@@ -283,7 +283,7 @@ public readonly partial struct BabelrcSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Mutable.DefaultInstance;
                 }
             }
 

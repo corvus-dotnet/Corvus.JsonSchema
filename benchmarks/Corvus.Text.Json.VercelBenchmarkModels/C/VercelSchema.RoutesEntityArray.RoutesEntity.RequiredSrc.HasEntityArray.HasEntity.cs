@@ -234,6 +234,15 @@ public readonly partial struct VercelSchema
                         }
 
                         /// <summary>
+                        /// Conversion from the <see cref="Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredTypeAndValue"/> mutable view.
+                        /// </summary>
+                        /// <param name="value">The value from which to convert.</param>
+                        public static implicit operator HasEntity(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredTypeAndValue.Mutable value)
+                        {
+                            return From(value);
+                        }
+
+                        /// <summary>
                         /// Conversion to <see cref="Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType"/>.
                         /// </summary>
                         /// <param name="value">The value from which to convert.</param>
@@ -247,6 +256,15 @@ public readonly partial struct VercelSchema
                         /// </summary>
                         /// <param name="value">The value from which to convert.</param>
                         public static implicit operator HasEntity(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType value)
+                        {
+                            return From(value);
+                        }
+
+                        /// <summary>
+                        /// Conversion from the <see cref="Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType"/> mutable view.
+                        /// </summary>
+                        /// <param name="value">The value from which to convert.</param>
+                        public static implicit operator HasEntity(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.Mutable value)
                         {
                             return From(value);
                         }

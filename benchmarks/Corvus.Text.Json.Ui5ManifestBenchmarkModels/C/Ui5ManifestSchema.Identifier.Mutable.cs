@@ -804,6 +804,7 @@ public readonly partial struct Ui5ManifestSchema
                 Unknown,
                 JsonElement,
                 DeprecatedBuilder,
+                DeprecatedSource,
                 True,
                 False,
             }
@@ -811,6 +812,7 @@ public readonly partial struct Ui5ManifestSchema
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.Deprecated.Builder.Build? _deprecatedBuilderInstance;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.Deprecated.Source _deprecatedSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -827,6 +829,8 @@ public readonly partial struct Ui5ManifestSchema
 
             public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.Deprecated.Builder.Build value) {_deprecatedBuilderInstance = value; _kind = Kind.DeprecatedBuilder; }
 
+            public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.Deprecated.Source value) { _deprecatedSourceInstance = value; _kind = Kind.DeprecatedSource; }
+
             public static implicit operator Source(Identifier instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -834,6 +838,9 @@ public readonly partial struct Ui5ManifestSchema
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.Deprecated instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.Deprecated.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.OneOf0Entity instance) => new(JsonElement.From(instance));
@@ -855,6 +862,9 @@ public readonly partial struct Ui5ManifestSchema
                         break;
                     case Kind.DeprecatedBuilder:
                         valueBuilder.AddProperty(utf8Name, _deprecatedBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.Deprecated.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.DeprecatedSource:
+                        _deprecatedSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -880,6 +890,9 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.DeprecatedBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _deprecatedBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.Deprecated.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DeprecatedSource:
+                        _deprecatedSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -903,6 +916,9 @@ public readonly partial struct Ui5ManifestSchema
                         break;
                     case Kind.DeprecatedBuilder:
                         valueBuilder.AddProperty(name, _deprecatedBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.Deprecated.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DeprecatedSource:
+                        _deprecatedSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -928,6 +944,9 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.DeprecatedBuilder:
                         valueBuilder.AddProperty(name, _deprecatedBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.Deprecated.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DeprecatedSource:
+                        _deprecatedSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -951,6 +970,9 @@ public readonly partial struct Ui5ManifestSchema
                         break;
                     case Kind.DeprecatedBuilder:
                         valueBuilder.AddItem(_deprecatedBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.Deprecated.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DeprecatedSource:
+                        _deprecatedSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

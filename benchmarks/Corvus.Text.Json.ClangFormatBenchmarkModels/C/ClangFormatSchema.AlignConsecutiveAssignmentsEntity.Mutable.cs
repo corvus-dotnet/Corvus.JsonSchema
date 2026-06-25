@@ -846,6 +846,7 @@ public readonly partial struct ClangFormatSchema
                 Unknown,
                 JsonElement,
                 ClangFormat15AlignmentOptionsBuilder,
+                ClangFormat15AlignmentOptionsSource,
                 RawUtf8StringRequiresUnescaping,
                 RawUtf8StringNotRequiresUnescaping,
                 Utf8String,
@@ -857,6 +858,7 @@ public readonly partial struct ClangFormatSchema
             private readonly ReadOnlySpan<byte> _utf8Backing;
             private readonly ReadOnlySpan<char> _utf16Backing;
             private readonly Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions.Builder.Build? _clangFormat15AlignmentOptionsBuilderInstance;
+            private readonly Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions.Source _clangFormat15AlignmentOptionsSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -889,6 +891,8 @@ public readonly partial struct ClangFormatSchema
 
             public Source(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions.Builder.Build value) {_clangFormat15AlignmentOptionsBuilderInstance = value; _kind = Kind.ClangFormat15AlignmentOptionsBuilder; }
 
+            public Source(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions.Source value) { _clangFormat15AlignmentOptionsSourceInstance = value; _kind = Kind.ClangFormat15AlignmentOptionsSource; }
+
             public static implicit operator Source(AlignConsecutiveAssignmentsEntity instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -902,6 +906,9 @@ public readonly partial struct ClangFormatSchema
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat38StyleOfAligningConsecutiveAssignments instance) => new(JsonElement.From(instance));
@@ -933,6 +940,9 @@ public readonly partial struct ClangFormatSchema
                     case Kind.ClangFormat15AlignmentOptionsBuilder:
                         valueBuilder.AddProperty(utf8Name, _clangFormat15AlignmentOptionsBuilderInstance!, static (in b, ref o) => Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.ClangFormat15AlignmentOptionsSource:
+                        _clangFormat15AlignmentOptionsSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -962,6 +972,9 @@ public readonly partial struct ClangFormatSchema
                         break;
                     case Kind.ClangFormat15AlignmentOptionsBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _clangFormat15AlignmentOptionsBuilderInstance!, static (in b, ref o) => Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ClangFormat15AlignmentOptionsSource:
+                        _clangFormat15AlignmentOptionsSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -993,6 +1006,9 @@ public readonly partial struct ClangFormatSchema
                     case Kind.ClangFormat15AlignmentOptionsBuilder:
                         valueBuilder.AddProperty(name, _clangFormat15AlignmentOptionsBuilderInstance!, static (in b, ref o) => Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ClangFormat15AlignmentOptionsSource:
+                        _clangFormat15AlignmentOptionsSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1023,6 +1039,9 @@ public readonly partial struct ClangFormatSchema
                     case Kind.ClangFormat15AlignmentOptionsBuilder:
                         valueBuilder.AddProperty(name, _clangFormat15AlignmentOptionsBuilderInstance!, static (in b, ref o) => Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.ClangFormat15AlignmentOptionsSource:
+                        _clangFormat15AlignmentOptionsSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1052,6 +1071,9 @@ public readonly partial struct ClangFormatSchema
                         break;
                     case Kind.ClangFormat15AlignmentOptionsBuilder:
                         valueBuilder.AddItem(_clangFormat15AlignmentOptionsBuilderInstance!, static (in b, ref o) => Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.ClangFormat15AlignmentOptions.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ClangFormat15AlignmentOptionsSource:
+                        _clangFormat15AlignmentOptionsSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

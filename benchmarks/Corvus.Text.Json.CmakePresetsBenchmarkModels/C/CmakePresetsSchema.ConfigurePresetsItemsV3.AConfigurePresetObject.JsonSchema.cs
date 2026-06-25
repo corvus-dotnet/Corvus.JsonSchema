@@ -59,7 +59,7 @@ public readonly partial struct CmakePresetsSchema
                 private static readonly JsonSchemaPathProvider InstallDirSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/installDir"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider ToolchainFileSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/toolchainFile"u8, buffer, out written);
 
-                private static void MatchBinaryDir(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchBinaryDir(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext =
@@ -74,7 +74,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext.IsMatch, ref childContext);
                 }
 
-                private static void MatchCondition(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchCondition(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext1 =
@@ -89,7 +89,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext1.IsMatch, ref childContext1);
                 }
 
-                private static void MatchGenerator(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchGenerator(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext2 =
@@ -104,7 +104,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext2.IsMatch, ref childContext2);
                 }
 
-                private static void MatchInstallDir(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchInstallDir(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext3 =
@@ -119,7 +119,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext3.IsMatch, ref childContext3);
                 }
 
-                private static void MatchToolchainFile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchToolchainFile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext4 =
@@ -210,7 +210,7 @@ public readonly partial struct CmakePresetsSchema
 
                             if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.CmakePresetsBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1? validator))
                             {
-                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                                 if (!context.HasCollector && !context.IsMatch)
                                 {

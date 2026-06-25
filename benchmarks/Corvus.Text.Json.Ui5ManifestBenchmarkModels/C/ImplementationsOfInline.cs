@@ -210,6 +210,15 @@ public readonly partial struct ImplementationsOfInline
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator ImplementationsOfInline(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.TextRun"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>

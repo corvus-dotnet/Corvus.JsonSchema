@@ -328,7 +328,7 @@ public readonly partial struct KrakendSchema
                                             return value;
                                         }
 
-                                        return default;
+                                        return Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.ServicesEntityArray.ServicesEntity.MethodsEntityArray.MethodsEntity.JsonStringArray.Mutable.DefaultInstance;
                                     }
                                 }
 

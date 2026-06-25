@@ -227,7 +227,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Proxy.DecompressGzip.Mutable.DefaultInstance;
                 }
             }
 
@@ -283,7 +283,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Proxy.MaximumPayload.Mutable.DefaultInstance;
                 }
             }
 
@@ -308,7 +308,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Proxy.TrafficShadowingOrMirroring.Mutable.DefaultInstance;
                 }
             }
 

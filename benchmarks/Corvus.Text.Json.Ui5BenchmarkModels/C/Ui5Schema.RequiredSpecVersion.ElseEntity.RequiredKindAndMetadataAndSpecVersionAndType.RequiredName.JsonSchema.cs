@@ -64,7 +64,7 @@ public readonly partial struct Ui5Schema
                         private static readonly JsonSchemaPathProvider CopyrightSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/copyright"u8, buffer, out written);
                         private static readonly JsonSchemaPathProvider NameSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/name"u8, buffer, out written);
 
-                        private static void MatchCopyright(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                        private static void MatchCopyright(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                         {
                             context.AddLocalEvaluatedProperty(propertyCount);
                             JsonSchemaContext childContext =
@@ -79,7 +79,7 @@ public readonly partial struct Ui5Schema
                             context.CommitChildContext(childContext.IsMatch, ref childContext);
                         }
 
-                        private static void MatchName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                        private static void MatchName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                         {
                             context.AddLocalEvaluatedProperty(propertyCount);
                             JsonSchemaContext childContext1 =
@@ -179,7 +179,7 @@ public readonly partial struct Ui5Schema
 
                                     if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Ui5Benchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                                     {
-                                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                                         if (!context.HasCollector && !context.IsMatch)
                                         {

@@ -71,6 +71,16 @@ public readonly partial struct NestCliSchema
                 _documentVersion = _parent?.Version ?? 0;
             }
 
+            /// <summary>
+            /// Gets a read-only default instance of the mutable type, surfacing the schema default value.
+            /// </summary>
+            /// <remarks>
+            /// The instance is a zero-copy facade over the immutable default, so it can be read but not
+            /// mutated; attempting to mutate it throws an <see cref="InvalidOperationException"/> directing
+            /// the caller to set the value on its parent first.
+            /// </remarks>
+            public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<CompilerOptions, Mutable>(CompilerOptions.DefaultInstance);
+
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();
 
@@ -197,7 +207,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -234,7 +244,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -255,7 +265,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -271,7 +281,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -292,7 +302,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -313,7 +323,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -334,7 +344,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -355,7 +365,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -376,7 +386,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Mutable.DefaultInstance;
                 }
             }
 

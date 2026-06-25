@@ -189,7 +189,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.SetToFalseToDisableCachingForThisCard.Mutable.DefaultInstance;
                 }
             }
 
@@ -210,7 +210,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.TheMaximumAgeForWhichTheCacheIsConsideredFresh.Mutable.DefaultInstance;
                 }
             }
 
@@ -231,7 +231,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.DeprecatedSetToTrueToDisableCachingForThisCard.Mutable.DefaultInstance;
                 }
             }
 
@@ -252,7 +252,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.ShouldWeShowStaleCacheWhileRevalidating.Mutable.DefaultInstance;
                 }
             }
 

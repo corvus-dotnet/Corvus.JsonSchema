@@ -308,7 +308,7 @@ public readonly partial struct AnsibleMetaSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.VersionsArray.Mutable.DefaultInstance;
                 }
             }
 

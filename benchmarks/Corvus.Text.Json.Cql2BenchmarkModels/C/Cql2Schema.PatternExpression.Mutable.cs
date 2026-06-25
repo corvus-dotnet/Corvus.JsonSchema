@@ -890,7 +890,9 @@ public readonly partial struct Cql2Schema
                 Unknown,
                 JsonElement,
                 PatternExpressionRequiredArgsAndOpBuilder,
+                PatternExpressionRequiredArgsAndOpSource,
                 RequiredArgsAndOpBuilder,
+                RequiredArgsAndOpSource,
                 RawUtf8StringRequiresUnescaping,
                 RawUtf8StringNotRequiresUnescaping,
                 Utf8String,
@@ -902,7 +904,9 @@ public readonly partial struct Cql2Schema
             private readonly ReadOnlySpan<byte> _utf8Backing;
             private readonly ReadOnlySpan<char> _utf16Backing;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp.Builder.Build? _patternExpressionRequiredArgsAndOpBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp.Source _patternExpressionRequiredArgsAndOpSourceInstance;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.Builder.Build? _requiredArgsAndOpBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.Source _requiredArgsAndOpSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -935,7 +939,11 @@ public readonly partial struct Cql2Schema
 
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp.Builder.Build value) {_patternExpressionRequiredArgsAndOpBuilderInstance = value; _kind = Kind.PatternExpressionRequiredArgsAndOpBuilder; }
 
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp.Source value) { _patternExpressionRequiredArgsAndOpSourceInstance = value; _kind = Kind.PatternExpressionRequiredArgsAndOpSource; }
+
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.Builder.Build value) {_requiredArgsAndOpBuilderInstance = value; _kind = Kind.RequiredArgsAndOpBuilder; }
+
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.Source value) { _requiredArgsAndOpSourceInstance = value; _kind = Kind.RequiredArgsAndOpSource; }
 
             public static implicit operator Source(PatternExpression instance) => new(JsonElement.From(instance));
 
@@ -952,7 +960,13 @@ public readonly partial struct Cql2Schema
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.JsonString instance) => new(JsonElement.From(instance));
@@ -984,8 +998,14 @@ public readonly partial struct Cql2Schema
                     case Kind.PatternExpressionRequiredArgsAndOpBuilder:
                         valueBuilder.AddProperty(utf8Name, _patternExpressionRequiredArgsAndOpBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.PatternExpressionRequiredArgsAndOpSource:
+                        _patternExpressionRequiredArgsAndOpSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.RequiredArgsAndOpBuilder:
                         valueBuilder.AddProperty(utf8Name, _requiredArgsAndOpBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.RequiredArgsAndOpSource:
+                        _requiredArgsAndOpSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1017,8 +1037,14 @@ public readonly partial struct Cql2Schema
                     case Kind.PatternExpressionRequiredArgsAndOpBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _patternExpressionRequiredArgsAndOpBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.PatternExpressionRequiredArgsAndOpSource:
+                        _patternExpressionRequiredArgsAndOpSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.RequiredArgsAndOpBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredArgsAndOpBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredArgsAndOpSource:
+                        _requiredArgsAndOpSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1050,8 +1076,14 @@ public readonly partial struct Cql2Schema
                     case Kind.PatternExpressionRequiredArgsAndOpBuilder:
                         valueBuilder.AddProperty(name, _patternExpressionRequiredArgsAndOpBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.PatternExpressionRequiredArgsAndOpSource:
+                        _patternExpressionRequiredArgsAndOpSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.RequiredArgsAndOpBuilder:
                         valueBuilder.AddProperty(name, _requiredArgsAndOpBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredArgsAndOpSource:
+                        _requiredArgsAndOpSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1083,8 +1115,14 @@ public readonly partial struct Cql2Schema
                     case Kind.PatternExpressionRequiredArgsAndOpBuilder:
                         valueBuilder.AddProperty(name, _patternExpressionRequiredArgsAndOpBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.PatternExpressionRequiredArgsAndOpSource:
+                        _patternExpressionRequiredArgsAndOpSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.RequiredArgsAndOpBuilder:
                         valueBuilder.AddProperty(name, _requiredArgsAndOpBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredArgsAndOpSource:
+                        _requiredArgsAndOpSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1116,8 +1154,14 @@ public readonly partial struct Cql2Schema
                     case Kind.PatternExpressionRequiredArgsAndOpBuilder:
                         valueBuilder.AddItem(_patternExpressionRequiredArgsAndOpBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.PatternExpressionRequiredArgsAndOpSource:
+                        _patternExpressionRequiredArgsAndOpSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.RequiredArgsAndOpBuilder:
                         valueBuilder.AddItem(_requiredArgsAndOpBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredArgsAndOpSource:
+                        _requiredArgsAndOpSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

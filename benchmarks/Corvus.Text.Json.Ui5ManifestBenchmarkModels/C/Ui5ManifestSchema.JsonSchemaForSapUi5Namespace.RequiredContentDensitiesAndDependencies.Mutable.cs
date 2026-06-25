@@ -530,7 +530,7 @@ public readonly partial struct Ui5ManifestSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.FlexExtensionPointEnabledEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -551,7 +551,7 @@ public readonly partial struct Ui5ManifestSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.HandleValidationEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -572,7 +572,7 @@ public readonly partial struct Ui5ManifestSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.IsCloudDevAdaptationEntity.Mutable.DefaultInstance;
                     }
                 }
 

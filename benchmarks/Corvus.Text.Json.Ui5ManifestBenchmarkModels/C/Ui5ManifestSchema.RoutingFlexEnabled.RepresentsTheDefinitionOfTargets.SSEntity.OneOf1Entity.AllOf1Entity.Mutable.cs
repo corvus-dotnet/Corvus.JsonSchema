@@ -823,13 +823,17 @@ public readonly partial struct Ui5ManifestSchema
                                 Unknown,
                                 JsonElement,
                                 RequiredIdAndNameBuilder,
+                                RequiredIdAndNameSource,
                                 RequiredIdAndTypeAndUsageBuilder,
+                                RequiredIdAndTypeAndUsageSource,
                             }
 
                             private readonly Kind _kind;
                             private readonly JsonElement _jsonElement;
                             private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndName.Builder.Build? _requiredIdAndNameBuilderInstance;
+                            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndName.Source _requiredIdAndNameSourceInstance;
                             private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage.Builder.Build? _requiredIdAndTypeAndUsageBuilderInstance;
+                            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage.Source _requiredIdAndTypeAndUsageSourceInstance;
 
                             /// <summary>
                             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -844,7 +848,11 @@ public readonly partial struct Ui5ManifestSchema
 
                             public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndName.Builder.Build value) {_requiredIdAndNameBuilderInstance = value; _kind = Kind.RequiredIdAndNameBuilder; }
 
+                            public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndName.Source value) { _requiredIdAndNameSourceInstance = value; _kind = Kind.RequiredIdAndNameSource; }
+
                             public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage.Builder.Build value) {_requiredIdAndTypeAndUsageBuilderInstance = value; _kind = Kind.RequiredIdAndTypeAndUsageBuilder; }
+
+                            public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage.Source value) { _requiredIdAndTypeAndUsageSourceInstance = value; _kind = Kind.RequiredIdAndTypeAndUsageSource; }
 
                             public static implicit operator Source(AllOf1Entity instance) => new(JsonElement.From(instance));
 
@@ -852,7 +860,13 @@ public readonly partial struct Ui5ManifestSchema
                             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndName instance) => new(JsonElement.From(instance));
 
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndName.Source value) => new(value);
+
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
                             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage instance) => new(JsonElement.From(instance));
+
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage.Source value) => new(value);
 
                             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                             {
@@ -866,8 +880,14 @@ public readonly partial struct Ui5ManifestSchema
                                     case Kind.RequiredIdAndNameBuilder:
                                         valueBuilder.AddProperty(utf8Name, _requiredIdAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndName.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                                         break;
+                                    case Kind.RequiredIdAndNameSource:
+                                        _requiredIdAndNameSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                                        break;
                                     case Kind.RequiredIdAndTypeAndUsageBuilder:
                                         valueBuilder.AddProperty(utf8Name, _requiredIdAndTypeAndUsageBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                                        break;
+                                    case Kind.RequiredIdAndTypeAndUsageSource:
+                                        _requiredIdAndTypeAndUsageSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -887,8 +907,14 @@ public readonly partial struct Ui5ManifestSchema
                                     case Kind.RequiredIdAndNameBuilder:
                                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredIdAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndName.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.RequiredIdAndNameSource:
+                                        _requiredIdAndNameSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                        break;
                                     case Kind.RequiredIdAndTypeAndUsageBuilder:
                                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredIdAndTypeAndUsageBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.RequiredIdAndTypeAndUsageSource:
+                                        _requiredIdAndTypeAndUsageSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -908,8 +934,14 @@ public readonly partial struct Ui5ManifestSchema
                                     case Kind.RequiredIdAndNameBuilder:
                                         valueBuilder.AddProperty(name, _requiredIdAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndName.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.RequiredIdAndNameSource:
+                                        _requiredIdAndNameSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                        break;
                                     case Kind.RequiredIdAndTypeAndUsageBuilder:
                                         valueBuilder.AddProperty(name, _requiredIdAndTypeAndUsageBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.RequiredIdAndTypeAndUsageSource:
+                                        _requiredIdAndTypeAndUsageSourceInstance.AddAsProperty(name, ref valueBuilder);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -929,8 +961,14 @@ public readonly partial struct Ui5ManifestSchema
                                     case Kind.RequiredIdAndNameBuilder:
                                         valueBuilder.AddProperty(name, _requiredIdAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndName.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.RequiredIdAndNameSource:
+                                        _requiredIdAndNameSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                        break;
                                     case Kind.RequiredIdAndTypeAndUsageBuilder:
                                         valueBuilder.AddProperty(name, _requiredIdAndTypeAndUsageBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.RequiredIdAndTypeAndUsageSource:
+                                        _requiredIdAndTypeAndUsageSourceInstance.AddAsProperty(name, ref valueBuilder);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -950,8 +988,14 @@ public readonly partial struct Ui5ManifestSchema
                                     case Kind.RequiredIdAndNameBuilder:
                                         valueBuilder.AddItem(_requiredIdAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndName.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.RequiredIdAndNameSource:
+                                        _requiredIdAndNameSourceInstance.AddAsItem(ref valueBuilder);
+                                        break;
                                     case Kind.RequiredIdAndTypeAndUsageBuilder:
                                         valueBuilder.AddItem(_requiredIdAndTypeAndUsageBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.RequiredIdAndTypeAndUsageSource:
+                                        _requiredIdAndTypeAndUsageSourceInstance.AddAsItem(ref valueBuilder);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");

@@ -38,7 +38,7 @@ public readonly partial struct CodeClimateSchema
         private static readonly JsonSchemaPathProvider PrepareSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/prepare"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider VersionValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/version"u8, buffer, out written);
 
-        private static void MatchChecksValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchChecksValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
@@ -53,7 +53,7 @@ public readonly partial struct CodeClimateSchema
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
-        private static void MatchExcludePatterns(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchExcludePatterns(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
@@ -68,7 +68,7 @@ public readonly partial struct CodeClimateSchema
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
         }
 
-        private static void MatchPluginsValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPluginsValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
@@ -83,7 +83,7 @@ public readonly partial struct CodeClimateSchema
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
-        private static void MatchPrepare(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPrepare(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext3 =
@@ -98,7 +98,7 @@ public readonly partial struct CodeClimateSchema
             context.CommitChildContext(childContext3.IsMatch, ref childContext3);
         }
 
-        private static void MatchVersionValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchVersionValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext4 =
@@ -189,7 +189,7 @@ public readonly partial struct CodeClimateSchema
 
                     if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.CodeClimateBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {

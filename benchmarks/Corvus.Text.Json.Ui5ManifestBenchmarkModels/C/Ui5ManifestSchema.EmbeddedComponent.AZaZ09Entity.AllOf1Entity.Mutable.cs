@@ -870,15 +870,21 @@ public readonly partial struct Ui5ManifestSchema
                         Unknown,
                         JsonElement,
                         RequiredComponentNameBuilder,
+                        RequiredComponentNameSource,
                         RequiredComponentUsageBuilder,
+                        RequiredComponentUsageSource,
                         RequiredEmbeddedComponentsBuilder,
+                        RequiredEmbeddedComponentsSource,
                     }
 
                     private readonly Kind _kind;
                     private readonly JsonElement _jsonElement;
                     private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentName.Builder.Build? _requiredComponentNameBuilderInstance;
+                    private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentName.Source _requiredComponentNameSourceInstance;
                     private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentUsage.Builder.Build? _requiredComponentUsageBuilderInstance;
+                    private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentUsage.Source _requiredComponentUsageSourceInstance;
                     private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredEmbeddedComponents.Builder.Build? _requiredEmbeddedComponentsBuilderInstance;
+                    private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredEmbeddedComponents.Source _requiredEmbeddedComponentsSourceInstance;
 
                     /// <summary>
                     /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -893,9 +899,15 @@ public readonly partial struct Ui5ManifestSchema
 
                     public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentName.Builder.Build value) {_requiredComponentNameBuilderInstance = value; _kind = Kind.RequiredComponentNameBuilder; }
 
+                    public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentName.Source value) { _requiredComponentNameSourceInstance = value; _kind = Kind.RequiredComponentNameSource; }
+
                     public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentUsage.Builder.Build value) {_requiredComponentUsageBuilderInstance = value; _kind = Kind.RequiredComponentUsageBuilder; }
 
+                    public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentUsage.Source value) { _requiredComponentUsageSourceInstance = value; _kind = Kind.RequiredComponentUsageSource; }
+
                     public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredEmbeddedComponents.Builder.Build value) {_requiredEmbeddedComponentsBuilderInstance = value; _kind = Kind.RequiredEmbeddedComponentsBuilder; }
+
+                    public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredEmbeddedComponents.Source value) { _requiredEmbeddedComponentsSourceInstance = value; _kind = Kind.RequiredEmbeddedComponentsSource; }
 
                     public static implicit operator Source(AllOf1Entity instance) => new(JsonElement.From(instance));
 
@@ -903,10 +915,19 @@ public readonly partial struct Ui5ManifestSchema
                     public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentName instance) => new(JsonElement.From(instance));
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentName.Source value) => new(value);
+
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentUsage instance) => new(JsonElement.From(instance));
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentUsage.Source value) => new(value);
+
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredEmbeddedComponents instance) => new(JsonElement.From(instance));
+
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredEmbeddedComponents.Source value) => new(value);
 
                     internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                     {
@@ -920,11 +941,20 @@ public readonly partial struct Ui5ManifestSchema
                             case Kind.RequiredComponentNameBuilder:
                                 valueBuilder.AddProperty(utf8Name, _requiredComponentNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentName.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                                 break;
+                            case Kind.RequiredComponentNameSource:
+                                _requiredComponentNameSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                                break;
                             case Kind.RequiredComponentUsageBuilder:
                                 valueBuilder.AddProperty(utf8Name, _requiredComponentUsageBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentUsage.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                                 break;
+                            case Kind.RequiredComponentUsageSource:
+                                _requiredComponentUsageSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                                break;
                             case Kind.RequiredEmbeddedComponentsBuilder:
                                 valueBuilder.AddProperty(utf8Name, _requiredEmbeddedComponentsBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredEmbeddedComponents.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                                break;
+                            case Kind.RequiredEmbeddedComponentsSource:
+                                _requiredEmbeddedComponentsSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                                 break;
                             default:
                                 Debug.Fail("Unexpected Kind");
@@ -944,11 +974,20 @@ public readonly partial struct Ui5ManifestSchema
                             case Kind.RequiredComponentNameBuilder:
                                 valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredComponentNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentName.Builder.BuildValue(b, ref o));
                                 break;
+                            case Kind.RequiredComponentNameSource:
+                                _requiredComponentNameSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                break;
                             case Kind.RequiredComponentUsageBuilder:
                                 valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredComponentUsageBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentUsage.Builder.BuildValue(b, ref o));
                                 break;
+                            case Kind.RequiredComponentUsageSource:
+                                _requiredComponentUsageSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                break;
                             case Kind.RequiredEmbeddedComponentsBuilder:
                                 valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredEmbeddedComponentsBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredEmbeddedComponents.Builder.BuildValue(b, ref o));
+                                break;
+                            case Kind.RequiredEmbeddedComponentsSource:
+                                _requiredEmbeddedComponentsSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                                 break;
                             default:
                                 Debug.Fail("Unexpected Kind");
@@ -968,11 +1007,20 @@ public readonly partial struct Ui5ManifestSchema
                             case Kind.RequiredComponentNameBuilder:
                                 valueBuilder.AddProperty(name, _requiredComponentNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentName.Builder.BuildValue(b, ref o));
                                 break;
+                            case Kind.RequiredComponentNameSource:
+                                _requiredComponentNameSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                break;
                             case Kind.RequiredComponentUsageBuilder:
                                 valueBuilder.AddProperty(name, _requiredComponentUsageBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentUsage.Builder.BuildValue(b, ref o));
                                 break;
+                            case Kind.RequiredComponentUsageSource:
+                                _requiredComponentUsageSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                break;
                             case Kind.RequiredEmbeddedComponentsBuilder:
                                 valueBuilder.AddProperty(name, _requiredEmbeddedComponentsBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredEmbeddedComponents.Builder.BuildValue(b, ref o));
+                                break;
+                            case Kind.RequiredEmbeddedComponentsSource:
+                                _requiredEmbeddedComponentsSourceInstance.AddAsProperty(name, ref valueBuilder);
                                 break;
                             default:
                                 Debug.Fail("Unexpected Kind");
@@ -992,11 +1040,20 @@ public readonly partial struct Ui5ManifestSchema
                             case Kind.RequiredComponentNameBuilder:
                                 valueBuilder.AddProperty(name, _requiredComponentNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentName.Builder.BuildValue(b, ref o));
                                 break;
+                            case Kind.RequiredComponentNameSource:
+                                _requiredComponentNameSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                break;
                             case Kind.RequiredComponentUsageBuilder:
                                 valueBuilder.AddProperty(name, _requiredComponentUsageBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentUsage.Builder.BuildValue(b, ref o));
                                 break;
+                            case Kind.RequiredComponentUsageSource:
+                                _requiredComponentUsageSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                break;
                             case Kind.RequiredEmbeddedComponentsBuilder:
                                 valueBuilder.AddProperty(name, _requiredEmbeddedComponentsBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredEmbeddedComponents.Builder.BuildValue(b, ref o));
+                                break;
+                            case Kind.RequiredEmbeddedComponentsSource:
+                                _requiredEmbeddedComponentsSourceInstance.AddAsProperty(name, ref valueBuilder);
                                 break;
                             default:
                                 Debug.Fail("Unexpected Kind");
@@ -1016,11 +1073,20 @@ public readonly partial struct Ui5ManifestSchema
                             case Kind.RequiredComponentNameBuilder:
                                 valueBuilder.AddItem(_requiredComponentNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentName.Builder.BuildValue(b, ref o));
                                 break;
+                            case Kind.RequiredComponentNameSource:
+                                _requiredComponentNameSourceInstance.AddAsItem(ref valueBuilder);
+                                break;
                             case Kind.RequiredComponentUsageBuilder:
                                 valueBuilder.AddItem(_requiredComponentUsageBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentUsage.Builder.BuildValue(b, ref o));
                                 break;
+                            case Kind.RequiredComponentUsageSource:
+                                _requiredComponentUsageSourceInstance.AddAsItem(ref valueBuilder);
+                                break;
                             case Kind.RequiredEmbeddedComponentsBuilder:
                                 valueBuilder.AddItem(_requiredEmbeddedComponentsBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredEmbeddedComponents.Builder.BuildValue(b, ref o));
+                                break;
+                            case Kind.RequiredEmbeddedComponentsSource:
+                                _requiredEmbeddedComponentsSourceInstance.AddAsItem(ref valueBuilder);
                                 break;
                             default:
                                 Debug.Fail("Unexpected Kind");

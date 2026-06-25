@@ -812,16 +812,16 @@ public readonly partial struct JshintrcSchema
     /// Maximum amount of warnings JSHint will produce before giving up
     /// </para>
     /// </remarks>
-    public Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxerrEntity Maxerr
+    public Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp Maxerr
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxerrUtf8, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxerrEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxerrUtf8, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp value))
             {
                 return value;
             }
 
-            return Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaxerrEntity.DefaultInstance;
+            return Corvus.JshintrcBenchmark.Current.JshintrcSchema.MaximumAmountOfWarningsJsHintWillProduceBeforeGivingUp.DefaultInstance;
         }
     }
 

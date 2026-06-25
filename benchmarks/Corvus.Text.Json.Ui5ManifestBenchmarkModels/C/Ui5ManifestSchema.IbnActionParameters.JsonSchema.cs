@@ -47,7 +47,7 @@ public readonly partial struct Ui5ManifestSchema
             private const uint RequiredBitMask0 =
                 RequiredBitForIbnTarget;
 
-            private static void MatchIbnTarget(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+            private static void MatchIbnTarget(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
             {
                 requiredBitBuffer[RequiredOffsetForIbnTarget] |= RequiredBitForIbnTarget;
             }
@@ -126,7 +126,7 @@ public readonly partial struct Ui5ManifestSchema
 
                         if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Ui5ManifestBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                         {
-                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                             if (!context.HasCollector && !context.IsMatch)
                             {

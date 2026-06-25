@@ -220,6 +220,15 @@ public readonly partial struct TmuxinatorSchema
                 return From(value);
             }
 
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator WindowsEntity(Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.Mutable value)
+            {
+                return From(value);
+            }
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator string(WindowsEntity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

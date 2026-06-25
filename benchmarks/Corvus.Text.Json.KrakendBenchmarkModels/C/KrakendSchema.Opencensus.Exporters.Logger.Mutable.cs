@@ -255,7 +255,7 @@ public readonly partial struct KrakendSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Logger.Spans.Mutable.DefaultInstance;
                         }
                     }
 
@@ -277,7 +277,7 @@ public readonly partial struct KrakendSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Logger.Stats.Mutable.DefaultInstance;
                         }
                     }
 

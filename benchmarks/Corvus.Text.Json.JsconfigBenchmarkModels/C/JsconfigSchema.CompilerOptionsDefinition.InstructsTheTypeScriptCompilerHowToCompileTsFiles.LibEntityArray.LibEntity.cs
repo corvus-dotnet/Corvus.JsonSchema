@@ -122,6 +122,15 @@ public readonly partial struct JsconfigSchema
                     }
 
                     /// <summary>
+                    /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf0Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf0Entity.Mutable value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
                     /// Conversion to <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf1Entity"/>.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
@@ -135,6 +144,15 @@ public readonly partial struct JsconfigSchema
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
                     public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf1Entity value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
+                    /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf1Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf1Entity.Mutable value)
                     {
                         return From(value);
                     }
@@ -158,6 +176,15 @@ public readonly partial struct JsconfigSchema
                     }
 
                     /// <summary>
+                    /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf10Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf10Entity.Mutable value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
                     /// Conversion to <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf11Entity"/>.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
@@ -171,6 +198,15 @@ public readonly partial struct JsconfigSchema
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
                     public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf11Entity value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
+                    /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf11Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf11Entity.Mutable value)
                     {
                         return From(value);
                     }
@@ -194,6 +230,15 @@ public readonly partial struct JsconfigSchema
                     }
 
                     /// <summary>
+                    /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf12Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf12Entity.Mutable value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
                     /// Conversion to <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf13Entity"/>.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
@@ -207,6 +252,15 @@ public readonly partial struct JsconfigSchema
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
                     public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf13Entity value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
+                    /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf13Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf13Entity.Mutable value)
                     {
                         return From(value);
                     }
@@ -230,6 +284,15 @@ public readonly partial struct JsconfigSchema
                     }
 
                     /// <summary>
+                    /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf2Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf2Entity.Mutable value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
                     /// Conversion to <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf3Entity"/>.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
@@ -243,6 +306,15 @@ public readonly partial struct JsconfigSchema
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
                     public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf3Entity value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
+                    /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf3Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf3Entity.Mutable value)
                     {
                         return From(value);
                     }
@@ -266,6 +338,15 @@ public readonly partial struct JsconfigSchema
                     }
 
                     /// <summary>
+                    /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf4Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf4Entity.Mutable value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
                     /// Conversion to <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf5Entity"/>.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
@@ -279,6 +360,15 @@ public readonly partial struct JsconfigSchema
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
                     public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf5Entity value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
+                    /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf5Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf5Entity.Mutable value)
                     {
                         return From(value);
                     }
@@ -302,6 +392,15 @@ public readonly partial struct JsconfigSchema
                     }
 
                     /// <summary>
+                    /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf6Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf6Entity.Mutable value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
                     /// Conversion to <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf7Entity"/>.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
@@ -315,6 +414,15 @@ public readonly partial struct JsconfigSchema
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
                     public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf7Entity value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
+                    /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf7Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf7Entity.Mutable value)
                     {
                         return From(value);
                     }
@@ -338,6 +446,15 @@ public readonly partial struct JsconfigSchema
                     }
 
                     /// <summary>
+                    /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf8Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf8Entity.Mutable value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
                     /// Conversion to <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf9Entity"/>.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
@@ -351,6 +468,15 @@ public readonly partial struct JsconfigSchema
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
                     public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf9Entity value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
+                    /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf9Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator LibEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.LibEntity.AnyOf9Entity.Mutable value)
                     {
                         return From(value);
                     }

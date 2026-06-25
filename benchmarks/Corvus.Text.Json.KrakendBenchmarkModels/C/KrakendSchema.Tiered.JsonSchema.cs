@@ -55,7 +55,7 @@ public readonly partial struct KrakendSchema
             private static readonly JsonSchemaPathProvider TierKeySchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/tier_key"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider TiersSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/tiers"u8, buffer, out written);
 
-            private static void MatchTierKey(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+            private static void MatchTierKey(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext =
@@ -77,7 +77,7 @@ public readonly partial struct KrakendSchema
                 requiredBitBuffer[RequiredOffsetForTierKey] |= RequiredBitForTierKey;
             }
 
-            private static void MatchTiers(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+            private static void MatchTiers(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext1 =
@@ -174,7 +174,7 @@ public readonly partial struct KrakendSchema
 
                         if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.KrakendBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                         {
-                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                             if (!context.HasCollector && !context.IsMatch)
                             {

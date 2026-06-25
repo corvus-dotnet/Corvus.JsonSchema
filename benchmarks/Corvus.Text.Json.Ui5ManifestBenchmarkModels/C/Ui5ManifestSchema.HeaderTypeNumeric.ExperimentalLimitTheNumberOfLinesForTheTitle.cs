@@ -173,6 +173,15 @@ public readonly partial struct Ui5ManifestSchema
                 return From(value);
             }
 
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator ExperimentalLimitTheNumberOfLinesForTheTitle(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding.Mutable value)
+            {
+                return From(value);
+            }
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator string(ExperimentalLimitTheNumberOfLinesForTheTitle value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

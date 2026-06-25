@@ -313,7 +313,7 @@ public readonly partial struct BabelrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Mutable.DefaultInstance;
             }
         }
 
@@ -376,7 +376,7 @@ public readonly partial struct BabelrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Mutable.DefaultInstance;
             }
         }
 
@@ -397,7 +397,7 @@ public readonly partial struct BabelrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Mutable.DefaultInstance;
             }
         }
 
@@ -418,7 +418,7 @@ public readonly partial struct BabelrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -439,7 +439,7 @@ public readonly partial struct BabelrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -481,7 +481,7 @@ public readonly partial struct BabelrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Mutable.DefaultInstance;
             }
         }
 
@@ -565,7 +565,7 @@ public readonly partial struct BabelrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -586,7 +586,7 @@ public readonly partial struct BabelrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Mutable.DefaultInstance;
             }
         }
 
@@ -628,7 +628,7 @@ public readonly partial struct BabelrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -733,7 +733,7 @@ public readonly partial struct BabelrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -775,7 +775,7 @@ public readonly partial struct BabelrcSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Mutable.DefaultInstance;
             }
         }
 

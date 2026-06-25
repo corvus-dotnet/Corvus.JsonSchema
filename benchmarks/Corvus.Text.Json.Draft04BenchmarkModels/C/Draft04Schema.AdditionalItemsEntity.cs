@@ -252,6 +252,15 @@ public readonly partial struct Draft04Schema
             return From(value);
         }
 
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Draft04Benchmark.Current.Draft04Schema"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator AdditionalItemsEntity(Corvus.Draft04Benchmark.Current.Draft04Schema.Mutable value)
+        {
+            return From(value);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator bool(AdditionalItemsEntity value)
         {

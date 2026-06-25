@@ -184,7 +184,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.AllowCompoundWordsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -211,7 +211,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.CaseSensitiveEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -310,7 +310,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.IsTheSpellCheckerEnabled.Mutable.DefaultInstance;
                 }
             }
 
@@ -626,7 +626,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.LoadDefaultConfigurationEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -647,7 +647,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.MaxDuplicateProblemsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -668,7 +668,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.TheMaximumNumberOfProblemsToReportInAFile.Mutable.DefaultInstance;
                 }
             }
 
@@ -689,7 +689,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.MinWordLengthEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -755,7 +755,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.NumberOfSuggestionsToMake.Mutable.DefaultInstance;
                 }
             }
 
@@ -803,7 +803,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.PnpFilesJsArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -830,7 +830,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.SuggestionNumChangesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -851,7 +851,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.SuggestionsTimeoutEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -905,7 +905,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettings.UsePnPEntity.Mutable.DefaultInstance;
                 }
             }
 

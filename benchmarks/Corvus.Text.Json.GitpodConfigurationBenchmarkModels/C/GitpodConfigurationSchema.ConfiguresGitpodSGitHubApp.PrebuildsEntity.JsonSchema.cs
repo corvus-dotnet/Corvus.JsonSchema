@@ -56,7 +56,7 @@ public readonly partial struct GitpodConfigurationSchema
                 private static readonly JsonSchemaPathProvider PullRequestsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/pullRequests"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider PullRequestsFromForksSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/pullRequestsFromForks"u8, buffer, out written);
 
-                private static void MatchAddBadge(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchAddBadge(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext =
@@ -71,7 +71,7 @@ public readonly partial struct GitpodConfigurationSchema
                     context.CommitChildContext(childContext.IsMatch, ref childContext);
                 }
 
-                private static void MatchAddCheck(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchAddCheck(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext1 =
@@ -86,7 +86,7 @@ public readonly partial struct GitpodConfigurationSchema
                     context.CommitChildContext(childContext1.IsMatch, ref childContext1);
                 }
 
-                private static void MatchAddLabel(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchAddLabel(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext2 =
@@ -101,7 +101,7 @@ public readonly partial struct GitpodConfigurationSchema
                     context.CommitChildContext(childContext2.IsMatch, ref childContext2);
                 }
 
-                private static void MatchBranches(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchBranches(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext3 =
@@ -116,7 +116,7 @@ public readonly partial struct GitpodConfigurationSchema
                     context.CommitChildContext(childContext3.IsMatch, ref childContext3);
                 }
 
-                private static void MatchMaster(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchMaster(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext4 =
@@ -131,7 +131,7 @@ public readonly partial struct GitpodConfigurationSchema
                     context.CommitChildContext(childContext4.IsMatch, ref childContext4);
                 }
 
-                private static void MatchPullRequests(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPullRequests(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext5 =
@@ -146,7 +146,7 @@ public readonly partial struct GitpodConfigurationSchema
                     context.CommitChildContext(childContext5.IsMatch, ref childContext5);
                 }
 
-                private static void MatchPullRequestsFromForks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPullRequestsFromForks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext6 =
@@ -234,7 +234,7 @@ public readonly partial struct GitpodConfigurationSchema
 
                             if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.GitpodConfigurationBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                             {
-                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                                 if (!context.HasCollector && !context.IsMatch)
                                 {

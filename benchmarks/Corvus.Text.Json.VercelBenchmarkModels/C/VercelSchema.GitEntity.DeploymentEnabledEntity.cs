@@ -239,6 +239,15 @@ public readonly partial struct VercelSchema
                 return From(value);
             }
 
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.VercelBenchmark.Current.VercelSchema.GitEntity.DeploymentEnabledEntity.OneOf1Entity"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator DeploymentEnabledEntity(Corvus.VercelBenchmark.Current.VercelSchema.GitEntity.DeploymentEnabledEntity.OneOf1Entity.Mutable value)
+            {
+                return From(value);
+            }
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator bool(DeploymentEnabledEntity value)
             {

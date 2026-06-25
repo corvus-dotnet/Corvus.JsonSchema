@@ -299,7 +299,7 @@ public readonly partial struct OpenapiSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -315,7 +315,7 @@ public readonly partial struct OpenapiSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -347,7 +347,7 @@ public readonly partial struct OpenapiSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -459,7 +459,7 @@ public readonly partial struct OpenapiSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Mutable.DefaultInstance;
                 }
             }
 

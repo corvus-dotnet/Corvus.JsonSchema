@@ -91,7 +91,7 @@ public readonly partial struct OmnisharpSchema
             private static readonly JsonSchemaPathProvider WrappingKeepStatementsOnSingleLineSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/WrappingKeepStatementsOnSingleLine"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider WrappingPreserveSingleLineSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/WrappingPreserveSingleLine"u8, buffer, out written);
 
-            private static void MatchEnableEditorConfigSupport(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchEnableEditorConfigSupport(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext =
@@ -106,7 +106,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext.IsMatch, ref childContext);
             }
 
-            private static void MatchIndentationSize(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchIndentationSize(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext1 =
@@ -121,7 +121,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext1.IsMatch, ref childContext1);
             }
 
-            private static void MatchIndentBlock(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchIndentBlock(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext2 =
@@ -136,7 +136,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext2.IsMatch, ref childContext2);
             }
 
-            private static void MatchIndentBraces(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchIndentBraces(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext3 =
@@ -151,7 +151,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext3.IsMatch, ref childContext3);
             }
 
-            private static void MatchIndentSwitchCaseSection(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchIndentSwitchCaseSection(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext4 =
@@ -166,7 +166,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext4.IsMatch, ref childContext4);
             }
 
-            private static void MatchIndentSwitchCaseSectionWhenBlock(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchIndentSwitchCaseSectionWhenBlock(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext5 =
@@ -181,7 +181,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext5.IsMatch, ref childContext5);
             }
 
-            private static void MatchIndentSwitchSection(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchIndentSwitchSection(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext6 =
@@ -196,7 +196,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext6.IsMatch, ref childContext6);
             }
 
-            private static void MatchLabelPositioning(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchLabelPositioning(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext7 =
@@ -211,7 +211,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext7.IsMatch, ref childContext7);
             }
 
-            private static void MatchNewLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNewLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext8 =
@@ -226,7 +226,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext8.IsMatch, ref childContext8);
             }
 
-            private static void MatchNewLineForCatch(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNewLineForCatch(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext9 =
@@ -241,7 +241,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext9.IsMatch, ref childContext9);
             }
 
-            private static void MatchNewLineForClausesInQuery(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNewLineForClausesInQuery(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext10 =
@@ -256,7 +256,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext10.IsMatch, ref childContext10);
             }
 
-            private static void MatchNewLineForElse(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNewLineForElse(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext11 =
@@ -271,7 +271,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext11.IsMatch, ref childContext11);
             }
 
-            private static void MatchNewLineForFinally(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNewLineForFinally(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext12 =
@@ -286,7 +286,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext12.IsMatch, ref childContext12);
             }
 
-            private static void MatchNewLineForMembersInAnonymousTypes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNewLineForMembersInAnonymousTypes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext13 =
@@ -301,7 +301,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext13.IsMatch, ref childContext13);
             }
 
-            private static void MatchNewLineForMembersInObjectInit(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNewLineForMembersInObjectInit(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext14 =
@@ -316,7 +316,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext14.IsMatch, ref childContext14);
             }
 
-            private static void MatchNewLinesForBracesInAccessors(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNewLinesForBracesInAccessors(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext15 =
@@ -331,7 +331,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext15.IsMatch, ref childContext15);
             }
 
-            private static void MatchNewLinesForBracesInAnonymousMethods(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNewLinesForBracesInAnonymousMethods(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext16 =
@@ -346,7 +346,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext16.IsMatch, ref childContext16);
             }
 
-            private static void MatchNewLinesForBracesInAnonymousTypes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNewLinesForBracesInAnonymousTypes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext17 =
@@ -361,7 +361,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext17.IsMatch, ref childContext17);
             }
 
-            private static void MatchNewLinesForBracesInControlBlocks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNewLinesForBracesInControlBlocks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext18 =
@@ -376,7 +376,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext18.IsMatch, ref childContext18);
             }
 
-            private static void MatchNewLinesForBracesInLambdaExpressionBody(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNewLinesForBracesInLambdaExpressionBody(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext19 =
@@ -391,7 +391,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext19.IsMatch, ref childContext19);
             }
 
-            private static void MatchNewLinesForBracesInMethods(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNewLinesForBracesInMethods(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext20 =
@@ -406,7 +406,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext20.IsMatch, ref childContext20);
             }
 
-            private static void MatchNewLinesForBracesInObjectCollectionArrayInitializers(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNewLinesForBracesInObjectCollectionArrayInitializers(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext21 =
@@ -421,7 +421,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext21.IsMatch, ref childContext21);
             }
 
-            private static void MatchNewLinesForBracesInProperties(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNewLinesForBracesInProperties(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext22 =
@@ -436,7 +436,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext22.IsMatch, ref childContext22);
             }
 
-            private static void MatchNewLinesForBracesInTypes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNewLinesForBracesInTypes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext23 =
@@ -451,7 +451,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext23.IsMatch, ref childContext23);
             }
 
-            private static void MatchSpaceAfterCast(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceAfterCast(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext24 =
@@ -466,7 +466,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext24.IsMatch, ref childContext24);
             }
 
-            private static void MatchSpaceAfterColonInBaseTypeDeclaration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceAfterColonInBaseTypeDeclaration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext25 =
@@ -481,7 +481,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext25.IsMatch, ref childContext25);
             }
 
-            private static void MatchSpaceAfterComma(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceAfterComma(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext26 =
@@ -496,7 +496,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext26.IsMatch, ref childContext26);
             }
 
-            private static void MatchSpaceAfterControlFlowStatementKeyword(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceAfterControlFlowStatementKeyword(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext27 =
@@ -511,7 +511,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext27.IsMatch, ref childContext27);
             }
 
-            private static void MatchSpaceAfterDot(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceAfterDot(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext28 =
@@ -526,7 +526,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext28.IsMatch, ref childContext28);
             }
 
-            private static void MatchSpaceAfterMethodCallName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceAfterMethodCallName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext29 =
@@ -541,7 +541,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext29.IsMatch, ref childContext29);
             }
 
-            private static void MatchSpaceAfterSemicolonsInForStatement(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceAfterSemicolonsInForStatement(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext30 =
@@ -556,7 +556,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext30.IsMatch, ref childContext30);
             }
 
-            private static void MatchSpaceBeforeColonInBaseTypeDeclaration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceBeforeColonInBaseTypeDeclaration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext31 =
@@ -571,7 +571,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext31.IsMatch, ref childContext31);
             }
 
-            private static void MatchSpaceBeforeComma(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceBeforeComma(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext32 =
@@ -586,7 +586,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext32.IsMatch, ref childContext32);
             }
 
-            private static void MatchSpaceBeforeDot(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceBeforeDot(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext33 =
@@ -601,7 +601,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext33.IsMatch, ref childContext33);
             }
 
-            private static void MatchSpaceBeforeOpenSquareBracket(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceBeforeOpenSquareBracket(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext34 =
@@ -616,7 +616,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext34.IsMatch, ref childContext34);
             }
 
-            private static void MatchSpaceBeforeSemicolonsInForStatement(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceBeforeSemicolonsInForStatement(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext35 =
@@ -631,7 +631,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext35.IsMatch, ref childContext35);
             }
 
-            private static void MatchSpaceBetweenEmptyMethodCallParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceBetweenEmptyMethodCallParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext36 =
@@ -646,7 +646,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext36.IsMatch, ref childContext36);
             }
 
-            private static void MatchSpaceBetweenEmptyMethodDeclarationParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceBetweenEmptyMethodDeclarationParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext37 =
@@ -661,7 +661,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext37.IsMatch, ref childContext37);
             }
 
-            private static void MatchSpaceBetweenEmptySquareBrackets(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceBetweenEmptySquareBrackets(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext38 =
@@ -676,7 +676,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext38.IsMatch, ref childContext38);
             }
 
-            private static void MatchSpacesIgnoreAroundVariableDeclaration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpacesIgnoreAroundVariableDeclaration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext39 =
@@ -691,7 +691,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext39.IsMatch, ref childContext39);
             }
 
-            private static void MatchSpaceWithinCastParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceWithinCastParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext40 =
@@ -706,7 +706,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext40.IsMatch, ref childContext40);
             }
 
-            private static void MatchSpaceWithinExpressionParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceWithinExpressionParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext41 =
@@ -721,7 +721,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext41.IsMatch, ref childContext41);
             }
 
-            private static void MatchSpaceWithinMethodCallParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceWithinMethodCallParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext42 =
@@ -736,7 +736,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext42.IsMatch, ref childContext42);
             }
 
-            private static void MatchSpaceWithinMethodDeclarationParenthesis(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceWithinMethodDeclarationParenthesis(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext43 =
@@ -751,7 +751,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext43.IsMatch, ref childContext43);
             }
 
-            private static void MatchSpaceWithinOtherParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceWithinOtherParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext44 =
@@ -766,7 +766,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext44.IsMatch, ref childContext44);
             }
 
-            private static void MatchSpaceWithinSquareBrackets(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpaceWithinSquareBrackets(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext45 =
@@ -781,7 +781,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext45.IsMatch, ref childContext45);
             }
 
-            private static void MatchSpacingAfterMethodDeclarationName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpacingAfterMethodDeclarationName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext46 =
@@ -796,7 +796,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext46.IsMatch, ref childContext46);
             }
 
-            private static void MatchSpacingAroundBinaryOperator(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSpacingAroundBinaryOperator(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext47 =
@@ -811,7 +811,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext47.IsMatch, ref childContext47);
             }
 
-            private static void MatchTabSize(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchTabSize(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext48 =
@@ -826,7 +826,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext48.IsMatch, ref childContext48);
             }
 
-            private static void MatchUseTabs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchUseTabs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext49 =
@@ -841,7 +841,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext49.IsMatch, ref childContext49);
             }
 
-            private static void MatchWrappingKeepStatementsOnSingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchWrappingKeepStatementsOnSingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext50 =
@@ -856,7 +856,7 @@ public readonly partial struct OmnisharpSchema
                 context.CommitChildContext(childContext50.IsMatch, ref childContext50);
             }
 
-            private static void MatchWrappingPreserveSingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchWrappingPreserveSingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext51 =
@@ -994,7 +994,7 @@ public readonly partial struct OmnisharpSchema
 
                         if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.OmnisharpBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                         {
-                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                             if (!context.HasCollector && !context.IsMatch)
                             {

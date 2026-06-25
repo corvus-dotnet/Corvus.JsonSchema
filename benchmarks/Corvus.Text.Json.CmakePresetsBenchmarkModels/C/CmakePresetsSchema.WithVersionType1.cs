@@ -136,11 +136,11 @@ public readonly partial struct CmakePresetsSchema
         /// A required integer representing the version of the JSON schema.
         /// </para>
         /// </remarks>
-        public Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType1.VersionEntity Version
+        public Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType1.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema Version
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionUtf8, out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType1.VersionEntity value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionUtf8, out Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType1.ARequiredIntegerRepresentingTheVersionOfTheJsonSchema value))
                 {
                     return value;
                 }

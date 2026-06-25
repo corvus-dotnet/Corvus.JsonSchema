@@ -283,7 +283,7 @@ public readonly partial struct JasmineSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -307,7 +307,7 @@ public readonly partial struct JasmineSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -331,7 +331,7 @@ public readonly partial struct JasmineSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Mutable.DefaultInstance;
                 }
             }
 

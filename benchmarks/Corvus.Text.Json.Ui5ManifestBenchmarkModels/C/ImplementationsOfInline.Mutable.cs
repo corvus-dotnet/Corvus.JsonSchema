@@ -778,6 +778,7 @@ public readonly partial struct ImplementationsOfInline
             Unknown,
             JsonElement,
             RequiredTypeBuilder,
+            RequiredTypeSource,
             RawUtf8StringRequiresUnescaping,
             RawUtf8StringNotRequiresUnescaping,
             Utf8String,
@@ -789,6 +790,7 @@ public readonly partial struct ImplementationsOfInline
         private readonly ReadOnlySpan<byte> _utf8Backing;
         private readonly ReadOnlySpan<char> _utf16Backing;
         private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType.Builder.Build? _requiredTypeBuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType.Source _requiredTypeSourceInstance;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -821,6 +823,8 @@ public readonly partial struct ImplementationsOfInline
 
         public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType.Builder.Build value) {_requiredTypeBuilderInstance = value; _kind = Kind.RequiredTypeBuilder; }
 
+        public Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType.Source value) { _requiredTypeSourceInstance = value; _kind = Kind.RequiredTypeSource; }
+
         public static implicit operator Source(ImplementationsOfInline instance) => new(JsonElement.From(instance));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -834,6 +838,9 @@ public readonly partial struct ImplementationsOfInline
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType.Source value) => new(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);
@@ -861,6 +868,9 @@ public readonly partial struct ImplementationsOfInline
                     break;
                 case Kind.RequiredTypeBuilder:
                     valueBuilder.AddProperty(utf8Name, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.RequiredTypeSource:
+                    _requiredTypeSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -892,6 +902,9 @@ public readonly partial struct ImplementationsOfInline
                 case Kind.RequiredTypeBuilder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.RequiredTypeSource:
+                    _requiredTypeSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -921,6 +934,9 @@ public readonly partial struct ImplementationsOfInline
                     break;
                 case Kind.RequiredTypeBuilder:
                     valueBuilder.AddProperty(name, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RequiredTypeSource:
+                    _requiredTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -952,6 +968,9 @@ public readonly partial struct ImplementationsOfInline
                 case Kind.RequiredTypeBuilder:
                     valueBuilder.AddProperty(name, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.RequiredTypeSource:
+                    _requiredTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -981,6 +1000,9 @@ public readonly partial struct ImplementationsOfInline
                     break;
                 case Kind.RequiredTypeBuilder:
                     valueBuilder.AddItem(_requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.RequiredType.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RequiredTypeSource:
+                    _requiredTypeSourceInstance.AddAsItem(ref valueBuilder);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");

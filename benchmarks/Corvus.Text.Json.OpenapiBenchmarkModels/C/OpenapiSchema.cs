@@ -321,6 +321,15 @@ public readonly partial struct OpenapiSchema
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredPaths"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator OpenapiSchema(Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredPaths.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredComponents"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -339,6 +348,15 @@ public readonly partial struct OpenapiSchema
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredComponents"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator OpenapiSchema(Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredComponents.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredWebhooks"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -352,6 +370,15 @@ public readonly partial struct OpenapiSchema
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator OpenapiSchema(Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredWebhooks value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
+    /// Conversion from the <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredWebhooks"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator OpenapiSchema(Corvus.OpenapiBenchmark.Current.OpenapiSchema.RequiredWebhooks.Mutable value)
     {
         return From(value);
     }

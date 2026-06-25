@@ -204,7 +204,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowCommonHungarianPrefixesEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -225,7 +225,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.Mutable.DefaultInstance;
                     }
                 }
 
@@ -246,7 +246,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.Mutable.DefaultInstance;
                     }
                 }
 
@@ -267,7 +267,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.IncludeInferredTupleElementNamesEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -288,7 +288,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.SpecifiesTheCasingConventionUsedForTupleElementNames.Mutable.DefaultInstance;
                     }
                 }
 

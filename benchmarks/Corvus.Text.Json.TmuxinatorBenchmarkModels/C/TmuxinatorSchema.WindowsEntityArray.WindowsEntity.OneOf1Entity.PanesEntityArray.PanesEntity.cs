@@ -212,6 +212,15 @@ public readonly partial struct TmuxinatorSchema
                         }
 
                         /// <summary>
+                        /// Conversion from the <see cref="Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.OneOf1Entity"/> mutable view.
+                        /// </summary>
+                        /// <param name="value">The value from which to convert.</param>
+                        public static implicit operator PanesEntity(Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.OneOf1Entity.Mutable value)
+                        {
+                            return From(value);
+                        }
+
+                        /// <summary>
                         /// Conversion to <see cref="Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.JsonStringArray"/>.
                         /// </summary>
                         /// <param name="value">The value from which to convert.</param>
@@ -225,6 +234,15 @@ public readonly partial struct TmuxinatorSchema
                         /// </summary>
                         /// <param name="value">The value from which to convert.</param>
                         public static implicit operator PanesEntity(Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.JsonStringArray value)
+                        {
+                            return From(value);
+                        }
+
+                        /// <summary>
+                        /// Conversion from the <see cref="Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.JsonStringArray"/> mutable view.
+                        /// </summary>
+                        /// <param name="value">The value from which to convert.</param>
+                        public static implicit operator PanesEntity(Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.JsonStringArray.Mutable value)
                         {
                             return From(value);
                         }

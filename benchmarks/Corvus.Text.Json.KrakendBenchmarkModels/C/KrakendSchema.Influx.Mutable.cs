@@ -288,7 +288,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.DbName.Mutable.DefaultInstance;
                 }
             }
 

@@ -757,13 +757,17 @@ public readonly partial struct Ui5ManifestSchema
                 Unknown,
                 JsonElement,
                 DataSourceCustomBuilder,
+                DataSourceCustomSource,
                 DataSourceEnumBuilder,
+                DataSourceEnumSource,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceCustom.Builder.Build? _dataSourceCustomBuilderInstance;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceCustom.Source _dataSourceCustomSourceInstance;
             private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceEnum.Builder.Build? _dataSourceEnumBuilderInstance;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceEnum.Source _dataSourceEnumSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -778,7 +782,11 @@ public readonly partial struct Ui5ManifestSchema
 
             public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceCustom.Builder.Build value) {_dataSourceCustomBuilderInstance = value; _kind = Kind.DataSourceCustomBuilder; }
 
+            public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceCustom.Source value) { _dataSourceCustomSourceInstance = value; _kind = Kind.DataSourceCustomSource; }
+
             public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceEnum.Builder.Build value) {_dataSourceEnumBuilderInstance = value; _kind = Kind.DataSourceEnumBuilder; }
+
+            public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceEnum.Source value) { _dataSourceEnumSourceInstance = value; _kind = Kind.DataSourceEnumSource; }
 
             public static implicit operator Source(DataSource instance) => new(JsonElement.From(instance));
 
@@ -786,7 +794,13 @@ public readonly partial struct Ui5ManifestSchema
             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceCustom instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceCustom.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceEnum instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceEnum.Source value) => new(value);
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -800,8 +814,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.DataSourceCustomBuilder:
                         valueBuilder.AddProperty(utf8Name, _dataSourceCustomBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceCustom.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.DataSourceCustomSource:
+                        _dataSourceCustomSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.DataSourceEnumBuilder:
                         valueBuilder.AddProperty(utf8Name, _dataSourceEnumBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceEnum.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.DataSourceEnumSource:
+                        _dataSourceEnumSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -821,8 +841,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.DataSourceCustomBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dataSourceCustomBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceCustom.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DataSourceCustomSource:
+                        _dataSourceCustomSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.DataSourceEnumBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dataSourceEnumBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceEnum.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DataSourceEnumSource:
+                        _dataSourceEnumSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -842,8 +868,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.DataSourceCustomBuilder:
                         valueBuilder.AddProperty(name, _dataSourceCustomBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceCustom.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DataSourceCustomSource:
+                        _dataSourceCustomSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.DataSourceEnumBuilder:
                         valueBuilder.AddProperty(name, _dataSourceEnumBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceEnum.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DataSourceEnumSource:
+                        _dataSourceEnumSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -863,8 +895,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.DataSourceCustomBuilder:
                         valueBuilder.AddProperty(name, _dataSourceCustomBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceCustom.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DataSourceCustomSource:
+                        _dataSourceCustomSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.DataSourceEnumBuilder:
                         valueBuilder.AddProperty(name, _dataSourceEnumBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceEnum.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DataSourceEnumSource:
+                        _dataSourceEnumSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -884,8 +922,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.DataSourceCustomBuilder:
                         valueBuilder.AddItem(_dataSourceCustomBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceCustom.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DataSourceCustomSource:
+                        _dataSourceCustomSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.DataSourceEnumBuilder:
                         valueBuilder.AddItem(_dataSourceEnumBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DataSourceEnum.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DataSourceEnumSource:
+                        _dataSourceEnumSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

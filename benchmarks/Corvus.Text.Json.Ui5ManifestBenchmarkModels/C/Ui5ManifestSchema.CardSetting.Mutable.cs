@@ -477,7 +477,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.EnableAddToInsightsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -498,7 +498,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.EnableLocaleCurrencyFormattingEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -561,7 +561,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.IgnoreSapTextEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -582,7 +582,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.FlagForEnablingImagesInACondensedListCard.Mutable.DefaultInstance;
                 }
             }
 
@@ -813,7 +813,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowFilterInHeaderEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -834,7 +834,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowLabelTextEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -855,7 +855,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.FlagForShowLineItemDetailInListAndTableCard.Mutable.DefaultInstance;
                 }
             }
 
@@ -876,7 +876,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowRefreshEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -897,7 +897,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowSortingInHeaderEntity.Mutable.DefaultInstance;
                 }
             }
 

@@ -56,7 +56,7 @@ public readonly partial struct PulumiSchema
             private static readonly JsonSchemaPathProvider PathSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/path"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider VersionSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/version"u8, buffer, out written);
 
-            private static void MatchName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+            private static void MatchName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext =
@@ -78,7 +78,7 @@ public readonly partial struct PulumiSchema
                 requiredBitBuffer[RequiredOffsetForName] |= RequiredBitForName;
             }
 
-            private static void MatchPath(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+            private static void MatchPath(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext1 =
@@ -100,7 +100,7 @@ public readonly partial struct PulumiSchema
                 requiredBitBuffer[RequiredOffsetForPath] |= RequiredBitForPath;
             }
 
-            private static void MatchVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+            private static void MatchVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext2 =
@@ -194,7 +194,7 @@ public readonly partial struct PulumiSchema
 
                         if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.PulumiBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                         {
-                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                             if (!context.HasCollector && !context.IsMatch)
                             {

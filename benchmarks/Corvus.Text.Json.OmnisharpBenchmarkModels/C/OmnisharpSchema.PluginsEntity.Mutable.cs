@@ -278,7 +278,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.PluginsEntity.JsonStringArray.Mutable.DefaultInstance;
                 }
             }
 

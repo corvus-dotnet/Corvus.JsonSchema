@@ -283,7 +283,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.EnableEditorConfigSupportEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -299,7 +299,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentationSizeEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -315,7 +315,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentBlockEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -331,7 +331,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentBracesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -347,7 +347,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentSwitchCaseSectionEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -363,7 +363,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentSwitchCaseSectionWhenBlockEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -379,7 +379,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentSwitchSectionEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -395,7 +395,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.LabelPositioningEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -411,7 +411,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -427,7 +427,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForCatchEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -443,7 +443,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForClausesInQueryEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -459,7 +459,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForElseEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -475,7 +475,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForFinallyEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -491,7 +491,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForMembersInAnonymousTypesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -507,7 +507,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForMembersInObjectInitEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -523,7 +523,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInAccessorsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -539,7 +539,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInAnonymousMethodsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -555,7 +555,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInAnonymousTypesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -571,7 +571,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInControlBlocksEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -587,7 +587,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInLambdaExpressionBodyEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -603,7 +603,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInMethodsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -619,7 +619,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInObjectCollectionArrayInitializersEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -635,7 +635,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInPropertiesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -651,7 +651,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInTypesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -667,7 +667,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterCastEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -683,7 +683,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterColonInBaseTypeDeclarationEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -699,7 +699,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterCommaEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -715,7 +715,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterControlFlowStatementKeywordEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -731,7 +731,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterDotEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -747,7 +747,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterMethodCallNameEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -763,7 +763,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterSemicolonsInForStatementEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -779,7 +779,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeColonInBaseTypeDeclarationEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -795,7 +795,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeCommaEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -811,7 +811,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeDotEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -827,7 +827,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeOpenSquareBracketEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -843,7 +843,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeSemicolonsInForStatementEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -859,7 +859,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBetweenEmptyMethodCallParenthesesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -875,7 +875,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBetweenEmptyMethodDeclarationParenthesesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -891,7 +891,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBetweenEmptySquareBracketsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -907,7 +907,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpacesIgnoreAroundVariableDeclarationEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -923,7 +923,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinCastParenthesesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -939,7 +939,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinExpressionParenthesesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -955,7 +955,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinMethodCallParenthesesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -971,7 +971,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinMethodDeclarationParenthesisEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -987,7 +987,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinOtherParenthesesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -1003,7 +1003,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinSquareBracketsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -1019,7 +1019,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpacingAfterMethodDeclarationNameEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -1035,7 +1035,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpacingAroundBinaryOperatorEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -1051,7 +1051,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.TabSizeEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -1067,7 +1067,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.UseTabsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -1083,7 +1083,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.WrappingKeepStatementsOnSingleLineEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -1099,7 +1099,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.WrappingPreserveSingleLineEntity.Mutable.DefaultInstance;
                 }
             }
 

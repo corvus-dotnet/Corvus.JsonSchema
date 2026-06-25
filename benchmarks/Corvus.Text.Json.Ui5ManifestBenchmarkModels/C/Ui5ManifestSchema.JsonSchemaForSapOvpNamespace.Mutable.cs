@@ -210,7 +210,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.BHeaderExpandedEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -273,7 +273,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ConsiderAnalyticalParametersEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -294,7 +294,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheLayoutOfTheCardContainer.Mutable.DefaultInstance;
                 }
             }
 
@@ -336,7 +336,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableErrorPageEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -357,7 +357,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.DisableTableCardFlexibilityEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -378,7 +378,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLoadingOfCardsWhenTheyEnterViewport.Mutable.DefaultInstance;
                 }
             }
 
@@ -399,7 +399,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.EnableLiveFilterEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -504,7 +504,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.TimeIntervalInMinutesToAutoRefreshTheCardModels.Mutable.DefaultInstance;
                 }
             }
 
@@ -562,7 +562,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowBasicSearchEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -583,7 +583,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.ShowDateInRelativeFormatEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -604,7 +604,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.SmartVariantRequiredEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -625,7 +625,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.UseDateRangeTypeEntity.Mutable.DefaultInstance;
                 }
             }
 

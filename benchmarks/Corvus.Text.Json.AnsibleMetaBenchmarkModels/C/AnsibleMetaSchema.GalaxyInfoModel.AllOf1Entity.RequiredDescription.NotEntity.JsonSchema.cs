@@ -107,37 +107,37 @@ public readonly partial struct AnsibleMetaSchema
                             RequiredBitForCloudPlatforms | RequiredBitForGalaxyTags | RequiredBitForMinAnsibleVersion | RequiredBitForNamespace |
                             RequiredBitForPlatforms | RequiredBitForRoleName | RequiredBitForVideoLinks;
 
-                        private static void MatchCloudPlatforms(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                        private static void MatchCloudPlatforms(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                         {
                             requiredBitBuffer[RequiredOffsetForCloudPlatforms] |= RequiredBitForCloudPlatforms;
                         }
 
-                        private static void MatchGalaxyTags(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                        private static void MatchGalaxyTags(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                         {
                             requiredBitBuffer[RequiredOffsetForGalaxyTags] |= RequiredBitForGalaxyTags;
                         }
 
-                        private static void MatchMinAnsibleVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                        private static void MatchMinAnsibleVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                         {
                             requiredBitBuffer[RequiredOffsetForMinAnsibleVersion] |= RequiredBitForMinAnsibleVersion;
                         }
 
-                        private static void MatchNamespace(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                        private static void MatchNamespace(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                         {
                             requiredBitBuffer[RequiredOffsetForNamespace] |= RequiredBitForNamespace;
                         }
 
-                        private static void MatchPlatforms(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                        private static void MatchPlatforms(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                         {
                             requiredBitBuffer[RequiredOffsetForPlatforms] |= RequiredBitForPlatforms;
                         }
 
-                        private static void MatchRoleName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                        private static void MatchRoleName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                         {
                             requiredBitBuffer[RequiredOffsetForRoleName] |= RequiredBitForRoleName;
                         }
 
-                        private static void MatchVideoLinks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                        private static void MatchVideoLinks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                         {
                             requiredBitBuffer[RequiredOffsetForVideoLinks] |= RequiredBitForVideoLinks;
                         }
@@ -213,7 +213,7 @@ public readonly partial struct AnsibleMetaSchema
 
                                     if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.AnsibleMetaBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1? validator))
                                     {
-                                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                                         if (!context.HasCollector && !context.IsMatch)
                                         {

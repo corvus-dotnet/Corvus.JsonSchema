@@ -81,7 +81,7 @@ public readonly partial struct Ui5ManifestSchema
         private static readonly JsonSchemaPathProvider SapWdaSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/sap.wda"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider StartUrlSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/start_url"u8, buffer, out written);
 
-        private static void MatchVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
@@ -103,7 +103,7 @@ public readonly partial struct Ui5ManifestSchema
             requiredBitBuffer[RequiredOffsetForVersion] |= RequiredBitForVersion;
         }
 
-        private static void MatchSchemaValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSchemaValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
@@ -118,7 +118,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
         }
 
-        private static void MatchSapApf(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapApf(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
@@ -133,7 +133,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
-        private static void MatchSapApp(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapApp(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext3 =
@@ -155,7 +155,7 @@ public readonly partial struct Ui5ManifestSchema
             requiredBitBuffer[RequiredOffsetForSapApp] |= RequiredBitForSapApp;
         }
 
-        private static void MatchSapArtifact(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapArtifact(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext4 =
@@ -170,7 +170,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext4.IsMatch, ref childContext4);
         }
 
-        private static void MatchSapBpaTask(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapBpaTask(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext5 =
@@ -185,7 +185,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext5.IsMatch, ref childContext5);
         }
 
-        private static void MatchSapCard(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapCard(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext6 =
@@ -200,7 +200,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext6.IsMatch, ref childContext6);
         }
 
-        private static void MatchSapCloud(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapCloud(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext7 =
@@ -215,7 +215,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext7.IsMatch, ref childContext7);
         }
 
-        private static void MatchSapCloudPortal(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapCloudPortal(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext8 =
@@ -230,7 +230,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext8.IsMatch, ref childContext8);
         }
 
-        private static void MatchSapCopilot(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapCopilot(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext9 =
@@ -245,7 +245,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext9.IsMatch, ref childContext9);
         }
 
-        private static void MatchSapFe(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapFe(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext10 =
@@ -260,7 +260,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext10.IsMatch, ref childContext10);
         }
 
-        private static void MatchSapFiori(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapFiori(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext11 =
@@ -275,7 +275,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext11.IsMatch, ref childContext11);
         }
 
-        private static void MatchSapFlp(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapFlp(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext12 =
@@ -290,7 +290,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext12.IsMatch, ref childContext12);
         }
 
-        private static void MatchSapGui(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapGui(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext13 =
@@ -305,7 +305,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext13.IsMatch, ref childContext13);
         }
 
-        private static void MatchSapInsights(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapInsights(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext14 =
@@ -320,7 +320,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext14.IsMatch, ref childContext14);
         }
 
-        private static void MatchSapIntegration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapIntegration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext15 =
@@ -335,7 +335,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext15.IsMatch, ref childContext15);
         }
 
-        private static void MatchSapMap(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapMap(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext16 =
@@ -350,7 +350,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext16.IsMatch, ref childContext16);
         }
 
-        private static void MatchSapMobile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapMobile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext17 =
@@ -365,7 +365,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext17.IsMatch, ref childContext17);
         }
 
-        private static void MatchSapOvp(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapOvp(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext18 =
@@ -380,7 +380,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext18.IsMatch, ref childContext18);
         }
 
-        private static void MatchSapPackage(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapPackage(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext19 =
@@ -395,7 +395,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext19.IsMatch, ref childContext19);
         }
 
-        private static void MatchSapPlatformAbap(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapPlatformAbap(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext20 =
@@ -410,7 +410,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext20.IsMatch, ref childContext20);
         }
 
-        private static void MatchSapPlatformCf(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapPlatformCf(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext21 =
@@ -425,7 +425,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext21.IsMatch, ref childContext21);
         }
 
-        private static void MatchSapPlatformHcp(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapPlatformHcp(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext22 =
@@ -440,7 +440,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext22.IsMatch, ref childContext22);
         }
 
-        private static void MatchSapPlatformMobilecards(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapPlatformMobilecards(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext23 =
@@ -455,7 +455,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext23.IsMatch, ref childContext23);
         }
 
-        private static void MatchSapPlatformSfsf(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapPlatformSfsf(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext24 =
@@ -470,7 +470,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext24.IsMatch, ref childContext24);
         }
 
-        private static void MatchSapUi(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapUi(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext25 =
@@ -492,7 +492,7 @@ public readonly partial struct Ui5ManifestSchema
             requiredBitBuffer[RequiredOffsetForSapUi] |= RequiredBitForSapUi;
         }
 
-        private static void MatchSapUiGenericApp(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapUiGenericApp(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext26 =
@@ -507,7 +507,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext26.IsMatch, ref childContext26);
         }
 
-        private static void MatchSapUiSmartbusinessApp(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapUiSmartbusinessApp(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext27 =
@@ -522,7 +522,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext27.IsMatch, ref childContext27);
         }
 
-        private static void MatchSapUi5(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapUi5(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext28 =
@@ -537,7 +537,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext28.IsMatch, ref childContext28);
         }
 
-        private static void MatchSapUrl(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapUrl(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext29 =
@@ -552,7 +552,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext29.IsMatch, ref childContext29);
         }
 
-        private static void MatchSapWcf(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapWcf(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext30 =
@@ -567,7 +567,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext30.IsMatch, ref childContext30);
         }
 
-        private static void MatchSapWda(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSapWda(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext31 =
@@ -582,7 +582,7 @@ public readonly partial struct Ui5ManifestSchema
             context.CommitChildContext(childContext31.IsMatch, ref childContext31);
         }
 
-        private static void MatchStartUrl(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchStartUrl(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext32 =
@@ -706,7 +706,7 @@ public readonly partial struct Ui5ManifestSchema
 
                     if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Ui5ManifestBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {

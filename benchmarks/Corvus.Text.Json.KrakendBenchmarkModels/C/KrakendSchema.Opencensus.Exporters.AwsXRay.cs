@@ -401,6 +401,15 @@ public readonly partial struct KrakendSchema
                 }
 
                 /// <summary>
+                /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.AwsXRay.RequiredAccessKeyIdAndRegionAndSecretAccessKeyAndVersion"/> mutable view.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                public static implicit operator AwsXRay(Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.AwsXRay.RequiredAccessKeyIdAndRegionAndSecretAccessKeyAndVersion.Mutable value)
+                {
+                    return From(value);
+                }
+
+                /// <summary>
                 /// Conversion to <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.AwsXRay.RequiredRegionAndUseEnvAndVersion"/>.
                 /// </summary>
                 /// <param name="value">The value from which to convert.</param>
@@ -414,6 +423,15 @@ public readonly partial struct KrakendSchema
                 /// </summary>
                 /// <param name="value">The value from which to convert.</param>
                 public static implicit operator AwsXRay(Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.AwsXRay.RequiredRegionAndUseEnvAndVersion value)
+                {
+                    return From(value);
+                }
+
+                /// <summary>
+                /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.AwsXRay.RequiredRegionAndUseEnvAndVersion"/> mutable view.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                public static implicit operator AwsXRay(Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.AwsXRay.RequiredRegionAndUseEnvAndVersion.Mutable value)
                 {
                     return From(value);
                 }

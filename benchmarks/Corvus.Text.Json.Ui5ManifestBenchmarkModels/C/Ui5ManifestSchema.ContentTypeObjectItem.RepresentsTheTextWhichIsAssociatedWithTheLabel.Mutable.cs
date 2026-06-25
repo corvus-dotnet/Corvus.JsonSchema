@@ -950,6 +950,7 @@ public readonly partial struct Ui5ManifestSchema
                     Unknown,
                     JsonElement,
                     OneOf2EntityBuilder,
+                    OneOf2EntitySource,
                     RawUtf8StringRequiresUnescaping,
                     RawUtf8StringNotRequiresUnescaping,
                     Utf8String,
@@ -964,6 +965,7 @@ public readonly partial struct Ui5ManifestSchema
                 private readonly ReadOnlySpan<char> _utf16Backing;
                 private readonly SimpleTypesBacking _simpleTypeBacking;
                 private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.RepresentsTheTextWhichIsAssociatedWithTheLabel.OneOf2Entity.Builder.Build? _oneOf2EntityBuilderInstance;
+                private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.RepresentsTheTextWhichIsAssociatedWithTheLabel.OneOf2Entity.Source _oneOf2EntitySourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1009,6 +1011,8 @@ public readonly partial struct Ui5ManifestSchema
 
                 public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.RepresentsTheTextWhichIsAssociatedWithTheLabel.OneOf2Entity.Builder.Build value) {_oneOf2EntityBuilderInstance = value; _kind = Kind.OneOf2EntityBuilder; }
 
+                public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.RepresentsTheTextWhichIsAssociatedWithTheLabel.OneOf2Entity.Source value) { _oneOf2EntitySourceInstance = value; _kind = Kind.OneOf2EntitySource; }
+
                 public static implicit operator Source(RepresentsTheTextWhichIsAssociatedWithTheLabel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1028,6 +1032,9 @@ public readonly partial struct Ui5ManifestSchema
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.RepresentsTheTextWhichIsAssociatedWithTheLabel.OneOf2Entity instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.RepresentsTheTextWhichIsAssociatedWithTheLabel.OneOf2Entity.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);
@@ -1065,6 +1072,9 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.OneOf2EntityBuilder:
                             valueBuilder.AddProperty(utf8Name, _oneOf2EntityBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.RepresentsTheTextWhichIsAssociatedWithTheLabel.OneOf2Entity.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.OneOf2EntitySource:
+                            _oneOf2EntitySourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1100,6 +1110,9 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.OneOf2EntityBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _oneOf2EntityBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.RepresentsTheTextWhichIsAssociatedWithTheLabel.OneOf2Entity.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OneOf2EntitySource:
+                            _oneOf2EntitySourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1137,6 +1150,9 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.OneOf2EntityBuilder:
                             valueBuilder.AddProperty(name, _oneOf2EntityBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.RepresentsTheTextWhichIsAssociatedWithTheLabel.OneOf2Entity.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OneOf2EntitySource:
+                            _oneOf2EntitySourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1173,6 +1189,9 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.OneOf2EntityBuilder:
                             valueBuilder.AddProperty(name, _oneOf2EntityBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.RepresentsTheTextWhichIsAssociatedWithTheLabel.OneOf2Entity.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OneOf2EntitySource:
+                            _oneOf2EntitySourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1208,6 +1227,9 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.OneOf2EntityBuilder:
                             valueBuilder.AddItem(_oneOf2EntityBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.RepresentsTheTextWhichIsAssociatedWithTheLabel.OneOf2Entity.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OneOf2EntitySource:
+                            _oneOf2EntitySourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

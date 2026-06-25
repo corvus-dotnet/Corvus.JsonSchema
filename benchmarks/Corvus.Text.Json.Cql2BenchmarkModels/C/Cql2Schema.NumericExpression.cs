@@ -257,6 +257,15 @@ public readonly partial struct Cql2Schema
             return From(value);
         }
 
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator NumericExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Mutable value)
+        {
+            return From(value);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator long(NumericExpression value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
 

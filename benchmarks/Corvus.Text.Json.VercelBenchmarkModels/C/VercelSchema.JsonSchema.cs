@@ -56,7 +56,7 @@ public readonly partial struct VercelSchema
         private static readonly JsonSchemaPathProvider VersionSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/version"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider WildcardSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/wildcard"u8, buffer, out written);
 
-        private static void MatchSchema(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSchema(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
@@ -71,7 +71,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
-        private static void MatchAlias(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAlias(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
@@ -86,7 +86,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
         }
 
-        private static void MatchBuildValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBuildValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
@@ -101,7 +101,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
-        private static void MatchBuildCommand(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBuildCommand(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext3 =
@@ -116,7 +116,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext3.IsMatch, ref childContext3);
         }
 
-        private static void MatchBuilds(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBuilds(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext4 =
@@ -131,7 +131,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext4.IsMatch, ref childContext4);
         }
 
-        private static void MatchCleanUrls(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchCleanUrls(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext5 =
@@ -146,7 +146,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext5.IsMatch, ref childContext5);
         }
 
-        private static void MatchCrons(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchCrons(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext6 =
@@ -161,7 +161,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext6.IsMatch, ref childContext6);
         }
 
-        private static void MatchDevCommand(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchDevCommand(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext7 =
@@ -176,7 +176,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext7.IsMatch, ref childContext7);
         }
 
-        private static void MatchEnv(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchEnv(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext8 =
@@ -191,7 +191,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext8.IsMatch, ref childContext8);
         }
 
-        private static void MatchFramework(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchFramework(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext9 =
@@ -206,7 +206,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext9.IsMatch, ref childContext9);
         }
 
-        private static void MatchFunctions(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchFunctions(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext10 =
@@ -221,7 +221,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext10.IsMatch, ref childContext10);
         }
 
-        private static void MatchGit(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchGit(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext11 =
@@ -236,7 +236,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext11.IsMatch, ref childContext11);
         }
 
-        private static void MatchGithub(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchGithub(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext12 =
@@ -251,7 +251,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext12.IsMatch, ref childContext12);
         }
 
-        private static void MatchHeaders(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchHeaders(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext13 =
@@ -266,7 +266,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext13.IsMatch, ref childContext13);
         }
 
-        private static void MatchIgnoreCommand(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIgnoreCommand(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext14 =
@@ -281,7 +281,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext14.IsMatch, ref childContext14);
         }
 
-        private static void MatchImages(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchImages(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext15 =
@@ -296,7 +296,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext15.IsMatch, ref childContext15);
         }
 
-        private static void MatchInstallCommand(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchInstallCommand(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext16 =
@@ -311,7 +311,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext16.IsMatch, ref childContext16);
         }
 
-        private static void MatchName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext17 =
@@ -326,7 +326,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext17.IsMatch, ref childContext17);
         }
 
-        private static void MatchOutputDirectory(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchOutputDirectory(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext18 =
@@ -341,7 +341,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext18.IsMatch, ref childContext18);
         }
 
-        private static void MatchPublic(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPublic(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext19 =
@@ -356,7 +356,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext19.IsMatch, ref childContext19);
         }
 
-        private static void MatchRedirects(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchRedirects(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext20 =
@@ -371,7 +371,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext20.IsMatch, ref childContext20);
         }
 
-        private static void MatchRegions(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchRegions(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext21 =
@@ -386,7 +386,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext21.IsMatch, ref childContext21);
         }
 
-        private static void MatchRewrites(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchRewrites(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext22 =
@@ -401,7 +401,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext22.IsMatch, ref childContext22);
         }
 
-        private static void MatchRoutes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchRoutes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext23 =
@@ -416,7 +416,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext23.IsMatch, ref childContext23);
         }
 
-        private static void MatchScope(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchScope(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext24 =
@@ -431,7 +431,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext24.IsMatch, ref childContext24);
         }
 
-        private static void MatchTrailingSlash(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchTrailingSlash(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext25 =
@@ -446,7 +446,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext25.IsMatch, ref childContext25);
         }
 
-        private static void MatchVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext26 =
@@ -461,7 +461,7 @@ public readonly partial struct VercelSchema
             context.CommitChildContext(childContext26.IsMatch, ref childContext26);
         }
 
-        private static void MatchWildcard(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchWildcard(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext27 =
@@ -578,7 +578,7 @@ public readonly partial struct VercelSchema
 
                     if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.VercelBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {

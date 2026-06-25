@@ -295,7 +295,7 @@ public readonly partial struct KrakendSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.KrakendBenchmark.Current.KrakendSchema.DebugEndpoint.Mutable.DefaultInstance;
             }
         }
 
@@ -404,7 +404,7 @@ public readonly partial struct KrakendSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.KrakendBenchmark.Current.KrakendSchema.DisableCompression.Mutable.DefaultInstance;
             }
         }
 
@@ -429,7 +429,7 @@ public readonly partial struct KrakendSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.KrakendBenchmark.Current.KrakendSchema.DisableKeepAlives.Mutable.DefaultInstance;
             }
         }
 
@@ -451,7 +451,7 @@ public readonly partial struct KrakendSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.KrakendBenchmark.Current.KrakendSchema.DisableResTfulUrLs.Mutable.DefaultInstance;
             }
         }
 
@@ -501,7 +501,7 @@ public readonly partial struct KrakendSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.KrakendBenchmark.Current.KrakendSchema.EchoEndpoint.Mutable.DefaultInstance;
             }
         }
 
@@ -676,7 +676,7 @@ public readonly partial struct KrakendSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.KrakendBenchmark.Current.KrakendSchema.ListenIp.Mutable.DefaultInstance;
             }
         }
 
@@ -701,7 +701,7 @@ public readonly partial struct KrakendSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.KrakendBenchmark.Current.KrakendSchema.MaxHeaderBytes.Mutable.DefaultInstance;
             }
         }
 
@@ -726,7 +726,7 @@ public readonly partial struct KrakendSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.KrakendBenchmark.Current.KrakendSchema.MaxIdleConnections.Mutable.DefaultInstance;
             }
         }
 
@@ -751,7 +751,7 @@ public readonly partial struct KrakendSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.KrakendBenchmark.Current.KrakendSchema.MaxIdleConnectionsPerHost.Mutable.DefaultInstance;
             }
         }
 
@@ -773,7 +773,7 @@ public readonly partial struct KrakendSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.KrakendBenchmark.Current.KrakendSchema.Name.Mutable.DefaultInstance;
             }
         }
 
@@ -798,7 +798,7 @@ public readonly partial struct KrakendSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.KrakendBenchmark.Current.KrakendSchema.OutputEncoding.Mutable.DefaultInstance;
             }
         }
 
@@ -842,7 +842,7 @@ public readonly partial struct KrakendSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.KrakendBenchmark.Current.KrakendSchema.Port.Mutable.DefaultInstance;
             }
         }
 
@@ -951,7 +951,7 @@ public readonly partial struct KrakendSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.KrakendBenchmark.Current.KrakendSchema.SequentialStart.Mutable.DefaultInstance;
             }
         }
 
@@ -1028,7 +1028,7 @@ public readonly partial struct KrakendSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.KrakendBenchmark.Current.KrakendSchema.EnableH2c.Mutable.DefaultInstance;
             }
         }
 

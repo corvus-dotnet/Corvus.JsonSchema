@@ -1164,24 +1164,38 @@ public readonly partial struct GeoJsonSchema
                     Unknown,
                     JsonElement,
                     GeoJsonGeometryCollectionBuilder,
+                    GeoJsonGeometryCollectionSource,
                     GeoJsonLineStringBuilder,
+                    GeoJsonLineStringSource,
                     GeoJsonMultiLineStringBuilder,
+                    GeoJsonMultiLineStringSource,
                     GeoJsonMultiPointBuilder,
+                    GeoJsonMultiPointSource,
                     GeoJsonMultiPolygonBuilder,
+                    GeoJsonMultiPolygonSource,
                     GeoJsonPointBuilder,
+                    GeoJsonPointSource,
                     GeoJsonPolygonBuilder,
+                    GeoJsonPolygonSource,
                     Null,
                 }
 
                 private readonly Kind _kind;
                 private readonly JsonElement _jsonElement;
                 private readonly Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.Builder.Build? _geoJsonGeometryCollectionBuilderInstance;
+                private readonly Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.Source _geoJsonGeometryCollectionSourceInstance;
                 private readonly Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonLineString.Builder.Build? _geoJsonLineStringBuilderInstance;
+                private readonly Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonLineString.Source _geoJsonLineStringSourceInstance;
                 private readonly Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString.Builder.Build? _geoJsonMultiLineStringBuilderInstance;
+                private readonly Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString.Source _geoJsonMultiLineStringSourceInstance;
                 private readonly Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint.Builder.Build? _geoJsonMultiPointBuilderInstance;
+                private readonly Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint.Source _geoJsonMultiPointSourceInstance;
                 private readonly Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.Builder.Build? _geoJsonMultiPolygonBuilderInstance;
+                private readonly Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.Source _geoJsonMultiPolygonSourceInstance;
                 private readonly Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPoint.Builder.Build? _geoJsonPointBuilderInstance;
+                private readonly Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPoint.Source _geoJsonPointSourceInstance;
                 private readonly Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPolygon.Builder.Build? _geoJsonPolygonBuilderInstance;
+                private readonly Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPolygon.Source _geoJsonPolygonSourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1198,17 +1212,31 @@ public readonly partial struct GeoJsonSchema
 
                 public Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.Builder.Build value) {_geoJsonGeometryCollectionBuilderInstance = value; _kind = Kind.GeoJsonGeometryCollectionBuilder; }
 
+                public Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.Source value) { _geoJsonGeometryCollectionSourceInstance = value; _kind = Kind.GeoJsonGeometryCollectionSource; }
+
                 public Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonLineString.Builder.Build value) {_geoJsonLineStringBuilderInstance = value; _kind = Kind.GeoJsonLineStringBuilder; }
+
+                public Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonLineString.Source value) { _geoJsonLineStringSourceInstance = value; _kind = Kind.GeoJsonLineStringSource; }
 
                 public Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString.Builder.Build value) {_geoJsonMultiLineStringBuilderInstance = value; _kind = Kind.GeoJsonMultiLineStringBuilder; }
 
+                public Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString.Source value) { _geoJsonMultiLineStringSourceInstance = value; _kind = Kind.GeoJsonMultiLineStringSource; }
+
                 public Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint.Builder.Build value) {_geoJsonMultiPointBuilderInstance = value; _kind = Kind.GeoJsonMultiPointBuilder; }
+
+                public Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint.Source value) { _geoJsonMultiPointSourceInstance = value; _kind = Kind.GeoJsonMultiPointSource; }
 
                 public Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.Builder.Build value) {_geoJsonMultiPolygonBuilderInstance = value; _kind = Kind.GeoJsonMultiPolygonBuilder; }
 
+                public Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.Source value) { _geoJsonMultiPolygonSourceInstance = value; _kind = Kind.GeoJsonMultiPolygonSource; }
+
                 public Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPoint.Builder.Build value) {_geoJsonPointBuilderInstance = value; _kind = Kind.GeoJsonPointBuilder; }
 
+                public Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPoint.Source value) { _geoJsonPointSourceInstance = value; _kind = Kind.GeoJsonPointSource; }
+
                 public Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPolygon.Builder.Build value) {_geoJsonPolygonBuilderInstance = value; _kind = Kind.GeoJsonPolygonBuilder; }
+
+                public Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPolygon.Source value) { _geoJsonPolygonSourceInstance = value; _kind = Kind.GeoJsonPolygonSource; }
 
                 public static implicit operator Source(GeometryEntity instance) => new(JsonElement.From(instance));
 
@@ -1216,22 +1244,43 @@ public readonly partial struct GeoJsonSchema
                 public static implicit operator Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonLineString instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonLineString.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPoint instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPoint.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPolygon instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPolygon.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.GeoJsonBenchmark.Current.JsonNull instance) => new(JsonElement.From(instance));
@@ -1254,23 +1303,44 @@ public readonly partial struct GeoJsonSchema
                         case Kind.GeoJsonGeometryCollectionBuilder:
                             valueBuilder.AddProperty(utf8Name, _geoJsonGeometryCollectionBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.GeoJsonGeometryCollectionSource:
+                            _geoJsonGeometryCollectionSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.GeoJsonLineStringBuilder:
                             valueBuilder.AddProperty(utf8Name, _geoJsonLineStringBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonLineString.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.GeoJsonLineStringSource:
+                            _geoJsonLineStringSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.GeoJsonMultiLineStringBuilder:
                             valueBuilder.AddProperty(utf8Name, _geoJsonMultiLineStringBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.GeoJsonMultiLineStringSource:
+                            _geoJsonMultiLineStringSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.GeoJsonMultiPointBuilder:
                             valueBuilder.AddProperty(utf8Name, _geoJsonMultiPointBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.GeoJsonMultiPointSource:
+                            _geoJsonMultiPointSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.GeoJsonMultiPolygonBuilder:
                             valueBuilder.AddProperty(utf8Name, _geoJsonMultiPolygonBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.GeoJsonMultiPolygonSource:
+                            _geoJsonMultiPolygonSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.GeoJsonPointBuilder:
                             valueBuilder.AddProperty(utf8Name, _geoJsonPointBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPoint.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.GeoJsonPointSource:
+                            _geoJsonPointSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.GeoJsonPolygonBuilder:
                             valueBuilder.AddProperty(utf8Name, _geoJsonPolygonBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPolygon.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.GeoJsonPolygonSource:
+                            _geoJsonPolygonSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1293,23 +1363,44 @@ public readonly partial struct GeoJsonSchema
                         case Kind.GeoJsonGeometryCollectionBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geoJsonGeometryCollectionBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeoJsonGeometryCollectionSource:
+                            _geoJsonGeometryCollectionSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.GeoJsonLineStringBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geoJsonLineStringBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonLineString.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GeoJsonLineStringSource:
+                            _geoJsonLineStringSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.GeoJsonMultiLineStringBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geoJsonMultiLineStringBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeoJsonMultiLineStringSource:
+                            _geoJsonMultiLineStringSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.GeoJsonMultiPointBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geoJsonMultiPointBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GeoJsonMultiPointSource:
+                            _geoJsonMultiPointSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.GeoJsonMultiPolygonBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geoJsonMultiPolygonBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeoJsonMultiPolygonSource:
+                            _geoJsonMultiPolygonSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.GeoJsonPointBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geoJsonPointBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPoint.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeoJsonPointSource:
+                            _geoJsonPointSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.GeoJsonPolygonBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geoJsonPolygonBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPolygon.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GeoJsonPolygonSource:
+                            _geoJsonPolygonSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1332,23 +1423,44 @@ public readonly partial struct GeoJsonSchema
                         case Kind.GeoJsonGeometryCollectionBuilder:
                             valueBuilder.AddProperty(name, _geoJsonGeometryCollectionBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeoJsonGeometryCollectionSource:
+                            _geoJsonGeometryCollectionSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.GeoJsonLineStringBuilder:
                             valueBuilder.AddProperty(name, _geoJsonLineStringBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonLineString.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GeoJsonLineStringSource:
+                            _geoJsonLineStringSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.GeoJsonMultiLineStringBuilder:
                             valueBuilder.AddProperty(name, _geoJsonMultiLineStringBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeoJsonMultiLineStringSource:
+                            _geoJsonMultiLineStringSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.GeoJsonMultiPointBuilder:
                             valueBuilder.AddProperty(name, _geoJsonMultiPointBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GeoJsonMultiPointSource:
+                            _geoJsonMultiPointSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.GeoJsonMultiPolygonBuilder:
                             valueBuilder.AddProperty(name, _geoJsonMultiPolygonBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeoJsonMultiPolygonSource:
+                            _geoJsonMultiPolygonSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.GeoJsonPointBuilder:
                             valueBuilder.AddProperty(name, _geoJsonPointBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPoint.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeoJsonPointSource:
+                            _geoJsonPointSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.GeoJsonPolygonBuilder:
                             valueBuilder.AddProperty(name, _geoJsonPolygonBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPolygon.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GeoJsonPolygonSource:
+                            _geoJsonPolygonSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1371,23 +1483,44 @@ public readonly partial struct GeoJsonSchema
                         case Kind.GeoJsonGeometryCollectionBuilder:
                             valueBuilder.AddProperty(name, _geoJsonGeometryCollectionBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeoJsonGeometryCollectionSource:
+                            _geoJsonGeometryCollectionSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.GeoJsonLineStringBuilder:
                             valueBuilder.AddProperty(name, _geoJsonLineStringBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonLineString.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GeoJsonLineStringSource:
+                            _geoJsonLineStringSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.GeoJsonMultiLineStringBuilder:
                             valueBuilder.AddProperty(name, _geoJsonMultiLineStringBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeoJsonMultiLineStringSource:
+                            _geoJsonMultiLineStringSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.GeoJsonMultiPointBuilder:
                             valueBuilder.AddProperty(name, _geoJsonMultiPointBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GeoJsonMultiPointSource:
+                            _geoJsonMultiPointSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.GeoJsonMultiPolygonBuilder:
                             valueBuilder.AddProperty(name, _geoJsonMultiPolygonBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeoJsonMultiPolygonSource:
+                            _geoJsonMultiPolygonSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.GeoJsonPointBuilder:
                             valueBuilder.AddProperty(name, _geoJsonPointBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPoint.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeoJsonPointSource:
+                            _geoJsonPointSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.GeoJsonPolygonBuilder:
                             valueBuilder.AddProperty(name, _geoJsonPolygonBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPolygon.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GeoJsonPolygonSource:
+                            _geoJsonPolygonSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1410,23 +1543,44 @@ public readonly partial struct GeoJsonSchema
                         case Kind.GeoJsonGeometryCollectionBuilder:
                             valueBuilder.AddItem(_geoJsonGeometryCollectionBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeoJsonGeometryCollectionSource:
+                            _geoJsonGeometryCollectionSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.GeoJsonLineStringBuilder:
                             valueBuilder.AddItem(_geoJsonLineStringBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonLineString.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GeoJsonLineStringSource:
+                            _geoJsonLineStringSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.GeoJsonMultiLineStringBuilder:
                             valueBuilder.AddItem(_geoJsonMultiLineStringBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeoJsonMultiLineStringSource:
+                            _geoJsonMultiLineStringSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.GeoJsonMultiPointBuilder:
                             valueBuilder.AddItem(_geoJsonMultiPointBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GeoJsonMultiPointSource:
+                            _geoJsonMultiPointSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.GeoJsonMultiPolygonBuilder:
                             valueBuilder.AddItem(_geoJsonMultiPolygonBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeoJsonMultiPolygonSource:
+                            _geoJsonMultiPolygonSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.GeoJsonPointBuilder:
                             valueBuilder.AddItem(_geoJsonPointBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPoint.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GeoJsonPointSource:
+                            _geoJsonPointSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.GeoJsonPolygonBuilder:
                             valueBuilder.AddItem(_geoJsonPolygonBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPolygon.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GeoJsonPolygonSource:
+                            _geoJsonPolygonSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

@@ -803,13 +803,17 @@ public readonly partial struct Ui5ManifestSchema
                     Unknown,
                     JsonElement,
                     OneOf1EntityBuilder,
+                    OneOf1EntitySource,
                     RequiredFlexEnabledBuilder,
+                    RequiredFlexEnabledSource,
                 }
 
                 private readonly Kind _kind;
                 private readonly JsonElement _jsonElement;
                 private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.OneOf1Entity.Builder.Build? _oneOf1EntityBuilderInstance;
+                private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.OneOf1Entity.Source _oneOf1EntitySourceInstance;
                 private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.RequiredFlexEnabled.Builder.Build? _requiredFlexEnabledBuilderInstance;
+                private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.RequiredFlexEnabled.Source _requiredFlexEnabledSourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -824,7 +828,11 @@ public readonly partial struct Ui5ManifestSchema
 
                 public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.OneOf1Entity.Builder.Build value) {_oneOf1EntityBuilderInstance = value; _kind = Kind.OneOf1EntityBuilder; }
 
+                public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.OneOf1Entity.Source value) { _oneOf1EntitySourceInstance = value; _kind = Kind.OneOf1EntitySource; }
+
                 public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.RequiredFlexEnabled.Builder.Build value) {_requiredFlexEnabledBuilderInstance = value; _kind = Kind.RequiredFlexEnabledBuilder; }
+
+                public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.RequiredFlexEnabled.Source value) { _requiredFlexEnabledSourceInstance = value; _kind = Kind.RequiredFlexEnabledSource; }
 
                 public static implicit operator Source(AllOf1Entity instance) => new(JsonElement.From(instance));
 
@@ -832,7 +840,13 @@ public readonly partial struct Ui5ManifestSchema
                 public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.OneOf1Entity instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.OneOf1Entity.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.RequiredFlexEnabled instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.RequiredFlexEnabled.Source value) => new(value);
 
                 internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                 {
@@ -846,8 +860,14 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.OneOf1EntityBuilder:
                             valueBuilder.AddProperty(utf8Name, _oneOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.OneOf1Entity.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.OneOf1EntitySource:
+                            _oneOf1EntitySourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.RequiredFlexEnabledBuilder:
                             valueBuilder.AddProperty(utf8Name, _requiredFlexEnabledBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.RequiredFlexEnabled.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.RequiredFlexEnabledSource:
+                            _requiredFlexEnabledSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -867,8 +887,14 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.OneOf1EntityBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _oneOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.OneOf1Entity.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OneOf1EntitySource:
+                            _oneOf1EntitySourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.RequiredFlexEnabledBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredFlexEnabledBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.RequiredFlexEnabled.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.RequiredFlexEnabledSource:
+                            _requiredFlexEnabledSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -888,8 +914,14 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.OneOf1EntityBuilder:
                             valueBuilder.AddProperty(name, _oneOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.OneOf1Entity.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OneOf1EntitySource:
+                            _oneOf1EntitySourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.RequiredFlexEnabledBuilder:
                             valueBuilder.AddProperty(name, _requiredFlexEnabledBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.RequiredFlexEnabled.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.RequiredFlexEnabledSource:
+                            _requiredFlexEnabledSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -909,8 +941,14 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.OneOf1EntityBuilder:
                             valueBuilder.AddProperty(name, _oneOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.OneOf1Entity.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OneOf1EntitySource:
+                            _oneOf1EntitySourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.RequiredFlexEnabledBuilder:
                             valueBuilder.AddProperty(name, _requiredFlexEnabledBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.RequiredFlexEnabled.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.RequiredFlexEnabledSource:
+                            _requiredFlexEnabledSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -930,8 +968,14 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.OneOf1EntityBuilder:
                             valueBuilder.AddItem(_oneOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.OneOf1Entity.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OneOf1EntitySource:
+                            _oneOf1EntitySourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.RequiredFlexEnabledBuilder:
                             valueBuilder.AddItem(_requiredFlexEnabledBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.AllOf1Entity.RequiredFlexEnabled.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.RequiredFlexEnabledSource:
+                            _requiredFlexEnabledSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

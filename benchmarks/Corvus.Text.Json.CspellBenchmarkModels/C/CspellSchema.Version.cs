@@ -97,6 +97,15 @@ public readonly partial struct CspellSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.VersionLatest"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Version(Corvus.CspellBenchmark.Current.CspellSchema.VersionLatest.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CspellBenchmark.Current.CspellSchema.VersionLegacy"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -110,6 +119,15 @@ public readonly partial struct CspellSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Version(Corvus.CspellBenchmark.Current.CspellSchema.VersionLegacy value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.VersionLegacy"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Version(Corvus.CspellBenchmark.Current.CspellSchema.VersionLegacy.Mutable value)
         {
             return From(value);
         }

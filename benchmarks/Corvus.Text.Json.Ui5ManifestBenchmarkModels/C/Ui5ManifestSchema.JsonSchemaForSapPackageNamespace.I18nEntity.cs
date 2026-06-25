@@ -119,6 +119,15 @@ public readonly partial struct Ui5ManifestSchema
                 return From(value);
             }
 
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.I18nEntity.OneOf0Entity"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator I18nEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.I18nEntity.OneOf0Entity.Mutable value)
+            {
+                return From(value);
+            }
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator string(I18nEntity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

@@ -767,13 +767,17 @@ public readonly partial struct VercelSchema
                     Unknown,
                     JsonElement,
                     RequiredHandleBuilder,
+                    RequiredHandleSource,
                     RequiredSrcBuilder,
+                    RequiredSrcSource,
                 }
 
                 private readonly Kind _kind;
                 private readonly JsonElement _jsonElement;
                 private readonly Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.Builder.Build? _requiredHandleBuilderInstance;
+                private readonly Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.Source _requiredHandleSourceInstance;
                 private readonly Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.Builder.Build? _requiredSrcBuilderInstance;
+                private readonly Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.Source _requiredSrcSourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -788,7 +792,11 @@ public readonly partial struct VercelSchema
 
                 public Source(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.Builder.Build value) {_requiredHandleBuilderInstance = value; _kind = Kind.RequiredHandleBuilder; }
 
+                public Source(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.Source value) { _requiredHandleSourceInstance = value; _kind = Kind.RequiredHandleSource; }
+
                 public Source(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.Builder.Build value) {_requiredSrcBuilderInstance = value; _kind = Kind.RequiredSrcBuilder; }
+
+                public Source(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.Source value) { _requiredSrcSourceInstance = value; _kind = Kind.RequiredSrcSource; }
 
                 public static implicit operator Source(RoutesEntity instance) => new(JsonElement.From(instance));
 
@@ -796,7 +804,13 @@ public readonly partial struct VercelSchema
                 public static implicit operator Source(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.Source value) => new(value);
 
                 internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                 {
@@ -810,8 +824,14 @@ public readonly partial struct VercelSchema
                         case Kind.RequiredHandleBuilder:
                             valueBuilder.AddProperty(utf8Name, _requiredHandleBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.RequiredHandleSource:
+                            _requiredHandleSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.RequiredSrcBuilder:
                             valueBuilder.AddProperty(utf8Name, _requiredSrcBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.RequiredSrcSource:
+                            _requiredSrcSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -831,8 +851,14 @@ public readonly partial struct VercelSchema
                         case Kind.RequiredHandleBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredHandleBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.RequiredHandleSource:
+                            _requiredHandleSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.RequiredSrcBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredSrcBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.RequiredSrcSource:
+                            _requiredSrcSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -852,8 +878,14 @@ public readonly partial struct VercelSchema
                         case Kind.RequiredHandleBuilder:
                             valueBuilder.AddProperty(name, _requiredHandleBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.RequiredHandleSource:
+                            _requiredHandleSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.RequiredSrcBuilder:
                             valueBuilder.AddProperty(name, _requiredSrcBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.RequiredSrcSource:
+                            _requiredSrcSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -873,8 +905,14 @@ public readonly partial struct VercelSchema
                         case Kind.RequiredHandleBuilder:
                             valueBuilder.AddProperty(name, _requiredHandleBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.RequiredHandleSource:
+                            _requiredHandleSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.RequiredSrcBuilder:
                             valueBuilder.AddProperty(name, _requiredSrcBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.RequiredSrcSource:
+                            _requiredSrcSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -894,8 +932,14 @@ public readonly partial struct VercelSchema
                         case Kind.RequiredHandleBuilder:
                             valueBuilder.AddItem(_requiredHandleBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.RequiredHandleSource:
+                            _requiredHandleSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.RequiredSrcBuilder:
                             valueBuilder.AddItem(_requiredSrcBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.RequiredSrcSource:
+                            _requiredSrcSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

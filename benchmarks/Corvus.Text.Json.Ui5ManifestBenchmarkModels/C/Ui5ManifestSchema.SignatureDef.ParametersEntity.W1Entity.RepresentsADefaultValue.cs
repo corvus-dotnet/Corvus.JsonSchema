@@ -165,6 +165,15 @@ public readonly partial struct Ui5ManifestSchema
                     }
 
                     /// <summary>
+                    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf0Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator RepresentsADefaultValue(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf0Entity.Mutable value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
                     /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf1Entity"/>.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
@@ -183,6 +192,15 @@ public readonly partial struct Ui5ManifestSchema
                     }
 
                     /// <summary>
+                    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf1Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator RepresentsADefaultValue(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf1Entity.Mutable value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
                     /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf2Entity"/>.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
@@ -196,6 +214,15 @@ public readonly partial struct Ui5ManifestSchema
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
                     public static implicit operator RepresentsADefaultValue(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf2Entity value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
+                    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf2Entity"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator RepresentsADefaultValue(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.ParametersEntity.W1Entity.RepresentsADefaultValue.AnyOf2Entity.Mutable value)
                     {
                         return From(value);
                     }

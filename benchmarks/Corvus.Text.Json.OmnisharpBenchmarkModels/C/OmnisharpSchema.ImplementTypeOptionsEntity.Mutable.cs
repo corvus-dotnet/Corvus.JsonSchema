@@ -278,7 +278,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.ImplementTypeOptionsEntity.InsertionBehaviorEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -294,7 +294,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.ImplementTypeOptionsEntity.PropertyGenerationBehaviorEntity.Mutable.DefaultInstance;
                 }
             }
 

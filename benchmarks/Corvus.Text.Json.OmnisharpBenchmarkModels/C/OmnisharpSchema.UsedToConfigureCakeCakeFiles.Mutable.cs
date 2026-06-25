@@ -283,7 +283,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCakeCakeFiles.BakeryPathEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -299,7 +299,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCakeCakeFiles.EnabledEntity.Mutable.DefaultInstance;
                 }
             }
 

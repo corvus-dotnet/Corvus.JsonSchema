@@ -51,7 +51,7 @@ public readonly partial struct KrakendSchema
             private static readonly JsonSchemaPathProvider MaxVersionSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/max_version"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider MinVersionSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/min_version"u8, buffer, out written);
 
-            private static void MatchAllowInsecureConnectionsValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchAllowInsecureConnectionsValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext =
@@ -66,7 +66,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext.IsMatch, ref childContext);
             }
 
-            private static void MatchCaCerts(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchCaCerts(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext1 =
@@ -81,7 +81,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext1.IsMatch, ref childContext1);
             }
 
-            private static void MatchCipherSuitesValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchCipherSuitesValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext2 =
@@ -96,7 +96,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext2.IsMatch, ref childContext2);
             }
 
-            private static void MatchClientCerts(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchClientCerts(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext3 =
@@ -111,7 +111,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext3.IsMatch, ref childContext3);
             }
 
-            private static void MatchCurvePreferences(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchCurvePreferences(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext4 =
@@ -126,7 +126,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext4.IsMatch, ref childContext4);
             }
 
-            private static void MatchDisableSystemCaPool(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchDisableSystemCaPool(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext5 =
@@ -141,7 +141,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext5.IsMatch, ref childContext5);
             }
 
-            private static void MatchMaxVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchMaxVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext6 =
@@ -156,7 +156,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext6.IsMatch, ref childContext6);
             }
 
-            private static void MatchMinVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchMinVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext7 =
@@ -251,7 +251,7 @@ public readonly partial struct KrakendSchema
 
                         if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.KrakendBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1? validator))
                         {
-                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                             if (!context.HasCollector && !context.IsMatch)
                             {

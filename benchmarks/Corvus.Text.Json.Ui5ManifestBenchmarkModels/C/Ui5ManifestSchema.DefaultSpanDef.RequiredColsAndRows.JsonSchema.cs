@@ -63,7 +63,7 @@ public readonly partial struct Ui5ManifestSchema
                 private static readonly JsonSchemaPathProvider RowsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/rows"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider ShowOnlyHeaderSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/showOnlyHeader"u8, buffer, out written);
 
-                private static void MatchCols(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchCols(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext =
@@ -85,7 +85,7 @@ public readonly partial struct Ui5ManifestSchema
                     requiredBitBuffer[RequiredOffsetForCols] |= RequiredBitForCols;
                 }
 
-                private static void MatchMinimumSubTitleRow(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchMinimumSubTitleRow(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext1 =
@@ -100,7 +100,7 @@ public readonly partial struct Ui5ManifestSchema
                     context.CommitChildContext(childContext1.IsMatch, ref childContext1);
                 }
 
-                private static void MatchMinimumTitleRow(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchMinimumTitleRow(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext2 =
@@ -115,7 +115,7 @@ public readonly partial struct Ui5ManifestSchema
                     context.CommitChildContext(childContext2.IsMatch, ref childContext2);
                 }
 
-                private static void MatchRows(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchRows(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext3 =
@@ -137,7 +137,7 @@ public readonly partial struct Ui5ManifestSchema
                     requiredBitBuffer[RequiredOffsetForRows] |= RequiredBitForRows;
                 }
 
-                private static void MatchShowOnlyHeader(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchShowOnlyHeader(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext4 =
@@ -233,7 +233,7 @@ public readonly partial struct Ui5ManifestSchema
 
                             if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Ui5ManifestBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                             {
-                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                                 if (!context.HasCollector && !context.IsMatch)
                                 {

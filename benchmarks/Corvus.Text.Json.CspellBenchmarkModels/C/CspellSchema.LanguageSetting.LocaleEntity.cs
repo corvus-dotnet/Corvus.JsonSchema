@@ -142,6 +142,15 @@ public readonly partial struct CspellSchema
                 return From(value);
             }
 
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocaleEntity.JsonStringArray"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator LocaleEntity(Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocaleEntity.JsonStringArray.Mutable value)
+            {
+                return From(value);
+            }
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator string(LocaleEntity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

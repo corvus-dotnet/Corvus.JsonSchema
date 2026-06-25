@@ -73,7 +73,7 @@ public readonly partial struct CmakePresetsSchema
                 private static readonly JsonSchemaPathProvider VendorSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/vendor"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider VerboseSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/verbose"u8, buffer, out written);
 
-                private static void MatchCleanFirst(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchCleanFirst(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext =
@@ -88,7 +88,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext.IsMatch, ref childContext);
                 }
 
-                private static void MatchCondition(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchCondition(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext1 =
@@ -103,7 +103,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext1.IsMatch, ref childContext1);
                 }
 
-                private static void MatchConfiguration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchConfiguration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext2 =
@@ -118,7 +118,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext2.IsMatch, ref childContext2);
                 }
 
-                private static void MatchConfigurePreset(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchConfigurePreset(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext3 =
@@ -133,7 +133,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext3.IsMatch, ref childContext3);
                 }
 
-                private static void MatchDescription(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchDescription(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext4 =
@@ -148,7 +148,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext4.IsMatch, ref childContext4);
                 }
 
-                private static void MatchDisplayName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchDisplayName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext5 =
@@ -163,7 +163,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext5.IsMatch, ref childContext5);
                 }
 
-                private static void MatchEnvironment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchEnvironment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext6 =
@@ -178,7 +178,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext6.IsMatch, ref childContext6);
                 }
 
-                private static void MatchHidden(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchHidden(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext7 =
@@ -193,7 +193,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext7.IsMatch, ref childContext7);
                 }
 
-                private static void MatchInheritConfigureEnvironment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchInheritConfigureEnvironment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext8 =
@@ -208,7 +208,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext8.IsMatch, ref childContext8);
                 }
 
-                private static void MatchInherits(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchInherits(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext9 =
@@ -223,7 +223,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext9.IsMatch, ref childContext9);
                 }
 
-                private static void MatchJobs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchJobs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext10 =
@@ -238,7 +238,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext10.IsMatch, ref childContext10);
                 }
 
-                private static void MatchName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext11 =
@@ -260,7 +260,7 @@ public readonly partial struct CmakePresetsSchema
                     requiredBitBuffer[RequiredOffsetForName] |= RequiredBitForName;
                 }
 
-                private static void MatchNativeToolOptions(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchNativeToolOptions(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext12 =
@@ -275,7 +275,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext12.IsMatch, ref childContext12);
                 }
 
-                private static void MatchTargets(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchTargets(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext13 =
@@ -290,7 +290,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext13.IsMatch, ref childContext13);
                 }
 
-                private static void MatchVendor(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchVendor(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext14 =
@@ -305,7 +305,7 @@ public readonly partial struct CmakePresetsSchema
                     context.CommitChildContext(childContext14.IsMatch, ref childContext14);
                 }
 
-                private static void MatchVerbose(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchVerbose(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext15 =
@@ -412,7 +412,7 @@ public readonly partial struct CmakePresetsSchema
 
                             if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.CmakePresetsBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                             {
-                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                                 if (!context.HasCollector && !context.IsMatch)
                                 {

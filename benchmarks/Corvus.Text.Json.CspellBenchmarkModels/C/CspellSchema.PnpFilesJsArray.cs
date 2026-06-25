@@ -74,7 +74,7 @@ public readonly partial struct CspellSchema
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static PnpFilesJsArray DefaultInstance { get; } = PnpFilesJsArray.ParseValue("[\r\n        \".pnp.js\",\r\n        \".pnp.cjs\"\r\n      ]"u8);
+        public static PnpFilesJsArray DefaultInstance { get; } = PnpFilesJsArray.ParseValue("[\n        \".pnp.js\",\n        \".pnp.cjs\"\n      ]"u8);
 
         /// <summary>
         /// Gets the rank of the array.

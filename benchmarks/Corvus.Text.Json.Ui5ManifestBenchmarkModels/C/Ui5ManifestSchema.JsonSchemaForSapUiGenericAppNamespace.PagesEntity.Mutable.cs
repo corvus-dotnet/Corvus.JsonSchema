@@ -1178,6 +1178,7 @@ public readonly partial struct Ui5ManifestSchema
                     Unknown,
                     JsonElement,
                     OneOf1EntityBuilder,
+                    OneOf1EntitySource,
                     ArrayBuilder,
                 }
 
@@ -1185,6 +1186,7 @@ public readonly partial struct Ui5ManifestSchema
                 private readonly JsonElement _jsonElement;
                 private readonly ArrayBuilder.Build? _arrayBuilder;
                 private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.OneOf1Entity.Builder.Build? _oneOf1EntityBuilderInstance;
+                private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.OneOf1Entity.Source _oneOf1EntitySourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1201,10 +1203,15 @@ public readonly partial struct Ui5ManifestSchema
 
                 public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.OneOf1Entity.Builder.Build value) {_oneOf1EntityBuilderInstance = value; _kind = Kind.OneOf1EntityBuilder; }
 
+                public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.OneOf1Entity.Source value) { _oneOf1EntitySourceInstance = value; _kind = Kind.OneOf1EntitySource; }
+
                 public static implicit operator Source(PagesEntity instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.OneOf1Entity instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.OneOf1Entity.Source value) => new(value);
 
                 internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                 {
@@ -1220,6 +1227,9 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.OneOf1EntityBuilder:
                             valueBuilder.AddProperty(utf8Name, _oneOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.OneOf1Entity.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.OneOf1EntitySource:
+                            _oneOf1EntitySourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1242,6 +1252,9 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.OneOf1EntityBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _oneOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.OneOf1Entity.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OneOf1EntitySource:
+                            _oneOf1EntitySourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1262,6 +1275,9 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.OneOf1EntityBuilder:
                             valueBuilder.AddProperty(name, _oneOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.OneOf1Entity.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OneOf1EntitySource:
+                            _oneOf1EntitySourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1284,6 +1300,9 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.OneOf1EntityBuilder:
                             valueBuilder.AddProperty(name, _oneOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.OneOf1Entity.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OneOf1EntitySource:
+                            _oneOf1EntitySourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1304,6 +1323,9 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.OneOf1EntityBuilder:
                             valueBuilder.AddItem(_oneOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.PagesEntity.OneOf1Entity.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OneOf1EntitySource:
+                            _oneOf1EntitySourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

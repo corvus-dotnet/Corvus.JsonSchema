@@ -234,6 +234,15 @@ public readonly partial struct ClangFormatSchema
             return From(value);
         }
 
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator AlignTrailingCommentsEntity(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions.Mutable value)
+        {
+            return From(value);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator bool(AlignTrailingCommentsEntity value)
         {

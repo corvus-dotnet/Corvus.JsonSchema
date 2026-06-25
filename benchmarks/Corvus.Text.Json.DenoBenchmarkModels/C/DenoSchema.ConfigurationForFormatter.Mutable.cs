@@ -351,7 +351,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.TheNumberOfCharactersForAnIndent.Mutable.DefaultInstance;
                 }
             }
 
@@ -372,7 +372,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.LineWidthEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -409,7 +409,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.DefineHowProseShouldBeWrappedInMarkdownFiles.Mutable.DefaultInstance;
                 }
             }
 
@@ -430,7 +430,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.WhetherToPreferUsingSemicolons.Mutable.DefaultInstance;
                 }
             }
 
@@ -451,7 +451,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.SingleQuoteEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -472,7 +472,7 @@ public readonly partial struct DenoSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.WhetherToUseTabsTrueOrSpacesFalseForIndentation.Mutable.DefaultInstance;
                 }
             }
 

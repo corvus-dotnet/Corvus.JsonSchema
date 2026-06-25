@@ -322,7 +322,7 @@ public readonly partial struct NestCliSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.TypeEntity.Mutable.DefaultInstance;
                         }
                     }
 

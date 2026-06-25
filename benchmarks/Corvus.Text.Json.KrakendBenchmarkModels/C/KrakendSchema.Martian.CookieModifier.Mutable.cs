@@ -346,7 +346,7 @@ public readonly partial struct KrakendSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.HttpOnlyEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -367,7 +367,7 @@ public readonly partial struct KrakendSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.MaxAgeEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -458,7 +458,7 @@ public readonly partial struct KrakendSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.SecureEntity.Mutable.DefaultInstance;
                     }
                 }
 

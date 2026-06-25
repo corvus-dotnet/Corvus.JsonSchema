@@ -234,6 +234,15 @@ public readonly partial struct Ui5ManifestSchema
                         }
 
                         /// <summary>
+                        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndName"/> mutable view.
+                        /// </summary>
+                        /// <param name="value">The value from which to convert.</param>
+                        public static implicit operator AllOf1Entity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndName.Mutable value)
+                        {
+                            return From(value);
+                        }
+
+                        /// <summary>
                         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage"/>.
                         /// </summary>
                         /// <param name="value">The value from which to convert.</param>
@@ -247,6 +256,15 @@ public readonly partial struct Ui5ManifestSchema
                         /// </summary>
                         /// <param name="value">The value from which to convert.</param>
                         public static implicit operator AllOf1Entity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage value)
+                        {
+                            return From(value);
+                        }
+
+                        /// <summary>
+                        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage"/> mutable view.
+                        /// </summary>
+                        /// <param name="value">The value from which to convert.</param>
+                        public static implicit operator AllOf1Entity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage.Mutable value)
                         {
                             return From(value);
                         }

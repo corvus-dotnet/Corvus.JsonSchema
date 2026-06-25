@@ -118,16 +118,16 @@ public readonly partial struct StylecopSchema
             /// Specifies the traits used for ordering elements within a document, along with their precedence.
             /// </para>
             /// </remarks>
-            public Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray ElementOrder
+            public Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray ElementOrder
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ElementOrderUtf8, out Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ElementOrderUtf8, out Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray value))
                     {
                         return value;
                     }
 
-                    return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.DefaultInstance;
+                    return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.DefaultInstance;
                 }
             }
 

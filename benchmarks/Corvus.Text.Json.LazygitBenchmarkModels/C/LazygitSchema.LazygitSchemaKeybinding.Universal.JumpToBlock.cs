@@ -114,7 +114,7 @@ public readonly partial struct LazygitSchema
                 /// <summary>
                 /// Gets the default instance.
                 /// </summary>
-                public static JumpToBlock DefaultInstance { get; } = JumpToBlock.ParseValue("[\r\n                \"1\",\r\n                \"2\",\r\n                \"3\",\r\n                \"4\",\r\n                \"5\"\r\n              ]"u8);
+                public static JumpToBlock DefaultInstance { get; } = JumpToBlock.ParseValue("[\n                \"1\",\n                \"2\",\n                \"3\",\n                \"4\",\n                \"5\"\n              ]"u8);
 
                 /// <summary>
                 /// Gets the item at the given index.

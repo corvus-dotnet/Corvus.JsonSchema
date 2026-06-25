@@ -234,6 +234,15 @@ public readonly partial struct VercelSchema
                         }
 
                         /// <summary>
+                        /// Conversion from the <see cref="Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.MissingEntity.RequiredTypeAndValue"/> mutable view.
+                        /// </summary>
+                        /// <param name="value">The value from which to convert.</param>
+                        public static implicit operator MissingEntity(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.MissingEntity.RequiredTypeAndValue.Mutable value)
+                        {
+                            return From(value);
+                        }
+
+                        /// <summary>
                         /// Conversion to <see cref="Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.MissingEntity.RequiredKeyAndType"/>.
                         /// </summary>
                         /// <param name="value">The value from which to convert.</param>
@@ -247,6 +256,15 @@ public readonly partial struct VercelSchema
                         /// </summary>
                         /// <param name="value">The value from which to convert.</param>
                         public static implicit operator MissingEntity(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.MissingEntity.RequiredKeyAndType value)
+                        {
+                            return From(value);
+                        }
+
+                        /// <summary>
+                        /// Conversion from the <see cref="Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.MissingEntity.RequiredKeyAndType"/> mutable view.
+                        /// </summary>
+                        /// <param name="value">The value from which to convert.</param>
+                        public static implicit operator MissingEntity(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.MissingEntity.RequiredKeyAndType.Mutable value)
                         {
                             return From(value);
                         }

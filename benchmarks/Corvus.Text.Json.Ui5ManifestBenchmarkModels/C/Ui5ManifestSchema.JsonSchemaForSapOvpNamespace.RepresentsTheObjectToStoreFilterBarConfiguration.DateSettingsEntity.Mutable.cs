@@ -308,7 +308,7 @@ public readonly partial struct Ui5ManifestSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.FlagToExcludeValuesFromTheDatePicker.Mutable.DefaultInstance;
                         }
                     }
 
@@ -371,7 +371,7 @@ public readonly partial struct Ui5ManifestSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.UseDateRangeEntity.Mutable.DefaultInstance;
                         }
                     }
 

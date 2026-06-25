@@ -235,7 +235,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Mutable.DefaultInstance;
                 }
             }
 
@@ -260,7 +260,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Mutable.DefaultInstance;
                 }
             }
 
@@ -285,7 +285,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Mutable.DefaultInstance;
                 }
             }
 
@@ -310,7 +310,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Mutable.DefaultInstance;
                 }
             }
 
@@ -335,7 +335,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -360,7 +360,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Mutable.DefaultInstance;
                 }
             }
 
@@ -385,7 +385,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Mutable.DefaultInstance;
                 }
             }
 
@@ -410,7 +410,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Mutable.DefaultInstance;
                 }
             }
 
@@ -491,7 +491,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Mutable.DefaultInstance;
                 }
             }
 
@@ -516,7 +516,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Mutable.DefaultInstance;
                 }
             }
 
@@ -569,7 +569,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Mutable.DefaultInstance;
                 }
             }
 

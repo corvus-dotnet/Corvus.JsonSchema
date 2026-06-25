@@ -402,7 +402,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -468,7 +468,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.OfflineEntity.Mutable.DefaultInstance;
                 }
             }
 

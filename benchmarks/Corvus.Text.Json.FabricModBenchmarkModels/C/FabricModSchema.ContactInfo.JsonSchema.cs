@@ -39,7 +39,7 @@ public readonly partial struct FabricModSchema
             private static readonly JsonSchemaPathProvider IssuesSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/issues"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider SourcesSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/sources"u8, buffer, out written);
 
-            private static void MatchEmail(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchEmail(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext =
@@ -54,7 +54,7 @@ public readonly partial struct FabricModSchema
                 context.CommitChildContext(childContext.IsMatch, ref childContext);
             }
 
-            private static void MatchHomepage(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchHomepage(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext1 =
@@ -69,7 +69,7 @@ public readonly partial struct FabricModSchema
                 context.CommitChildContext(childContext1.IsMatch, ref childContext1);
             }
 
-            private static void MatchIrc(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchIrc(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext2 =
@@ -84,7 +84,7 @@ public readonly partial struct FabricModSchema
                 context.CommitChildContext(childContext2.IsMatch, ref childContext2);
             }
 
-            private static void MatchIssues(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchIssues(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext3 =
@@ -99,7 +99,7 @@ public readonly partial struct FabricModSchema
                 context.CommitChildContext(childContext3.IsMatch, ref childContext3);
             }
 
-            private static void MatchSources(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSources(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext4 =
@@ -193,7 +193,7 @@ public readonly partial struct FabricModSchema
 
                         if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.FabricModBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1? validator))
                         {
-                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                             if (!context.HasCollector && !context.IsMatch)
                             {

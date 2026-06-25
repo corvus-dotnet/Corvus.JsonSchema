@@ -209,6 +209,15 @@ public readonly partial struct CspellSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DictionaryDefinitionInline(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -227,6 +236,15 @@ public readonly partial struct CspellSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DictionaryDefinitionInline(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -240,6 +258,15 @@ public readonly partial struct CspellSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator DictionaryDefinitionInline(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DictionaryDefinitionInline(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Mutable value)
         {
             return From(value);
         }

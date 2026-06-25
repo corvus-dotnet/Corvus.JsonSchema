@@ -826,15 +826,21 @@ public readonly partial struct CspellSchema
                 Unknown,
                 JsonElement,
                 CostMapDefInsDelBuilder,
+                CostMapDefInsDelSource,
                 CostMapDefReplaceBuilder,
+                CostMapDefReplaceSource,
                 CostMapDefSwapBuilder,
+                CostMapDefSwapSource,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel.Builder.Build? _costMapDefInsDelBuilderInstance;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel.Source _costMapDefInsDelSourceInstance;
             private readonly Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace.Builder.Build? _costMapDefReplaceBuilderInstance;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace.Source _costMapDefReplaceSourceInstance;
             private readonly Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap.Builder.Build? _costMapDefSwapBuilderInstance;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap.Source _costMapDefSwapSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -849,9 +855,15 @@ public readonly partial struct CspellSchema
 
             public Source(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel.Builder.Build value) {_costMapDefInsDelBuilderInstance = value; _kind = Kind.CostMapDefInsDelBuilder; }
 
+            public Source(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel.Source value) { _costMapDefInsDelSourceInstance = value; _kind = Kind.CostMapDefInsDelSource; }
+
             public Source(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace.Builder.Build value) {_costMapDefReplaceBuilderInstance = value; _kind = Kind.CostMapDefReplaceBuilder; }
 
+            public Source(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace.Source value) { _costMapDefReplaceSourceInstance = value; _kind = Kind.CostMapDefReplaceSource; }
+
             public Source(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap.Builder.Build value) {_costMapDefSwapBuilderInstance = value; _kind = Kind.CostMapDefSwapBuilder; }
+
+            public Source(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap.Source value) { _costMapDefSwapSourceInstance = value; _kind = Kind.CostMapDefSwapSource; }
 
             public static implicit operator Source(SuggestionCostMapDef instance) => new(JsonElement.From(instance));
 
@@ -859,10 +871,19 @@ public readonly partial struct CspellSchema
             public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap.Source value) => new(value);
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -876,11 +897,20 @@ public readonly partial struct CspellSchema
                     case Kind.CostMapDefInsDelBuilder:
                         valueBuilder.AddProperty(utf8Name, _costMapDefInsDelBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.CostMapDefInsDelSource:
+                        _costMapDefInsDelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.CostMapDefReplaceBuilder:
                         valueBuilder.AddProperty(utf8Name, _costMapDefReplaceBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.CostMapDefReplaceSource:
+                        _costMapDefReplaceSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.CostMapDefSwapBuilder:
                         valueBuilder.AddProperty(utf8Name, _costMapDefSwapBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.CostMapDefSwapSource:
+                        _costMapDefSwapSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -900,11 +930,20 @@ public readonly partial struct CspellSchema
                     case Kind.CostMapDefInsDelBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _costMapDefInsDelBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.CostMapDefInsDelSource:
+                        _costMapDefInsDelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.CostMapDefReplaceBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _costMapDefReplaceBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.CostMapDefReplaceSource:
+                        _costMapDefReplaceSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.CostMapDefSwapBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _costMapDefSwapBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.CostMapDefSwapSource:
+                        _costMapDefSwapSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -924,11 +963,20 @@ public readonly partial struct CspellSchema
                     case Kind.CostMapDefInsDelBuilder:
                         valueBuilder.AddProperty(name, _costMapDefInsDelBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.CostMapDefInsDelSource:
+                        _costMapDefInsDelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.CostMapDefReplaceBuilder:
                         valueBuilder.AddProperty(name, _costMapDefReplaceBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.CostMapDefReplaceSource:
+                        _costMapDefReplaceSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.CostMapDefSwapBuilder:
                         valueBuilder.AddProperty(name, _costMapDefSwapBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.CostMapDefSwapSource:
+                        _costMapDefSwapSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -948,11 +996,20 @@ public readonly partial struct CspellSchema
                     case Kind.CostMapDefInsDelBuilder:
                         valueBuilder.AddProperty(name, _costMapDefInsDelBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.CostMapDefInsDelSource:
+                        _costMapDefInsDelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.CostMapDefReplaceBuilder:
                         valueBuilder.AddProperty(name, _costMapDefReplaceBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.CostMapDefReplaceSource:
+                        _costMapDefReplaceSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.CostMapDefSwapBuilder:
                         valueBuilder.AddProperty(name, _costMapDefSwapBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.CostMapDefSwapSource:
+                        _costMapDefSwapSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -972,11 +1029,20 @@ public readonly partial struct CspellSchema
                     case Kind.CostMapDefInsDelBuilder:
                         valueBuilder.AddItem(_costMapDefInsDelBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.CostMapDefInsDelSource:
+                        _costMapDefInsDelSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.CostMapDefReplaceBuilder:
                         valueBuilder.AddItem(_costMapDefReplaceBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.CostMapDefReplaceSource:
+                        _costMapDefReplaceSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.CostMapDefSwapBuilder:
                         valueBuilder.AddItem(_costMapDefSwapBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.CostMapDefSwapSource:
+                        _costMapDefSwapSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

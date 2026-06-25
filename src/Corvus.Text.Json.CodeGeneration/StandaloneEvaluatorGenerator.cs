@@ -231,64 +231,6 @@ internal static partial class StandaloneEvaluatorGenerator
         return pathModifier;
     }
 
-    /// <summary>
-    /// Percent-encodes each segment of a path (split by '/') so that the resulting
-    /// string is valid for use in a URI fragment. Characters like '^', '[', ']' etc.
-    /// in patternProperties regex patterns are encoded (e.g., "^a" → "%5Ea").
-    /// Characters allowed in URI fragment pchar (unreserved, sub-delims, ':', '@')
-    /// are preserved. JSON Pointer escape sequences (~0, ~1) also pass through.
-    /// </summary>
-    private static string PercentEncodePathSegments(string path)
-    {
-        string[] segments = path.Split('/');
-        for (int i = 0; i < segments.Length; i++)
-        {
-            segments[i] = PercentEncodeFragmentSegment(segments[i]);
-        }
-
-        return string.Join("/", segments);
-    }
-
-    private static string PercentEncodeFragmentSegment(string segment)
-    {
-        var sb = new StringBuilder(segment.Length);
-        foreach (char c in segment)
-        {
-            if (IsFragmentPchar(c))
-            {
-                sb.Append(c);
-            }
-            else
-            {
-                // Percent-encode as UTF-8 bytes.
-                foreach (byte b in System.Text.Encoding.UTF8.GetBytes(new[] { c }))
-                {
-                    sb.Append('%');
-                    sb.Append(b.ToString("X2"));
-                }
-            }
-        }
-
-        return sb.ToString();
-    }
-
-    /// <summary>
-    /// Returns true if the character is allowed unencoded in a URI fragment pchar
-    /// (RFC 3986: unreserved / sub-delims / ":" / "@").
-    /// </summary>
-    private static bool IsFragmentPchar(char c)
-    {
-        // unreserved: ALPHA / DIGIT / "-" / "." / "_" / "~"
-        if (char.IsLetterOrDigit(c) || c == '-' || c == '.' || c == '_' || c == '~')
-        {
-            return true;
-        }
-
-        // sub-delims: "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
-        // plus ":" / "@"
-        return c is '!' or '$' or '&' or '\'' or '(' or ')' or '*' or '+' or ',' or ';' or '=' or ':' or '@';
-    }
-
     private static void CollectPropertySubschemas(
         TypeDeclaration typeDeclaration,
         Dictionary<string, SubschemaInfo> subschemas,
@@ -531,17 +473,18 @@ internal static partial class StandaloneEvaluatorGenerator
             }
 
             // Evaluation path field — uses TryCopyPath (strips #/) for evaluation path segments.
-            // Percent-encode segments so regex metacharacters (e.g. "^" in patternProperties) are valid URI chars.
+            // The path is a raw JSON Pointer; URI-unsafe JSON-Pointer chars (e.g. "^" in patternProperties)
+            // are kept verbatim and only percent-encoded if a location is later rendered as a URI.
             string evalFieldName = kvp.Value.MethodName.Replace("Evaluate", string.Empty) + "EvaluationPath";
             kvp.Value.PathFieldName = evalFieldName;
-            string encodedEvalPath = PercentEncodePathSegments(kvp.Value.SchemaPath);
-            ctx.AppendLine($"private static readonly JsonSchemaPathProvider {evalFieldName} = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath({FormatUtf8Literal(encodedEvalPath)}, buffer, out written);");
+            string evalPath = kvp.Value.SchemaPath;
+            ctx.AppendLine($"private static readonly JsonSchemaPathProvider {evalFieldName} = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath({FormatUtf8Literal(evalPath)}, buffer, out written);");
 
             // Schema evaluation path field — derived from the TypeDeclaration's actual location
             // in the schema document (not the keyword-derived evaluation path). This handles $ref
             // correctly: $ref targets get their actual location (e.g., /$defs/foo) rather than
             // the evaluation path (e.g., /$ref/0).
-            string schemaPath = PercentEncodePathSegments(GetSchemaLocationFragment(kvp.Value.TypeDeclaration));
+            string schemaPath = GetSchemaLocationFragment(kvp.Value.TypeDeclaration);
 
             string schemaFieldName = kvp.Value.MethodName.Replace("Evaluate", string.Empty) + "SchemaPath";
             kvp.Value.SchemaPathFieldName = schemaFieldName;

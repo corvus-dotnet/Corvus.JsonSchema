@@ -127,8 +127,8 @@ public readonly partial struct CmakePresetsSchema
                             }
 
                             JsonSchemaContext anyOfContext1 =
-                                Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: AnyOf1SchemaEvaluationPath);
-                            Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Type1EntityArray.JsonSchema.Evaluate(parentDocument, parentIndex, ref anyOfContext1);
+                                Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: AnyOf1SchemaEvaluationPath);
+                            Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.AStringRepresentingThePathToOneSourceFileToBeTracedArray.JsonSchema.Evaluate(parentDocument, parentIndex, ref anyOfContext1);
                             anyOfComposedIsMatch = anyOfComposedIsMatch || anyOfContext1.IsMatch;
 
                             if (anyOfContext1.IsMatch)

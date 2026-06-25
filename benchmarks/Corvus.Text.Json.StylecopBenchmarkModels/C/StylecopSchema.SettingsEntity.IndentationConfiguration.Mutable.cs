@@ -204,7 +204,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheIndentationSize.Mutable.DefaultInstance;
                     }
                 }
 
@@ -225,7 +225,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheTabWidth.Mutable.DefaultInstance;
                     }
                 }
 
@@ -246,7 +246,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.UseTabsEntity.Mutable.DefaultInstance;
                     }
                 }
 

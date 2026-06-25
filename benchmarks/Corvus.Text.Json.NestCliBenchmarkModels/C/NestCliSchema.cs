@@ -224,16 +224,16 @@ public readonly partial struct NestCliSchema
     /// The entry file where &#39;nest start&#39; work with. Default to &#39;main&#39;.
     /// </para>
     /// </remarks>
-    public Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity EntryFile
+    public Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain EntryFile
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EntryFileUtf8, out Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EntryFileUtf8, out Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain value))
             {
                 return value;
             }
 
-            return Corvus.NestCliBenchmark.Current.NestCliSchema.EntryFileEntity.DefaultInstance;
+            return Corvus.NestCliBenchmark.Current.NestCliSchema.TheEntryFileWhereNestStartWorkWithDefaultToMain.DefaultInstance;
         }
     }
 

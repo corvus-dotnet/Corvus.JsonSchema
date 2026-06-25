@@ -823,6 +823,7 @@ public readonly partial struct FabricModSchema
                 Unknown,
                 JsonElement,
                 RequiredNameBuilder,
+                RequiredNameSource,
                 RawUtf8StringRequiresUnescaping,
                 RawUtf8StringNotRequiresUnescaping,
                 Utf8String,
@@ -834,6 +835,7 @@ public readonly partial struct FabricModSchema
             private readonly ReadOnlySpan<byte> _utf8Backing;
             private readonly ReadOnlySpan<char> _utf16Backing;
             private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName.Builder.Build? _requiredNameBuilderInstance;
+            private readonly Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName.Source _requiredNameSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -866,6 +868,8 @@ public readonly partial struct FabricModSchema
 
             public Source(Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName.Builder.Build value) {_requiredNameBuilderInstance = value; _kind = Kind.RequiredNameBuilder; }
 
+            public Source(Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName.Source value) { _requiredNameSourceInstance = value; _kind = Kind.RequiredNameSource; }
+
             public static implicit operator Source(Person instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -879,6 +883,9 @@ public readonly partial struct FabricModSchema
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.FabricModBenchmark.Current.JsonString instance) => new(JsonElement.From(instance));
@@ -910,6 +917,9 @@ public readonly partial struct FabricModSchema
                     case Kind.RequiredNameBuilder:
                         valueBuilder.AddProperty(utf8Name, _requiredNameBuilderInstance!, static (in b, ref o) => Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.RequiredNameSource:
+                        _requiredNameSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -939,6 +949,9 @@ public readonly partial struct FabricModSchema
                         break;
                     case Kind.RequiredNameBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredNameBuilderInstance!, static (in b, ref o) => Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredNameSource:
+                        _requiredNameSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -970,6 +983,9 @@ public readonly partial struct FabricModSchema
                     case Kind.RequiredNameBuilder:
                         valueBuilder.AddProperty(name, _requiredNameBuilderInstance!, static (in b, ref o) => Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.RequiredNameSource:
+                        _requiredNameSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1000,6 +1016,9 @@ public readonly partial struct FabricModSchema
                     case Kind.RequiredNameBuilder:
                         valueBuilder.AddProperty(name, _requiredNameBuilderInstance!, static (in b, ref o) => Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.RequiredNameSource:
+                        _requiredNameSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -1029,6 +1048,9 @@ public readonly partial struct FabricModSchema
                         break;
                     case Kind.RequiredNameBuilder:
                         valueBuilder.AddItem(_requiredNameBuilderInstance!, static (in b, ref o) => Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredNameSource:
+                        _requiredNameSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

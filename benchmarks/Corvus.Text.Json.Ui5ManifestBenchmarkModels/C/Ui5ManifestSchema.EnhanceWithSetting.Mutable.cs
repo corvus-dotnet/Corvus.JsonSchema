@@ -757,13 +757,17 @@ public readonly partial struct Ui5ManifestSchema
                 Unknown,
                 JsonElement,
                 RequiredBundleNameBuilder,
+                RequiredBundleNameSource,
                 RequiredBundleUrlBuilder,
+                RequiredBundleUrlSource,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleName.Builder.Build? _requiredBundleNameBuilderInstance;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleName.Source _requiredBundleNameSourceInstance;
             private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleUrl.Builder.Build? _requiredBundleUrlBuilderInstance;
+            private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleUrl.Source _requiredBundleUrlSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -778,7 +782,11 @@ public readonly partial struct Ui5ManifestSchema
 
             public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleName.Builder.Build value) {_requiredBundleNameBuilderInstance = value; _kind = Kind.RequiredBundleNameBuilder; }
 
+            public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleName.Source value) { _requiredBundleNameSourceInstance = value; _kind = Kind.RequiredBundleNameSource; }
+
             public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleUrl.Builder.Build value) {_requiredBundleUrlBuilderInstance = value; _kind = Kind.RequiredBundleUrlBuilder; }
+
+            public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleUrl.Source value) { _requiredBundleUrlSourceInstance = value; _kind = Kind.RequiredBundleUrlSource; }
 
             public static implicit operator Source(EnhanceWithSetting instance) => new(JsonElement.From(instance));
 
@@ -786,7 +794,13 @@ public readonly partial struct Ui5ManifestSchema
             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleName instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleName.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleUrl instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleUrl.Source value) => new(value);
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -800,8 +814,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.RequiredBundleNameBuilder:
                         valueBuilder.AddProperty(utf8Name, _requiredBundleNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleName.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.RequiredBundleNameSource:
+                        _requiredBundleNameSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.RequiredBundleUrlBuilder:
                         valueBuilder.AddProperty(utf8Name, _requiredBundleUrlBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleUrl.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.RequiredBundleUrlSource:
+                        _requiredBundleUrlSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -821,8 +841,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.RequiredBundleNameBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredBundleNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleName.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.RequiredBundleNameSource:
+                        _requiredBundleNameSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.RequiredBundleUrlBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredBundleUrlBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleUrl.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredBundleUrlSource:
+                        _requiredBundleUrlSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -842,8 +868,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.RequiredBundleNameBuilder:
                         valueBuilder.AddProperty(name, _requiredBundleNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleName.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.RequiredBundleNameSource:
+                        _requiredBundleNameSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.RequiredBundleUrlBuilder:
                         valueBuilder.AddProperty(name, _requiredBundleUrlBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleUrl.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredBundleUrlSource:
+                        _requiredBundleUrlSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -863,8 +895,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.RequiredBundleNameBuilder:
                         valueBuilder.AddProperty(name, _requiredBundleNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleName.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.RequiredBundleNameSource:
+                        _requiredBundleNameSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.RequiredBundleUrlBuilder:
                         valueBuilder.AddProperty(name, _requiredBundleUrlBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleUrl.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredBundleUrlSource:
+                        _requiredBundleUrlSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -884,8 +922,14 @@ public readonly partial struct Ui5ManifestSchema
                     case Kind.RequiredBundleNameBuilder:
                         valueBuilder.AddItem(_requiredBundleNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleName.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.RequiredBundleNameSource:
+                        _requiredBundleNameSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.RequiredBundleUrlBuilder:
                         valueBuilder.AddItem(_requiredBundleUrlBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EnhanceWithSetting.RequiredBundleUrl.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredBundleUrlSource:
+                        _requiredBundleUrlSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

@@ -57,7 +57,7 @@ public readonly partial struct KrakendSchema
             private static readonly JsonSchemaPathProvider ValidationJsonSchemaSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/validation~1json-schema"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider WebsocketValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/websocket/$ref"u8, buffer, out written);
 
-            private static void MatchAuthApiKeys(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchAuthApiKeys(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext =
@@ -72,7 +72,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext.IsMatch, ref childContext);
             }
 
-            private static void MatchAuthBasic(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchAuthBasic(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext1 =
@@ -87,7 +87,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext1.IsMatch, ref childContext1);
             }
 
-            private static void MatchAuthSigner(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchAuthSigner(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext2 =
@@ -102,7 +102,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext2.IsMatch, ref childContext2);
             }
 
-            private static void MatchAuthValidator(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchAuthValidator(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext3 =
@@ -117,7 +117,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext3.IsMatch, ref childContext3);
             }
 
-            private static void MatchDocumentationOpenapi(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchDocumentationOpenapi(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext4 =
@@ -132,7 +132,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext4.IsMatch, ref childContext4);
             }
 
-            private static void MatchModifierJmespath(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchModifierJmespath(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext5 =
@@ -147,7 +147,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext5.IsMatch, ref childContext5);
             }
 
-            private static void MatchModifierLuaEndpoint(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchModifierLuaEndpoint(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext6 =
@@ -162,7 +162,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext6.IsMatch, ref childContext6);
             }
 
-            private static void MatchModifierLuaProxy(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchModifierLuaProxy(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext7 =
@@ -177,7 +177,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext7.IsMatch, ref childContext7);
             }
 
-            private static void MatchModifierRequestBodyGenerator(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchModifierRequestBodyGenerator(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext8 =
@@ -192,7 +192,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext8.IsMatch, ref childContext8);
             }
 
-            private static void MatchModifierResponseBodyGenerator(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchModifierResponseBodyGenerator(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext9 =
@@ -207,7 +207,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext9.IsMatch, ref childContext9);
             }
 
-            private static void MatchPluginReqRespModifier(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchPluginReqRespModifier(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext10 =
@@ -222,7 +222,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext10.IsMatch, ref childContext10);
             }
 
-            private static void MatchProxyValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchProxyValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext11 =
@@ -237,7 +237,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext11.IsMatch, ref childContext11);
             }
 
-            private static void MatchQosRatelimitRouter(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchQosRatelimitRouter(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext12 =
@@ -252,7 +252,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext12.IsMatch, ref childContext12);
             }
 
-            private static void MatchQosRatelimitTiered(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchQosRatelimitTiered(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext13 =
@@ -267,7 +267,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext13.IsMatch, ref childContext13);
             }
 
-            private static void MatchSecurityBotDetector(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSecurityBotDetector(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext14 =
@@ -282,7 +282,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext14.IsMatch, ref childContext14);
             }
 
-            private static void MatchSecurityCors(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSecurityCors(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext15 =
@@ -297,7 +297,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext15.IsMatch, ref childContext15);
             }
 
-            private static void MatchSecurityHttp(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSecurityHttp(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext16 =
@@ -312,7 +312,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext16.IsMatch, ref childContext16);
             }
 
-            private static void MatchSecurityPolicies(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSecurityPolicies(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext17 =
@@ -327,7 +327,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext17.IsMatch, ref childContext17);
             }
 
-            private static void MatchTelemetryOpentelemetry(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchTelemetryOpentelemetry(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext18 =
@@ -342,7 +342,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext18.IsMatch, ref childContext18);
             }
 
-            private static void MatchValidationCel(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchValidationCel(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext19 =
@@ -357,7 +357,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext19.IsMatch, ref childContext19);
             }
 
-            private static void MatchValidationJsonSchema(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchValidationJsonSchema(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext20 =
@@ -372,7 +372,7 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext20.IsMatch, ref childContext20);
             }
 
-            private static void MatchWebsocketValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchWebsocketValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext21 =
@@ -491,7 +491,7 @@ public readonly partial struct KrakendSchema
 
                         if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.KrakendBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1? validator))
                         {
-                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                             if (!context.HasCollector && !context.IsMatch)
                             {

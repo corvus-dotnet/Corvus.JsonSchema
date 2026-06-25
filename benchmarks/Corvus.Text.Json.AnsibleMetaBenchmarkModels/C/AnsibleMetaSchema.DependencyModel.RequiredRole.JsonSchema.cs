@@ -60,7 +60,7 @@ public readonly partial struct AnsibleMetaSchema
                 private const uint RequiredBitMask0 =
                     RequiredBitForRole;
 
-                private static void MatchRole(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchRole(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     requiredBitBuffer[RequiredOffsetForRole] |= RequiredBitForRole;
                 }
@@ -128,7 +128,7 @@ public readonly partial struct AnsibleMetaSchema
 
                             if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.AnsibleMetaBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1? validator))
                             {
-                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                                 if (!context.HasCollector && !context.IsMatch)
                                 {

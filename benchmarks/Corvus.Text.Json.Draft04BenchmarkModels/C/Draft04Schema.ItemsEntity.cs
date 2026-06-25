@@ -263,6 +263,15 @@ public readonly partial struct Draft04Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Draft04Benchmark.Current.Draft04Schema"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ItemsEntity(Corvus.Draft04Benchmark.Current.Draft04Schema.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Draft04Benchmark.Current.Draft04Schema.SchemaArray"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -276,6 +285,15 @@ public readonly partial struct Draft04Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator ItemsEntity(Corvus.Draft04Benchmark.Current.Draft04Schema.SchemaArray value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Draft04Benchmark.Current.Draft04Schema.SchemaArray"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ItemsEntity(Corvus.Draft04Benchmark.Current.Draft04Schema.SchemaArray.Mutable value)
         {
             return From(value);
         }

@@ -204,7 +204,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowConsecutiveUsingsEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -225,7 +225,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowDoWhileOnClosingBraceEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -255,7 +255,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.NewlineAtEndOfFileEntity.Mutable.DefaultInstance;
                     }
                 }
 

@@ -253,7 +253,7 @@ public readonly partial struct KrakendSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.KrakendBenchmark.Current.KrakendSchema.OpentelemetryBackend.ReportBackendActivity.MetricsEntity.DisableThisStage.Mutable.DefaultInstance;
                         }
                     }
 

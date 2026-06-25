@@ -331,7 +331,7 @@ public readonly partial struct JasmineSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -373,7 +373,7 @@ public readonly partial struct JasmineSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -394,7 +394,7 @@ public readonly partial struct JasmineSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Mutable.DefaultInstance;
             }
         }
 
@@ -415,7 +415,7 @@ public readonly partial struct JasmineSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -436,7 +436,7 @@ public readonly partial struct JasmineSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Mutable.DefaultInstance;
             }
         }
 
@@ -457,7 +457,7 @@ public readonly partial struct JasmineSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -481,7 +481,7 @@ public readonly partial struct JasmineSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -505,7 +505,7 @@ public readonly partial struct JasmineSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Mutable.DefaultInstance;
             }
         }
 
@@ -526,7 +526,7 @@ public readonly partial struct JasmineSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -547,7 +547,7 @@ public readonly partial struct JasmineSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Mutable.DefaultInstance;
             }
         }
 
@@ -568,7 +568,7 @@ public readonly partial struct JasmineSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Mutable.DefaultInstance;
             }
         }
 

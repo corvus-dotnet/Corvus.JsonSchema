@@ -976,23 +976,37 @@ public readonly partial struct CspellSchema
                 Unknown,
                 JsonElement,
                 DictionaryDefinitionAlternateBuilder,
+                DictionaryDefinitionAlternateSource,
                 DictionaryDefinitionAugmentedBuilder,
+                DictionaryDefinitionAugmentedSource,
                 DictionaryDefinitionCustomBuilder,
+                DictionaryDefinitionCustomSource,
                 DictionaryDefinitionInlineFlagWordsBuilder,
+                DictionaryDefinitionInlineFlagWordsSource,
                 DictionaryDefinitionInlineIgnoreWordsBuilder,
+                DictionaryDefinitionInlineIgnoreWordsSource,
                 DictionaryDefinitionInlineWordsBuilder,
+                DictionaryDefinitionInlineWordsSource,
                 DictionaryDefinitionPreferredBuilder,
+                DictionaryDefinitionPreferredSource,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate.Builder.Build? _dictionaryDefinitionAlternateBuilderInstance;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate.Source _dictionaryDefinitionAlternateSourceInstance;
             private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented.Builder.Build? _dictionaryDefinitionAugmentedBuilderInstance;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented.Source _dictionaryDefinitionAugmentedSourceInstance;
             private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.Builder.Build? _dictionaryDefinitionCustomBuilderInstance;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.Source _dictionaryDefinitionCustomSourceInstance;
             private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Builder.Build? _dictionaryDefinitionInlineFlagWordsBuilderInstance;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Source _dictionaryDefinitionInlineFlagWordsSourceInstance;
             private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Builder.Build? _dictionaryDefinitionInlineIgnoreWordsBuilderInstance;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Source _dictionaryDefinitionInlineIgnoreWordsSourceInstance;
             private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Builder.Build? _dictionaryDefinitionInlineWordsBuilderInstance;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Source _dictionaryDefinitionInlineWordsSourceInstance;
             private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.Builder.Build? _dictionaryDefinitionPreferredBuilderInstance;
+            private readonly Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.Source _dictionaryDefinitionPreferredSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1007,17 +1021,31 @@ public readonly partial struct CspellSchema
 
             public Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate.Builder.Build value) {_dictionaryDefinitionAlternateBuilderInstance = value; _kind = Kind.DictionaryDefinitionAlternateBuilder; }
 
+            public Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate.Source value) { _dictionaryDefinitionAlternateSourceInstance = value; _kind = Kind.DictionaryDefinitionAlternateSource; }
+
             public Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented.Builder.Build value) {_dictionaryDefinitionAugmentedBuilderInstance = value; _kind = Kind.DictionaryDefinitionAugmentedBuilder; }
+
+            public Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented.Source value) { _dictionaryDefinitionAugmentedSourceInstance = value; _kind = Kind.DictionaryDefinitionAugmentedSource; }
 
             public Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.Builder.Build value) {_dictionaryDefinitionCustomBuilderInstance = value; _kind = Kind.DictionaryDefinitionCustomBuilder; }
 
+            public Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.Source value) { _dictionaryDefinitionCustomSourceInstance = value; _kind = Kind.DictionaryDefinitionCustomSource; }
+
             public Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Builder.Build value) {_dictionaryDefinitionInlineFlagWordsBuilderInstance = value; _kind = Kind.DictionaryDefinitionInlineFlagWordsBuilder; }
+
+            public Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Source value) { _dictionaryDefinitionInlineFlagWordsSourceInstance = value; _kind = Kind.DictionaryDefinitionInlineFlagWordsSource; }
 
             public Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Builder.Build value) {_dictionaryDefinitionInlineIgnoreWordsBuilderInstance = value; _kind = Kind.DictionaryDefinitionInlineIgnoreWordsBuilder; }
 
+            public Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Source value) { _dictionaryDefinitionInlineIgnoreWordsSourceInstance = value; _kind = Kind.DictionaryDefinitionInlineIgnoreWordsSource; }
+
             public Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Builder.Build value) {_dictionaryDefinitionInlineWordsBuilderInstance = value; _kind = Kind.DictionaryDefinitionInlineWordsBuilder; }
 
+            public Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Source value) { _dictionaryDefinitionInlineWordsSourceInstance = value; _kind = Kind.DictionaryDefinitionInlineWordsSource; }
+
             public Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.Builder.Build value) {_dictionaryDefinitionPreferredBuilderInstance = value; _kind = Kind.DictionaryDefinitionPreferredBuilder; }
+
+            public Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.Source value) { _dictionaryDefinitionPreferredSourceInstance = value; _kind = Kind.DictionaryDefinitionPreferredSource; }
 
             public static implicit operator Source(DictionaryDefinition instance) => new(JsonElement.From(instance));
 
@@ -1025,22 +1053,43 @@ public readonly partial struct CspellSchema
             public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.Source value) => new(value);
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -1054,23 +1103,44 @@ public readonly partial struct CspellSchema
                     case Kind.DictionaryDefinitionAlternateBuilder:
                         valueBuilder.AddProperty(utf8Name, _dictionaryDefinitionAlternateBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.DictionaryDefinitionAlternateSource:
+                        _dictionaryDefinitionAlternateSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.DictionaryDefinitionAugmentedBuilder:
                         valueBuilder.AddProperty(utf8Name, _dictionaryDefinitionAugmentedBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.DictionaryDefinitionAugmentedSource:
+                        _dictionaryDefinitionAugmentedSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     case Kind.DictionaryDefinitionCustomBuilder:
                         valueBuilder.AddProperty(utf8Name, _dictionaryDefinitionCustomBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.DictionaryDefinitionCustomSource:
+                        _dictionaryDefinitionCustomSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.DictionaryDefinitionInlineFlagWordsBuilder:
                         valueBuilder.AddProperty(utf8Name, _dictionaryDefinitionInlineFlagWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.DictionaryDefinitionInlineFlagWordsSource:
+                        _dictionaryDefinitionInlineFlagWordsSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     case Kind.DictionaryDefinitionInlineIgnoreWordsBuilder:
                         valueBuilder.AddProperty(utf8Name, _dictionaryDefinitionInlineIgnoreWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.DictionaryDefinitionInlineIgnoreWordsSource:
+                        _dictionaryDefinitionInlineIgnoreWordsSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.DictionaryDefinitionInlineWordsBuilder:
                         valueBuilder.AddProperty(utf8Name, _dictionaryDefinitionInlineWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.DictionaryDefinitionInlineWordsSource:
+                        _dictionaryDefinitionInlineWordsSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.DictionaryDefinitionPreferredBuilder:
                         valueBuilder.AddProperty(utf8Name, _dictionaryDefinitionPreferredBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.DictionaryDefinitionPreferredSource:
+                        _dictionaryDefinitionPreferredSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1090,23 +1160,44 @@ public readonly partial struct CspellSchema
                     case Kind.DictionaryDefinitionAlternateBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dictionaryDefinitionAlternateBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DictionaryDefinitionAlternateSource:
+                        _dictionaryDefinitionAlternateSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.DictionaryDefinitionAugmentedBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dictionaryDefinitionAugmentedBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DictionaryDefinitionAugmentedSource:
+                        _dictionaryDefinitionAugmentedSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     case Kind.DictionaryDefinitionCustomBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dictionaryDefinitionCustomBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DictionaryDefinitionCustomSource:
+                        _dictionaryDefinitionCustomSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.DictionaryDefinitionInlineFlagWordsBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dictionaryDefinitionInlineFlagWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DictionaryDefinitionInlineFlagWordsSource:
+                        _dictionaryDefinitionInlineFlagWordsSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     case Kind.DictionaryDefinitionInlineIgnoreWordsBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dictionaryDefinitionInlineIgnoreWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DictionaryDefinitionInlineIgnoreWordsSource:
+                        _dictionaryDefinitionInlineIgnoreWordsSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.DictionaryDefinitionInlineWordsBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dictionaryDefinitionInlineWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DictionaryDefinitionInlineWordsSource:
+                        _dictionaryDefinitionInlineWordsSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.DictionaryDefinitionPreferredBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dictionaryDefinitionPreferredBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DictionaryDefinitionPreferredSource:
+                        _dictionaryDefinitionPreferredSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1126,23 +1217,44 @@ public readonly partial struct CspellSchema
                     case Kind.DictionaryDefinitionAlternateBuilder:
                         valueBuilder.AddProperty(name, _dictionaryDefinitionAlternateBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DictionaryDefinitionAlternateSource:
+                        _dictionaryDefinitionAlternateSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.DictionaryDefinitionAugmentedBuilder:
                         valueBuilder.AddProperty(name, _dictionaryDefinitionAugmentedBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DictionaryDefinitionAugmentedSource:
+                        _dictionaryDefinitionAugmentedSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     case Kind.DictionaryDefinitionCustomBuilder:
                         valueBuilder.AddProperty(name, _dictionaryDefinitionCustomBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DictionaryDefinitionCustomSource:
+                        _dictionaryDefinitionCustomSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.DictionaryDefinitionInlineFlagWordsBuilder:
                         valueBuilder.AddProperty(name, _dictionaryDefinitionInlineFlagWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DictionaryDefinitionInlineFlagWordsSource:
+                        _dictionaryDefinitionInlineFlagWordsSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     case Kind.DictionaryDefinitionInlineIgnoreWordsBuilder:
                         valueBuilder.AddProperty(name, _dictionaryDefinitionInlineIgnoreWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DictionaryDefinitionInlineIgnoreWordsSource:
+                        _dictionaryDefinitionInlineIgnoreWordsSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.DictionaryDefinitionInlineWordsBuilder:
                         valueBuilder.AddProperty(name, _dictionaryDefinitionInlineWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DictionaryDefinitionInlineWordsSource:
+                        _dictionaryDefinitionInlineWordsSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.DictionaryDefinitionPreferredBuilder:
                         valueBuilder.AddProperty(name, _dictionaryDefinitionPreferredBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DictionaryDefinitionPreferredSource:
+                        _dictionaryDefinitionPreferredSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1162,23 +1274,44 @@ public readonly partial struct CspellSchema
                     case Kind.DictionaryDefinitionAlternateBuilder:
                         valueBuilder.AddProperty(name, _dictionaryDefinitionAlternateBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DictionaryDefinitionAlternateSource:
+                        _dictionaryDefinitionAlternateSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.DictionaryDefinitionAugmentedBuilder:
                         valueBuilder.AddProperty(name, _dictionaryDefinitionAugmentedBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DictionaryDefinitionAugmentedSource:
+                        _dictionaryDefinitionAugmentedSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     case Kind.DictionaryDefinitionCustomBuilder:
                         valueBuilder.AddProperty(name, _dictionaryDefinitionCustomBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DictionaryDefinitionCustomSource:
+                        _dictionaryDefinitionCustomSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.DictionaryDefinitionInlineFlagWordsBuilder:
                         valueBuilder.AddProperty(name, _dictionaryDefinitionInlineFlagWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DictionaryDefinitionInlineFlagWordsSource:
+                        _dictionaryDefinitionInlineFlagWordsSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     case Kind.DictionaryDefinitionInlineIgnoreWordsBuilder:
                         valueBuilder.AddProperty(name, _dictionaryDefinitionInlineIgnoreWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DictionaryDefinitionInlineIgnoreWordsSource:
+                        _dictionaryDefinitionInlineIgnoreWordsSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.DictionaryDefinitionInlineWordsBuilder:
                         valueBuilder.AddProperty(name, _dictionaryDefinitionInlineWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DictionaryDefinitionInlineWordsSource:
+                        _dictionaryDefinitionInlineWordsSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.DictionaryDefinitionPreferredBuilder:
                         valueBuilder.AddProperty(name, _dictionaryDefinitionPreferredBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DictionaryDefinitionPreferredSource:
+                        _dictionaryDefinitionPreferredSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1198,23 +1331,44 @@ public readonly partial struct CspellSchema
                     case Kind.DictionaryDefinitionAlternateBuilder:
                         valueBuilder.AddItem(_dictionaryDefinitionAlternateBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DictionaryDefinitionAlternateSource:
+                        _dictionaryDefinitionAlternateSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.DictionaryDefinitionAugmentedBuilder:
                         valueBuilder.AddItem(_dictionaryDefinitionAugmentedBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DictionaryDefinitionAugmentedSource:
+                        _dictionaryDefinitionAugmentedSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     case Kind.DictionaryDefinitionCustomBuilder:
                         valueBuilder.AddItem(_dictionaryDefinitionCustomBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DictionaryDefinitionCustomSource:
+                        _dictionaryDefinitionCustomSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.DictionaryDefinitionInlineFlagWordsBuilder:
                         valueBuilder.AddItem(_dictionaryDefinitionInlineFlagWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DictionaryDefinitionInlineFlagWordsSource:
+                        _dictionaryDefinitionInlineFlagWordsSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     case Kind.DictionaryDefinitionInlineIgnoreWordsBuilder:
                         valueBuilder.AddItem(_dictionaryDefinitionInlineIgnoreWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DictionaryDefinitionInlineIgnoreWordsSource:
+                        _dictionaryDefinitionInlineIgnoreWordsSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.DictionaryDefinitionInlineWordsBuilder:
                         valueBuilder.AddItem(_dictionaryDefinitionInlineWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DictionaryDefinitionInlineWordsSource:
+                        _dictionaryDefinitionInlineWordsSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.DictionaryDefinitionPreferredBuilder:
                         valueBuilder.AddItem(_dictionaryDefinitionPreferredBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DictionaryDefinitionPreferredSource:
+                        _dictionaryDefinitionPreferredSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

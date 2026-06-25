@@ -96,6 +96,15 @@ public readonly partial struct HorizontalAlignment
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.AnyOf0Entity"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator HorizontalAlignment(Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.AnyOf0Entity.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.AnyOf1Entity"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -109,6 +118,15 @@ public readonly partial struct HorizontalAlignment
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator HorizontalAlignment(Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.AnyOf1Entity value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.AnyOf1Entity"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator HorizontalAlignment(Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.AnyOf1Entity.Mutable value)
     {
         return From(value);
     }

@@ -204,7 +204,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Mutable.DefaultInstance;
                 }
             }
 
@@ -229,7 +229,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Mutable.DefaultInstance;
                 }
             }
 
@@ -254,7 +254,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Mutable.DefaultInstance;
                 }
             }
 
@@ -279,7 +279,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Mutable.DefaultInstance;
                 }
             }
 
@@ -354,7 +354,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Mutable.DefaultInstance;
                 }
             }
 
@@ -379,7 +379,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Mutable.DefaultInstance;
                 }
             }
 
@@ -404,7 +404,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Mutable.DefaultInstance;
                 }
             }
 
@@ -454,7 +454,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -504,7 +504,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Mutable.DefaultInstance;
                 }
             }
 
@@ -554,7 +554,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Mutable.DefaultInstance;
                 }
             }
 
@@ -579,7 +579,7 @@ public readonly partial struct LazygitSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Mutable.DefaultInstance;
                 }
             }
 

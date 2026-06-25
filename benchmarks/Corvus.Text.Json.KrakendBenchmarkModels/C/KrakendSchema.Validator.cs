@@ -906,6 +906,15 @@ public readonly partial struct KrakendSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.RequiredAlgAndJwkLocalPath"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Validator(Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.RequiredAlgAndJwkLocalPath.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.RequiredAlgAndJwkUrl"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -919,6 +928,15 @@ public readonly partial struct KrakendSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Validator(Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.RequiredAlgAndJwkUrl value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.RequiredAlgAndJwkUrl"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Validator(Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.RequiredAlgAndJwkUrl.Mutable value)
         {
             return From(value);
         }

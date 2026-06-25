@@ -221,6 +221,15 @@ public readonly partial struct Ui5ManifestSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DefaultSpanDef(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.OneOf1Entity"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -234,6 +243,15 @@ public readonly partial struct Ui5ManifestSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator DefaultSpanDef(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.OneOf1Entity value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.OneOf1Entity"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DefaultSpanDef(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.OneOf1Entity.Mutable value)
         {
             return From(value);
         }

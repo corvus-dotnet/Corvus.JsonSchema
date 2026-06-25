@@ -204,7 +204,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForReadabilityRulesSa1100.AllowBuiltInTypeAliasesEntity.Mutable.DefaultInstance;
                     }
                 }
 

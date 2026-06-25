@@ -210,7 +210,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateFilterReductionEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -231,7 +231,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateLrepEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -252,7 +252,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.UseHeadRequestForXsrfTokenEntity.Mutable.DefaultInstance;
                 }
             }
 

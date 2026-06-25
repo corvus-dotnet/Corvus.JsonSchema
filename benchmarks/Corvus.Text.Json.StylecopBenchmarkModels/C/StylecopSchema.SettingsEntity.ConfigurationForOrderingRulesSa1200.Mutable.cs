@@ -213,7 +213,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -225,16 +225,16 @@ public readonly partial struct StylecopSchema
                 /// Specifies the traits used for ordering elements within a document, along with their precedence.
                 /// </para>
                 /// </remarks>
-                public Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Mutable ElementOrder
+                public Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Mutable ElementOrder
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ElementOrderUtf8, out Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ElementOrderUtf8, out Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Mutable value))
                         {
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Mutable.DefaultInstance;
                     }
                 }
 
@@ -255,7 +255,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -285,7 +285,7 @@ public readonly partial struct StylecopSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -367,7 +367,7 @@ public readonly partial struct StylecopSchema
                 /// Set the <c>elementOrder</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetElementOrder(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Source value)
+                public void SetElementOrder(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -400,7 +400,7 @@ public readonly partial struct StylecopSchema
                 /// Set the <c>elementOrder</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetElementOrder<TContext>(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Source<TContext> value)
+                public void SetElementOrder<TContext>(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -689,7 +689,7 @@ public readonly partial struct StylecopSchema
                 private readonly JsonElement _jsonElement;
                 private readonly Builder.Build? _objectBuilder;
                 private readonly Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source _createArg1;
-                private readonly Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Source _createArg2;
+                private readonly Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Source _createArg2;
                 private readonly Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source _createArg3;
                 private readonly Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source _createArg4;
 
@@ -706,7 +706,7 @@ public readonly partial struct StylecopSchema
 
                 internal Source(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source arg1, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Source arg2, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source arg3, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source arg4)
+                internal Source(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source arg1, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Source arg2, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source arg3, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source arg4)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -861,7 +861,7 @@ public readonly partial struct StylecopSchema
                 Source _source;
                 private readonly Builder.Build<TContext>? _objectBuilder;
                 private readonly Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source _createArg1;
-                private readonly Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Source<TContext> _createArg2;
+                private readonly Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Source<TContext> _createArg2;
                 private readonly Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source _createArg3;
                 private readonly Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source _createArg4;
 
@@ -876,7 +876,7 @@ public readonly partial struct StylecopSchema
 
                 internal Source(scoped in TContext context, Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source arg1, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Source<TContext> arg2, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source arg3, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source arg4)
+                internal Source(scoped in TContext context, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source arg1, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Source<TContext> arg2, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source arg3, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source arg4)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1036,7 +1036,7 @@ public readonly partial struct StylecopSchema
                 internal static void Create(
                     ref ComplexValueBuilder builder,
                     in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source blankLinesBetweenUsingGroups = default,
-                    in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Source elementOrder = default,
+                    in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Source elementOrder = default,
                     in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source systemUsingDirectivesFirst = default,
                     in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source usingDirectivesPlacement = default)
                 {
@@ -1051,7 +1051,7 @@ public readonly partial struct StylecopSchema
                 /// </summary>
                 public void Create(
                     in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source blankLinesBetweenUsingGroups = default,
-                    in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Source elementOrder = default,
+                    in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Source elementOrder = default,
                     in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source systemUsingDirectivesFirst = default,
                     in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source usingDirectivesPlacement = default)
                 {
@@ -1065,7 +1065,7 @@ public readonly partial struct StylecopSchema
                     in TContext context,
                     ref ComplexValueBuilder builder,
                     in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source blankLinesBetweenUsingGroups = default,
-                    in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Source<TContext> elementOrder = default,
+                    in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Source<TContext> elementOrder = default,
                     in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source systemUsingDirectivesFirst = default,
                     in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source usingDirectivesPlacement = default)
                 #if NET9_0_OR_GREATER
@@ -1084,7 +1084,7 @@ public readonly partial struct StylecopSchema
                 public void Create<TContext>(
                     in TContext context,
                     in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source blankLinesBetweenUsingGroups = default,
-                    in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Source<TContext> elementOrder = default,
+                    in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Source<TContext> elementOrder = default,
                     in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source systemUsingDirectivesFirst = default,
                     in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source usingDirectivesPlacement = default)
                 #if NET9_0_OR_GREATER
@@ -1125,7 +1125,7 @@ public readonly partial struct StylecopSchema
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source arg1, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Source arg2, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source arg3, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source arg4, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source arg1, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Source arg2, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source arg3, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source arg4, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4);
@@ -1142,7 +1142,7 @@ public readonly partial struct StylecopSchema
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source arg1, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Source<TContext> arg2, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source arg3, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source arg4, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source arg1, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Source<TContext> arg2, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source arg3, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1190,7 +1190,7 @@ public readonly partial struct StylecopSchema
             /// <param name="systemUsingDirectivesFirst">The value of the <c>"systemUsingDirectivesFirst"</c> property.</param>
             /// <param name="usingDirectivesPlacement">The value of the <c>"usingDirectivesPlacement"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source blankLinesBetweenUsingGroups = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Source elementOrder = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source systemUsingDirectivesFirst = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source usingDirectivesPlacement = default)
+            public static Source Build(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source blankLinesBetweenUsingGroups = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Source elementOrder = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source systemUsingDirectivesFirst = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source usingDirectivesPlacement = default)
             {
                 return new Source(blankLinesBetweenUsingGroups, elementOrder, systemUsingDirectivesFirst, usingDirectivesPlacement);
             }
@@ -1205,7 +1205,7 @@ public readonly partial struct StylecopSchema
             /// <param name="systemUsingDirectivesFirst">The value of the <c>"systemUsingDirectivesFirst"</c> property.</param>
             /// <param name="usingDirectivesPlacement">The value of the <c>"usingDirectivesPlacement"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source blankLinesBetweenUsingGroups = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Source<TContext> elementOrder = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source systemUsingDirectivesFirst = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source usingDirectivesPlacement = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source blankLinesBetweenUsingGroups = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Source<TContext> elementOrder = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source systemUsingDirectivesFirst = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source usingDirectivesPlacement = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
@@ -1289,7 +1289,7 @@ public readonly partial struct StylecopSchema
             /// <param name="usingDirectivesPlacement">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source blankLinesBetweenUsingGroups = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Source elementOrder = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source systemUsingDirectivesFirst = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source usingDirectivesPlacement = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source blankLinesBetweenUsingGroups = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Source elementOrder = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source systemUsingDirectivesFirst = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source usingDirectivesPlacement = default, int initialCapacity = 30)
             {
                 JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1314,7 +1314,7 @@ public readonly partial struct StylecopSchema
             /// <param name="usingDirectivesPlacement">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source blankLinesBetweenUsingGroups = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.EntityArray.Source<TContext> elementOrder = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source systemUsingDirectivesFirst = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source usingDirectivesPlacement = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.BlankLinesBetweenUsingGroupsEntity.Source blankLinesBetweenUsingGroups = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.ElementOrderEntityArray.Source<TContext> elementOrder = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.SystemUsingDirectivesFirstEntity.Source systemUsingDirectivesFirst = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.UsingDirectivesPlacementEntity.Source usingDirectivesPlacement = default, int initialCapacity = 30)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

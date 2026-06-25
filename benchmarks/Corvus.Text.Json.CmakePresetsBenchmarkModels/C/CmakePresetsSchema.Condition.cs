@@ -235,6 +235,15 @@ public readonly partial struct CmakePresetsSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredTypeAndValue"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Condition(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredTypeAndValue.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -248,6 +257,15 @@ public readonly partial struct CmakePresetsSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Condition(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Condition(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType.Mutable value)
         {
             return From(value);
         }
@@ -271,6 +289,15 @@ public readonly partial struct CmakePresetsSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredLhsAndRhsAndType"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Condition(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredLhsAndRhsAndType.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -284,6 +311,15 @@ public readonly partial struct CmakePresetsSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Condition(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Condition(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType.Mutable value)
         {
             return From(value);
         }
@@ -307,6 +343,15 @@ public readonly partial struct CmakePresetsSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredListAndStringEntityAndType"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Condition(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredListAndStringEntityAndType.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredListAndStringEntityAndType"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -320,6 +365,15 @@ public readonly partial struct CmakePresetsSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Condition(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredListAndStringEntityAndType value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredListAndStringEntityAndType"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Condition(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredListAndStringEntityAndType.Mutable value)
         {
             return From(value);
         }
@@ -343,6 +397,15 @@ public readonly partial struct CmakePresetsSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredRegexAndStringEntityAndType"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Condition(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredRegexAndStringEntityAndType.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredRegexAndStringEntityAndType"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -356,6 +419,15 @@ public readonly partial struct CmakePresetsSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Condition(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredRegexAndStringEntityAndType value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredRegexAndStringEntityAndType"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Condition(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredRegexAndStringEntityAndType.Mutable value)
         {
             return From(value);
         }
@@ -379,6 +451,15 @@ public readonly partial struct CmakePresetsSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionsAndType"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Condition(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionsAndType.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredConditionsAndType"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -392,6 +473,15 @@ public readonly partial struct CmakePresetsSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Condition(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredConditionsAndType value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredConditionsAndType"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Condition(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredConditionsAndType.Mutable value)
         {
             return From(value);
         }

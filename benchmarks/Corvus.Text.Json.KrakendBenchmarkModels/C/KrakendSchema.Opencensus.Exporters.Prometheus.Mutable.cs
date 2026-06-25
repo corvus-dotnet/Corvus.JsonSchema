@@ -308,7 +308,7 @@ public readonly partial struct KrakendSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Prometheus.TagHost.Mutable.DefaultInstance;
                         }
                     }
 
@@ -333,7 +333,7 @@ public readonly partial struct KrakendSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Prometheus.TagMethod.Mutable.DefaultInstance;
                         }
                     }
 
@@ -358,7 +358,7 @@ public readonly partial struct KrakendSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Prometheus.TagPath.Mutable.DefaultInstance;
                         }
                     }
 
@@ -383,7 +383,7 @@ public readonly partial struct KrakendSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Prometheus.TagStatusCode.Mutable.DefaultInstance;
                         }
                     }
 

@@ -98,7 +98,15 @@ public class PropertySchemaMatchers<T>
                         + key[0],
                 1 => key[0],
                 0 => 0,
-                _ => ((ulong)((length + key[7] + key[key.Length - 1]) % 256) << 56)
+
+                // The top byte encodes the length (with key[7] and the last byte) to disambiguate keys of
+                // 8+ bytes from shorter keys that share the same first 7 bytes. It MUST be non-zero: a top
+                // byte of 0 is the marker for a short, fully-encoded key (which the lookup fast-path trusts
+                // without a full comparison), so a long key whose (length + key[7] + last) is a multiple of
+                // 256 — e.g. "NewLinesForBracesInMethods", (26 + 's' + 's') % 256 == 0 — would otherwise
+                // collide with a short key like "NewLine" and be mis-matched. Mapping into 1..255 keeps the
+                // length in the hash while reserving 0 exclusively for short keys.
+                _ => ((ulong)(((length + key[7] + key[key.Length - 1]) % 255) + 1) << 56)
                         + MemoryMarshal.Read<uint>(key.Slice(0, 4))
                         + ((ulong)key[4] << 32)
                         + ((ulong)key[5] << 40)

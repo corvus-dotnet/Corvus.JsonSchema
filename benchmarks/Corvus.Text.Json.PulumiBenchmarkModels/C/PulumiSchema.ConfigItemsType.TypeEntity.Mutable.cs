@@ -851,6 +851,7 @@ public readonly partial struct PulumiSchema
                     Unknown,
                     JsonElement,
                     ConfigItemsTypeBuilder,
+                    ConfigItemsTypeSource,
                     RawUtf8StringRequiresUnescaping,
                     RawUtf8StringNotRequiresUnescaping,
                     Utf8String,
@@ -862,6 +863,7 @@ public readonly partial struct PulumiSchema
                 private readonly ReadOnlySpan<byte> _utf8Backing;
                 private readonly ReadOnlySpan<char> _utf16Backing;
                 private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Builder.Build? _configItemsTypeBuilderInstance;
+                private readonly Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source _configItemsTypeSourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -894,6 +896,8 @@ public readonly partial struct PulumiSchema
 
                 public Source(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Builder.Build value) {_configItemsTypeBuilderInstance = value; _kind = Kind.ConfigItemsTypeBuilder; }
 
+                public Source(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source value) { _configItemsTypeSourceInstance = value; _kind = Kind.ConfigItemsTypeSource; }
+
                 public static implicit operator Source(TypeEntity instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -907,6 +911,9 @@ public readonly partial struct PulumiSchema
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType instance) => new(JsonElement.From(instance));
@@ -938,6 +945,9 @@ public readonly partial struct PulumiSchema
                         case Kind.ConfigItemsTypeBuilder:
                             valueBuilder.AddProperty(utf8Name, _configItemsTypeBuilderInstance!, static (in b, ref o) => Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.ConfigItemsTypeSource:
+                            _configItemsTypeSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -967,6 +977,9 @@ public readonly partial struct PulumiSchema
                             break;
                         case Kind.ConfigItemsTypeBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _configItemsTypeBuilderInstance!, static (in b, ref o) => Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ConfigItemsTypeSource:
+                            _configItemsTypeSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -998,6 +1011,9 @@ public readonly partial struct PulumiSchema
                         case Kind.ConfigItemsTypeBuilder:
                             valueBuilder.AddProperty(name, _configItemsTypeBuilderInstance!, static (in b, ref o) => Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ConfigItemsTypeSource:
+                            _configItemsTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1028,6 +1044,9 @@ public readonly partial struct PulumiSchema
                         case Kind.ConfigItemsTypeBuilder:
                             valueBuilder.AddProperty(name, _configItemsTypeBuilderInstance!, static (in b, ref o) => Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ConfigItemsTypeSource:
+                            _configItemsTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1057,6 +1076,9 @@ public readonly partial struct PulumiSchema
                             break;
                         case Kind.ConfigItemsTypeBuilder:
                             valueBuilder.AddItem(_configItemsTypeBuilderInstance!, static (in b, ref o) => Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ConfigItemsTypeSource:
+                            _configItemsTypeSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

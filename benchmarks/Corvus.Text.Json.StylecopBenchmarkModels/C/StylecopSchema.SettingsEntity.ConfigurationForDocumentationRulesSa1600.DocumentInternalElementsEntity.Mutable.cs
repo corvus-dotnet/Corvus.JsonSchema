@@ -96,6 +96,16 @@ public readonly partial struct StylecopSchema
                         _documentVersion = _parent?.Version ?? 0;
                     }
 
+                    /// <summary>
+                    /// Gets a read-only default instance of the mutable type, surfacing the schema default value.
+                    /// </summary>
+                    /// <remarks>
+                    /// The instance is a zero-copy facade over the immutable default, so it can be read but not
+                    /// mutated; attempting to mutate it throws an <see cref="InvalidOperationException"/> directing
+                    /// the caller to set the value on its parent first.
+                    /// </remarks>
+                    public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<DocumentInternalElementsEntity, Mutable>(DocumentInternalElementsEntity.DefaultInstance);
+
                     /// <inheritdoc/>
                     public JsonValueKind ValueKind => TokenType.ToValueKind();
 

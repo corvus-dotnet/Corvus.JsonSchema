@@ -793,13 +793,17 @@ public readonly partial struct Cql2Schema
                 Unknown,
                 JsonElement,
                 DateInstantBuilder,
+                DateInstantSource,
                 TimestampInstantBuilder,
+                TimestampInstantSource,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.Build? _dateInstantBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Source _dateInstantSourceInstance;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.Build? _timestampInstantBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Source _timestampInstantSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -814,7 +818,11 @@ public readonly partial struct Cql2Schema
 
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.Build value) {_dateInstantBuilderInstance = value; _kind = Kind.DateInstantBuilder; }
 
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Source value) { _dateInstantSourceInstance = value; _kind = Kind.DateInstantSource; }
+
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.Build value) {_timestampInstantBuilderInstance = value; _kind = Kind.TimestampInstantBuilder; }
+
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Source value) { _timestampInstantSourceInstance = value; _kind = Kind.TimestampInstantSource; }
 
             public static implicit operator Source(InstantInstance instance) => new(JsonElement.From(instance));
 
@@ -822,7 +830,13 @@ public readonly partial struct Cql2Schema
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Source value) => new(value);
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -836,8 +850,14 @@ public readonly partial struct Cql2Schema
                     case Kind.DateInstantBuilder:
                         valueBuilder.AddProperty(utf8Name, _dateInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.DateInstantSource:
+                        _dateInstantSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.TimestampInstantBuilder:
                         valueBuilder.AddProperty(utf8Name, _timestampInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.TimestampInstantSource:
+                        _timestampInstantSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -857,8 +877,14 @@ public readonly partial struct Cql2Schema
                     case Kind.DateInstantBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dateInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DateInstantSource:
+                        _dateInstantSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.TimestampInstantBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _timestampInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.TimestampInstantSource:
+                        _timestampInstantSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -878,8 +904,14 @@ public readonly partial struct Cql2Schema
                     case Kind.DateInstantBuilder:
                         valueBuilder.AddProperty(name, _dateInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DateInstantSource:
+                        _dateInstantSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.TimestampInstantBuilder:
                         valueBuilder.AddProperty(name, _timestampInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.TimestampInstantSource:
+                        _timestampInstantSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -899,8 +931,14 @@ public readonly partial struct Cql2Schema
                     case Kind.DateInstantBuilder:
                         valueBuilder.AddProperty(name, _dateInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DateInstantSource:
+                        _dateInstantSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.TimestampInstantBuilder:
                         valueBuilder.AddProperty(name, _timestampInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.TimestampInstantSource:
+                        _timestampInstantSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -920,8 +958,14 @@ public readonly partial struct Cql2Schema
                     case Kind.DateInstantBuilder:
                         valueBuilder.AddItem(_dateInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.DateInstantSource:
+                        _dateInstantSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.TimestampInstantBuilder:
                         valueBuilder.AddItem(_timestampInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.TimestampInstantSource:
+                        _timestampInstantSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

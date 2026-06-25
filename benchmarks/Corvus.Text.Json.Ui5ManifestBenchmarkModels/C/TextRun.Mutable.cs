@@ -804,6 +804,7 @@ public readonly partial struct TextRun
             Unknown,
             JsonElement,
             RequiredTextBuilder,
+            RequiredTextSource,
             RawUtf8StringRequiresUnescaping,
             RawUtf8StringNotRequiresUnescaping,
             Utf8String,
@@ -815,6 +816,7 @@ public readonly partial struct TextRun
         private readonly ReadOnlySpan<byte> _utf8Backing;
         private readonly ReadOnlySpan<char> _utf16Backing;
         private readonly Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.Builder.Build? _requiredTextBuilderInstance;
+        private readonly Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.Source _requiredTextSourceInstance;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -847,6 +849,8 @@ public readonly partial struct TextRun
 
         public Source(Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.Builder.Build value) {_requiredTextBuilderInstance = value; _kind = Kind.RequiredTextBuilder; }
 
+        public Source(Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.Source value) { _requiredTextSourceInstance = value; _kind = Kind.RequiredTextSource; }
+
         public static implicit operator Source(TextRun instance) => new(JsonElement.From(instance));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -863,6 +867,9 @@ public readonly partial struct TextRun
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText instance) => new(JsonElement.From(instance));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.Source value) => new(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);
@@ -890,6 +897,9 @@ public readonly partial struct TextRun
                     break;
                 case Kind.RequiredTextBuilder:
                     valueBuilder.AddProperty(utf8Name, _requiredTextBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                case Kind.RequiredTextSource:
+                    _requiredTextSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -921,6 +931,9 @@ public readonly partial struct TextRun
                 case Kind.RequiredTextBuilder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredTextBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.RequiredTextSource:
+                    _requiredTextSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -950,6 +963,9 @@ public readonly partial struct TextRun
                     break;
                 case Kind.RequiredTextBuilder:
                     valueBuilder.AddProperty(name, _requiredTextBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RequiredTextSource:
+                    _requiredTextSourceInstance.AddAsProperty(name, ref valueBuilder);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -981,6 +997,9 @@ public readonly partial struct TextRun
                 case Kind.RequiredTextBuilder:
                     valueBuilder.AddProperty(name, _requiredTextBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.Builder.BuildValue(b, ref o));
                     break;
+                case Kind.RequiredTextSource:
+                    _requiredTextSourceInstance.AddAsProperty(name, ref valueBuilder);
+                    break;
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1010,6 +1029,9 @@ public readonly partial struct TextRun
                     break;
                 case Kind.RequiredTextBuilder:
                     valueBuilder.AddItem(_requiredTextBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RequiredTextSource:
+                    _requiredTextSourceInstance.AddAsItem(ref valueBuilder);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");

@@ -1322,12 +1322,19 @@ public readonly partial struct Cql2Schema
                 Unknown,
                 JsonElement,
                 AccentiBuilder,
+                AccentiSource,
                 ArithmeticExpressionBuilder,
+                ArithmeticExpressionSource,
                 CaseiBuilder,
+                CaseiSource,
                 DateInstantBuilder,
+                DateInstantSource,
                 FunctionRefBuilder,
+                FunctionRefSource,
                 PropertyRefBuilder,
+                PropertyRefSource,
                 TimestampInstantBuilder,
+                TimestampInstantSource,
                 RawUtf8StringRequiresUnescaping,
                 RawUtf8StringNotRequiresUnescaping,
                 Utf8String,
@@ -1344,12 +1351,19 @@ public readonly partial struct Cql2Schema
             private readonly ReadOnlySpan<char> _utf16Backing;
             private readonly SimpleTypesBacking _simpleTypeBacking;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.Build? _accentiBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Source _accentiSourceInstance;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.Build? _arithmeticExpressionBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Source _arithmeticExpressionSourceInstance;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.Build? _caseiBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Source _caseiSourceInstance;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.Build? _dateInstantBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Source _dateInstantSourceInstance;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.Build? _functionRefBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source _functionRefSourceInstance;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.Build? _propertyRefBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Source _propertyRefSourceInstance;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.Build? _timestampInstantBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Source _timestampInstantSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1397,17 +1411,31 @@ public readonly partial struct Cql2Schema
 
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.Build value) {_accentiBuilderInstance = value; _kind = Kind.AccentiBuilder; }
 
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Source value) { _accentiSourceInstance = value; _kind = Kind.AccentiSource; }
+
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.Build value) {_arithmeticExpressionBuilderInstance = value; _kind = Kind.ArithmeticExpressionBuilder; }
+
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Source value) { _arithmeticExpressionSourceInstance = value; _kind = Kind.ArithmeticExpressionSource; }
 
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.Build value) {_caseiBuilderInstance = value; _kind = Kind.CaseiBuilder; }
 
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Source value) { _caseiSourceInstance = value; _kind = Kind.CaseiSource; }
+
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.Build value) {_dateInstantBuilderInstance = value; _kind = Kind.DateInstantBuilder; }
+
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Source value) { _dateInstantSourceInstance = value; _kind = Kind.DateInstantSource; }
 
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.Build value) {_functionRefBuilderInstance = value; _kind = Kind.FunctionRefBuilder; }
 
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source value) { _functionRefSourceInstance = value; _kind = Kind.FunctionRefSource; }
+
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.Build value) {_propertyRefBuilderInstance = value; _kind = Kind.PropertyRefBuilder; }
 
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Source value) { _propertyRefSourceInstance = value; _kind = Kind.PropertyRefSource; }
+
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.Build value) {_timestampInstantBuilderInstance = value; _kind = Kind.TimestampInstantBuilder; }
+
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Source value) { _timestampInstantSourceInstance = value; _kind = Kind.TimestampInstantSource; }
 
             public static implicit operator Source(ScalarExpression instance) => new(JsonElement.From(instance));
 
@@ -1427,22 +1455,43 @@ public readonly partial struct Cql2Schema
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Casei instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.JsonBoolean instance) => new(JsonElement.From(instance));
@@ -1495,23 +1544,44 @@ public readonly partial struct Cql2Schema
                     case Kind.AccentiBuilder:
                         valueBuilder.AddProperty(utf8Name, _accentiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.AccentiSource:
+                        _accentiSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.ArithmeticExpressionBuilder:
                         valueBuilder.AddProperty(utf8Name, _arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.ArithmeticExpressionSource:
+                        _arithmeticExpressionSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     case Kind.CaseiBuilder:
                         valueBuilder.AddProperty(utf8Name, _caseiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.CaseiSource:
+                        _caseiSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.DateInstantBuilder:
                         valueBuilder.AddProperty(utf8Name, _dateInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.DateInstantSource:
+                        _dateInstantSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     case Kind.FunctionRefBuilder:
                         valueBuilder.AddProperty(utf8Name, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.FunctionRefSource:
+                        _functionRefSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.PropertyRefBuilder:
                         valueBuilder.AddProperty(utf8Name, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.PropertyRefSource:
+                        _propertyRefSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.TimestampInstantBuilder:
                         valueBuilder.AddProperty(utf8Name, _timestampInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.TimestampInstantSource:
+                        _timestampInstantSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1555,23 +1625,44 @@ public readonly partial struct Cql2Schema
                     case Kind.AccentiBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _accentiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.AccentiSource:
+                        _accentiSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.ArithmeticExpressionBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ArithmeticExpressionSource:
+                        _arithmeticExpressionSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     case Kind.CaseiBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _caseiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.CaseiSource:
+                        _caseiSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.DateInstantBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dateInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DateInstantSource:
+                        _dateInstantSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     case Kind.FunctionRefBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.FunctionRefSource:
+                        _functionRefSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.PropertyRefBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.PropertyRefSource:
+                        _propertyRefSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.TimestampInstantBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _timestampInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.TimestampInstantSource:
+                        _timestampInstantSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1615,23 +1706,44 @@ public readonly partial struct Cql2Schema
                     case Kind.AccentiBuilder:
                         valueBuilder.AddProperty(name, _accentiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.AccentiSource:
+                        _accentiSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.ArithmeticExpressionBuilder:
                         valueBuilder.AddProperty(name, _arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ArithmeticExpressionSource:
+                        _arithmeticExpressionSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     case Kind.CaseiBuilder:
                         valueBuilder.AddProperty(name, _caseiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.CaseiSource:
+                        _caseiSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.DateInstantBuilder:
                         valueBuilder.AddProperty(name, _dateInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DateInstantSource:
+                        _dateInstantSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     case Kind.FunctionRefBuilder:
                         valueBuilder.AddProperty(name, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.FunctionRefSource:
+                        _functionRefSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.PropertyRefBuilder:
                         valueBuilder.AddProperty(name, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.PropertyRefSource:
+                        _propertyRefSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.TimestampInstantBuilder:
                         valueBuilder.AddProperty(name, _timestampInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.TimestampInstantSource:
+                        _timestampInstantSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1675,23 +1787,44 @@ public readonly partial struct Cql2Schema
                     case Kind.AccentiBuilder:
                         valueBuilder.AddProperty(name, _accentiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.AccentiSource:
+                        _accentiSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.ArithmeticExpressionBuilder:
                         valueBuilder.AddProperty(name, _arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ArithmeticExpressionSource:
+                        _arithmeticExpressionSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     case Kind.CaseiBuilder:
                         valueBuilder.AddProperty(name, _caseiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.CaseiSource:
+                        _caseiSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.DateInstantBuilder:
                         valueBuilder.AddProperty(name, _dateInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DateInstantSource:
+                        _dateInstantSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     case Kind.FunctionRefBuilder:
                         valueBuilder.AddProperty(name, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.FunctionRefSource:
+                        _functionRefSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.PropertyRefBuilder:
                         valueBuilder.AddProperty(name, _propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.PropertyRefSource:
+                        _propertyRefSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.TimestampInstantBuilder:
                         valueBuilder.AddProperty(name, _timestampInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.TimestampInstantSource:
+                        _timestampInstantSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1735,23 +1868,44 @@ public readonly partial struct Cql2Schema
                     case Kind.AccentiBuilder:
                         valueBuilder.AddItem(_accentiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Accenti.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.AccentiSource:
+                        _accentiSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.ArithmeticExpressionBuilder:
                         valueBuilder.AddItem(_arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ArithmeticExpressionSource:
+                        _arithmeticExpressionSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     case Kind.CaseiBuilder:
                         valueBuilder.AddItem(_caseiBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Casei.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.CaseiSource:
+                        _caseiSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.DateInstantBuilder:
                         valueBuilder.AddItem(_dateInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DateInstantSource:
+                        _dateInstantSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     case Kind.FunctionRefBuilder:
                         valueBuilder.AddItem(_functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.FunctionRefSource:
+                        _functionRefSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.PropertyRefBuilder:
                         valueBuilder.AddItem(_propertyRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PropertyRef.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.PropertyRefSource:
+                        _propertyRefSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.TimestampInstantBuilder:
                         valueBuilder.AddItem(_timestampInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.TimestampInstantSource:
+                        _timestampInstantSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

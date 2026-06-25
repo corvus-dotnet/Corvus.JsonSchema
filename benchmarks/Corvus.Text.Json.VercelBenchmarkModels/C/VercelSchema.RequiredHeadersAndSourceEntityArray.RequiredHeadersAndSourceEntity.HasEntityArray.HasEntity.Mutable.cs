@@ -782,13 +782,17 @@ public readonly partial struct VercelSchema
                             Unknown,
                             JsonElement,
                             RequiredKeyAndTypeBuilder,
+                            RequiredKeyAndTypeSource,
                             RequiredTypeAndValueBuilder,
+                            RequiredTypeAndValueSource,
                         }
 
                         private readonly Kind _kind;
                         private readonly JsonElement _jsonElement;
                         private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredKeyAndType.Builder.Build? _requiredKeyAndTypeBuilderInstance;
+                        private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredKeyAndType.Source _requiredKeyAndTypeSourceInstance;
                         private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.Builder.Build? _requiredTypeAndValueBuilderInstance;
+                        private readonly Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.Source _requiredTypeAndValueSourceInstance;
 
                         /// <summary>
                         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -803,7 +807,11 @@ public readonly partial struct VercelSchema
 
                         public Source(Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredKeyAndType.Builder.Build value) {_requiredKeyAndTypeBuilderInstance = value; _kind = Kind.RequiredKeyAndTypeBuilder; }
 
+                        public Source(Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredKeyAndType.Source value) { _requiredKeyAndTypeSourceInstance = value; _kind = Kind.RequiredKeyAndTypeSource; }
+
                         public Source(Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.Builder.Build value) {_requiredTypeAndValueBuilderInstance = value; _kind = Kind.RequiredTypeAndValueBuilder; }
+
+                        public Source(Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.Source value) { _requiredTypeAndValueSourceInstance = value; _kind = Kind.RequiredTypeAndValueSource; }
 
                         public static implicit operator Source(HasEntity instance) => new(JsonElement.From(instance));
 
@@ -811,7 +819,13 @@ public readonly partial struct VercelSchema
                         public static implicit operator Source(Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredKeyAndType instance) => new(JsonElement.From(instance));
 
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                        public static implicit operator Source(Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredKeyAndType.Source value) => new(value);
+
+                        [MethodImpl(MethodImplOptions.AggressiveInlining)]
                         public static implicit operator Source(Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue instance) => new(JsonElement.From(instance));
+
+                        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                        public static implicit operator Source(Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.Source value) => new(value);
 
                         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                         {
@@ -825,8 +839,14 @@ public readonly partial struct VercelSchema
                                 case Kind.RequiredKeyAndTypeBuilder:
                                     valueBuilder.AddProperty(utf8Name, _requiredKeyAndTypeBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredKeyAndType.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                                     break;
+                                case Kind.RequiredKeyAndTypeSource:
+                                    _requiredKeyAndTypeSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                                    break;
                                 case Kind.RequiredTypeAndValueBuilder:
                                     valueBuilder.AddProperty(utf8Name, _requiredTypeAndValueBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                                    break;
+                                case Kind.RequiredTypeAndValueSource:
+                                    _requiredTypeAndValueSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
@@ -846,8 +866,14 @@ public readonly partial struct VercelSchema
                                 case Kind.RequiredKeyAndTypeBuilder:
                                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredKeyAndTypeBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredKeyAndType.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.RequiredKeyAndTypeSource:
+                                    _requiredKeyAndTypeSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                    break;
                                 case Kind.RequiredTypeAndValueBuilder:
                                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredTypeAndValueBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.Builder.BuildValue(b, ref o));
+                                    break;
+                                case Kind.RequiredTypeAndValueSource:
+                                    _requiredTypeAndValueSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
@@ -867,8 +893,14 @@ public readonly partial struct VercelSchema
                                 case Kind.RequiredKeyAndTypeBuilder:
                                     valueBuilder.AddProperty(name, _requiredKeyAndTypeBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredKeyAndType.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.RequiredKeyAndTypeSource:
+                                    _requiredKeyAndTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                    break;
                                 case Kind.RequiredTypeAndValueBuilder:
                                     valueBuilder.AddProperty(name, _requiredTypeAndValueBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.Builder.BuildValue(b, ref o));
+                                    break;
+                                case Kind.RequiredTypeAndValueSource:
+                                    _requiredTypeAndValueSourceInstance.AddAsProperty(name, ref valueBuilder);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
@@ -888,8 +920,14 @@ public readonly partial struct VercelSchema
                                 case Kind.RequiredKeyAndTypeBuilder:
                                     valueBuilder.AddProperty(name, _requiredKeyAndTypeBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredKeyAndType.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.RequiredKeyAndTypeSource:
+                                    _requiredKeyAndTypeSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                    break;
                                 case Kind.RequiredTypeAndValueBuilder:
                                     valueBuilder.AddProperty(name, _requiredTypeAndValueBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.Builder.BuildValue(b, ref o));
+                                    break;
+                                case Kind.RequiredTypeAndValueSource:
+                                    _requiredTypeAndValueSourceInstance.AddAsProperty(name, ref valueBuilder);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
@@ -909,8 +947,14 @@ public readonly partial struct VercelSchema
                                 case Kind.RequiredKeyAndTypeBuilder:
                                     valueBuilder.AddItem(_requiredKeyAndTypeBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredKeyAndType.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.RequiredKeyAndTypeSource:
+                                    _requiredKeyAndTypeSourceInstance.AddAsItem(ref valueBuilder);
+                                    break;
                                 case Kind.RequiredTypeAndValueBuilder:
                                     valueBuilder.AddItem(_requiredTypeAndValueBuilderInstance!, static (in b, ref o) => Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.Builder.BuildValue(b, ref o));
+                                    break;
+                                case Kind.RequiredTypeAndValueSource:
+                                    _requiredTypeAndValueSourceInstance.AddAsItem(ref valueBuilder);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");

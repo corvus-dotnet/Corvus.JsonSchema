@@ -75,6 +75,16 @@ public readonly partial struct KrakendSchema
                 _documentVersion = _parent?.Version ?? 0;
             }
 
+            /// <summary>
+            /// Gets a read-only default instance of the mutable type, surfacing the schema default value.
+            /// </summary>
+            /// <remarks>
+            /// The instance is a zero-copy facade over the immutable default, so it can be read but not
+            /// mutated; attempting to mutate it throws an <see cref="InvalidOperationException"/> directing
+            /// the caller to set the value on its parent first.
+            /// </remarks>
+            public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<Endpoint, Mutable>(Endpoint.DefaultInstance);
+
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();
 
@@ -294,7 +304,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Endpoint.ConcurrentCalls.Mutable.DefaultInstance;
                 }
             }
 
@@ -372,7 +382,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Endpoint.JsonStringArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -403,7 +413,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Endpoint.AllowedQueArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -428,7 +438,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Endpoint.Method.Mutable.DefaultInstance;
                 }
             }
 
@@ -450,7 +460,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Endpoint.OutputEncoding.Mutable.DefaultInstance;
                 }
             }
 

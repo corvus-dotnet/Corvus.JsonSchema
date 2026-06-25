@@ -252,6 +252,15 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IdentifierEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -265,6 +274,15 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IdentifierEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IdentifierEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding.Mutable value)
             {
                 return From(value);
             }
@@ -288,6 +306,15 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.OneOf0Entity"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IdentifierEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.OneOf0Entity.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.Deprecated"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -301,6 +328,15 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator IdentifierEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.Deprecated value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.Deprecated"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator IdentifierEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Identifier.Deprecated.Mutable value)
             {
                 return From(value);
             }

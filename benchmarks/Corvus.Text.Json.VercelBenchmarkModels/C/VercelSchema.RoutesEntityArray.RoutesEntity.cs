@@ -214,6 +214,15 @@ public readonly partial struct VercelSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator RoutesEntity(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -227,6 +236,15 @@ public readonly partial struct VercelSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator RoutesEntity(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator RoutesEntity(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.Mutable value)
             {
                 return From(value);
             }

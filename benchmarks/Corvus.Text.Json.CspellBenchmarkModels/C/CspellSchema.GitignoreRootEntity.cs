@@ -137,6 +137,15 @@ public readonly partial struct CspellSchema
             return From(value);
         }
 
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.GitignoreRootEntity.JsonStringArray"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator GitignoreRootEntity(Corvus.CspellBenchmark.Current.CspellSchema.GitignoreRootEntity.JsonStringArray.Mutable value)
+        {
+            return From(value);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator string(GitignoreRootEntity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

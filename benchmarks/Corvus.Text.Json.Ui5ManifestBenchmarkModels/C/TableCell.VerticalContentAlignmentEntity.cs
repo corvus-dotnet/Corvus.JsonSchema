@@ -107,6 +107,15 @@ public readonly partial struct TableCell
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.VerticalContentAlignment"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator VerticalContentAlignmentEntity(Corvus.Ui5ManifestBenchmark.Current.VerticalContentAlignment.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.VerticalContentAlignment.AnyOf0Entity"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -125,6 +134,15 @@ public readonly partial struct TableCell
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.VerticalContentAlignment.AnyOf0Entity"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator VerticalContentAlignmentEntity(Corvus.Ui5ManifestBenchmark.Current.VerticalContentAlignment.AnyOf0Entity.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.VerticalContentAlignment.AnyOf1Entity"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -138,6 +156,15 @@ public readonly partial struct TableCell
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator VerticalContentAlignmentEntity(Corvus.Ui5ManifestBenchmark.Current.VerticalContentAlignment.AnyOf1Entity value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.VerticalContentAlignment.AnyOf1Entity"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator VerticalContentAlignmentEntity(Corvus.Ui5ManifestBenchmark.Current.VerticalContentAlignment.AnyOf1Entity.Mutable value)
         {
             return From(value);
         }

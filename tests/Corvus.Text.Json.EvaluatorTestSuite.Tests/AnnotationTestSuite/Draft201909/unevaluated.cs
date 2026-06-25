@@ -152,7 +152,7 @@ public class SuiteUnevaluatedPropertiesWithPatternProperties
             "{ \"apple\": 42, \"bar\": 24 }",
             "/apple",
             "title",
-            "{\n                \"#/patternProperties/%5Ea\": \"Evaluated\"\n              }");
+            "{\n                \"#/patternProperties/^a\": \"Evaluated\"\n              }");
     }
 
     [TestMethod]

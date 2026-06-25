@@ -236,7 +236,7 @@ public readonly partial struct Ui5ManifestSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.RequiredBundleUrl.BundleUrlRelativeToEntity.Mutable.DefaultInstance;
                         }
                     }
 

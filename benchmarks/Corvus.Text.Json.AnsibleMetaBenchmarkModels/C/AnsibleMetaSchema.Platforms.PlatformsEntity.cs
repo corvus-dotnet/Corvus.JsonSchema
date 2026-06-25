@@ -222,6 +222,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -235,6 +244,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -258,6 +276,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -271,6 +298,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -294,6 +330,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -307,6 +352,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -330,6 +384,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -343,6 +406,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -366,6 +438,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -379,6 +460,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -402,6 +492,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -415,6 +514,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -438,6 +546,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -451,6 +568,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -474,6 +600,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -487,6 +622,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -510,6 +654,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -523,6 +676,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -546,6 +708,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -559,6 +730,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -582,6 +762,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -595,6 +784,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -618,6 +816,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -631,6 +838,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -654,6 +870,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -667,6 +892,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -690,6 +924,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -703,6 +946,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -726,6 +978,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -739,6 +1000,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -762,6 +1032,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -775,6 +1054,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -798,6 +1086,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -811,6 +1108,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -834,6 +1140,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -847,6 +1162,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -870,6 +1194,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -883,6 +1216,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -906,6 +1248,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -919,6 +1270,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -942,6 +1302,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -955,6 +1324,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.Mutable value)
             {
                 return From(value);
             }
@@ -978,6 +1356,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -996,6 +1383,15 @@ public readonly partial struct AnsibleMetaSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -1009,6 +1405,15 @@ public readonly partial struct AnsibleMetaSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformsEntity(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.Mutable value)
             {
                 return From(value);
             }

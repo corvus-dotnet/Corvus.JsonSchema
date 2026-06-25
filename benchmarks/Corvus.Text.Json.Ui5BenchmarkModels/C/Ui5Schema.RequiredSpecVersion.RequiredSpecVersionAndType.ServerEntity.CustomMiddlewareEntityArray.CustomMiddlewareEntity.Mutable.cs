@@ -782,13 +782,17 @@ public readonly partial struct Ui5Schema
                                 Unknown,
                                 JsonElement,
                                 RequiredAfterMiddlewareAndNameBuilder,
+                                RequiredAfterMiddlewareAndNameSource,
                                 RequiredBeforeMiddlewareAndNameBuilder,
+                                RequiredBeforeMiddlewareAndNameSource,
                             }
 
                             private readonly Kind _kind;
                             private readonly JsonElement _jsonElement;
                             private readonly Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredAfterMiddlewareAndName.Builder.Build? _requiredAfterMiddlewareAndNameBuilderInstance;
+                            private readonly Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredAfterMiddlewareAndName.Source _requiredAfterMiddlewareAndNameSourceInstance;
                             private readonly Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredBeforeMiddlewareAndName.Builder.Build? _requiredBeforeMiddlewareAndNameBuilderInstance;
+                            private readonly Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredBeforeMiddlewareAndName.Source _requiredBeforeMiddlewareAndNameSourceInstance;
 
                             /// <summary>
                             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -803,7 +807,11 @@ public readonly partial struct Ui5Schema
 
                             public Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredAfterMiddlewareAndName.Builder.Build value) {_requiredAfterMiddlewareAndNameBuilderInstance = value; _kind = Kind.RequiredAfterMiddlewareAndNameBuilder; }
 
+                            public Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredAfterMiddlewareAndName.Source value) { _requiredAfterMiddlewareAndNameSourceInstance = value; _kind = Kind.RequiredAfterMiddlewareAndNameSource; }
+
                             public Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredBeforeMiddlewareAndName.Builder.Build value) {_requiredBeforeMiddlewareAndNameBuilderInstance = value; _kind = Kind.RequiredBeforeMiddlewareAndNameBuilder; }
+
+                            public Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredBeforeMiddlewareAndName.Source value) { _requiredBeforeMiddlewareAndNameSourceInstance = value; _kind = Kind.RequiredBeforeMiddlewareAndNameSource; }
 
                             public static implicit operator Source(CustomMiddlewareEntity instance) => new(JsonElement.From(instance));
 
@@ -811,7 +819,13 @@ public readonly partial struct Ui5Schema
                             public static implicit operator Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredAfterMiddlewareAndName instance) => new(JsonElement.From(instance));
 
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public static implicit operator Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredAfterMiddlewareAndName.Source value) => new(value);
+
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
                             public static implicit operator Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredBeforeMiddlewareAndName instance) => new(JsonElement.From(instance));
+
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public static implicit operator Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredBeforeMiddlewareAndName.Source value) => new(value);
 
                             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                             {
@@ -825,8 +839,14 @@ public readonly partial struct Ui5Schema
                                     case Kind.RequiredAfterMiddlewareAndNameBuilder:
                                         valueBuilder.AddProperty(utf8Name, _requiredAfterMiddlewareAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredAfterMiddlewareAndName.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                                         break;
+                                    case Kind.RequiredAfterMiddlewareAndNameSource:
+                                        _requiredAfterMiddlewareAndNameSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                                        break;
                                     case Kind.RequiredBeforeMiddlewareAndNameBuilder:
                                         valueBuilder.AddProperty(utf8Name, _requiredBeforeMiddlewareAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredBeforeMiddlewareAndName.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                                        break;
+                                    case Kind.RequiredBeforeMiddlewareAndNameSource:
+                                        _requiredBeforeMiddlewareAndNameSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -846,8 +866,14 @@ public readonly partial struct Ui5Schema
                                     case Kind.RequiredAfterMiddlewareAndNameBuilder:
                                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredAfterMiddlewareAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredAfterMiddlewareAndName.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.RequiredAfterMiddlewareAndNameSource:
+                                        _requiredAfterMiddlewareAndNameSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                        break;
                                     case Kind.RequiredBeforeMiddlewareAndNameBuilder:
                                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredBeforeMiddlewareAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredBeforeMiddlewareAndName.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.RequiredBeforeMiddlewareAndNameSource:
+                                        _requiredBeforeMiddlewareAndNameSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -867,8 +893,14 @@ public readonly partial struct Ui5Schema
                                     case Kind.RequiredAfterMiddlewareAndNameBuilder:
                                         valueBuilder.AddProperty(name, _requiredAfterMiddlewareAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredAfterMiddlewareAndName.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.RequiredAfterMiddlewareAndNameSource:
+                                        _requiredAfterMiddlewareAndNameSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                        break;
                                     case Kind.RequiredBeforeMiddlewareAndNameBuilder:
                                         valueBuilder.AddProperty(name, _requiredBeforeMiddlewareAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredBeforeMiddlewareAndName.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.RequiredBeforeMiddlewareAndNameSource:
+                                        _requiredBeforeMiddlewareAndNameSourceInstance.AddAsProperty(name, ref valueBuilder);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -888,8 +920,14 @@ public readonly partial struct Ui5Schema
                                     case Kind.RequiredAfterMiddlewareAndNameBuilder:
                                         valueBuilder.AddProperty(name, _requiredAfterMiddlewareAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredAfterMiddlewareAndName.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.RequiredAfterMiddlewareAndNameSource:
+                                        _requiredAfterMiddlewareAndNameSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                        break;
                                     case Kind.RequiredBeforeMiddlewareAndNameBuilder:
                                         valueBuilder.AddProperty(name, _requiredBeforeMiddlewareAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredBeforeMiddlewareAndName.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.RequiredBeforeMiddlewareAndNameSource:
+                                        _requiredBeforeMiddlewareAndNameSourceInstance.AddAsProperty(name, ref valueBuilder);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -909,8 +947,14 @@ public readonly partial struct Ui5Schema
                                     case Kind.RequiredAfterMiddlewareAndNameBuilder:
                                         valueBuilder.AddItem(_requiredAfterMiddlewareAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredAfterMiddlewareAndName.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.RequiredAfterMiddlewareAndNameSource:
+                                        _requiredAfterMiddlewareAndNameSourceInstance.AddAsItem(ref valueBuilder);
+                                        break;
                                     case Kind.RequiredBeforeMiddlewareAndNameBuilder:
                                         valueBuilder.AddItem(_requiredBeforeMiddlewareAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.CustomMiddlewareEntityArray.CustomMiddlewareEntity.RequiredBeforeMiddlewareAndName.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.RequiredBeforeMiddlewareAndNameSource:
+                                        _requiredBeforeMiddlewareAndNameSourceInstance.AddAsItem(ref valueBuilder);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");

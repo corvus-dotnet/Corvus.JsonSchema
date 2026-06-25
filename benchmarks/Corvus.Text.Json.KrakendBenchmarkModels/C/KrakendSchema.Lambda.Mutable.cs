@@ -310,7 +310,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Lambda.MaxRetries.Mutable.DefaultInstance;
                 }
             }
 

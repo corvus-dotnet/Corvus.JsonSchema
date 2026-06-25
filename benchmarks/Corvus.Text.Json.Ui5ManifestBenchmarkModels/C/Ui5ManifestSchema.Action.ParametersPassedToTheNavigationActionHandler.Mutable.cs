@@ -790,13 +790,17 @@ public readonly partial struct Ui5ManifestSchema
                     Unknown,
                     JsonElement,
                     IbnActionParametersBuilder,
+                    IbnActionParametersSource,
                     ParametersBuilder,
+                    ParametersSource,
                 }
 
                 private readonly Kind _kind;
                 private readonly JsonElement _jsonElement;
                 private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters.Builder.Build? _ibnActionParametersBuilderInstance;
+                private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters.Source _ibnActionParametersSourceInstance;
                 private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Builder.Build? _parametersBuilderInstance;
+                private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source _parametersSourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -811,7 +815,11 @@ public readonly partial struct Ui5ManifestSchema
 
                 public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters.Builder.Build value) {_ibnActionParametersBuilderInstance = value; _kind = Kind.IbnActionParametersBuilder; }
 
+                public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters.Source value) { _ibnActionParametersSourceInstance = value; _kind = Kind.IbnActionParametersSource; }
+
                 public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Builder.Build value) {_parametersBuilderInstance = value; _kind = Kind.ParametersBuilder; }
+
+                public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source value) { _parametersSourceInstance = value; _kind = Kind.ParametersSource; }
 
                 public static implicit operator Source(ParametersPassedToTheNavigationActionHandler instance) => new(JsonElement.From(instance));
 
@@ -819,7 +827,13 @@ public readonly partial struct Ui5ManifestSchema
                 public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source value) => new(value);
 
                 internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                 {
@@ -833,8 +847,14 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.IbnActionParametersBuilder:
                             valueBuilder.AddProperty(utf8Name, _ibnActionParametersBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.IbnActionParametersSource:
+                            _ibnActionParametersSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.ParametersBuilder:
                             valueBuilder.AddProperty(utf8Name, _parametersBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.ParametersSource:
+                            _parametersSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -854,8 +874,14 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.IbnActionParametersBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _ibnActionParametersBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.IbnActionParametersSource:
+                            _ibnActionParametersSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.ParametersBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _parametersBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ParametersSource:
+                            _parametersSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -875,8 +901,14 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.IbnActionParametersBuilder:
                             valueBuilder.AddProperty(name, _ibnActionParametersBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.IbnActionParametersSource:
+                            _ibnActionParametersSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.ParametersBuilder:
                             valueBuilder.AddProperty(name, _parametersBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ParametersSource:
+                            _parametersSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -896,8 +928,14 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.IbnActionParametersBuilder:
                             valueBuilder.AddProperty(name, _ibnActionParametersBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.IbnActionParametersSource:
+                            _ibnActionParametersSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.ParametersBuilder:
                             valueBuilder.AddProperty(name, _parametersBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ParametersSource:
+                            _parametersSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -917,8 +955,14 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.IbnActionParametersBuilder:
                             valueBuilder.AddItem(_ibnActionParametersBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.IbnActionParametersSource:
+                            _ibnActionParametersSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.ParametersBuilder:
                             valueBuilder.AddItem(_parametersBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ParametersSource:
+                            _parametersSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

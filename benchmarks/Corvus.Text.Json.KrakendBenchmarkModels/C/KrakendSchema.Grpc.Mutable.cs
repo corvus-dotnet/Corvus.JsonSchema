@@ -266,7 +266,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Mutable.DefaultInstance;
                 }
             }
 
@@ -341,7 +341,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Mutable.DefaultInstance;
                 }
             }
 
@@ -366,7 +366,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Mutable.DefaultInstance;
                 }
             }
 
@@ -391,7 +391,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Mutable.DefaultInstance;
                 }
             }
 
@@ -416,7 +416,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Mutable.DefaultInstance;
                 }
             }
 
@@ -441,7 +441,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Mutable.DefaultInstance;
                 }
             }
 
@@ -466,7 +466,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Mutable.DefaultInstance;
                 }
             }
 
@@ -516,7 +516,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Mutable.DefaultInstance;
                 }
             }
 

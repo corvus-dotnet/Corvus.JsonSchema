@@ -47,6 +47,14 @@ public struct JsonSchemaContext
     // This is the maximum number of properties/items for which we can store bits without allocation.
     private const int MaxComplexValueCount = (BufferSize * BitsInAnInt) - 1;
 
+    // The most-significant bit of the last int in the inline evaluated-bits buffer flags whether the
+    // evaluated bits live in the rented buffer (set) rather than inline (clear). It MUST be the top bit
+    // (which corresponds to index 255) so it never collides with a real property/item index: inline data
+    // only ever reaches index 254 because MaxComplexValueCount sends larger objects/arrays to the rented
+    // buffer. (This was previously 0b1000_0000 — bit 7, i.e. index 231 — which an object/array with
+    // 232..255 entries would set, corrupting the flag and faulting the buffer accessor.)
+    private const int RentedBufferInUseFlag = unchecked((int)0b1000_0000_0000_0000_0000_0000_0000_0000);
+
 #endif
 
     private readonly IJsonSchemaResultsCollector? _resultsCollector;
@@ -136,8 +144,8 @@ public struct JsonSchemaContext
                 _rentedBuffer.AsSpan(_offset, required).Clear();
             }
 
-            _localEvaluated[^1] = 0b1000_0000; // Set the top bit to indicate that we are using the buffer for evaluated items
-            _appliedEvaluated[^1] = 0b1000_0000; // Set the top bit to indicate that we are using the buffer for evaluated items
+            _localEvaluated[^1] = RentedBufferInUseFlag; // Flag that the evaluated bits live in the rented buffer
+            _appliedEvaluated[^1] = RentedBufferInUseFlag; // Flag that the evaluated bits live in the rented buffer
             _localEvaluated[0] = _offset;
             _localEvaluated[1] = bitBufferLength;
             _appliedEvaluated[0] = _offset + bitBufferLength;
@@ -208,7 +216,7 @@ public struct JsonSchemaContext
         get
         {
 #if NET
-            if ((_localEvaluated[^1] & 0b1000_0000) == 0)
+            if ((_localEvaluated[^1] & RentedBufferInUseFlag) == 0)
             {
                 return MemoryMarshal.CreateSpan(ref _localEvaluated[0], BufferSize);
             }
@@ -229,7 +237,7 @@ public struct JsonSchemaContext
         get
         {
 #if NET
-            if ((_appliedEvaluated[^1] & 0b1000_0000) == 0)
+            if ((_appliedEvaluated[^1] & RentedBufferInUseFlag) == 0)
             {
                 return MemoryMarshal.CreateSpan(ref _appliedEvaluated[0], BufferSize);
             }

@@ -994,19 +994,29 @@ public readonly partial struct Cql2Schema
                 Unknown,
                 JsonElement,
                 BinaryComparisonPredicateBuilder,
+                BinaryComparisonPredicateSource,
                 IsBetweenPredicateBuilder,
+                IsBetweenPredicateSource,
                 IsInListPredicateBuilder,
+                IsInListPredicateSource,
                 IsLikePredicateBuilder,
+                IsLikePredicateSource,
                 IsNullPredicateBuilder,
+                IsNullPredicateSource,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.Build? _binaryComparisonPredicateBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Source _binaryComparisonPredicateSourceInstance;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.Build? _isBetweenPredicateBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Source _isBetweenPredicateSourceInstance;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.Build? _isInListPredicateBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Source _isInListPredicateSourceInstance;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.Build? _isLikePredicateBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Source _isLikePredicateSourceInstance;
             private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.Build? _isNullPredicateBuilderInstance;
+            private readonly Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Source _isNullPredicateSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1021,13 +1031,23 @@ public readonly partial struct Cql2Schema
 
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.Build value) {_binaryComparisonPredicateBuilderInstance = value; _kind = Kind.BinaryComparisonPredicateBuilder; }
 
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Source value) { _binaryComparisonPredicateSourceInstance = value; _kind = Kind.BinaryComparisonPredicateSource; }
+
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.Build value) {_isBetweenPredicateBuilderInstance = value; _kind = Kind.IsBetweenPredicateBuilder; }
+
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Source value) { _isBetweenPredicateSourceInstance = value; _kind = Kind.IsBetweenPredicateSource; }
 
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.Build value) {_isInListPredicateBuilderInstance = value; _kind = Kind.IsInListPredicateBuilder; }
 
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Source value) { _isInListPredicateSourceInstance = value; _kind = Kind.IsInListPredicateSource; }
+
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.Build value) {_isLikePredicateBuilderInstance = value; _kind = Kind.IsLikePredicateBuilder; }
 
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Source value) { _isLikePredicateSourceInstance = value; _kind = Kind.IsLikePredicateSource; }
+
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.Build value) {_isNullPredicateBuilderInstance = value; _kind = Kind.IsNullPredicateBuilder; }
+
+            public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Source value) { _isNullPredicateSourceInstance = value; _kind = Kind.IsNullPredicateSource; }
 
             public static implicit operator Source(ComparisonPredicate instance) => new(JsonElement.From(instance));
 
@@ -1035,16 +1055,31 @@ public readonly partial struct Cql2Schema
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Source value) => new(value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Source value) => new(value);
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -1058,17 +1093,32 @@ public readonly partial struct Cql2Schema
                     case Kind.BinaryComparisonPredicateBuilder:
                         valueBuilder.AddProperty(utf8Name, _binaryComparisonPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.BinaryComparisonPredicateSource:
+                        _binaryComparisonPredicateSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.IsBetweenPredicateBuilder:
                         valueBuilder.AddProperty(utf8Name, _isBetweenPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.IsBetweenPredicateSource:
+                        _isBetweenPredicateSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     case Kind.IsInListPredicateBuilder:
                         valueBuilder.AddProperty(utf8Name, _isInListPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.IsInListPredicateSource:
+                        _isInListPredicateSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.IsLikePredicateBuilder:
                         valueBuilder.AddProperty(utf8Name, _isLikePredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.IsLikePredicateSource:
+                        _isLikePredicateSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.IsNullPredicateBuilder:
                         valueBuilder.AddProperty(utf8Name, _isNullPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.IsNullPredicateSource:
+                        _isNullPredicateSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1088,17 +1138,32 @@ public readonly partial struct Cql2Schema
                     case Kind.BinaryComparisonPredicateBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _binaryComparisonPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.BinaryComparisonPredicateSource:
+                        _binaryComparisonPredicateSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.IsBetweenPredicateBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _isBetweenPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.IsBetweenPredicateSource:
+                        _isBetweenPredicateSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     case Kind.IsInListPredicateBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _isInListPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.IsInListPredicateSource:
+                        _isInListPredicateSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.IsLikePredicateBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _isLikePredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.IsLikePredicateSource:
+                        _isLikePredicateSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     case Kind.IsNullPredicateBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _isNullPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.IsNullPredicateSource:
+                        _isNullPredicateSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1118,17 +1183,32 @@ public readonly partial struct Cql2Schema
                     case Kind.BinaryComparisonPredicateBuilder:
                         valueBuilder.AddProperty(name, _binaryComparisonPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.BinaryComparisonPredicateSource:
+                        _binaryComparisonPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.IsBetweenPredicateBuilder:
                         valueBuilder.AddProperty(name, _isBetweenPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.IsBetweenPredicateSource:
+                        _isBetweenPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     case Kind.IsInListPredicateBuilder:
                         valueBuilder.AddProperty(name, _isInListPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.IsInListPredicateSource:
+                        _isInListPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.IsLikePredicateBuilder:
                         valueBuilder.AddProperty(name, _isLikePredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.IsLikePredicateSource:
+                        _isLikePredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.IsNullPredicateBuilder:
                         valueBuilder.AddProperty(name, _isNullPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.IsNullPredicateSource:
+                        _isNullPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1148,17 +1228,32 @@ public readonly partial struct Cql2Schema
                     case Kind.BinaryComparisonPredicateBuilder:
                         valueBuilder.AddProperty(name, _binaryComparisonPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.BinaryComparisonPredicateSource:
+                        _binaryComparisonPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.IsBetweenPredicateBuilder:
                         valueBuilder.AddProperty(name, _isBetweenPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.IsBetweenPredicateSource:
+                        _isBetweenPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     case Kind.IsInListPredicateBuilder:
                         valueBuilder.AddProperty(name, _isInListPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.IsInListPredicateSource:
+                        _isInListPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.IsLikePredicateBuilder:
                         valueBuilder.AddProperty(name, _isLikePredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.IsLikePredicateSource:
+                        _isLikePredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     case Kind.IsNullPredicateBuilder:
                         valueBuilder.AddProperty(name, _isNullPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.IsNullPredicateSource:
+                        _isNullPredicateSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1178,17 +1273,32 @@ public readonly partial struct Cql2Schema
                     case Kind.BinaryComparisonPredicateBuilder:
                         valueBuilder.AddItem(_binaryComparisonPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.BinaryComparisonPredicateSource:
+                        _binaryComparisonPredicateSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.IsBetweenPredicateBuilder:
                         valueBuilder.AddItem(_isBetweenPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.IsBetweenPredicateSource:
+                        _isBetweenPredicateSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     case Kind.IsInListPredicateBuilder:
                         valueBuilder.AddItem(_isInListPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.IsInListPredicateSource:
+                        _isInListPredicateSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.IsLikePredicateBuilder:
                         valueBuilder.AddItem(_isLikePredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.IsLikePredicateSource:
+                        _isLikePredicateSourceInstance.AddAsItem(ref valueBuilder);
+                        break;
                     case Kind.IsNullPredicateBuilder:
                         valueBuilder.AddItem(_isNullPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.IsNullPredicateSource:
+                        _isNullPredicateSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

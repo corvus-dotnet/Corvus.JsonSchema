@@ -584,6 +584,15 @@ public readonly partial struct KrakendSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.RequiredAlgAndDisableJwkSecurityAndJwkLocalPath"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Signer(Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.RequiredAlgAndDisableJwkSecurityAndJwkLocalPath.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.RequiredAlgAndJwkUrl"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -597,6 +606,15 @@ public readonly partial struct KrakendSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Signer(Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.RequiredAlgAndJwkUrl value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.RequiredAlgAndJwkUrl"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Signer(Corvus.KrakendBenchmark.Current.KrakendSchema.Signer.RequiredAlgAndJwkUrl.Mutable value)
         {
             return From(value);
         }

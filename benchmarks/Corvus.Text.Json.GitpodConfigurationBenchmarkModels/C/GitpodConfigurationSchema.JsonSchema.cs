@@ -41,7 +41,7 @@ public readonly partial struct GitpodConfigurationSchema
         private static readonly JsonSchemaPathProvider VscodeSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/vscode"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider WorkspaceLocationSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/workspaceLocation"u8, buffer, out written);
 
-        private static void MatchAdditionalRepositories(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAdditionalRepositories(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
@@ -56,7 +56,7 @@ public readonly partial struct GitpodConfigurationSchema
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
-        private static void MatchCheckoutLocation(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchCheckoutLocation(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
@@ -71,7 +71,7 @@ public readonly partial struct GitpodConfigurationSchema
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
         }
 
-        private static void MatchCoreDump(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchCoreDump(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
@@ -86,7 +86,7 @@ public readonly partial struct GitpodConfigurationSchema
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
-        private static void MatchExperimentalNetwork(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchExperimentalNetwork(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext3 =
@@ -101,7 +101,7 @@ public readonly partial struct GitpodConfigurationSchema
             context.CommitChildContext(childContext3.IsMatch, ref childContext3);
         }
 
-        private static void MatchGitConfig(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchGitConfig(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext4 =
@@ -116,7 +116,7 @@ public readonly partial struct GitpodConfigurationSchema
             context.CommitChildContext(childContext4.IsMatch, ref childContext4);
         }
 
-        private static void MatchGithub(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchGithub(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext5 =
@@ -131,7 +131,7 @@ public readonly partial struct GitpodConfigurationSchema
             context.CommitChildContext(childContext5.IsMatch, ref childContext5);
         }
 
-        private static void MatchImage(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchImage(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext6 =
@@ -146,7 +146,7 @@ public readonly partial struct GitpodConfigurationSchema
             context.CommitChildContext(childContext6.IsMatch, ref childContext6);
         }
 
-        private static void MatchJetbrains(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchJetbrains(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext7 =
@@ -161,7 +161,7 @@ public readonly partial struct GitpodConfigurationSchema
             context.CommitChildContext(childContext7.IsMatch, ref childContext7);
         }
 
-        private static void MatchMainConfiguration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchMainConfiguration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext8 =
@@ -176,7 +176,7 @@ public readonly partial struct GitpodConfigurationSchema
             context.CommitChildContext(childContext8.IsMatch, ref childContext8);
         }
 
-        private static void MatchPorts(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPorts(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext9 =
@@ -191,7 +191,7 @@ public readonly partial struct GitpodConfigurationSchema
             context.CommitChildContext(childContext9.IsMatch, ref childContext9);
         }
 
-        private static void MatchTasks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchTasks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext10 =
@@ -206,7 +206,7 @@ public readonly partial struct GitpodConfigurationSchema
             context.CommitChildContext(childContext10.IsMatch, ref childContext10);
         }
 
-        private static void MatchVscode(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchVscode(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext11 =
@@ -221,7 +221,7 @@ public readonly partial struct GitpodConfigurationSchema
             context.CommitChildContext(childContext11.IsMatch, ref childContext11);
         }
 
-        private static void MatchWorkspaceLocation(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchWorkspaceLocation(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext12 =
@@ -323,7 +323,7 @@ public readonly partial struct GitpodConfigurationSchema
 
                     if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.GitpodConfigurationBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {

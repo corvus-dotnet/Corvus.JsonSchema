@@ -4533,6 +4533,72 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Gets a value indicating whether surfacing <paramref name="constituent"/>'s <c>Source</c> through
+    /// <paramref name="union"/>'s <c>Source</c> (the #812 constituent-<c>Source</c> projection) would create
+    /// a value-type containment cycle — i.e. whether <paramref name="constituent"/>'s <c>Source</c> already
+    /// embeds <paramref name="union"/>'s <c>Source</c> by value, directly or transitively.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A constituent <c>Source</c> embeds another type's <c>Source</c> by value through two kinds of edge:
+    /// a captured <c>_createArg</c> field (one per <c>Create(...)</c> parameter, present only when the type
+    /// actually emits that capture — see <see cref="EmitsCreateParamsBuild"/>), and a nested #812 projection
+    /// of its own composition constituents. When <paramref name="union"/> is reachable along those edges,
+    /// also embedding <paramref name="constituent"/>'s <c>Source</c> in <paramref name="union"/>'s would close
+    /// a value cycle and emit an illegal self-containing ref struct (CS0523). The projection is therefore
+    /// suppressed for that constituent, which remains reachable through the builder/<c>JsonElement</c> path.
+    /// </para>
+    /// <para>
+    /// The composition edge is over-approximated by following every constituent (whether or not it is itself
+    /// ultimately projected): suppressing more projections can only break cycles, never create them, so —
+    /// mirroring <see cref="InCreateParamCycle"/> — this keeps the projected set acyclic by construction and
+    /// depends only on the two type arguments, independent of generation order.
+    /// </para>
+    /// </remarks>
+    private static bool ConstituentSourceReachesUnion(TypeDeclaration constituent, TypeDeclaration union)
+    {
+        string targetName = union.FullyQualifiedDotnetTypeName();
+        return Reaches(constituent, targetName, new HashSet<string>(StringComparer.Ordinal));
+
+        static bool Reaches(TypeDeclaration current, string targetName, HashSet<string> visited)
+        {
+            if (EmitsCreateParamsBuild(current))
+            {
+                foreach (PropertyDeclaration p in CreateParameterProperties(current))
+                {
+                    TypeDeclaration child = p.ReducedPropertyType;
+                    string childName = child.FullyQualifiedDotnetTypeName();
+                    if (childName == targetName)
+                    {
+                        return true;
+                    }
+
+                    if (visited.Add(childName) && Reaches(child, targetName, visited))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            foreach (TypeDeclaration c in current.CompositionSources())
+            {
+                string childName = c.FullyQualifiedDotnetTypeName();
+                if (childName == targetName)
+                {
+                    return true;
+                }
+
+                if (visited.Add(childName) && Reaches(c, targetName, visited))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Gets the estimated number of captured value slots the property-parameter <c>Build(...)</c>
     /// overload for <paramref name="typeDeclaration"/> would hold, counting nested emitting object
     /// properties by-value (bottom-up) and everything else as a single fixed slot.
@@ -5105,8 +5171,12 @@ internal static partial class CodeGeneratorExtensions
                     // #812: when the constituent object-builder wiring is enabled (a pure oneOf, or a
                     // discriminated union), also surface the constituent's own Source through the
                     // union's Source, so the result of Constituent.Build(...) can be passed wherever
-                    // the union's Source is expected.
-                    if (!typeDeclaration.HasPropertyDeclarations || typeDeclaration.ConstituentBuildYieldsValidInstance())
+                    // the union's Source is expected. Suppress it for a constituent whose Source would
+                    // (transitively) embed this union's Source by value — surfacing it would close a
+                    // ref-struct containment cycle (CS0523) for a recursive union; the constituent stays
+                    // reachable through the builder/JsonElement path.
+                    if ((!typeDeclaration.HasPropertyDeclarations || typeDeclaration.ConstituentBuildYieldsValidInstance()) &&
+                        !ConstituentSourceReachesUnion(t, typeDeclaration))
                     {
                         sourceKindName = generator.GetUniqueMethodNameInScope(t.DotnetTypeName(), suffix: "Source");
                         sourceInstanceName = generator.GetUniqueFieldNameInScope(sourceKindName, suffix: "Instance");

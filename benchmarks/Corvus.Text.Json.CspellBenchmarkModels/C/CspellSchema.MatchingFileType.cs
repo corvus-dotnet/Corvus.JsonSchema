@@ -133,6 +133,15 @@ public readonly partial struct CspellSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageId"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator MatchingFileType(Corvus.CspellBenchmark.Current.CspellSchema.LanguageId.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.LanguageIdArray"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -146,6 +155,15 @@ public readonly partial struct CspellSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator MatchingFileType(Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.LanguageIdArray value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.LanguageIdArray"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator MatchingFileType(Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.LanguageIdArray.Mutable value)
         {
             return From(value);
         }
@@ -169,6 +187,15 @@ public readonly partial struct CspellSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdSingle"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator MatchingFileType(Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdSingle.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultiple"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -187,6 +214,15 @@ public readonly partial struct CspellSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultiple"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator MatchingFileType(Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultiple.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultipleNeg"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -200,6 +236,15 @@ public readonly partial struct CspellSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator MatchingFileType(Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultipleNeg value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultipleNeg"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator MatchingFileType(Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdMultipleNeg.Mutable value)
         {
             return From(value);
         }

@@ -317,7 +317,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.WhetherItShouldBeEnabledByDefault.Mutable.DefaultInstance;
                 }
             }
 
@@ -338,7 +338,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.HasExplicitPlatformsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -404,7 +404,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.OptionalEntity.Mutable.DefaultInstance;
                 }
             }
 

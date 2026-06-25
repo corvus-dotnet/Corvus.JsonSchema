@@ -224,6 +224,15 @@ public readonly partial struct CmakePresetsSchema
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType1"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator CmakePresetsSchema(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType1.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType2"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -237,6 +246,15 @@ public readonly partial struct CmakePresetsSchema
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator CmakePresetsSchema(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType2 value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
+    /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType2"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator CmakePresetsSchema(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType2.Mutable value)
     {
         return From(value);
     }
@@ -260,6 +278,15 @@ public readonly partial struct CmakePresetsSchema
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType3"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator CmakePresetsSchema(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType3.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType4"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -273,6 +300,15 @@ public readonly partial struct CmakePresetsSchema
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator CmakePresetsSchema(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType4 value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
+    /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType4"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator CmakePresetsSchema(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType4.Mutable value)
     {
         return From(value);
     }
@@ -296,6 +332,15 @@ public readonly partial struct CmakePresetsSchema
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType5"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator CmakePresetsSchema(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType5.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType6"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -309,6 +354,15 @@ public readonly partial struct CmakePresetsSchema
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator CmakePresetsSchema(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType6 value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
+    /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType6"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator CmakePresetsSchema(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType6.Mutable value)
     {
         return From(value);
     }
@@ -332,6 +386,15 @@ public readonly partial struct CmakePresetsSchema
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType7"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator CmakePresetsSchema(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType7.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -345,6 +408,15 @@ public readonly partial struct CmakePresetsSchema
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator CmakePresetsSchema(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8 value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
+    /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator CmakePresetsSchema(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WithVersionType8.Mutable value)
     {
         return From(value);
     }

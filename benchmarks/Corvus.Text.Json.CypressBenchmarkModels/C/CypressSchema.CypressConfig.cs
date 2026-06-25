@@ -503,16 +503,16 @@ public readonly partial struct CypressSchema
         /// Path to folder containing fixture files (Pass false to disable)
         /// </para>
         /// </remarks>
-        public Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity FixturesFolder
+        public Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable FixturesFolder
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FixturesFolderUtf8, out Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FixturesFolderUtf8, out Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable value))
                 {
                     return value;
                 }
 
-                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.DefaultInstance;
+                return Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.DefaultInstance;
             }
         }
 

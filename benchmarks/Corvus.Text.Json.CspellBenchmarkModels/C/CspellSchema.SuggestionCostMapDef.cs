@@ -224,6 +224,15 @@ public readonly partial struct CspellSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SuggestionCostMapDef(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -242,6 +251,15 @@ public readonly partial struct CspellSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SuggestionCostMapDef(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -255,6 +273,15 @@ public readonly partial struct CspellSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator SuggestionCostMapDef(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SuggestionCostMapDef(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap.Mutable value)
         {
             return From(value);
         }

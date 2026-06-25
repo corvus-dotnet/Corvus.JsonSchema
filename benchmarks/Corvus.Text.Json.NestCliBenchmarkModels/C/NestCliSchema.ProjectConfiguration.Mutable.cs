@@ -184,7 +184,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Mutable.DefaultInstance;
                 }
             }
 
@@ -221,7 +221,7 @@ public readonly partial struct NestCliSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Mutable.DefaultInstance;
                 }
             }
 

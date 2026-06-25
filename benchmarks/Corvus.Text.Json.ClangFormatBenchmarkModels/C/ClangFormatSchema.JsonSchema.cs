@@ -186,7 +186,7 @@ public readonly partial struct ClangFormatSchema
         private static readonly JsonSchemaPathProvider UseTabSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/UseTab"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider WhitespaceSensitiveMacrosSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/WhitespaceSensitiveMacros"u8, buffer, out written);
 
-        private static void MatchAccessModifierOffset(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAccessModifierOffset(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
@@ -201,7 +201,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
-        private static void MatchAlignAfterOpenBracket(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAlignAfterOpenBracket(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
@@ -216,7 +216,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
         }
 
-        private static void MatchAlignArrayOfStructures(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAlignArrayOfStructures(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
@@ -231,7 +231,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
-        private static void MatchAlignConsecutiveAssignments(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAlignConsecutiveAssignments(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext3 =
@@ -246,7 +246,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext3.IsMatch, ref childContext3);
         }
 
-        private static void MatchAlignConsecutiveBitFields(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAlignConsecutiveBitFields(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext4 =
@@ -261,7 +261,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext4.IsMatch, ref childContext4);
         }
 
-        private static void MatchAlignConsecutiveDeclarations(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAlignConsecutiveDeclarations(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext5 =
@@ -276,7 +276,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext5.IsMatch, ref childContext5);
         }
 
-        private static void MatchAlignConsecutiveMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAlignConsecutiveMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext6 =
@@ -291,7 +291,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext6.IsMatch, ref childContext6);
         }
 
-        private static void MatchAlignEscapedNewlines(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAlignEscapedNewlines(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext7 =
@@ -306,7 +306,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext7.IsMatch, ref childContext7);
         }
 
-        private static void MatchAlignOperands(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAlignOperands(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext8 =
@@ -321,7 +321,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext8.IsMatch, ref childContext8);
         }
 
-        private static void MatchAlignTrailingComments(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAlignTrailingComments(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext9 =
@@ -336,7 +336,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext9.IsMatch, ref childContext9);
         }
 
-        private static void MatchAllowAllArgumentsOnNextLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAllowAllArgumentsOnNextLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext10 =
@@ -351,7 +351,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext10.IsMatch, ref childContext10);
         }
 
-        private static void MatchAllowAllConstructorInitializersOnNextLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAllowAllConstructorInitializersOnNextLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext11 =
@@ -366,7 +366,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext11.IsMatch, ref childContext11);
         }
 
-        private static void MatchAllowAllParametersOfDeclarationOnNextLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAllowAllParametersOfDeclarationOnNextLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext12 =
@@ -381,7 +381,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext12.IsMatch, ref childContext12);
         }
 
-        private static void MatchAllowShortBlocksOnASingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAllowShortBlocksOnASingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext13 =
@@ -396,7 +396,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext13.IsMatch, ref childContext13);
         }
 
-        private static void MatchAllowShortCaseLabelsOnASingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAllowShortCaseLabelsOnASingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext14 =
@@ -411,7 +411,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext14.IsMatch, ref childContext14);
         }
 
-        private static void MatchAllowShortEnumsOnASingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAllowShortEnumsOnASingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext15 =
@@ -426,7 +426,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext15.IsMatch, ref childContext15);
         }
 
-        private static void MatchAllowShortFunctionsOnASingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAllowShortFunctionsOnASingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext16 =
@@ -441,7 +441,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext16.IsMatch, ref childContext16);
         }
 
-        private static void MatchAllowShortIfStatementsOnASingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAllowShortIfStatementsOnASingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext17 =
@@ -456,7 +456,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext17.IsMatch, ref childContext17);
         }
 
-        private static void MatchAllowShortLambdasOnASingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAllowShortLambdasOnASingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext18 =
@@ -471,7 +471,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext18.IsMatch, ref childContext18);
         }
 
-        private static void MatchAllowShortLoopsOnASingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAllowShortLoopsOnASingleLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext19 =
@@ -486,7 +486,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext19.IsMatch, ref childContext19);
         }
 
-        private static void MatchAlwaysBreakAfterDefinitionReturnType(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAlwaysBreakAfterDefinitionReturnType(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext20 =
@@ -501,7 +501,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext20.IsMatch, ref childContext20);
         }
 
-        private static void MatchAlwaysBreakAfterReturnType(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAlwaysBreakAfterReturnType(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext21 =
@@ -516,7 +516,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext21.IsMatch, ref childContext21);
         }
 
-        private static void MatchAlwaysBreakBeforeMultilineStrings(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAlwaysBreakBeforeMultilineStrings(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext22 =
@@ -531,7 +531,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext22.IsMatch, ref childContext22);
         }
 
-        private static void MatchAlwaysBreakTemplateDeclarations(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAlwaysBreakTemplateDeclarations(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext23 =
@@ -546,7 +546,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext23.IsMatch, ref childContext23);
         }
 
-        private static void MatchAttributeMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchAttributeMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext24 =
@@ -561,7 +561,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext24.IsMatch, ref childContext24);
         }
 
-        private static void MatchBasedOnStyle(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBasedOnStyle(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext25 =
@@ -576,7 +576,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext25.IsMatch, ref childContext25);
         }
 
-        private static void MatchBinPackArguments(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBinPackArguments(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext26 =
@@ -591,7 +591,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext26.IsMatch, ref childContext26);
         }
 
-        private static void MatchBinPackParameters(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBinPackParameters(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext27 =
@@ -606,7 +606,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext27.IsMatch, ref childContext27);
         }
 
-        private static void MatchBitFieldColonSpacing(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBitFieldColonSpacing(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext28 =
@@ -621,7 +621,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext28.IsMatch, ref childContext28);
         }
 
-        private static void MatchBraceWrapping(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBraceWrapping(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext29 =
@@ -636,7 +636,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext29.IsMatch, ref childContext29);
         }
 
-        private static void MatchBreakAfterAttributes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBreakAfterAttributes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext30 =
@@ -651,7 +651,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext30.IsMatch, ref childContext30);
         }
 
-        private static void MatchBreakAfterJavaFieldAnnotations(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBreakAfterJavaFieldAnnotations(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext31 =
@@ -666,7 +666,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext31.IsMatch, ref childContext31);
         }
 
-        private static void MatchBreakArrays(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBreakArrays(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext32 =
@@ -681,7 +681,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext32.IsMatch, ref childContext32);
         }
 
-        private static void MatchBreakBeforeBinaryOperators(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBreakBeforeBinaryOperators(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext33 =
@@ -696,7 +696,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext33.IsMatch, ref childContext33);
         }
 
-        private static void MatchBreakBeforeBraces(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBreakBeforeBraces(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext34 =
@@ -711,7 +711,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext34.IsMatch, ref childContext34);
         }
 
-        private static void MatchBreakBeforeConceptDeclarations(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBreakBeforeConceptDeclarations(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext35 =
@@ -726,7 +726,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext35.IsMatch, ref childContext35);
         }
 
-        private static void MatchBreakBeforeInheritanceComma(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBreakBeforeInheritanceComma(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext36 =
@@ -741,7 +741,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext36.IsMatch, ref childContext36);
         }
 
-        private static void MatchBreakBeforeInlineAsmColon(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBreakBeforeInlineAsmColon(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext37 =
@@ -756,7 +756,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext37.IsMatch, ref childContext37);
         }
 
-        private static void MatchBreakBeforeTernaryOperators(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBreakBeforeTernaryOperators(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext38 =
@@ -771,7 +771,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext38.IsMatch, ref childContext38);
         }
 
-        private static void MatchBreakConstructorInitializers(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBreakConstructorInitializers(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext39 =
@@ -786,7 +786,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext39.IsMatch, ref childContext39);
         }
 
-        private static void MatchBreakConstructorInitializersBeforeComma(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBreakConstructorInitializersBeforeComma(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext40 =
@@ -801,7 +801,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext40.IsMatch, ref childContext40);
         }
 
-        private static void MatchBreakInheritanceList(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBreakInheritanceList(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext41 =
@@ -816,7 +816,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext41.IsMatch, ref childContext41);
         }
 
-        private static void MatchBreakStringLiterals(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchBreakStringLiterals(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext42 =
@@ -831,7 +831,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext42.IsMatch, ref childContext42);
         }
 
-        private static void MatchColumnLimit(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchColumnLimit(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext43 =
@@ -846,7 +846,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext43.IsMatch, ref childContext43);
         }
 
-        private static void MatchCommentPragmas(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchCommentPragmas(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext44 =
@@ -861,7 +861,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext44.IsMatch, ref childContext44);
         }
 
-        private static void MatchCompactNamespaces(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchCompactNamespaces(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext45 =
@@ -876,7 +876,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext45.IsMatch, ref childContext45);
         }
 
-        private static void MatchConstructorInitializerAllOnOneLineOrOnePerLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchConstructorInitializerAllOnOneLineOrOnePerLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext46 =
@@ -891,7 +891,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext46.IsMatch, ref childContext46);
         }
 
-        private static void MatchConstructorInitializerIndentWidth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchConstructorInitializerIndentWidth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext47 =
@@ -906,7 +906,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext47.IsMatch, ref childContext47);
         }
 
-        private static void MatchContinuationIndentWidth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchContinuationIndentWidth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext48 =
@@ -921,7 +921,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext48.IsMatch, ref childContext48);
         }
 
-        private static void MatchCpp11BracedListStyle(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchCpp11BracedListStyle(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext49 =
@@ -936,7 +936,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext49.IsMatch, ref childContext49);
         }
 
-        private static void MatchDeriveLineEnding(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchDeriveLineEnding(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext50 =
@@ -951,7 +951,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext50.IsMatch, ref childContext50);
         }
 
-        private static void MatchDerivePointerAlignment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchDerivePointerAlignment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext51 =
@@ -966,7 +966,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext51.IsMatch, ref childContext51);
         }
 
-        private static void MatchDisableFormat(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchDisableFormat(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext52 =
@@ -981,7 +981,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext52.IsMatch, ref childContext52);
         }
 
-        private static void MatchEmptyLineAfterAccessModifier(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchEmptyLineAfterAccessModifier(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext53 =
@@ -996,7 +996,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext53.IsMatch, ref childContext53);
         }
 
-        private static void MatchEmptyLineBeforeAccessModifier(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchEmptyLineBeforeAccessModifier(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext54 =
@@ -1011,7 +1011,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext54.IsMatch, ref childContext54);
         }
 
-        private static void MatchExperimentalAutoDetectBinPacking(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchExperimentalAutoDetectBinPacking(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext55 =
@@ -1026,7 +1026,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext55.IsMatch, ref childContext55);
         }
 
-        private static void MatchFixNamespaceComments(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchFixNamespaceComments(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext56 =
@@ -1041,7 +1041,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext56.IsMatch, ref childContext56);
         }
 
-        private static void MatchForEachMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchForEachMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext57 =
@@ -1056,7 +1056,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext57.IsMatch, ref childContext57);
         }
 
-        private static void MatchIfMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIfMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext58 =
@@ -1071,7 +1071,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext58.IsMatch, ref childContext58);
         }
 
-        private static void MatchIncludeBlocks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIncludeBlocks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext59 =
@@ -1086,7 +1086,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext59.IsMatch, ref childContext59);
         }
 
-        private static void MatchIncludeCategories(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIncludeCategories(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext60 =
@@ -1101,7 +1101,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext60.IsMatch, ref childContext60);
         }
 
-        private static void MatchIncludeIsMainRegex(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIncludeIsMainRegex(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext61 =
@@ -1116,7 +1116,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext61.IsMatch, ref childContext61);
         }
 
-        private static void MatchIncludeIsMainSourceRegex(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIncludeIsMainSourceRegex(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext62 =
@@ -1131,7 +1131,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext62.IsMatch, ref childContext62);
         }
 
-        private static void MatchIndentAccessModifiers(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIndentAccessModifiers(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext63 =
@@ -1146,7 +1146,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext63.IsMatch, ref childContext63);
         }
 
-        private static void MatchIndentCaseBlocks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIndentCaseBlocks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext64 =
@@ -1161,7 +1161,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext64.IsMatch, ref childContext64);
         }
 
-        private static void MatchIndentCaseLabels(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIndentCaseLabels(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext65 =
@@ -1176,7 +1176,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext65.IsMatch, ref childContext65);
         }
 
-        private static void MatchIndentExternBlock(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIndentExternBlock(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext66 =
@@ -1191,7 +1191,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext66.IsMatch, ref childContext66);
         }
 
-        private static void MatchIndentGotoLabels(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIndentGotoLabels(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext67 =
@@ -1206,7 +1206,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext67.IsMatch, ref childContext67);
         }
 
-        private static void MatchIndentPpDirectives(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIndentPpDirectives(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext68 =
@@ -1221,7 +1221,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext68.IsMatch, ref childContext68);
         }
 
-        private static void MatchIndentRequires(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIndentRequires(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext69 =
@@ -1236,7 +1236,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext69.IsMatch, ref childContext69);
         }
 
-        private static void MatchIndentRequiresClause(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIndentRequiresClause(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext70 =
@@ -1251,7 +1251,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext70.IsMatch, ref childContext70);
         }
 
-        private static void MatchIndentWidth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIndentWidth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext71 =
@@ -1266,7 +1266,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext71.IsMatch, ref childContext71);
         }
 
-        private static void MatchIndentWrappedFunctionNames(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIndentWrappedFunctionNames(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext72 =
@@ -1281,7 +1281,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext72.IsMatch, ref childContext72);
         }
 
-        private static void MatchInsertBraces(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchInsertBraces(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext73 =
@@ -1296,7 +1296,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext73.IsMatch, ref childContext73);
         }
 
-        private static void MatchInsertNewlineAtEof(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchInsertNewlineAtEof(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext74 =
@@ -1311,7 +1311,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext74.IsMatch, ref childContext74);
         }
 
-        private static void MatchInsertTrailingCommas(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchInsertTrailingCommas(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext75 =
@@ -1326,7 +1326,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext75.IsMatch, ref childContext75);
         }
 
-        private static void MatchIntegerLiteralSeparator(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchIntegerLiteralSeparator(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext76 =
@@ -1341,7 +1341,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext76.IsMatch, ref childContext76);
         }
 
-        private static void MatchJavaImportGroup(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchJavaImportGroup(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext77 =
@@ -1356,7 +1356,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext77.IsMatch, ref childContext77);
         }
 
-        private static void MatchJavaScriptQuotes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchJavaScriptQuotes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext78 =
@@ -1371,7 +1371,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext78.IsMatch, ref childContext78);
         }
 
-        private static void MatchJavaScriptWrapImports(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchJavaScriptWrapImports(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext79 =
@@ -1386,7 +1386,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext79.IsMatch, ref childContext79);
         }
 
-        private static void MatchKeepEmptyLinesAtTheStartOfBlocks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchKeepEmptyLinesAtTheStartOfBlocks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext80 =
@@ -1401,7 +1401,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext80.IsMatch, ref childContext80);
         }
 
-        private static void MatchLambdaBodyIndentation(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchLambdaBodyIndentation(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext81 =
@@ -1416,7 +1416,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext81.IsMatch, ref childContext81);
         }
 
-        private static void MatchLanguage(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchLanguage(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext82 =
@@ -1431,7 +1431,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext82.IsMatch, ref childContext82);
         }
 
-        private static void MatchLineEnding(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchLineEnding(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext83 =
@@ -1446,7 +1446,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext83.IsMatch, ref childContext83);
         }
 
-        private static void MatchMacroBlockBegin(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchMacroBlockBegin(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext84 =
@@ -1461,7 +1461,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext84.IsMatch, ref childContext84);
         }
 
-        private static void MatchMacroBlockEnd(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchMacroBlockEnd(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext85 =
@@ -1476,7 +1476,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext85.IsMatch, ref childContext85);
         }
 
-        private static void MatchMaxEmptyLinesToKeep(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchMaxEmptyLinesToKeep(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext86 =
@@ -1491,7 +1491,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext86.IsMatch, ref childContext86);
         }
 
-        private static void MatchNamespaceIndentation(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchNamespaceIndentation(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext87 =
@@ -1506,7 +1506,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext87.IsMatch, ref childContext87);
         }
 
-        private static void MatchNamespaceMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchNamespaceMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext88 =
@@ -1521,7 +1521,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext88.IsMatch, ref childContext88);
         }
 
-        private static void MatchObjCBinPackProtocolList(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchObjCBinPackProtocolList(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext89 =
@@ -1536,7 +1536,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext89.IsMatch, ref childContext89);
         }
 
-        private static void MatchObjCBlockIndentWidth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchObjCBlockIndentWidth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext90 =
@@ -1551,7 +1551,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext90.IsMatch, ref childContext90);
         }
 
-        private static void MatchObjCBreakBeforeNestedBlockParam(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchObjCBreakBeforeNestedBlockParam(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext91 =
@@ -1566,7 +1566,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext91.IsMatch, ref childContext91);
         }
 
-        private static void MatchObjCSpaceAfterProperty(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchObjCSpaceAfterProperty(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext92 =
@@ -1581,7 +1581,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext92.IsMatch, ref childContext92);
         }
 
-        private static void MatchObjCSpaceBeforeProtocolList(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchObjCSpaceBeforeProtocolList(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext93 =
@@ -1596,7 +1596,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext93.IsMatch, ref childContext93);
         }
 
-        private static void MatchPackConstructorInitializers(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPackConstructorInitializers(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext94 =
@@ -1611,7 +1611,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext94.IsMatch, ref childContext94);
         }
 
-        private static void MatchPenaltyBreakAssignment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPenaltyBreakAssignment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext95 =
@@ -1626,7 +1626,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext95.IsMatch, ref childContext95);
         }
 
-        private static void MatchPenaltyBreakBeforeFirstCallParameter(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPenaltyBreakBeforeFirstCallParameter(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext96 =
@@ -1641,7 +1641,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext96.IsMatch, ref childContext96);
         }
 
-        private static void MatchPenaltyBreakComment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPenaltyBreakComment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext97 =
@@ -1656,7 +1656,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext97.IsMatch, ref childContext97);
         }
 
-        private static void MatchPenaltyBreakFirstLessLess(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPenaltyBreakFirstLessLess(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext98 =
@@ -1671,7 +1671,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext98.IsMatch, ref childContext98);
         }
 
-        private static void MatchPenaltyBreakOpenParenthesis(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPenaltyBreakOpenParenthesis(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext99 =
@@ -1686,7 +1686,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext99.IsMatch, ref childContext99);
         }
 
-        private static void MatchPenaltyBreakString(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPenaltyBreakString(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext100 =
@@ -1701,7 +1701,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext100.IsMatch, ref childContext100);
         }
 
-        private static void MatchPenaltyBreakTemplateDeclaration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPenaltyBreakTemplateDeclaration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext101 =
@@ -1716,7 +1716,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext101.IsMatch, ref childContext101);
         }
 
-        private static void MatchPenaltyExcessCharacter(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPenaltyExcessCharacter(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext102 =
@@ -1731,7 +1731,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext102.IsMatch, ref childContext102);
         }
 
-        private static void MatchPenaltyIndentedWhitespace(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPenaltyIndentedWhitespace(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext103 =
@@ -1746,7 +1746,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext103.IsMatch, ref childContext103);
         }
 
-        private static void MatchPenaltyReturnTypeOnItsOwnLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPenaltyReturnTypeOnItsOwnLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext104 =
@@ -1761,7 +1761,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext104.IsMatch, ref childContext104);
         }
 
-        private static void MatchPointerAlignment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPointerAlignment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext105 =
@@ -1776,7 +1776,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext105.IsMatch, ref childContext105);
         }
 
-        private static void MatchPpIndentWidth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchPpIndentWidth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext106 =
@@ -1791,7 +1791,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext106.IsMatch, ref childContext106);
         }
 
-        private static void MatchQualifierAlignment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchQualifierAlignment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext107 =
@@ -1806,7 +1806,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext107.IsMatch, ref childContext107);
         }
 
-        private static void MatchQualifierOrder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchQualifierOrder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext108 =
@@ -1821,7 +1821,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext108.IsMatch, ref childContext108);
         }
 
-        private static void MatchRawStringFormats(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchRawStringFormats(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext109 =
@@ -1836,7 +1836,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext109.IsMatch, ref childContext109);
         }
 
-        private static void MatchReferenceAlignment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchReferenceAlignment(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext110 =
@@ -1851,7 +1851,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext110.IsMatch, ref childContext110);
         }
 
-        private static void MatchReflowComments(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchReflowComments(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext111 =
@@ -1866,7 +1866,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext111.IsMatch, ref childContext111);
         }
 
-        private static void MatchRemoveBracesLlvm(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchRemoveBracesLlvm(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext112 =
@@ -1881,7 +1881,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext112.IsMatch, ref childContext112);
         }
 
-        private static void MatchRemoveSemicolon(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchRemoveSemicolon(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext113 =
@@ -1896,7 +1896,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext113.IsMatch, ref childContext113);
         }
 
-        private static void MatchRequiresClausePosition(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchRequiresClausePosition(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext114 =
@@ -1911,7 +1911,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext114.IsMatch, ref childContext114);
         }
 
-        private static void MatchRequiresExpressionIndentation(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchRequiresExpressionIndentation(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext115 =
@@ -1926,7 +1926,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext115.IsMatch, ref childContext115);
         }
 
-        private static void MatchSeparateDefinitionBlocks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSeparateDefinitionBlocks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext116 =
@@ -1941,7 +1941,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext116.IsMatch, ref childContext116);
         }
 
-        private static void MatchShortNamespaceLines(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchShortNamespaceLines(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext117 =
@@ -1956,7 +1956,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext117.IsMatch, ref childContext117);
         }
 
-        private static void MatchSortIncludes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSortIncludes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext118 =
@@ -1971,7 +1971,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext118.IsMatch, ref childContext118);
         }
 
-        private static void MatchSortJavaStaticImport(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSortJavaStaticImport(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext119 =
@@ -1986,7 +1986,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext119.IsMatch, ref childContext119);
         }
 
-        private static void MatchSortUsingDeclarations(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSortUsingDeclarations(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext120 =
@@ -2001,7 +2001,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext120.IsMatch, ref childContext120);
         }
 
-        private static void MatchSpaceAfterCStyleCast(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpaceAfterCStyleCast(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext121 =
@@ -2016,7 +2016,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext121.IsMatch, ref childContext121);
         }
 
-        private static void MatchSpaceAfterLogicalNot(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpaceAfterLogicalNot(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext122 =
@@ -2031,7 +2031,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext122.IsMatch, ref childContext122);
         }
 
-        private static void MatchSpaceAfterTemplateKeyword(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpaceAfterTemplateKeyword(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext123 =
@@ -2046,7 +2046,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext123.IsMatch, ref childContext123);
         }
 
-        private static void MatchSpaceAroundPointerQualifiers(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpaceAroundPointerQualifiers(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext124 =
@@ -2061,7 +2061,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext124.IsMatch, ref childContext124);
         }
 
-        private static void MatchSpaceBeforeAssignmentOperators(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpaceBeforeAssignmentOperators(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext125 =
@@ -2076,7 +2076,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext125.IsMatch, ref childContext125);
         }
 
-        private static void MatchSpaceBeforeCaseColon(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpaceBeforeCaseColon(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext126 =
@@ -2091,7 +2091,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext126.IsMatch, ref childContext126);
         }
 
-        private static void MatchSpaceBeforeCpp11BracedList(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpaceBeforeCpp11BracedList(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext127 =
@@ -2106,7 +2106,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext127.IsMatch, ref childContext127);
         }
 
-        private static void MatchSpaceBeforeCtorInitializerColon(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpaceBeforeCtorInitializerColon(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext128 =
@@ -2121,7 +2121,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext128.IsMatch, ref childContext128);
         }
 
-        private static void MatchSpaceBeforeInheritanceColon(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpaceBeforeInheritanceColon(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext129 =
@@ -2136,7 +2136,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext129.IsMatch, ref childContext129);
         }
 
-        private static void MatchSpaceBeforeParens(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpaceBeforeParens(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext130 =
@@ -2151,7 +2151,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext130.IsMatch, ref childContext130);
         }
 
-        private static void MatchSpaceBeforeParensOptions(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpaceBeforeParensOptions(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext131 =
@@ -2166,7 +2166,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext131.IsMatch, ref childContext131);
         }
 
-        private static void MatchSpaceBeforeRangeBasedForLoopColon(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpaceBeforeRangeBasedForLoopColon(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext132 =
@@ -2181,7 +2181,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext132.IsMatch, ref childContext132);
         }
 
-        private static void MatchSpaceBeforeSquareBrackets(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpaceBeforeSquareBrackets(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext133 =
@@ -2196,7 +2196,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext133.IsMatch, ref childContext133);
         }
 
-        private static void MatchSpaceInEmptyBlock(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpaceInEmptyBlock(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext134 =
@@ -2211,7 +2211,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext134.IsMatch, ref childContext134);
         }
 
-        private static void MatchSpaceInEmptyParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpaceInEmptyParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext135 =
@@ -2226,7 +2226,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext135.IsMatch, ref childContext135);
         }
 
-        private static void MatchSpacesBeforeTrailingComments(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpacesBeforeTrailingComments(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext136 =
@@ -2241,7 +2241,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext136.IsMatch, ref childContext136);
         }
 
-        private static void MatchSpacesInAngles(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpacesInAngles(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext137 =
@@ -2256,7 +2256,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext137.IsMatch, ref childContext137);
         }
 
-        private static void MatchSpacesInConditionalStatement(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpacesInConditionalStatement(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext138 =
@@ -2271,7 +2271,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext138.IsMatch, ref childContext138);
         }
 
-        private static void MatchSpacesInContainerLiterals(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpacesInContainerLiterals(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext139 =
@@ -2286,7 +2286,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext139.IsMatch, ref childContext139);
         }
 
-        private static void MatchSpacesInCStyleCastParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpacesInCStyleCastParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext140 =
@@ -2301,7 +2301,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext140.IsMatch, ref childContext140);
         }
 
-        private static void MatchSpacesInLineCommentPrefix(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpacesInLineCommentPrefix(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext141 =
@@ -2316,7 +2316,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext141.IsMatch, ref childContext141);
         }
 
-        private static void MatchSpacesInParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpacesInParentheses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext142 =
@@ -2331,7 +2331,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext142.IsMatch, ref childContext142);
         }
 
-        private static void MatchSpacesInSquareBrackets(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSpacesInSquareBrackets(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext143 =
@@ -2346,7 +2346,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext143.IsMatch, ref childContext143);
         }
 
-        private static void MatchStandard(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchStandard(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext144 =
@@ -2361,7 +2361,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext144.IsMatch, ref childContext144);
         }
 
-        private static void MatchStatementAttributeLikeMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchStatementAttributeLikeMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext145 =
@@ -2376,7 +2376,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext145.IsMatch, ref childContext145);
         }
 
-        private static void MatchStatementMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchStatementMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext146 =
@@ -2391,7 +2391,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext146.IsMatch, ref childContext146);
         }
 
-        private static void MatchTabWidth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchTabWidth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext147 =
@@ -2406,7 +2406,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext147.IsMatch, ref childContext147);
         }
 
-        private static void MatchTypenameMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchTypenameMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext148 =
@@ -2421,7 +2421,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext148.IsMatch, ref childContext148);
         }
 
-        private static void MatchUseCrlf(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchUseCrlf(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext149 =
@@ -2436,7 +2436,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext149.IsMatch, ref childContext149);
         }
 
-        private static void MatchUseTab(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchUseTab(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext150 =
@@ -2451,7 +2451,7 @@ public readonly partial struct ClangFormatSchema
             context.CommitChildContext(childContext150.IsMatch, ref childContext150);
         }
 
-        private static void MatchWhitespaceSensitiveMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchWhitespaceSensitiveMacros(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext151 =
@@ -2695,7 +2695,7 @@ public readonly partial struct ClangFormatSchema
 
                     if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.ClangFormatBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {

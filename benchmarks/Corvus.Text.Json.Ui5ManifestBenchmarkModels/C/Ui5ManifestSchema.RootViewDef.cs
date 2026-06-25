@@ -220,6 +220,15 @@ public readonly partial struct Ui5ManifestSchema
             return From(value);
         }
 
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RootViewDef.RequiredViewName"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator RootViewDef(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RootViewDef.RequiredViewName.Mutable value)
+        {
+            return From(value);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator string(RootViewDef value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

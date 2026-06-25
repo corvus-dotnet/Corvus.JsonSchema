@@ -224,6 +224,15 @@ public readonly partial struct Ui5Schema
                     }
 
                     /// <summary>
+                    /// Conversion from the <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator CustomTasksEntity(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName.Mutable value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
                     /// Conversion to <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName"/>.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
@@ -237,6 +246,15 @@ public readonly partial struct Ui5Schema
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
                     public static implicit operator CustomTasksEntity(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
+                    /// Conversion from the <see cref="Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator CustomTasksEntity(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName.Mutable value)
                     {
                         return From(value);
                     }

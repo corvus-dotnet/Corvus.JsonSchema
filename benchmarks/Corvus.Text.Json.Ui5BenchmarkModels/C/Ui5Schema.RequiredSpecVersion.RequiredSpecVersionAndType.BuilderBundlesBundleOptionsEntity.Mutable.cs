@@ -194,7 +194,7 @@ public readonly partial struct Ui5Schema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.AddTryCatchRestartWrapperEntity.Mutable.DefaultInstance;
                         }
                     }
 
@@ -210,7 +210,7 @@ public readonly partial struct Ui5Schema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.DecorateBootstrapModuleEntity.Mutable.DefaultInstance;
                         }
                     }
 
@@ -226,7 +226,7 @@ public readonly partial struct Ui5Schema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.NumberOfPartsEntity.Mutable.DefaultInstance;
                         }
                     }
 
@@ -242,7 +242,7 @@ public readonly partial struct Ui5Schema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.OptimizeEntity.Mutable.DefaultInstance;
                         }
                     }
 
@@ -258,7 +258,7 @@ public readonly partial struct Ui5Schema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.UsePredefineCallsEntity.Mutable.DefaultInstance;
                         }
                     }
 

@@ -217,7 +217,7 @@ public readonly partial struct LazygitSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.SignOff.Mutable.DefaultInstance;
                     }
                 }
 

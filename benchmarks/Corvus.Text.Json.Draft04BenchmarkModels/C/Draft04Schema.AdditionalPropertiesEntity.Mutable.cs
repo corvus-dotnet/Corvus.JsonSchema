@@ -81,6 +81,16 @@ public readonly partial struct Draft04Schema
                 _documentVersion = _parent?.Version ?? 0;
             }
 
+            /// <summary>
+            /// Gets a read-only default instance of the mutable type, surfacing the schema default value.
+            /// </summary>
+            /// <remarks>
+            /// The instance is a zero-copy facade over the immutable default, so it can be read but not
+            /// mutated; attempting to mutate it throws an <see cref="InvalidOperationException"/> directing
+            /// the caller to set the value on its parent first.
+            /// </remarks>
+            public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<AdditionalPropertiesEntity, Mutable>(AdditionalPropertiesEntity.DefaultInstance);
+
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();
 
@@ -822,6 +832,7 @@ public readonly partial struct Draft04Schema
                 Unknown,
                 JsonElement,
                 Draft04SchemaBuilder,
+                Draft04SchemaSource,
                 True,
                 False,
             }
@@ -829,6 +840,7 @@ public readonly partial struct Draft04Schema
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Corvus.Draft04Benchmark.Current.Draft04Schema.Builder.Build? _draft04SchemaBuilderInstance;
+            private readonly Corvus.Draft04Benchmark.Current.Draft04Schema.Source _draft04SchemaSourceInstance;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -845,6 +857,8 @@ public readonly partial struct Draft04Schema
 
             public Source(Corvus.Draft04Benchmark.Current.Draft04Schema.Builder.Build value) {_draft04SchemaBuilderInstance = value; _kind = Kind.Draft04SchemaBuilder; }
 
+            public Source(Corvus.Draft04Benchmark.Current.Draft04Schema.Source value) { _draft04SchemaSourceInstance = value; _kind = Kind.Draft04SchemaSource; }
+
             public static implicit operator Source(AdditionalPropertiesEntity instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -852,6 +866,9 @@ public readonly partial struct Draft04Schema
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Draft04Benchmark.Current.Draft04Schema instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.Draft04Benchmark.Current.Draft04Schema.Source value) => new(value);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(Corvus.Draft04Benchmark.Current.JsonBoolean instance) => new(JsonElement.From(instance));
@@ -873,6 +890,9 @@ public readonly partial struct Draft04Schema
                         break;
                     case Kind.Draft04SchemaBuilder:
                         valueBuilder.AddProperty(utf8Name, _draft04SchemaBuilderInstance!, static (in b, ref o) => Corvus.Draft04Benchmark.Current.Draft04Schema.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    case Kind.Draft04SchemaSource:
+                        _draft04SchemaSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -898,6 +918,9 @@ public readonly partial struct Draft04Schema
                     case Kind.Draft04SchemaBuilder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _draft04SchemaBuilderInstance!, static (in b, ref o) => Corvus.Draft04Benchmark.Current.Draft04Schema.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Draft04SchemaSource:
+                        _draft04SchemaSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -921,6 +944,9 @@ public readonly partial struct Draft04Schema
                         break;
                     case Kind.Draft04SchemaBuilder:
                         valueBuilder.AddProperty(name, _draft04SchemaBuilderInstance!, static (in b, ref o) => Corvus.Draft04Benchmark.Current.Draft04Schema.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.Draft04SchemaSource:
+                        _draft04SchemaSourceInstance.AddAsProperty(name, ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -946,6 +972,9 @@ public readonly partial struct Draft04Schema
                     case Kind.Draft04SchemaBuilder:
                         valueBuilder.AddProperty(name, _draft04SchemaBuilderInstance!, static (in b, ref o) => Corvus.Draft04Benchmark.Current.Draft04Schema.Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Draft04SchemaSource:
+                        _draft04SchemaSourceInstance.AddAsProperty(name, ref valueBuilder);
+                        break;
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -969,6 +998,9 @@ public readonly partial struct Draft04Schema
                         break;
                     case Kind.Draft04SchemaBuilder:
                         valueBuilder.AddItem(_draft04SchemaBuilderInstance!, static (in b, ref o) => Corvus.Draft04Benchmark.Current.Draft04Schema.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.Draft04SchemaSource:
+                        _draft04SchemaSourceInstance.AddAsItem(ref valueBuilder);
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

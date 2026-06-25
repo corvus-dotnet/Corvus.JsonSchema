@@ -226,6 +226,15 @@ public readonly partial struct PulumiSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator TypeEntity(Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -239,6 +248,15 @@ public readonly partial struct PulumiSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator TypeEntity(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator TypeEntity(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Mutable value)
             {
                 return From(value);
             }

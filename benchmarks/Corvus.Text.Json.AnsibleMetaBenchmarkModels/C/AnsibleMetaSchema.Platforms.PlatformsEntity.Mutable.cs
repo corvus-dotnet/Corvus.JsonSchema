@@ -3692,99 +3692,189 @@ public readonly partial struct AnsibleMetaSchema
                     Unknown,
                     JsonElement,
                     AixPlatformModelBuilder,
+                    AixPlatformModelSource,
                     AlpinePlatformModelBuilder,
+                    AlpinePlatformModelSource,
                     AmazonLinuxPlatformModelBuilder,
+                    AmazonLinuxPlatformModelSource,
                     AmazonPlatformModelBuilder,
+                    AmazonPlatformModelSource,
                     AosPlatformModelBuilder,
+                    AosPlatformModelSource,
                     ArchLinuxPlatformModelBuilder,
+                    ArchLinuxPlatformModelSource,
                     ClearLinuxPlatformModelBuilder,
+                    ClearLinuxPlatformModelSource,
                     CumulusPlatformModelBuilder,
+                    CumulusPlatformModelSource,
                     DebianPlatformModelBuilder,
+                    DebianPlatformModelSource,
                     DellOsPlatformModelBuilder,
+                    DellOsPlatformModelSource,
                     DevuanPlatformModelBuilder,
+                    DevuanPlatformModelSource,
                     DragonFlyBsdPlatformModelBuilder,
+                    DragonFlyBsdPlatformModelSource,
                     ElPlatformModelBuilder,
+                    ElPlatformModelSource,
                     EosPlatformModelBuilder,
+                    EosPlatformModelSource,
                     FedoraPlatformModelBuilder,
+                    FedoraPlatformModelSource,
                     FreeBsdPlatformModelBuilder,
+                    FreeBsdPlatformModelSource,
                     GenericBsdPlatformModelBuilder,
+                    GenericBsdPlatformModelSource,
                     GenericLinuxPlatformModelBuilder,
+                    GenericLinuxPlatformModelSource,
                     GenericUnixPlatformModelBuilder,
+                    GenericUnixPlatformModelSource,
                     GentooPlatformModelBuilder,
+                    GentooPlatformModelSource,
                     HardenedBsdPlatformModelBuilder,
+                    HardenedBsdPlatformModelSource,
                     IosPlatformModelBuilder,
+                    IosPlatformModelSource,
                     JunosPlatformModelBuilder,
+                    JunosPlatformModelSource,
                     KaliPlatformModelBuilder,
+                    KaliPlatformModelSource,
                     MacOsPlatformModelBuilder,
+                    MacOsPlatformModelSource,
                     MacOsxPlatformModelBuilder,
+                    MacOsxPlatformModelSource,
                     MageiaPlatformModelBuilder,
+                    MageiaPlatformModelSource,
                     NetBsdPlatformModelBuilder,
+                    NetBsdPlatformModelSource,
                     NxosPlatformModelBuilder,
+                    NxosPlatformModelSource,
                     OpenBsdPlatformModelBuilder,
+                    OpenBsdPlatformModelSource,
                     OpensusePlatformModelBuilder,
+                    OpensusePlatformModelSource,
                     OpenWrtPlatformModelBuilder,
+                    OpenWrtPlatformModelSource,
                     OracleLinuxPlatformModelBuilder,
+                    OracleLinuxPlatformModelSource,
                     Os10PlatformModelBuilder,
+                    Os10PlatformModelSource,
                     PanOsPlatformModelBuilder,
+                    PanOsPlatformModelSource,
                     SlesPlatformModelBuilder,
+                    SlesPlatformModelSource,
                     SmartOsPlatformModelBuilder,
+                    SmartOsPlatformModelSource,
                     SolarisPlatformModelBuilder,
+                    SolarisPlatformModelSource,
                     SynologyPlatformModelBuilder,
+                    SynologyPlatformModelSource,
                     TmosPlatformModelBuilder,
+                    TmosPlatformModelSource,
                     UbuntuPlatformModelBuilder,
+                    UbuntuPlatformModelSource,
                     VCenterPlatformModelBuilder,
+                    VCenterPlatformModelSource,
                     VoidLinuxPlatformModelBuilder,
+                    VoidLinuxPlatformModelSource,
                     VSpherePlatformModelBuilder,
+                    VSpherePlatformModelSource,
                     WindowsPlatformModelBuilder,
+                    WindowsPlatformModelSource,
                 }
 
                 private readonly Kind _kind;
                 private readonly JsonElement _jsonElement;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Builder.Build? _aixPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Source _aixPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.Builder.Build? _alpinePlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.Source _alpinePlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.Builder.Build? _amazonLinuxPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.Source _amazonLinuxPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.Builder.Build? _amazonPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.Source _amazonPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.Builder.Build? _aosPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.Source _aosPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.Builder.Build? _archLinuxPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.Source _archLinuxPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.Builder.Build? _clearLinuxPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.Source _clearLinuxPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.Builder.Build? _cumulusPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.Source _cumulusPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.Builder.Build? _debianPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.Source _debianPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.Builder.Build? _dellOsPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.Source _dellOsPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.Builder.Build? _devuanPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.Source _devuanPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.Builder.Build? _dragonFlyBsdPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.Source _dragonFlyBsdPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.Builder.Build? _elPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.Source _elPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.Builder.Build? _eosPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.Source _eosPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.Builder.Build? _fedoraPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.Source _fedoraPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.Builder.Build? _freeBsdPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.Source _freeBsdPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.Builder.Build? _genericBsdPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.Source _genericBsdPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.Builder.Build? _genericLinuxPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.Source _genericLinuxPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.Builder.Build? _genericUnixPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.Source _genericUnixPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.Builder.Build? _gentooPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.Source _gentooPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.Builder.Build? _hardenedBsdPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.Source _hardenedBsdPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.Builder.Build? _iosPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.Source _iosPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.Builder.Build? _junosPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.Source _junosPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.Builder.Build? _kaliPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.Source _kaliPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.Builder.Build? _macOsPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.Source _macOsPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.Builder.Build? _macOsxPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.Source _macOsxPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.Builder.Build? _mageiaPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.Source _mageiaPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.Builder.Build? _netBsdPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.Source _netBsdPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.Builder.Build? _nxosPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.Source _nxosPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.Builder.Build? _openBsdPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.Source _openBsdPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.Builder.Build? _opensusePlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.Source _opensusePlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.Builder.Build? _openWrtPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.Source _openWrtPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.Builder.Build? _oracleLinuxPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.Source _oracleLinuxPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.Builder.Build? _os10PlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.Source _os10PlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.Builder.Build? _panOsPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.Source _panOsPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.Builder.Build? _slesPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.Source _slesPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.Builder.Build? _smartOsPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.Source _smartOsPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.Builder.Build? _solarisPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.Source _solarisPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.Builder.Build? _synologyPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.Source _synologyPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.Builder.Build? _tmosPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.Source _tmosPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.Builder.Build? _ubuntuPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.Source _ubuntuPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.Builder.Build? _vCenterPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.Source _vCenterPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.Builder.Build? _voidLinuxPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.Source _voidLinuxPlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.Builder.Build? _vSpherePlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.Source _vSpherePlatformModelSourceInstance;
                 private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Builder.Build? _windowsPlatformModelBuilderInstance;
+                private readonly Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Source _windowsPlatformModelSourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -3799,93 +3889,183 @@ public readonly partial struct AnsibleMetaSchema
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Builder.Build value) {_aixPlatformModelBuilderInstance = value; _kind = Kind.AixPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Source value) { _aixPlatformModelSourceInstance = value; _kind = Kind.AixPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.Builder.Build value) {_alpinePlatformModelBuilderInstance = value; _kind = Kind.AlpinePlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.Source value) { _alpinePlatformModelSourceInstance = value; _kind = Kind.AlpinePlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.Builder.Build value) {_amazonLinuxPlatformModelBuilderInstance = value; _kind = Kind.AmazonLinuxPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.Source value) { _amazonLinuxPlatformModelSourceInstance = value; _kind = Kind.AmazonLinuxPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.Builder.Build value) {_amazonPlatformModelBuilderInstance = value; _kind = Kind.AmazonPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.Source value) { _amazonPlatformModelSourceInstance = value; _kind = Kind.AmazonPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.Builder.Build value) {_aosPlatformModelBuilderInstance = value; _kind = Kind.AosPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.Source value) { _aosPlatformModelSourceInstance = value; _kind = Kind.AosPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.Builder.Build value) {_archLinuxPlatformModelBuilderInstance = value; _kind = Kind.ArchLinuxPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.Source value) { _archLinuxPlatformModelSourceInstance = value; _kind = Kind.ArchLinuxPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.Builder.Build value) {_clearLinuxPlatformModelBuilderInstance = value; _kind = Kind.ClearLinuxPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.Source value) { _clearLinuxPlatformModelSourceInstance = value; _kind = Kind.ClearLinuxPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.Builder.Build value) {_cumulusPlatformModelBuilderInstance = value; _kind = Kind.CumulusPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.Source value) { _cumulusPlatformModelSourceInstance = value; _kind = Kind.CumulusPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.Builder.Build value) {_debianPlatformModelBuilderInstance = value; _kind = Kind.DebianPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.Source value) { _debianPlatformModelSourceInstance = value; _kind = Kind.DebianPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.Builder.Build value) {_dellOsPlatformModelBuilderInstance = value; _kind = Kind.DellOsPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.Source value) { _dellOsPlatformModelSourceInstance = value; _kind = Kind.DellOsPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.Builder.Build value) {_devuanPlatformModelBuilderInstance = value; _kind = Kind.DevuanPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.Source value) { _devuanPlatformModelSourceInstance = value; _kind = Kind.DevuanPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.Builder.Build value) {_dragonFlyBsdPlatformModelBuilderInstance = value; _kind = Kind.DragonFlyBsdPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.Source value) { _dragonFlyBsdPlatformModelSourceInstance = value; _kind = Kind.DragonFlyBsdPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.Builder.Build value) {_elPlatformModelBuilderInstance = value; _kind = Kind.ElPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.Source value) { _elPlatformModelSourceInstance = value; _kind = Kind.ElPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.Builder.Build value) {_eosPlatformModelBuilderInstance = value; _kind = Kind.EosPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.Source value) { _eosPlatformModelSourceInstance = value; _kind = Kind.EosPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.Builder.Build value) {_fedoraPlatformModelBuilderInstance = value; _kind = Kind.FedoraPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.Source value) { _fedoraPlatformModelSourceInstance = value; _kind = Kind.FedoraPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.Builder.Build value) {_freeBsdPlatformModelBuilderInstance = value; _kind = Kind.FreeBsdPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.Source value) { _freeBsdPlatformModelSourceInstance = value; _kind = Kind.FreeBsdPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.Builder.Build value) {_genericBsdPlatformModelBuilderInstance = value; _kind = Kind.GenericBsdPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.Source value) { _genericBsdPlatformModelSourceInstance = value; _kind = Kind.GenericBsdPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.Builder.Build value) {_genericLinuxPlatformModelBuilderInstance = value; _kind = Kind.GenericLinuxPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.Source value) { _genericLinuxPlatformModelSourceInstance = value; _kind = Kind.GenericLinuxPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.Builder.Build value) {_genericUnixPlatformModelBuilderInstance = value; _kind = Kind.GenericUnixPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.Source value) { _genericUnixPlatformModelSourceInstance = value; _kind = Kind.GenericUnixPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.Builder.Build value) {_gentooPlatformModelBuilderInstance = value; _kind = Kind.GentooPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.Source value) { _gentooPlatformModelSourceInstance = value; _kind = Kind.GentooPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.Builder.Build value) {_hardenedBsdPlatformModelBuilderInstance = value; _kind = Kind.HardenedBsdPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.Source value) { _hardenedBsdPlatformModelSourceInstance = value; _kind = Kind.HardenedBsdPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.Builder.Build value) {_iosPlatformModelBuilderInstance = value; _kind = Kind.IosPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.Source value) { _iosPlatformModelSourceInstance = value; _kind = Kind.IosPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.Builder.Build value) {_junosPlatformModelBuilderInstance = value; _kind = Kind.JunosPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.Source value) { _junosPlatformModelSourceInstance = value; _kind = Kind.JunosPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.Builder.Build value) {_kaliPlatformModelBuilderInstance = value; _kind = Kind.KaliPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.Source value) { _kaliPlatformModelSourceInstance = value; _kind = Kind.KaliPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.Builder.Build value) {_macOsPlatformModelBuilderInstance = value; _kind = Kind.MacOsPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.Source value) { _macOsPlatformModelSourceInstance = value; _kind = Kind.MacOsPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.Builder.Build value) {_macOsxPlatformModelBuilderInstance = value; _kind = Kind.MacOsxPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.Source value) { _macOsxPlatformModelSourceInstance = value; _kind = Kind.MacOsxPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.Builder.Build value) {_mageiaPlatformModelBuilderInstance = value; _kind = Kind.MageiaPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.Source value) { _mageiaPlatformModelSourceInstance = value; _kind = Kind.MageiaPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.Builder.Build value) {_netBsdPlatformModelBuilderInstance = value; _kind = Kind.NetBsdPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.Source value) { _netBsdPlatformModelSourceInstance = value; _kind = Kind.NetBsdPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.Builder.Build value) {_nxosPlatformModelBuilderInstance = value; _kind = Kind.NxosPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.Source value) { _nxosPlatformModelSourceInstance = value; _kind = Kind.NxosPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.Builder.Build value) {_openBsdPlatformModelBuilderInstance = value; _kind = Kind.OpenBsdPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.Source value) { _openBsdPlatformModelSourceInstance = value; _kind = Kind.OpenBsdPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.Builder.Build value) {_opensusePlatformModelBuilderInstance = value; _kind = Kind.OpensusePlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.Source value) { _opensusePlatformModelSourceInstance = value; _kind = Kind.OpensusePlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.Builder.Build value) {_openWrtPlatformModelBuilderInstance = value; _kind = Kind.OpenWrtPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.Source value) { _openWrtPlatformModelSourceInstance = value; _kind = Kind.OpenWrtPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.Builder.Build value) {_oracleLinuxPlatformModelBuilderInstance = value; _kind = Kind.OracleLinuxPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.Source value) { _oracleLinuxPlatformModelSourceInstance = value; _kind = Kind.OracleLinuxPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.Builder.Build value) {_os10PlatformModelBuilderInstance = value; _kind = Kind.Os10PlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.Source value) { _os10PlatformModelSourceInstance = value; _kind = Kind.Os10PlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.Builder.Build value) {_panOsPlatformModelBuilderInstance = value; _kind = Kind.PanOsPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.Source value) { _panOsPlatformModelSourceInstance = value; _kind = Kind.PanOsPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.Builder.Build value) {_slesPlatformModelBuilderInstance = value; _kind = Kind.SlesPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.Source value) { _slesPlatformModelSourceInstance = value; _kind = Kind.SlesPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.Builder.Build value) {_smartOsPlatformModelBuilderInstance = value; _kind = Kind.SmartOsPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.Source value) { _smartOsPlatformModelSourceInstance = value; _kind = Kind.SmartOsPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.Builder.Build value) {_solarisPlatformModelBuilderInstance = value; _kind = Kind.SolarisPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.Source value) { _solarisPlatformModelSourceInstance = value; _kind = Kind.SolarisPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.Builder.Build value) {_synologyPlatformModelBuilderInstance = value; _kind = Kind.SynologyPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.Source value) { _synologyPlatformModelSourceInstance = value; _kind = Kind.SynologyPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.Builder.Build value) {_tmosPlatformModelBuilderInstance = value; _kind = Kind.TmosPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.Source value) { _tmosPlatformModelSourceInstance = value; _kind = Kind.TmosPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.Builder.Build value) {_ubuntuPlatformModelBuilderInstance = value; _kind = Kind.UbuntuPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.Source value) { _ubuntuPlatformModelSourceInstance = value; _kind = Kind.UbuntuPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.Builder.Build value) {_vCenterPlatformModelBuilderInstance = value; _kind = Kind.VCenterPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.Source value) { _vCenterPlatformModelSourceInstance = value; _kind = Kind.VCenterPlatformModelSource; }
 
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.Builder.Build value) {_voidLinuxPlatformModelBuilderInstance = value; _kind = Kind.VoidLinuxPlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.Source value) { _voidLinuxPlatformModelSourceInstance = value; _kind = Kind.VoidLinuxPlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.Builder.Build value) {_vSpherePlatformModelBuilderInstance = value; _kind = Kind.VSpherePlatformModelBuilder; }
 
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.Source value) { _vSpherePlatformModelSourceInstance = value; _kind = Kind.VSpherePlatformModelSource; }
+
                 public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Builder.Build value) {_windowsPlatformModelBuilderInstance = value; _kind = Kind.WindowsPlatformModelBuilder; }
+
+                public Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Source value) { _windowsPlatformModelSourceInstance = value; _kind = Kind.WindowsPlatformModelSource; }
 
                 public static implicit operator Source(PlatformsEntity instance) => new(JsonElement.From(instance));
 
@@ -3893,136 +4073,271 @@ public readonly partial struct AnsibleMetaSchema
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Source value) => new(value);
 
                 internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                 {
@@ -4036,137 +4351,272 @@ public readonly partial struct AnsibleMetaSchema
                         case Kind.AixPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _aixPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.AixPlatformModelSource:
+                            _aixPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.AlpinePlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _alpinePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.AlpinePlatformModelSource:
+                            _alpinePlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.AmazonLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _amazonLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.AmazonLinuxPlatformModelSource:
+                            _amazonLinuxPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.AmazonPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _amazonPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.AmazonPlatformModelSource:
+                            _amazonPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.AosPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _aosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.AosPlatformModelSource:
+                            _aosPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.ArchLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _archLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.ArchLinuxPlatformModelSource:
+                            _archLinuxPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.ClearLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _clearLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.ClearLinuxPlatformModelSource:
+                            _clearLinuxPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.CumulusPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _cumulusPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.CumulusPlatformModelSource:
+                            _cumulusPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.DebianPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _debianPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.DebianPlatformModelSource:
+                            _debianPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.DellOsPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _dellOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.DellOsPlatformModelSource:
+                            _dellOsPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.DevuanPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _devuanPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.DevuanPlatformModelSource:
+                            _devuanPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.DragonFlyBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _dragonFlyBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.DragonFlyBsdPlatformModelSource:
+                            _dragonFlyBsdPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.ElPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _elPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.ElPlatformModelSource:
+                            _elPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.EosPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _eosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.EosPlatformModelSource:
+                            _eosPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.FedoraPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _fedoraPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.FedoraPlatformModelSource:
+                            _fedoraPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.FreeBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _freeBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.FreeBsdPlatformModelSource:
+                            _freeBsdPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.GenericBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _genericBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.GenericBsdPlatformModelSource:
+                            _genericBsdPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.GenericLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _genericLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.GenericLinuxPlatformModelSource:
+                            _genericLinuxPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.GenericUnixPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _genericUnixPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.GenericUnixPlatformModelSource:
+                            _genericUnixPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.GentooPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _gentooPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.GentooPlatformModelSource:
+                            _gentooPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.HardenedBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _hardenedBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.HardenedBsdPlatformModelSource:
+                            _hardenedBsdPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.IosPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _iosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.IosPlatformModelSource:
+                            _iosPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.JunosPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _junosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.JunosPlatformModelSource:
+                            _junosPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.KaliPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _kaliPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.KaliPlatformModelSource:
+                            _kaliPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.MacOsPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _macOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.MacOsPlatformModelSource:
+                            _macOsPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.MacOsxPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _macOsxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.MacOsxPlatformModelSource:
+                            _macOsxPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.MageiaPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _mageiaPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.MageiaPlatformModelSource:
+                            _mageiaPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.NetBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _netBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.NetBsdPlatformModelSource:
+                            _netBsdPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.NxosPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _nxosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.NxosPlatformModelSource:
+                            _nxosPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.OpenBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _openBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.OpenBsdPlatformModelSource:
+                            _openBsdPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.OpensusePlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _opensusePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.OpensusePlatformModelSource:
+                            _opensusePlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.OpenWrtPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _openWrtPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.OpenWrtPlatformModelSource:
+                            _openWrtPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.OracleLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _oracleLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.OracleLinuxPlatformModelSource:
+                            _oracleLinuxPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.Os10PlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _os10PlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.Os10PlatformModelSource:
+                            _os10PlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.PanOsPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _panOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.PanOsPlatformModelSource:
+                            _panOsPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.SlesPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _slesPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.SlesPlatformModelSource:
+                            _slesPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.SmartOsPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _smartOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.SmartOsPlatformModelSource:
+                            _smartOsPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.SolarisPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _solarisPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.SolarisPlatformModelSource:
+                            _solarisPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.SynologyPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _synologyPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.SynologyPlatformModelSource:
+                            _synologyPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.TmosPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _tmosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.TmosPlatformModelSource:
+                            _tmosPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.UbuntuPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _ubuntuPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.UbuntuPlatformModelSource:
+                            _ubuntuPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.VCenterPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _vCenterPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.VCenterPlatformModelSource:
+                            _vCenterPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         case Kind.VoidLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _voidLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.VoidLinuxPlatformModelSource:
+                            _voidLinuxPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.VSpherePlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _vSpherePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.VSpherePlatformModelSource:
+                            _vSpherePlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.WindowsPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, _windowsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.WindowsPlatformModelSource:
+                            _windowsPlatformModelSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -4186,137 +4636,272 @@ public readonly partial struct AnsibleMetaSchema
                         case Kind.AixPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _aixPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AixPlatformModelSource:
+                            _aixPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.AlpinePlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _alpinePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AlpinePlatformModelSource:
+                            _alpinePlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.AmazonLinuxPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _amazonLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AmazonLinuxPlatformModelSource:
+                            _amazonLinuxPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.AmazonPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _amazonPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AmazonPlatformModelSource:
+                            _amazonPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.AosPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _aosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AosPlatformModelSource:
+                            _aosPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.ArchLinuxPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _archLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ArchLinuxPlatformModelSource:
+                            _archLinuxPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.ClearLinuxPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _clearLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ClearLinuxPlatformModelSource:
+                            _clearLinuxPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.CumulusPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _cumulusPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.CumulusPlatformModelSource:
+                            _cumulusPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.DebianPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _debianPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.DebianPlatformModelSource:
+                            _debianPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.DellOsPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dellOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.DellOsPlatformModelSource:
+                            _dellOsPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.DevuanPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _devuanPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.DevuanPlatformModelSource:
+                            _devuanPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.DragonFlyBsdPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dragonFlyBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.DragonFlyBsdPlatformModelSource:
+                            _dragonFlyBsdPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.ElPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _elPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ElPlatformModelSource:
+                            _elPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.EosPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _eosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.EosPlatformModelSource:
+                            _eosPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.FedoraPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _fedoraPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FedoraPlatformModelSource:
+                            _fedoraPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.FreeBsdPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _freeBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.FreeBsdPlatformModelSource:
+                            _freeBsdPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.GenericBsdPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _genericBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GenericBsdPlatformModelSource:
+                            _genericBsdPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.GenericLinuxPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _genericLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GenericLinuxPlatformModelSource:
+                            _genericLinuxPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.GenericUnixPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _genericUnixPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GenericUnixPlatformModelSource:
+                            _genericUnixPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.GentooPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _gentooPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GentooPlatformModelSource:
+                            _gentooPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.HardenedBsdPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _hardenedBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.HardenedBsdPlatformModelSource:
+                            _hardenedBsdPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.IosPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _iosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.IosPlatformModelSource:
+                            _iosPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.JunosPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _junosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.JunosPlatformModelSource:
+                            _junosPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.KaliPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _kaliPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.KaliPlatformModelSource:
+                            _kaliPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.MacOsPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _macOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MacOsPlatformModelSource:
+                            _macOsPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.MacOsxPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _macOsxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.MacOsxPlatformModelSource:
+                            _macOsxPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.MageiaPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _mageiaPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MageiaPlatformModelSource:
+                            _mageiaPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.NetBsdPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _netBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.NetBsdPlatformModelSource:
+                            _netBsdPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.NxosPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _nxosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.NxosPlatformModelSource:
+                            _nxosPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.OpenBsdPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _openBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OpenBsdPlatformModelSource:
+                            _openBsdPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.OpensusePlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _opensusePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OpensusePlatformModelSource:
+                            _opensusePlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.OpenWrtPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _openWrtPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OpenWrtPlatformModelSource:
+                            _openWrtPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.OracleLinuxPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _oracleLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OracleLinuxPlatformModelSource:
+                            _oracleLinuxPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.Os10PlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _os10PlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.Os10PlatformModelSource:
+                            _os10PlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.PanOsPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _panOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.PanOsPlatformModelSource:
+                            _panOsPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.SlesPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _slesPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SlesPlatformModelSource:
+                            _slesPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.SmartOsPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _smartOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.SmartOsPlatformModelSource:
+                            _smartOsPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.SolarisPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _solarisPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SolarisPlatformModelSource:
+                            _solarisPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.SynologyPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _synologyPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.SynologyPlatformModelSource:
+                            _synologyPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.TmosPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _tmosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.TmosPlatformModelSource:
+                            _tmosPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.UbuntuPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _ubuntuPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.UbuntuPlatformModelSource:
+                            _ubuntuPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.VCenterPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _vCenterPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.VCenterPlatformModelSource:
+                            _vCenterPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         case Kind.VoidLinuxPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _voidLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.VoidLinuxPlatformModelSource:
+                            _voidLinuxPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.VSpherePlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _vSpherePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.VSpherePlatformModelSource:
+                            _vSpherePlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.WindowsPlatformModelBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _windowsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.WindowsPlatformModelSource:
+                            _windowsPlatformModelSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -4336,137 +4921,272 @@ public readonly partial struct AnsibleMetaSchema
                         case Kind.AixPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _aixPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AixPlatformModelSource:
+                            _aixPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.AlpinePlatformModelBuilder:
                             valueBuilder.AddProperty(name, _alpinePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AlpinePlatformModelSource:
+                            _alpinePlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.AmazonLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _amazonLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AmazonLinuxPlatformModelSource:
+                            _amazonLinuxPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.AmazonPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _amazonPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AmazonPlatformModelSource:
+                            _amazonPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.AosPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _aosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AosPlatformModelSource:
+                            _aosPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.ArchLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _archLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ArchLinuxPlatformModelSource:
+                            _archLinuxPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.ClearLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _clearLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ClearLinuxPlatformModelSource:
+                            _clearLinuxPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.CumulusPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _cumulusPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.CumulusPlatformModelSource:
+                            _cumulusPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.DebianPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _debianPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.DebianPlatformModelSource:
+                            _debianPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.DellOsPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _dellOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.DellOsPlatformModelSource:
+                            _dellOsPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.DevuanPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _devuanPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.DevuanPlatformModelSource:
+                            _devuanPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.DragonFlyBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _dragonFlyBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.DragonFlyBsdPlatformModelSource:
+                            _dragonFlyBsdPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.ElPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _elPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ElPlatformModelSource:
+                            _elPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.EosPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _eosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.EosPlatformModelSource:
+                            _eosPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.FedoraPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _fedoraPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FedoraPlatformModelSource:
+                            _fedoraPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.FreeBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _freeBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.FreeBsdPlatformModelSource:
+                            _freeBsdPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.GenericBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _genericBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GenericBsdPlatformModelSource:
+                            _genericBsdPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.GenericLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _genericLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GenericLinuxPlatformModelSource:
+                            _genericLinuxPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.GenericUnixPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _genericUnixPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GenericUnixPlatformModelSource:
+                            _genericUnixPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.GentooPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _gentooPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GentooPlatformModelSource:
+                            _gentooPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.HardenedBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _hardenedBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.HardenedBsdPlatformModelSource:
+                            _hardenedBsdPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.IosPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _iosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.IosPlatformModelSource:
+                            _iosPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.JunosPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _junosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.JunosPlatformModelSource:
+                            _junosPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.KaliPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _kaliPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.KaliPlatformModelSource:
+                            _kaliPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.MacOsPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _macOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MacOsPlatformModelSource:
+                            _macOsPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.MacOsxPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _macOsxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.MacOsxPlatformModelSource:
+                            _macOsxPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.MageiaPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _mageiaPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MageiaPlatformModelSource:
+                            _mageiaPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.NetBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _netBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.NetBsdPlatformModelSource:
+                            _netBsdPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.NxosPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _nxosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.NxosPlatformModelSource:
+                            _nxosPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.OpenBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _openBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OpenBsdPlatformModelSource:
+                            _openBsdPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.OpensusePlatformModelBuilder:
                             valueBuilder.AddProperty(name, _opensusePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OpensusePlatformModelSource:
+                            _opensusePlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.OpenWrtPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _openWrtPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OpenWrtPlatformModelSource:
+                            _openWrtPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.OracleLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _oracleLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OracleLinuxPlatformModelSource:
+                            _oracleLinuxPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.Os10PlatformModelBuilder:
                             valueBuilder.AddProperty(name, _os10PlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.Os10PlatformModelSource:
+                            _os10PlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.PanOsPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _panOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.PanOsPlatformModelSource:
+                            _panOsPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.SlesPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _slesPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SlesPlatformModelSource:
+                            _slesPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.SmartOsPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _smartOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.SmartOsPlatformModelSource:
+                            _smartOsPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.SolarisPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _solarisPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SolarisPlatformModelSource:
+                            _solarisPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.SynologyPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _synologyPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.SynologyPlatformModelSource:
+                            _synologyPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.TmosPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _tmosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.TmosPlatformModelSource:
+                            _tmosPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.UbuntuPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _ubuntuPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.UbuntuPlatformModelSource:
+                            _ubuntuPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.VCenterPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _vCenterPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.VCenterPlatformModelSource:
+                            _vCenterPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.VoidLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _voidLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.VoidLinuxPlatformModelSource:
+                            _voidLinuxPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.VSpherePlatformModelBuilder:
                             valueBuilder.AddProperty(name, _vSpherePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.VSpherePlatformModelSource:
+                            _vSpherePlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.WindowsPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _windowsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.WindowsPlatformModelSource:
+                            _windowsPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -4486,137 +5206,272 @@ public readonly partial struct AnsibleMetaSchema
                         case Kind.AixPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _aixPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AixPlatformModelSource:
+                            _aixPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.AlpinePlatformModelBuilder:
                             valueBuilder.AddProperty(name, _alpinePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AlpinePlatformModelSource:
+                            _alpinePlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.AmazonLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _amazonLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AmazonLinuxPlatformModelSource:
+                            _amazonLinuxPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.AmazonPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _amazonPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AmazonPlatformModelSource:
+                            _amazonPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.AosPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _aosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AosPlatformModelSource:
+                            _aosPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.ArchLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _archLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ArchLinuxPlatformModelSource:
+                            _archLinuxPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.ClearLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _clearLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ClearLinuxPlatformModelSource:
+                            _clearLinuxPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.CumulusPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _cumulusPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.CumulusPlatformModelSource:
+                            _cumulusPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.DebianPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _debianPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.DebianPlatformModelSource:
+                            _debianPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.DellOsPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _dellOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.DellOsPlatformModelSource:
+                            _dellOsPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.DevuanPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _devuanPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.DevuanPlatformModelSource:
+                            _devuanPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.DragonFlyBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _dragonFlyBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.DragonFlyBsdPlatformModelSource:
+                            _dragonFlyBsdPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.ElPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _elPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ElPlatformModelSource:
+                            _elPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.EosPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _eosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.EosPlatformModelSource:
+                            _eosPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.FedoraPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _fedoraPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FedoraPlatformModelSource:
+                            _fedoraPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.FreeBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _freeBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.FreeBsdPlatformModelSource:
+                            _freeBsdPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.GenericBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _genericBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GenericBsdPlatformModelSource:
+                            _genericBsdPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.GenericLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _genericLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GenericLinuxPlatformModelSource:
+                            _genericLinuxPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.GenericUnixPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _genericUnixPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GenericUnixPlatformModelSource:
+                            _genericUnixPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.GentooPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _gentooPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GentooPlatformModelSource:
+                            _gentooPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.HardenedBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _hardenedBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.HardenedBsdPlatformModelSource:
+                            _hardenedBsdPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.IosPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _iosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.IosPlatformModelSource:
+                            _iosPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.JunosPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _junosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.JunosPlatformModelSource:
+                            _junosPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.KaliPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _kaliPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.KaliPlatformModelSource:
+                            _kaliPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.MacOsPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _macOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MacOsPlatformModelSource:
+                            _macOsPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.MacOsxPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _macOsxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.MacOsxPlatformModelSource:
+                            _macOsxPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.MageiaPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _mageiaPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MageiaPlatformModelSource:
+                            _mageiaPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.NetBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _netBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.NetBsdPlatformModelSource:
+                            _netBsdPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.NxosPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _nxosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.NxosPlatformModelSource:
+                            _nxosPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.OpenBsdPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _openBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OpenBsdPlatformModelSource:
+                            _openBsdPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.OpensusePlatformModelBuilder:
                             valueBuilder.AddProperty(name, _opensusePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OpensusePlatformModelSource:
+                            _opensusePlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.OpenWrtPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _openWrtPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OpenWrtPlatformModelSource:
+                            _openWrtPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.OracleLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _oracleLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OracleLinuxPlatformModelSource:
+                            _oracleLinuxPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.Os10PlatformModelBuilder:
                             valueBuilder.AddProperty(name, _os10PlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.Os10PlatformModelSource:
+                            _os10PlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.PanOsPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _panOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.PanOsPlatformModelSource:
+                            _panOsPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.SlesPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _slesPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SlesPlatformModelSource:
+                            _slesPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.SmartOsPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _smartOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.SmartOsPlatformModelSource:
+                            _smartOsPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.SolarisPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _solarisPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SolarisPlatformModelSource:
+                            _solarisPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.SynologyPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _synologyPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.SynologyPlatformModelSource:
+                            _synologyPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.TmosPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _tmosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.TmosPlatformModelSource:
+                            _tmosPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.UbuntuPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _ubuntuPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.UbuntuPlatformModelSource:
+                            _ubuntuPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.VCenterPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _vCenterPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.VCenterPlatformModelSource:
+                            _vCenterPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         case Kind.VoidLinuxPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _voidLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.VoidLinuxPlatformModelSource:
+                            _voidLinuxPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.VSpherePlatformModelBuilder:
                             valueBuilder.AddProperty(name, _vSpherePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.VSpherePlatformModelSource:
+                            _vSpherePlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.WindowsPlatformModelBuilder:
                             valueBuilder.AddProperty(name, _windowsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.WindowsPlatformModelSource:
+                            _windowsPlatformModelSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -4636,137 +5491,272 @@ public readonly partial struct AnsibleMetaSchema
                         case Kind.AixPlatformModelBuilder:
                             valueBuilder.AddItem(_aixPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AixPlatformModelSource:
+                            _aixPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.AlpinePlatformModelBuilder:
                             valueBuilder.AddItem(_alpinePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AlpinePlatformModelSource:
+                            _alpinePlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.AmazonLinuxPlatformModelBuilder:
                             valueBuilder.AddItem(_amazonLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AmazonLinuxPlatformModelSource:
+                            _amazonLinuxPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.AmazonPlatformModelBuilder:
                             valueBuilder.AddItem(_amazonPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AmazonPlatformModelSource:
+                            _amazonPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.AosPlatformModelBuilder:
                             valueBuilder.AddItem(_aosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.AosPlatformModelSource:
+                            _aosPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.ArchLinuxPlatformModelBuilder:
                             valueBuilder.AddItem(_archLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ArchLinuxPlatformModelSource:
+                            _archLinuxPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.ClearLinuxPlatformModelBuilder:
                             valueBuilder.AddItem(_clearLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ClearLinuxPlatformModelSource:
+                            _clearLinuxPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.CumulusPlatformModelBuilder:
                             valueBuilder.AddItem(_cumulusPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.CumulusPlatformModelSource:
+                            _cumulusPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.DebianPlatformModelBuilder:
                             valueBuilder.AddItem(_debianPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.DebianPlatformModelSource:
+                            _debianPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.DellOsPlatformModelBuilder:
                             valueBuilder.AddItem(_dellOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.DellOsPlatformModelSource:
+                            _dellOsPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.DevuanPlatformModelBuilder:
                             valueBuilder.AddItem(_devuanPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.DevuanPlatformModelSource:
+                            _devuanPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.DragonFlyBsdPlatformModelBuilder:
                             valueBuilder.AddItem(_dragonFlyBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.DragonFlyBsdPlatformModelSource:
+                            _dragonFlyBsdPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.ElPlatformModelBuilder:
                             valueBuilder.AddItem(_elPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ElPlatformModelSource:
+                            _elPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.EosPlatformModelBuilder:
                             valueBuilder.AddItem(_eosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.EosPlatformModelSource:
+                            _eosPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.FedoraPlatformModelBuilder:
                             valueBuilder.AddItem(_fedoraPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FedoraPlatformModelSource:
+                            _fedoraPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.FreeBsdPlatformModelBuilder:
                             valueBuilder.AddItem(_freeBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.FreeBsdPlatformModelSource:
+                            _freeBsdPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.GenericBsdPlatformModelBuilder:
                             valueBuilder.AddItem(_genericBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GenericBsdPlatformModelSource:
+                            _genericBsdPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.GenericLinuxPlatformModelBuilder:
                             valueBuilder.AddItem(_genericLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GenericLinuxPlatformModelSource:
+                            _genericLinuxPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.GenericUnixPlatformModelBuilder:
                             valueBuilder.AddItem(_genericUnixPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.GenericUnixPlatformModelSource:
+                            _genericUnixPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.GentooPlatformModelBuilder:
                             valueBuilder.AddItem(_gentooPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GentooPlatformModelSource:
+                            _gentooPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.HardenedBsdPlatformModelBuilder:
                             valueBuilder.AddItem(_hardenedBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.HardenedBsdPlatformModelSource:
+                            _hardenedBsdPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.IosPlatformModelBuilder:
                             valueBuilder.AddItem(_iosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.IosPlatformModelSource:
+                            _iosPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.JunosPlatformModelBuilder:
                             valueBuilder.AddItem(_junosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.JunosPlatformModelSource:
+                            _junosPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.KaliPlatformModelBuilder:
                             valueBuilder.AddItem(_kaliPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.KaliPlatformModelSource:
+                            _kaliPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.MacOsPlatformModelBuilder:
                             valueBuilder.AddItem(_macOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MacOsPlatformModelSource:
+                            _macOsPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.MacOsxPlatformModelBuilder:
                             valueBuilder.AddItem(_macOsxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.MacOsxPlatformModelSource:
+                            _macOsxPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.MageiaPlatformModelBuilder:
                             valueBuilder.AddItem(_mageiaPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.MageiaPlatformModelSource:
+                            _mageiaPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.NetBsdPlatformModelBuilder:
                             valueBuilder.AddItem(_netBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.NetBsdPlatformModelSource:
+                            _netBsdPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.NxosPlatformModelBuilder:
                             valueBuilder.AddItem(_nxosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.NxosPlatformModelSource:
+                            _nxosPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.OpenBsdPlatformModelBuilder:
                             valueBuilder.AddItem(_openBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OpenBsdPlatformModelSource:
+                            _openBsdPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.OpensusePlatformModelBuilder:
                             valueBuilder.AddItem(_opensusePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OpensusePlatformModelSource:
+                            _opensusePlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.OpenWrtPlatformModelBuilder:
                             valueBuilder.AddItem(_openWrtPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OpenWrtPlatformModelSource:
+                            _openWrtPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.OracleLinuxPlatformModelBuilder:
                             valueBuilder.AddItem(_oracleLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.OracleLinuxPlatformModelSource:
+                            _oracleLinuxPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.Os10PlatformModelBuilder:
                             valueBuilder.AddItem(_os10PlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.Os10PlatformModelSource:
+                            _os10PlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.PanOsPlatformModelBuilder:
                             valueBuilder.AddItem(_panOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.PanOsPlatformModelSource:
+                            _panOsPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.SlesPlatformModelBuilder:
                             valueBuilder.AddItem(_slesPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SlesPlatformModelSource:
+                            _slesPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.SmartOsPlatformModelBuilder:
                             valueBuilder.AddItem(_smartOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.SmartOsPlatformModelSource:
+                            _smartOsPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.SolarisPlatformModelBuilder:
                             valueBuilder.AddItem(_solarisPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SolarisPlatformModelSource:
+                            _solarisPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.SynologyPlatformModelBuilder:
                             valueBuilder.AddItem(_synologyPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.SynologyPlatformModelSource:
+                            _synologyPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.TmosPlatformModelBuilder:
                             valueBuilder.AddItem(_tmosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.TmosPlatformModelSource:
+                            _tmosPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.UbuntuPlatformModelBuilder:
                             valueBuilder.AddItem(_ubuntuPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.UbuntuPlatformModelSource:
+                            _ubuntuPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.VCenterPlatformModelBuilder:
                             valueBuilder.AddItem(_vCenterPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.VCenterPlatformModelSource:
+                            _vCenterPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         case Kind.VoidLinuxPlatformModelBuilder:
                             valueBuilder.AddItem(_voidLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.VoidLinuxPlatformModelSource:
+                            _voidLinuxPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.VSpherePlatformModelBuilder:
                             valueBuilder.AddItem(_vSpherePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.VSpherePlatformModelSource:
+                            _vSpherePlatformModelSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.WindowsPlatformModelBuilder:
                             valueBuilder.AddItem(_windowsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.WindowsPlatformModelSource:
+                            _windowsPlatformModelSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

@@ -358,7 +358,7 @@ public readonly partial struct ExtendableAction
                     return value;
                 }
 
-                return default;
+                return Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.DeterminesWhetherTheActionShouldBeEnabled.Mutable.DefaultInstance;
             }
         }
 

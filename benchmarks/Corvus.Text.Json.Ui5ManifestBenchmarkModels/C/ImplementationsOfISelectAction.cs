@@ -198,6 +198,15 @@ public readonly partial struct ImplementationsOfISelectAction
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator ImplementationsOfISelectAction(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.ActionExecute"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -270,6 +279,15 @@ public readonly partial struct ImplementationsOfISelectAction
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator ImplementationsOfISelectAction(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.ActionOpenUrl"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -306,6 +324,15 @@ public readonly partial struct ImplementationsOfISelectAction
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator ImplementationsOfISelectAction(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.ActionSubmit"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -337,6 +364,15 @@ public readonly partial struct ImplementationsOfISelectAction
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator ImplementationsOfISelectAction(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2 value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator ImplementationsOfISelectAction(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.Mutable value)
     {
         return From(value);
     }

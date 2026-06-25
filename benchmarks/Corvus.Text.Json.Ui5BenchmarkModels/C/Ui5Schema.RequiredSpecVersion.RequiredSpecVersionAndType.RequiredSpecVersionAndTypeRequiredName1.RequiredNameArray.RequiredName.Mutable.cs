@@ -204,7 +204,7 @@ public readonly partial struct Ui5Schema
                                         return value;
                                     }
 
-                                    return default;
+                                    return Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.DevelopmentEntity.Mutable.DefaultInstance;
                                 }
                             }
 
@@ -241,7 +241,7 @@ public readonly partial struct Ui5Schema
                                         return value;
                                     }
 
-                                    return default;
+                                    return Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.RequiredNameArray.RequiredName.OptionalEntity.Mutable.DefaultInstance;
                                 }
                             }
 

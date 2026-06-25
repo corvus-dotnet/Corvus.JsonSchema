@@ -65,7 +65,7 @@ public readonly partial struct OpenapiSchema
                     private static readonly JsonSchemaPathProvider InSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/in"u8, buffer, out written);
                     private static readonly JsonSchemaPathProvider NameSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/name"u8, buffer, out written);
 
-                    private static void MatchIn(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                    private static void MatchIn(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                     {
                         context.AddLocalEvaluatedProperty(propertyCount);
                         JsonSchemaContext childContext =
@@ -87,7 +87,7 @@ public readonly partial struct OpenapiSchema
                         requiredBitBuffer[RequiredOffsetForIn] |= RequiredBitForIn;
                     }
 
-                    private static void MatchName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                    private static void MatchName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                     {
                         context.AddLocalEvaluatedProperty(propertyCount);
                         JsonSchemaContext childContext1 =
@@ -175,7 +175,7 @@ public readonly partial struct OpenapiSchema
 
                                 if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.OpenapiBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                                 {
-                                    validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                                    validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                                     if (!context.HasCollector && !context.IsMatch)
                                     {

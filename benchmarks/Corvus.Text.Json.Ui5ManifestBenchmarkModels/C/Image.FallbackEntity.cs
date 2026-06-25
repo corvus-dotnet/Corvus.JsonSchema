@@ -226,6 +226,15 @@ public readonly partial struct Image
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.FallbackOption"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -244,6 +253,15 @@ public readonly partial struct Image
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.FallbackOption"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.FallbackOption.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -257,6 +275,15 @@ public readonly partial struct Image
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType.Mutable value)
         {
             return From(value);
         }
@@ -352,6 +379,15 @@ public readonly partial struct Image
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.ColumnSet"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -383,6 +419,15 @@ public readonly partial struct Image
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType1 value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType1"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Mutable value)
         {
             return From(value);
         }
@@ -442,6 +487,15 @@ public readonly partial struct Image
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType2"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.InputToggle"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -473,6 +527,15 @@ public readonly partial struct Image
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType3 value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType3"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Mutable value)
         {
             return From(value);
         }
@@ -514,6 +577,15 @@ public readonly partial struct Image
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType4"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.RichTextBlock"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -545,6 +617,15 @@ public readonly partial struct Image
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5 value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Mutable value)
         {
             return From(value);
         }
@@ -586,6 +667,15 @@ public readonly partial struct Image
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType6"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.TextBlock"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -617,6 +707,15 @@ public readonly partial struct Image
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7 value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Mutable value)
         {
             return From(value);
         }
@@ -658,6 +757,15 @@ public readonly partial struct Image
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType8"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.FactSet"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -689,6 +797,15 @@ public readonly partial struct Image
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType9 value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType9"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Mutable value)
         {
             return From(value);
         }
@@ -730,6 +847,15 @@ public readonly partial struct Image
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType10"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.ImageSet"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -761,6 +887,15 @@ public readonly partial struct Image
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType11 value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType11"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Mutable value)
         {
             return From(value);
         }
@@ -802,6 +937,15 @@ public readonly partial struct Image
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType12"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.InputDate"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -833,6 +977,15 @@ public readonly partial struct Image
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType13 value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType13"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Mutable value)
         {
             return From(value);
         }
@@ -874,6 +1027,15 @@ public readonly partial struct Image
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType14"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.InputText"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -910,6 +1072,15 @@ public readonly partial struct Image
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.FallbackOption.AnyOf0Entity"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.FallbackOption.AnyOf0Entity.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.FallbackOption.AnyOf1Entity"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -923,6 +1094,15 @@ public readonly partial struct Image
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.FallbackOption.AnyOf1Entity value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.FallbackOption.AnyOf1Entity"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator FallbackEntity(Corvus.Ui5ManifestBenchmark.Current.FallbackOption.AnyOf1Entity.Mutable value)
         {
             return From(value);
         }

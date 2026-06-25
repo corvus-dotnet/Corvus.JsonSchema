@@ -214,6 +214,15 @@ public readonly partial struct Ui5ManifestSchema
                 }
 
                 /// <summary>
+                /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentName"/> mutable view.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                public static implicit operator AllOf1Entity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentName.Mutable value)
+                {
+                    return From(value);
+                }
+
+                /// <summary>
                 /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentUsage"/>.
                 /// </summary>
                 /// <param name="value">The value from which to convert.</param>
@@ -232,6 +241,15 @@ public readonly partial struct Ui5ManifestSchema
                 }
 
                 /// <summary>
+                /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentUsage"/> mutable view.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                public static implicit operator AllOf1Entity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredComponentUsage.Mutable value)
+                {
+                    return From(value);
+                }
+
+                /// <summary>
                 /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredEmbeddedComponents"/>.
                 /// </summary>
                 /// <param name="value">The value from which to convert.</param>
@@ -245,6 +263,15 @@ public readonly partial struct Ui5ManifestSchema
                 /// </summary>
                 /// <param name="value">The value from which to convert.</param>
                 public static implicit operator AllOf1Entity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredEmbeddedComponents value)
+                {
+                    return From(value);
+                }
+
+                /// <summary>
+                /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredEmbeddedComponents"/> mutable view.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                public static implicit operator AllOf1Entity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.AllOf1Entity.RequiredEmbeddedComponents.Mutable value)
                 {
                     return From(value);
                 }

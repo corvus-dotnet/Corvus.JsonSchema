@@ -777,13 +777,17 @@ public readonly partial struct Ui5Schema
                             Unknown,
                             JsonElement,
                             RequiredAfterTaskAndNameBuilder,
+                            RequiredAfterTaskAndNameSource,
                             RequiredBeforeTaskAndNameBuilder,
+                            RequiredBeforeTaskAndNameSource,
                         }
 
                         private readonly Kind _kind;
                         private readonly JsonElement _jsonElement;
                         private readonly Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName.Builder.Build? _requiredAfterTaskAndNameBuilderInstance;
+                        private readonly Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName.Source _requiredAfterTaskAndNameSourceInstance;
                         private readonly Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName.Builder.Build? _requiredBeforeTaskAndNameBuilderInstance;
+                        private readonly Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName.Source _requiredBeforeTaskAndNameSourceInstance;
 
                         /// <summary>
                         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -798,7 +802,11 @@ public readonly partial struct Ui5Schema
 
                         public Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName.Builder.Build value) {_requiredAfterTaskAndNameBuilderInstance = value; _kind = Kind.RequiredAfterTaskAndNameBuilder; }
 
+                        public Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName.Source value) { _requiredAfterTaskAndNameSourceInstance = value; _kind = Kind.RequiredAfterTaskAndNameSource; }
+
                         public Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName.Builder.Build value) {_requiredBeforeTaskAndNameBuilderInstance = value; _kind = Kind.RequiredBeforeTaskAndNameBuilder; }
+
+                        public Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName.Source value) { _requiredBeforeTaskAndNameSourceInstance = value; _kind = Kind.RequiredBeforeTaskAndNameSource; }
 
                         public static implicit operator Source(CustomTasksEntity instance) => new(JsonElement.From(instance));
 
@@ -806,7 +814,13 @@ public readonly partial struct Ui5Schema
                         public static implicit operator Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName instance) => new(JsonElement.From(instance));
 
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                        public static implicit operator Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName.Source value) => new(value);
+
+                        [MethodImpl(MethodImplOptions.AggressiveInlining)]
                         public static implicit operator Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName instance) => new(JsonElement.From(instance));
+
+                        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                        public static implicit operator Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName.Source value) => new(value);
 
                         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                         {
@@ -820,8 +834,14 @@ public readonly partial struct Ui5Schema
                                 case Kind.RequiredAfterTaskAndNameBuilder:
                                     valueBuilder.AddProperty(utf8Name, _requiredAfterTaskAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                                     break;
+                                case Kind.RequiredAfterTaskAndNameSource:
+                                    _requiredAfterTaskAndNameSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                                    break;
                                 case Kind.RequiredBeforeTaskAndNameBuilder:
                                     valueBuilder.AddProperty(utf8Name, _requiredBeforeTaskAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                                    break;
+                                case Kind.RequiredBeforeTaskAndNameSource:
+                                    _requiredBeforeTaskAndNameSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
@@ -841,8 +861,14 @@ public readonly partial struct Ui5Schema
                                 case Kind.RequiredAfterTaskAndNameBuilder:
                                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredAfterTaskAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.RequiredAfterTaskAndNameSource:
+                                    _requiredAfterTaskAndNameSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                    break;
                                 case Kind.RequiredBeforeTaskAndNameBuilder:
                                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredBeforeTaskAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName.Builder.BuildValue(b, ref o));
+                                    break;
+                                case Kind.RequiredBeforeTaskAndNameSource:
+                                    _requiredBeforeTaskAndNameSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
@@ -862,8 +888,14 @@ public readonly partial struct Ui5Schema
                                 case Kind.RequiredAfterTaskAndNameBuilder:
                                     valueBuilder.AddProperty(name, _requiredAfterTaskAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.RequiredAfterTaskAndNameSource:
+                                    _requiredAfterTaskAndNameSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                    break;
                                 case Kind.RequiredBeforeTaskAndNameBuilder:
                                     valueBuilder.AddProperty(name, _requiredBeforeTaskAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName.Builder.BuildValue(b, ref o));
+                                    break;
+                                case Kind.RequiredBeforeTaskAndNameSource:
+                                    _requiredBeforeTaskAndNameSourceInstance.AddAsProperty(name, ref valueBuilder);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
@@ -883,8 +915,14 @@ public readonly partial struct Ui5Schema
                                 case Kind.RequiredAfterTaskAndNameBuilder:
                                     valueBuilder.AddProperty(name, _requiredAfterTaskAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.RequiredAfterTaskAndNameSource:
+                                    _requiredAfterTaskAndNameSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                    break;
                                 case Kind.RequiredBeforeTaskAndNameBuilder:
                                     valueBuilder.AddProperty(name, _requiredBeforeTaskAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName.Builder.BuildValue(b, ref o));
+                                    break;
+                                case Kind.RequiredBeforeTaskAndNameSource:
+                                    _requiredBeforeTaskAndNameSourceInstance.AddAsProperty(name, ref valueBuilder);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
@@ -904,8 +942,14 @@ public readonly partial struct Ui5Schema
                                 case Kind.RequiredAfterTaskAndNameBuilder:
                                     valueBuilder.AddItem(_requiredAfterTaskAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredAfterTaskAndName.Builder.BuildValue(b, ref o));
                                     break;
+                                case Kind.RequiredAfterTaskAndNameSource:
+                                    _requiredAfterTaskAndNameSourceInstance.AddAsItem(ref valueBuilder);
+                                    break;
                                 case Kind.RequiredBeforeTaskAndNameBuilder:
                                     valueBuilder.AddItem(_requiredBeforeTaskAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.CustomTasksEntity.RequiredBeforeTaskAndName.Builder.BuildValue(b, ref o));
+                                    break;
+                                case Kind.RequiredBeforeTaskAndNameSource:
+                                    _requiredBeforeTaskAndNameSourceInstance.AddAsItem(ref valueBuilder);
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");

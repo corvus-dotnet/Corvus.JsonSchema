@@ -209,6 +209,15 @@ public readonly partial struct Ui5ManifestSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Microchart(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -222,6 +231,15 @@ public readonly partial struct Ui5ManifestSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Microchart(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Microchart(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.Mutable value)
         {
             return From(value);
         }

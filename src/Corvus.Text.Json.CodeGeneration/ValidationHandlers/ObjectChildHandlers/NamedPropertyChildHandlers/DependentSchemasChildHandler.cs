@@ -53,48 +53,76 @@ internal class DependentSchemasChildHandler : INamedPropertyChildHandler
     /// <inheritdoc/>
     public void AppendObjectPropertyValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration, PropertyDeclaration property)
     {
+        // dependentSchemas are applied as a whole-object pre-pass in AppendValidationSetup (which runs before the
+        // property loop), not per-property. See that method for the reason.
+    }
+
+    /// <inheritdoc/>
+    public void AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+    }
+
+    /// <inheritdoc/>
+    public void AppendValidationSetup(CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
         if (!typeDeclaration.TryGetMetadata(DependentSchemaByPropertyNameKey, out Dictionary<string, DependentSchemaDeclaration>? declarationsByPropertyName) ||
-            declarationsByPropertyName is null ||
-            !declarationsByPropertyName.TryGetValue(property.JsonPropertyName, out DependentSchemaDeclaration? declaration)
-            || declaration is null)
+            declarationsByPropertyName is null)
         {
             return;
         }
 
-        string keywordAsQuotedString = SymbolDisplay.FormatLiteral(declaration.Keyword.Keyword, true);
-        string propertyClassName = declaration.ReducedDepdendentSchemaType.FullyQualifiedDotnetTypeName();
-        string jsonSchemaClassName = generator.JsonSchemaClassName(propertyClassName);
-        string childContextName = generator.GetUniqueVariableNameInScope("childContext");
-        string schemaEvaluationPathProviderName = GetSchemaEvaluationProviderName(typeDeclaration, declaration);
-        string quotedPropertyName = SymbolDisplay.FormatLiteral(declaration.JsonPropertyName, true);
+        // A dependent subschema is an applicator over the whole object: it can evaluate — and so credit for
+        // unevaluatedProperties — any property, including one positioned before the property that triggers the
+        // dependency. The object property loop checks unevaluatedProperties inline, so if dependentSchemas ran
+        // lazily at the trigger property's loop position an earlier property would already have failed its check.
+        // We therefore detect each dependency directly and apply it up front, before the loop.
+        foreach (DependentSchemaDeclaration declaration in declarationsByPropertyName.Values)
+        {
+            if (generator.IsCancellationRequested)
+            {
+                return;
+            }
 
-        generator
-            .AppendSeparatorLine()
-            .AppendLineIndent("JsonSchemaContext ", childContextName, " = ", propertyClassName, ".", jsonSchemaClassName, ".PushChildContext(")
-            .PushIndent()
-                .AppendLineIndent("parentDocument,")
-                .AppendLineIndent("depdendentSchemasChildHandler_propertyParentDocumentIndex,")
-                .AppendLineIndent("ref context,")
-                .AppendLineIndent("schemaEvaluationPath: ", schemaEvaluationPathProviderName, ");")
-            .PopIndent()
-            .AppendSeparatorLine()
-            .AppendLineIndent(propertyClassName, ".", jsonSchemaClassName, ".Evaluate(parentDocument, depdendentSchemasChildHandler_propertyParentDocumentIndex, ref ", childContextName, ");")
-            .AppendSeparatorLine()
-            .AppendLineIndent("if (!", childContextName, ".IsMatch)")
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendLineIndent("context.CommitChildContext(false, ref ", childContextName, ");")
-                .AppendLineIndent("context.EvaluatedKeyword(false, ", quotedPropertyName, ", messageProvider: JsonSchemaEvaluation.ExpectedMatchesDependentSchema, ", keywordAsQuotedString, "u8);")
-            .PopIndent()
-            .AppendLineIndent("}")
-            .AppendLineIndent("else")
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendLineIndent("context.ApplyEvaluated(ref ", childContextName, ");")
-                .AppendLineIndent("context.CommitChildContext(true, ref ", childContextName, ");")
-                .AppendLineIndent("context.EvaluatedKeyword(true, ", quotedPropertyName, ", messageProvider: JsonSchemaEvaluation.ExpectedMatchesDependentSchema, ", keywordAsQuotedString, "u8);")
-            .PopIndent()
-            .AppendLineIndent("}");
+            string keywordAsQuotedString = SymbolDisplay.FormatLiteral(declaration.Keyword.Keyword, true);
+            string propertyClassName = declaration.ReducedDepdendentSchemaType.FullyQualifiedDotnetTypeName();
+            string jsonSchemaClassName = generator.JsonSchemaClassName(propertyClassName);
+            string childContextName = generator.GetUniqueVariableNameInScope("dependentSchemaContext");
+            string schemaEvaluationPathProviderName = GetSchemaEvaluationProviderName(typeDeclaration, declaration);
+            string quotedPropertyName = SymbolDisplay.FormatLiteral(declaration.JsonPropertyName, true);
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("if (parentDocument.TryGetNamedPropertyValue(parentIndex, ", quotedPropertyName, "u8, out _, out _))")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("JsonSchemaContext ", childContextName, " = ", propertyClassName, ".", jsonSchemaClassName, ".PushChildContext(")
+                    .PushIndent()
+                        .AppendLineIndent("parentDocument,")
+                        .AppendLineIndent("parentIndex,")
+                        .AppendLineIndent("ref context,")
+                        .AppendLineIndent("schemaEvaluationPath: ", schemaEvaluationPathProviderName, ");")
+                    .PopIndent()
+                    .AppendSeparatorLine()
+                    .AppendLineIndent(propertyClassName, ".", jsonSchemaClassName, ".Evaluate(parentDocument, parentIndex, ref ", childContextName, ");")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (!", childContextName, ".IsMatch)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("context.CommitChildContext(false, ref ", childContextName, ");")
+                        .AppendLineIndent("context.EvaluatedKeyword(false, ", quotedPropertyName, ", messageProvider: JsonSchemaEvaluation.ExpectedMatchesDependentSchema, ", keywordAsQuotedString, "u8);")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendLineIndent("else")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("context.ApplyEvaluated(ref ", childContextName, ");")
+                        .AppendLineIndent("context.CommitChildContext(true, ref ", childContextName, ");")
+                        .AppendLineIndent("context.EvaluatedKeyword(true, ", quotedPropertyName, ", messageProvider: JsonSchemaEvaluation.ExpectedMatchesDependentSchema, ", keywordAsQuotedString, "u8);")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
 
         static string GetSchemaEvaluationProviderName(TypeDeclaration typeDeclaration, DependentSchemaDeclaration declaration)
         {
@@ -111,20 +139,10 @@ internal class DependentSchemasChildHandler : INamedPropertyChildHandler
     }
 
     /// <inheritdoc/>
-    public void AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration) { }
-
-    /// <inheritdoc/>
     public void AppendValidatorArguments(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if (!typeDeclaration.TryGetMetadata(DependentSchemaByPropertyNameKey, out Dictionary<string, DependentSchemaDeclaration>? declarationsByPropertyName) ||
-            declarationsByPropertyName is null)
-        {
-            return;
-        }
-
-        // Pass in the parent document index
-        generator
-            .Append(", parentIndex");
+        // dependentSchemas now run as a whole-object pre-pass, not inside the per-property validator, so they
+        // contribute no per-property validator arguments.
     }
 
     /// <inheritdoc/>
@@ -176,21 +194,8 @@ internal class DependentSchemasChildHandler : INamedPropertyChildHandler
     public void EndJsonSchemaClassSetup(CodeGenerator generator, TypeDeclaration typeDeclaration) { }
 
     /// <inheritdoc/>
-    public IEnumerable<ObjectPropertyValidatorParameter> GetNamedPropertyValidatorParameters(TypeDeclaration typeDeclaration)
-    {
-        if (!typeDeclaration.TryGetMetadata(DependentSchemaByPropertyNameKey, out Dictionary<string, DependentSchemaDeclaration>? declarationsByPropertyName) ||
-            declarationsByPropertyName is null)
-        {
-            return [];
-        }
-
-        return [
-            new("int", "depdendentSchemasChildHandler_propertyParentDocumentIndex")
-            ];
-    }
+    public IEnumerable<ObjectPropertyValidatorParameter> GetNamedPropertyValidatorParameters(TypeDeclaration typeDeclaration) => [];
 
     /// <inheritdoc/>
     public bool WillEmitCodeFor(TypeDeclaration typeDeclaration) => typeDeclaration.DependentSchemasSubschemaTypes()?.Any() ?? false;
-
-    public void AppendValidationSetup(CodeGenerator generator, TypeDeclaration typeDeclaration) { }
 }

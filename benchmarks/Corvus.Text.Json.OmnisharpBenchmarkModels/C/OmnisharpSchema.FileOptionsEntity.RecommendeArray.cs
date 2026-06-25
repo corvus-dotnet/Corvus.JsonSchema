@@ -86,7 +86,7 @@ public readonly partial struct OmnisharpSchema
             /// <summary>
             /// Gets the default instance.
             /// </summary>
-            public static RecommendeArray DefaultInstance { get; } = RecommendeArray.ParseValue("[\r\n            \"**/node_modules/**/*\",\r\n            \"**/bin/**/*\",\r\n            \"**/obj/**/*\",\r\n            \"**/.git/**/*\"\r\n          ]"u8);
+            public static RecommendeArray DefaultInstance { get; } = RecommendeArray.ParseValue("[\n            \"**/node_modules/**/*\",\n            \"**/bin/**/*\",\n            \"**/obj/**/*\",\n            \"**/.git/**/*\"\n          ]"u8);
 
             /// <summary>
             /// Gets the rank of the array.

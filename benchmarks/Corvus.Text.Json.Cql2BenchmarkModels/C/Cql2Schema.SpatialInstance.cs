@@ -204,6 +204,15 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.GeometryLiteral"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SpatialInstance(Corvus.Cql2Benchmark.Current.Cql2Schema.GeometryLiteral.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -217,6 +226,15 @@ public readonly partial struct Cql2Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator SpatialInstance(Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SpatialInstance(Corvus.Cql2Benchmark.Current.Cql2Schema.BboxLiteral.Mutable value)
         {
             return From(value);
         }
@@ -240,6 +258,15 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Point"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SpatialInstance(Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -253,6 +280,15 @@ public readonly partial struct Cql2Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator SpatialInstance(Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SpatialInstance(Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Mutable value)
         {
             return From(value);
         }
@@ -276,6 +312,15 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SpatialInstance(Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -289,6 +334,15 @@ public readonly partial struct Cql2Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator SpatialInstance(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SpatialInstance(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Mutable value)
         {
             return From(value);
         }
@@ -312,6 +366,15 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SpatialInstance(Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -330,6 +393,15 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SpatialInstance(Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -343,6 +415,15 @@ public readonly partial struct Cql2Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator SpatialInstance(Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SpatialInstance(Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Mutable value)
         {
             return From(value);
         }

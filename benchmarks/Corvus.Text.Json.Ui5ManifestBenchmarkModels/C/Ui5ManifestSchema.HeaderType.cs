@@ -204,6 +204,15 @@ public readonly partial struct Ui5ManifestSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator HeaderType(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -217,6 +226,15 @@ public readonly partial struct Ui5ManifestSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator HeaderType(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator HeaderType(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Mutable value)
         {
             return From(value);
         }

@@ -248,7 +248,7 @@ public readonly partial struct KrakendSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.KrakendBenchmark.Current.KrakendSchema.OpentelemetryEndpoint.ReportProxyActivity.DisableMetrics.Mutable.DefaultInstance;
                     }
                 }
 
@@ -273,7 +273,7 @@ public readonly partial struct KrakendSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.KrakendBenchmark.Current.KrakendSchema.OpentelemetryEndpoint.ReportProxyActivity.DisableTraces.Mutable.DefaultInstance;
                     }
                 }
 

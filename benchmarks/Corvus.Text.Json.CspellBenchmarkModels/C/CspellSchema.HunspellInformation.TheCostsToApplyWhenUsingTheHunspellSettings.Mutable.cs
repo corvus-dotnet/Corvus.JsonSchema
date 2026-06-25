@@ -194,7 +194,7 @@ public readonly partial struct CspellSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.AccentCostsEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -215,7 +215,7 @@ public readonly partial struct CspellSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheBaseCostForMakingAnEdit.Mutable.DefaultInstance;
                     }
                 }
 
@@ -236,7 +236,7 @@ public readonly partial struct CspellSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.CapsCostsEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -257,7 +257,7 @@ public readonly partial struct CspellSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.FirstLetterPenaltyEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -281,7 +281,7 @@ public readonly partial struct CspellSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.IoConvertCostEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -305,7 +305,7 @@ public readonly partial struct CspellSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.KeyboardCostEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -329,7 +329,7 @@ public readonly partial struct CspellSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.MapCostEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -350,7 +350,7 @@ public readonly partial struct CspellSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheCostForCharactersNotInTheAlphabet.Mutable.DefaultInstance;
                     }
                 }
 
@@ -371,7 +371,7 @@ public readonly partial struct CspellSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.TheCostToSubstitutePairsFoundInTheReplaceSettings.Mutable.DefaultInstance;
                     }
                 }
 

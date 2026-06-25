@@ -820,6 +820,7 @@ public readonly partial struct Ui5ManifestSchema
                     Unknown,
                     JsonElement,
                     FieldBuilder,
+                    FieldSource,
                     RawUtf8StringRequiresUnescaping,
                     RawUtf8StringNotRequiresUnescaping,
                     Utf8String,
@@ -831,6 +832,7 @@ public readonly partial struct Ui5ManifestSchema
                 private readonly ReadOnlySpan<byte> _utf8Backing;
                 private readonly ReadOnlySpan<char> _utf16Backing;
                 private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Builder.Build? _fieldBuilderInstance;
+                private readonly Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source _fieldSourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -863,6 +865,8 @@ public readonly partial struct Ui5ManifestSchema
 
                 public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Builder.Build value) {_fieldBuilderInstance = value; _kind = Kind.FieldBuilder; }
 
+                public Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source value) { _fieldSourceInstance = value; _kind = Kind.FieldSource; }
+
                 public static implicit operator Source(TheDescriptionOfTheItem instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -879,6 +883,9 @@ public readonly partial struct Ui5ManifestSchema
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source value) => new(value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);
@@ -906,6 +913,9 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.FieldBuilder:
                             valueBuilder.AddProperty(utf8Name, _fieldBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.FieldSource:
+                            _fieldSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -937,6 +947,9 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.FieldBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _fieldBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FieldSource:
+                            _fieldSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -966,6 +979,9 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.FieldBuilder:
                             valueBuilder.AddProperty(name, _fieldBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.FieldSource:
+                            _fieldSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -997,6 +1013,9 @@ public readonly partial struct Ui5ManifestSchema
                         case Kind.FieldBuilder:
                             valueBuilder.AddProperty(name, _fieldBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.FieldSource:
+                            _fieldSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1026,6 +1045,9 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.FieldBuilder:
                             valueBuilder.AddItem(_fieldBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.FieldSource:
+                            _fieldSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

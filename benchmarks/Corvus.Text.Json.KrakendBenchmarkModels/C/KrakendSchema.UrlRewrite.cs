@@ -300,6 +300,15 @@ public readonly partial struct KrakendSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.RequiredLiteral"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator UrlRewrite(Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.RequiredLiteral.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.RequiredRegexp"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -313,6 +322,15 @@ public readonly partial struct KrakendSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator UrlRewrite(Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.RequiredRegexp value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.RequiredRegexp"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator UrlRewrite(Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.RequiredRegexp.Mutable value)
         {
             return From(value);
         }

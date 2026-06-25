@@ -83,7 +83,7 @@ public readonly partial struct CypressSchema
             private static readonly JsonSchemaPathProvider WaitForAnimationsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/waitForAnimations"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider WatchForFileChangesSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/watchForFileChanges"u8, buffer, out written);
 
-            private static void MatchAnimationDistanceThreshold(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchAnimationDistanceThreshold(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext =
@@ -98,7 +98,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext.IsMatch, ref childContext);
             }
 
-            private static void MatchBaseUrl(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchBaseUrl(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext1 =
@@ -113,7 +113,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext1.IsMatch, ref childContext1);
             }
 
-            private static void MatchBlockHosts(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchBlockHosts(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext2 =
@@ -128,7 +128,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext2.IsMatch, ref childContext2);
             }
 
-            private static void MatchChromeWebSecurity(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchChromeWebSecurity(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext3 =
@@ -143,7 +143,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext3.IsMatch, ref childContext3);
             }
 
-            private static void MatchClientCertificates(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchClientCertificates(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext4 =
@@ -158,7 +158,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext4.IsMatch, ref childContext4);
             }
 
-            private static void MatchComponentFolder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchComponentFolder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext5 =
@@ -173,7 +173,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext5.IsMatch, ref childContext5);
             }
 
-            private static void MatchDefaultCommandTimeout(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchDefaultCommandTimeout(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext6 =
@@ -188,7 +188,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext6.IsMatch, ref childContext6);
             }
 
-            private static void MatchDownloadsFolder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchDownloadsFolder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext7 =
@@ -203,7 +203,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext7.IsMatch, ref childContext7);
             }
 
-            private static void MatchEnv(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchEnv(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext8 =
@@ -218,7 +218,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext8.IsMatch, ref childContext8);
             }
 
-            private static void MatchExecTimeout(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchExecTimeout(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext9 =
@@ -233,7 +233,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext9.IsMatch, ref childContext9);
             }
 
-            private static void MatchExperimentalFetchPolyfill(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchExperimentalFetchPolyfill(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext10 =
@@ -248,7 +248,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext10.IsMatch, ref childContext10);
             }
 
-            private static void MatchExperimentalInteractiveRunEvents(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchExperimentalInteractiveRunEvents(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext11 =
@@ -263,7 +263,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext11.IsMatch, ref childContext11);
             }
 
-            private static void MatchExperimentalSessionSupport(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchExperimentalSessionSupport(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext12 =
@@ -278,7 +278,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext12.IsMatch, ref childContext12);
             }
 
-            private static void MatchExperimentalSourceRewriting(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchExperimentalSourceRewriting(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext13 =
@@ -293,7 +293,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext13.IsMatch, ref childContext13);
             }
 
-            private static void MatchExperimentalStudio(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchExperimentalStudio(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext14 =
@@ -308,7 +308,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext14.IsMatch, ref childContext14);
             }
 
-            private static void MatchFileServerFolder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchFileServerFolder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext15 =
@@ -323,22 +323,22 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext15.IsMatch, ref childContext15);
             }
 
-            private static void MatchFixturesFolder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchFixturesFolder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext16 =
-                    Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.JsonSchema.PushChildContextUnescaped(
+                    Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.FixturesFolderUtf8,
                         evaluationPath: FixturesFolderSchemaEvaluationPath);
 
-                Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext16);
+                Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext16);
                 context.CommitChildContext(childContext16.IsMatch, ref childContext16);
             }
 
-            private static void MatchIgnoreTestFiles(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchIgnoreTestFiles(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext17 =
@@ -353,7 +353,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext17.IsMatch, ref childContext17);
             }
 
-            private static void MatchIncludeShadowDom(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchIncludeShadowDom(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext18 =
@@ -368,7 +368,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext18.IsMatch, ref childContext18);
             }
 
-            private static void MatchIntegrationFolder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchIntegrationFolder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext19 =
@@ -383,7 +383,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext19.IsMatch, ref childContext19);
             }
 
-            private static void MatchModifyObstructiveCode(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchModifyObstructiveCode(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext20 =
@@ -398,7 +398,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext20.IsMatch, ref childContext20);
             }
 
-            private static void MatchNodeVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNodeVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext21 =
@@ -413,7 +413,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext21.IsMatch, ref childContext21);
             }
 
-            private static void MatchNumTestsKeptInMemory(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchNumTestsKeptInMemory(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext22 =
@@ -428,7 +428,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext22.IsMatch, ref childContext22);
             }
 
-            private static void MatchPageLoadTimeout(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchPageLoadTimeout(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext23 =
@@ -443,7 +443,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext23.IsMatch, ref childContext23);
             }
 
-            private static void MatchPluginsFile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchPluginsFile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext24 =
@@ -458,7 +458,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext24.IsMatch, ref childContext24);
             }
 
-            private static void MatchPort(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchPort(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext25 =
@@ -473,7 +473,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext25.IsMatch, ref childContext25);
             }
 
-            private static void MatchProjectId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchProjectId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext26 =
@@ -488,7 +488,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext26.IsMatch, ref childContext26);
             }
 
-            private static void MatchReporter(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchReporter(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext27 =
@@ -503,7 +503,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext27.IsMatch, ref childContext27);
             }
 
-            private static void MatchReporterOptions(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchReporterOptions(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext28 =
@@ -518,7 +518,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext28.IsMatch, ref childContext28);
             }
 
-            private static void MatchRequestTimeout(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchRequestTimeout(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext29 =
@@ -533,7 +533,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext29.IsMatch, ref childContext29);
             }
 
-            private static void MatchResponseTimeout(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchResponseTimeout(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext30 =
@@ -548,7 +548,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext30.IsMatch, ref childContext30);
             }
 
-            private static void MatchRetries(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchRetries(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext31 =
@@ -563,7 +563,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext31.IsMatch, ref childContext31);
             }
 
-            private static void MatchScreenshotOnRunFailure(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchScreenshotOnRunFailure(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext32 =
@@ -578,7 +578,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext32.IsMatch, ref childContext32);
             }
 
-            private static void MatchScreenshotsFolder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchScreenshotsFolder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext33 =
@@ -593,7 +593,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext33.IsMatch, ref childContext33);
             }
 
-            private static void MatchScrollBehavior(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchScrollBehavior(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext34 =
@@ -608,7 +608,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext34.IsMatch, ref childContext34);
             }
 
-            private static void MatchSlowTestThreshold(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSlowTestThreshold(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext35 =
@@ -623,7 +623,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext35.IsMatch, ref childContext35);
             }
 
-            private static void MatchSupportFile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchSupportFile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext36 =
@@ -638,7 +638,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext36.IsMatch, ref childContext36);
             }
 
-            private static void MatchTaskTimeout(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchTaskTimeout(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext37 =
@@ -653,7 +653,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext37.IsMatch, ref childContext37);
             }
 
-            private static void MatchTestFiles(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchTestFiles(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext38 =
@@ -668,7 +668,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext38.IsMatch, ref childContext38);
             }
 
-            private static void MatchTrashAssetsBeforeRuns(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchTrashAssetsBeforeRuns(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext39 =
@@ -683,7 +683,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext39.IsMatch, ref childContext39);
             }
 
-            private static void MatchUserAgent(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchUserAgent(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext40 =
@@ -698,7 +698,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext40.IsMatch, ref childContext40);
             }
 
-            private static void MatchVideo(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchVideo(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext41 =
@@ -713,7 +713,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext41.IsMatch, ref childContext41);
             }
 
-            private static void MatchVideoCompression(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchVideoCompression(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext42 =
@@ -728,7 +728,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext42.IsMatch, ref childContext42);
             }
 
-            private static void MatchVideosFolder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchVideosFolder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext43 =
@@ -743,7 +743,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext43.IsMatch, ref childContext43);
             }
 
-            private static void MatchVideoUploadOnPasses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchVideoUploadOnPasses(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext44 =
@@ -758,7 +758,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext44.IsMatch, ref childContext44);
             }
 
-            private static void MatchViewportHeight(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchViewportHeight(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext45 =
@@ -773,7 +773,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext45.IsMatch, ref childContext45);
             }
 
-            private static void MatchViewportWidth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchViewportWidth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext46 =
@@ -788,7 +788,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext46.IsMatch, ref childContext46);
             }
 
-            private static void MatchWaitForAnimations(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchWaitForAnimations(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext47 =
@@ -803,7 +803,7 @@ public readonly partial struct CypressSchema
                 context.CommitChildContext(childContext47.IsMatch, ref childContext47);
             }
 
-            private static void MatchWatchForFileChanges(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchWatchForFileChanges(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext48 =
@@ -930,7 +930,7 @@ public readonly partial struct CypressSchema
 
                         if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.CypressBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                         {
-                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                             if (!context.HasCollector && !context.IsMatch)
                             {

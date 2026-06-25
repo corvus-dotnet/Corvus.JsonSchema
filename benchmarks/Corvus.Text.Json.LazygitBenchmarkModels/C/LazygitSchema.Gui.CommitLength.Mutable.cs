@@ -217,7 +217,7 @@ public readonly partial struct LazygitSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.CommitLength.Show.Mutable.DefaultInstance;
                     }
                 }
 

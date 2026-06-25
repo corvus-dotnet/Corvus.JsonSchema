@@ -818,13 +818,17 @@ public readonly partial struct CypressSchema
                                 Unknown,
                                 JsonElement,
                                 PemFileSpecificPropertiesBuilder,
+                                PemFileSpecificPropertiesSource,
                                 PfxFileSpecificPropertiesBuilder,
+                                PfxFileSpecificPropertiesSource,
                             }
 
                             private readonly Kind _kind;
                             private readonly JsonElement _jsonElement;
                             private readonly Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties.Builder.Build? _pemFileSpecificPropertiesBuilderInstance;
+                            private readonly Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties.Source _pemFileSpecificPropertiesSourceInstance;
                             private readonly Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties.Builder.Build? _pfxFileSpecificPropertiesBuilderInstance;
+                            private readonly Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties.Source _pfxFileSpecificPropertiesSourceInstance;
 
                             /// <summary>
                             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -839,7 +843,11 @@ public readonly partial struct CypressSchema
 
                             public Source(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties.Builder.Build value) {_pemFileSpecificPropertiesBuilderInstance = value; _kind = Kind.PemFileSpecificPropertiesBuilder; }
 
+                            public Source(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties.Source value) { _pemFileSpecificPropertiesSourceInstance = value; _kind = Kind.PemFileSpecificPropertiesSource; }
+
                             public Source(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties.Builder.Build value) {_pfxFileSpecificPropertiesBuilderInstance = value; _kind = Kind.PfxFileSpecificPropertiesBuilder; }
+
+                            public Source(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties.Source value) { _pfxFileSpecificPropertiesSourceInstance = value; _kind = Kind.PfxFileSpecificPropertiesSource; }
 
                             public static implicit operator Source(CertsEntity instance) => new(JsonElement.From(instance));
 
@@ -847,7 +855,13 @@ public readonly partial struct CypressSchema
                             public static implicit operator Source(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties instance) => new(JsonElement.From(instance));
 
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public static implicit operator Source(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties.Source value) => new(value);
+
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
                             public static implicit operator Source(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties instance) => new(JsonElement.From(instance));
+
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public static implicit operator Source(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties.Source value) => new(value);
 
                             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                             {
@@ -861,8 +875,14 @@ public readonly partial struct CypressSchema
                                     case Kind.PemFileSpecificPropertiesBuilder:
                                         valueBuilder.AddProperty(utf8Name, _pemFileSpecificPropertiesBuilderInstance!, static (in b, ref o) => Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                                         break;
+                                    case Kind.PemFileSpecificPropertiesSource:
+                                        _pemFileSpecificPropertiesSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                                        break;
                                     case Kind.PfxFileSpecificPropertiesBuilder:
                                         valueBuilder.AddProperty(utf8Name, _pfxFileSpecificPropertiesBuilderInstance!, static (in b, ref o) => Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                                        break;
+                                    case Kind.PfxFileSpecificPropertiesSource:
+                                        _pfxFileSpecificPropertiesSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -882,8 +902,14 @@ public readonly partial struct CypressSchema
                                     case Kind.PemFileSpecificPropertiesBuilder:
                                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _pemFileSpecificPropertiesBuilderInstance!, static (in b, ref o) => Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.PemFileSpecificPropertiesSource:
+                                        _pemFileSpecificPropertiesSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                        break;
                                     case Kind.PfxFileSpecificPropertiesBuilder:
                                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _pfxFileSpecificPropertiesBuilderInstance!, static (in b, ref o) => Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.PfxFileSpecificPropertiesSource:
+                                        _pfxFileSpecificPropertiesSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -903,8 +929,14 @@ public readonly partial struct CypressSchema
                                     case Kind.PemFileSpecificPropertiesBuilder:
                                         valueBuilder.AddProperty(name, _pemFileSpecificPropertiesBuilderInstance!, static (in b, ref o) => Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.PemFileSpecificPropertiesSource:
+                                        _pemFileSpecificPropertiesSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                        break;
                                     case Kind.PfxFileSpecificPropertiesBuilder:
                                         valueBuilder.AddProperty(name, _pfxFileSpecificPropertiesBuilderInstance!, static (in b, ref o) => Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.PfxFileSpecificPropertiesSource:
+                                        _pfxFileSpecificPropertiesSourceInstance.AddAsProperty(name, ref valueBuilder);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -924,8 +956,14 @@ public readonly partial struct CypressSchema
                                     case Kind.PemFileSpecificPropertiesBuilder:
                                         valueBuilder.AddProperty(name, _pemFileSpecificPropertiesBuilderInstance!, static (in b, ref o) => Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.PemFileSpecificPropertiesSource:
+                                        _pemFileSpecificPropertiesSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                        break;
                                     case Kind.PfxFileSpecificPropertiesBuilder:
                                         valueBuilder.AddProperty(name, _pfxFileSpecificPropertiesBuilderInstance!, static (in b, ref o) => Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.PfxFileSpecificPropertiesSource:
+                                        _pfxFileSpecificPropertiesSourceInstance.AddAsProperty(name, ref valueBuilder);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -945,8 +983,14 @@ public readonly partial struct CypressSchema
                                     case Kind.PemFileSpecificPropertiesBuilder:
                                         valueBuilder.AddItem(_pemFileSpecificPropertiesBuilderInstance!, static (in b, ref o) => Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PemFileSpecificProperties.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.PemFileSpecificPropertiesSource:
+                                        _pemFileSpecificPropertiesSourceInstance.AddAsItem(ref valueBuilder);
+                                        break;
                                     case Kind.PfxFileSpecificPropertiesBuilder:
                                         valueBuilder.AddItem(_pfxFileSpecificPropertiesBuilderInstance!, static (in b, ref o) => Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.PfxFileSpecificPropertiesSource:
+                                        _pfxFileSpecificPropertiesSourceInstance.AddAsItem(ref valueBuilder);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");

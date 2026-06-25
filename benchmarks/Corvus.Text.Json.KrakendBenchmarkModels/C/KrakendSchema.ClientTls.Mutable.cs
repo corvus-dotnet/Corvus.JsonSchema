@@ -232,7 +232,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.AllowInsecureConnections.Mutable.DefaultInstance;
                 }
             }
 
@@ -257,7 +257,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CaCertificates.Mutable.DefaultInstance;
                 }
             }
 
@@ -282,7 +282,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CipherSuites.Mutable.DefaultInstance;
                 }
             }
 
@@ -332,7 +332,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CurvePreferencesEntityArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -357,7 +357,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.DisableSystemSCa.Mutable.DefaultInstance;
                 }
             }
 
@@ -382,7 +382,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MaximumTlsVersion.Mutable.DefaultInstance;
                 }
             }
 
@@ -407,7 +407,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MinimumTlsVersion.Mutable.DefaultInstance;
                 }
             }
 

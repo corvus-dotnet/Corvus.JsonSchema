@@ -337,11 +337,11 @@ public readonly partial struct Ui5ManifestSchema
             /// Represents the products and service that the pacakge depends on
             /// </para>
             /// </remarks>
-            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.DependenciesEntity.Mutable Dependencies
+            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.Mutable Dependencies
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DependenciesUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.DependenciesEntity.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DependenciesUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.Mutable value))
                     {
                         return value;
                     }
@@ -439,7 +439,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.I18nEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -945,7 +945,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>dependencies</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDependencies(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.DependenciesEntity.Source value)
+            public void SetDependencies(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.Source value)
             {
                 CheckValidInstance();
 
@@ -978,7 +978,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>dependencies</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDependencies<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.DependenciesEntity.Source<TContext> value)
+            public void SetDependencies<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2410,7 +2410,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.VersionEntity.Source version = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.JsonStringArray.Source consumption = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.ContentitemArray.Source contents = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.DependenciesEntity.Source dependencies = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.Source dependencies = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source documentation = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source homepage = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.I18nEntity.Source i18n = default,
@@ -2455,7 +2455,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.VersionEntity.Source version = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.JsonStringArray.Source consumption = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.ContentitemArray.Source contents = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.DependenciesEntity.Source dependencies = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.Source dependencies = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source documentation = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source homepage = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.I18nEntity.Source i18n = default,
@@ -2484,7 +2484,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.VersionEntity.Source version = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.JsonStringArray.Source<TContext> consumption = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.ContentitemArray.Source<TContext> contents = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.DependenciesEntity.Source<TContext> dependencies = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.Source<TContext> dependencies = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source<TContext> documentation = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source<TContext> homepage = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.I18nEntity.Source i18n = default,
@@ -2533,7 +2533,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.VersionEntity.Source version = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.JsonStringArray.Source<TContext> consumption = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.ContentitemArray.Source<TContext> contents = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.DependenciesEntity.Source<TContext> dependencies = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.Source<TContext> dependencies = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source<TContext> documentation = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source<TContext> homepage = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.I18nEntity.Source i18n = default,
@@ -2787,7 +2787,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="type">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source description, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Iddef.Source id, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RequiredVersion.Source packageVersion, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source support, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Vendor.Source vendor, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.JsonStringArray.Source consumption = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.ContentitemArray.Source contents = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.DependenciesEntity.Source dependencies = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source documentation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source homepage = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.I18nEntity.Source i18n = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source info = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source shortTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsArrayOfKeywordsUsedToFindThePackage.Source tags = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.TypeEntity.Source type = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source description, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Iddef.Source id, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RequiredVersion.Source packageVersion, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source support, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Vendor.Source vendor, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.JsonStringArray.Source consumption = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.ContentitemArray.Source contents = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.Source dependencies = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source documentation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source homepage = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.I18nEntity.Source i18n = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source info = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source shortTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsArrayOfKeywordsUsedToFindThePackage.Source tags = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.TypeEntity.Source type = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -2827,7 +2827,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="type">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source description, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Iddef.Source id, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RequiredVersion.Source<TContext> packageVersion, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source<TContext> support, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Vendor.Source<TContext> vendor, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.JsonStringArray.Source<TContext> consumption = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.ContentitemArray.Source<TContext> contents = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.DependenciesEntity.Source<TContext> dependencies = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source<TContext> documentation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source<TContext> homepage = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.I18nEntity.Source i18n = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source info = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source shortTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsArrayOfKeywordsUsedToFindThePackage.Source<TContext> tags = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.TypeEntity.Source type = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source description, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Iddef.Source id, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RequiredVersion.Source<TContext> packageVersion, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source<TContext> support, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Vendor.Source<TContext> vendor, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.JsonStringArray.Source<TContext> consumption = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.ContentitemArray.Source<TContext> contents = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.Source<TContext> dependencies = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source<TContext> documentation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source<TContext> homepage = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.I18nEntity.Source i18n = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source info = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source shortTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsArrayOfKeywordsUsedToFindThePackage.Source<TContext> tags = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.TypeEntity.Source type = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

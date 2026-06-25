@@ -2064,7 +2064,7 @@ public readonly partial struct ClangFormatSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.MaxEmptyLinesToKeepEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -2127,7 +2127,7 @@ public readonly partial struct ClangFormatSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBinPackProtocolListEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -2484,7 +2484,7 @@ public readonly partial struct ClangFormatSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PpIndentWidthEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -2715,7 +2715,7 @@ public readonly partial struct ClangFormatSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ShortNamespaceLinesEntity.Mutable.DefaultInstance;
             }
         }
 

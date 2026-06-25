@@ -153,7 +153,7 @@ public readonly partial struct JsconfigSchema
                 private static readonly JsonSchemaPathProvider WatchDirectorySchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/watchDirectory"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider WatchFileSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/watchFile"u8, buffer, out written);
 
-                private static void MatchAllowArbitraryExtensions(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchAllowArbitraryExtensions(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext =
@@ -168,7 +168,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext.IsMatch, ref childContext);
                 }
 
-                private static void MatchAllowImportingTsExtensions(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchAllowImportingTsExtensions(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext1 =
@@ -183,7 +183,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext1.IsMatch, ref childContext1);
                 }
 
-                private static void MatchAllowJs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchAllowJs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext2 =
@@ -198,7 +198,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext2.IsMatch, ref childContext2);
                 }
 
-                private static void MatchAllowSyntheticDefaultImports(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchAllowSyntheticDefaultImports(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext3 =
@@ -213,7 +213,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext3.IsMatch, ref childContext3);
                 }
 
-                private static void MatchAllowUmdGlobalAccess(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchAllowUmdGlobalAccess(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext4 =
@@ -228,7 +228,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext4.IsMatch, ref childContext4);
                 }
 
-                private static void MatchAllowUnreachableCode(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchAllowUnreachableCode(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext5 =
@@ -243,7 +243,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext5.IsMatch, ref childContext5);
                 }
 
-                private static void MatchAllowUnusedLabels(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchAllowUnusedLabels(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext6 =
@@ -258,7 +258,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext6.IsMatch, ref childContext6);
                 }
 
-                private static void MatchAlwaysStrict(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchAlwaysStrict(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext7 =
@@ -273,7 +273,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext7.IsMatch, ref childContext7);
                 }
 
-                private static void MatchAssumeChangesOnlyAffectDirectDependencies(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchAssumeChangesOnlyAffectDirectDependencies(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext8 =
@@ -288,7 +288,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext8.IsMatch, ref childContext8);
                 }
 
-                private static void MatchBaseUrl(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchBaseUrl(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext9 =
@@ -303,7 +303,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext9.IsMatch, ref childContext9);
                 }
 
-                private static void MatchCharset(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchCharset(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext10 =
@@ -318,7 +318,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext10.IsMatch, ref childContext10);
                 }
 
-                private static void MatchCheckJs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchCheckJs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext11 =
@@ -333,7 +333,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext11.IsMatch, ref childContext11);
                 }
 
-                private static void MatchComposite(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchComposite(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext12 =
@@ -348,7 +348,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext12.IsMatch, ref childContext12);
                 }
 
-                private static void MatchCustomConditions(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchCustomConditions(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext13 =
@@ -363,7 +363,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext13.IsMatch, ref childContext13);
                 }
 
-                private static void MatchDeclaration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchDeclaration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext14 =
@@ -378,7 +378,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext14.IsMatch, ref childContext14);
                 }
 
-                private static void MatchDeclarationDir(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchDeclarationDir(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext15 =
@@ -393,7 +393,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext15.IsMatch, ref childContext15);
                 }
 
-                private static void MatchDeclarationMap(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchDeclarationMap(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext16 =
@@ -408,7 +408,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext16.IsMatch, ref childContext16);
                 }
 
-                private static void MatchDiagnostics(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchDiagnostics(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext17 =
@@ -423,7 +423,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext17.IsMatch, ref childContext17);
                 }
 
-                private static void MatchDisableReferencedProjectLoad(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchDisableReferencedProjectLoad(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext18 =
@@ -438,7 +438,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext18.IsMatch, ref childContext18);
                 }
 
-                private static void MatchDisableSizeLimit(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchDisableSizeLimit(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext19 =
@@ -453,7 +453,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext19.IsMatch, ref childContext19);
                 }
 
-                private static void MatchDisableSolutionSearching(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchDisableSolutionSearching(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext20 =
@@ -468,7 +468,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext20.IsMatch, ref childContext20);
                 }
 
-                private static void MatchDisableSourceOfProjectReferenceRedirect(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchDisableSourceOfProjectReferenceRedirect(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext21 =
@@ -483,7 +483,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext21.IsMatch, ref childContext21);
                 }
 
-                private static void MatchDownlevelIteration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchDownlevelIteration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext22 =
@@ -498,7 +498,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext22.IsMatch, ref childContext22);
                 }
 
-                private static void MatchEmitBom(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchEmitBom(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext23 =
@@ -513,7 +513,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext23.IsMatch, ref childContext23);
                 }
 
-                private static void MatchEmitDeclarationOnly(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchEmitDeclarationOnly(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext24 =
@@ -528,7 +528,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext24.IsMatch, ref childContext24);
                 }
 
-                private static void MatchEmitDecoratorMetadata(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchEmitDecoratorMetadata(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext25 =
@@ -543,7 +543,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext25.IsMatch, ref childContext25);
                 }
 
-                private static void MatchEsModuleInterop(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchEsModuleInterop(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext26 =
@@ -558,7 +558,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext26.IsMatch, ref childContext26);
                 }
 
-                private static void MatchExactOptionalPropertyTypes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchExactOptionalPropertyTypes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext27 =
@@ -573,7 +573,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext27.IsMatch, ref childContext27);
                 }
 
-                private static void MatchExperimentalDecorators(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchExperimentalDecorators(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext28 =
@@ -588,7 +588,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext28.IsMatch, ref childContext28);
                 }
 
-                private static void MatchExtendedDiagnostics(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchExtendedDiagnostics(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext29 =
@@ -603,7 +603,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext29.IsMatch, ref childContext29);
                 }
 
-                private static void MatchFallbackPolling(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchFallbackPolling(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext30 =
@@ -618,7 +618,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext30.IsMatch, ref childContext30);
                 }
 
-                private static void MatchForceConsistentCasingInFileNames(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchForceConsistentCasingInFileNames(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext31 =
@@ -633,7 +633,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext31.IsMatch, ref childContext31);
                 }
 
-                private static void MatchGenerateCpuProfile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchGenerateCpuProfile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext32 =
@@ -648,7 +648,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext32.IsMatch, ref childContext32);
                 }
 
-                private static void MatchImportHelpers(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchImportHelpers(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext33 =
@@ -663,7 +663,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext33.IsMatch, ref childContext33);
                 }
 
-                private static void MatchImportsNotUsedAsValues(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchImportsNotUsedAsValues(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext34 =
@@ -678,7 +678,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext34.IsMatch, ref childContext34);
                 }
 
-                private static void MatchIncremental(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchIncremental(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext35 =
@@ -693,7 +693,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext35.IsMatch, ref childContext35);
                 }
 
-                private static void MatchInlineSourceMap(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchInlineSourceMap(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext36 =
@@ -708,7 +708,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext36.IsMatch, ref childContext36);
                 }
 
-                private static void MatchInlineSources(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchInlineSources(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext37 =
@@ -723,7 +723,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext37.IsMatch, ref childContext37);
                 }
 
-                private static void MatchIsolatedModules(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchIsolatedModules(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext38 =
@@ -738,7 +738,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext38.IsMatch, ref childContext38);
                 }
 
-                private static void MatchJsx(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchJsx(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext39 =
@@ -753,7 +753,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext39.IsMatch, ref childContext39);
                 }
 
-                private static void MatchJsxFactory(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchJsxFactory(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext40 =
@@ -768,7 +768,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext40.IsMatch, ref childContext40);
                 }
 
-                private static void MatchJsxFragmentFactory(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchJsxFragmentFactory(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext41 =
@@ -783,7 +783,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext41.IsMatch, ref childContext41);
                 }
 
-                private static void MatchJsxImportSource(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchJsxImportSource(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext42 =
@@ -798,7 +798,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext42.IsMatch, ref childContext42);
                 }
 
-                private static void MatchKeyofStringsOnly(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchKeyofStringsOnly(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext43 =
@@ -813,7 +813,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext43.IsMatch, ref childContext43);
                 }
 
-                private static void MatchLib(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchLib(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext44 =
@@ -828,7 +828,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext44.IsMatch, ref childContext44);
                 }
 
-                private static void MatchListEmittedFiles(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchListEmittedFiles(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext45 =
@@ -843,7 +843,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext45.IsMatch, ref childContext45);
                 }
 
-                private static void MatchListFiles(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchListFiles(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext46 =
@@ -858,7 +858,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext46.IsMatch, ref childContext46);
                 }
 
-                private static void MatchListFilesOnly(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchListFilesOnly(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext47 =
@@ -873,7 +873,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext47.IsMatch, ref childContext47);
                 }
 
-                private static void MatchMapRoot(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchMapRoot(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext48 =
@@ -888,7 +888,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext48.IsMatch, ref childContext48);
                 }
 
-                private static void MatchMaxNodeModuleJsDepth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchMaxNodeModuleJsDepth(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext49 =
@@ -903,7 +903,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext49.IsMatch, ref childContext49);
                 }
 
-                private static void MatchModule(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchModule(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext50 =
@@ -918,7 +918,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext50.IsMatch, ref childContext50);
                 }
 
-                private static void MatchModuleResolution(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchModuleResolution(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext51 =
@@ -933,7 +933,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext51.IsMatch, ref childContext51);
                 }
 
-                private static void MatchNewLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNewLine(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext52 =
@@ -948,7 +948,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext52.IsMatch, ref childContext52);
                 }
 
-                private static void MatchNoEmit(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoEmit(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext53 =
@@ -963,7 +963,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext53.IsMatch, ref childContext53);
                 }
 
-                private static void MatchNoEmitHelpers(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoEmitHelpers(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext54 =
@@ -978,7 +978,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext54.IsMatch, ref childContext54);
                 }
 
-                private static void MatchNoEmitOnError(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoEmitOnError(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext55 =
@@ -993,7 +993,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext55.IsMatch, ref childContext55);
                 }
 
-                private static void MatchNoErrorTruncation(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoErrorTruncation(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext56 =
@@ -1008,7 +1008,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext56.IsMatch, ref childContext56);
                 }
 
-                private static void MatchNoFallthroughCasesInSwitch(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoFallthroughCasesInSwitch(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext57 =
@@ -1023,7 +1023,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext57.IsMatch, ref childContext57);
                 }
 
-                private static void MatchNoImplicitAny(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoImplicitAny(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext58 =
@@ -1038,7 +1038,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext58.IsMatch, ref childContext58);
                 }
 
-                private static void MatchNoImplicitOverride(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoImplicitOverride(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext59 =
@@ -1053,7 +1053,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext59.IsMatch, ref childContext59);
                 }
 
-                private static void MatchNoImplicitReturns(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoImplicitReturns(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext60 =
@@ -1068,7 +1068,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext60.IsMatch, ref childContext60);
                 }
 
-                private static void MatchNoImplicitThis(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoImplicitThis(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext61 =
@@ -1083,7 +1083,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext61.IsMatch, ref childContext61);
                 }
 
-                private static void MatchNoImplicitUseStrict(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoImplicitUseStrict(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext62 =
@@ -1098,7 +1098,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext62.IsMatch, ref childContext62);
                 }
 
-                private static void MatchNoLib(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoLib(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext63 =
@@ -1113,7 +1113,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext63.IsMatch, ref childContext63);
                 }
 
-                private static void MatchNoPropertyAccessFromIndexSignature(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoPropertyAccessFromIndexSignature(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext64 =
@@ -1128,7 +1128,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext64.IsMatch, ref childContext64);
                 }
 
-                private static void MatchNoResolve(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoResolve(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext65 =
@@ -1143,7 +1143,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext65.IsMatch, ref childContext65);
                 }
 
-                private static void MatchNoStrictGenericChecks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoStrictGenericChecks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext66 =
@@ -1158,7 +1158,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext66.IsMatch, ref childContext66);
                 }
 
-                private static void MatchNoUncheckedIndexedAccess(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoUncheckedIndexedAccess(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext67 =
@@ -1173,7 +1173,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext67.IsMatch, ref childContext67);
                 }
 
-                private static void MatchNoUnusedLocals(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoUnusedLocals(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext68 =
@@ -1188,7 +1188,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext68.IsMatch, ref childContext68);
                 }
 
-                private static void MatchNoUnusedParameters(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchNoUnusedParameters(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext69 =
@@ -1203,7 +1203,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext69.IsMatch, ref childContext69);
                 }
 
-                private static void MatchOutDir(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchOutDir(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext70 =
@@ -1218,7 +1218,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext70.IsMatch, ref childContext70);
                 }
 
-                private static void MatchOutFile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchOutFile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext71 =
@@ -1233,7 +1233,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext71.IsMatch, ref childContext71);
                 }
 
-                private static void MatchPaths(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPaths(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext72 =
@@ -1248,7 +1248,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext72.IsMatch, ref childContext72);
                 }
 
-                private static void MatchPlugins(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPlugins(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext73 =
@@ -1263,7 +1263,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext73.IsMatch, ref childContext73);
                 }
 
-                private static void MatchPreserveConstEnums(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPreserveConstEnums(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext74 =
@@ -1278,7 +1278,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext74.IsMatch, ref childContext74);
                 }
 
-                private static void MatchPreserveSymlinks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPreserveSymlinks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext75 =
@@ -1293,7 +1293,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext75.IsMatch, ref childContext75);
                 }
 
-                private static void MatchPreserveValueImports(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPreserveValueImports(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext76 =
@@ -1308,7 +1308,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext76.IsMatch, ref childContext76);
                 }
 
-                private static void MatchPreserveWatchOutput(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPreserveWatchOutput(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext77 =
@@ -1323,7 +1323,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext77.IsMatch, ref childContext77);
                 }
 
-                private static void MatchPretty(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchPretty(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext78 =
@@ -1338,7 +1338,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext78.IsMatch, ref childContext78);
                 }
 
-                private static void MatchReactNamespace(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchReactNamespace(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext79 =
@@ -1353,7 +1353,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext79.IsMatch, ref childContext79);
                 }
 
-                private static void MatchRemoveComments(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchRemoveComments(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext80 =
@@ -1368,7 +1368,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext80.IsMatch, ref childContext80);
                 }
 
-                private static void MatchResolveJsonModule(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchResolveJsonModule(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext81 =
@@ -1383,7 +1383,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext81.IsMatch, ref childContext81);
                 }
 
-                private static void MatchResolvePackageJsonExports(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchResolvePackageJsonExports(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext82 =
@@ -1398,7 +1398,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext82.IsMatch, ref childContext82);
                 }
 
-                private static void MatchResolvePackageJsonImports(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchResolvePackageJsonImports(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext83 =
@@ -1413,7 +1413,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext83.IsMatch, ref childContext83);
                 }
 
-                private static void MatchRootDir(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchRootDir(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext84 =
@@ -1428,7 +1428,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext84.IsMatch, ref childContext84);
                 }
 
-                private static void MatchRootDirs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchRootDirs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext85 =
@@ -1443,7 +1443,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext85.IsMatch, ref childContext85);
                 }
 
-                private static void MatchSkipDefaultLibCheck(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchSkipDefaultLibCheck(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext86 =
@@ -1458,7 +1458,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext86.IsMatch, ref childContext86);
                 }
 
-                private static void MatchSkipLibCheck(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchSkipLibCheck(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext87 =
@@ -1473,7 +1473,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext87.IsMatch, ref childContext87);
                 }
 
-                private static void MatchSourceMap(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchSourceMap(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext88 =
@@ -1488,7 +1488,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext88.IsMatch, ref childContext88);
                 }
 
-                private static void MatchSourceRoot(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchSourceRoot(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext89 =
@@ -1503,7 +1503,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext89.IsMatch, ref childContext89);
                 }
 
-                private static void MatchStrict(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchStrict(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext90 =
@@ -1518,7 +1518,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext90.IsMatch, ref childContext90);
                 }
 
-                private static void MatchStrictBindCallApply(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchStrictBindCallApply(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext91 =
@@ -1533,7 +1533,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext91.IsMatch, ref childContext91);
                 }
 
-                private static void MatchStrictFunctionTypes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchStrictFunctionTypes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext92 =
@@ -1548,7 +1548,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext92.IsMatch, ref childContext92);
                 }
 
-                private static void MatchStrictNullChecks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchStrictNullChecks(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext93 =
@@ -1563,7 +1563,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext93.IsMatch, ref childContext93);
                 }
 
-                private static void MatchStrictPropertyInitialization(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchStrictPropertyInitialization(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext94 =
@@ -1578,7 +1578,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext94.IsMatch, ref childContext94);
                 }
 
-                private static void MatchStripInternal(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchStripInternal(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext95 =
@@ -1593,7 +1593,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext95.IsMatch, ref childContext95);
                 }
 
-                private static void MatchSuppressExcessPropertyErrors(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchSuppressExcessPropertyErrors(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext96 =
@@ -1608,7 +1608,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext96.IsMatch, ref childContext96);
                 }
 
-                private static void MatchSuppressImplicitAnyIndexErrors(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchSuppressImplicitAnyIndexErrors(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext97 =
@@ -1623,7 +1623,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext97.IsMatch, ref childContext97);
                 }
 
-                private static void MatchTarget(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchTarget(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext98 =
@@ -1638,7 +1638,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext98.IsMatch, ref childContext98);
                 }
 
-                private static void MatchTraceResolution(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchTraceResolution(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext99 =
@@ -1653,7 +1653,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext99.IsMatch, ref childContext99);
                 }
 
-                private static void MatchTsBuildInfoFile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchTsBuildInfoFile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext100 =
@@ -1668,22 +1668,22 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext100.IsMatch, ref childContext100);
                 }
 
-                private static void MatchTypeRoots(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchTypeRoots(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext101 =
-                        Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypeRootsJArray.JsonSchema.PushChildContextUnescaped(
+                        Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
                             JsonPropertyNames.TypeRootsUtf8,
                             evaluationPath: TypeRootsSchemaEvaluationPath);
 
-                    Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypeRootsJArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext101);
+                    Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext101);
                     context.CommitChildContext(childContext101.IsMatch, ref childContext101);
                 }
 
-                private static void MatchTypes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchTypes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext102 =
@@ -1698,7 +1698,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext102.IsMatch, ref childContext102);
                 }
 
-                private static void MatchUseDefineForClassFields(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchUseDefineForClassFields(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext103 =
@@ -1713,7 +1713,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext103.IsMatch, ref childContext103);
                 }
 
-                private static void MatchUseUnknownInCatchVariables(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchUseUnknownInCatchVariables(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext104 =
@@ -1728,7 +1728,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext104.IsMatch, ref childContext104);
                 }
 
-                private static void MatchVerbatimModuleSyntax(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchVerbatimModuleSyntax(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext105 =
@@ -1743,7 +1743,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext105.IsMatch, ref childContext105);
                 }
 
-                private static void MatchWatch(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchWatch(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext106 =
@@ -1758,7 +1758,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext106.IsMatch, ref childContext106);
                 }
 
-                private static void MatchWatchDirectory(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchWatchDirectory(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext107 =
@@ -1773,7 +1773,7 @@ public readonly partial struct JsconfigSchema
                     context.CommitChildContext(childContext107.IsMatch, ref childContext107);
                 }
 
-                private static void MatchWatchFile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchWatchFile(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext108 =
@@ -1968,7 +1968,7 @@ public readonly partial struct JsconfigSchema
 
                             if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.JsconfigBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                             {
-                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                                 if (!context.HasCollector && !context.IsMatch)
                                 {

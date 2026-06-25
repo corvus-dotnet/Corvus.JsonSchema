@@ -68,6 +68,16 @@ public readonly partial struct Ui5ManifestSchema
                 _documentVersion = _parent?.Version ?? 0;
             }
 
+            /// <summary>
+            /// Gets a read-only default instance of the mutable type, surfacing the schema default value.
+            /// </summary>
+            /// <remarks>
+            /// The instance is a zero-copy facade over the immutable default, so it can be read but not
+            /// mutated; attempting to mutate it throws an <see cref="InvalidOperationException"/> directing
+            /// the caller to set the value on its parent first.
+            /// </remarks>
+            public static Mutable DefaultInstance { get; } = JsonElementHelpers.CreateDefaultValueElement<Schema, Mutable>(Schema.DefaultInstance);
+
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();
 
@@ -368,7 +378,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Mutable.DefaultInstance;
                 }
             }
 
@@ -384,7 +394,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Mutable.DefaultInstance;
                 }
             }
 
@@ -448,7 +458,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Mutable.DefaultInstance;
                 }
             }
 
@@ -512,7 +522,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.DefinitionsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -560,7 +570,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Mutable.DefaultInstance;
                 }
             }
 
@@ -656,7 +666,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Mutable.DefaultInstance;
                 }
             }
 
@@ -672,7 +682,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.ItemsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -832,7 +842,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Mutable.DefaultInstance;
                 }
             }
 
@@ -880,7 +890,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.PatternPropertiesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -896,7 +906,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.PropertiesEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -912,7 +922,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Mutable.DefaultInstance;
                 }
             }
 
@@ -928,7 +938,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.ReadOnlyEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -944,7 +954,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.StringArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -960,7 +970,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Mutable.DefaultInstance;
                 }
             }
 
@@ -1008,7 +1018,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.UniqueItemsEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -1024,7 +1034,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.WriteOnlyEntity.Mutable.DefaultInstance;
                 }
             }
 

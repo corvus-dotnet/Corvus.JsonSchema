@@ -253,6 +253,15 @@ public readonly partial struct OpenapiSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.Link.RequiredOperationRef"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Link(Corvus.OpenapiBenchmark.Current.OpenapiSchema.Link.RequiredOperationRef.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.Link.RequiredOperationId"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -266,6 +275,15 @@ public readonly partial struct OpenapiSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Link(Corvus.OpenapiBenchmark.Current.OpenapiSchema.Link.RequiredOperationId value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.OpenapiBenchmark.Current.OpenapiSchema.Link.RequiredOperationId"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Link(Corvus.OpenapiBenchmark.Current.OpenapiSchema.Link.RequiredOperationId.Mutable value)
         {
             return From(value);
         }

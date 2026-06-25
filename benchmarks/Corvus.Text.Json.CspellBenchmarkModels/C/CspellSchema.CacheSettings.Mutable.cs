@@ -268,7 +268,7 @@ public readonly partial struct CspellSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.CspellBenchmark.Current.CspellSchema.CacheSettings.UseCacheEntity.Mutable.DefaultInstance;
                 }
             }
 

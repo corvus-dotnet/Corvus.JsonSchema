@@ -76,7 +76,7 @@ public readonly partial struct Ui5Schema
                             private static readonly JsonSchemaPathProvider ConfigurationSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/configuration"u8, buffer, out written);
                             private static readonly JsonSchemaPathProvider NameSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/name"u8, buffer, out written);
 
-                            private static void MatchBeforeTask(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                            private static void MatchBeforeTask(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                             {
                                 context.AddLocalEvaluatedProperty(propertyCount);
                                 JsonSchemaContext childContext =
@@ -98,7 +98,7 @@ public readonly partial struct Ui5Schema
                                 requiredBitBuffer[RequiredOffsetForBeforeTask] |= RequiredBitForBeforeTask;
                             }
 
-                            private static void MatchConfiguration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                            private static void MatchConfiguration(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                             {
                                 context.AddLocalEvaluatedProperty(propertyCount);
                                 JsonSchemaContext childContext1 =
@@ -113,7 +113,7 @@ public readonly partial struct Ui5Schema
                                 context.CommitChildContext(childContext1.IsMatch, ref childContext1);
                             }
 
-                            private static void MatchName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                            private static void MatchName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                             {
                                 context.AddLocalEvaluatedProperty(propertyCount);
                                 JsonSchemaContext childContext2 =
@@ -214,7 +214,7 @@ public readonly partial struct Ui5Schema
 
                                         if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Ui5Benchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
                                         {
-                                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                                             if (!context.HasCollector && !context.IsMatch)
                                             {

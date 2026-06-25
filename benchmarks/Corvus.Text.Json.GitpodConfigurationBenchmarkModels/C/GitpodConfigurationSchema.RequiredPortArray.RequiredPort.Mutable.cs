@@ -302,7 +302,7 @@ public readonly partial struct GitpodConfigurationSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.VisibilityEntity.Mutable.DefaultInstance;
                     }
                 }
 

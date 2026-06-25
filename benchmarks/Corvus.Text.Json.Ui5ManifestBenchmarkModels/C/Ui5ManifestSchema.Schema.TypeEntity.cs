@@ -148,6 +148,15 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.SimpleTypes"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator TypeEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.SimpleTypes.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.TypeEntity.SimpleTypesArray"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -161,6 +170,15 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator TypeEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.TypeEntity.SimpleTypesArray value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.TypeEntity.SimpleTypesArray"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator TypeEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.TypeEntity.SimpleTypesArray.Mutable value)
             {
                 return From(value);
             }

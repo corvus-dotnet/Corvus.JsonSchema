@@ -390,7 +390,7 @@ public readonly partial struct ExtendableInput
                     return value;
                 }
 
-                return default;
+                return Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.IfFalseThisItemWillBeRemovedFromTheVisualTree.Mutable.DefaultInstance;
             }
         }
 

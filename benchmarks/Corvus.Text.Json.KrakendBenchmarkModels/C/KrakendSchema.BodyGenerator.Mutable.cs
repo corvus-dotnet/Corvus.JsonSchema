@@ -347,7 +347,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.BodyGenerator.ContentType.Mutable.DefaultInstance;
                 }
             }
 
@@ -372,7 +372,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.BodyGenerator.EnableDebug.Mutable.DefaultInstance;
                 }
             }
 

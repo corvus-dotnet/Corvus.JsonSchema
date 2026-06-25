@@ -240,6 +240,15 @@ public readonly partial struct CmakePresetsSchema
                     return From(value);
                 }
 
+                /// <summary>
+                /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ToolsetEntity.AnyOf1Entity"/> mutable view.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                public static implicit operator ToolsetEntity(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ToolsetEntity.AnyOf1Entity.Mutable value)
+                {
+                    return From(value);
+                }
+
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static explicit operator string(ToolsetEntity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

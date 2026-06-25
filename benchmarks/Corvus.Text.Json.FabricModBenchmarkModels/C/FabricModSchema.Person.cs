@@ -215,6 +215,15 @@ public readonly partial struct FabricModSchema
             return From(value);
         }
 
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Person(Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName.Mutable value)
+        {
+            return From(value);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator string(Person value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

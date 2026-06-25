@@ -58,7 +58,7 @@ public readonly partial struct VercelSchema
                         RequiredBitForHandle;
                     private static readonly JsonSchemaPathProvider HandleSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/handle"u8, buffer, out written);
 
-                    private static void MatchHandle(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                    private static void MatchHandle(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                     {
                         context.AddLocalEvaluatedProperty(propertyCount);
                         JsonSchemaContext childContext =
@@ -155,7 +155,7 @@ public readonly partial struct VercelSchema
 
                                 if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.VercelBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1? validator))
                                 {
-                                    validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                                    validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                                     if (!context.HasCollector && !context.IsMatch)
                                     {

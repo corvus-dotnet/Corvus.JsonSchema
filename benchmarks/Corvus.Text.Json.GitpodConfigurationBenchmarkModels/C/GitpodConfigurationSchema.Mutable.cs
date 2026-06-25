@@ -304,7 +304,7 @@ public readonly partial struct GitpodConfigurationSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Mutable.DefaultInstance;
             }
         }
 

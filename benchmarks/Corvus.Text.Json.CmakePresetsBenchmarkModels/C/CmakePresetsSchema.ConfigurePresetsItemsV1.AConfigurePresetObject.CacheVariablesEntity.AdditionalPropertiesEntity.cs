@@ -276,6 +276,15 @@ public readonly partial struct CmakePresetsSchema
                         return From(value);
                     }
 
+                    /// <summary>
+                    /// Conversion from the <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.AdditionalPropertiesEntity.AnObjectRepresentingTheTypeAndValueOfTheVariable"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator AdditionalPropertiesEntity(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.AdditionalPropertiesEntity.AnObjectRepresentingTheTypeAndValueOfTheVariable.Mutable value)
+                    {
+                        return From(value);
+                    }
+
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static explicit operator string(AdditionalPropertiesEntity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

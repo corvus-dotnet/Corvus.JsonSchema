@@ -112,6 +112,15 @@ public readonly partial struct TextRun
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.FontType"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator TheTypeOfFontToUse(Corvus.Ui5ManifestBenchmark.Current.FontType.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.FontType.AnyOf0Entity"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -130,6 +139,15 @@ public readonly partial struct TextRun
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.FontType.AnyOf0Entity"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator TheTypeOfFontToUse(Corvus.Ui5ManifestBenchmark.Current.FontType.AnyOf0Entity.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.FontType.AnyOf1Entity"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -143,6 +161,15 @@ public readonly partial struct TextRun
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator TheTypeOfFontToUse(Corvus.Ui5ManifestBenchmark.Current.FontType.AnyOf1Entity value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.FontType.AnyOf1Entity"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator TheTypeOfFontToUse(Corvus.Ui5ManifestBenchmark.Current.FontType.AnyOf1Entity.Mutable value)
             {
                 return From(value);
             }

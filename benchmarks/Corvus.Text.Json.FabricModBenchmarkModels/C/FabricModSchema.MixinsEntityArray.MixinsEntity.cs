@@ -220,6 +220,15 @@ public readonly partial struct FabricModSchema
                 return From(value);
             }
 
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.MixinsEntity.OneOf1Entity"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator MixinsEntity(Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.MixinsEntity.OneOf1Entity.Mutable value)
+            {
+                return From(value);
+            }
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator string(MixinsEntity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

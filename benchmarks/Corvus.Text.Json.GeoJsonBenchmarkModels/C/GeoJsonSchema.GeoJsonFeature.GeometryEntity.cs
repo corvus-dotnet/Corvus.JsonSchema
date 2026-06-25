@@ -209,6 +209,15 @@ public readonly partial struct GeoJsonSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPoint"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator GeometryEntity(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPoint.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonLineString"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -222,6 +231,15 @@ public readonly partial struct GeoJsonSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator GeometryEntity(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonLineString value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonLineString"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator GeometryEntity(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonLineString.Mutable value)
             {
                 return From(value);
             }
@@ -245,6 +263,15 @@ public readonly partial struct GeoJsonSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPolygon"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator GeometryEntity(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonPolygon.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -258,6 +285,15 @@ public readonly partial struct GeoJsonSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator GeometryEntity(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator GeometryEntity(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPoint.Mutable value)
             {
                 return From(value);
             }
@@ -281,6 +317,15 @@ public readonly partial struct GeoJsonSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator GeometryEntity(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiLineString.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -299,6 +344,15 @@ public readonly partial struct GeoJsonSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator GeometryEntity(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -312,6 +366,15 @@ public readonly partial struct GeoJsonSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator GeometryEntity(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator GeometryEntity(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonGeometryCollection.Mutable value)
             {
                 return From(value);
             }

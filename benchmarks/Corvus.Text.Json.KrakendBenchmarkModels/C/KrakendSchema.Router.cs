@@ -460,6 +460,15 @@ public readonly partial struct KrakendSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Router.RequiredMaxRate"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Router(Corvus.KrakendBenchmark.Current.KrakendSchema.Router.RequiredMaxRate.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Router.RequiredClientMaxRate"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -473,6 +482,15 @@ public readonly partial struct KrakendSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator Router(Corvus.KrakendBenchmark.Current.KrakendSchema.Router.RequiredClientMaxRate value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Router.RequiredClientMaxRate"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Router(Corvus.KrakendBenchmark.Current.KrakendSchema.Router.RequiredClientMaxRate.Mutable value)
         {
             return From(value);
         }

@@ -300,6 +300,15 @@ public readonly partial struct KrakendSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.ServerVirtualhost.RequiredHosts"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ServerVirtualhost(Corvus.KrakendBenchmark.Current.KrakendSchema.ServerVirtualhost.RequiredHosts.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.ServerVirtualhost.RequiredAliasedHosts"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -313,6 +322,15 @@ public readonly partial struct KrakendSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator ServerVirtualhost(Corvus.KrakendBenchmark.Current.KrakendSchema.ServerVirtualhost.RequiredAliasedHosts value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.ServerVirtualhost.RequiredAliasedHosts"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator ServerVirtualhost(Corvus.KrakendBenchmark.Current.KrakendSchema.ServerVirtualhost.RequiredAliasedHosts.Mutable value)
         {
             return From(value);
         }

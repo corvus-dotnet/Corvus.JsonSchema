@@ -75,7 +75,7 @@ public readonly partial struct KrakendSchema
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static Endpoint DefaultInstance { get; } = Endpoint.ParseValue("{\r\n        \"backend\": [\r\n          {\r\n            \"url_pattern\": \"/url\"\r\n          }\r\n        ],\r\n        \"endpoint\": \"/foo\"\r\n      }"u8);
+        public static Endpoint DefaultInstance { get; } = Endpoint.ParseValue("{\n        \"backend\": [\n          {\n            \"url_pattern\": \"/url\"\n          }\n        ],\n        \"endpoint\": \"/foo\"\n      }"u8);
 
         /// <summary>
         /// Tries to get the value of the property with the given name.

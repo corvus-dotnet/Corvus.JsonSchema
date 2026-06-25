@@ -288,7 +288,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.FileOptionsEntity.JsonStringArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -309,7 +309,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.FileOptionsEntity.RecommendeArray.Mutable.DefaultInstance;
                 }
             }
 

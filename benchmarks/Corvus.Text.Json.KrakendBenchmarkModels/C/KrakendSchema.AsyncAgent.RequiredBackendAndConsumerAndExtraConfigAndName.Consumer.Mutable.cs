@@ -313,7 +313,7 @@ public readonly partial struct KrakendSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.MaxRate.Mutable.DefaultInstance;
                         }
                     }
 
@@ -394,7 +394,7 @@ public readonly partial struct KrakendSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.Workers.Mutable.DefaultInstance;
                         }
                     }
 

@@ -71,10 +71,7 @@ public readonly partial struct JsonDecimal
             }
             else
             {
-                ReadOnlyMemory<byte> rawSimpleValue = parentDocument.GetRawSimpleValue(parentIndex);
-
-                JsonElementHelpers.TryParseNumber(rawSimpleValue.Span, out bool isNegative,out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
-                JsonSchemaEvaluation.MatchDecimal(isNegative, integral, fractional, exponent, "format"u8, ref context);
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredFormatNotAsserted, "format"u8);
             }
         }
 

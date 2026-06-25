@@ -841,6 +841,7 @@ public readonly partial struct SemanticReleaseSchema
                         Unknown,
                         JsonElement,
                         BranchObjectBuilder,
+                        BranchObjectSource,
                         RawUtf8StringRequiresUnescaping,
                         RawUtf8StringNotRequiresUnescaping,
                         Utf8String,
@@ -852,6 +853,7 @@ public readonly partial struct SemanticReleaseSchema
                     private readonly ReadOnlySpan<byte> _utf8Backing;
                     private readonly ReadOnlySpan<char> _utf16Backing;
                     private readonly Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject.Builder.Build? _branchObjectBuilderInstance;
+                    private readonly Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject.Source _branchObjectSourceInstance;
 
                     /// <summary>
                     /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -884,6 +886,8 @@ public readonly partial struct SemanticReleaseSchema
 
                     public Source(Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject.Builder.Build value) {_branchObjectBuilderInstance = value; _kind = Kind.BranchObjectBuilder; }
 
+                    public Source(Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject.Source value) { _branchObjectSourceInstance = value; _kind = Kind.BranchObjectSource; }
+
                     public static implicit operator Source(Type2Entity instance) => new(JsonElement.From(instance));
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -900,6 +904,9 @@ public readonly partial struct SemanticReleaseSchema
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static implicit operator Source(Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject instance) => new(JsonElement.From(instance));
+
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    public static implicit operator Source(Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject.Source value) => new(value);
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);
@@ -927,6 +934,9 @@ public readonly partial struct SemanticReleaseSchema
                                 break;
                             case Kind.BranchObjectBuilder:
                                 valueBuilder.AddProperty(utf8Name, _branchObjectBuilderInstance!, static (in b, ref o) => Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                                break;
+                            case Kind.BranchObjectSource:
+                                _branchObjectSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                                 break;
                             default:
                                 Debug.Fail("Unexpected Kind");
@@ -958,6 +968,9 @@ public readonly partial struct SemanticReleaseSchema
                             case Kind.BranchObjectBuilder:
                                 valueBuilder.AddPrebakedProperty(prebakedPropertyName, _branchObjectBuilderInstance!, static (in b, ref o) => Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject.Builder.BuildValue(b, ref o));
                                 break;
+                            case Kind.BranchObjectSource:
+                                _branchObjectSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                break;
                             default:
                                 Debug.Fail("Unexpected Kind");
                                 break;
@@ -987,6 +1000,9 @@ public readonly partial struct SemanticReleaseSchema
                                 break;
                             case Kind.BranchObjectBuilder:
                                 valueBuilder.AddProperty(name, _branchObjectBuilderInstance!, static (in b, ref o) => Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject.Builder.BuildValue(b, ref o));
+                                break;
+                            case Kind.BranchObjectSource:
+                                _branchObjectSourceInstance.AddAsProperty(name, ref valueBuilder);
                                 break;
                             default:
                                 Debug.Fail("Unexpected Kind");
@@ -1018,6 +1034,9 @@ public readonly partial struct SemanticReleaseSchema
                             case Kind.BranchObjectBuilder:
                                 valueBuilder.AddProperty(name, _branchObjectBuilderInstance!, static (in b, ref o) => Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject.Builder.BuildValue(b, ref o));
                                 break;
+                            case Kind.BranchObjectSource:
+                                _branchObjectSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                break;
                             default:
                                 Debug.Fail("Unexpected Kind");
                                 break;
@@ -1047,6 +1066,9 @@ public readonly partial struct SemanticReleaseSchema
                                 break;
                             case Kind.BranchObjectBuilder:
                                 valueBuilder.AddItem(_branchObjectBuilderInstance!, static (in b, ref o) => Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject.Builder.BuildValue(b, ref o));
+                                break;
+                            case Kind.BranchObjectSource:
+                                _branchObjectSourceInstance.AddAsItem(ref valueBuilder);
                                 break;
                             default:
                                 Debug.Fail("Unexpected Kind");

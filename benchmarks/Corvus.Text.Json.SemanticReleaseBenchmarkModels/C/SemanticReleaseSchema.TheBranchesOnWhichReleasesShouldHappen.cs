@@ -84,7 +84,7 @@ public readonly partial struct SemanticReleaseSchema
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static TheBranchesOnWhichReleasesShouldHappen DefaultInstance { get; } = TheBranchesOnWhichReleasesShouldHappen.ParseValue("[\r\n        \"+([0-9])?(.{+([0-9]),x}).x\",\r\n        \"master\",\r\n        \"next\",\r\n        \"next-major\",\r\n        {\r\n          \"name\": \"beta\",\r\n          \"prerelease\": true\r\n        },\r\n        {\r\n          \"name\": \"alpha\",\r\n          \"prerelease\": true\r\n        }\r\n      ]"u8);
+        public static TheBranchesOnWhichReleasesShouldHappen DefaultInstance { get; } = TheBranchesOnWhichReleasesShouldHappen.ParseValue("[\n        \"+([0-9])?(.{+([0-9]),x}).x\",\n        \"master\",\n        \"next\",\n        \"next-major\",\n        {\n          \"name\": \"beta\",\n          \"prerelease\": true\n        },\n        {\n          \"name\": \"alpha\",\n          \"prerelease\": true\n        }\n      ]"u8);
 
         /// <summary>
         /// Gets the item at the given index.
@@ -278,6 +278,15 @@ public readonly partial struct SemanticReleaseSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator TheBranchesOnWhichReleasesShouldHappen(Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.BranchObject.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -291,6 +300,15 @@ public readonly partial struct SemanticReleaseSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator TheBranchesOnWhichReleasesShouldHappen(Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator TheBranchesOnWhichReleasesShouldHappen(Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Type2EntityArray.Mutable value)
         {
             return From(value);
         }

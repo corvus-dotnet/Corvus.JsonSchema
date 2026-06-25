@@ -310,6 +310,15 @@ public readonly partial struct KrakendSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.RequiredPortAndScope"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PortModifier(Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.RequiredPortAndScope.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.RequiredDefaultForSchemeAndScope"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -328,6 +337,15 @@ public readonly partial struct KrakendSchema
             }
 
             /// <summary>
+            /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.RequiredDefaultForSchemeAndScope"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PortModifier(Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.RequiredDefaultForSchemeAndScope.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
             /// Conversion to <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.RequiredRemoveEntityAndScope"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -341,6 +359,15 @@ public readonly partial struct KrakendSchema
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
             public static implicit operator PortModifier(Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.RequiredRemoveEntityAndScope value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.RequiredRemoveEntityAndScope"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PortModifier(Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.RequiredRemoveEntityAndScope.Mutable value)
             {
                 return From(value);
             }

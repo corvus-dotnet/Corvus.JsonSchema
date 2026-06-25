@@ -88,7 +88,7 @@ public readonly partial struct CspellSchema
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static ReporterSettingsArray DefaultInstance { get; } = ReporterSettingsArray.ParseValue("[\r\n        \"default\"\r\n      ]"u8);
+        public static ReporterSettingsArray DefaultInstance { get; } = ReporterSettingsArray.ParseValue("[\n        \"default\"\n      ]"u8);
 
         /// <summary>
         /// Gets the rank of the array.

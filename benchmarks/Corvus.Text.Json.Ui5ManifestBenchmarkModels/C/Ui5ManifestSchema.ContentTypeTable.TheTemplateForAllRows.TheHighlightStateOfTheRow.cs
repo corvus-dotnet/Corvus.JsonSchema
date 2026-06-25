@@ -122,6 +122,15 @@ public readonly partial struct Ui5ManifestSchema
                 }
 
                 /// <summary>
+                /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.State"/> mutable view.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                public static implicit operator TheHighlightStateOfTheRow(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.State.Mutable value)
+                {
+                    return From(value);
+                }
+
+                /// <summary>
                 /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding"/>.
                 /// </summary>
                 /// <param name="value">The value from which to convert.</param>
@@ -135,6 +144,15 @@ public readonly partial struct Ui5ManifestSchema
                 /// </summary>
                 /// <param name="value">The value from which to convert.</param>
                 public static implicit operator TheHighlightStateOfTheRow(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding value)
+                {
+                    return From(value);
+                }
+
+                /// <summary>
+                /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding"/> mutable view.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                public static implicit operator TheHighlightStateOfTheRow(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding.Mutable value)
                 {
                     return From(value);
                 }

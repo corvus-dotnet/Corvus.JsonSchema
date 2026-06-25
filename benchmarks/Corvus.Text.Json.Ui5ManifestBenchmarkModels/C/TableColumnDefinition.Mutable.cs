@@ -246,7 +246,7 @@ public readonly partial struct TableColumnDefinition
                     return value;
                 }
 
-                return default;
+                return Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.WidthEntity.Mutable.DefaultInstance;
             }
         }
 

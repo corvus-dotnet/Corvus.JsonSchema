@@ -271,7 +271,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheDeletedStateForAUser.Mutable.DefaultInstance;
                 }
             }
 
@@ -292,7 +292,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheStateOfOriginalOrCopiedCard.Mutable.DefaultInstance;
                 }
             }
 
@@ -421,7 +421,7 @@ public readonly partial struct Ui5ManifestSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheVisibilityTypeOfInsightsCard.Mutable.DefaultInstance;
                 }
             }
 

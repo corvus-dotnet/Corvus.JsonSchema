@@ -523,6 +523,64 @@ public class InProcessGenerationTests
     }
 
     [TestMethod]
+    public async Task GenerateCode_RecursiveDiscriminatedUnion_SuppressesCyclicConstituentSourceProjection()
+    {
+        // Regression for the recursive-union ref-struct containment cycle (CS0523). The #812 wiring
+        // also projects each constituent's own Source through the union's Source by VALUE
+        // (a "_<constituent>SourceInstance" field). For a recursive union — here Node = oneOf(Leaf, Branch)
+        // where Branch carries a "child" of type Node — projecting Branch.Source into Node.Source by value
+        // closes a cycle (Node.Source -> Branch.Source -> (child _createArg) Node.Source), which the C#
+        // compiler rejects as "causes a cycle in the struct layout". The generator must suppress the
+        // by-value Source projection for the cyclic constituent (Branch), while keeping it for the
+        // acyclic one (Leaf); Branch stays reachable through the builder path.
+        string schema = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "title": "Node",
+              "type": "object",
+              "required": [ "kind" ],
+              "properties": { "kind": { "type": "string", "enum": [ "Leaf", "Branch" ] } },
+              "oneOf": [ { "$ref": "#/$defs/leaf" }, { "$ref": "#/$defs/branch" } ],
+              "$defs": {
+                "leaf": {
+                  "title": "Leaf",
+                  "type": "object",
+                  "required": [ "kind", "value" ],
+                  "properties": { "kind": { "const": "Leaf" }, "value": { "type": "string" } }
+                },
+                "branch": {
+                  "title": "Branch",
+                  "type": "object",
+                  "required": [ "kind", "child" ],
+                  "properties": { "kind": { "const": "Branch" }, "child": { "$ref": "#" } }
+                }
+              }
+            }
+            """;
+
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schema);
+        string allCode = string.Join("\n", files.Select(f => f.FileContent));
+
+        // The acyclic constituent keeps its by-value Source projection (proves #812 is active here).
+        Assert.IsTrue(
+            allCode.Contains("_leafSourceInstance", StringComparison.Ordinal),
+            "Expected the acyclic constituent (Leaf) to keep its by-value Source projection.");
+
+        // The cyclic constituent must NOT be projected by value — that is exactly the CS0523 cycle.
+        Assert.IsFalse(
+            allCode.Contains("_branchSourceInstance", StringComparison.Ordinal),
+            "The cyclic constituent (Branch) must not be projected by value (would emit a self-containing ref struct, CS0523).");
+        Assert.IsFalse(
+            allCode.Contains(".Branch.Source value)", StringComparison.Ordinal),
+            "The cyclic constituent (Branch) must not expose a Source-accepting union constructor.");
+
+        // ...but Branch remains reachable through the builder path.
+        Assert.IsTrue(
+            allCode.Contains(".Branch.Builder.Build value)", StringComparison.Ordinal),
+            "The cyclic constituent (Branch) must still be reachable through its builder.");
+    }
+
+    [TestMethod]
     public async Task GenerateCode_BothMode_ProducesMoreOrEqualFiles()
     {
         string schemaPath = Path.Combine(SchemasDir, "numeric-and-format.json");

@@ -513,14 +513,14 @@ public readonly partial struct CypressSchema
                                 context.AddAppliedEvaluatedProperty(objectValidation_propertyCount);
 
                                 JsonSchemaContext hoistedChildContext16 =
-                                    Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.JsonSchema.PushChildContextUnescaped(
+                                    Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.JsonSchema.PushChildContextUnescaped(
                                         parentDocument,
                                         objectValidation_currentIndex,
                                         ref hoistedAllOf0_context,
                                         "fixturesFolder"u8,
                                         evaluationPath: HoistedAllOf0FixturesFolderSchemaEvaluationPath);
 
-                                Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.JsonSchema.Evaluate(parentDocument, objectValidation_currentIndex, ref hoistedChildContext16);
+                                Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingFixtureFilesPassFalseToDisable.JsonSchema.Evaluate(parentDocument, objectValidation_currentIndex, ref hoistedChildContext16);
                                 hoistedAllOf0_context.CommitChildContext(hoistedChildContext16.IsMatch, ref hoistedChildContext16);
                                 break;
                             case 17:

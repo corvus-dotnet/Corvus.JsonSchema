@@ -323,7 +323,7 @@ public readonly partial struct StaleSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Mutable.DefaultInstance;
             }
         }
 
@@ -345,7 +345,7 @@ public readonly partial struct StaleSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Mutable.DefaultInstance;
             }
         }
 
@@ -367,7 +367,7 @@ public readonly partial struct StaleSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Mutable.DefaultInstance;
             }
         }
 
@@ -389,7 +389,7 @@ public readonly partial struct StaleSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Mutable.DefaultInstance;
             }
         }
 
@@ -411,7 +411,7 @@ public readonly partial struct StaleSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Mutable.DefaultInstance;
             }
         }
 
@@ -455,7 +455,7 @@ public readonly partial struct StaleSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Mutable.DefaultInstance;
             }
         }
 
@@ -477,7 +477,7 @@ public readonly partial struct StaleSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Mutable.DefaultInstance;
             }
         }
 
@@ -521,7 +521,7 @@ public readonly partial struct StaleSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Mutable.DefaultInstance;
             }
         }
 
@@ -565,7 +565,7 @@ public readonly partial struct StaleSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Mutable.DefaultInstance;
             }
         }
 

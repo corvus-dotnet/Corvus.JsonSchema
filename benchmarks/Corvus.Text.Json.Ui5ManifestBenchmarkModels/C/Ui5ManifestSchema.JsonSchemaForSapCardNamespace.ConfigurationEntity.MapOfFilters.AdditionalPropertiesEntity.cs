@@ -234,6 +234,15 @@ public readonly partial struct Ui5ManifestSchema
                     }
 
                     /// <summary>
+                    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSelect"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator AdditionalPropertiesEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSelect.Mutable value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
                     /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange"/>.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
@@ -252,6 +261,15 @@ public readonly partial struct Ui5ManifestSchema
                     }
 
                     /// <summary>
+                    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator AdditionalPropertiesEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange.Mutable value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
                     /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSearch"/>.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
@@ -265,6 +283,15 @@ public readonly partial struct Ui5ManifestSchema
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
                     public static implicit operator AdditionalPropertiesEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSearch value)
+                    {
+                        return From(value);
+                    }
+
+                    /// <summary>
+                    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSearch"/> mutable view.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    public static implicit operator AdditionalPropertiesEntity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeSearch.Mutable value)
                     {
                         return From(value);
                     }

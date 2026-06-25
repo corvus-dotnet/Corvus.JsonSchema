@@ -74,7 +74,7 @@ public readonly partial struct KrakendSchema
                     private static readonly JsonSchemaPathProvider ReportHeadersValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/report_headers"u8, buffer, out written);
                     private static readonly JsonSchemaPathProvider TracesStaticAttributesSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/traces_static_attributes"u8, buffer, out written);
 
-                    private static void MatchDisableMetrics(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                    private static void MatchDisableMetrics(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                     {
                         context.AddLocalEvaluatedProperty(propertyCount);
                         JsonSchemaContext childContext =
@@ -89,7 +89,7 @@ public readonly partial struct KrakendSchema
                         context.CommitChildContext(childContext.IsMatch, ref childContext);
                     }
 
-                    private static void MatchDisableTraces(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                    private static void MatchDisableTraces(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                     {
                         context.AddLocalEvaluatedProperty(propertyCount);
                         JsonSchemaContext childContext1 =
@@ -104,7 +104,7 @@ public readonly partial struct KrakendSchema
                         context.CommitChildContext(childContext1.IsMatch, ref childContext1);
                     }
 
-                    private static void MatchMetricsStaticAttributes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                    private static void MatchMetricsStaticAttributes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                     {
                         context.AddLocalEvaluatedProperty(propertyCount);
                         JsonSchemaContext childContext2 =
@@ -119,7 +119,7 @@ public readonly partial struct KrakendSchema
                         context.CommitChildContext(childContext2.IsMatch, ref childContext2);
                     }
 
-                    private static void MatchReportHeadersValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                    private static void MatchReportHeadersValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                     {
                         context.AddLocalEvaluatedProperty(propertyCount);
                         JsonSchemaContext childContext3 =
@@ -134,7 +134,7 @@ public readonly partial struct KrakendSchema
                         context.CommitChildContext(childContext3.IsMatch, ref childContext3);
                     }
 
-                    private static void MatchTracesStaticAttributes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                    private static void MatchTracesStaticAttributes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
                     {
                         context.AddLocalEvaluatedProperty(propertyCount);
                         JsonSchemaContext childContext4 =
@@ -236,7 +236,7 @@ public readonly partial struct KrakendSchema
 
                                 if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.KrakendBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1? validator))
                                 {
-                                    validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                                    validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                                     if (!context.HasCollector && !context.IsMatch)
                                     {

@@ -288,7 +288,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.BuildConfigurationUsedForProjectEvaluation.Mutable.DefaultInstance;
                 }
             }
 
@@ -309,7 +309,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.FileNameOfCCompiler.Mutable.DefaultInstance;
                 }
             }
 
@@ -330,7 +330,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LocalRoslynPathEGMsBuildPathCurrentBinRoslyn.Mutable.DefaultInstance;
                 }
             }
 
@@ -346,7 +346,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnabledEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -362,7 +362,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnablePackageAutoRestoreEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -383,7 +383,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LoadProjectsOnDemandEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -404,7 +404,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.MsBuildExtensionsPathEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -425,7 +425,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PathToTheSdksFolderForThisMsBuildInstance.Mutable.DefaultInstance;
                 }
             }
 
@@ -446,7 +446,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PlatformEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -462,7 +462,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.RoslynTargetsPathEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -483,7 +483,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.TargetFrameworkRootPathEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -504,7 +504,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.ToolsVersionEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -520,7 +520,7 @@ public readonly partial struct OmnisharpSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.VisualStudioVersionEntity.Mutable.DefaultInstance;
                 }
             }
 

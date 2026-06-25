@@ -316,7 +316,7 @@ public readonly partial struct ExtendableToggleableItem
                     return value;
                 }
 
-                return default;
+                return Corvus.Ui5ManifestBenchmark.Current.ExtendableToggleableItem.IfFalseThisItemWillBeRemovedFromTheVisualTree.Mutable.DefaultInstance;
             }
         }
 

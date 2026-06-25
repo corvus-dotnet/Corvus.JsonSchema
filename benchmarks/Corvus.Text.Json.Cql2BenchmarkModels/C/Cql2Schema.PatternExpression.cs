@@ -216,6 +216,15 @@ public readonly partial struct Cql2Schema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator PatternExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -229,6 +238,15 @@ public readonly partial struct Cql2Schema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator PatternExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator PatternExpression(Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp.Mutable value)
         {
             return From(value);
         }

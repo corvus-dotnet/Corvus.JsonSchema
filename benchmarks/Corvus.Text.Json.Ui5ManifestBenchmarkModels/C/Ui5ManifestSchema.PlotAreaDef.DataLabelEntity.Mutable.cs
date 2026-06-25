@@ -199,7 +199,7 @@ public readonly partial struct Ui5ManifestSchema
                             return value;
                         }
 
-                        return default;
+                        return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PlotAreaDef.DataLabelEntity.TypeEntity.Mutable.DefaultInstance;
                     }
                 }
 

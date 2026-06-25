@@ -313,7 +313,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Mutable.DefaultInstance;
                 }
             }
 
@@ -338,7 +338,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Mutable.DefaultInstance;
                 }
             }
 
@@ -363,7 +363,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -388,7 +388,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Mutable.DefaultInstance;
                 }
             }
 
@@ -413,7 +413,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Mutable.DefaultInstance;
                 }
             }
 
@@ -438,7 +438,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Mutable.DefaultInstance;
                 }
             }
 
@@ -484,7 +484,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Mutable.DefaultInstance;
                 }
             }
 
@@ -509,7 +509,7 @@ public readonly partial struct KrakendSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Mutable.DefaultInstance;
                 }
             }
 

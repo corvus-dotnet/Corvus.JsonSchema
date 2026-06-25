@@ -370,6 +370,15 @@ public readonly partial struct AnsibleMetaSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredRole"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DependencyModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredRole.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredSrc"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -388,6 +397,15 @@ public readonly partial struct AnsibleMetaSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredSrc"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DependencyModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredSrc.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredName"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -401,6 +419,15 @@ public readonly partial struct AnsibleMetaSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator DependencyModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredName value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredName"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DependencyModel(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.RequiredName.Mutable value)
         {
             return From(value);
         }

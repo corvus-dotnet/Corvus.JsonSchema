@@ -98,7 +98,7 @@ public readonly partial struct StylecopSchema
                 /// <summary>
                 /// Gets the default instance.
                 /// </summary>
-                public static ExcludeFromPunctuationCheckArray DefaultInstance { get; } = ExcludeFromPunctuationCheckArray.ParseValue("[\r\n                \"seealso\"\r\n              ]"u8);
+                public static ExcludeFromPunctuationCheckArray DefaultInstance { get; } = ExcludeFromPunctuationCheckArray.ParseValue("[\n                \"seealso\"\n              ]"u8);
 
                 /// <summary>
                 /// Gets the item at the given index.

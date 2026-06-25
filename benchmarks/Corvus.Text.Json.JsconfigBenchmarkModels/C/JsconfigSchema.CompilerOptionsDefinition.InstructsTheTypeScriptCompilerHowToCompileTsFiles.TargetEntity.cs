@@ -125,6 +125,15 @@ public readonly partial struct JsconfigSchema
                 }
 
                 /// <summary>
+                /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.AnyOf0Entity"/> mutable view.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                public static implicit operator TargetEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.AnyOf0Entity.Mutable value)
+                {
+                    return From(value);
+                }
+
+                /// <summary>
                 /// Conversion to <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.AnyOf1Entity"/>.
                 /// </summary>
                 /// <param name="value">The value from which to convert.</param>
@@ -138,6 +147,15 @@ public readonly partial struct JsconfigSchema
                 /// </summary>
                 /// <param name="value">The value from which to convert.</param>
                 public static implicit operator TargetEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.AnyOf1Entity value)
+                {
+                    return From(value);
+                }
+
+                /// <summary>
+                /// Conversion from the <see cref="Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.AnyOf1Entity"/> mutable view.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                public static implicit operator TargetEntity(Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.AnyOf1Entity.Mutable value)
                 {
                     return From(value);
                 }

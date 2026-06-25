@@ -429,7 +429,7 @@ public readonly partial struct DenoSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.DenoBenchmark.Current.DenoSchema.LockEntity.Mutable.DefaultInstance;
             }
         }
 
@@ -471,7 +471,7 @@ public readonly partial struct DenoSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.DenoBenchmark.Current.DenoSchema.ScopesEntity.Mutable.DefaultInstance;
             }
         }
 

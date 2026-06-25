@@ -83,7 +83,7 @@ public readonly partial struct KrakendSchema
             /// <summary>
             /// Gets the default instance.
             /// </summary>
-            public static CrossOriginResourceSharing DefaultInstance { get; } = CrossOriginResourceSharing.ParseValue("{\r\n            \"allow_methods\": [ \"POST\", \"GET\" ],\r\n            \"allow_origins\": [ \"http://foobar.com\" ],\r\n            \"max_age\": \"12h\"\r\n          }"u8);
+            public static CrossOriginResourceSharing DefaultInstance { get; } = CrossOriginResourceSharing.ParseValue("{\n            \"allow_methods\": [ \"POST\", \"GET\" ],\n            \"allow_origins\": [ \"http://foobar.com\" ],\n            \"max_age\": \"12h\"\n          }"u8);
 
             /// <summary>
             /// Gets the value of the property with the given name.

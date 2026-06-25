@@ -126,10 +126,17 @@ public static class TypeDeclarationExtensions
     public static FormatAssertionMode GetEffectiveFormatMode(this TypeDeclaration typeDeclaration, string format)
     {
         if (typeDeclaration.TryGetMetadata(FormatModeOverridesKey, out FrozenDictionary<string, FormatAssertionMode>? overrides) &&
-            overrides is not null &&
-            overrides.TryGetValue(format, out FormatAssertionMode mode))
+            overrides is not null)
         {
-            return mode;
+            // An explicit per-format override wins; failing that, a wildcard "*" override sets the mode
+            // for every format and takes precedence over the vocabulary and AlwaysAssertFormat — this is
+            // how a single switch (e.g. "--formatMode disable") forces annotation-only output across all
+            // drafts, including those (draft-04/06/07) whose vocabulary asserts format.
+            if (overrides.TryGetValue(format, out FormatAssertionMode mode) ||
+                overrides.TryGetValue("*", out mode))
+            {
+                return mode;
+            }
         }
 
         if (typeDeclaration.IsFormatAssertion() || typeDeclaration.AlwaysAssertFormat())

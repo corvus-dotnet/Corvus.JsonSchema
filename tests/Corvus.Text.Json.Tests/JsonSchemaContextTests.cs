@@ -18,7 +18,7 @@ public class JsonSchemaContextTests
     [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
     [DataRow(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
     [DataRow(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [DataRow(false, true, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(false, true, new int[] { 254 }, new int[] { 254 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
     public void EvaluatedItems(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
@@ -46,7 +46,7 @@ public class JsonSchemaContextTests
     [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
     [DataRow(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
     [DataRow(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [DataRow(false, true, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(false, true, new int[] { 254 }, new int[] { 254 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
     public void EvaluatedItemsAfterUnchangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
@@ -79,7 +79,7 @@ public class JsonSchemaContextTests
     [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
     [DataRow(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
     [DataRow(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [DataRow(false, true, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(false, true, new int[] { 254 }, new int[] { 254 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
     public void EvaluatedItemsFromChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
@@ -112,7 +112,7 @@ public class JsonSchemaContextTests
     [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
     [DataRow(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
     [DataRow(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [DataRow(false, true, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(false, true, new int[] { 254 }, new int[] { 254 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
     public void EvaluatedItemsWithBeforeUnchangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
@@ -145,7 +145,7 @@ public class JsonSchemaContextTests
     [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
     [DataRow(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
     [DataRow(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [DataRow(false, true, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(false, true, new int[] { 254 }, new int[] { 254 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
     public void EvaluatedItemsWithChangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
@@ -181,7 +181,7 @@ public class JsonSchemaContextTests
     [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
     [DataRow(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
     [DataRow(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [DataRow(true, false, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(true, false, new int[] { 254 }, new int[] { 254 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
     public void EvaluatedProperties(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
@@ -209,7 +209,7 @@ public class JsonSchemaContextTests
     [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
     [DataRow(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
     [DataRow(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [DataRow(true, false, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(true, false, new int[] { 254 }, new int[] { 254 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
     public void EvaluatedPropertiesAfterUnchangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
@@ -242,7 +242,7 @@ public class JsonSchemaContextTests
     [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
     [DataRow(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
     [DataRow(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [DataRow(true, false, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(true, false, new int[] { 254 }, new int[] { 254 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
     public void EvaluatedPropertiesBeforeUnchangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
@@ -274,7 +274,7 @@ public class JsonSchemaContextTests
     [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
     [DataRow(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
     [DataRow(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [DataRow(true, false, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(true, false, new int[] { 254 }, new int[] { 254 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
     public void EvaluatedPropertiesFromChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
@@ -307,7 +307,7 @@ public class JsonSchemaContextTests
     [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
     [DataRow(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
     [DataRow(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [DataRow(true, false, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(true, false, new int[] { 254 }, new int[] { 254 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
     public void EvaluatedPropertiesWithChangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange

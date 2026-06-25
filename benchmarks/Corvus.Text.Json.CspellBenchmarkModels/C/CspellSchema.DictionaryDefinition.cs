@@ -204,6 +204,15 @@ public readonly partial struct CspellSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DictionaryDefinition(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -217,6 +226,15 @@ public readonly partial struct CspellSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator DictionaryDefinition(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DictionaryDefinition(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionCustom.Mutable value)
         {
             return From(value);
         }
@@ -240,6 +258,15 @@ public readonly partial struct CspellSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DictionaryDefinition(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAugmented.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInline"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -253,6 +280,15 @@ public readonly partial struct CspellSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator DictionaryDefinition(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInline value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInline"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DictionaryDefinition(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInline.Mutable value)
         {
             return From(value);
         }
@@ -276,6 +312,15 @@ public readonly partial struct CspellSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DictionaryDefinition(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionAlternate.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -289,6 +334,15 @@ public readonly partial struct CspellSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator DictionaryDefinition(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DictionaryDefinition(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Mutable value)
         {
             return From(value);
         }
@@ -312,6 +366,15 @@ public readonly partial struct CspellSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DictionaryDefinition(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -325,6 +388,15 @@ public readonly partial struct CspellSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator DictionaryDefinition(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator DictionaryDefinition(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Mutable value)
         {
             return From(value);
         }

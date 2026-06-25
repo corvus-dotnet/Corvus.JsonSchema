@@ -298,7 +298,7 @@ public readonly partial struct DependabotSchema
                     return value;
                 }
 
-                return default;
+                return Corvus.DependabotBenchmark.Current.DependabotSchema.VersionEntity.Mutable.DefaultInstance;
             }
         }
 

@@ -71,8 +71,7 @@ public readonly partial struct JsonEmail
             }
             else
             {
-                using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
-                JsonSchemaEvaluation.MatchEmail(unescapedUtf8JsonString.Span, "format"u8, ref context);
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredFormatNotAsserted, "format"u8);
             }
         }
 

@@ -83,22 +83,22 @@ public readonly partial struct AnsibleMetaSchema
                     private const uint RequiredBitMask0 =
                         RequiredBitForAuthor | RequiredBitForDescription | RequiredBitForLicense | RequiredBitForMinAnsibleVersion;
 
-                    private static void MatchAuthor(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                    private static void MatchAuthor(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                     {
                         requiredBitBuffer[RequiredOffsetForAuthor] |= RequiredBitForAuthor;
                     }
 
-                    private static void MatchDescription(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                    private static void MatchDescription(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                     {
                         requiredBitBuffer[RequiredOffsetForDescription] |= RequiredBitForDescription;
                     }
 
-                    private static void MatchLicense(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                    private static void MatchLicense(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                     {
                         requiredBitBuffer[RequiredOffsetForLicense] |= RequiredBitForLicense;
                     }
 
-                    private static void MatchMinAnsibleVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                    private static void MatchMinAnsibleVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                     {
                         requiredBitBuffer[RequiredOffsetForMinAnsibleVersion] |= RequiredBitForMinAnsibleVersion;
                     }
@@ -171,7 +171,7 @@ public readonly partial struct AnsibleMetaSchema
 
                                 if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.AnsibleMetaBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1? validator))
                                 {
-                                    validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                                    validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                                     if (!context.HasCollector && !context.IsMatch)
                                     {

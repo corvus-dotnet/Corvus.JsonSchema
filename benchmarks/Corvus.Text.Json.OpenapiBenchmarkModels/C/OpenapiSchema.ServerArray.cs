@@ -77,7 +77,7 @@ public readonly partial struct OpenapiSchema
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static ServerArray DefaultInstance { get; } = ServerArray.ParseValue("[\r\n        {\r\n          \"url\": \"/\"\r\n        }\r\n      ]"u8);
+        public static ServerArray DefaultInstance { get; } = ServerArray.ParseValue("[\n        {\n          \"url\": \"/\"\n        }\n      ]"u8);
 
         /// <summary>
         /// Gets the rank of the array.

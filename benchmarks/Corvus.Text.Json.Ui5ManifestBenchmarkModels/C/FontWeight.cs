@@ -91,6 +91,15 @@ public readonly partial struct FontWeight
     }
 
     /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.FontWeight.AnyOf0Entity"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator FontWeight(Corvus.Ui5ManifestBenchmark.Current.FontWeight.AnyOf0Entity.Mutable value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
     /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.FontWeight.AnyOf1Entity"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -104,6 +113,15 @@ public readonly partial struct FontWeight
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator FontWeight(Corvus.Ui5ManifestBenchmark.Current.FontWeight.AnyOf1Entity value)
+    {
+        return From(value);
+    }
+
+    /// <summary>
+    /// Conversion from the <see cref="Corvus.Ui5ManifestBenchmark.Current.FontWeight.AnyOf1Entity"/> mutable view.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator FontWeight(Corvus.Ui5ManifestBenchmark.Current.FontWeight.AnyOf1Entity.Mutable value)
     {
         return From(value);
     }

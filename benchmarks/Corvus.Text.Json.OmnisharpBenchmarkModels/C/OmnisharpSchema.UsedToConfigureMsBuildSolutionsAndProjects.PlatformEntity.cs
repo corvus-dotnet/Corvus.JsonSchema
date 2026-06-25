@@ -119,6 +119,15 @@ public readonly partial struct OmnisharpSchema
                 return From(value);
             }
 
+            /// <summary>
+            /// Conversion from the <see cref="Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PlatformEntity.AnyOf0Entity"/> mutable view.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PlatformEntity(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PlatformEntity.AnyOf0Entity.Mutable value)
+            {
+                return From(value);
+            }
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator string(PlatformEntity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 

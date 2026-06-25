@@ -226,7 +226,7 @@ public readonly partial struct PreCommitHooksSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -247,7 +247,7 @@ public readonly partial struct PreCommitHooksSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Mutable.DefaultInstance;
                 }
             }
 
@@ -268,7 +268,7 @@ public readonly partial struct PreCommitHooksSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -313,7 +313,7 @@ public readonly partial struct PreCommitHooksSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Mutable.DefaultInstance;
                 }
             }
 
@@ -355,7 +355,7 @@ public readonly partial struct PreCommitHooksSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -376,7 +376,7 @@ public readonly partial struct PreCommitHooksSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Mutable.DefaultInstance;
                 }
             }
 
@@ -445,7 +445,7 @@ public readonly partial struct PreCommitHooksSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -487,7 +487,7 @@ public readonly partial struct PreCommitHooksSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -532,7 +532,7 @@ public readonly partial struct PreCommitHooksSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Mutable.DefaultInstance;
                 }
             }
 
@@ -553,7 +553,7 @@ public readonly partial struct PreCommitHooksSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -637,7 +637,7 @@ public readonly partial struct PreCommitHooksSchema
                         return value;
                     }
 
-                    return default;
+                    return Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Mutable.DefaultInstance;
                 }
             }
 

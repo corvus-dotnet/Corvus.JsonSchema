@@ -309,7 +309,7 @@ public readonly partial struct OpenapiSchema
                                 return value;
                             }
 
-                            return default;
+                            return Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.StyleEntity.Mutable.DefaultInstance;
                         }
                     }
 

@@ -446,6 +446,15 @@ public readonly partial struct KrakendSchema
         }
 
         /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.BodyGenerator.RequiredPath"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator BodyGenerator(Corvus.KrakendBenchmark.Current.KrakendSchema.BodyGenerator.RequiredPath.Mutable value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
         /// Conversion to <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.BodyGenerator.RequiredTemplate"/>.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -459,6 +468,15 @@ public readonly partial struct KrakendSchema
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator BodyGenerator(Corvus.KrakendBenchmark.Current.KrakendSchema.BodyGenerator.RequiredTemplate value)
+        {
+            return From(value);
+        }
+
+        /// <summary>
+        /// Conversion from the <see cref="Corvus.KrakendBenchmark.Current.KrakendSchema.BodyGenerator.RequiredTemplate"/> mutable view.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator BodyGenerator(Corvus.KrakendBenchmark.Current.KrakendSchema.BodyGenerator.RequiredTemplate.Mutable value)
         {
             return From(value);
         }
