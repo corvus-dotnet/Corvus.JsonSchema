@@ -17,7 +17,22 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// Parameters for the ListSecurityBindings operation (GET /security/bindings).
 /// </summary>
-/// <remarks>Returns all claim→rule bindings, ordered by Order then id.</remarks>
+/// <remarks>Returns a keyset page of claim→rule bindings ordered by (order, id), bounded by limit and resumable via the page token; q filters by a case-insensitive substring of the claim type, claim value, or description.</remarks>
 public readonly struct ListSecurityBindingsParams
 {
+
+    /// <summary>
+    /// Gets the 'q' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Q { get; init; }
+
+    /// <summary>
+    /// Gets the 'limit' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit Limit { get; init; }
+
+    /// <summary>
+    /// Gets the 'pageToken' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PageToken { get; init; }
 }

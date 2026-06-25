@@ -278,10 +278,13 @@ public interface IApiSecurityClient : IAsyncDisposable
     /// List security bindings
     /// </summary>
     /// <remarks>
-    /// Returns all claim→rule bindings, ordered by Order then id.
+    /// Returns a keyset page of claim→rule bindings ordered by (order, id), bounded by limit and resumable via the page token; q filters by a case-insensitive substring of the claim type, claim value, or description.
     /// </remarks>
+    /// <param name="q">The q parameter.</param>
+    /// <param name="limit">The limit parameter.</param>
+    /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ListSecurityBindingsResponse> ListSecurityBindingsAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<ListSecurityBindingsResponse> ListSecurityBindingsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source q = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Create a security binding

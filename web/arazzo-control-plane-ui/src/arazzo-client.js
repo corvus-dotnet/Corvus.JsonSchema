@@ -602,16 +602,35 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
-   * `listSecurityBindings` — the deployment's claim→rule bindings (`GET /security/bindings`): each maps a principal
-   * claim to per-verb (read/write/purge) reach. Requires `security:read`.
-   * @param {{ signal?: AbortSignal }} [opts]
-   * @returns {Promise<{ bindings: object[] }>} A {@link SecurityBindingList} — each binding is
-   *   `{ id, claimType, claimValue?, read, write, purge, order, description?, createdBy, createdAt, etag }` where a verb
+   * `listSecurityBindings` — a keyset page of the deployment's claim→rule bindings (`GET /security/bindings`): each maps
+   * a principal claim to per-verb (read/write/purge) reach, ordered by `(order, id)`. `q` filters by a case-insensitive
+   * substring of the claim type, claim value, or description; `limit`/`pageToken` page. Requires `security:read`.
+   * @param {{ q?: string, limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ bindings: object[], nextPageToken: (string|null) }>} A {@link SecurityBindingList} — each binding
+   *   is `{ id, claimType, claimValue?, read, write, purge, order, description?, createdBy, createdAt, etag }` where a verb
    *   grant is `{ unrestricted?: boolean, ruleNames?: string[] }`.
    */
-  async listSecurityBindings(opts = {}) {
-    const result = await this._request('GET', '/security/bindings', { signal: opts.signal });
-    return { bindings: result.bindings ?? [] };
+  async listSecurityBindings(query = {}) {
+    const search = new URLSearchParams();
+    if (query.q) search.set('q', query.q);
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const result = await this._request('GET', `/security/bindings${qs(search)}`, { signal: query.signal });
+    return { bindings: result.bindings ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `listSecurityBindings`, as an async iterator that walks every page via the keyset `nextPageToken`.
+   * @param {{ q?: string, limit?: number, signal?: AbortSignal }} [query]
+   * @returns {AsyncGenerator<{ bindings: object[], nextPageToken: (string|null) }>}
+   */
+  async *listSecurityBindingsPaged(query = {}) {
+    let pageToken;
+    do {
+      const page = await this.listSecurityBindings({ ...query, pageToken });
+      yield page;
+      pageToken = page.nextPageToken || undefined;
+    } while (pageToken);
   }
 
   /**
