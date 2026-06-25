@@ -283,13 +283,13 @@ internal sealed class TsPatternPropertiesHandler : IKeywordValidationHandler, IT
     {
         IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>>? pp = td.PatternProperties();
         if (pp is null) { return; }
-        var entries = new List<(string Pattern, string Name)>();
+        var entries = new List<(string Pattern, string Name, string SubEv)>();
         foreach (KeyValuePair<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>> kv in pp)
         {
             foreach (PatternPropertyDeclaration d in kv.Value)
             {
                 string? n = TsEmit.EvalName(d.ReducedPatternPropertyType);
-                if (n is not null) { entries.Add((d.Pattern, n)); }
+                if (n is not null) { entries.Add((d.Pattern, n, TsEmit.SubEv(d.ReducedPatternPropertyType))); }
             }
         }
 
@@ -297,9 +297,12 @@ internal sealed class TsPatternPropertiesHandler : IKeywordValidationHandler, IT
         sb.Append("  if (__isObj(value)) {\n");
         sb.Append("    const o = value as Record<string, unknown>;\n");
         sb.Append("    const keys = Object.keys(o);\n    for (let i = 0; i < keys.length; i++) {\n      const k = keys[i];\n");
-        foreach ((string pattern, string name) in entries)
+        foreach ((string pattern, string name, string subEv) in entries)
         {
-            sb.Append("      if (__re(").Append(TsEmit.Str(pattern)).Append(").test(k)) { if (!").Append(name).Append("(o[k], NOEV)) { return false; } ev.markProp(i); }\n");
+            // Pass the pattern-property type its OWN tracker when it needs one (SubEv, like properties/
+            // additionalProperties) -- NOT a hardcoded NOEV. A matched value with its own unevaluated* (e.g.
+            // an OpenAPI path-item) must track its local evaluations or it rejects every property.
+            sb.Append("      if (__re(").Append(TsEmit.Str(pattern)).Append(").test(k)) { if (!").Append(name).Append("(o[k], ").Append(subEv).Append(")) { return false; } ev.markProp(i); }\n");
         }
 
         sb.Append("    }\n  }\n");
