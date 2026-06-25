@@ -663,6 +663,16 @@ function seedSecurityOrderings() {
   ];
 }
 
+function seedSecurityBindings() {
+  const hr = 60 * 60 * 1000;
+  const day = 24 * hr;
+  // Claim → per-verb reach bindings (§14.2): a group/role claim conferring read, and a tenant claim conferring full reach.
+  return [
+    { id: 'bind-1', claimType: 'team', claimValue: 'payments', read: { ruleNames: ['reach-payments'] }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 0, description: 'Payments team can read payments-domain rows.', createdBy: 'alice@example.com', createdAt: iso(-12 * day), etag: nextEtag() },
+    { id: 'bind-2', claimType: 'tenant', claimValue: 'acme', read: { unrestricted: true }, write: { unrestricted: true }, purge: { unrestricted: false }, order: 1, description: 'Acme tenant operators.', createdBy: 'alice@example.com', createdAt: iso(-5 * day), etag: nextEtag() },
+  ];
+}
+
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
@@ -687,6 +697,8 @@ export function createMockControlPlane(options = {}) {
   const accessRequests = options.accessRequestsSeed ? structuredClone(options.accessRequestsSeed) : seedAccessRequests();
   const securityRules = options.securityRulesSeed ? structuredClone(options.securityRulesSeed) : seedSecurityRules();
   const securityOrderings = options.securityOrderingsSeed ? structuredClone(options.securityOrderingsSeed) : seedSecurityOrderings();
+  const securityBindings = options.securityBindingsSeed ? structuredClone(options.securityBindingsSeed) : seedSecurityBindings();
+  let nextBindingId = 1000;
   const latency = options.latencyMs ?? 250;
   const find = (id) => runs.find((r) => r.id === id);
   const findVersion = (base, n) => catalog.find((v) => v.baseWorkflowId === base && v.versionNumber === Number(n));
@@ -716,6 +728,9 @@ export function createMockControlPlane(options = {}) {
 
     const securityOrderingsResponse = handleSecurityOrderings(path, method);
     if (securityOrderingsResponse) return securityOrderingsResponse;
+
+    const securityBindingsResponse = handleSecurityBindings(path, method, body);
+    if (securityBindingsResponse) return securityBindingsResponse;
 
     const securityRulesResponse = handleSecurityRules(path, method, body);
     if (securityRulesResponse) return securityRulesResponse;
@@ -1181,6 +1196,63 @@ export function createMockControlPlane(options = {}) {
     if (fullPath.indexOf('/security/orderings') < 0) return null;
     if (method !== 'GET') return problem(405, 'Method not allowed');
     return json({ orderings: securityOrderings.map((o) => structuredClone(o)) });
+  }
+
+  function handleSecurityBindings(fullPath, method, body) {
+    const idx = fullPath.indexOf('/security/bindings');
+    if (idx < 0) return null;
+    const path = fullPath.slice(idx);
+
+    if (path === '/security/bindings') {
+      if (method === 'GET') return json({ bindings: securityBindings.map((b) => structuredClone(b)) });
+      if (method === 'POST') return createSecurityBinding(body);
+      return problem(405, 'Method not allowed');
+    }
+    const idMatch = path.match(/^\/security\/bindings\/([^/]+)$/);
+    if (idMatch) {
+      const id = decodeURIComponent(idMatch[1]);
+      const binding = securityBindings.find((b) => b.id === id);
+      if (method === 'GET') {
+        return binding ? json(structuredClone(binding)) : problem(404, 'Binding not found', `No security binding '${id}'.`);
+      }
+      if (method === 'PUT') {
+        if (!binding) return problem(404, 'Binding not found', `No security binding '${id}'.`);
+        if (!body?.claimType) return problem(400, 'Invalid binding', 'A claimType is required.');
+        Object.assign(binding, normalizeBinding(body), { id, lastUpdatedBy: 'demo-admin', lastUpdatedAt: iso(0), etag: nextEtag() });
+        return json(structuredClone(binding));
+      }
+      if (method === 'DELETE') {
+        const i = securityBindings.findIndex((b) => b.id === id);
+        if (i < 0) return problem(404, 'Binding not found', `No security binding '${id}'.`);
+        securityBindings.splice(i, 1);
+        return new Response(null, { status: 204 });
+      }
+      return problem(405, 'Method not allowed');
+    }
+    return null;
+  }
+
+  // The verb grants default to a denied (empty) grant when omitted; the mock cannot resolve the caller's identity, so the
+  // server's self-elevation 403 (§16.5.3) is exercised by the server tests, not here.
+  function normalizeBinding(body) {
+    const verb = (v) => (v && (v.unrestricted || (Array.isArray(v.ruleNames) && v.ruleNames.length > 0)) ? structuredClone(v) : { unrestricted: false });
+    const b = {
+      claimType: body.claimType,
+      read: verb(body.read),
+      write: verb(body.write),
+      purge: verb(body.purge),
+      order: Number.isFinite(body.order) ? body.order : 0,
+    };
+    if (body.claimValue != null) b.claimValue = body.claimValue;
+    if (body.description) b.description = body.description;
+    return b;
+  }
+
+  function createSecurityBinding(body) {
+    if (!body?.claimType) return problem(400, 'Invalid binding', 'A claimType is required.');
+    const binding = { id: `bind-${++nextBindingId}`, ...normalizeBinding(body), createdBy: 'demo-admin', createdAt: iso(0), etag: nextEtag() };
+    securityBindings.push(binding);
+    return json(structuredClone(binding), 201);
   }
 
   function handleSecurityRules(fullPath, method, body) {

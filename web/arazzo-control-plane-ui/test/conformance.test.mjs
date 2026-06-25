@@ -176,6 +176,36 @@ test('listSecurityOrderings emits the contract method + path', async () => {
   assert.equal(calls[0].path, OPS.listSecurityOrderings.path);
 });
 
+test('the contract declares the security-binding operations', () => {
+  for (const id of ['listSecurityBindings', 'getSecurityBinding', 'createSecurityBinding', 'updateSecurityBinding', 'deleteSecurityBinding']) {
+    assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);
+  }
+});
+
+test('security bindings: each client method emits the contract method + templated path + body', async () => {
+  const { client, calls } = capturing();
+  await client.listSecurityBindings();
+  assert.equal(calls[0].method, OPS.listSecurityBindings.method);
+  assert.equal(calls[0].path, OPS.listSecurityBindings.path);
+
+  await client.getSecurityBinding('bind-1');
+  assert.equal(calls[1].method, OPS.getSecurityBinding.method);
+  assert.equal(calls[1].path, OPS.getSecurityBinding.path.replace('{bindingId}', 'bind-1'));
+
+  await client.createSecurityBinding({ claimType: 'team', claimValue: 'payments', read: { unrestricted: true } });
+  assert.equal(calls[2].method, OPS.createSecurityBinding.method);
+  assert.equal(calls[2].path, OPS.createSecurityBinding.path);
+  assert.equal(calls[2].body.claimType, 'team');
+
+  await client.updateSecurityBinding('bind-1', { claimType: 'team', claimValue: 'payments', read: { unrestricted: true } });
+  assert.equal(calls[3].method, OPS.updateSecurityBinding.method);
+  assert.equal(calls[3].path, OPS.updateSecurityBinding.path.replace('{bindingId}', 'bind-1'));
+
+  await client.deleteSecurityBinding('bind-1');
+  assert.equal(calls[4].method, OPS.deleteSecurityBinding.method);
+  assert.equal(calls[4].path, OPS.deleteSecurityBinding.path.replace('{bindingId}', 'bind-1'));
+});
+
 test('security rules: each client method emits the contract method + templated path + body', async () => {
   const { client, calls } = capturing();
   await client.listSecurityRules();

@@ -490,6 +490,32 @@ test('listSecurityOrderings returns the configured ordered dimensions with their
   assert.deepEqual(classification.labels, ['public', 'internal', 'confidential', 'restricted']);
 });
 
+test('security bindings: list, create, update and delete round-trip through the store', async () => {
+  const c = makeClient();
+  const { bindings } = await c.listSecurityBindings();
+  assert.ok(bindings.some((b) => b.claimType === 'team' && b.claimValue === 'payments'));
+
+  const created = await c.createSecurityBinding({ claimType: 'role', claimValue: 'sre', read: { unrestricted: true }, write: { ruleNames: ['reach-payments'] } });
+  assert.equal(created.claimType, 'role');
+  assert.equal(created.read.unrestricted, true);
+  assert.deepEqual(created.write.ruleNames, ['reach-payments']);
+  assert.ok(created.id, 'the store assigned an id');
+
+  const updated = await c.updateSecurityBinding(created.id, { claimType: 'role', claimValue: 'sre', read: { ruleNames: ['reach-core-tenants'] } });
+  assert.deepEqual(updated.read.ruleNames, ['reach-core-tenants']);
+
+  await c.deleteSecurityBinding(created.id);
+  assert.ok(!(await c.listSecurityBindings()).bindings.some((b) => b.id === created.id));
+});
+
+test('security-binding client methods validate their arguments before calling the server', async () => {
+  const c = makeClient();
+  await assert.rejects(async () => c.createSecurityBinding({}), TypeError);
+  await assert.rejects(async () => c.updateSecurityBinding('x', {}), TypeError);
+  await assert.rejects(async () => c.deleteSecurityBinding(''), TypeError);
+  await assert.rejects(async () => c.getSecurityBinding(''), TypeError);
+});
+
 // ---- identity / grantee resolution (§16.5.4) ----------------------------------------------------
 
 test('searchGrantees returns the resolved grantees with their exact identity and complete flag', async () => {
