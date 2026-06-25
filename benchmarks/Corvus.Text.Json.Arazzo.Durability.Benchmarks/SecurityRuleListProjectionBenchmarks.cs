@@ -62,8 +62,8 @@ public class SecurityRuleListProjectionBenchmarks
         // store emits this as pooled UTF-8; the projection just references it, so it is precomputed (not measured here).
         if (this.RuleCount > PageSize)
         {
-            string boundaryName = $"scope-{PageSize - 1:D5}";
-            byte[] token = new byte[SecurityRuleContinuationToken.GetMaxEncodedLength(boundaryName)];
+            byte[] boundaryName = System.Text.Encoding.UTF8.GetBytes($"scope-{PageSize - 1:D5}");
+            byte[] token = new byte[SecurityRuleContinuationToken.GetMaxEncodedLength(boundaryName.Length)];
             int written = SecurityRuleContinuationToken.EncodeToUtf8(boundaryName, token);
             this.pageTokenUtf8 = token.AsMemory(0, written);
         }

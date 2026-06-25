@@ -52,22 +52,14 @@ public interface ISecurityPolicyStore
     /// read itself is bounded.</summary>
     /// <param name="limit">The maximum rules to return (a non-positive value uses the store's default page size).</param>
     /// <param name="pageToken">The opaque token (its JSON value) from a previous page's <see cref="SecurityRulePage.NextPageToken"/>, or undefined for the first page; decoded bytes-native from its UTF-8.</param>
-    /// <param name="q">An optional case-insensitive substring filter over the rule name and expression; <see langword="null"/> for no filter.</param>
+    /// <param name="q">An optional case-insensitive substring filter (its JSON value) over the rule name and expression; undefined for no filter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>One keyset page, as a disposable the caller must dispose.</returns>
     /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
-    async ValueTask<SecurityRulePage> ListRulesAsync(int limit, JsonString pageToken, string? q, CancellationToken cancellationToken)
+    async ValueTask<SecurityRulePage> ListRulesAsync(int limit, JsonString pageToken, JsonString q, CancellationToken cancellationToken)
     {
-        string cursor = string.Empty;
-        bool hasCursor = false;
-        if (pageToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-            hasCursor = SecurityRuleContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
-        }
-
         using PooledDocumentList<SecurityRuleDocument> all = await this.ListRulesAsync(cancellationToken).ConfigureAwait(false);
-        return SecurityRulePaging.PageInMemory(all, limit, hasCursor ? cursor : null, q);
+        return SecurityRulePaging.PageInMemory(all, limit, pageToken, q);
     }
 
     /// <summary>Updates a rule's content under optimistic concurrency.</summary>
@@ -101,10 +93,29 @@ public interface ISecurityPolicyStore
     /// <returns>The binding as a pooled document the caller must dispose, or <see langword="null"/>.</returns>
     ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> GetBindingAsync(string id, CancellationToken cancellationToken);
 
-    /// <summary>Lists all bindings (ascending by <see cref="SecurityBindingDocument.OrderValue"/> then id).</summary>
+    /// <summary>Lists all bindings (ascending by <see cref="SecurityBindingDocument.OrderValue"/> then id). The full read
+    /// used by snapshot/compile paths and by the default keyset pager; the paged
+    /// <see cref="ListBindingsAsync(int, JsonString, string?, CancellationToken)"/> is the API list seam.</summary>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>All bindings, as a pooled batch the caller must dispose.</returns>
     ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken);
+
+    /// <summary>Lists bindings as a keyset page (design §14.2): bindings ordered by <c>(order, id)</c>, bounded to
+    /// <paramref name="limit"/>, optionally filtered by <paramref name="q"/> (a case-insensitive substring of the claim
+    /// type, claim value, or description), resuming strictly after <paramref name="pageToken"/>. The default implementation
+    /// pages over <see cref="ListBindingsAsync(CancellationToken)"/> in memory; a backend overrides it with a native keyset
+    /// query so the read itself is bounded.</summary>
+    /// <param name="limit">The maximum bindings to return (a non-positive value uses the store's default page size).</param>
+    /// <param name="pageToken">The opaque token (its JSON value) from a previous page's <see cref="SecurityBindingPage.NextPageToken"/>, or undefined for the first page; decoded bytes-native from its UTF-8.</param>
+    /// <param name="q">An optional case-insensitive substring filter (its JSON value) over the binding claim type/value/description; undefined for no filter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>One keyset page, as a disposable the caller must dispose.</returns>
+    /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
+    async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, JsonString pageToken, JsonString q, CancellationToken cancellationToken)
+    {
+        using PooledDocumentList<SecurityBindingDocument> all = await this.ListBindingsAsync(cancellationToken).ConfigureAwait(false);
+        return SecurityBindingPaging.PageInMemory(all, limit, pageToken, q);
+    }
 
     /// <summary>Updates a binding's content under optimistic concurrency.</summary>
     /// <param name="id">The binding id.</param>
