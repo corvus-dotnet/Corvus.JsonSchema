@@ -91,6 +91,33 @@ public class FormatAssertionModeTests
     }
 
     [TestMethod]
+    public async Task WildcardOverride_SetsModeForEveryFormat()
+    {
+        // The "*" wildcard sets the default mode for all formats — this is how a single switch
+        // ("--formatMode disable") yields annotation-only output, even overriding a vocabulary that asserts.
+        string code = await GenerateAsync(
+            DateTimeAndUuidObject,
+            validateFormat: true,
+            overrides: new Dictionary<string, FormatAssertionMode> { ["*"] = FormatAssertionMode.Disable });
+
+        Assert.IsFalse(code.Contains("MatchDateTime"), "Wildcard disable must not assert date-time.");
+        Assert.IsFalse(code.Contains("MatchUuid"), "Wildcard disable must not assert uuid.");
+    }
+
+    [TestMethod]
+    public async Task WildcardOverride_IsOutrankedByPerFormatOverride()
+    {
+        // A specific per-format override takes precedence over the "*" wildcard default.
+        string code = await GenerateAsync(
+            DateTimeAndUuidObject,
+            validateFormat: true,
+            overrides: new Dictionary<string, FormatAssertionMode> { ["*"] = FormatAssertionMode.Disable, ["uuid"] = FormatAssertionMode.Assert });
+
+        Assert.IsFalse(code.Contains("MatchDateTime"), "date-time falls under the wildcard disable.");
+        StringAssert.Contains(code, "MatchUuid");
+    }
+
+    [TestMethod]
     public async Task WarningOverride_GeneratedCodeCompiles()
     {
         DynamicJsonType type = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
@@ -135,6 +162,32 @@ public class FormatAssertionModeTests
         Assert.AreEqual(3, result.Count);
         Assert.AreEqual(FormatAssertionMode.Disable, result["date-time"]);
         Assert.AreEqual(FormatAssertionMode.Warning, result["time"]);
+        Assert.AreEqual(FormatAssertionMode.Assert, result["uuid"]);
+    }
+
+    [TestMethod]
+    [DataRow("disable", FormatAssertionMode.Disable)]
+    [DataRow("assert", FormatAssertionMode.Assert)]
+    [DataRow("warning", FormatAssertionMode.Warning)]
+    public void Parser_ParseSpecification_BareModeSetsWildcard(string bareMode, FormatAssertionMode expected)
+    {
+        // A bare mode (no '<format>=') is the global default for every format, recorded under "*".
+        IReadOnlyDictionary<string, FormatAssertionMode> result =
+            FormatAssertionModeParser.ParseSpecification(bareMode, ',');
+
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(expected, result["*"]);
+    }
+
+    [TestMethod]
+    public void Parser_ParseSpecification_BareModeCombinesWithPerFormatPairs()
+    {
+        // A bare global mode plus explicit per-format pairs: the bare mode lands under "*".
+        IReadOnlyDictionary<string, FormatAssertionMode> result =
+            FormatAssertionModeParser.ParseSpecification("disable,uuid=assert", ',');
+
+        Assert.AreEqual(2, result.Count);
+        Assert.AreEqual(FormatAssertionMode.Disable, result["*"]);
         Assert.AreEqual(FormatAssertionMode.Assert, result["uuid"]);
     }
 

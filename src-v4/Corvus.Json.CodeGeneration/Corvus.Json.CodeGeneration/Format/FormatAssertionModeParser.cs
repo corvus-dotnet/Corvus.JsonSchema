@@ -74,7 +74,20 @@ public static class FormatAssertionModeParser
             }
 
             int equalsIndex = pair.IndexOf('=');
-            if (equalsIndex <= 0 || equalsIndex == pair.Length - 1)
+            if (equalsIndex < 0)
+            {
+                // A bare mode (no '=') sets the wildcard "*" default applied to every format — e.g.
+                // 'disable' to generate annotation-only output across all formats and drafts.
+                if (TryParseMode(pair, out FormatAssertionMode bareMode))
+                {
+                    result["*"] = bareMode;
+                    continue;
+                }
+
+                throw new FormatException($"Invalid format mode entry '{pair}'. Expected '<format>=<assert|disable|warning>', or a bare '<assert|disable|warning>' to set the default for all formats.");
+            }
+
+            if (equalsIndex == 0 || equalsIndex == pair.Length - 1)
             {
                 throw new FormatException($"Invalid format mode entry '{pair}'. Expected '<format>=<assert|disable|warning>'.");
             }

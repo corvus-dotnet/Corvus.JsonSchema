@@ -68,13 +68,13 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [DefaultValue(false)]
         public bool RebaseToRootPath { get; init; }
 
-        [CommandOption("--assertFormat")]
-        [Description("If --assertFormat is specified, assert format specifications.")]
+        [CommandOption("--assertFormat <VALUE>")]
+        [Description("Whether to assert 'format' specifications globally (default true). Pass '--assertFormat false' to generate annotation-only, where 'format' is recorded but never fails validation.")]
         [DefaultValue(true)]
         public bool AssertFormat { get; init; }
 
         [CommandOption("--formatMode")]
-        [Description("Per-format assertion mode overrides as comma-separated '<format>=<assert|disable|warning>' pairs (e.g. 'date-time=disable,time=warning'). May be specified more than once. An override takes precedence over --assertFormat.")]
+        [Description("Format assertion mode overrides, comma-separated. Use '<format>=<assert|disable|warning>' for one format (e.g. 'date-time=disable,time=warning'), or a bare '<assert|disable|warning>' (equivalently '*=<mode>') to set the default for ALL formats — e.g. '--formatMode disable' for annotation-only output across every draft. May be specified more than once. An override takes precedence over the schema's format vocabulary and --assertFormat.")]
         public string[]? FormatMode { get; init; }
 
         [Description("The path to the schema file to process.")]
