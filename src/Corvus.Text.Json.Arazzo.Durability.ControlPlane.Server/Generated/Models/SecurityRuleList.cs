@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// All security rules.
+/// A keyset page of security rules, ordered by name.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -156,6 +156,27 @@ public readonly partial struct SecurityRuleList
     {
         CheckValidInstance();
         return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>nextPageToken</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// An opaque token to fetch the next page, or null/absent if this is the last page.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString NextPageToken
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NextPageTokenUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
     }
 
     /// <summary>
@@ -623,9 +644,19 @@ public readonly partial struct SecurityRuleList
     public static class JsonPropertyNames
     {
         /// <summary>
+        /// Gets the JSON property name for <see cref="NextPageToken"/>.
+        /// </summary>
+        public const string NextPageToken = "nextPageToken";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Rules"/>.
         /// </summary>
         public const string Rules = "rules";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="NextPageToken"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> NextPageTokenUtf8 => "nextPageToken"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Rules"/>.
@@ -639,6 +670,11 @@ public readonly partial struct SecurityRuleList
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="NextPageToken"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> NextPageToken => "nextPageToken"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Rules"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Rules => "rules"u8;
@@ -650,6 +686,11 @@ public readonly partial struct SecurityRuleList
     /// </summary>
     private static class JsonPropertyNamesPrebaked
     {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="NextPageToken"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> NextPageToken => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x65, 0x78, 0x74, 0x50, 0x61, 0x67, 0x65, 0x54, 0x6F, 0x6B, 0x65, 0x6E, 0x22];
+
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Rules"/>.
         /// </summary>

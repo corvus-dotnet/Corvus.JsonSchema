@@ -230,8 +230,14 @@ public interface IApiSecurityClient : IAsyncDisposable
     /// <summary>
     /// List security rules
     /// </summary>
+    /// <remarks>
+    /// Returns a keyset page of rules ordered by name, bounded by limit and resumable via the page token; q filters by a case-insensitive substring of the name or expression.
+    /// </remarks>
+    /// <param name="q">The q parameter.</param>
+    /// <param name="limit">The limit parameter.</param>
+    /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ListSecurityRulesResponse> ListSecurityRulesAsync(CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<ListSecurityRulesResponse> ListSecurityRulesAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source q = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Create a security rule

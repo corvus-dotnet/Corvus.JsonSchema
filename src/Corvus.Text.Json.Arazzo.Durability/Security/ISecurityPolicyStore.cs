@@ -39,10 +39,36 @@ public interface ISecurityPolicyStore
     /// <returns>The rule as a pooled document the caller must dispose, or <see langword="null"/>.</returns>
     ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> GetRuleAsync(string name, CancellationToken cancellationToken);
 
-    /// <summary>Lists all rules.</summary>
+    /// <summary>Lists all rules. The full read used by snapshot/compile paths and by the default keyset pager; the
+    /// paged <see cref="ListRulesAsync(int, JsonString, string?, CancellationToken)"/> is the API list seam.</summary>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>All rules, as a pooled batch the caller must dispose.</returns>
     ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken);
+
+    /// <summary>Lists rules as a keyset page (design §14.2): rules ordered by <c>name</c>, bounded to
+    /// <paramref name="limit"/>, optionally filtered by <paramref name="q"/> (a case-insensitive substring of the name or
+    /// expression), resuming strictly after <paramref name="pageToken"/>. The default implementation pages over
+    /// <see cref="ListRulesAsync(CancellationToken)"/> in memory; a backend overrides it with a native keyset query so the
+    /// read itself is bounded.</summary>
+    /// <param name="limit">The maximum rules to return (a non-positive value uses the store's default page size).</param>
+    /// <param name="pageToken">The opaque token (its JSON value) from a previous page's <see cref="SecurityRulePage.NextPageToken"/>, or undefined for the first page; decoded bytes-native from its UTF-8.</param>
+    /// <param name="q">An optional case-insensitive substring filter over the rule name and expression; <see langword="null"/> for no filter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>One keyset page, as a disposable the caller must dispose.</returns>
+    /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
+    async ValueTask<SecurityRulePage> ListRulesAsync(int limit, JsonString pageToken, string? q, CancellationToken cancellationToken)
+    {
+        string cursor = string.Empty;
+        bool hasCursor = false;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            hasCursor = SecurityRuleContinuationToken.TryDecode(tokenUtf8.Span, out cursor);
+        }
+
+        using PooledDocumentList<SecurityRuleDocument> all = await this.ListRulesAsync(cancellationToken).ConfigureAwait(false);
+        return SecurityRulePaging.PageInMemory(all, limit, hasCursor ? cursor : null, q);
+    }
 
     /// <summary>Updates a rule's content under optimistic concurrency.</summary>
     /// <param name="name">The rule name.</param>

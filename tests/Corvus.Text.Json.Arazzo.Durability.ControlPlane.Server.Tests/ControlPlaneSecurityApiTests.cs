@@ -66,6 +66,41 @@ public sealed class ControlPlaneSecurityApiTests
     }
 
     [TestMethod]
+    public async Task The_rule_list_keyset_pages_and_filters_over_http()
+    {
+        await using Scoped host = await StartAsync();
+
+        foreach (string name in new[] { "charlie", "alpha", "bravo" })
+        {
+            (await host.SendJsonAsync(HttpMethod.Post, "/security/rules", $$"""{"name":"{{name}}","expression":"tenant == '{{name}}'"}""", Write))
+                .StatusCode.ShouldBe(HttpStatusCode.Created);
+        }
+
+        // First page (limit 2): the first two rules in name order plus a continuation token (the q/limit/pageToken
+        // query parameters are bound by the generated handler).
+        string token;
+        using (Stj.JsonDocument page1 = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/security/rules?limit=2", Read)))
+        {
+            page1.RootElement.GetProperty("rules").EnumerateArray().Select(r => r.GetProperty("name").GetString()).ShouldBe(["alpha", "bravo"]);
+            token = page1.RootElement.GetProperty("nextPageToken").GetString()!;
+            token.ShouldNotBeNullOrEmpty();
+        }
+
+        // Following the token returns the remainder; the last page omits nextPageToken (no further rules).
+        using (Stj.JsonDocument page2 = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/security/rules?limit=2&pageToken={token}", Read)))
+        {
+            page2.RootElement.GetProperty("rules").EnumerateArray().Select(r => r.GetProperty("name").GetString()).ShouldBe(["charlie"]);
+            page2.RootElement.TryGetProperty("nextPageToken", out _).ShouldBeFalse();
+        }
+
+        // The q filter matches a case-insensitive substring of the name (or expression).
+        using (Stj.JsonDocument filtered = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/security/rules?q=ALPHA", Read)))
+        {
+            filtered.RootElement.GetProperty("rules").EnumerateArray().Select(r => r.GetProperty("name").GetString()).ShouldBe(["alpha"]);
+        }
+    }
+
+    [TestMethod]
     public async Task A_malformed_rule_expression_is_a_bad_request()
     {
         await using Scoped host = await StartAsync();

@@ -17,7 +17,22 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// Parameters for the ListSecurityRules operation (GET /security/rules).
 /// </summary>
-/// <remarks>List security rules</remarks>
+/// <remarks>Returns a keyset page of rules ordered by name, bounded by limit and resumable via the page token; q filters by a case-insensitive substring of the name or expression.</remarks>
 public readonly struct ListSecurityRulesParams
 {
+
+    /// <summary>
+    /// Gets the 'q' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Q { get; init; }
+
+    /// <summary>
+    /// Gets the 'limit' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit Limit { get; init; }
+
+    /// <summary>
+    /// Gets the 'pageToken' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PageToken { get; init; }
 }

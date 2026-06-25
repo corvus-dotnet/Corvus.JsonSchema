@@ -100,5 +100,52 @@ then implement the paged seam + InMemory impl + OpenAPI + handler + client.
 
 ## Matrix — Part D (measured before→after)
 
-_(empty — fill per row as work lands; a row is "done" only when a measured before→after + paging conformance appears
-here, per the clean-slate rule.)_
+_A row is "done" only when a measured before→after + paging conformance appears here, per the clean-slate rule._
+
+### `listSecurityRules` — `ISecurityPolicyStore` (foundation seam: InMemory + default keyset pager)
+
+**Status:** seam + InMemory + OpenAPI + handler + regen + client iterator + carrier token **done & verified**. The 9
+persistent backends page correctly today via the default in-memory pager (no backend file changed); native keyset
+queries per backend are a later row (Phase 2). UI panels + CLI list now walk every page (no silent first-page cap).
+
+**What changed.** New carrier types `SecurityRuleContinuationToken` (base64url of `name`) + `SecurityRulePage` (sealed
+disposable, pooled rows + pooled `NextPageToken`). New paged interface seam `ListRulesAsync(int limit, JsonString
+pageToken, string? q, CancellationToken)` with a default impl paging the existing full read in memory
+(`SecurityRulePaging.PageInMemory`: order by `name` ordinal → filter by `q` (name/expression substring,
+case-insensitive) → keyset past the token → bound to `limit`). OpenAPI `listSecurityRules` gained `q`/`limit`/`pageToken`
++ `SecurityRuleList.nextPageToken`; handler projects one bounded page + token; JS client `listSecurityRules` is paged
+with a `listSecurityRulesPaged` iterator; demo `mock-api.js` `/security/rules` pages to match.
+
+**Benchmark** (`SecurityRuleListProjectionBenchmarks`, `[MemoryDiagnoser]`, the handler's `SecurityRuleList` projection).
+The harness is **production-faithful**: the workspace is rented from `JsonWorkspaceCache` and **disposed per op**, exactly
+as the request pipeline does, so the pooled arena returns to the pool each time and "Allocated" is steady-state
+per-request GC (not a held-arena working-set figure).
+
+| Method | RuleCount | Mean | Allocated |
+|---|---|---|---|
+| `Unpaged_All` | 50 | 24.3 µs | 168 B |
+| `Paged_FirstPage` | 50 | 22.2 µs | 168 B |
+| `Unpaged_All` | 500 | 67.1 µs | 169 B |
+| `Paged_FirstPage` | 500 | **4.0 µs** | 168 B |
+
+**Allocation is already clean and pagination does not change it.** Per `corvus-typed-model-construction` +
+`corvus-ctj-handler-implementation`, the body is a lazy `Source<TContext>` materialised once by `Ok<TContext>(body, ws)`
+into the workspace — a per-request pooled arena (`JsonWorkspace` doc-index array + `PooledByteBufferWriter` write buffer,
+ArrayPool-backed). Because that arena is disposed/returned per request, steady-state GC is **~168 B for both arms at both
+sizes** — flat, no per-page cost, no regression. So this row is **not** an allocation-reduction row (there is no managed
+garbage to remove — unlike the record/string/closure rows that went e.g. `8584→136 B`); an earlier `136 KB→24 KB`
+figure here was an artefact of a reuse-the-workspace-without-reset harness defeating the pool, and is withdrawn.
+
+**What pagination actually bounds is size and CPU, O(total) → O(page).** The Mean shows it: projecting every rule is
+O(total) — 67 µs at 500 and climbing — while a page is flat (~4 µs at 500; equal to unpaged at one page of 50). The same
+bound applies to the produced **response bytes**, hence the network transfer and the browser render, and to the **live
+working set per in-flight request** — all capped at one page instead of scaling with the deployment's total rule count
+(the property that stops a large deployment OOM/LOH-thrashing or shipping a multi-MB list body). That structural bound —
+not a GC delta — is the reason to page.
+
+**Conformance.** `SecurityPolicyStoreConformance` (runs on all 10 backends) gained: keyset pages in `name` order with no
+gaps/duplicates across boundaries + malformed-token → `FormatException`; and `q` substring filtering over name/expression.
+Server-level `ControlPlaneSecurityApiTests` gained an end-to-end HTTP test (`?limit`/`?pageToken`/`?q`, last-page token
+omission). Verified locally: warning-free `dotnet build Corvus.Text.Json.slnx` (0W/0E); InMemory conformance + bootstrap
+(11), server API (8), Sqlite conformance (9), JS client + conformance (74) — all green. Container conformance for the 8
+remaining persistent backends rides their existing suites (default seam) and is re-asserted natively in Phase 2.

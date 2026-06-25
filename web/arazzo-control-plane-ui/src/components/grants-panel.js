@@ -22,6 +22,14 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
 import './grantee-picker.js';
 
+// Load the full scope vocabulary, accumulating every keyset page (find, not scale: the scope typeahead filters the
+// whole set client-side, so it must walk past the server's first page rather than silently stop at it).
+async function loadAllRules(client) {
+  const rules = [];
+  for await (const page of client.listSecurityRulesPaged()) rules.push(...page.rules);
+  return rules;
+}
+
 const VERBS = ['read', 'write', 'purge'];
 
 const grantMode = (g) => (g?.unrestricted ? 'unrestricted' : (Array.isArray(g?.ruleNames) && g.ruleNames.length > 0 ? 'scopes' : 'denied'));
@@ -82,13 +90,13 @@ class ArazzoGrantsPanel extends ArazzoElement {
     this.renderBody();
     try {
       // Grants are required; the scope names (for the scoped-action typeahead) are best-effort.
-      const [{ bindings }, scopesResult] = await Promise.all([
+      const [{ bindings }, scopes] = await Promise.all([
         client.listSecurityBindings(),
-        client.listSecurityRules().catch(() => ({ rules: [] })),
+        loadAllRules(client).catch(() => []),
       ]);
       if (seq !== this._reqSeq) return;
       this._grants = bindings;
-      this._scopes = scopesResult.rules ?? [];
+      this._scopes = scopes;
       this._loading = false;
       this.renderBody();
       this.emit('loaded', { count: this._grants.length });
