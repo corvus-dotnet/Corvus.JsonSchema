@@ -1848,17 +1848,22 @@ public sealed class JsonSchemaResultsCollector : IJsonSchemaResultsCollector
         _currentSchemaEvaluationPathRange = _schemaEvaluationPathStack.Pop();
         _currentDocumentEvaluationPathRange = _documentEvaluationPathStack.Pop();
 
-        // Also, pop the results off the stack
-        // There must be at least one.
-        ValueRangeWithCommitIndexAndSequenceNumber range = default;
+        // Pop and discard this context's own result entries.
         while (_resultStack.Peek().SequenceNumber == _sequenceNumber)
         {
-            range = _resultStack.Pop();
+            _resultStack.Pop();
         }
 
-        // And ensure we roll back any commits
-        _committedResultStack.Length = range.CommitIndex;
-        _utf8StringBackingLength = range.Start;
+        // Roll back to the context-start marker that PushChildContext left below those entries. Its Start and
+        // CommitIndex were captured together at the moment this context began, so they are mutually
+        // consistent: resetting the result buffer and the committed-result stack to them discards exactly what
+        // this context produced. Using the first popped result instead (as before) was wrong when the context
+        // wrote no results — it left a default (0, 0) and rolled the whole collector back to empty, clobbering
+        // earlier committed results (observed validating deeply-branching schemas such as the OpenAPI 3.1
+        // metaschema, where it corrupted a result's length headers and faulted ReadResult).
+        ValueRangeWithCommitIndexAndSequenceNumber contextStart = _resultStack.Peek();
+        _committedResultStack.Length = contextStart.CommitIndex;
+        _utf8StringBackingLength = contextStart.Start;
         _sequenceNumber--;
     }
 
