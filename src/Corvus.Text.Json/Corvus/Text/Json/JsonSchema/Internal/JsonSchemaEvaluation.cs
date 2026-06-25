@@ -144,13 +144,15 @@ public static partial class JsonSchemaEvaluation
     /// Tries to copy the path to the output buffer.
     /// </summary>
     /// <remarks>
-    /// The path must be a fully canonical URI.
+    /// The path is a schema evaluation location — a JSON Pointer (RFC 6901), optionally <c>#</c>-prefixed
+    /// and/or preceded by a base URI, or an anchor fragment. It is copied verbatim: a reference token may
+    /// legally contain characters that are unsafe in a URI (e.g. <c>^</c> from a <c>patternProperties</c>
+    /// key), which are valid in a JSON Pointer and are only percent-encoded when a location is rendered as a
+    /// URI. We therefore do not require the input to be a canonical URI.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool TryCopyPath(ReadOnlySpan<byte> readOnlySpan, Span<byte> buffer, out int written)
     {
-        Debug.Assert(Utf8UriTools.Validate(readOnlySpan, Utf8UriKind.RelativeOrAbsolute, requireAbsolute: false, allowIri: true, allowUNCPath: false));
-
         if (readOnlySpan.Length == 0)
         {
             written = 0;

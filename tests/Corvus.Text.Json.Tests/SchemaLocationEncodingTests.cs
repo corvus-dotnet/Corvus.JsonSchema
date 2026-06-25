@@ -9,10 +9,11 @@ using TestUtilities;
 namespace Corvus.Text.Json.Tests;
 
 /// <summary>
-/// Regression tests for schema-location URI encoding. A keyword key (e.g. a <c>patternProperties</c>
-/// regex) is a valid JSON Pointer token but may contain characters that are invalid in a URI fragment
-/// (such as <c>^</c>). The generated <c>JsonSchemaEvaluation.TryCopyPath(...)</c> literal must therefore
-/// be percent-encoded, otherwise detailed-results validation faults when it validates the path as a URI.
+/// Regression test for schema-location handling. A keyword key (e.g. a <c>patternProperties</c> regex) is a
+/// valid JSON Pointer token but may contain characters that are unsafe in a URI fragment (such as <c>^</c>).
+/// Schema locations are kept as raw JSON Pointers, so the generated <c>JsonSchemaEvaluation.TryCopyPath(...)</c>
+/// literal must contain the character verbatim (not percent-encoded); percent-encoding is applied only when a
+/// location is rendered as a URI, and <c>TryCopyPath</c> tolerates the raw character without faulting.
 /// </summary>
 [TestClass]
 public class SchemaLocationEncodingTests
@@ -27,7 +28,7 @@ public class SchemaLocationEncodingTests
         """;
 
     [TestMethod]
-    public async Task PatternPropertiesWithUriUnsafeKey_EmitsPercentEncodedSchemaLocation()
+    public async Task PatternPropertiesWithUriUnsafeKey_EmitsRawJsonPointerSchemaLocation()
     {
         string code = await TestJsonSchemaCodeGenerator.GenerateCodeTextForVirtualFile(
             "schema_location_encoding.json",
@@ -38,11 +39,11 @@ public class SchemaLocationEncodingTests
             validateFormat: true,
             formatModeOverrides: null);
 
-        // The '^' of the patternProperties key must be percent-encoded (%5E) in the schema-location URI
-        // literal — and the raw, URI-invalid form must not appear in a TryCopyPath literal.
-        StringAssert.Contains(code, "patternProperties/%5Ex-", "patternProperties location must percent-encode '^'.");
+        // The '^' of the patternProperties key is a valid JSON Pointer token character; the schema location is
+        // a JSON Pointer, not a URI, so it is kept verbatim — and must not be percent-encoded.
+        StringAssert.Contains(code, "patternProperties/^x-", "patternProperties location must keep the raw '^'.");
         Assert.IsFalse(
-            code.Contains("TryCopyPath(\"#/patternProperties/^", System.StringComparison.Ordinal),
-            "A raw, URI-invalid '^' must not appear in a schema-location literal.");
+            code.Contains("%5E", System.StringComparison.Ordinal),
+            "A schema-location JSON Pointer must not be percent-encoded.");
     }
 }

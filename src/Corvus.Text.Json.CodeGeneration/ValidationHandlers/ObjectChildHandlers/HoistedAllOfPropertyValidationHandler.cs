@@ -66,7 +66,7 @@ internal sealed class HoistedAllOfPropertyValidationHandler : IChildObjectProper
         {
             foreach (HoistedPropertyMetadata propMeta in branchMeta.Properties)
             {
-                string evaluationPath = SymbolDisplay.FormatLiteral(SchemaLocationEncoding.EncodeAsUriFragment(propMeta.KeywordPathModifier), true);
+                string evaluationPath = SymbolDisplay.FormatLiteral(propMeta.KeywordPathModifier, true);
                 generator
                     .AppendSeparatorLine()
                     .AppendLineIndent(

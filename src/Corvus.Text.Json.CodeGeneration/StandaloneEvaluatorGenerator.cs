@@ -473,17 +473,18 @@ internal static partial class StandaloneEvaluatorGenerator
             }
 
             // Evaluation path field — uses TryCopyPath (strips #/) for evaluation path segments.
-            // Percent-encode segments so regex metacharacters (e.g. "^" in patternProperties) are valid URI chars.
+            // The path is a raw JSON Pointer; URI-unsafe JSON-Pointer chars (e.g. "^" in patternProperties)
+            // are kept verbatim and only percent-encoded if a location is later rendered as a URI.
             string evalFieldName = kvp.Value.MethodName.Replace("Evaluate", string.Empty) + "EvaluationPath";
             kvp.Value.PathFieldName = evalFieldName;
-            string encodedEvalPath = SchemaLocationEncoding.EncodeAsUriFragment(kvp.Value.SchemaPath);
-            ctx.AppendLine($"private static readonly JsonSchemaPathProvider {evalFieldName} = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath({FormatUtf8Literal(encodedEvalPath)}, buffer, out written);");
+            string evalPath = kvp.Value.SchemaPath;
+            ctx.AppendLine($"private static readonly JsonSchemaPathProvider {evalFieldName} = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath({FormatUtf8Literal(evalPath)}, buffer, out written);");
 
             // Schema evaluation path field — derived from the TypeDeclaration's actual location
             // in the schema document (not the keyword-derived evaluation path). This handles $ref
             // correctly: $ref targets get their actual location (e.g., /$defs/foo) rather than
             // the evaluation path (e.g., /$ref/0).
-            string schemaPath = SchemaLocationEncoding.EncodeAsUriFragment(GetSchemaLocationFragment(kvp.Value.TypeDeclaration));
+            string schemaPath = GetSchemaLocationFragment(kvp.Value.TypeDeclaration);
 
             string schemaFieldName = kvp.Value.MethodName.Replace("Evaluate", string.Empty) + "SchemaPath";
             kvp.Value.SchemaPathFieldName = schemaFieldName;

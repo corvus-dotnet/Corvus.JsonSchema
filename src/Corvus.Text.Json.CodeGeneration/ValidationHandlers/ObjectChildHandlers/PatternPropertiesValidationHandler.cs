@@ -93,7 +93,7 @@ public class PatternPropertiesValidationHandler : IChildObjectPropertyValidation
                         .AppendLineIndent(
                             "private static readonly JsonSchemaPathProvider ",
                             evaluationPathProperty,
-                            " = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath(", SymbolDisplay.FormatLiteral(SchemaLocationEncoding.EncodeAsUriFragment(value.KeywordPathModifier), true), "u8, buffer, out written);");
+                            " = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath(", SymbolDisplay.FormatLiteral(value.KeywordPathModifier, true), "u8, buffer, out written);");
                 }
             }
 

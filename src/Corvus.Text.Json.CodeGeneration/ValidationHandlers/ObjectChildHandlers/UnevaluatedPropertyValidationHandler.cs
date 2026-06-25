@@ -119,7 +119,7 @@ public class UnevaluatedPropertyValidationHandler : IChildObjectPropertyValidati
         if (typeDeclaration.LocalEvaluatedPropertyType() is FallbackObjectPropertyType localEvaluatedProperty)
         {
             string evaluationPathProperty = generator.GetUniqueStaticReadOnlyPropertyNameInScope(localEvaluatedProperty.Keyword.Keyword, suffix: "SchemaEvaluationPath");
-            string keywordPathProperty = SymbolDisplay.FormatLiteral(SchemaLocationEncoding.EncodeAsUriFragment(localEvaluatedProperty.KeywordPathModifier), true);
+            string keywordPathProperty = SymbolDisplay.FormatLiteral(localEvaluatedProperty.KeywordPathModifier, true);
             typeDeclaration.SetMetadata(LocalEvaluatedSchemaEvaluationPathKey, evaluationPathProperty);
             generator
                 .AppendSeparatorLine()
@@ -132,7 +132,7 @@ public class UnevaluatedPropertyValidationHandler : IChildObjectPropertyValidati
         if (typeDeclaration.LocalAndAppliedEvaluatedPropertyType() is FallbackObjectPropertyType localAndAppliedEvaluatedProperty)
         {
             string evaluationPathProperty = generator.GetUniqueStaticReadOnlyPropertyNameInScope(localAndAppliedEvaluatedProperty.Keyword.Keyword, suffix: "SchemaEvaluationPath");
-            string keywordPathProperty = SymbolDisplay.FormatLiteral(SchemaLocationEncoding.EncodeAsUriFragment(localAndAppliedEvaluatedProperty.KeywordPathModifier), true);
+            string keywordPathProperty = SymbolDisplay.FormatLiteral(localAndAppliedEvaluatedProperty.KeywordPathModifier, true);
             typeDeclaration.SetMetadata(LocalAndAppliedEvaluatedSchemaEvaluationPathKey, evaluationPathProperty);
             generator
                 .AppendSeparatorLine()
