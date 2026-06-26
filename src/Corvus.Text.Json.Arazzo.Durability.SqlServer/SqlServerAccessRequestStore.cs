@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Data;
 using System.Globalization;
 using System.Text;
@@ -161,6 +162,117 @@ public sealed class SqlServerAccessRequestStore : IAccessRequestStore, IAsyncDis
     }
 
     /// <inheritdoc/>
+    public async ValueTask<AccessRequestPage> ListAsync(AccessRequestQuery query, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : AccessRequestPage.DefaultPageSize;
+
+        // Decode the keyset cursor; createdAt + id reify to the strings the SqlClient predicate needs (a genuine DB-param
+        // leaf) only here — createdAt as the ISO-8601 "o" form the CreatedAt column stores (reconstructed from the token's
+        // UTC ticks so it byte-matches the boundary row), id as its text. Undefined token = first page.
+        string? cursorCreatedAt = null;
+        string? cursorId = null;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(AccessRequestContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
+            try
+            {
+                if (AccessRequestContinuationToken.TryDecode(tokenUtf8.Span, buffer, out long cursorTicks, out ReadOnlySpan<byte> cursorIdUtf8))
+                {
+                    cursorCreatedAt = new DateTime(cursorTicks, DateTimeKind.Utc).ToString("o", CultureInfo.InvariantCulture);
+                    cursorId = Encoding.UTF8.GetString(cursorIdUtf8);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+        }
+
+        var page = new PooledDocumentList<AccessRequest>(pageSize);
+        try
+        {
+            await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+            await using SqlCommand select = connection.CreateCommand();
+            var sql = new StringBuilder("SELECT TOP (@limit) Document FROM AccessRequests");
+            select.Parameters.AddWithValue("@limit", pageSize + 1);
+            var conditions = new List<string>(5);
+            if (query.Status is { } status)
+            {
+                conditions.Add("Status = @status");
+                select.Parameters.AddWithValue("@status", AccessRequestStatusNames.ToWire(status));
+            }
+
+            if (query.BaseWorkflowId.IsNotUndefined())
+            {
+                conditions.Add("BaseWorkflowId = @bw");
+                select.Parameters.AddWithValue("@bw", (string)query.BaseWorkflowId);
+            }
+
+            if (query.SubjectClaimType is { } subjectType)
+            {
+                conditions.Add("SubjectClaimType = @st");
+                select.Parameters.AddWithValue("@st", subjectType);
+            }
+
+            if (query.SubjectClaimValue is { } subjectValue)
+            {
+                conditions.Add("SubjectClaimValue = @sv");
+                select.Parameters.AddWithValue("@sv", subjectValue);
+            }
+
+            if (cursorCreatedAt is not null)
+            {
+                // Keyset seek strictly past (createdAt, id): CreatedAt is the fixed-width ISO-8601 "o" UTC form (ordinal ==
+                // chronological), and Id is declared COLLATE Latin1_General_BIN2 so its compare is byte-ordinal == the
+                // in-memory pager's.
+                conditions.Add("(CreatedAt > @ca OR (CreatedAt = @ca AND Id > @id))");
+                select.Parameters.AddWithValue("@ca", cursorCreatedAt);
+                select.Parameters.AddWithValue("@id", cursorId!);
+            }
+
+            if (conditions.Count > 0)
+            {
+                sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+            }
+
+            // The IX_AccessRequests_Created index on (CreatedAt, Id) drives both the order and the seek; TOP bounds the read
+            // to one page + 1 (lookahead) — never a full read + parse of the whole queue.
+            sql.Append(" ORDER BY CreatedAt, Id;");
+            select.CommandText = sql.ToString();
+
+            bool hasMore = false;
+            await using (SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    if (page.Count == pageSize)
+                    {
+                        hasMore = true; // the (pageSize+1)th row exists → a next page; don't parse it
+                        break;
+                    }
+
+                    page.Add(ParsedJsonDocument<AccessRequest>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
+                }
+            }
+
+            if (!hasMore)
+            {
+                return AccessRequestPage.Create(page);
+            }
+
+            AccessRequest last = page[page.Count - 1];
+            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+            return AccessRequestPage.Create(page, last.CreatedAtValue.UtcTicks, lastId.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<AccessRequest>?> DecideAsync(string id, AccessRequestDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -232,7 +344,7 @@ public sealed class SqlServerAccessRequestStore : IAccessRequestStore, IAsyncDis
         IF OBJECT_ID(N'AccessRequests', N'U') IS NULL
         BEGIN
             CREATE TABLE AccessRequests (
-                Id NVARCHAR(450) NOT NULL PRIMARY KEY,
+                Id NVARCHAR(450) COLLATE Latin1_General_BIN2 NOT NULL PRIMARY KEY,
                 BaseWorkflowId NVARCHAR(450) NOT NULL,
                 SubjectClaimType NVARCHAR(450) NOT NULL,
                 SubjectClaimValue NVARCHAR(450) NOT NULL,
@@ -244,6 +356,7 @@ public sealed class SqlServerAccessRequestStore : IAccessRequestStore, IAsyncDis
             CREATE INDEX IX_AccessRequests_Status ON AccessRequests (Status);
             CREATE INDEX IX_AccessRequests_Workflow ON AccessRequests (BaseWorkflowId);
             CREATE INDEX IX_AccessRequests_Subject ON AccessRequests (SubjectClaimType, SubjectClaimValue);
+            CREATE INDEX IX_AccessRequests_Created ON AccessRequests (CreatedAt, Id);
         END;
         """;
 }
