@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Catalog",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "title": { "type": "string" },
+    "version": { "type": "integer" },
+    "owner": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "org": { "type": "string" }
+      },
+      "required": ["name"]
+    },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sku": { "type": "string" },
+          "name": { "type": "string" },
+          "price": { "type": "number" },
+          "qty": { "type": "integer" },
+          "active": { "type": "boolean" }
+        },
+        "required": ["sku", "name", "price"]
+      }
+    }
+  },
+  "required": ["id", "title", "version", "items"]
+}
