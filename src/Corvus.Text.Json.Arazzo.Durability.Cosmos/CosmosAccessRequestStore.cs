@@ -2,9 +2,11 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Globalization;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Internal;
@@ -19,7 +21,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 /// id, so a request is a single logical record reached by a single-partition point read. The record holds its
 /// <see cref="AccessRequest"/> schema document verbatim as a raw nested JSON value (no base64 round-trip); the
 /// filterable fields (status, target workflow, subject, creation instant) are mirrored to top-level envelope properties
-/// so <see cref="ListAsync"/> can query and order on them, and the store-owned etag travels inside the embedded
+/// so <see cref="ListAsync(AccessRequestQuery, CancellationToken)"/> can query and order on them, and the store-owned etag travels inside the embedded
 /// document. Documents are written and read through the Cosmos <em>stream</em> APIs (no SDK serializer), so persistence
 /// flows through Corvus.Text.Json.
 /// </summary>
@@ -209,6 +211,121 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
         catch
         {
             list.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    // This project generates its own Cosmos-namespace JsonString (per-root type identity), so the seam parameter is fully
+    // qualified to the core JsonString IAccessRequestStore's signature uses.
+    public async ValueTask<AccessRequestPage> ListAsync(AccessRequestQuery query, int limit, global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : AccessRequestPage.DefaultPageSize;
+
+        // Decode the keyset cursor; createdAt + id reify to the strings the Cosmos parameters need (the leaf) only here —
+        // createdAt as the ISO-8601 "o" form the mirrored c.createdAt stores (reconstructed from the token's UTC ticks).
+        string? cursorCreatedAt = null;
+        string? cursorId = null;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(AccessRequestContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
+            try
+            {
+                if (AccessRequestContinuationToken.TryDecode(tokenUtf8.Span, buffer, out long cursorTicks, out ReadOnlySpan<byte> cursorIdUtf8))
+                {
+                    cursorCreatedAt = new DateTime(cursorTicks, DateTimeKind.Utc).ToString("o", CultureInfo.InvariantCulture);
+                    cursorId = Encoding.UTF8.GetString(cursorIdUtf8);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+        }
+
+        var conditions = new List<string>(5);
+        if (query.Status is not null)
+        {
+            conditions.Add("c.status = @status");
+        }
+
+        if (query.BaseWorkflowId.IsNotUndefined())
+        {
+            conditions.Add("c.bw = @bw");
+        }
+
+        if (query.SubjectClaimType is not null)
+        {
+            conditions.Add("c.st = @st");
+        }
+
+        if (query.SubjectClaimValue is not null)
+        {
+            conditions.Add("c.sv = @sv");
+        }
+
+        if (cursorCreatedAt is not null)
+        {
+            // Keyset seek strictly past (createdAt, id): Cosmos orders strings ordinally, so the ISO createdAt order is
+            // chronological and the id order is byte-ordinal — the same total order the in-memory pager uses.
+            conditions.Add("(c.createdAt > @ca OR (c.createdAt = @ca AND c.id > @id))");
+        }
+
+        string where = conditions.Count == 0 ? string.Empty : " WHERE " + string.Join(" AND ", conditions);
+        var definition = new QueryDefinition("SELECT c.doc FROM c" + where + " ORDER BY c.createdAt, c.id");
+        if (query.Status is { } statusFilter)
+        {
+            definition = definition.WithParameter("@status", AccessRequestStatusNames.ToWire(statusFilter));
+        }
+
+        if (query.BaseWorkflowId.IsNotUndefined())
+        {
+            definition = definition.WithParameter("@bw", (string)query.BaseWorkflowId);
+        }
+
+        if (query.SubjectClaimType is { } subjectType)
+        {
+            definition = definition.WithParameter("@st", subjectType);
+        }
+
+        if (query.SubjectClaimValue is { } subjectValue)
+        {
+            definition = definition.WithParameter("@sv", subjectValue);
+        }
+
+        if (cursorCreatedAt is not null)
+        {
+            definition = definition.WithParameter("@ca", cursorCreatedAt).WithParameter("@id", cursorId);
+        }
+
+        var page = new PooledDocumentList<AccessRequest>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            await foreach (ReadOnlyMemory<byte> doc in this.QueryDocumentsAsync(definition, cancellationToken).ConfigureAwait(false))
+            {
+                if (page.Count == pageSize)
+                {
+                    hasMore = true; // a row beyond the page exists → there is a next page; stop early
+                    break;
+                }
+
+                page.Add(PersistedJson.ToPooledDocument<AccessRequest>(doc.Span));
+            }
+
+            if (!hasMore)
+            {
+                return AccessRequestPage.Create(page);
+            }
+
+            AccessRequest last = page[page.Count - 1];
+            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+            return AccessRequestPage.Create(page, last.CreatedAtValue.UtcTicks, lastId.Span);
+        }
+        catch
+        {
+            page.Dispose();
             throw;
         }
     }
