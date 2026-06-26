@@ -1919,3 +1919,60 @@ Severity = impact on a production‑quality engine. Effort = S / M / L.
    F1 (canonical write) / F2 / F3, D3 (eval‑only mode), G4 (Bowtie), G5 (benchmark), G6 (consumer docs).
 5. **Showcase** — G7 (playground).
 6. **Deferred** — H1 (LSP), H2 (Model A), unless their use case is taken up.
+
+---
+
+## 15. Results collector (gaps D1+D2) — design
+
+The decision (2026-06-26) is to fold **D2** (location data) into **D1** (the collector): the per-subschema
+location is only useful when an evaluator threads it into a collector, so they ship as one feature. The
+goal: an optional collector passed to `evaluateRoot(value, results?)` that records **why** a value failed —
+per-keyword `Failure`s carrying `instanceLocation` / `keywordLocation` / `absoluteKeywordLocation` (the JSON
+Schema output formats + Bowtie). The boolean fast path must stay **zero-overhead** when no collector is passed.
+
+### Runtime (`@corvus/json-runtime`)
+
+```ts
+export interface Failure { keywordLocation: string; instanceLocation: string; absoluteKeywordLocation?: string; }
+export class Results { readonly failures: Failure[] = []; get valid() { return this.failures.length === 0; }
+  fail(keywordLocation: string, instanceLocation: string, absoluteKeywordLocation?: string): false {
+    this.failures.push({ keywordLocation, instanceLocation, absoluteKeywordLocation }); return false; } }
+```
+
+`Ev` gains `r: Results | null = null` (the collector). A free helper threads it:
+`function __fail(ev: Ev, kw: string, il: string, akw?: string): false { return ev.r === null ? false : ev.r.fail(kw, il, akw); }`
+— the `ev.r === null` check is the entire fast-path cost (a null compare + return).
+
+### Codegen
+
+- **Locations (the D2 part).** Each type's `td.LocatedSchema.Location` is its `absoluteKeywordLocation` base
+  and its fragment is the `keywordLocation` base. These are baked **inline** into each `__fail(...)` call
+  (string literals) — no separate exported constants needed; a keyword adds `"/<keyword>"`.
+- **Instance location.** `evaluate{Type}(value, ev, il = "")` gains an `il` parameter (the instance JSON
+  Pointer). Structural handlers thread it: properties pass `il + "/" + escapePointer(k)`, items pass
+  `il + "/" + i`, composition passes `il` through.
+- **Recording.** Every `return false` becomes `return __fail(ev, "<keywordLocation>", il, "<absoluteKeywordLocation>")`.
+- `evaluateRoot(value, results?)` seeds a fresh `Ev` with `ev.r = results ?? null`, `il = ""`.
+
+### Increments (execution order)
+
+1. **Runtime + entry** — `Failure`/`Results`/`Ev.r`/`__fail`; `evaluate{Type}(value, ev, il)` signature
+   (`il` defaulted, threaded as `""` everywhere first — no behaviour change); `evaluateRoot(value, results?)`.
+   Verifiable: compiles, boolean path unchanged, all suites green.
+2. **Leaf handlers record** — type / numeric+length bounds / membership / regex / format `return false` →
+   `__fail` with their keyword location. Verifiable: a leaf failure yields a correct `keywordLocation`.
+3. **Structural handlers thread `il` + record** — properties / patternProperties / additionalProperties /
+   required / items / prefixItems / contains / not / unevaluated* descend with the right `il` so leaf
+   failures carry the correct `instanceLocation`. This is the bulk.
+4. **Spec output + Bowtie** — render `Results.failures` as the JSON Schema basic/detailed output; add a
+   Node/TS Bowtie harness (gap G4) that consumes it.
+5. **Annotation collection (D4)** — collect title/default/etc. in verbose mode on the same context.
+
+### Risks
+
+- **Zero-overhead discipline.** `il` defaults to `""` and is only string-concatenated when descending; the
+  `__fail` null-check is the only added cost on the boolean path. Verify on the sustained-load bench that the
+  no-collector path is unregressed (the bitmask `Ev` is unchanged; `r` is one extra null field).
+- **Pointer escaping.** `instanceLocation`/`keywordLocation` segments must RFC 6901-escape `~`→`~0`, `/`→`~1`.
+- **`$dynamicRef`.** `keywordLocation` follows the dynamic path; `absoluteKeywordLocation` is the resolved
+  `$id` URI — they diverge through dynamic refs (the core already distinguishes them in the location).
