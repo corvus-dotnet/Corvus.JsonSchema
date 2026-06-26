@@ -195,6 +195,62 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RunnerRegistryPage> ListAsync(int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
+
+        // Decode the keyset cursor; the runner id reifies to a string only for the ordinal compare (the leaf).
+        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
+
+        // KV keys are unordered and the value-fetch is the cost, so — like the runs store — the keyset order is materialised
+        // client-side. But each runner key is Base64Url(runnerId), so the id (hence the order) is recovered from the key
+        // WITHOUT fetching the document; only the page's documents are then fetched (one beyond, to look ahead), never
+        // every runner's. The decoded id sorts ordinal == the in-memory pager's order.
+        var entries = new List<(string Id, string Key)>();
+        await foreach (string key in this.registry.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (IsHostingKey(key))
+            {
+                continue;
+            }
+
+            entries.Add((Dec(key), key));
+        }
+
+        entries.Sort(static (a, b) => string.CompareOrdinal(a.Id, b.Id));
+
+        var page = new List<RunnerRegistration>(pageSize + 1);
+        foreach ((string id, string key) in entries)
+        {
+            if (after is not null && string.CompareOrdinal(id, after) <= 0)
+            {
+                continue; // already returned in an earlier page
+            }
+
+            NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            if (entry is not { Value: { } value })
+            {
+                continue; // key listed but entry gone (raced with prune) — skip
+            }
+
+            page.Add(RunnerRegistration.FromJson(value));
+            if (page.Count > pageSize)
+            {
+                break; // fetched one real row beyond the page → a next page exists
+            }
+        }
+
+        if (page.Count <= pageSize)
+        {
+            return RunnerRegistryPage.Create(page);
+        }
+
+        page.RemoveAt(page.Count - 1);
+        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
+        return RunnerRegistryPage.Create(page, lastId.Span);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
@@ -268,6 +324,11 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
     // a single dot-free token (periods are reserved here as the segment separator).
     private static string Enc(string value)
         => Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
+
+    // The inverse of Enc: recovers a runner id from its Base64Url KV key so the keyset order can be computed without
+    // fetching the document. Only ever applied to runner keys (hosting keys are filtered out before decoding).
+    private static string Dec(string key)
+        => Encoding.UTF8.GetString(Base64Url.DecodeFromChars(key));
 
     private async ValueTask<NatsKVEntry<byte[]>?> TryGetAsync(string key, CancellationToken cancellationToken)
     {
