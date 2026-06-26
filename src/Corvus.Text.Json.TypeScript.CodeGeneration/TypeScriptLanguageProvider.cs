@@ -425,42 +425,25 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
           if (edits.length === 0) return bytes;
           return applyEditsBytes(bytes, edits);
         }
-        // §13.3 lazy-read produce: a lazy overlay draft replaces JSON.parse(whole-doc). Objects navigate by
-        // byte span (no value decode); scalars decode on read; arrays decode-on-touch then reuse __diffSeg.
-        // Writes record a change-set the byte lowering (__lower) consumes -- a pure overwrite decodes nothing.
+        // §13.3 lazy-read produce: a lazy overlay draft replaces JSON.parse(whole-doc). Objects AND arrays
+        // navigate by byte span (no value decode); scalars decode on read; an array element edit touches only
+        // that element's span, and only a structural array op materialises (see __makeArrayDraft). Writes
+        // record a change-set the byte lowering (__lower) consumes -- a pure overwrite decodes nothing.
         function __decodeValue(bytes: Uint8Array, vs: number, ve: number): unknown { return JSON.parse(new TextDecoder().decode(bytes.subarray(vs, ve))); }
         function __spanKind(bytes: Uint8Array, vs: number): number { const c = bytes[vs]; return c === 0x7b ? 0 : c === 0x5b ? 1 : 2; }
-        function __diffSeg(orig: any, cur: any, path: string[], out: __DraftOp[]): void {
-          if (orig === cur) return;
-          const oa = Array.isArray(orig), ma = Array.isArray(cur);
-          if (oa && ma) {
-            if (orig.length !== cur.length) { out.push({ path, op: "replace", value: cur }); return; }
-            for (let i = 0; i < orig.length; i++) __diffSeg(orig[i], cur[i], [...path, String(i)], out);
-            return;
-          }
-          const oo = orig !== null && typeof orig === "object" && !oa;
-          const mo = cur !== null && typeof cur === "object" && !ma;
-          if (oo && mo) {
-            for (const k of Object.keys(orig)) { if (!(k in cur)) out.push({ path: [...path, k], op: "remove" }); else __diffSeg(orig[k], cur[k], [...path, k], out); }
-            for (const k of Object.keys(cur)) { if (!(k in orig)) out.push({ path: [...path, k], op: "add", value: cur[k] }); }
-            return;
-          }
-          out.push({ path, op: "replace", value: cur });
-        }
-        export interface __ArrTracked { current: unknown[]; finalize: (out: __DraftOp[]) => void; }
-        function __makeArrayTracked(bytes: Uint8Array, vs: number, ve: number, path: string[]): __ArrTracked {
-          const original = __decodeValue(bytes, vs, ve) as unknown[];   // touching an array decodes it (one decode)
-          const current = structuredClone(original);
-          return { current, finalize(out) { __diffSeg(original, current, path, out); } };
-        }
-        export interface __ObjDraft { proxy: any; finalize: (out: __DraftOp[]) => void; }
-        export type __Child = { kind: 0; draft: __ObjDraft } | { kind: 1; tracked: __ArrTracked };
-        function __makeObjectDraft(bytes: Uint8Array, vs: number, ve: number, path: string[]): __ObjDraft {
+        // Lazy drafts. An object navigates by byte span (no value decode); a scalar decodes on read; an
+        // array is element-lazy too: items[i].field = v touches only element i's span, an in-bounds index
+        // set becomes a per-element edit, and only a STRUCTURAL op (push/splice/pop/length) materialises
+        // (decode + fold prior edits) then whole-replaces. Both draft kinds share { proxy, value, finalize }.
+        const __ISIDX = /^(0|[1-9][0-9]*)$/;
+        interface __Draft { proxy: any; value: () => any; finalize: (out: __DraftOp[]) => void; }
+        type __Kid = { kind: 0 | 1; d: __Draft };
+        function __makeObjectDraft(bytes: Uint8Array, vs: number, ve: number, path: string[]): __Draft {
           const enc = new TextEncoder();
           let members: RmwMember[] | null = null;
           const written = new Map<string, unknown>();
           const deleted = new Set<string>();
-          const children = new Map<string, __Child>();
+          const children = new Map<string, __Kid>();
           function scan(): RmwMember[] {
             if (members) return members;
             const s = scanAll(bytes.subarray(vs, ve));
@@ -478,25 +461,79 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
               if (deleted.has(k)) return undefined;
               if (written.has(k)) return written.get(k);
               const c = children.get(k);
-              if (c) return c.kind === 0 ? c.draft.proxy : c.tracked.current;
+              if (c) return c.d.proxy;
               const m = findKey(k);
               if (!m) return undefined;
               const kind = __spanKind(bytes, m.vs);
-              if (kind === 0) { const draft = __makeObjectDraft(bytes, m.vs, m.ve, [...path, k]); children.set(k, { kind: 0, draft }); return draft.proxy; }
-              if (kind === 1) { const tracked = __makeArrayTracked(bytes, m.vs, m.ve, [...path, k]); children.set(k, { kind: 1, tracked }); return tracked.current; }
+              if (kind === 0) { const d = __makeObjectDraft(bytes, m.vs, m.ve, [...path, k]); children.set(k, { kind: 0, d }); return d.proxy; }
+              if (kind === 1) { const d = __makeArrayDraft(bytes, m.vs, m.ve, [...path, k]); children.set(k, { kind: 1, d }); return d.proxy; }
               return __decodeValue(bytes, m.vs, m.ve);
             },
             set(_t, key, val) { const k = String(key); written.set(k, val); deleted.delete(k); children.delete(k); return true; },
             deleteProperty(_t, key) { const k = String(key); deleted.add(k); written.delete(k); children.delete(k); return true; },
             has(_t, key) { const k = String(key); if (deleted.has(k)) return false; if (written.has(k) || children.has(k)) return true; return !!findKey(k); },
           });
+          function value(): any { const base: any = __decodeValue(bytes, vs, ve); for (const [k, v] of written) base[k] = v; for (const k of deleted) delete base[k]; for (const [k, c] of children) base[k] = c.d.value(); return base; }
           function finalize(out: __DraftOp[]): void {
             for (const [k, val] of written) { out.push({ path: [...path, k], op: findKey(k) ? "replace" : "add", value: val }); }
             for (const k of deleted) { if (findKey(k)) out.push({ path: [...path, k], op: "remove" }); }
-            for (const [, c] of children) { if (c.kind === 0) c.draft.finalize(out); else c.tracked.finalize(out); }
+            for (const [, c] of children) c.d.finalize(out);
           }
-          return { proxy, finalize };
+          return { proxy, value, finalize };
         }
+        function __makeArrayDraft(bytes: Uint8Array, vs: number, ve: number, path: string[]): __Draft {
+          let elems: Array<{ vs: number; ve: number }> | null = null;
+          const overrides = new Map<number, unknown>();
+          const children = new Map<number, __Kid>();
+          let materialized: any[] | null = null;
+          function scan(): Array<{ vs: number; ve: number }> {
+            if (elems) return elems;
+            const s = scanArrayElements(bytes.subarray(vs, ve));
+            elems = s.elems.map((x) => ({ vs: vs + x.vs, ve: vs + x.ve }));
+            return elems;
+          }
+          function len(): number { return materialized ? materialized.length : scan().length; }
+          function value(): any[] {
+            if (materialized) return materialized;
+            const es = scan();
+            return es.map((e, i) => { const c = children.get(i); if (c) return c.d.value(); if (overrides.has(i)) return overrides.get(i); return __decodeValue(bytes, e.vs, e.ve); });
+          }
+          function materialize(): void { if (!materialized) materialized = value(); }
+          const proxy: any = new Proxy([] as any[], {
+            get(_t, key) {
+              if (key === "length") return len();
+              if (typeof key === "symbol") return materialized ? (materialized as any)[key] : (Array.prototype as any)[key];
+              if (materialized) return (materialized as any)[key];
+              if (!__ISIDX.test(key)) return (Array.prototype as any)[key];
+              const i = Number(key);
+              if (overrides.has(i)) return overrides.get(i);
+              const c = children.get(i); if (c) return c.d.proxy;
+              const es = scan(); if (i >= es.length) return undefined;
+              const e = es[i]; const kind = __spanKind(bytes, e.vs);
+              if (kind === 0) { const d = __makeObjectDraft(bytes, e.vs, e.ve, [...path, String(i)]); children.set(i, { kind: 0, d }); return d.proxy; }
+              if (kind === 1) { const d = __makeArrayDraft(bytes, e.vs, e.ve, [...path, String(i)]); children.set(i, { kind: 1, d }); return d.proxy; }
+              return __decodeValue(bytes, e.vs, e.ve);
+            },
+            set(_t, key, val) {
+              if (key === "length") { materialize(); materialized!.length = Number(val); return true; }
+              if (typeof key === "symbol") return true;
+              if (!__ISIDX.test(key)) return true;
+              const i = Number(key);
+              if (materialized) { materialized[i] = val; return true; }
+              if (i < len()) { overrides.set(i, val); children.delete(i); return true; }
+              materialize(); materialized![i] = val; return true;
+            },
+            deleteProperty(_t, key) { if (typeof key === "symbol") return true; if (!__ISIDX.test(key)) return true; materialize(); delete materialized![Number(key)]; return true; },
+            has(_t, key) { if (key === "length") return true; const sk = String(key); if (__ISIDX.test(sk)) return Number(sk) < len(); return sk in Array.prototype; },
+          });
+          function finalize(out: __DraftOp[]): void {
+            if (materialized) { out.push({ path, op: "replace", value: materialized }); return; }
+            for (const [i, v] of overrides) out.push({ path: [...path, String(i)], op: "replace", value: v });
+            for (const [, c] of children) c.d.finalize(out);
+          }
+          return { proxy, value, finalize };
+        }
+
         // produce(source, recipe): immer-style mutation lowered to a Model C byte patch via lazy reads.
         function produce<T>(source: Uint8Array, recipe: (draft: Draft<T>) => void): Uint8Array {
           const root = __makeObjectDraft(source, 0, source.length, []);
