@@ -357,7 +357,6 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         }
         
         interface __DraftOp { path: string[]; op: "replace" | "add" | "remove"; value?: unknown; }
-        function __parsePtr(path: string): string[] { return path.split("/").slice(1).map((s) => s.replace(/~1/g, "/").replace(/~0/g, "~")); }
         function __groupHead(ops: __DraftOp[]): Map<string, __DraftOp[]> {
           const g = new Map<string, __DraftOp[]>();
           for (const op of ops) { const h = op.path[0]; const cur = g.get(h); if (cur) cur.push(op); else g.set(h, [op]); }
@@ -426,13 +425,86 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
           if (edits.length === 0) return bytes;
           return applyEditsBytes(bytes, edits);
         }
-        // produce(source, recipe): immer-style mutation lowered to a Model C byte patch (arbitrary depth).
+        // §13.3 lazy-read produce: a lazy overlay draft replaces JSON.parse(whole-doc). Objects navigate by
+        // byte span (no value decode); scalars decode on read; arrays decode-on-touch then reuse __diffSeg.
+        // Writes record a change-set the byte lowering (__lower) consumes -- a pure overwrite decodes nothing.
+        function __decodeValue(bytes: Uint8Array, vs: number, ve: number): unknown { return JSON.parse(new TextDecoder().decode(bytes.subarray(vs, ve))); }
+        function __spanKind(bytes: Uint8Array, vs: number): number { const c = bytes[vs]; return c === 0x7b ? 0 : c === 0x5b ? 1 : 2; }
+        function __diffSeg(orig: any, cur: any, path: string[], out: __DraftOp[]): void {
+          if (orig === cur) return;
+          const oa = Array.isArray(orig), ma = Array.isArray(cur);
+          if (oa && ma) {
+            if (orig.length !== cur.length) { out.push({ path, op: "replace", value: cur }); return; }
+            for (let i = 0; i < orig.length; i++) __diffSeg(orig[i], cur[i], [...path, String(i)], out);
+            return;
+          }
+          const oo = orig !== null && typeof orig === "object" && !oa;
+          const mo = cur !== null && typeof cur === "object" && !ma;
+          if (oo && mo) {
+            for (const k of Object.keys(orig)) { if (!(k in cur)) out.push({ path: [...path, k], op: "remove" }); else __diffSeg(orig[k], cur[k], [...path, k], out); }
+            for (const k of Object.keys(cur)) { if (!(k in orig)) out.push({ path: [...path, k], op: "add", value: cur[k] }); }
+            return;
+          }
+          out.push({ path, op: "replace", value: cur });
+        }
+        export interface __ArrTracked { current: unknown[]; finalize: (out: __DraftOp[]) => void; }
+        function __makeArrayTracked(bytes: Uint8Array, vs: number, ve: number, path: string[]): __ArrTracked {
+          const original = __decodeValue(bytes, vs, ve) as unknown[];   // touching an array decodes it (one decode)
+          const current = structuredClone(original);
+          return { current, finalize(out) { __diffSeg(original, current, path, out); } };
+        }
+        export interface __ObjDraft { proxy: any; finalize: (out: __DraftOp[]) => void; }
+        export type __Child = { kind: 0; draft: __ObjDraft } | { kind: 1; tracked: __ArrTracked };
+        function __makeObjectDraft(bytes: Uint8Array, vs: number, ve: number, path: string[]): __ObjDraft {
+          const enc = new TextEncoder();
+          let members: RmwMember[] | null = null;
+          const written = new Map<string, unknown>();
+          const deleted = new Set<string>();
+          const children = new Map<string, __Child>();
+          function scan(): RmwMember[] {
+            if (members) return members;
+            const s = scanAll(bytes.subarray(vs, ve));
+            members = s.members.map((m) => ({ ns: vs + m.ns, ne: vs + m.ne, vs: vs + m.vs, ve: vs + m.ve }));
+            return members;
+          }
+          function findKey(key: string): RmwMember | null {
+            const ms = scan(); const idx = findMember(bytes, ms, enc.encode(key));
+            return idx < 0 ? null : ms[idx];
+          }
+          const proxy: any = new Proxy({}, {
+            get(_t, key) {
+              if (typeof key === "symbol") return undefined;
+              const k = String(key);
+              if (deleted.has(k)) return undefined;
+              if (written.has(k)) return written.get(k);
+              const c = children.get(k);
+              if (c) return c.kind === 0 ? c.draft.proxy : c.tracked.current;
+              const m = findKey(k);
+              if (!m) return undefined;
+              const kind = __spanKind(bytes, m.vs);
+              if (kind === 0) { const draft = __makeObjectDraft(bytes, m.vs, m.ve, [...path, k]); children.set(k, { kind: 0, draft }); return draft.proxy; }
+              if (kind === 1) { const tracked = __makeArrayTracked(bytes, m.vs, m.ve, [...path, k]); children.set(k, { kind: 1, tracked }); return tracked.current; }
+              return __decodeValue(bytes, m.vs, m.ve);
+            },
+            set(_t, key, val) { const k = String(key); written.set(k, val); deleted.delete(k); children.delete(k); return true; },
+            deleteProperty(_t, key) { const k = String(key); deleted.add(k); written.delete(k); children.delete(k); return true; },
+            has(_t, key) { const k = String(key); if (deleted.has(k)) return false; if (written.has(k) || children.has(k)) return true; return !!findKey(k); },
+          });
+          function finalize(out: __DraftOp[]): void {
+            for (const [k, val] of written) { out.push({ path: [...path, k], op: findKey(k) ? "replace" : "add", value: val }); }
+            for (const k of deleted) { if (findKey(k)) out.push({ path: [...path, k], op: "remove" }); }
+            for (const [, c] of children) { if (c.kind === 0) c.draft.finalize(out); else c.tracked.finalize(out); }
+          }
+          return { proxy, finalize };
+        }
+        // produce(source, recipe): immer-style mutation lowered to a Model C byte patch via lazy reads.
         function produce<T>(source: Uint8Array, recipe: (draft: Draft<T>) => void): Uint8Array {
-          const value = JSON.parse(new TextDecoder().decode(source)) as T;
-          const patches = recordChanges(value, recipe).patches;
-          if (patches.length === 0) return source;
-          if (patches.length === 1 && patches[0].path === "") return new TextEncoder().encode(JSON.stringify(patches[0].value));
-          return __lower(source, patches.map((p) => ({ path: __parsePtr(p.path), op: p.op, value: p.value })));
+          const root = __makeObjectDraft(source, 0, source.length, []);
+          recipe(root.proxy as Draft<T>);
+          const ops: __DraftOp[] = [];
+          root.finalize(ops);
+          if (ops.length === 0) return source;
+          return __lower(source, ops);
         }
         """;
 
