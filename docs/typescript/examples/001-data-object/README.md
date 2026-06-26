@@ -1,6 +1,6 @@
 # TypeScript Patterns - Simple Data Objects
 
-This recipe demonstrates how to define a simple data object of primitive values in JSON Schema, and how the Corvus.Text.Json **TypeScript** generator produces an idiomatic `readonly` interface plus a small, allocation-lean API to validate, read, build and mutate it.
+This recipe demonstrates how to define a simple data object of primitive values in JSON Schema, and how the Corvus.Text.Json **TypeScript** generator produces an idiomatic `readonly` interface plus a small, allocation-lean API to evaluate, read, build and mutate it.
 
 ## The Pattern
 
@@ -8,9 +8,9 @@ It is very common to define a simple data object composed of primitive values fo
 
 The generator emits, for the root schema, a `readonly` **interface** whose name is derived from the schema (here `Person`). Required properties are `name: T`; optional properties are `name?: T`. JSON Schema scalar types map to TypeScript primitives (`string`, `number`, `boolean`), and a `format` keyword becomes a **branded** type with a validating factory (here `birthDate` is `Brand<string, "date">` with `asBirthDate(...)`).
 
-There is **nothing to wrap**: a JSON value parsed with `JSON.parse` *is* a `Person` once validated — you read it with ordinary property access. The generator adds only what the language can't express for free:
+There is **nothing to wrap**: a JSON value parsed with `JSON.parse` *is* a `Person` once `evaluateRoot` accepts it — you read it with ordinary property access. The generator adds only what the language can't express for free:
 
-- `evaluateRoot(value)` / `evaluatePerson(value, ev)` — an AOT-compiled boolean validator (no exceptions, no error-object graph).
+- `evaluateRoot(value)` / `evaluatePerson(value, ev)` — an AOT-compiled boolean evaluator (no exceptions, no error-object graph).
 - `buildPerson(props)` — construct canonical UTF-8 JSON **bytes** from plain values.
 - `patchPerson(source, changes, removals?)` — change only the named fields, spliced at the byte level (unchanged bytes copied verbatim).
 - `producePerson(source, recipe)` — an immer-style `produce(draft => …)` over a typed, mutable `Draft<Person>`.
@@ -65,7 +65,7 @@ const bytes = buildPerson({
 // {"familyName":"Brontë","givenName":"Anne","birthDate":"1820-01-17","height":1.52}
 ```
 
-### Validate untrusted input
+### Evaluate untrusted input
 
 `evaluateRoot` is a boolean — no exceptions, no allocated error graph:
 
@@ -77,7 +77,7 @@ evaluateRoot({ givenName: "Anne" });     // false — familyName is required
 
 ### Read
 
-Once validated the value *is* a `Person`; read it with ordinary property access:
+Once `evaluateRoot` accepts it, the value *is* a `Person`; read it with ordinary property access:
 
 ```typescript
 const person = incoming as Person;
@@ -130,7 +130,7 @@ node dist/001-data-object/demo.js
 
 ### Why is there no wrapper type to "parse into"?
 
-Because TypeScript already expresses the shape. A `JSON.parse`'d value, once `evaluateRoot`'d, is a sound `Person` — there is nothing to beat reading a validated plain object. The generated functions cover only what the type system can't: validation, byte-level mutation, and construction.
+Because TypeScript already expresses the shape. A `JSON.parse`'d value, once `evaluateRoot`'d, is a sound `Person` — there is nothing to beat reading a plain object you trust. The generated functions cover only what the type system can't: evaluation, byte-level mutation, and construction.
 
 ### What is the difference between an absent property and `null`?
 

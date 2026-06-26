@@ -3,7 +3,7 @@
 The Corvus.Text.Json code generator emits idiomatic, high-performance **TypeScript** from JSON Schema. From one schema you get:
 
 - a `readonly` **type surface** — interfaces, string-literal-union enums, discriminated unions with `match*`, branded format types, typed arrays/tuples, maps;
-- **AOT-compiled validators** — a boolean `evaluateRoot(value)` per module, fully JSON-Schema-compliant (all five dialects), with no runtime schema interpretation;
+- **AOT-compiled evaluators** — a boolean `evaluateRoot(value)` per module, fully JSON-Schema-compliant (all five dialects), with no runtime schema interpretation;
 - a **byte-level mutation API** — `build*` / `patch*` / `produce*` over canonical UTF-8 JSON bytes, splicing only what changed.
 
 Generate with the CLI:
@@ -43,6 +43,6 @@ Each recipe under [`examples/`](./examples/) is a schema + the generated TypeScr
 Prose documentation for the generated API (in progress):
 
 - **getting-started** — installing the runtime, generating, the shape of a module.
-- **reading-and-validating** — the `readonly` surface and the `evaluateRoot` / `evaluate*` boolean validators.
+- **reading-and-validating** — the `readonly` surface and the `evaluateRoot` / `evaluate*` boolean evaluators.
 - **mutation** — `build` / `patch` / `produce` and the byte-level engine.
 - **the-type-surface** — every construct → its generated TypeScript.
