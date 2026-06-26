@@ -1,0 +1,17 @@
+{
+  "title": "Shape",
+  "oneOf": [
+    {
+      "title": "Circle",
+      "type": "object",
+      "required": ["kind", "radius"],
+      "properties": { "kind": { "const": "circle" }, "radius": { "type": "number" } }
+    },
+    {
+      "title": "Rectangle",
+      "type": "object",
+      "required": ["kind", "width", "height"],
+      "properties": { "kind": { "const": "rectangle" }, "width": { "type": "number" }, "height": { "type": "number" } }
+    }
+  ]
+}

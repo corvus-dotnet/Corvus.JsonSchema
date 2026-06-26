@@ -1,0 +1,22 @@
+{
+  "title": "Order",
+  "type": "object",
+  "$defs": {
+    "address": {
+      "title": "Address",
+      "type": "object",
+      "required": ["line1", "city", "postcode"],
+      "properties": {
+        "line1": { "type": "string" },
+        "city": { "type": "string" },
+        "postcode": { "type": "string" }
+      }
+    }
+  },
+  "required": ["id", "shipTo"],
+  "properties": {
+    "id": { "type": "string" },
+    "shipTo": { "$ref": "#/$defs/address" },
+    "billTo": { "$ref": "#/$defs/address" }
+  }
+}
