@@ -19,14 +19,14 @@ public sealed class MySqlRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     private const string SchemaSql =
         """
         CREATE TABLE IF NOT EXISTS runner_registrations (
-            runner_id VARCHAR(255) NOT NULL,
+            runner_id VARCHAR(255) COLLATE utf8mb4_bin NOT NULL,
             last_seen_at BIGINT NOT NULL,
             doc LONGBLOB NOT NULL,
             PRIMARY KEY (runner_id),
             INDEX ix_runner_registrations_last_seen (last_seen_at)
         );
         CREATE TABLE IF NOT EXISTS runner_hosted_versions (
-            runner_id VARCHAR(255) NOT NULL,
+            runner_id VARCHAR(255) COLLATE utf8mb4_bin NOT NULL,
             base_workflow_id VARCHAR(255) NOT NULL,
             version_number INT NOT NULL,
             PRIMARY KEY (runner_id, base_workflow_id, version_number),
@@ -206,6 +206,50 @@ public sealed class MySqlRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         }
 
         return result;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<RunnerRegistryPage> ListAsync(int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
+
+        // Decode the keyset cursor from the request's page token; the runner id reifies to a string only at the
+        // MySqlConnector parameter boundary (a genuine DB-param leaf) — undefined token = first page.
+        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
+
+        await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand select = connection.CreateCommand();
+
+        // Native keyset page: runner_id is the PRIMARY KEY declared COLLATE utf8mb4_bin, so the index gives a byte-ordinal
+        // order (the same order the in-memory pager sorts by) and drives both the range seek and the ordering; LIMIT bounds
+        // the read to one page — never a full SELECT + parse of every registration. @limit is pageSize + 1 to look ahead.
+        select.CommandText =
+            """
+            SELECT doc FROM runner_registrations
+            WHERE (@after IS NULL OR runner_id > @after)
+            ORDER BY runner_id
+            LIMIT @limit;
+            """;
+        select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
+        select.Parameters.AddWithValue("@limit", pageSize + 1);
+
+        var page = new List<RunnerRegistration>(pageSize + 1);
+        await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            page.Add(RunnerRegistration.FromJson((byte[])reader[0]));
+        }
+
+        if (page.Count <= pageSize)
+        {
+            return RunnerRegistryPage.Create(page);
+        }
+
+        // A (pageSize+1)th row exists → there is a next page; drop it and emit the token from the last kept row's id
+        // (bytes-native: base64url straight over the runner id's persisted UTF-8, no managed id string).
+        page.RemoveAt(page.Count - 1);
+        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
+        return RunnerRegistryPage.Create(page, lastId.Span);
     }
 
     /// <inheritdoc/>
