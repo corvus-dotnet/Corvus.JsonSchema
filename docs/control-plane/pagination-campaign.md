@@ -411,7 +411,20 @@ NatsJetStream 7/7**.
 **`listAccessRequests` Phase 2 — COMPLETE across all 10 backends.** InMemory + Sqlite/Postgres/MySql/SqlServer (keyset
 predicate + composite `(CreatedAt, Id)` index, byte-ordinal `Id`) + Cosmos/Mongo (native compound range) + AzureStorage/
 Redis/Nats (secondary `createdAt` index / projection, page-only document fetch). Every backend pages oldest-first by
-`(createdAt, id)`, validated by the shared `AccessRequestStoreConformance` (7 tests each). **Next Phase 2 stores:**
-`listSecurityRules`/`listSecurityBindings` — keyset (`name`; `(order, id)`) already columns/fields, so the keyset axis is
-ready; the open sub-decision is the free-text `q` (rule expression; binding claimType/claimValue/description live in the
-blob — extract to columns for server-side `q`, or filter `q` client-side over keyset pages).
+`(createdAt, id)`, validated by the shared `AccessRequestStoreConformance` (7 tests each).
+
+### `listSecurityRules` + `listSecurityBindings` — native keyset on `ISecurityPolicyStore` (per backend)
+
+The last Phase 2 store. Keyset: rules on `name` (unique), bindings on `(order, id)`. The keyset fields were already columns
+(`Name` PK; `SortOrder`/`Id`); the **`q` decision (server-side via extracted fields)** means the q-searched blob fields are
+extracted to columns so `q` runs server-side: rules add `Expression` (q matches `Name` OR `Expression`); bindings add
+`ClaimType`/`ClaimValue`/`Description` (q matches any). The write path populates them on add/update. **Sqlite — done.** Native
+`ListRulesAsync`/`ListBindingsAsync` add the keyset seek (`Name > @after`; `SortOrder > @order OR (SortOrder = @order AND Id >
+@id)`) + `WHERE (@q IS NULL OR col LIKE @q ESCAPE '\' OR …)` + `ORDER BY` the keyset + `LIMIT @n+1`. The cursor (name; order +
+id) and the q LIKE pattern reify to strings only at the ADO parameter leaf; SQLite `LIKE` is case-insensitive (matching the
+in-memory `OrdinalIgnoreCase`), `Name`/`Id` TEXT PK are BINARY (ordinal == the in-memory pager), and the existing
+`IX_SecurityBindings_Order (SortOrder, Id)` index serves the binding keyset. Default page sizes promoted to public
+`SecurityRulePage`/`SecurityBindingPage.DefaultPageSize` (no IVT). Warning-free slnx (0W/0E); Sqlite + InMemory
+`SecurityPolicyStoreConformance` (11 each, incl. rule/binding keyset no-gaps/dupes + `q` + malformed-token) green. **Remaining
+backends:** Postgres/MySql/SqlServer (q-columns + byte-ordinal `Name`/`Id` collation + the predicates), Cosmos/Mongo (mirror
+the q-fields + native range), Redis/Nats (keyset index + client-side `q` — no server-side `LIKE`).
