@@ -325,28 +325,115 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
           T extends object ? { -readonly [K in keyof T]: Draft<T[K]> } :
           T;
         export interface JsonDocument<T> { readonly value: T; }
-        export interface JsonPatchOp { readonly op: "replace"; readonly path: string; readonly value: unknown; }
-        const __escPtr = (k: string | symbol): string => String(k).replace(/~/g, "~0").replace(/\//g, "~1");
+        export interface JsonPatchOp { readonly op: "replace" | "add" | "remove"; readonly path: string; readonly value?: unknown; }
+        const __escPtr = (k: string): string => k.replace(/~/g, "~0").replace(/\//g, "~1");
+        // immer-style change recorder: a Proxy over a structural clone. Assignment -> replace (existing) or
+        // add (new); delete -> remove; array index -> numeric segment (ignoring `length` writes). The change-set
+        // IS RFC 6902 JSON Patch and lowers to a Model C byte patch.
         function recordChanges<T>(value: T, recipe: (draft: Draft<T>) => void): { next: T; patches: JsonPatchOp[] } {
           const next = structuredClone(value);
           const patches: JsonPatchOp[] = [];
-          const wrap = (obj: object, ptr: string): object =>
+          const wrap = (obj: any, ptr: string): any =>
             new Proxy(obj, {
-              get(o: Record<string | symbol, unknown>, k) {
+              get(o: any, k) {
+                if (typeof k === "symbol") return o[k];
                 const v = o[k];
-                return v !== null && typeof v === "object" ? wrap(v as object, ptr + "/" + __escPtr(k)) : v;
+                return v !== null && typeof v === "object" ? wrap(v, ptr + "/" + __escPtr(String(k))) : v;
               },
-              set(o: Record<string | symbol, unknown>, k, val) {
+              set(o: any, k, val) {
+                if (typeof k === "symbol") { o[k] = val; return true; }
+                if (Array.isArray(o) && k === "length") { o[k] = val; return true; }
+                const existed = Array.isArray(o) ? Number(k) < o.length : (k in o);
                 o[k] = val;
-                patches.push({ op: "replace", path: ptr + "/" + __escPtr(k), value: val });
+                patches.push({ op: existed ? "replace" : "add", path: ptr + "/" + __escPtr(String(k)), value: val });
+                return true;
+              },
+              deleteProperty(o: any, k) {
+                if (typeof k === "symbol") { delete o[k]; return true; }
+                delete o[k];
+                patches.push({ op: "remove", path: ptr + "/" + __escPtr(String(k)) });
                 return true;
               },
             });
           recipe(wrap(next as object, "") as Draft<T>);
           return { next, patches };
         }
-        function produce<T>(doc: JsonDocument<T>, recipe: (draft: Draft<T>) => void): JsonDocument<T> {
-          return { value: recordChanges(doc.value, recipe).next };
+        interface __DraftOp { path: string[]; op: "replace" | "add" | "remove"; value?: unknown; }
+        function __parsePtr(path: string): string[] { return path.split("/").slice(1).map((s) => s.replace(/~1/g, "/").replace(/~0/g, "~")); }
+        function __groupHead(ops: __DraftOp[]): Map<string, __DraftOp[]> {
+          const g = new Map<string, __DraftOp[]>();
+          for (const op of ops) { const h = op.path[0]; const cur = g.get(h); if (cur) cur.push(op); else g.set(h, [op]); }
+          return g;
+        }
+        // Recursive change-set -> byte-patch lowering: descend each container level, locate the sub-span (object
+        // scan or array scan), recurse into it, splice back. Reuses the RMW scan/splice primitives.
+        function __lower(bytes: Uint8Array, ops: __DraftOp[]): Uint8Array {
+          let i = 0;
+          if (bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) i = 3;
+          while (i < bytes.length && isWsB(bytes[i])) i++;
+          return bytes[i] === 0x5b ? __lowerArray(bytes, ops) : __lowerObject(bytes, ops);
+        }
+        function __lowerObject(bytes: Uint8Array, ops: __DraftOp[]): Uint8Array {
+          const enc = new TextEncoder();
+          const scan = scanAll(bytes); const members = scan.members; const n = members.length;
+          const edits: RmwEdit[] = [];
+          const removed: boolean[] = new Array<boolean>(n).fill(false);
+          const adds: Array<{ name: string; value: unknown }> = [];
+          for (const [key, group] of __groupHead(ops)) {
+            const idx = findMember(bytes, members, enc.encode(key));
+            const direct = group.find((o) => o.path.length === 1);
+            if (direct) {
+              if (direct.op === "remove") { if (idx < 0) throw new Error("produce: remove of missing member"); removed[idx] = true; }
+              else if (idx < 0) adds.push({ name: key, value: direct.value });
+              else edits.push({ offset: members[idx].vs, length: members[idx].ve - members[idx].vs, content: enc.encode(JSON.stringify(direct.value)) });
+            } else {
+              if (idx < 0) throw new Error("produce: deep path into missing member");
+              const newSub = __lower(bytes.subarray(members[idx].vs, members[idx].ve), group.map((o) => ({ path: o.path.slice(1), op: o.op, value: o.value })));
+              edits.push({ offset: members[idx].vs, length: members[idx].ve - members[idx].vs, content: newSub });
+            }
+          }
+          const COMMA = new Uint8Array([0x2c]); const EMPTY = new Uint8Array(0);
+          let j = 0;
+          while (j < n) {
+            if (!removed[j]) { j++; continue; }
+            let hi = j; while (hi + 1 < n && removed[hi + 1]) hi++;
+            if (j === 0 && hi === n - 1) edits.push({ offset: members[0].ns, length: members[n - 1].ve - members[0].ns, content: EMPTY });
+            else if (j === 0) edits.push({ offset: members[0].ns, length: members[hi + 1].ns - members[0].ns, content: EMPTY });
+            else if (hi === n - 1) edits.push({ offset: members[j - 1].ve, length: members[n - 1].ve - members[j - 1].ve, content: EMPTY });
+            else edits.push({ offset: members[j - 1].ve, length: members[hi + 1].ns - members[j - 1].ve, content: COMMA });
+            j = hi + 1;
+          }
+          if (adds.length > 0) {
+            let surviving = 0; for (let k = 0; k < n; k++) if (!removed[k]) surviving++;
+            const parts: Uint8Array[] = [];
+            for (let a = 0; a < adds.length; a++) { if (a > 0 || surviving > 0) parts.push(COMMA); parts.push(memberBytes(enc.encode(adds[a].name), enc.encode(JSON.stringify(adds[a].value)))); }
+            edits.push({ offset: scan.close, length: 0, content: concatBytes(parts) });
+          }
+          if (edits.length === 0) return bytes;
+          return applyEditsBytes(bytes, edits);
+        }
+        function __lowerArray(bytes: Uint8Array, ops: __DraftOp[]): Uint8Array {
+          const enc = new TextEncoder();
+          const scan = scanArrayElements(bytes); const elems = scan.elems;
+          const edits: RmwEdit[] = [];
+          for (const [idx, group] of __groupHead(ops)) {
+            const i = Number(idx);
+            const direct = group.find((o) => o.path.length === 1);
+            if (direct) edits.push({ offset: elems[i].vs, length: elems[i].ve - elems[i].vs, content: enc.encode(JSON.stringify(direct.value)) });
+            else {
+              const newSub = __lower(bytes.subarray(elems[i].vs, elems[i].ve), group.map((o) => ({ path: o.path.slice(1), op: o.op, value: o.value })));
+              edits.push({ offset: elems[i].vs, length: elems[i].ve - elems[i].vs, content: newSub });
+            }
+          }
+          if (edits.length === 0) return bytes;
+          return applyEditsBytes(bytes, edits);
+        }
+        // produce(source, recipe): immer-style mutation lowered to a Model C byte patch (arbitrary depth).
+        function produce<T>(source: Uint8Array, recipe: (draft: Draft<T>) => void): Uint8Array {
+          const value = JSON.parse(new TextDecoder().decode(source)) as T;
+          const patches = recordChanges(value, recipe).patches;
+          if (patches.length === 0) return source;
+          return __lower(source, patches.map((p) => ({ path: __parsePtr(p.path), op: p.op, value: p.value })));
         }
         """;
 
@@ -781,7 +868,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         // (@corvus/json-runtime, §5.5) that every generated module imports — never inlined per module.
         var sb = new StringBuilder();
         sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n");
-        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, rmwUpsert, rmwProduceFull, memberBytes, rmwJoinObject, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand } from \"./corvus-runtime.js\";\n\n");
+        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, memberBytes, rmwJoinObject, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand } from \"./corvus-runtime.js\";\n\n");
         var moduleGuards = new HashSet<string>(StringComparer.Ordinal); // union guard names, unique per module
         foreach (TypeDeclaration td in types)
         {
@@ -800,6 +887,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
                     EmitPatch(sb, td);
                     EmitBuild(sb, td);
                     EmitApplyTo(sb, td);
+                    EmitProduceDraft(sb, td);
                 }
             }
             else if (IsEnum(td))
@@ -1019,6 +1107,21 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         string union = string.Join(" | ", members.Select(TsTypeRef).Distinct());
         sb.Append("export function applyTo").Append(name).Append("(source: Uint8Array, member: ").Append(union).Append("): Uint8Array {\n");
         sb.Append("  return patch").Append(name).Append("(source, member as Partial<").Append(name).Append(">);\n");
+        sb.Append("}\n\n");
+    }
+
+    // The immer-style draft (design §5.7): produce<T>(source, recipe) records mutations on a typed
+    // Draft<T> and lowers the change-set to a Model C byte patch (arbitrary depth). Typed per object.
+    private static void EmitProduceDraft(StringBuilder sb, TypeDeclaration td)
+    {
+        if (!td.HasPropertyDeclarations)
+        {
+            return;
+        }
+
+        string name = FinalName(td);
+        sb.Append("export function produce").Append(name).Append("(source: Uint8Array, recipe: (draft: Draft<").Append(name).Append(">) => void): Uint8Array {\n");
+        sb.Append("  return produce<").Append(name).Append(">(source, recipe);\n");
         sb.Append("}\n\n");
     }
 
