@@ -48,5 +48,5 @@ Plus, once per module, `evaluateRoot` (the document entry point and `default` ex
 
 ## See also
 
-- [getting-started](./getting-started.md), [reading-and-validating](./reading-and-validating.md), [mutation](./mutation.md)
+- [getting-started](./getting-started.md), [reading-and-validating](./reading-and-validating.md), [mutation](./mutation.md), [value-types](./value-types.md)
 - [examples](./examples/) — every row above, as a runnable recipe.

@@ -44,3 +44,4 @@ Each recipe under [`examples/`](./examples/) is a schema + the generated TypeScr
 - [reading-and-validating](./reading-and-validating.md) — the `readonly` surface and the `evaluateRoot` / `evaluate*` evaluators.
 - [mutation](./mutation.md) — `build` / `patch` / `produce` and the byte-level engine.
 - [the-type-surface](./the-type-surface.md) — every construct → its generated TypeScript.
+- [value-types](./value-types.md) — branded formats, exact numbers, dates and times.
