@@ -900,8 +900,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         var p = new TypeScriptLanguageProvider();
         p.RegisterValidationHandlers(
             new TsTypeHandler(), new TsConstantBoundHandler(), new TsMembershipHandler(), new TsUniqueItemsHandler(),
-            new TsRegexHandler(), new TsPropertiesHandler(), new TsRequiredHandler(),
-            new TsPatternPropertiesHandler(), new TsAdditionalPropertiesHandler(),
+            new TsRegexHandler(), new TsObjectPropertiesHandler(), new TsRequiredHandler(),
             new TsAllOfHandler(), new TsAnyOfHandler(), new TsOneOfHandler(),
             new TsPrefixItemsHandler(), new TsItemsHandler(),
             new TsPropertyNamesHandler(), new TsDependentRequiredHandler(), new TsIfThenElseHandler(),

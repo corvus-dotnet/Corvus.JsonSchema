@@ -207,44 +207,104 @@ internal sealed class TsRegexHandler : IKeywordValidationHandler, ITsKeywordEmit
     }
 }
 
-internal sealed class TsPropertiesHandler : IKeywordValidationHandler, ITsKeywordEmitter
+internal sealed class TsObjectPropertiesHandler : IKeywordValidationHandler, ITsKeywordEmitter
 {
     public uint ValidationHandlerPriority => 800;
 
-    public bool HandlesKeyword(IKeyword keyword) => keyword is IObjectPropertyValidationKeyword;
+    // Fused: properties + patternProperties + additionalProperties are evaluated in ONE for..in pass (as
+    // the C# generator does), not one loop each. Registered for all three keyword interfaces; emits once
+    // per type -- on the "anchor" keyword (the first present) -- so the dispatch invocations collapse to
+    // a single loop.
+    public bool HandlesKeyword(IKeyword keyword)
+        => keyword is IObjectPropertyValidationKeyword or IObjectPatternPropertyValidationKeyword or ILocalEvaluatedPropertyValidationKeyword;
 
     public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
     {
-        // Only LOCAL properties (declared by this schema's own `properties`). Composed properties hoisted
-        // from dependentSchemas/allOf/etc. into PropertyDeclarations are validated AND marked by their own
-        // subschema validators -- marking them here would wrongly credit them at this level.
-        var locals = new List<PropertyDeclaration>();
-        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        // LOCAL `properties` declarations -- but ONLY when the type actually has a `properties` keyword.
+        // PropertyDeclarations also surfaces required-only names (no local schema), which must NOT be validated
+        // or marked here -- they are matched by patternProperties/additionalProperties instead. (Composed
+        // properties hoisted from allOf/dependentSchemas are validated + marked by their own subschema
+        // validators, so they're excluded by the Local check too.)
+        bool hasPropsKw = false;
+        foreach (IKeyword kw in td.Keywords())
         {
-            if (p.LocalOrComposed == LocalOrComposed.Local) { locals.Add(p); }
+            if (kw is IObjectPropertyValidationKeyword) { hasPropsKw = true; break; }
         }
 
-        if (locals.Count == 0) { return; }
+        var locals = new List<PropertyDeclaration>();
+        if (hasPropsKw)
+        {
+            foreach (PropertyDeclaration p in td.PropertyDeclarations)
+            {
+                if (p.LocalOrComposed == LocalOrComposed.Local && TsEmit.EvalName(p.ReducedPropertyType) is not null) { locals.Add(p); }
+            }
+        }
+
+        var patterns = new List<(string Pattern, string Name, string SubEv)>();
+        IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>>? pp = td.PatternProperties();
+        if (pp is not null)
+        {
+            foreach (KeyValuePair<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>> kv in pp)
+            {
+                foreach (PatternPropertyDeclaration d in kv.Value)
+                {
+                    string? n = TsEmit.EvalName(d.ReducedPatternPropertyType);
+                    if (n is not null) { patterns.Add((d.Pattern, n, TsEmit.SubEv(d.ReducedPatternPropertyType))); }
+                }
+            }
+        }
+
+        FallbackObjectPropertyType? fb = td.LocalEvaluatedPropertyType();
+        string? addName = fb is null ? null : TsEmit.EvalName(fb.ReducedType);
+        string addSubEv = fb is null ? "NOEV" : TsEmit.SubEv(fb.ReducedType);
+
+        bool hasProps = locals.Count > 0;
+        bool hasPattern = patterns.Count > 0;
+        bool hasAdditional = addName is not null;
+        if (!hasProps && !hasPattern && !hasAdditional) { return; }
+
+        // Emit once: only on the anchor keyword (the first present among properties/patternProperties/additional).
+        bool isAnchor = hasProps ? keyword is IObjectPropertyValidationKeyword
+                      : hasPattern ? keyword is IObjectPatternPropertyValidationKeyword
+                      : keyword is ILocalEvaluatedPropertyValidationKeyword;
+        if (!isAnchor) { return; }
+
+        // for..in own-key enumeration (allocation-free; no hasOwn -- a JSON instance owns all its for..in
+        // keys, differing only under a polluted Object.prototype, the host's concern). properties and
+        // patternProperties BOTH apply to a matching key (patternProperties is a fresh `if`, not `else if`);
+        // additionalProperties applies ONLY to keys matched by neither (tracked via `m`). markProp per
+        // applied key (a no-op on NOEV; unconditional so an in-place applicator member credits the parent).
+        bool needMatched = hasAdditional && (hasProps || hasPattern);
         sb.Append("  if (__isObj(value)) {\n");
         sb.Append("    const o = value as Record<string, unknown>;\n");
-
-        // Enumerate own keys allocation-free via for..in + a position counter -- NOT Object.keys, which
-        // allocates a fresh key array per object (~3x the validator's own allocation under sustained load).
-        // No hasOwn guard: a JSON instance's own keys are exactly what for..in yields; it would differ only
-        // under a globally-polluted Object.prototype (the host's concern, not the data's -- JSON cannot inject
-        // prototype-chain keys). Mark each evaluated property's index into the tracker (a no-op on NOEV);
-        // marking is unconditional so an in-place applicator member credits its evaluations into the parent's
-        // tracker (mirrors the C# generator's unconditional AddLocalEvaluatedProperty).
         sb.Append("    let i = -1;\n");
         sb.Append("    for (const k in o) {\n      i++;\n");
+        if (needMatched) { sb.Append("      let m = false;\n"); }
         bool first = true;
         foreach (PropertyDeclaration p in locals)
         {
-            string? e = TsEmit.EvalName(p.ReducedPropertyType);
-            if (e is null) { continue; }
             sb.Append("      ").Append(first ? "if" : "else if").Append(" (k === ").Append(TsEmit.Str(p.JsonPropertyName))
-              .Append(") { if (!").Append(e).Append("(o[k], ").Append(TsEmit.SubEv(p.ReducedPropertyType)).Append(")) { return false; } ev.markProp(i); }\n");
+              .Append(") { if (!").Append(TsEmit.EvalName(p.ReducedPropertyType)).Append("(o[k], ").Append(TsEmit.SubEv(p.ReducedPropertyType))
+              .Append(")) { return false; } ev.markProp(i);").Append(needMatched ? " m = true;" : string.Empty).Append(" }\n");
             first = false;
+        }
+
+        foreach ((string pattern, string name, string subEv) in patterns)
+        {
+            sb.Append("      if (__re(").Append(TsEmit.Str(pattern)).Append(").test(k)) { if (!").Append(name).Append("(o[k], ").Append(subEv)
+              .Append(")) { return false; } ev.markProp(i);").Append(needMatched ? " m = true;" : string.Empty).Append(" }\n");
+        }
+
+        if (hasAdditional)
+        {
+            if (needMatched)
+            {
+                sb.Append("      if (!m) { if (!").Append(addName!).Append("(o[k], ").Append(addSubEv).Append(")) { return false; } ev.markProp(i); }\n");
+            }
+            else
+            {
+                sb.Append("      if (!").Append(addName!).Append("(o[k], ").Append(addSubEv).Append(")) { return false; } ev.markProp(i);\n");
+            }
         }
 
         sb.Append("    }\n  }\n");
@@ -274,83 +334,6 @@ internal sealed class TsRequiredHandler : IKeywordValidationHandler, ITsKeywordE
         }
 
         sb.Append("  }\n");
-    }
-}
-
-internal sealed class TsPatternPropertiesHandler : IKeywordValidationHandler, ITsKeywordEmitter
-{
-    public uint ValidationHandlerPriority => 810;
-
-    public bool HandlesKeyword(IKeyword keyword) => keyword is IObjectPatternPropertyValidationKeyword;
-
-    public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
-    {
-        IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>>? pp = td.PatternProperties();
-        if (pp is null) { return; }
-        var entries = new List<(string Pattern, string Name, string SubEv)>();
-        foreach (KeyValuePair<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>> kv in pp)
-        {
-            foreach (PatternPropertyDeclaration d in kv.Value)
-            {
-                string? n = TsEmit.EvalName(d.ReducedPatternPropertyType);
-                if (n is not null) { entries.Add((d.Pattern, n, TsEmit.SubEv(d.ReducedPatternPropertyType))); }
-            }
-        }
-
-        if (entries.Count == 0) { return; }
-        sb.Append("  if (__isObj(value)) {\n");
-        sb.Append("    const o = value as Record<string, unknown>;\n");
-        sb.Append("    let i = -1;\n    for (const k in o) {\n      i++;\n");
-        foreach ((string pattern, string name, string subEv) in entries)
-        {
-            // Pass the pattern-property type its OWN tracker when it needs one (SubEv, like properties/
-            // additionalProperties) -- NOT a hardcoded NOEV. A matched value with its own unevaluated* (e.g.
-            // an OpenAPI path-item) must track its local evaluations or it rejects every property.
-            sb.Append("      if (__re(").Append(TsEmit.Str(pattern)).Append(").test(k)) { if (!").Append(name).Append("(o[k], ").Append(subEv).Append(")) { return false; } ev.markProp(i); }\n");
-        }
-
-        sb.Append("    }\n  }\n");
-    }
-}
-
-internal sealed class TsAdditionalPropertiesHandler : IKeywordValidationHandler, ITsKeywordEmitter
-{
-    public uint ValidationHandlerPriority => 820;
-
-    public bool HandlesKeyword(IKeyword keyword) => keyword is ILocalEvaluatedPropertyValidationKeyword;
-
-    public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
-    {
-        FallbackObjectPropertyType? fb = td.LocalEvaluatedPropertyType();
-        string? name = fb is null ? null : TsEmit.EvalName(fb.ReducedType);
-        if (name is null) { return; }
-
-        var known = new List<string>();
-        foreach (PropertyDeclaration p in td.PropertyDeclarations)
-        {
-            if (p.LocalOrComposed == LocalOrComposed.Local) { known.Add(TsEmit.Str(p.JsonPropertyName)); }
-        }
-
-        var patterns = new List<string>();
-        IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>>? pp = td.PatternProperties();
-        if (pp is not null)
-        {
-            foreach (KeyValuePair<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>> kv in pp)
-            {
-                foreach (PatternPropertyDeclaration d in kv.Value) { patterns.Add("__re(" + TsEmit.Str(d.Pattern) + ")"); }
-            }
-        }
-
-        string subEv = fb is null ? "NOEV" : TsEmit.SubEv(fb.ReducedType);
-        sb.Append("  if (__isObj(value)) {\n");
-        sb.Append("    const o = value as Record<string, unknown>;\n");
-        sb.Append("    const known = new Set<string>([").Append(string.Join(", ", known)).Append("]);\n");
-        sb.Append("    const patterns: RegExp[] = [").Append(string.Join(", ", patterns)).Append("];\n");
-        sb.Append("    let i = -1;\n    for (const k in o) {\n      i++;\n");
-        sb.Append("      if (known.has(k)) { continue; }\n");
-        sb.Append("      if (patterns.some((p) => p.test(k))) { continue; }\n");
-        sb.Append("      if (!").Append(name).Append("(o[k], ").Append(subEv).Append(")) { return false; } ev.markProp(i);\n");
-        sb.Append("    }\n  }\n");
     }
 }
 
