@@ -101,6 +101,7 @@ export function asEmail(value: string): Email { if (!__fmt("email", value)) { th
 
 export function evaluateEmail(value: unknown, ev: Ev): boolean {
   if (!(typeof value === "string")) { return false; }
+  if (typeof value === "string" && !__fmt("email", value)) { return false; }
   return true;
 }
 

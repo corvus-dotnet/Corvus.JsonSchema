@@ -52,6 +52,7 @@ export function asCreated(value: string): Created { if (!__fmt("date-time", valu
 
 export function evaluateCreated(value: unknown, ev: Ev): boolean {
   if (!(typeof value === "string")) { return false; }
+  if (typeof value === "string" && !__fmt("date-time", value)) { return false; }
   return true;
 }
 
@@ -60,6 +61,7 @@ export function asId(value: string): Id { if (!__fmt("uuid", value)) { throw new
 
 export function evaluateId(value: unknown, ev: Ev): boolean {
   if (!(typeof value === "string")) { return false; }
+  if (typeof value === "string" && !__fmt("uuid", value)) { return false; }
   return true;
 }
 
@@ -68,6 +70,7 @@ export function asWebsite(value: string): Website { if (!__fmt("uri", value)) { 
 
 export function evaluateWebsite(value: unknown, ev: Ev): boolean {
   if (!(typeof value === "string")) { return false; }
+  if (typeof value === "string" && !__fmt("uri", value)) { return false; }
   return true;
 }
 

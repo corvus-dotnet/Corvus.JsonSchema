@@ -59,6 +59,7 @@ export function asBirthDate(value: string): BirthDate { if (!__fmt("date", value
 
 export function evaluateBirthDate(value: unknown, ev: Ev): boolean {
   if (!(typeof value === "string")) { return false; }
+  if (typeof value === "string" && !__fmt("date", value)) { return false; }
   return true;
 }
 

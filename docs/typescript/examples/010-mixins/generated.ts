@@ -130,6 +130,7 @@ export function asCreatedAt(value: string): CreatedAt { if (!__fmt("date-time", 
 
 export function evaluateCreatedAt(value: unknown, ev: Ev): boolean {
   if (!(typeof value === "string")) { return false; }
+  if (typeof value === "string" && !__fmt("date-time", value)) { return false; }
   return true;
 }
 
