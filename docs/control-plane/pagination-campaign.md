@@ -281,3 +281,38 @@ store query. There is no store query to "get caught out by scale": it is bounded
 "keyset on digest" assuming a multi-row store; the implementation is a single record. **Exempted** (decision recorded
 with the user) — paging it would bound only the response projection over an already-whole-loaded record, no store-read
 benefit.
+
+## Matrix — Part D, Phase 2 (native per-backend keyset reads)
+
+_Phase 1 made every endpoint paged via the default in-memory seam (read all, page in memory). Phase 2 replaces that seam,
+backend by backend, with a native keyset query (`WHERE key > @after ORDER BY key LIMIT @n+1`) so the **store read** itself
+is bounded to one page — the corpus is the already-paged runs store (`WorkflowStateStore.QueryAsync`). The metric here is
+the store read, not the projection: a backend store-read benchmark whose cost should go from O(total) to O(page) (flat as
+the table grows). Sequenced by feasibility: `listRunners` first (key is a real PK column / doc-id / KV key in all 10
+backends), then `listSecurityRules`/`listSecurityBindings` and `listAccessRequests` (keys live inside the JSON blob — need
+key-extraction columns or JSON-path queries, a per-backend design decision)._
+
+### `listRunners` — native keyset on `runner_id` (per backend)
+
+The store-read benchmark (`RunnerRegistryReadPagingBenchmarks`, the first page of 50 read through a real embedded SQLite
+driver over an in-memory database, `MemoryDiagnoser`) before (default in-memory pager: a full `SELECT doc` + parse of every
+registration, then sort + slice) → after (native `SELECT doc FROM runner_registrations WHERE (@after IS NULL OR runner_id >
+@after) ORDER BY runner_id LIMIT @limit`, `@limit = pageSize + 1`, the `runner_id` PK B-tree driving the seek + order):
+
+| Backend | RunnerCount | Mean before → after | Allocated before → after |
+|---|---|---|---|
+| **Sqlite** | 50 | 2.50 ms → 54 µs | 43.74 KB → 41.31 KB |
+| **Sqlite** | 500 | 7.51 ms → 51 µs | **416.36 KB → 42.09 KB (−90%)** |
+
+The headline is the allocation at 500: the first page no longer reads the whole registry, so the store read is now **flat**
+across table size (41→42 KB) instead of growing O(total) (43→416 KB). The cursor reifies to a managed string only at the
+ADO `@after` TEXT-parameter (a genuine DB-param leaf — one transient cursor string per request, never per row); decoded
+base64url over the request UTF-8 into a pooled buffer; `runner_id` BINARY collation == ordinal UTF-8 byte order == the
+in-memory pager's `SequenceCompareTo`, so the native query pages identically — the Sqlite `RunnerRegistryConformance` (12,
+incl. keyset no-gaps/dupes + malformed-token) validates that against the in-memory reference. `corvus-bytes-to-bytes`
+self-audit: token in via `GetUtf8String().Span` → pooled decode; rows via driver `byte[]` → `FromJson`; token out via the
+last row's `RunnerId` UTF-8 → pooled encode; only leaves = the `@after` DB-param string + the malformed-token
+`FormatException`. (Default-page-size constant promoted to public `RunnerRegistryPage.DefaultPageSize` so backends share
+one source — no InternalsVisibleTo.) Warning-free slnx (0W/0E). **Remaining backends:** Postgres, MySql, SqlServer (SQL
+`> @after`/`TOP`), Cosmos/Mongo/AzureStorage (native range), Redis/Nats (client-sorted scan + keyset+limit, as in the runs
+corpus) — each with container conformance.

@@ -17,8 +17,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </summary>
 internal static class RunnerRegistryPaging
 {
-    /// <summary>The page size used when a caller passes a non-positive limit.</summary>
-    internal const int DefaultPageSize = 50;
+    /// <summary>The page size used when a caller passes a non-positive limit (the public store-contract default).</summary>
+    internal const int DefaultPageSize = RunnerRegistryPage.DefaultPageSize;
 
     /// <summary>Pages <paramref name="all"/> (a full read) in memory: runners ordered by <c>runnerId</c> (ordinal UTF-8),
     /// resuming strictly after the cursor decoded from <paramref name="pageToken"/> (undefined = first page), bounded to
