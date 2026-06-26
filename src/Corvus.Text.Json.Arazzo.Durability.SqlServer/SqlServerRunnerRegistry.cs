@@ -31,7 +31,7 @@ public sealed class SqlServerRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         IF OBJECT_ID(N'runner_registrations', N'U') IS NULL
         BEGIN
             CREATE TABLE runner_registrations (
-                runner_id NVARCHAR(450) NOT NULL,
+                runner_id NVARCHAR(450) COLLATE Latin1_General_BIN2 NOT NULL,
                 last_seen_at BIGINT NOT NULL,
                 doc VARCHAR(MAX) COLLATE Latin1_General_100_CI_AS_SC_UTF8 NOT NULL,
                 CONSTRAINT PK_runner_registrations PRIMARY KEY (runner_id)
@@ -41,7 +41,7 @@ public sealed class SqlServerRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         IF OBJECT_ID(N'runner_hosted_versions', N'U') IS NULL
         BEGIN
             CREATE TABLE runner_hosted_versions (
-                runner_id NVARCHAR(450) NOT NULL,
+                runner_id NVARCHAR(450) COLLATE Latin1_General_BIN2 NOT NULL,
                 base_workflow_id NVARCHAR(450) NOT NULL,
                 version_number INT NOT NULL,
                 CONSTRAINT PK_runner_hosted PRIMARY KEY (runner_id, base_workflow_id, version_number),
@@ -205,6 +205,50 @@ public sealed class SqlServerRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         }
 
         return result;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<RunnerRegistryPage> ListAsync(int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
+
+        // Decode the keyset cursor from the request's page token; the runner id reifies to a string only at the SqlClient
+        // parameter boundary (a genuine DB-param leaf) — undefined token = first page.
+        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
+
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlCommand select = connection.CreateCommand();
+
+        // Native keyset page: runner_id is the PRIMARY KEY declared COLLATE Latin1_General_BIN2, so the index gives a
+        // byte-ordinal order (the same order the in-memory pager sorts by) and drives both the range seek and the ordering;
+        // TOP bounds the read to one page — never a full SELECT + parse of every registration. TOP (@limit) is pageSize + 1
+        // to look one row ahead. The UTF-8 doc is read back as VARBINARY so the deserialize stays bytes-native.
+        select.CommandText =
+            """
+            SELECT TOP (@limit) CAST(doc AS VARBINARY(MAX)) FROM runner_registrations
+            WHERE (@after IS NULL OR runner_id > @after)
+            ORDER BY runner_id;
+            """;
+        select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
+        select.Parameters.AddWithValue("@limit", pageSize + 1);
+
+        var page = new List<RunnerRegistration>(pageSize + 1);
+        await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            page.Add(RunnerRegistration.FromJson((byte[])reader[0]));
+        }
+
+        if (page.Count <= pageSize)
+        {
+            return RunnerRegistryPage.Create(page);
+        }
+
+        // A (pageSize+1)th row exists → there is a next page; drop it and emit the token from the last kept row's id
+        // (bytes-native: base64url straight over the runner id's persisted UTF-8, no managed id string).
+        page.RemoveAt(page.Count - 1);
+        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
+        return RunnerRegistryPage.Create(page, lastId.Span);
     }
 
     /// <inheritdoc/>

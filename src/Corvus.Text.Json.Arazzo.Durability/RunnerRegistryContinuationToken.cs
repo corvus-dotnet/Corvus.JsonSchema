@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Buffers.Text;
+using System.Text;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
 
@@ -67,5 +68,33 @@ public static class RunnerRegistryContinuationToken
 
         runnerIdUtf8 = destination[..decoded];
         return true;
+    }
+
+    /// <summary>Decodes the keyset cursor from a request's page token to the runner id as a managed string — the form a
+    /// backend's native keyset needs at its genuine leaf (a SQL <c>@after</c> parameter, a KV key, or an OData literal).
+    /// Bytes-native up to the leaf: the token's UTF-8 is Base64URL-decoded into a pooled buffer and the id is realised to a
+    /// string only on return (one transient cursor string per request, never per row).</summary>
+    /// <param name="pageToken">The request's page token (its JSON value), or undefined for the first page.</param>
+    /// <returns>The runner id to page strictly after, or <see langword="null"/> for the first page (undefined/empty token).</returns>
+    /// <exception cref="FormatException">The token is not valid base64url.</exception>
+    public static string? DecodeCursorToString(JsonString pageToken)
+    {
+        if (!pageToken.IsNotUndefined())
+        {
+            return null;
+        }
+
+        using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(GetMaxDecodedLength(tokenUtf8.Span.Length));
+        try
+        {
+            return TryDecode(tokenUtf8.Span, buffer, out ReadOnlySpan<byte> runnerIdUtf8)
+                ? Encoding.UTF8.GetString(runnerIdUtf8)
+                : null;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
     }
 }
