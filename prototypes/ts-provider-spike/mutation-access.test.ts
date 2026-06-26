@@ -33,6 +33,17 @@ eq("array element edit applied", next.tags[0], "algebra");
 eq("name copied verbatim", next.name, "Ada");
 eq("source bytes untouched", base, JSON.stringify({ name: "Ada", age: 30, address: { city: "Anytown" }, tags: ["math"] }));
 
+// array STRUCTURAL mutation (the clone+diff recorder handles push/splice/pop, not just index-set):
+// a length change re-serialises that one array; every sibling member is copied through verbatim.
+const grown = dec.decode(produce<Doc>(enc.encode(base), (d) => {
+  d.tags.push("stats");       // ["math"] -> ["math","stats"]
+  d.age = 31;                 // same-pass scalar edit
+}));
+const g = JSON.parse(grown);
+eq("array push applied", g.tags, ["math", "stats"]);
+eq("push + scalar same pass", g.age, 31);
+eq("push byte-preserve siblings", g.name, "Ada");
+
 // the recorded change-set is RFC 6902 JSON Patch
 const { patches } = recordChanges(JSON.parse(base) as Doc, (d) => {
   d.age = 42;
@@ -40,6 +51,10 @@ const { patches } = recordChanges(JSON.parse(base) as Doc, (d) => {
 });
 eq("scalar patch (RFC 6902)", patches[0], { op: "replace", path: "/age", value: 42 });
 eq("nested patch (RFC 6902)", patches[1], { op: "replace", path: "/address/city", value: "Paris" });
+
+// a push surfaces as a single whole-array replace op (length changed)
+const { patches: ap } = recordChanges(JSON.parse(base) as Doc, (d) => { d.tags.push("stats"); });
+eq("array push patch (RFC 6902)", ap, [{ op: "replace", path: "/tags", value: ["math", "stats"] }]);
 
 console.log(`mutation-access: ${pass} passed, ${fail} failed`);
 if (fail > 0) { throw new Error(`mutation-access: ${fail} failed`); }

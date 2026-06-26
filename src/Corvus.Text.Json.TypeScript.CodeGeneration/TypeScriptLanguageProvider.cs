@@ -315,7 +315,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         """;
 
     // Mutation runtime (design §5.7): idiomatic immer-style `produce` over a typed `Draft<T>`. A tiny
-    // Proxy change-recorder over a structural clone; the change-set is RFC 6902 JSON Patch (and lowers to
+    // clone-and-diff change-recorder over a structural clone; the change-set is RFC 6902 JSON Patch (and lowers to
     // a Model C byte patch). These are GENERIC runtime helpers — generated modules don't emit per-type
     // mutation code; a consumer pairs `produce` with the emitted readonly interface.
     private const string MutationRuntime = """
@@ -327,37 +327,35 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         export interface JsonDocument<T> { readonly value: T; }
         export interface JsonPatchOp { readonly op: "replace" | "add" | "remove"; readonly path: string; readonly value?: unknown; }
         const __escPtr = (k: string): string => k.replace(/~/g, "~0").replace(/\//g, "~1");
-        // immer-style change recorder: a Proxy over a structural clone. Assignment -> replace (existing) or
-        // add (new); delete -> remove; array index -> numeric segment (ignoring `length` writes). The change-set
-        // IS RFC 6902 JSON Patch and lowers to a Model C byte patch.
+        // immer-faithful recorder: structuredClone the substrate, run the recipe DIRECTLY on the clone
+        // (plain mutation -- no Proxy), then diff(original, clone) -> a minimal RFC 6902 change-set. Array
+        // structural ops (push/splice/pop/unshift) "just work": a length change re-serialises that one array
+        // (siblings byte-preserved), a same-length array diffs per element. The change-set lowers to bytes.
+        function __diff(orig: any, mut: any, ptr: string, out: JsonPatchOp[]): void {
+          if (orig === mut) return;
+          const oa = Array.isArray(orig), ma = Array.isArray(mut);
+          if (oa && ma) {
+            if (orig.length !== mut.length) { out.push({ op: "replace", path: ptr, value: mut }); return; }
+            for (let i = 0; i < orig.length; i++) __diff(orig[i], mut[i], ptr + "/" + i, out);
+            return;
+          }
+          const oo = orig !== null && typeof orig === "object" && !oa;
+          const mo = mut !== null && typeof mut === "object" && !ma;
+          if (oo && mo) {
+            for (const k of Object.keys(orig)) { const np = ptr + "/" + __escPtr(k); if (!(k in mut)) out.push({ op: "remove", path: np }); else __diff(orig[k], mut[k], np, out); }
+            for (const k of Object.keys(mut)) { if (!(k in orig)) out.push({ op: "add", path: ptr + "/" + __escPtr(k), value: mut[k] }); }
+            return;
+          }
+          out.push({ op: "replace", path: ptr, value: mut });
+        }
         function recordChanges<T>(value: T, recipe: (draft: Draft<T>) => void): { next: T; patches: JsonPatchOp[] } {
           const next = structuredClone(value);
+          recipe(next as unknown as Draft<T>);
           const patches: JsonPatchOp[] = [];
-          const wrap = (obj: any, ptr: string): any =>
-            new Proxy(obj, {
-              get(o: any, k) {
-                if (typeof k === "symbol") return o[k];
-                const v = o[k];
-                return v !== null && typeof v === "object" ? wrap(v, ptr + "/" + __escPtr(String(k))) : v;
-              },
-              set(o: any, k, val) {
-                if (typeof k === "symbol") { o[k] = val; return true; }
-                if (Array.isArray(o) && k === "length") { o[k] = val; return true; }
-                const existed = Array.isArray(o) ? Number(k) < o.length : (k in o);
-                o[k] = val;
-                patches.push({ op: existed ? "replace" : "add", path: ptr + "/" + __escPtr(String(k)), value: val });
-                return true;
-              },
-              deleteProperty(o: any, k) {
-                if (typeof k === "symbol") { delete o[k]; return true; }
-                delete o[k];
-                patches.push({ op: "remove", path: ptr + "/" + __escPtr(String(k)) });
-                return true;
-              },
-            });
-          recipe(wrap(next as object, "") as Draft<T>);
+          __diff(value, next, "", patches);
           return { next, patches };
         }
+        
         interface __DraftOp { path: string[]; op: "replace" | "add" | "remove"; value?: unknown; }
         function __parsePtr(path: string): string[] { return path.split("/").slice(1).map((s) => s.replace(/~1/g, "/").replace(/~0/g, "~")); }
         function __groupHead(ops: __DraftOp[]): Map<string, __DraftOp[]> {
@@ -433,6 +431,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
           const value = JSON.parse(new TextDecoder().decode(source)) as T;
           const patches = recordChanges(value, recipe).patches;
           if (patches.length === 0) return source;
+          if (patches.length === 1 && patches[0].path === "") return new TextEncoder().encode(JSON.stringify(patches[0].value));
           return __lower(source, patches.map((p) => ({ path: __parsePtr(p.path), op: p.op, value: p.value })));
         }
         """;

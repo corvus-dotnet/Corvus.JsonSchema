@@ -34,6 +34,29 @@ const base = JSON.stringify({ id: "u1", name: "Ada", email: "ada@x.com", age: 30
   const p = JSON.parse(out);
   ok("draft add + delete", p.extra === "new" && p.email === undefined && p.id === "u1" && p.name === "Ada");
 }
+// array STRUCTURAL mutation: push grows the array (length change -> that one array re-serialised, siblings preserved)
+{
+  const out = dec.decode(produceProfile(enc.encode(base), (d) => {
+    d.roles!.push("owner");       // ["admin","author"] -> ["admin","author","owner"]
+  }));
+  const p = JSON.parse(out);
+  ok("draft array push", JSON.stringify(p.roles) === JSON.stringify(["admin", "author", "owner"]));
+  ok("draft push byte-preserve siblings", out.includes('"id":"u1"') && out.includes('"street":"1 Main"') && out.includes('"country":"UK"'));
+}
+// array splice (remove + insert in one call) + a same-pass scalar edit
+{
+  const out = dec.decode(produceProfile(enc.encode(base), (d) => {
+    d.roles!.splice(0, 1, "owner");  // remove "admin", insert "owner" -> ["owner","author"]
+    d.age = 41;
+  }));
+  const p = JSON.parse(out);
+  ok("draft array splice + scalar", JSON.stringify(p.roles) === JSON.stringify(["owner", "author"]) && p.age === 41);
+}
+// pop shrinks the array
+{
+  const out = dec.decode(produceProfile(enc.encode(base), (d) => { d.roles!.pop(); }));
+  ok("draft array pop", JSON.stringify(JSON.parse(out).roles) === JSON.stringify(["admin"]));
+}
 // no-op recipe returns the source byte-identical
 {
   ok("draft no-op byte-identical", dec.decode(produceProfile(enc.encode(base), () => { /* nothing */ })) === base);
