@@ -44,9 +44,21 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     // into a lazily-allocated Set so large instances validate correctly without slowing the fast path.
     // `local` (this schema's own evaluations) + `applied` (OR-merged from matched in-place applicators).
     // NOEV is the shared no-op tracker passed to sub-instances that do not require tracking.
+    // The results collector (§15). `Ev.r` is null on the boolean hot path; a Results when the caller wants
+    // detailed (failures) or verbose (failures + successes) output. The boolean path never touches it beyond
+    // an `ev.r === null` check, so collection costs nothing — no allocation, no location-string building.
+    private const string ResultsRuntime =
+        "export interface Failure { readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string; }\n" +
+        "class Results {\n" +
+        "  readonly failures: Failure[] = [];\n" +
+        "  constructor(readonly verbose = false) {}\n" +
+        "  get valid(): boolean { return this.failures.length === 0; }\n" +
+        "  fail(keywordLocation: string, instanceLocation: string, absoluteKeywordLocation?: string): void { this.failures.push({ keywordLocation, instanceLocation, absoluteKeywordLocation }); }\n" +
+        "}\n\n";
+
     private const string EvRuntime =
         "class Ev {\n" +
-        "  n = false; pl = 0; pa = 0; il = 0; ia = 0;\n" +
+        "  n = false; pl = 0; pa = 0; il = 0; ia = 0; r: Results | null = null;\n" +
         "  po: Set<number> | null = null; poa: Set<number> | null = null; io: Set<number> | null = null; ioa: Set<number> | null = null;\n" +
         "  markProp(i: number): void { if (this.n) { return; } if (i < 32) { this.pl |= (1 << i) >>> 0; } else { (this.po ??= new Set<number>()).add(i); } }\n" +
         "  hasProp(i: number): boolean { return i < 32 ? (((this.pl | this.pa) & ((1 << i) >>> 0)) !== 0) : ((this.po !== null && this.po.has(i)) || (this.poa !== null && this.poa.has(i))); }\n" +
@@ -867,7 +879,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     // the third-party imports (lossless-json for source-text numbers, Temporal + tr46 for formats) at top.
     public static string RuntimeModuleSource()
     {
-        string body = NumericRuntime + KindRuntime + DeepEqual + EvRuntime + FormatRuntime + BrandRuntime + MutationRuntime + RmwRuntime;
+        string body = NumericRuntime + KindRuntime + DeepEqual + ResultsRuntime + EvRuntime + FormatRuntime + BrandRuntime + MutationRuntime + RmwRuntime;
         body = body.Replace("import { isLosslessNumber } from \"lossless-json\";\n", string.Empty);
         body = body.Replace("\nfunction ", "\nexport function ")
                    .Replace("\nconst ", "\nexport const ")
@@ -902,7 +914,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         }
 
         this.moduleTopLevelNames.Add(entry);
-        return $"\nexport const {entry} = (v: unknown): boolean => evaluate{rootName}(v, fresh());\nexport default {entry};\n";
+        return $"\nexport const {entry} = (v: unknown, results?: Results): boolean => {{ const ev = fresh(); ev.r = results ?? null; return evaluate{rootName}(v, ev); }};\nexport default {entry};\n";
     }
 
     public static TypeScriptLanguageProvider CreateDefault()
@@ -1012,7 +1024,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         // (@corvus/json-runtime, §5.5) that every generated module imports — never inlined per module.
         var sb = new StringBuilder();
         sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n");
-        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand } from \"").Append(this.runtimeModuleSpecifier).Append("\";\n\n");
+        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, type Results } from \"").Append(this.runtimeModuleSpecifier).Append("\";\n\n");
         var moduleGuards = new HashSet<string>(StringComparer.Ordinal); // union guard names, unique per module
         foreach (TypeDeclaration td in types)
         {
