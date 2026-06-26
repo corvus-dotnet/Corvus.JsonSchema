@@ -157,6 +157,59 @@ public sealed class RedisRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RunnerRegistryPage> ListAsync(int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
+
+        // Decode the keyset cursor; the runner id reifies to a string only for the ordinal compare + key lookup (the leaf).
+        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
+
+        // A Redis set is unordered, so — exactly like the runs store — the keyset order is materialised client-side over the
+        // id index (small strings, ordinal == the in-memory pager's order); only the page's documents are then fetched
+        // (one beyond, to look ahead), never every registration's JSON.
+        RedisValue[] members = await this.database.SetMembersAsync(IndexKey).ConfigureAwait(false);
+        var ids = new List<string>(members.Length);
+        foreach (RedisValue member in members)
+        {
+            ids.Add((string)member!);
+        }
+
+        ids.Sort(static (a, b) => string.CompareOrdinal(a, b));
+
+        var page = new List<RunnerRegistration>(pageSize + 1);
+        foreach (string runnerId in ids)
+        {
+            if (after is not null && string.CompareOrdinal(runnerId, after) <= 0)
+            {
+                continue; // already returned in an earlier page
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            RedisValue value = await this.database.StringGetAsync(RunnerKey(runnerId)).ConfigureAwait(false);
+            if (value.IsNullOrEmpty)
+            {
+                continue; // id indexed but doc gone (raced with prune) — skip
+            }
+
+            page.Add(RunnerRegistration.FromJson((byte[])value!));
+            if (page.Count > pageSize)
+            {
+                break; // fetched one real row beyond the page → a next page exists
+            }
+        }
+
+        if (page.Count <= pageSize)
+        {
+            return RunnerRegistryPage.Create(page);
+        }
+
+        page.RemoveAt(page.Count - 1);
+        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
+        return RunnerRegistryPage.Create(page, lastId.Span);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<int> PruneAsync(DateTimeOffset deadBefore, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
