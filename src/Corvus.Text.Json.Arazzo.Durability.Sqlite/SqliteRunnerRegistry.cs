@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+using System.Text;
 using Microsoft.Data.Sqlite;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Sqlite;
@@ -217,6 +219,56 @@ public sealed class SqliteRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RunnerRegistryPage> ListAsync(int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
+
+        // Decode the keyset cursor from the request's page token; the runner id reifies to a string only here, at the ADO
+        // TEXT-parameter boundary the driver forces (a genuine DB-param leaf) — undefined token = first page.
+        string? after = DecodeCursor(pageToken);
+
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            // Native keyset page: the runner_id PRIMARY KEY B-tree (BINARY collation == ordinal UTF-8 byte order, the same
+            // order the in-memory pager sorts by) drives both the range seek and the ordering, and LIMIT bounds the read to
+            // one page — never a full SELECT + parse of every registration. @limit is pageSize + 1 to look one row ahead.
+            using SqliteCommand select = this.connection.CreateCommand();
+            select.CommandText =
+                """
+                SELECT doc FROM runner_registrations
+                WHERE (@after IS NULL OR runner_id > @after)
+                ORDER BY runner_id
+                LIMIT @limit;
+                """;
+            select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
+            select.Parameters.AddWithValue("@limit", pageSize + 1);
+
+            var page = new List<RunnerRegistration>(pageSize + 1);
+            using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                page.Add(RunnerRegistration.FromJson(reader.GetFieldValue<byte[]>(0)));
+            }
+
+            if (page.Count <= pageSize)
+            {
+                return RunnerRegistryPage.Create(page);
+            }
+
+            // A (pageSize+1)th row exists → there is a next page; drop it and emit the token from the last kept row's id
+            // (bytes-native: base64url straight over the runner id's persisted UTF-8, no managed id string).
+            page.RemoveAt(page.Count - 1);
+            using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
+            return RunnerRegistryPage.Create(page, lastId.Span);
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<int> PruneAsync(DateTimeOffset deadBefore, CancellationToken cancellationToken)
     {
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -250,6 +302,30 @@ public sealed class SqliteRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         finally
         {
             this.gate.Release();
+        }
+    }
+
+    // Decodes the keyset cursor from the request's page token (its JSON value): base64url straight over the request UTF-8
+    // into a pooled buffer, the runner id reified to a managed string only for the ADO @after parameter (TEXT-param leaf).
+    // An undefined or empty token is the first page (null); a malformed token throws FormatException (rejected, not reset).
+    private static string? DecodeCursor(JsonString pageToken)
+    {
+        if (!pageToken.IsNotUndefined())
+        {
+            return null;
+        }
+
+        using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(RunnerRegistryContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
+        try
+        {
+            return RunnerRegistryContinuationToken.TryDecode(tokenUtf8.Span, buffer, out ReadOnlySpan<byte> runnerIdUtf8)
+                ? Encoding.UTF8.GetString(runnerIdUtf8)
+                : null;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
         }
     }
 
