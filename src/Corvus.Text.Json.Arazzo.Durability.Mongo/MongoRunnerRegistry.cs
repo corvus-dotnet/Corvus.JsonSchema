@@ -166,6 +166,43 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RunnerRegistryPage> ListAsync(int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
+
+        // Decode the keyset cursor; the runner id reifies to a string only for the Mongo _id filter (a leaf).
+        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
+
+        FilterDefinition<BsonDocument> filter = after is null
+            ? Builders<BsonDocument>.Filter.Empty
+            : Builders<BsonDocument>.Filter.Gt("_id", after);
+
+        // Native keyset page: the _id index (runner id; BSON orders strings by bytes == ordinal == the in-memory pager's
+        // order) drives the seek + sort, and Limit bounds the read to one page + 1 (lookahead) — never every registration.
+        List<BsonDocument> documents = await this.registrations
+            .Find(filter)
+            .Sort(Builders<BsonDocument>.Sort.Ascending("_id"))
+            .Limit(pageSize + 1)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+        bool hasMore = documents.Count > pageSize;
+        int take = hasMore ? pageSize : documents.Count;
+        var page = new List<RunnerRegistration>(take);
+        for (int i = 0; i < take; i++)
+        {
+            page.Add(RunnerRegistration.FromJson(documents[i]["doc"].AsBsonBinaryData.Bytes));
+        }
+
+        if (!hasMore)
+        {
+            return RunnerRegistryPage.Create(page);
+        }
+
+        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
+        return RunnerRegistryPage.Create(page, lastId.Span);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<int> PruneAsync(DateTimeOffset deadBefore, CancellationToken cancellationToken)
     {
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Lt("lastSeenAt", deadBefore.ToUnixTimeMilliseconds());

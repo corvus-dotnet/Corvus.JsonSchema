@@ -198,6 +198,48 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    // This project generates its own RunnerDocument model, which emits a Cosmos-namespace JsonString (per-root type
+    // identity), so the seam parameter is fully qualified to the core JsonString IRunnerRegistry's signature uses.
+    public async ValueTask<RunnerRegistryPage> ListAsync(int limit, global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
+
+        // Decode the keyset cursor; the runner id reifies to a string only for the Cosmos @after query parameter (leaf).
+        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
+
+        // Native keyset page: order by the document id (== runner id; Cosmos orders strings ordinally, the same order the
+        // in-memory pager sorts by) and seek strictly past the cursor. The lazy stream iterator is drained only until one
+        // row beyond the page, so the read is bounded — never every registration.
+        string where = after is null ? string.Empty : " WHERE c.id > @after";
+        var definition = new QueryDefinition("SELECT * FROM c" + where + " ORDER BY c.id");
+        if (after is not null)
+        {
+            definition = definition.WithParameter("@after", after);
+        }
+
+        var page = new List<RunnerRegistration>(pageSize + 1);
+        bool hasMore = false;
+        await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(definition, cancellationToken).ConfigureAwait(false))
+        {
+            if (page.Count == pageSize)
+            {
+                hasMore = true; // a row beyond the page exists → there is a next page; stop early
+                break;
+            }
+
+            page.Add(RunnerRegistration.FromJson(CosmosJson.GetRawValue(element, "doc"u8)));
+        }
+
+        if (!hasMore)
+        {
+            return RunnerRegistryPage.Create(page);
+        }
+
+        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
+        return RunnerRegistryPage.Create(page, lastId.Span);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<int> PruneAsync(DateTimeOffset deadBefore, CancellationToken cancellationToken)
     {
         var definition = new QueryDefinition("SELECT c.id FROM c WHERE c.lastSeenAt < @cutoff")
