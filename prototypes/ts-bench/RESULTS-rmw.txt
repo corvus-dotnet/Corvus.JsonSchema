@@ -2,71 +2,71 @@
 # Section A — mutation surface (bytes-in -> bytes-out). ns/op, median-of-7. 'vs native' = native/Model-C (>1 = Model C faster).
 scenario                         size   content   model-C      native       immer      vs native   vs immer
 ----------------------------------------------------------------------------------------------------------------
-produce title (1 scalar)         small  ascii        4.24 us     3.44 us     6.21 us      0.81x      1.47x
-produce owner.name (nested)      small  ascii        6.44 us     2.91 us     6.52 us      0.45x      1.01x
-produce items[mid].price         small  ascii       10.49 us     2.98 us     7.24 us      0.28x      0.69x
-produce items.push               small  ascii        8.56 us     3.13 us     8.54 us      0.37x      1.00x
-patch {title} (change-set)       small  ascii        3.57 us     3.53 us           -      0.99x          -
-build (construct)                small  ascii       16.26 us     3.13 us           -      0.19x          -
-produce title (1 scalar)         mid    ascii       22.98 us    37.52 us    52.65 us      1.63x      2.29x
-produce owner.name (nested)      mid    ascii       25.04 us    31.49 us    47.41 us      1.26x      1.89x
-produce items[mid].price         mid    ascii       98.58 us    31.48 us    45.45 us      0.32x      0.46x
-produce items.push               mid    ascii       85.20 us    30.84 us    46.87 us      0.36x      0.55x
-patch {title} (change-set)       mid    ascii        4.30 us    36.71 us           -      8.55x          -
-build (construct)                mid    ascii       24.46 us    15.22 us           -      0.62x          -
-produce title (1 scalar)         large  ascii      672.47 us     1.39 ms     1.72 ms      2.06x      2.56x
-produce owner.name (nested)      large  ascii      682.74 us     1.15 ms     1.50 ms      1.69x      2.19x
-produce items[mid].price         large  ascii        3.45 ms     1.16 ms     1.55 ms      0.34x      0.45x
-produce items.push               large  ascii        2.85 ms     1.16 ms     1.51 ms      0.41x      0.53x
-patch {title} (change-set)       large  ascii       26.11 us     1.34 ms           -     51.23x          -
-build (construct)                large  ascii      573.05 us   535.57 us           -      0.93x          -
-produce title (1 scalar)         small  nonAscii     4.35 us     4.24 us     7.20 us      0.98x      1.66x
-produce owner.name (nested)      small  nonAscii     6.78 us     3.99 us     7.83 us      0.59x      1.16x
-produce items[mid].price         small  nonAscii    11.93 us     4.38 us     8.97 us      0.37x      0.75x
-produce items.push               small  nonAscii    10.00 us     4.49 us    10.03 us      0.45x      1.00x
-patch {title} (change-set)       small  nonAscii     3.33 us     4.48 us           -      1.35x          -
-build (construct)                small  nonAscii    15.72 us     3.08 us           -      0.20x          -
-produce title (1 scalar)         mid    nonAscii    24.46 us    47.38 us    62.62 us      1.94x      2.56x
-produce owner.name (nested)      mid    nonAscii    26.30 us    46.75 us    62.27 us      1.78x      2.37x
-produce items[mid].price         mid    nonAscii   114.75 us    46.47 us    62.74 us      0.40x      0.55x
-produce items.push               mid    nonAscii    99.25 us    48.04 us    64.70 us      0.48x      0.65x
-patch {title} (change-set)       mid    nonAscii     3.67 us    48.10 us           -     13.09x          -
-build (construct)                mid    nonAscii    28.81 us    20.37 us           -      0.71x          -
-produce title (1 scalar)         large  nonAscii   687.15 us     1.77 ms     2.12 ms      2.58x      3.09x
-produce owner.name (nested)      large  nonAscii   696.26 us     1.71 ms     2.13 ms      2.45x      3.06x
-produce items[mid].price         large  nonAscii     3.84 ms     1.80 ms     2.15 ms      0.47x      0.56x
-produce items.push               large  nonAscii     3.45 ms     1.80 ms     2.10 ms      0.52x      0.61x
-patch {title} (change-set)       large  nonAscii    25.96 us     1.80 ms           -     69.21x          -
-build (construct)                large  nonAscii   906.60 us   784.92 us           -      0.87x          -
+produce title (1 scalar)         small  ascii        4.38 us     3.47 us     6.05 us      0.79x      1.38x
+produce owner.name (nested)      small  ascii        6.67 us     3.13 us     6.41 us      0.47x      0.96x
+produce items[mid].price         small  ascii        9.62 us     3.10 us     7.21 us      0.32x      0.75x
+produce items.push               small  ascii        7.75 us     3.61 us     8.82 us      0.47x      1.14x
+patch {title} (change-set)       small  ascii        3.23 us     3.92 us           -      1.21x          -
+build (construct)                small  ascii       16.12 us     2.81 us           -      0.17x          -
+produce title (1 scalar)         mid    ascii       22.83 us    37.81 us    50.41 us      1.66x      2.21x
+produce owner.name (nested)      mid    ascii       25.58 us    31.08 us    44.35 us      1.22x      1.73x
+produce items[mid].price         mid    ascii       47.14 us    32.24 us    49.33 us      0.68x      1.05x
+produce items.push               mid    ascii       80.74 us    31.76 us    47.42 us      0.39x      0.59x
+patch {title} (change-set)       mid    ascii        3.51 us    36.05 us           -     10.27x          -
+build (construct)                mid    ascii       26.53 us    15.51 us           -      0.58x          -
+produce title (1 scalar)         large  ascii      677.78 us     1.36 ms     1.75 ms      2.00x      2.58x
+produce owner.name (nested)      large  ascii      705.12 us     1.16 ms     1.46 ms      1.65x      2.07x
+produce items[mid].price         large  ascii        1.41 ms     1.14 ms     1.49 ms      0.81x      1.05x
+produce items.push               large  ascii        2.87 ms     1.18 ms     1.55 ms      0.41x      0.54x
+patch {title} (change-set)       large  ascii       33.07 us     1.42 ms           -     43.02x          -
+build (construct)                large  ascii      628.09 us   574.07 us           -      0.91x          -
+produce title (1 scalar)         small  nonAscii     4.76 us     4.02 us     6.78 us      0.84x      1.43x
+produce owner.name (nested)      small  nonAscii     6.70 us     4.19 us     7.99 us      0.62x      1.19x
+produce items[mid].price         small  nonAscii     9.58 us     4.32 us     8.75 us      0.45x      0.91x
+produce items.push               small  nonAscii     8.11 us     4.32 us    10.37 us      0.53x      1.28x
+patch {title} (change-set)       small  nonAscii     3.20 us     4.63 us           -      1.45x          -
+build (construct)                small  nonAscii    15.06 us     3.40 us           -      0.23x          -
+produce title (1 scalar)         mid    nonAscii    23.40 us    46.02 us    61.35 us      1.97x      2.62x
+produce owner.name (nested)      mid    nonAscii    25.47 us    46.44 us    62.14 us      1.82x      2.44x
+produce items[mid].price         mid    nonAscii    47.68 us    46.91 us    64.60 us      0.98x      1.35x
+produce items.push               mid    nonAscii    94.78 us    47.74 us    62.90 us      0.50x      0.66x
+patch {title} (change-set)       mid    nonAscii     3.36 us    47.19 us           -     14.06x          -
+build (construct)                mid    nonAscii    28.00 us    19.82 us           -      0.71x          -
+produce title (1 scalar)         large  nonAscii   678.08 us     1.70 ms     2.08 ms      2.51x      3.06x
+produce owner.name (nested)      large  nonAscii   707.46 us     1.73 ms     2.10 ms      2.44x      2.97x
+produce items[mid].price         large  nonAscii     1.42 ms     1.78 ms     2.11 ms      1.25x      1.48x
+produce items.push               large  nonAscii     3.25 ms     1.78 ms     2.11 ms      0.55x      0.65x
+patch {title} (change-set)       large  nonAscii    24.82 us     1.79 ms           -     71.93x          -
+build (construct)                large  nonAscii   918.40 us   772.04 us           -      0.84x          -
 
 # Section B — full round-trip: read -> validate -> mutate -> write. Validator held constant (our evaluateRoot) so the delta is mutate+write.
 scenario                         size   content   model-C      native       immer      vs native   vs immer
 ----------------------------------------------------------------------------------------------------------------
-round-trip scalar edit           small  ascii        6.52 us     3.63 us     6.03 us      0.56x      0.92x
-round-trip array edit            small  ascii       12.71 us     3.33 us     7.45 us      0.26x      0.59x
-round-trip scalar edit           mid    ascii       47.48 us    40.54 us    54.93 us      0.85x      1.16x
-round-trip array edit            mid    ascii      139.17 us    41.76 us    54.46 us      0.30x      0.39x
-round-trip scalar edit           large  ascii        1.57 ms     1.66 ms     1.94 ms      1.06x      1.23x
-round-trip array edit            large  ascii        4.31 ms     1.38 ms     1.73 ms      0.32x      0.40x
-round-trip scalar edit           small  nonAscii     8.64 us     5.83 us     7.84 us      0.67x      0.91x
-round-trip array edit            small  nonAscii    14.58 us     4.66 us     8.80 us      0.32x      0.60x
-round-trip scalar edit           mid    nonAscii    56.10 us    54.17 us    68.90 us      0.97x      1.23x
-round-trip array edit            mid    nonAscii   153.86 us    56.35 us    74.59 us      0.37x      0.48x
-round-trip scalar edit           large  nonAscii     1.99 ms     2.09 ms     2.58 ms      1.05x      1.30x
-round-trip array edit            large  nonAscii     5.09 ms     1.98 ms     2.32 ms      0.39x      0.46x
+round-trip scalar edit           small  ascii        7.19 us     3.54 us     6.39 us      0.49x      0.89x
+round-trip array edit            small  ascii       10.79 us     3.76 us     7.53 us      0.35x      0.70x
+round-trip scalar edit           mid    ascii       48.50 us    39.18 us    53.21 us      0.81x      1.10x
+round-trip array edit            mid    ascii       69.56 us    38.76 us    53.84 us      0.56x      0.77x
+round-trip scalar edit           large  ascii        1.60 ms     1.49 ms     1.75 ms      0.93x      1.09x
+round-trip array edit            large  ascii        2.25 ms     1.37 ms     1.74 ms      0.61x      0.77x
+round-trip scalar edit           small  nonAscii     8.51 us     5.81 us     8.34 us      0.68x      0.98x
+round-trip array edit            small  nonAscii    12.48 us     4.49 us     8.69 us      0.36x      0.70x
+round-trip scalar edit           mid    nonAscii    57.34 us    53.07 us    71.29 us      0.93x      1.24x
+round-trip array edit            mid    nonAscii    82.33 us    54.84 us    72.07 us      0.67x      0.88x
+round-trip scalar edit           large  nonAscii     1.95 ms     2.13 ms     2.61 ms      1.09x      1.34x
+round-trip array edit            large  nonAscii     2.92 ms     2.03 ms     2.41 ms      0.69x      0.83x
 
 # GC pressure over 3000 large-doc (201 KB) round-trips — scalar edit. Lower = less allocation churn.
 variant     gc events   total pause   per-op pause
 ------------------------------------------------------
-Model C           126       77.9 ms      25.95 us
-native            170      109.9 ms      36.62 us
-immer             268      166.3 ms      55.43 us
+Model C           125       75.3 ms      25.09 us
+native            171      108.9 ms      36.31 us
+immer             268      164.2 ms      54.73 us
 
 # GC pressure over 3000 large-doc (201 KB) round-trips — array edit. Lower = less allocation churn.
 variant     gc events   total pause   per-op pause
 ------------------------------------------------------
-Model C           967      721.2 ms     240.40 us
-native            170      105.9 ms      35.30 us
-immer             274      184.6 ms      61.53 us
+Model C           199      123.5 ms      41.17 us
+native            172      111.3 ms      37.10 us
+immer             274      168.8 ms      56.28 us
 
 DONE — all variants structurally agree.
