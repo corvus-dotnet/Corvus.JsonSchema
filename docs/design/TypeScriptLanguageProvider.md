@@ -1930,49 +1930,92 @@ goal: an optional collector passed to `evaluateRoot(value, results?)` that recor
 per-keyword `Failure`s carrying `instanceLocation` / `keywordLocation` / `absoluteKeywordLocation` (the JSON
 Schema output formats + Bowtie). The boolean fast path must stay **zero-overhead** when no collector is passed.
 
+### Three modes — and the hard constraint
+
+A collector argument selects the mode, keyed on `ev.r`:
+
+- **Boolean** (`results` omitted → `ev.r === null`): the hot path. It must pay **nothing** for collection —
+  no `Results` allocation, **no string building** (no `instanceLocation` concatenation, no `Failure`), and it
+  **returns early** on the first failure (short-circuit).
+- **Detailed** (`new Results()`): collect every **failure**. It **must not return early** — keep evaluating
+  after a failure so all failures are gathered.
+- **Verbose** (`new Results(true)`): collect failures **and** successes/annotations. Also no early return.
+
 ### Runtime (`@corvus/json-runtime`)
 
 ```ts
 export interface Failure { keywordLocation: string; instanceLocation: string; absoluteKeywordLocation?: string; }
-export class Results { readonly failures: Failure[] = []; get valid() { return this.failures.length === 0; }
-  fail(keywordLocation: string, instanceLocation: string, absoluteKeywordLocation?: string): false {
-    this.failures.push({ keywordLocation, instanceLocation, absoluteKeywordLocation }); return false; } }
+export class Results {
+  readonly failures: Failure[] = [];
+  constructor(readonly verbose = false) {}        // verbose -> also record successes/annotations
+  get valid() { return this.failures.length === 0; }
+  fail(keywordLocation: string, instanceLocation: string, absoluteKeywordLocation?: string): void {
+    this.failures.push({ keywordLocation, instanceLocation, absoluteKeywordLocation }); }
+}
 ```
 
-`Ev` gains `r: Results | null = null` (the collector). A free helper threads it:
-`function __fail(ev: Ev, kw: string, il: string, akw?: string): false { return ev.r === null ? false : ev.r.fail(kw, il, akw); }`
-— the `ev.r === null` check is the entire fast-path cost (a null compare + return).
+`Ev` gains `r: Results | null = null` (null = boolean mode).
 
-### Codegen
+### The shape of an emitted check — all three modes from ONE function
 
-- **Locations (the D2 part).** Each type's `td.LocatedSchema.Location` is its `absoluteKeywordLocation` base
-  and its fragment is the `keywordLocation` base. These are baked **inline** into each `__fail(...)` call
-  (string literals) — no separate exported constants needed; a keyword adds `"/<keyword>"`.
-- **Instance location.** `evaluate{Type}(value, ev, il = "")` gains an `il` parameter (the instance JSON
-  Pointer). Structural handlers thread it: properties pass `il + "/" + escapePointer(k)`, items pass
-  `il + "/" + i`, composition passes `il` through.
-- **Recording.** Every `return false` becomes `return __fail(ev, "<keywordLocation>", il, "<absoluteKeywordLocation>")`.
-- `evaluateRoot(value, results?)` seeds a fresh `Ev` with `ev.r = results ?? null`, `il = ""`.
+The boolean path short-circuits with no work; the collecting paths record and fall through. One emitted
+function serves all three, branching on `ev.r`:
+
+```ts
+function evaluateName(value: unknown, ev: Ev, il: string): boolean {
+  let ok = true;
+  if (!__isStr(value))     { if (ev.r === null) return false; ev.r.fail("<kw>/type",      il, "<akw>/type");      ok = false; }
+  if ([...value].length < 3) { if (ev.r === null) return false; ev.r.fail("<kw>/minLength", il, "<akw>/minLength"); ok = false; }
+  return ok;
+}
+```
+
+- **Boolean** (`ev.r === null`): each check's `if (ev.r === null) return false` short-circuits on the first
+  failure; `il` is never concatenated (see below); `return ok` is `return true` on a clean pass. The only
+  added cost vs. today is one `ev.r === null` compare per check — no allocation, no strings.
+- **Detailed/Verbose** (`ev.r` set): the guard is false, so we `ev.r.fail(...)`, set `ok = false`, and
+  **fall through** to the remaining checks. `return ok` at the end carries the verdict.
+
+### Instance location — concatenated ONLY when collecting
+
+`evaluate{Type}(value, ev, il = "")` carries the instance JSON Pointer, but a structural handler must not
+build it on the boolean path. Gate every concat on `ev.r`:
+
+```ts
+evaluateName(o[k],     subEv, ev.r === null ? il : il + "/" + __ptr(k));   // properties
+evaluateItem(value[i], subEv, ev.r === null ? il : il + "/" + i);          // items
+```
+
+When `ev.r === null`, `il` flows through unchanged (it stays `""` all the way down — **zero string building**).
+When collecting, each level appends its RFC 6901-escaped segment, so a recorded `instanceLocation` is correct.
+Keyword/absolute locations are inline string **literals** (from `td.LocatedSchema.Location` + its fragment +
+`"/<keyword>"`) — free, and only *referenced* inside the `ev.r !== null` branch.
+
+`evaluateRoot(value, results?)` seeds a fresh `Ev` with `ev.r = results ?? null`, `il = ""`.
 
 ### Increments (execution order)
 
-1. **Runtime + entry** — `Failure`/`Results`/`Ev.r`/`__fail`; `evaluate{Type}(value, ev, il)` signature
-   (`il` defaulted, threaded as `""` everywhere first — no behaviour change); `evaluateRoot(value, results?)`.
-   Verifiable: compiles, boolean path unchanged, all suites green.
-2. **Leaf handlers record** — type / numeric+length bounds / membership / regex / format `return false` →
-   `__fail` with their keyword location. Verifiable: a leaf failure yields a correct `keywordLocation`.
-3. **Structural handlers thread `il` + record** — properties / patternProperties / additionalProperties /
-   required / items / prefixItems / contains / not / unevaluated* descend with the right `il` so leaf
-   failures carry the correct `instanceLocation`. This is the bulk.
-4. **Spec output + Bowtie** — render `Results.failures` as the JSON Schema basic/detailed output; add a
-   Node/TS Bowtie harness (gap G4) that consumes it.
-5. **Annotation collection (D4)** — collect title/default/etc. in verbose mode on the same context.
+1. **Runtime + entry + the check shape** — `Failure`/`Results`/`Ev.r`; `evaluate{Type}(value, ev, il = "")`;
+   the `let ok = true; … if (ev.r === null) return false; … return ok;` restructure with `il` gated to `""`
+   everywhere; `evaluateRoot(value, results?)`. No behaviour change on the boolean path; all suites green.
+2. **Leaf handlers** — type / numeric+length bounds / membership / regex / format emit the
+   `ev.r === null ? early-return : record + ok=false` shape with their keyword/absolute location.
+3. **Structural handlers** — properties / patternProperties / additionalProperties / required / items /
+   prefixItems / contains / not / unevaluated*: gated `il` threading + the same shape. **Composition must NOT
+   short-circuit when collecting** — `anyOf`/`oneOf`/`if` evaluate all branches under a collector (the boolean
+   path keeps its `||` short-circuit). The bulk.
+4. **Spec output + Bowtie** — render `Results.failures` as the JSON Schema basic/detailed output; a Node/TS
+   Bowtie harness (gap G4).
+5. **Verbose successes / annotation collection (D4)** — record successes + annotations when `results.verbose`.
 
 ### Risks
 
-- **Zero-overhead discipline.** `il` defaults to `""` and is only string-concatenated when descending; the
-  `__fail` null-check is the only added cost on the boolean path. Verify on the sustained-load bench that the
-  no-collector path is unregressed (the bitmask `Ev` is unchanged; `r` is one extra null field).
-- **Pointer escaping.** `instanceLocation`/`keywordLocation` segments must RFC 6901-escape `~`→`~0`, `/`→`~1`.
+- **The boolean path must build NO strings.** Every `il` concat and `fail()` call sits inside an
+  `ev.r === null ? … : …` guard or after an `if (ev.r === null) return false`. Gate on the sustained-load
+  bench that the no-collector path is unregressed vs. today (the bitmask `Ev` is unchanged; `r` is one extra
+  null field; per-check cost is one null compare).
+- **No early return when collecting.** Detailed/verbose fall through every check AND every composition branch;
+  only the boolean path short-circuits. The `ok` accumulator carries the verdict.
+- **Pointer escaping.** `__ptr` RFC 6901-escapes segments: `~`→`~0`, `/`→`~1`.
 - **`$dynamicRef`.** `keywordLocation` follows the dynamic path; `absoluteKeywordLocation` is the resolved
-  `$id` URI — they diverge through dynamic refs (the core already distinguishes them in the location).
+  `$id` URI — they diverge through dynamic refs (the core distinguishes them in the location).
