@@ -18,8 +18,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.Security;
 /// </summary>
 internal static class SecurityRulePaging
 {
-    /// <summary>The page size used when a caller passes a non-positive limit.</summary>
-    internal const int DefaultPageSize = 50;
+    /// <summary>The page size used when a caller passes a non-positive limit (the public store-contract default).</summary>
+    internal const int DefaultPageSize = SecurityRulePage.DefaultPageSize;
 
     /// <summary>Pages <paramref name="all"/> (a full read) in memory: rules ordered by <c>name</c> (ordinal UTF-8),
     /// resuming strictly after the cursor decoded from <paramref name="pageToken"/> (undefined = first page), optionally
