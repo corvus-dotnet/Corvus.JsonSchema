@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Globalization;
 using System.Text;
 using Azure;
@@ -17,8 +18,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// entity holding its <see cref="AccessRequest"/> schema document in a binary <c>Doc</c> property, keyed by the
 /// (encoded) request id under a constant partition so a record is a point read by (PartitionKey, RowKey). The
 /// filterable fields (status, target workflow, subject, creation instant) are mirrored into entity columns so
-/// <see cref="ListAsync"/> can apply a server-side filter; ordering is client-side (oldest first) because Table queries
-/// are unordered. The etag travels inside the document, so optimistic concurrency on a decision is a
+/// <see cref="ListAsync(AccessRequestQuery, CancellationToken)"/> can apply a server-side filter; ordering is client-side
+/// (oldest first) because Table queries are unordered. The etag travels inside the document, so optimistic concurrency on a decision is a
 /// read-compare-write. Works against Azure Storage and the Azurite emulator.
 /// </summary>
 public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
@@ -141,6 +142,107 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
     }
 
     /// <inheritdoc/>
+    public async ValueTask<AccessRequestPage> ListAsync(AccessRequestQuery query, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : AccessRequestPage.DefaultPageSize;
+
+        // Decode the keyset cursor; createdAt + id reify to strings (the leaf) only here — createdAt as the ISO-8601 "o"
+        // form the CreatedAt column stores (reconstructed from the token's UTC ticks), id as text. Undefined = first page.
+        string? cursorCreatedAt = null;
+        string? cursorId = null;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(AccessRequestContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
+            try
+            {
+                if (AccessRequestContinuationToken.TryDecode(tokenUtf8.Span, buffer, out long cursorTicks, out ReadOnlySpan<byte> cursorIdUtf8))
+                {
+                    cursorCreatedAt = new DateTime(cursorTicks, DateTimeKind.Utc).ToString("o", CultureInfo.InvariantCulture);
+                    cursorId = Encoding.UTF8.GetString(cursorIdUtf8);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+        }
+
+        // Table Storage has no server-side ORDER BY and the RowKey is Base64(id) (not the (createdAt, id) keyset order), so
+        // the order is materialised client-side — but over a PROJECTION of just the keyset fields (RowKey + CreatedAt, no
+        // Doc), with the filter applied server-side (those are entity columns). Only the page's documents are then point-read
+        // — never every request's Doc. createdAt is the fixed-width ISO "o" form (ordinal == chronological) and id is
+        // recovered from RowKey so the compare is byte-ordinal == the in-memory pager's.
+        string? filter = BuildFilter(query);
+        var keys = new List<(string CreatedAt, string Id)>();
+        await foreach (TableEntity entity in this.requests
+            .QueryAsync<TableEntity>(filter, select: ["RowKey", CreatedAtColumn], cancellationToken: cancellationToken)
+            .ConfigureAwait(false))
+        {
+            if (entity.GetString(CreatedAtColumn) is { } createdAt)
+            {
+                keys.Add((createdAt, Dec(entity.RowKey)));
+            }
+        }
+
+        keys.Sort(static (a, b) =>
+        {
+            int byCreated = string.CompareOrdinal(a.CreatedAt, b.CreatedAt);
+            return byCreated != 0 ? byCreated : string.CompareOrdinal(a.Id, b.Id);
+        });
+
+        // Keyset skip past the cursor, then take one id beyond the page (lookahead) — all in memory over the projection.
+        var pageIds = new List<string>(pageSize + 1);
+        foreach ((string createdAt, string id) in keys)
+        {
+            if (cursorCreatedAt is not null)
+            {
+                int byCreated = string.CompareOrdinal(createdAt, cursorCreatedAt);
+                bool after = byCreated > 0 || (byCreated == 0 && string.CompareOrdinal(id, cursorId) > 0);
+                if (!after)
+                {
+                    continue; // at or before the cursor — already returned in an earlier page
+                }
+            }
+
+            pageIds.Add(id);
+            if (pageIds.Count > pageSize)
+            {
+                break; // one id beyond the page → a next page exists
+            }
+        }
+
+        bool hasMore = pageIds.Count > pageSize;
+        int take = hasMore ? pageSize : pageIds.Count;
+        var page = new PooledDocumentList<AccessRequest>(take);
+        try
+        {
+            for (int i = 0; i < take; i++)
+            {
+                byte[]? doc = await this.DocumentAsync(pageIds[i], cancellationToken).ConfigureAwait(false);
+                if (doc is not null)
+                {
+                    page.Add(ParsedJsonDocument<AccessRequest>.Parse(doc.AsMemory()));
+                }
+            }
+
+            if (!hasMore || page.Count == 0)
+            {
+                return AccessRequestPage.Create(page);
+            }
+
+            AccessRequest last = page[page.Count - 1];
+            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+            return AccessRequestPage.Create(page, last.CreatedAtValue.UtcTicks, lastId.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<AccessRequest>?> DecideAsync(string id, AccessRequestDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -175,6 +277,11 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
 
     private static string Enc(string value)
         => Convert.ToBase64String(Encoding.UTF8.GetBytes(value)).Replace('/', '_').Replace('+', '-');
+
+    // The inverse of Enc: recovers a request id from its Base64 RowKey so the keyset order can be computed from the
+    // projection without reading documents. Only ever applied to RowKeys this store wrote (round-trips exactly).
+    private static string Dec(string rowKey)
+        => Encoding.UTF8.GetString(Convert.FromBase64String(rowKey.Replace('_', '/').Replace('-', '+')));
 
     // Builds the OData filter for the optional query criteria (an absent criterion matches anything); null when the
     // query is empty so the read is an unfiltered scan of the single partition.

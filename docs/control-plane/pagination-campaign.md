@@ -392,7 +392,26 @@ Both order strings ordinally (ISO createdAt == chronological; id byte-ordinal), 
 declaration needed. Cosmos per-root `JsonString` shadowing recurs (its generated model) → the seam param is the
 fully-qualified `global::…Durability.JsonString`. Container conformance: **Cosmos 7/7, Mongo 7/7**.
 
-**AzureStorage moves to the client-sorted group.** Unlike runners (whose `RowKey` *was* the keyset key), the access-request
-table keys `RowKey = Base64(id)` and has no server-side `ORDER BY` for `createdAt`, so it can't natively keyset on
-`(createdAt, id)` — it is handled with Redis/Nats below (project the key fields, sort client-side, fetch only the page's
-documents). **Remaining backends:** AzureStorage, Redis, Nats.
+**Client-sorted backends (AzureStorage, Redis, Nats) — done.** These key on the id, not `(createdAt, id)`, so a secondary
+`createdAt`-ordered structure is used (per the user's "extracted index" decision):
+- **AzureStorage** — no write-path change: `CreatedAt` is already an entity column, so the list projects `[RowKey, CreatedAt]`
+  (no `Doc`, filter server-side on the columns), recovers the id via `Dec(RowKey)`, sorts `(createdAt, id)` client-side,
+  keyset-skips, and **point-reads only the page's documents**.
+- **Redis** — a zero-scored sorted set `arazzo:accessreqs:bycreated` whose members are `{createdAtIso}\0{id}`, maintained on
+  create (`ZADD`); the list `ZRANGEBYLEX`-reads them in `(createdAt, id)` order (no docs) and fetches + filters only the
+  page's documents (reads ≈ page / selectivity).
+- **Nats** — KV listing is unordered, so a marker key `idx.{Base64Url(createdAtIso)}.{Base64Url(id)}` per request (written
+  on create) is enumerated cheaply (no docs), decoded to `(createdAt, id)`, sorted client-side, keyset-skipped, then only
+  the page's documents are fetched + filtered.
+
+A decision never changes `createdAt`/`id` and there is no delete, so the index needs maintenance only on create; the unpaged
+`ListAsync(query)` keeps using the existing flat id set/keys. Container conformance: **AzureStorage 7/7, Redis 7/7,
+NatsJetStream 7/7**.
+
+**`listAccessRequests` Phase 2 — COMPLETE across all 10 backends.** InMemory + Sqlite/Postgres/MySql/SqlServer (keyset
+predicate + composite `(CreatedAt, Id)` index, byte-ordinal `Id`) + Cosmos/Mongo (native compound range) + AzureStorage/
+Redis/Nats (secondary `createdAt` index / projection, page-only document fetch). Every backend pages oldest-first by
+`(createdAt, id)`, validated by the shared `AccessRequestStoreConformance` (7 tests each). **Next Phase 2 stores:**
+`listSecurityRules`/`listSecurityBindings` — keyset (`name`; `(order, id)`) already columns/fields, so the keyset axis is
+ready; the open sub-decision is the free-text `q` (rule expression; binding claimType/claimValue/description live in the
+blob — extract to columns for server-side `q`, or filter `q` client-side over keyset pages).
