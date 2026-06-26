@@ -329,5 +329,16 @@ conformance (`RunnerRegistryConformance`, real containers via podman): **Postgre
 (each incl. the keyset no-gaps/dupes walk + malformed-token). No per-backend benchmark — the win is the same structural
 full-read→`LIMIT` bounding the Sqlite figure measures; local-container latency under-measures the round-trip/payload win.
 
-**Remaining backends:** Cosmos/Mongo/AzureStorage (native range query/continuation), Redis/Nats (client-sorted scan +
-keyset+limit, as in the runs corpus) — each with container conformance.
+**Document-store backends (Cosmos, Mongo, AzureStorage) — done.** Each seeks strictly past the cursor on its native
+key/order and is bounded to one page + 1 (lookahead), never enumerating every registration: Cosmos `WHERE c.id > @after
+ORDER BY c.id` with the lazy stream iterator drained only until one row beyond the page; Mongo `Find(_id > after)` +
+`Sort(_id asc)` + `Limit(n+1)`; AzureStorage OData `RowKey gt @after` with `maxPerPage = n+1`. All three already order by the
+key the in-memory pager uses — Cosmos orders strings ordinally, BSON compares strings by bytes, and Azure Table keys are
+ordinal — so no collation declaration is needed (unlike the SQL trio). Cosmos gotcha (per-root type identity): its generated
+`RunnerDocument` model emits a `…Cosmos.JsonString`, which shadows the core seam type and even beats a file-level
+`using`-alias (a current-namespace member wins), so the override's `pageToken` parameter is written as the fully-qualified
+`global::Corvus.Text.Json.Arazzo.Durability.JsonString`. Container conformance: **Cosmos 12/12, Mongo 12/12, AzureStorage
+12/12** (each incl. keyset no-gaps/dupes + malformed-token).
+
+**Remaining backends:** Redis/Nats (client-sorted scan + keyset+limit, as in the runs corpus) — each with container
+conformance.

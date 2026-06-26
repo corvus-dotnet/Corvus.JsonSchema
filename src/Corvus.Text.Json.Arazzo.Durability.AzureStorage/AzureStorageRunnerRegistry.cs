@@ -201,6 +201,45 @@ public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RunnerRegistryPage> ListAsync(int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
+
+        // Decode the keyset cursor; the runner id reifies to a string only for the OData RowKey predicate (a leaf).
+        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
+
+        // Native keyset page: Azure Table returns a partition's entities ordered by RowKey (== runner id; key comparison is
+        // ordinal — the same order the in-memory pager uses), so the RowKey range predicate seeks strictly past the cursor.
+        // maxPerPage caps the server page at one page + 1 (lookahead) and we stop there — never enumerating every runner.
+        string filter = after is null
+            ? TableClient.CreateQueryFilter($"PartitionKey eq {PartitionKey}")
+            : TableClient.CreateQueryFilter($"PartitionKey eq {PartitionKey} and RowKey gt {after}");
+
+        var page = new List<RunnerRegistration>(pageSize + 1);
+        bool hasMore = false;
+        await foreach (TableEntity entity in this.runners
+            .QueryAsync<TableEntity>(filter, maxPerPage: pageSize + 1, cancellationToken: cancellationToken)
+            .ConfigureAwait(false))
+        {
+            if (page.Count == pageSize)
+            {
+                hasMore = true; // a row beyond the page exists → there is a next page; stop early
+                break;
+            }
+
+            page.Add(RunnerRegistration.FromJson(entity.GetBinary("Doc") ?? []));
+        }
+
+        if (!hasMore)
+        {
+            return RunnerRegistryPage.Create(page);
+        }
+
+        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
+        return RunnerRegistryPage.Create(page, lastId.Span);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<int> PruneAsync(DateTimeOffset deadBefore, CancellationToken cancellationToken)
     {
         long cutoff = deadBefore.ToUnixTimeMilliseconds();
