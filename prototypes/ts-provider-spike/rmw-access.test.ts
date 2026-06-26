@@ -9,7 +9,7 @@
 //   <ts-bench tsc> out-rmw/generated.ts out-rmw/corvus-runtime.ts rmw-access.test.ts spike-globals.d.ts \
 //       --outDir prov-test-rmw --strict --target es2022 --module esnext --moduleResolution bundler --lib es2022,dom
 //   node prov-test-rmw/rmw-access.test.js
-import { patchEntity, buildEntity, type Entity } from "./out-rmw/generated.js";
+import { patchSample, buildSample, type Sample } from "./out-rmw/generated.js";
 
 let pass = 0, fail = 0;
 const enc = new TextEncoder();
@@ -21,8 +21,8 @@ function ok(label: string, cond: boolean): void {
 function eq(label: string, got: unknown, want: unknown): void {
   ok(label + ` (got ${JSON.stringify(got)})`, JSON.stringify(got) === JSON.stringify(want));
 }
-function rt(src: string, changes: Partial<Entity>): string {
-  return dec.decode(patchEntity(enc.encode(src), changes));
+function rt(src: string, changes: Partial<Sample>): string {
+  return dec.decode(patchSample(enc.encode(src), changes));
 }
 function throws(label: string, fn: () => void): void {
   try { fn(); fail++; console.log(`FAIL ${label}: expected throw`); } catch { pass++; }
@@ -80,7 +80,7 @@ const rich = JSON.stringify({
 // 6) pretty-printed source (whitespace between tokens)
 {
   const pretty = JSON.stringify(JSON.parse(rich), null, 2);
-  const out = dec.decode(patchEntity(enc.encode(pretty), { seq: 99 }));
+  const out = dec.decode(patchSample(enc.encode(pretty), { seq: 99 }));
   eq("6 pretty seq changed", JSON.parse(out).seq, 99);
   eq("6 pretty address retained", JSON.parse(out).address, { street: "1 Main", city: "東京", zip: "100" });
 }
@@ -102,9 +102,9 @@ const rich = JSON.stringify({
 
 // 9) type change (consumer deliberately bypasses the typed surface)
 {
-  const o1 = JSON.parse(dec.decode(patchEntity(enc.encode(rich), { seq: "now-a-string" } as unknown as Partial<Entity>)));
+  const o1 = JSON.parse(dec.decode(patchSample(enc.encode(rich), { seq: "now-a-string" } as unknown as Partial<Sample>)));
   eq("9 seq int->string", o1.seq, "now-a-string");
-  const o2 = JSON.parse(dec.decode(patchEntity(enc.encode(rich), { active: null } as unknown as Partial<Entity>)));
+  const o2 = JSON.parse(dec.decode(patchSample(enc.encode(rich), { active: null } as unknown as Partial<Sample>)));
   eq("9 active bool->null", o2.active, null);
 }
 
@@ -133,7 +133,7 @@ const rich = JSON.stringify({
 // 14) upsert: setting a member absent from the source ADDS it (set = replace-or-add)
 {
   const noSeq = JSON.stringify({ id: "x", a: 5 });
-  const p = JSON.parse(dec.decode(patchEntity(enc.encode(noSeq), { seq: 5 })));
+  const p = JSON.parse(dec.decode(patchSample(enc.encode(noSeq), { seq: 5 })));
   ok("14 upsert adds absent member", p.seq === 5 && p.id === "x" && p.a === 5);
 }
 
@@ -142,7 +142,7 @@ const rich = JSON.stringify({
   const body = enc.encode(rich);
   const bom = new Uint8Array(body.length + 3);
   bom.set([0xef, 0xbb, 0xbf], 0); bom.set(body, 3);
-  const outBytes = patchEntity(bom, { seq: 99 });
+  const outBytes = patchSample(bom, { seq: 99 });
   ok("15 BOM preserved", outBytes[0] === 0xef && outBytes[1] === 0xbb && outBytes[2] === 0xbf);
   eq("15 BOM seq changed", JSON.parse(dec.decode(outBytes)).seq, 99);
 }
@@ -153,16 +153,16 @@ const rich = JSON.stringify({
   const og = JSON.parse(rt(rich, { note: grow }));
   eq("16 grow note (+500B)", og.note, grow); eq("16 grow seq retained", og.seq, 1); eq("16 grow tags retained", og.tags, ["alpha", "β", "γ"]);
   // object -> scalar (large shrink) in the middle: siblings before/after stay correct
-  const shrink = JSON.parse(dec.decode(patchEntity(enc.encode(rich), { address: 42 } as unknown as Partial<Entity>)));
+  const shrink = JSON.parse(dec.decode(patchSample(enc.encode(rich), { address: 42 } as unknown as Partial<Sample>)));
   eq("16 address object->scalar", shrink.address, 42); eq("16 id retained (before)", shrink.id, "日本語-id"); eq("16 tags retained (after)", shrink.tags, ["alpha", "β", "γ"]);
   // scalar -> object (grow in the middle)
-  const grow2 = JSON.parse(dec.decode(patchEntity(enc.encode(rich), { seq: { nested: [1, 2] } } as unknown as Partial<Entity>)));
+  const grow2 = JSON.parse(dec.decode(patchSample(enc.encode(rich), { seq: { nested: [1, 2] } } as unknown as Partial<Sample>)));
   eq("16 seq scalar->object", grow2.seq, { nested: [1, 2] }); eq("16 ratio retained", grow2.ratio, 0.5); eq("16 address retained", grow2.address, { street: "1 Main", city: "東京", zip: "100" });
 }
 
 // --- removal (the produce*Bytes `removals` param) ---
-const rtRem = (src: string, ch: Partial<Entity>, rm: ReadonlyArray<keyof Entity>): string =>
-  dec.decode(patchEntity(enc.encode(src), ch, rm));
+const rtRem = (src: string, ch: Partial<Sample>, rm: ReadonlyArray<keyof Sample>): string =>
+  dec.decode(patchSample(enc.encode(src), ch, rm));
 
 // 17) remove single member (first / middle / last in source order)
 {
@@ -193,12 +193,12 @@ const rtRem = (src: string, ch: Partial<Entity>, rm: ReadonlyArray<keyof Entity>
 // 21) throw on removing a member absent from the source
 {
   const noSeq = JSON.stringify({ id: "x", a: 5 });
-  throws("21 throw remove missing", () => patchEntity(enc.encode(noSeq), {}, ["seq"]));
+  throws("21 throw remove missing", () => patchSample(enc.encode(noSeq), {}, ["seq"]));
 }
 // 22) removal under pretty-print
 {
   const pretty = JSON.stringify(JSON.parse(rich), null, 2);
-  const p = JSON.parse(dec.decode(patchEntity(enc.encode(pretty), {}, ["active"])));
+  const p = JSON.parse(dec.decode(patchSample(enc.encode(pretty), {}, ["active"])));
   ok("22 pretty remove active", p.active === undefined && p.seq === 1 && JSON.stringify(p.address) === JSON.stringify({ street: "1 Main", city: "東京", zip: "100" }));
 }
 // 23) byte-retention of complex siblings after a removal
@@ -212,44 +212,44 @@ const rtRem = (src: string, ch: Partial<Entity>, rm: ReadonlyArray<keyof Entity>
 // 24) add members absent from the source
 {
   const partial = JSON.stringify({ id: "x", seq: 1 });
-  const p = JSON.parse(dec.decode(patchEntity(enc.encode(partial), { note: "added", active: true })));
+  const p = JSON.parse(dec.decode(patchSample(enc.encode(partial), { note: "added", active: true })));
   ok("24 add absent props", p.note === "added" && p.active === true && p.id === "x" && p.seq === 1);
 }
 // 25) replace existing + add absent in one call
 {
   const partial = JSON.stringify({ id: "x", seq: 1 });
-  const p = JSON.parse(dec.decode(patchEntity(enc.encode(partial), { seq: 99, note: "new" })));
+  const p = JSON.parse(dec.decode(patchSample(enc.encode(partial), { seq: 99, note: "new" })));
   ok("25 replace + add", p.seq === 99 && p.note === "new" && p.id === "x");
 }
 // 26) add appends at end; multibyte sibling retained byte-wise
 {
   const noNote = JSON.stringify({ id: "日本語-id", seq: 1, tags: ["alpha", "β"] });
-  const out = dec.decode(patchEntity(enc.encode(noNote), { note: "メモ" }));
+  const out = dec.decode(patchSample(enc.encode(noNote), { note: "メモ" }));
   const p = JSON.parse(out);
   ok("26 add appended", p.note === "メモ" && JSON.stringify(p.tags) === JSON.stringify(["alpha", "β"]));
   ok("26 byte-retain id before add", out.includes('"id":"日本語-id"'));
 }
 // 27) add to an empty object
 {
-  const p = JSON.parse(dec.decode(patchEntity(enc.encode("{}"), { seq: 5 })));
+  const p = JSON.parse(dec.decode(patchSample(enc.encode("{}"), { seq: 5 })));
   ok("27 add to empty", p.seq === 5);
 }
 // 28) add + remove in one call
 {
   const src = JSON.stringify({ id: "x", seq: 1, ratio: 0.5 });
-  const p = JSON.parse(dec.decode(patchEntity(enc.encode(src), { note: "n" }, ["ratio"])));
+  const p = JSON.parse(dec.decode(patchSample(enc.encode(src), { note: "n" }, ["ratio"])));
   ok("28 add note + remove ratio", p.note === "n" && p.ratio === undefined && p.id === "x" && p.seq === 1);
 }
 // 29) add complex (nested object + array) values
 {
   const src = JSON.stringify({ id: "x" });
-  const p = JSON.parse(dec.decode(patchEntity(enc.encode(src), { address: { street: "S", city: "C", zip: "Z" }, tags: ["t1", "t2"] })));
+  const p = JSON.parse(dec.decode(patchSample(enc.encode(src), { address: { street: "S", city: "C", zip: "Z" }, tags: ["t1", "t2"] })));
   ok("29 add complex values", JSON.stringify(p.address) === JSON.stringify({ street: "S", city: "C", zip: "Z" }) && JSON.stringify(p.tags) === JSON.stringify(["t1", "t2"]) && p.id === "x");
 }
 // 30) pretty-printed add (assert parsed)
 {
   const pretty = JSON.stringify({ id: "x", seq: 1 }, null, 2);
-  const p = JSON.parse(dec.decode(patchEntity(enc.encode(pretty), { note: "n" })));
+  const p = JSON.parse(dec.decode(patchSample(enc.encode(pretty), { note: "n" })));
   ok("30 pretty add", p.note === "n" && p.id === "x" && p.seq === 1);
 }
 
@@ -257,7 +257,7 @@ const rtRem = (src: string, ch: Partial<Entity>, rm: ReadonlyArray<keyof Entity>
 // 31) patch as overlay: replace existing + add new, leave the rest
 {
   const base = JSON.stringify({ id: "x", seq: 1, ratio: 0.5 });
-  const p = JSON.parse(dec.decode(patchEntity(enc.encode(base), { seq: 99, note: "added" })));
+  const p = JSON.parse(dec.decode(patchSample(enc.encode(base), { seq: 99, note: "added" })));
   ok("31 patch overlay", p.seq === 99 && p.note === "added" && p.ratio === 0.5 && p.id === "x");
 }
 
@@ -265,31 +265,31 @@ const rtRem = (src: string, ch: Partial<Entity>, rm: ReadonlyArray<keyof Entity>
 // 32) build round-trips and equals native JSON.stringify(props) (caller key order, NOT canonicalised)
 {
   const props = { id: "x", seq: 1, active: true };
-  const out = dec.decode(buildEntity(props));
+  const out = dec.decode(buildSample(props));
   const p = JSON.parse(out);
   ok("32 build round-trips", p.id === "x" && p.seq === 1 && p.active === true);
   ok("32 build = JSON.stringify (caller order)", out === JSON.stringify(props));
 }
 // 33) build empty -> {}
 {
-  ok("33 build empty", dec.decode(buildEntity({})) === "{}");
+  ok("33 build empty", dec.decode(buildSample({})) === "{}");
 }
 // 34) build with complex (nested object + array) values
 {
-  const p = JSON.parse(dec.decode(buildEntity({ id: "x", address: { street: "S", city: "C", zip: "Z" }, tags: ["t"] })));
+  const p = JSON.parse(dec.decode(buildSample({ id: "x", address: { street: "S", city: "C", zip: "Z" }, tags: ["t"] })));
   ok("34 build complex", p.id === "x" && JSON.stringify(p.address) === JSON.stringify({ street: "S", city: "C", zip: "Z" }) && JSON.stringify(p.tags) === JSON.stringify(["t"]));
 }
 // 35) build then RMW: construct, then produce over the built bytes
 {
-  const built = buildEntity({ id: "x", seq: 1 });
-  const p = JSON.parse(dec.decode(patchEntity(built, { seq: 99, note: "n" })));
+  const built = buildSample({ id: "x", seq: 1 });
+  const p = JSON.parse(dec.decode(patchSample(built, { seq: 99, note: "n" })));
   ok("35 build then produce", p.id === "x" && p.seq === 99 && p.note === "n");
 }
 
 // --- nested array integration (the 4th `arrays` param: element-wise ops on array members) ---
 // 36) nested append (addRange), surrounding object preserved byte-wise
 {
-  const out = dec.decode(patchEntity(enc.encode(rich), {}, undefined, { tags: { append: ["δ"] } }));
+  const out = dec.decode(patchSample(enc.encode(rich), {}, undefined, { tags: { append: ["δ"] } }));
   const p = JSON.parse(out);
   ok("36 nested append", JSON.stringify(p.tags) === JSON.stringify(["alpha", "β", "γ", "δ"]) && p.seq === 1);
   ok("36 byte-retain sibling object", out.includes('"address":{"street":"1 Main","city":"東京","zip":"100"}'));
@@ -297,22 +297,22 @@ const rtRem = (src: string, ch: Partial<Entity>, rm: ReadonlyArray<keyof Entity>
 }
 // 37) nested insert / set / removeAt (object-keyed)
 {
-  const ins = JSON.parse(dec.decode(patchEntity(enc.encode(rich), {}, undefined, { tags: { insert: { 1: ["X"] } } })));
+  const ins = JSON.parse(dec.decode(patchSample(enc.encode(rich), {}, undefined, { tags: { insert: { 1: ["X"] } } })));
   ok("37 nested insert", JSON.stringify(ins.tags) === JSON.stringify(["alpha", "X", "β", "γ"]));
-  const setd = JSON.parse(dec.decode(patchEntity(enc.encode(rich), {}, undefined, { tags: { set: { 0: "ZERO" } } })));
+  const setd = JSON.parse(dec.decode(patchSample(enc.encode(rich), {}, undefined, { tags: { set: { 0: "ZERO" } } })));
   ok("37 nested set", JSON.stringify(setd.tags) === JSON.stringify(["ZERO", "β", "γ"]));
-  const remd = JSON.parse(dec.decode(patchEntity(enc.encode(rich), {}, undefined, { tags: { removeAt: [1] } })));
+  const remd = JSON.parse(dec.decode(patchSample(enc.encode(rich), {}, undefined, { tags: { removeAt: [1] } })));
   ok("37 nested removeAt", JSON.stringify(remd.tags) === JSON.stringify(["alpha", "γ"]));
 }
 // 38) nested array op + scalar replace + member removal, all in one call
 {
-  const out = dec.decode(patchEntity(enc.encode(rich), { seq: 99 }, ["ratio"], { tags: { append: ["new"] } }));
+  const out = dec.decode(patchSample(enc.encode(rich), { seq: 99 }, ["ratio"], { tags: { append: ["new"] } }));
   const p = JSON.parse(out);
   ok("38 combined nested+scalar+remove", p.seq === 99 && p.ratio === undefined && JSON.stringify(p.tags) === JSON.stringify(["alpha", "β", "γ", "new"]));
 }
 // 39) nested addRange; multibyte sibling preserved byte-wise
 {
-  const out = dec.decode(patchEntity(enc.encode(rich), {}, undefined, { tags: { append: ["d", "e"] } }));
+  const out = dec.decode(patchSample(enc.encode(rich), {}, undefined, { tags: { append: ["d", "e"] } }));
   const p = JSON.parse(out);
   ok("39 nested addRange", JSON.stringify(p.tags) === JSON.stringify(["alpha", "β", "γ", "d", "e"]));
   ok("39 byte-retain multibyte sibling", out.includes('"note":"メモ書き"'));

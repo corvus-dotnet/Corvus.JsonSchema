@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Corvus.Json;
 using Corvus.Json.CodeGeneration;
 
 namespace Corvus.Text.Json.TypeScript.CodeGeneration;
@@ -965,8 +966,8 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     {
         List<TypeDeclaration> types = typeDeclarations.ToList();
 
-        // Pass 0: a minimal name heuristic — a type is named after its `title`, else the property it
-        // is the value of, else a generic fallback.
+        // Pass 0: record, for each type, the property it is the value of — a fallback name source for
+        // nested types that the reference/title heuristics can't name (see NameForType).
         var propertyName = new Dictionary<TypeDeclaration, string>();
         foreach (TypeDeclaration td in types)
         {
@@ -983,7 +984,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         var used = new HashSet<string>(StringComparer.Ordinal);
         foreach (TypeDeclaration td in types)
         {
-            string baseName = Title(td) ?? (propertyName.TryGetValue(td, out string? pn) ? Pascal(pn) : "Entity");
+            string baseName = NameForType(td, propertyName);
             string name = baseName;
             int suffix = 2;
             while (!used.Add(name))
@@ -1623,13 +1624,135 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         return r;
     }
 
-    private static string? Title(TypeDeclaration td)
+    // PascalCase identifiers that would shadow a TS global type or a generated-runtime import; a name
+    // colliding with one of these is suffixed "Entity" (mirrors the C# Formatting reserved-word pass,
+    // but with TS's reserved set rather than C#'s).
+    private static readonly HashSet<string> TsReserved = new(StringComparer.Ordinal)
+    {
+        "String", "Number", "Boolean", "Object", "Array", "Function", "Symbol", "Date", "RegExp",
+        "Error", "Map", "Set", "Promise", "BigInt", "JSON", "Math", "Proxy", "WeakMap", "WeakSet",
+        "Uint8Array", "Partial", "Record", "ReadonlyArray", "Readonly",
+        "Ev", "NOEV", "Draft", "RmwTarget", "ListOps", "RmwArrayOps", "RmwArrayEdit", "Brand", "FormatError",
+
+        // "Rmw" is reserved because the generated array-ops interface is `{Name}ArrayOps` — a type named
+        // "Rmw" would derive "RmwArrayOps", colliding with the imported runtime type of that name.
+        "Rmw",
+    };
+
+    // The TS analog of the C# NameHeuristic chain (§ NameHeuristics): a faithful port of the
+    // load-bearing heuristics — BaseSchema (root/$defs → fragment key or path basename),
+    // Documentation (title, but ONLY when short and usable), and Subschema (the fragment segment a
+    // nested type sits under). This is what turns `definitions/cypressConfig` into `CypressConfig`
+    // and a long descriptive `title` into a path-derived name instead of a sentence-long identifier.
+    private static string NameForType(TypeDeclaration td, Dictionary<TypeDeclaration, string> propertyName)
+    {
+        // The TS provider does not track parent relationships (GetParent is a stub), so root-vs-nested
+        // is read off the location instead of Parent(): a $defs member via IsInDefinitionsContainer
+        // (core), the document root via the absence of a fragment, everything else nested.
+        JsonReferenceBuilder reference = JsonReferenceBuilder.From(td.LocatedSchema.Location.ToString());
+        string? raw;
+        if (td.IsInDefinitionsContainer())
+        {
+            // BaseSchemaNameHeuristic: a $defs member is named from its key (the last fragment
+            // segment), NEVER the title (the C# Documentation heuristic excludes $defs).
+            raw = NameFromReference(reference, allowPath: false) ?? TitleIfShort(td);
+        }
+        else if (!reference.HasFragment)
+        {
+            // The document root: a short usable title, else the path basename, else a generic fallback.
+            // (Title-first here is a deliberate divergence from C#'s path-first root naming: a short
+            // `title` like "Person" reads better than a generic filename, and a long unusable title
+            // still falls through to the path — which is what defuses sentence-long root names.)
+            raw = TitleIfShort(td) ?? NameFromReference(reference, allowPath: true) ?? "Schema";
+        }
+        else
+        {
+            // A nested subschema: a short usable title, else the fragment segment it sits under, else
+            // the property it is the value of.
+            raw = TitleIfShort(td)
+                ?? NameFromReference(reference, allowPath: false)
+                ?? (propertyName.TryGetValue(td, out string? pn) ? Pascal(pn) : null);
+        }
+
+        string name = raw ?? string.Empty;
+        if (name.Length == 0)
+        {
+            return "Entity";
+        }
+
+        return TsReserved.Contains(name) ? name + "Entity" : name;
+    }
+
+    // DocumentationNameHeuristic: use the `title` ONLY when it is short (< 64 chars) and pascalises to
+    // a usable identifier (2..63 chars). A long descriptive title is rejected — that is exactly what
+    // stops a sentence-long `title` becoming the type name.
+    private static string? TitleIfShort(TypeDeclaration td)
     {
         JsonElement s = td.LocatedSchema.Schema;
         if (s.ValueKind == JsonValueKind.Object && s.TryGetProperty("title", out JsonElement t) && t.ValueKind == JsonValueKind.String)
         {
-            string p = Pascal(t.GetString()!);
-            return p.Length > 0 ? p : null;
+            string raw = t.GetString()!;
+            if (raw.Length > 0 && raw.Length < 64)
+            {
+                string p = Pascal(raw);
+                if (p.Length > 1 && p.Length < 64)
+                {
+                    return p;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    // BaseSchema/Subschema/Path: derive a name from the type's decomposed location — the last fragment
+    // segment (skipping a trailing numeric index, e.g. `allOf/0` → `AllOf`), else (root only) the
+    // document path's basename without its extension.
+    private static string? NameFromReference(JsonReferenceBuilder reference, bool allowPath)
+    {
+        if (reference.HasFragment)
+        {
+            ReadOnlySpan<char> frag = reference.Fragment;
+            int lastSlash = frag.LastIndexOf('/');
+            if (lastSlash >= 0 && lastSlash < frag.Length - 1)
+            {
+                if (char.IsDigit(frag[lastSlash + 1]))
+                {
+                    int prev = frag[..lastSlash].LastIndexOf('/');
+                    if (prev >= 0)
+                    {
+                        string keyword = Pascal(frag[(prev + 1)..lastSlash].ToString());
+                        if (keyword.Length > 0)
+                        {
+                            return keyword;
+                        }
+                    }
+                }
+
+                string seg = Pascal(frag[(lastSlash + 1)..].ToString());
+                if (seg.Length > 0)
+                {
+                    return seg;
+                }
+            }
+        }
+
+        if (allowPath && reference.HasPath)
+        {
+            ReadOnlySpan<char> path = reference.Path;
+            int lastSlash = path.LastIndexOf('/');
+            ReadOnlySpan<char> baseSeg = lastSlash >= 0 && lastSlash < path.Length - 1 ? path[(lastSlash + 1)..] : path;
+            int dot = baseSeg.LastIndexOf('.');
+            if (dot > 0)
+            {
+                baseSeg = baseSeg[..dot];
+            }
+
+            string p = Pascal(baseSeg.ToString());
+            if (p.Length > 0)
+            {
+                return p;
+            }
         }
 
         return null;
