@@ -27,10 +27,7 @@ TurnOnProducer producer = new(transport, ValidationMode.Basic);
 // The producer serializes and publishes to the channel.
 // The transport captures it AND delivers it to any active subscriber.
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-42");
 
 Console.WriteLine($"Published to channel, consumer received: {handler.ReceivedCount}");

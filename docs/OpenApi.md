@@ -121,10 +121,7 @@ internal sealed class PetsHandler : IApiPetsHandler
         ListPetsResult result = ListPetsResult.Ok(
             body: new Pets.Source((ref Pets.Builder b) =>
             {
-                b.AddItem(new Pet.Source((ref Pet.Builder pb) =>
-                {
-                    pb.Create(id: 1, name: "Luna"u8, tag: "cat"u8);
-                }));
+                b.AddItem(Pet.Build(id: 1, name: "Luna"u8, tag: "cat"u8));
             }),
             workspace: workspace);
 
@@ -209,11 +206,7 @@ The generator supports all OpenAPI 3.x parameter serialization styles:
 ```csharp
 await using ListPetsResponse response = await petsClient.ListPetsAsync(
     xRequestId: "req-abc-123"u8,
-    filter: new GetPetsFilter.Source((ref GetPetsFilter.Builder b) =>
-    {
-        b.AddProperty("status"u8, "available"u8);
-        b.AddProperty("breed"u8, "labrador"u8);
-    }),
+    filter: GetPetsFilter.Build(status: "available"u8, breed: "labrador"u8),
     tags: new GetPetsTags.Source((ref GetPetsTags.Builder b) =>
     {
         b.AddItem("dog"u8);
@@ -277,18 +270,15 @@ Object bodies use the generated `Builder` pattern. Required properties are manda
 ```csharp
 await using CreatePetResponse response = await client.CreatePetAsync(
     session_token: "admin-token"u8,
-    body: new NewPet.Source((ref NewPet.Builder b) =>
-    {
-        b.Create(
-            name: "Fido"u8,
-            status: "available"u8,
-            tags: new NewPet.JsonStringArray.Source(
-                (ref NewPet.JsonStringArray.Builder ab) =>
-                {
-                    ab.AddItem("friendly"u8);
-                    ab.AddItem("vaccinated"u8);
-                }));
-    }));
+    body: NewPet.Build(
+        name: "Fido"u8,
+        status: "available"u8,
+        tags: new NewPet.JsonStringArray.Source(
+            (ref NewPet.JsonStringArray.Builder ab) =>
+            {
+                ab.AddItem("friendly"u8);
+                ab.AddItem("vaccinated"u8);
+            })));
 ```
 
 ### JSON Bodies (Server)
@@ -305,10 +295,7 @@ public ValueTask<CreatePetResult> HandleCreatePetAsync(
 
     // Build a typed response
     return new(CreatePetResult.Created(
-        body: new Pet.Source((ref Pet.Builder pb) =>
-        {
-            pb.Create(id: nextId++, name: name.AsSpan(), status: status.AsSpan());
-        }),
+        body: Pet.Build(id: nextId++, name: name.AsSpan(), status: status.AsSpan()),
         workspace: workspace));
 }
 ```
@@ -320,13 +307,11 @@ URL-encoded forms use the same builder pattern — the generated code handles en
 ```csharp
 await using SubmitAdoptionApplicationResponse response =
     await adoptionClient.SubmitAdoptionApplicationAsync(
-        body: new PostAdoptionApplyBody.Source(
-            (ref PostAdoptionApplyBody.Builder b) =>
-                b.Create(
-                    applicantName: "Jane Smith"u8,
-                    email: "jane@example.com"u8,
-                    housingType: "house"u8,
-                    petId: "pet-42"u8)));
+        body: PostAdoptionApplyBody.Build(
+            applicantName: "Jane Smith"u8,
+            email: "jane@example.com"u8,
+            housingType: "house"u8,
+            petId: "pet-42"u8));
 // Wire format: applicantName=Jane+Smith&email=jane%40example.com&housingType=house&petId=pet-42
 ```
 
@@ -341,9 +326,7 @@ public ValueTask<SubmitAdoptionApplicationResult> HandleSubmitAdoptionApplicatio
     string email = (string)parameters.Body.Email;
 
     return new(SubmitAdoptionApplicationResult.Accepted(
-        body: new PostAdoptionApplyAccepted.Source(
-            (ref PostAdoptionApplyAccepted.Builder rb) =>
-                rb.Create(applicationId: "app-42"u8, status: "received"u8)),
+        body: PostAdoptionApplyAccepted.Build(applicationId: "app-42"u8, status: "received"u8),
         workspace: workspace));
 }
 ```
@@ -421,8 +404,7 @@ await foreach (ParsedJsonDocument<ActivityEvent> doc in activityResponse.Enumera
 ```csharp
 await using UploadPetPhotoResponse uploadResponse = await photosClient.UploadPetPhotoAsync(
     petId: "pet-1"u8,
-    metadata: new PhotoMetadata.Source((ref PhotoMetadata.Builder b) =>
-        b.Create(petId: "pet-1"u8, description: "At the park"u8)),
+    metadata: PhotoMetadata.Build(petId: "pet-1"u8, description: "At the park"u8),
     file: new BinaryPartData(
         WriteContentAsync: (stream, ct) => { stream.Write(photoBytes); return default; },
         ContentType: "image/png",
@@ -1132,10 +1114,7 @@ await using HttpClientTransport transport = new(httpClient);
 await using ApiWebhooksClient client = new(transport);
 
 await using PetAdoptedWebhookResponse response = await client.PetAdoptedWebhookAsync(
-    body: new PetAdoptedEvent.Source((ref PetAdoptedEvent.Builder b) =>
-    {
-        b.Create(petId: "pet-123"u8, adopterId: "user-456"u8);
-    }));
+    body: PetAdoptedEvent.Build(petId: "pet-123"u8, adopterId: "user-456"u8));
 ```
 
 ### Runtime Expressions and Context
@@ -1157,10 +1136,7 @@ The generated `Response` struct captures all the context needed to follow links 
 // runtime expression bindings from your OpenAPI spec automatically.
 // After creating a subscription, the response carries context for callbacks.
 await using CreateSubscriptionResponse response = await client.CreateSubscriptionAsync(
-    body: new Subscription.Source((ref Subscription.Builder b) =>
-    {
-        b.Create(callbackUrl: "https://my-app.example.com/hooks"u8, events: ...);
-    }));
+    body: Subscription.Build(callbackUrl: "https://my-app.example.com/hooks"u8, events: ...));
 
 // response.Links gives typed access to linked/callback operations.
 // Runtime expressions like $request.body#/callbackUrl are resolved automatically
@@ -1178,10 +1154,7 @@ When a response declares links, the generated `Response` struct provides typed n
 ```csharp
 // Create a pet — the 201 response links to showPetById
 await using CreatePetResponse response = await client.CreatePetAsync(
-    body: new NewPet.Source((ref NewPet.Builder b) =>
-    {
-        b.Create(name: "Luna"u8, tag: "cat"u8);
-    }));
+    body: NewPet.Build(name: "Luna"u8, tag: "cat"u8));
 
 // Follow the link — petId is automatically populated from $response.body#/id
 response.MatchResult(

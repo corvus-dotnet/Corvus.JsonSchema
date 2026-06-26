@@ -61,7 +61,7 @@ public ValueTask<CreatePetResult> HandleCreatePetAsync(
 
     // Return typed result — generated code handles serialization
     return ValueTask.FromResult(CreatePetResult.Created(
-        new Pet.Source((ref Pet.Builder b) => { b.Create(id: 1, name: name, status: "available"u8); }),
+        Pet.Build(id: 1, name: name, status: "available"u8),
         workspace));
 }
 ```

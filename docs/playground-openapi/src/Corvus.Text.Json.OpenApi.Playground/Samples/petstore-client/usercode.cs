@@ -43,10 +43,7 @@ Console.WriteLine();
 // ── 2. Create a pet (POST /pets) ─────────────────────────────────────────────
 Console.WriteLine("2. Creating a pet...");
 await using CreatePetResponse createResponse = await client.CreatePetAsync(
-    body: new NewPet.Source(static (ref NewPet.Builder b) =>
-    {
-        b.Create(name: "Fido"u8, tag: "dog"u8);
-    }));
+    body: NewPet.Build(name: "Fido"u8, tag: "dog"u8));
 
 createResponse.MatchResult(
     matchCreated: createdPet =>

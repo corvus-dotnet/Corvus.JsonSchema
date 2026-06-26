@@ -47,10 +47,7 @@ The generated client handles all the serialization styles defined in OpenAPI 3.2
 // You write typed builders...
 await petsClient.ListPetsAsync(
     xRequestId: "req-abc-123"u8,
-    filter: new GetPetsFilter.Source((ref GetPetsFilter.Builder b) =>
-    {
-        b.Create(status: "available"u8, breed: "labrador"u8, minAge: 1);
-    }),
+    filter: GetPetsFilter.Build(status: "available"u8, breed: "labrador"u8, minAge: 1),
     tags: new GetPetsTags.Source((ref GetPetsTags.Builder b) =>
     {
         b.AddItem("dog"u8);
@@ -109,15 +106,12 @@ await downloadResponse.MatchResult<ValueTask>(
 URL-encoded and multipart bodies use the same typed builder pattern as JSON — the generated code handles encoding:
 
 ```csharp
-// The builder mirrors the schema — no manual encoding needed
-body: new PostAdoptionApplyBody.Source((ref PostAdoptionApplyBody.Builder b) =>
-{
-    b.Create(
-        applicantName: "Jane Smith"u8,
-        email: "jane@example.com"u8,
-        housingType: "house"u8,
-        petId: "pet-42"u8);
-})
+// The factory mirrors the schema — no manual encoding needed
+body: PostAdoptionApplyBody.Build(
+    applicantName: "Jane Smith"u8,
+    email: "jane@example.com"u8,
+    housingType: "house"u8,
+    petId: "pet-42"u8)
 // Generated output: applicantName=Jane+Smith&email=jane%40example.com&housingType=house&petId=pet-42
 ```
 

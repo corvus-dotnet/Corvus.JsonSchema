@@ -95,13 +95,9 @@ internal sealed class PetsHandler : IApiPetsHandler
             {
                 foreach ((long id, string name, string? tag) in petsToReturn)
                 {
-                    b.AddItem(new Pet.Source((ref Pet.Builder pb) =>
-                    {
-                        if (tag is string t)
-                            pb.Create(id: id, name: name, tag: t);
-                        else
-                            pb.Create(id: id, name: name);
-                    }));
+                    b.AddItem(tag is string t
+                        ? Pet.Build(id: id, name: name, tag: t)
+                        : Pet.Build(id: id, name: name));
                 }
             }),
             workspace: workspace,
@@ -185,13 +181,13 @@ Each Result struct has factory methods matching the spec's response definitions:
 ```csharp
 // 201 Created with a typed body
 return ValueTask.FromResult(CreatePetResult.Created(
-    body: new Pet.Source((ref Pet.Builder b) => { b.Create(id: 1, name: "Fido"u8); }),
+    body: Pet.Build(id: 1, name: "Fido"u8),
     workspace: workspace));
 
 // 404 Not Found with custom error
 return ValueTask.FromResult(ShowPetByIdResult.Default(
     statusCode: 404,
-    body: new Error.Source((ref Error.Builder b) => { b.Create(code: 404, message: "Not found"u8); }),
+    body: Error.Build(code: 404, message: "Not found"u8),
     workspace: workspace));
 
 // 200 OK with response headers (e.g., pagination link)
@@ -239,10 +235,7 @@ public async ValueTask<ListPetsResult> HandleListPetsAsync(
         {
             foreach (PetEntity pet in pets)
             {
-                b.AddItem(new Pet.Source((ref Pet.Builder pb) =>
-                {
-                    pb.Create(id: pet.Id, name: pet.Name);
-                }));
+                b.AddItem(Pet.Build(id: pet.Id, name: pet.Name));
             }
         }),
         workspace: workspace);
@@ -258,12 +251,9 @@ if (!IsValidPetName(name))
 {
     return ValueTask.FromResult(CreatePetResult.Default(
         statusCode: 422,  // Unprocessable Entity
-        body: new Error.Source((ref Error.Builder b) =>
-        {
-            b.Create(
-                code: 422,
-                message: $"Invalid pet name: '{name}'. Must be 3-50 characters, alphanumeric only."u8);
-        }),
+        body: Error.Build(
+            code: 422,
+            message: $"Invalid pet name: '{name}'. Must be 3-50 characters, alphanumeric only."u8),
         workspace: workspace));
 }
 ```

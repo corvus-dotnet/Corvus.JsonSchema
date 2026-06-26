@@ -106,18 +106,9 @@ internal sealed class PetsHandler : IApiPetsHandler
             {
                 foreach ((long id, string name, string? tag) in petsToReturn)
                 {
-                    // Each array item is built with its own typed builder
-                    b.AddItem(new Pet.Source((ref Pet.Builder pb) =>
-                    {
-                        if (tag is string t)
-                        {
-                            pb.Create(id: id, name: name, tag: t);
-                        }
-                        else
-                        {
-                            pb.Create(id: id, name: name);
-                        }
-                    }));
+                    b.AddItem(tag is string t
+                        ? Pet.Build(id: id, name: name, tag: t)
+                        : Pet.Build(id: id, name: name));
                 }
             }),
             workspace: workspace,
@@ -152,17 +143,9 @@ internal sealed class PetsHandler : IApiPetsHandler
 
         // Return 201 Created with the full Pet (including the generated ID)
         CreatePetResult result = CreatePetResult.Created(
-            body: new Pet.Source((ref Pet.Builder b) =>
-            {
-                if (tag is string t)
-                {
-                    b.Create(id: id, name: name, tag: t);
-                }
-                else
-                {
-                    b.Create(id: id, name: name);
-                }
-            }),
+            body: tag is string t
+                ? Pet.Build(id: id, name: name, tag: t)
+                : Pet.Build(id: id, name: name),
             workspace: workspace);
 
         return ValueTask.FromResult(result);
@@ -191,17 +174,9 @@ internal sealed class PetsHandler : IApiPetsHandler
                 Console.WriteLine($"    [Pets] Found pet {found.Id}: {found.Name}");
 
                 return ValueTask.FromResult(ShowPetByIdResult.Ok(
-                    body: new Pet.Source((ref Pet.Builder b) =>
-                    {
-                        if (found.Tag is string t)
-                        {
-                            b.Create(id: found.Id, name: found.Name, tag: t);
-                        }
-                        else
-                        {
-                            b.Create(id: found.Id, name: found.Name);
-                        }
-                    }),
+                    body: found.Tag is string t
+                        ? Pet.Build(id: found.Id, name: found.Name, tag: t)
+                        : Pet.Build(id: found.Id, name: found.Name),
                     workspace: workspace));
             }
         }
@@ -210,10 +185,7 @@ internal sealed class PetsHandler : IApiPetsHandler
         Console.WriteLine($"    [Pets] Pet '{petId}' was not found");
         return ValueTask.FromResult(ShowPetByIdResult.Default(
             statusCode: 404,
-            body: new Error.Source((ref Error.Builder b) =>
-            {
-                b.Create(code: 404, message: $"Pet '{petId}' not found");
-            }),
+            body: Error.Build(code: 404, message: $"Pet '{petId}' not found"),
             workspace: workspace));
     }
 }

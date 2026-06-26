@@ -150,15 +150,12 @@ internal sealed class PetsHandler : IApiPetsHandler
             {
                 foreach (PetRecord p in results)
                 {
-                    b.AddItem(new Pet.Source((ref Pet.Builder pb) =>
-                    {
-                        pb.Create(
-                            id: p.Id,
-                            name: p.Name,
-                            status: p.Status,
-                            breed: p.Breed,
-                            age: p.Age);
-                    }));
+                    b.AddItem(Pet.Build(
+                        id: p.Id,
+                        name: p.Name,
+                        status: p.Status,
+                        breed: p.Breed,
+                        age: p.Age));
                 }
             }),
             workspace: workspace,
@@ -178,10 +175,7 @@ internal sealed class PetsHandler : IApiPetsHandler
         if (parameters.SessionToken.IsUndefined() || !IsValidSession((string)parameters.SessionToken))
         {
             return ValueTask.FromResult(CreatePetResult.Unauthorized(
-                new Error.Source((ref Error.Builder b) =>
-                {
-                    b.Create(code: 401, message: "Invalid or expired session token"u8);
-                }),
+                Error.Build(code: 401, message: "Invalid or expired session token"u8),
                 workspace));
         }
 
@@ -198,15 +192,12 @@ internal sealed class PetsHandler : IApiPetsHandler
         this.pets.Add(new PetRecord(id, name, status, breed, age, []));
 
         return ValueTask.FromResult(CreatePetResult.Created(
-            new Pet.Source((ref Pet.Builder b) =>
-            {
-                b.Create(
-                    id: id,
-                    name: name,
-                    status: status,
-                    breed: breed,
-                    age: age);
-            }),
+            Pet.Build(
+                id: id,
+                name: name,
+                status: status,
+                breed: breed,
+                age: age),
             workspace));
     }
 
@@ -230,10 +221,7 @@ internal sealed class PetsHandler : IApiPetsHandler
             {
                 foreach (PetRecord p in found)
                 {
-                    b.AddItem(new Pet.Source((ref Pet.Builder pb) =>
-                    {
-                        pb.Create(id: p.Id, name: p.Name, status: p.Status);
-                    }));
+                    b.AddItem(Pet.Build(id: p.Id, name: p.Name, status: p.Status));
                 }
             }),
             workspace: workspace));
@@ -252,24 +240,18 @@ internal sealed class PetsHandler : IApiPetsHandler
             if (found is not null)
             {
                 return ValueTask.FromResult(ShowPetByIdResult.Ok(
-                    new Pet.Source((ref Pet.Builder b) =>
-                    {
-                        b.Create(
-                            id: found.Id,
-                            name: found.Name,
-                            status: found.Status,
-                            breed: found.Breed,
-                            age: found.Age);
-                    }),
+                    Pet.Build(
+                        id: found.Id,
+                        name: found.Name,
+                        status: found.Status,
+                        breed: found.Breed,
+                        age: found.Age),
                     workspace));
             }
         }
 
         return ValueTask.FromResult(ShowPetByIdResult.NotFound(
-            new Error.Source((ref Error.Builder b) =>
-            {
-                b.Create(code: 404, message: "Pet not found"u8);
-            }),
+            Error.Build(code: 404, message: "Pet not found"u8),
             workspace));
     }
 
@@ -299,10 +281,7 @@ internal sealed class PhotosHandler : IApiPhotosHandler
         if (parameters.SessionToken.IsUndefined() || !((string)parameters.SessionToken).StartsWith("sess_"))
         {
             return ValueTask.FromResult(UploadPetPhotoResult.Unauthorized(
-                new Error.Source((ref Error.Builder b) =>
-                {
-                    b.Create(code: 401, message: "Authentication required"u8);
-                }),
+                Error.Build(code: 401, message: "Authentication required"u8),
                 workspace));
         }
 
@@ -319,15 +298,12 @@ internal sealed class PhotosHandler : IApiPhotosHandler
         this.photos[photoId] = new(photoId, petId, "image/png", []);
 
         return ValueTask.FromResult(UploadPetPhotoResult.Created(
-            new PhotoMetadata.Source((ref PhotoMetadata.Builder b) =>
-            {
-                b.Create(
-                    petId: petId,
-                    photoId: photoId,
-                    uploadedAt: DateTime.UtcNow.ToString("O"),
-                    caption: caption,
-                    isPrimary: isPrimary);
-            }),
+            PhotoMetadata.Build(
+                petId: petId,
+                photoId: photoId,
+                uploadedAt: DateTime.UtcNow.ToString("O"),
+                caption: caption,
+                isPrimary: isPrimary),
             workspace));
     }
 
@@ -341,10 +317,7 @@ internal sealed class PhotosHandler : IApiPhotosHandler
         if (!this.photos.TryGetValue(photoId, out PhotoRecord? photo))
         {
             return ValueTask.FromResult(DownloadPhotoResult.NotFound(
-                new Error.Source((ref Error.Builder b) =>
-                {
-                    b.Create(code: 404, message: "Photo not found"u8);
-                }),
+                Error.Build(code: 404, message: "Photo not found"u8),
                 workspace));
         }
 
@@ -372,10 +345,7 @@ internal sealed class ChatHandler : IApiChatHandler
         if (parameters.SessionToken.IsUndefined() || !((string)parameters.SessionToken).StartsWith("sess_"))
         {
             return ValueTask.FromResult(StartVetChatResult.Unauthorized(
-                new Error.Source((ref Error.Builder b) =>
-                {
-                    b.Create(code: 401, message: "Authentication required for chat"u8);
-                }),
+                Error.Build(code: 401, message: "Authentication required for chat"u8),
                 workspace));
         }
 
@@ -442,13 +412,10 @@ internal sealed class AdoptionHandler : IApiAdoptionHandler
         string appId = $"APP-{Interlocked.Increment(ref this.applicationCounter):D4}";
 
         return ValueTask.FromResult(SubmitAdoptionApplicationResult.Accepted(
-            new PostAdoptionApplyAccepted.Source((ref PostAdoptionApplyAccepted.Builder b) =>
-            {
-                b.Create(
-                    applicationId: appId,
-                    status: "pending_review"u8,
-                    estimatedReviewDays: 5);
-            }),
+            PostAdoptionApplyAccepted.Build(
+                applicationId: appId,
+                status: "pending_review"u8,
+                estimatedReviewDays: 5),
             workspace));
     }
 }

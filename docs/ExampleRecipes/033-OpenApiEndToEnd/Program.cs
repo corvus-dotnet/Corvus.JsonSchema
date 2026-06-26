@@ -73,16 +73,15 @@ Console.WriteLine("  → Body: {\"name\":\"Luna\",\"status\":\"available\",\"tag
 
 await using (CreatePetResponse createResponse = await petsClient.CreatePetAsync(
     session_token: "admin-token-123"u8,
-    body: new Petstore.EndToEnd.Client.Models.NewPet.Source((ref Petstore.EndToEnd.Client.Models.NewPet.Builder b) =>
-        b.Create(
-            name: "Luna"u8,
-            status: "available"u8,
-            tags: new Petstore.EndToEnd.Client.Models.NewPet.JsonStringArray.Source(
-                static (ref Petstore.EndToEnd.Client.Models.NewPet.JsonStringArray.Builder ab) =>
-                {
-                    ab.AddItem("friendly"u8);
-                    ab.AddItem("vaccinated"u8);
-                })))))
+    body: Petstore.EndToEnd.Client.Models.NewPet.Build(
+        name: "Luna"u8,
+        status: "available"u8,
+        tags: new Petstore.EndToEnd.Client.Models.NewPet.JsonStringArray.Source(
+            static (ref Petstore.EndToEnd.Client.Models.NewPet.JsonStringArray.Builder ab) =>
+            {
+                ab.AddItem("friendly"u8);
+                ab.AddItem("vaccinated"u8);
+            }))))
 {
     string createdPet = createResponse.MatchResult<string>(
         matchCreated: static (pet) =>
@@ -128,11 +127,7 @@ await using (ListPetsResponse listResponse = await petsClient.ListPetsAsync(
             ab.AddItem("friendly"u8);
             ab.AddItem("vaccinated"u8);
         }),
-    filter: new Petstore.EndToEnd.Client.Models.GetPetsFilter.Source(
-        static (ref Petstore.EndToEnd.Client.Models.GetPetsFilter.Builder ob) =>
-        {
-            ob.AddProperty("status"u8, "available"u8);
-        })))
+    filter: Petstore.EndToEnd.Client.Models.GetPetsFilter.Build(status: "available"u8)))
 {
     listResponse.MatchResult<bool>(
         matchOk: (pets) =>
@@ -228,13 +223,11 @@ Console.WriteLine("  → POST /adoption/apply  (application/x-www-form-urlencode
 Console.WriteLine("  → Form: applicantName=Jane+Doe&email=jane@example.com&petId=pet-1&housingType=house");
 
 await using (SubmitAdoptionApplicationResponse adoptionResponse = await adoptionClient.SubmitAdoptionApplicationAsync(
-    body: new Petstore.EndToEnd.Client.Models.PostAdoptionApplyBody.Source(
-        (ref Petstore.EndToEnd.Client.Models.PostAdoptionApplyBody.Builder b) =>
-            b.Create(
-                applicantName: "Jane Doe"u8,
-                email: "jane@example.com"u8,
-                housingType: "house"u8,
-                petId: "pet-1"u8))))
+    body: Petstore.EndToEnd.Client.Models.PostAdoptionApplyBody.Build(
+        applicantName: "Jane Doe"u8,
+        email: "jane@example.com"u8,
+        housingType: "house"u8,
+        petId: "pet-1"u8)))
 {
     adoptionResponse.MatchResult<bool>(
         matchAccepted: static (body) =>
@@ -265,9 +258,7 @@ Console.WriteLine("  → POST /pets/pet-1/chat  (Accept: text/event-stream)");
 await using (StartVetChatResponse chatResponse = await chatClient.StartVetChatAsync(
     petId: "pet-1"u8,
     session_token: "admin-token-123"u8,
-    body: new Petstore.EndToEnd.Client.Models.PostPetsByPetIdChatBody.Source(
-        static (ref Petstore.EndToEnd.Client.Models.PostPetsByPetIdChatBody.Builder b) =>
-            b.Create(message: "Bella has been coughing since this morning. What should I do?"u8))))
+    body: Petstore.EndToEnd.Client.Models.PostPetsByPetIdChatBody.Build(message: "Bella has been coughing since this morning. What should I do?"u8)))
 {
     Console.WriteLine($"  ← {chatResponse.StatusCode} text/event-stream");
 
@@ -427,22 +418,18 @@ internal sealed class PetstoreHandler
                 {
                     foreach (var p in filtered)
                     {
-                        ab.AddItem(new Petstore.EndToEnd.Server.Models.Pet.Source(
-                            (ref Petstore.EndToEnd.Server.Models.Pet.Builder pb) =>
-                            {
-                                pb.Create(
-                                    id: long.Parse(p.Id.Replace("pet-", string.Empty)),
-                                    name: p.Name.AsSpan(),
-                                    status: p.Status.AsSpan(),
-                                    tags: new Petstore.EndToEnd.Server.Models.Pet.TagsJsonStArray.Source(
-                                        (ref Petstore.EndToEnd.Server.Models.Pet.TagsJsonStArray.Builder tb) =>
-                                        {
-                                            foreach (string t in p.Tags)
-                                            {
-                                                tb.AddItem(t.AsSpan());
-                                            }
-                                        }));
-                            }));
+                        ab.AddItem(Petstore.EndToEnd.Server.Models.Pet.Build(
+                            id: long.Parse(p.Id.Replace("pet-", string.Empty)),
+                            name: p.Name.AsSpan(),
+                            status: p.Status.AsSpan(),
+                            tags: new Petstore.EndToEnd.Server.Models.Pet.TagsJsonStArray.Source(
+                                (ref Petstore.EndToEnd.Server.Models.Pet.TagsJsonStArray.Builder tb) =>
+                                {
+                                    foreach (string t in p.Tags)
+                                    {
+                                        tb.AddItem(t.AsSpan());
+                                    }
+                                })));
                     }
                 }),
             workspace: workspace,
@@ -467,14 +454,10 @@ internal sealed class PetstoreHandler
         pets.Add((id, name, status, []));
 
         CreatePetResult result = CreatePetResult.Created(
-            body: new Petstore.EndToEnd.Server.Models.Pet.Source(
-                (ref Petstore.EndToEnd.Server.Models.Pet.Builder pb) =>
-                {
-                    pb.Create(
-                        id: long.Parse(id.Replace("pet-", string.Empty)),
-                        name: name.AsSpan(),
-                        status: status.AsSpan());
-                }),
+            body: Petstore.EndToEnd.Server.Models.Pet.Build(
+                id: long.Parse(id.Replace("pet-", string.Empty)),
+                name: name.AsSpan(),
+                status: status.AsSpan()),
             workspace: workspace);
 
         Console.WriteLine($"       [Server]   → Created pet {id}");
@@ -502,30 +485,24 @@ internal sealed class PetstoreHandler
         {
             Console.WriteLine("       [Server]   → Not found");
             return new(ShowPetByIdResult.NotFound(
-                body: new Petstore.EndToEnd.Server.Models.Error.Source(
-                    static (ref Petstore.EndToEnd.Server.Models.Error.Builder eb) =>
-                        eb.Create(code: 404, message: "Pet not found"u8)),
+                body: Petstore.EndToEnd.Server.Models.Error.Build(code: 404, message: "Pet not found"u8),
                 workspace: workspace));
         }
 
         Console.WriteLine($"       [Server]   → Found: {found.Name}");
         return new(ShowPetByIdResult.Ok(
-            body: new Petstore.EndToEnd.Server.Models.Pet.Source(
-                (ref Petstore.EndToEnd.Server.Models.Pet.Builder pb) =>
-                {
-                    pb.Create(
-                        id: long.Parse(found.Id.Replace("pet-", string.Empty)),
-                        name: found.Name.AsSpan(),
-                        status: found.Status.AsSpan(),
-                        tags: new Petstore.EndToEnd.Server.Models.Pet.TagsJsonStArray.Source(
-                            (ref Petstore.EndToEnd.Server.Models.Pet.TagsJsonStArray.Builder tb) =>
-                            {
-                                foreach (string t in found.Tags)
-                                {
-                                    tb.AddItem(t.AsSpan());
-                                }
-                            }));
-                }),
+            body: Petstore.EndToEnd.Server.Models.Pet.Build(
+                id: long.Parse(found.Id.Replace("pet-", string.Empty)),
+                name: found.Name.AsSpan(),
+                status: found.Status.AsSpan(),
+                tags: new Petstore.EndToEnd.Server.Models.Pet.TagsJsonStArray.Source(
+                    (ref Petstore.EndToEnd.Server.Models.Pet.TagsJsonStArray.Builder tb) =>
+                    {
+                        foreach (string t in found.Tags)
+                        {
+                            tb.AddItem(t.AsSpan());
+                        }
+                    })),
             workspace: workspace));
     }
 
@@ -535,9 +512,7 @@ internal sealed class PetstoreHandler
         UploadPetPhotoParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken)
     {
         return new(UploadPetPhotoResult.Created(
-            body: new Petstore.EndToEnd.Server.Models.PhotoMetadata.Source(
-                static (ref Petstore.EndToEnd.Server.Models.PhotoMetadata.Builder pb) =>
-                    pb.Create(petId: "pet-1"u8, photoId: "photo-001"u8, uploadedAt: "2024-01-15T10:30:00Z"u8)),
+            body: Petstore.EndToEnd.Server.Models.PhotoMetadata.Build(petId: "pet-1"u8, photoId: "photo-001"u8, uploadedAt: "2024-01-15T10:30:00Z"u8),
             workspace: workspace));
     }
 
@@ -545,9 +520,7 @@ internal sealed class PetstoreHandler
         DownloadPhotoParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken)
     {
         return new(DownloadPhotoResult.NotFound(
-            body: new Petstore.EndToEnd.Server.Models.Error.Source(
-                static (ref Petstore.EndToEnd.Server.Models.Error.Builder eb) =>
-                    eb.Create(code: 404, message: "Photo not found"u8)),
+            body: Petstore.EndToEnd.Server.Models.Error.Build(code: 404, message: "Photo not found"u8),
             workspace: workspace));
     }
 
@@ -600,12 +573,10 @@ internal sealed class PetstoreHandler
         Console.WriteLine($"       [Server]   body = {parameters.Body}");
 
         SubmitAdoptionApplicationResult result = SubmitAdoptionApplicationResult.Accepted(
-            body: new Petstore.EndToEnd.Server.Models.PostAdoptionApplyAccepted.Source(
-                static (ref Petstore.EndToEnd.Server.Models.PostAdoptionApplyAccepted.Builder rb) =>
-                    rb.Create(
-                        applicationId: "app-42"u8,
-                        status: "received"u8,
-                        estimatedReviewDays: 5)),
+            body: Petstore.EndToEnd.Server.Models.PostAdoptionApplyAccepted.Build(
+                applicationId: "app-42"u8,
+                status: "received"u8,
+                estimatedReviewDays: 5),
             workspace: workspace);
 
         Console.WriteLine("       [Server]   → Accepted (app-42)");
