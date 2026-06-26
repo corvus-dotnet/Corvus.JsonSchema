@@ -340,5 +340,17 @@ ordinal — so no collation declaration is needed (unlike the SQL trio). Cosmos 
 `global::Corvus.Text.Json.Arazzo.Durability.JsonString`. Container conformance: **Cosmos 12/12, Mongo 12/12, AzureStorage
 12/12** (each incl. keyset no-gaps/dupes + malformed-token).
 
-**Remaining backends:** Redis/Nats (client-sorted scan + keyset+limit, as in the runs corpus) — each with container
-conformance.
+**KV backends (Redis, NatsJetStream) — done.** A KV store has no server-side range query, so — as in the runs corpus — the
+keyset order is materialised client-side over the *id index* (cheap), and only the page's **documents** are fetched (one
+beyond, to look ahead), never every registration's JSON. Redis: `SMEMBERS` the id set, sort ordinal, skip past the cursor,
+`GET` only the page's per-runner keys. Nats: each KV key is `Base64Url(runnerId)`, so the id (hence the order) is recovered
+from the key without fetching the value — list keys, decode, sort ordinal, skip past the cursor, then `GET` only the page's
+entries. Both sort ordinal (== the in-memory pager's order). Container conformance: **Redis 12/12, NatsJetStream 12/12**
+(each incl. keyset no-gaps/dupes + malformed-token).
+
+**`listRunners` Phase 2 — COMPLETE across all 10 backends.** InMemory (the reference in-memory pager) + Sqlite/Postgres/
+MySql/SqlServer (SQL keyset, byte-ordinal collation) + Cosmos/Mongo/AzureStorage (native range) + Redis/Nats (client-sorted
+id index, page-only document fetch). Every backend pages by ordinal `runnerId`, validated by the shared
+`RunnerRegistryConformance` (12 tests each). **Next Phase 2 stores:** `listSecurityRules`/`listSecurityBindings` and
+`listAccessRequests` — their keys live inside the JSON blob, so each needs a key-extraction column (SQL) / queryable field
+(doc) / id-index decode (KV) before the same keyset shape applies.
