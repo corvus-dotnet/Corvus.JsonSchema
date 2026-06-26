@@ -1603,7 +1603,25 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             return true;
         }
 
-        return SchemaTypes(td).Contains("object");
+        if (SchemaTypes(td).Contains("object"))
+        {
+            return true;
+        }
+
+        // allOf/dependentSchemas merge object properties into the parent as COMPOSED declarations; a type
+        // carrying them is object-like even with no direct `properties` (e.g. allOf:[{props:x},{props:y}]
+        // -> `interface { x; y }`, mirroring the C# engine's merged accessors — it was falling through to
+        // `unknown`). Gate on Composed (not required-only Local names) so a constraint-only schema that
+        // also admits non-objects isn't mis-claimed as an object.
+        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        {
+            if (p.LocalOrComposed == LocalOrComposed.Composed)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool IsEnum(TypeDeclaration td)
