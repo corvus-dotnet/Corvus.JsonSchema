@@ -1,0 +1,4 @@
+{ "title": "Payment", "type": "object", "required": ["method"],
+  "properties": { "method": { "enum": ["card", "cash"] }, "cardNumber": { "type": "string" } },
+  "if": { "properties": { "method": { "const": "card" } } },
+  "then": { "required": ["cardNumber"] } }

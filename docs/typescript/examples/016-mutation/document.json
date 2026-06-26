@@ -1,0 +1,6 @@
+{ "title": "Document", "type": "object", "required": ["title"],
+  "properties": {
+    "title": { "type": "string" },
+    "owner": { "title": "Owner", "type": "object", "properties": { "name": { "type": "string" }, "email": { "type": "string" } } },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "version": { "type": "integer" } } }

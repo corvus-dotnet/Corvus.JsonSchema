@@ -1,0 +1,2 @@
+{ "title": "Grid", "type": "object", "required": ["cells"],
+  "properties": { "cells": { "type": "array", "items": { "type": "array", "items": { "type": "number" } } } } }

@@ -1,0 +1,5 @@
+{ "title": "SmallBatch", "type": "object",
+  "$defs": { "batch": { "title": "Batch", "type": "object", "required": ["size"],
+      "properties": { "size": { "type": "integer", "minimum": 1 } } } },
+  "allOf": [ { "$ref": "#/$defs/batch" } ],
+  "properties": { "size": { "maximum": 100 } } }

@@ -1,0 +1,8 @@
+{ "title": "Event",
+  "oneOf": [
+    { "title": "Click", "type": "object", "required": ["type", "x", "y"],
+      "properties": { "type": { "const": "click" }, "x": { "type": "number" }, "y": { "type": "number" } } },
+    { "title": "KeyPress", "type": "object", "required": ["type", "key"],
+      "properties": { "type": { "const": "keypress" }, "key": { "type": "string" } } },
+    { "title": "Scroll", "type": "object", "required": ["type", "delta"],
+      "properties": { "type": { "const": "scroll" }, "delta": { "type": "number" } } } ] }

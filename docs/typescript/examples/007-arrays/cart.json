@@ -1,0 +1,4 @@
+{ "title": "Cart", "type": "object", "required": ["items"],
+  "properties": { "items": { "type": "array", "minItems": 1,
+      "items": { "title": "LineItem", "type": "object", "required": ["sku", "qty"],
+        "properties": { "sku": { "type": "string" }, "qty": { "type": "integer", "minimum": 1 } } } } } }
