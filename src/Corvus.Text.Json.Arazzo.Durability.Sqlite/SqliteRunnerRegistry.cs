@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
-using System.Text;
 using Microsoft.Data.Sqlite;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Sqlite;
@@ -223,9 +221,9 @@ public sealed class SqliteRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     {
         int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
 
-        // Decode the keyset cursor from the request's page token; the runner id reifies to a string only here, at the ADO
+        // Decode the keyset cursor from the request's page token; the runner id reifies to a string only at the ADO
         // TEXT-parameter boundary the driver forces (a genuine DB-param leaf) — undefined token = first page.
-        string? after = DecodeCursor(pageToken);
+        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
 
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -302,30 +300,6 @@ public sealed class SqliteRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         finally
         {
             this.gate.Release();
-        }
-    }
-
-    // Decodes the keyset cursor from the request's page token (its JSON value): base64url straight over the request UTF-8
-    // into a pooled buffer, the runner id reified to a managed string only for the ADO @after parameter (TEXT-param leaf).
-    // An undefined or empty token is the first page (null); a malformed token throws FormatException (rejected, not reset).
-    private static string? DecodeCursor(JsonString pageToken)
-    {
-        if (!pageToken.IsNotUndefined())
-        {
-            return null;
-        }
-
-        using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
-        byte[] buffer = ArrayPool<byte>.Shared.Rent(RunnerRegistryContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
-        try
-        {
-            return RunnerRegistryContinuationToken.TryDecode(tokenUtf8.Span, buffer, out ReadOnlySpan<byte> runnerIdUtf8)
-                ? Encoding.UTF8.GetString(runnerIdUtf8)
-                : null;
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(buffer);
         }
     }
 
