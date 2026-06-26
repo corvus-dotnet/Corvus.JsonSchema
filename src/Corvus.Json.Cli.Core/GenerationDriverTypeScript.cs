@@ -83,7 +83,15 @@ public static class GenerationDriverTypeScript
         }
 
         ProgressTask currentTask = context.AddTask("Generating TypeScript for schema.");
-        TypeScriptLanguageProvider provider = TypeScriptLanguageProvider.DefaultWithOptions(new TypeScriptLanguageProvider.Options(AlwaysAssertFormat: false));
+
+        // Where generated modules import the shared runtime from. Relative (default) re-emits the runtime
+        // alongside each module (self-contained); a bare specifier (e.g. "@corvus/json-runtime") imports the
+        // installed package and skips re-emitting it. (TODO: surface as a first-class CLI option — gap G2.)
+        string runtimeModule = Environment.GetEnvironmentVariable("CORVUS_TS_RUNTIME_MODULE") is { Length: > 0 } rm
+            ? rm
+            : "./corvus-runtime.js";
+        TypeScriptLanguageProvider provider = TypeScriptLanguageProvider.DefaultWithOptions(
+            new TypeScriptLanguageProvider.Options(AlwaysAssertFormat: false, RuntimeModuleSpecifier: runtimeModule));
         IReadOnlyCollection<GeneratedCodeFile> generatedCode = typeBuilder.GenerateCodeUsing(provider, typesToGenerate, CancellationToken.None);
 
         // Append a stable `evaluateRoot` entry point (aliases the root type's validator) to the types module.

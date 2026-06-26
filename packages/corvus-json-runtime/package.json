@@ -1,0 +1,12 @@
+{
+  "name": "@corvus/json-runtime",
+  "version": "0.1.0",
+  "description": "Shared runtime for Corvus.Text.Json-generated TypeScript validators and mutators.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
+  "files": ["dist"],
+  "scripts": { "build": "tsc", "regenerate": "bash regenerate.sh" },
+  "peerDependencies": { "lossless-json": "^4", "@js-temporal/polyfill": "^0.5", "tr46": "^5" },
+  "devDependencies": { "typescript": "^5.4", "lossless-json": "^4", "@js-temporal/polyfill": "^0.5", "tr46": "^5" }
+}

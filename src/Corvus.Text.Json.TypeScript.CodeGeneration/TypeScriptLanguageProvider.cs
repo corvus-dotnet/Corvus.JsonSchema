@@ -857,6 +857,11 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     // reserved against them and renamed around any collision (like type and union-guard names).
     private readonly HashSet<string> moduleTopLevelNames = new(StringComparer.Ordinal);
 
+    // Where generated modules import the shared runtime from. A relative specifier ("./corvus-runtime.js")
+    // means re-emit the runtime alongside the module (self-contained); a bare specifier
+    // ("@corvus/json-runtime") means import the installed package and DON'T re-emit it.
+    private string runtimeModuleSpecifier = "./corvus-runtime.js";
+
     // The shared runtime module (@corvus/json-runtime in production): emitted ONCE, imported by every
     // generated module. Assembled from the helper blocks with each top-level declaration exported, and
     // the third-party imports (lossless-json for source-text numbers, Temporal + tr46 for formats) at top.
@@ -925,11 +930,15 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 
     // Options for the TypeScript provider (driver entry point; design §7.2). Pragmatic minimal set —
     // the full Options surface (runtime module specifier, emitModel, indentWidth, ...) is a follow-up.
-    public sealed record Options(bool AlwaysAssertFormat = false);
+    public sealed record Options(bool AlwaysAssertFormat = false, string RuntimeModuleSpecifier = "./corvus-runtime.js");
 
     // The driver-facing entry point, mirroring CSharpLanguageProvider.DefaultWithOptions.
     public static TypeScriptLanguageProvider DefaultWithOptions(Options options)
-        => options.AlwaysAssertFormat ? CreateWithFormatAssertion() : CreateDefault();
+    {
+        TypeScriptLanguageProvider provider = options.AlwaysAssertFormat ? CreateWithFormatAssertion() : CreateDefault();
+        provider.runtimeModuleSpecifier = options.RuntimeModuleSpecifier;
+        return provider;
+    }
 
     public ILanguageProvider RegisterValidationHandlers(params IKeywordValidationHandler[] handlers)
     {
@@ -1003,7 +1012,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         // (@corvus/json-runtime, §5.5) that every generated module imports — never inlined per module.
         var sb = new StringBuilder();
         sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n");
-        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand } from \"./corvus-runtime.js\";\n\n");
+        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand } from \"").Append(this.runtimeModuleSpecifier).Append("\";\n\n");
         var moduleGuards = new HashSet<string>(StringComparer.Ordinal); // union guard names, unique per module
         foreach (TypeDeclaration td in types)
         {
@@ -1051,13 +1060,18 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             this.moduleTopLevelNames.Add(m.Groups[1].Value);
         }
 
-        // The generated types/validators module + the shared runtime, emitted once alongside it. (The
-        // test harness consumes files.First() and emits its own single shared runtime for the whole suite.)
-        return new[]
+        // The generated types/validators module. The shared runtime is re-emitted alongside it ONLY when
+        // the import specifier is relative (self-contained mode); a bare specifier means the consumer
+        // installs @corvus/json-runtime and we don't duplicate it. (The test harness consumes files.First()
+        // and emits its own single shared runtime for the whole suite.)
+        var files = new List<GeneratedCodeFile> { new("generated.ts", content) };
+        if (this.runtimeModuleSpecifier.StartsWith("./", StringComparison.Ordinal) ||
+            this.runtimeModuleSpecifier.StartsWith("../", StringComparison.Ordinal))
         {
-            new GeneratedCodeFile("generated.ts", content),
-            new GeneratedCodeFile("corvus-runtime.ts", RuntimeModuleSource()),
-        };
+            files.Add(new GeneratedCodeFile("corvus-runtime.ts", RuntimeModuleSource()));
+        }
+
+        return files;
     }
 
     // ---- type surface ----
