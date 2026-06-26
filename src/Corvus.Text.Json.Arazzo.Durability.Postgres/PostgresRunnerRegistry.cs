@@ -7,6 +7,7 @@ using System.Globalization;
 using Corvus.Text.Json;
 
 using Npgsql;
+using NpgsqlTypes;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Postgres;
 
@@ -20,13 +21,13 @@ public sealed class PostgresRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     private const string SchemaSql =
         """
         CREATE TABLE IF NOT EXISTS runner_registrations (
-            runner_id TEXT PRIMARY KEY NOT NULL,
+            runner_id TEXT COLLATE "C" PRIMARY KEY NOT NULL,
             last_seen_at BIGINT NOT NULL,
             doc BYTEA NOT NULL
         );
         CREATE INDEX IF NOT EXISTS ix_runner_registrations_last_seen ON runner_registrations (last_seen_at);
         CREATE TABLE IF NOT EXISTS runner_hosted_versions (
-            runner_id TEXT NOT NULL REFERENCES runner_registrations (runner_id) ON DELETE CASCADE,
+            runner_id TEXT COLLATE "C" NOT NULL REFERENCES runner_registrations (runner_id) ON DELETE CASCADE,
             base_workflow_id TEXT NOT NULL,
             version_number INTEGER NOT NULL,
             PRIMARY KEY (runner_id, base_workflow_id, version_number)
@@ -192,6 +193,53 @@ public sealed class PostgresRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         }
 
         return result;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<RunnerRegistryPage> ListAsync(int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
+
+        // Decode the keyset cursor from the request's page token; the runner id reifies to a string only at the Npgsql
+        // TEXT-parameter boundary (a genuine DB-param leaf) — undefined token = first page.
+        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
+
+        await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlCommand select = connection.CreateCommand();
+
+        // Native keyset page: runner_id is the PRIMARY KEY declared COLLATE "C", so the index gives a byte-ordinal order
+        // (the same order the in-memory pager sorts by) and drives both the range seek and the ordering; LIMIT bounds the
+        // read to one page — never a full SELECT + parse of every registration. @limit is pageSize + 1 to look one ahead.
+        select.CommandText =
+            """
+            SELECT doc FROM runner_registrations
+            WHERE (@after IS NULL OR runner_id > @after)
+            ORDER BY runner_id
+            LIMIT @limit;
+            """;
+
+        // Explicitly typed Text: an untyped DBNull @after (first page) leaves Npgsql unable to infer the parameter type
+        // for `@after IS NULL` (error 42P08) — the same reason the runs store binds its keyset cursor as typed Text.
+        select.Parameters.Add(new NpgsqlParameter("@after", NpgsqlDbType.Text) { Value = (object?)after ?? DBNull.Value });
+        select.Parameters.AddWithValue("@limit", pageSize + 1);
+
+        var page = new List<RunnerRegistration>(pageSize + 1);
+        await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            page.Add(RunnerRegistration.FromJson((byte[])reader[0]));
+        }
+
+        if (page.Count <= pageSize)
+        {
+            return RunnerRegistryPage.Create(page);
+        }
+
+        // A (pageSize+1)th row exists → there is a next page; drop it and emit the token from the last kept row's id
+        // (bytes-native: base64url straight over the runner id's persisted UTF-8, no managed id string).
+        page.RemoveAt(page.Count - 1);
+        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
+        return RunnerRegistryPage.Create(page, lastId.Span);
     }
 
     /// <inheritdoc/>

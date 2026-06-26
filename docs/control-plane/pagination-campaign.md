@@ -313,6 +313,21 @@ incl. keyset no-gaps/dupes + malformed-token) validates that against the in-memo
 self-audit: token in via `GetUtf8String().Span` → pooled decode; rows via driver `byte[]` → `FromJson`; token out via the
 last row's `RunnerId` UTF-8 → pooled encode; only leaves = the `@after` DB-param string + the malformed-token
 `FormatException`. (Default-page-size constant promoted to public `RunnerRegistryPage.DefaultPageSize` so backends share
-one source — no InternalsVisibleTo.) Warning-free slnx (0W/0E). **Remaining backends:** Postgres, MySql, SqlServer (SQL
-`> @after`/`TOP`), Cosmos/Mongo/AzureStorage (native range), Redis/Nats (client-sorted scan + keyset+limit, as in the runs
-corpus) — each with container conformance.
+one source — no InternalsVisibleTo.) Warning-free slnx (0W/0E).
+
+**SQL backends (Postgres, MySql, SqlServer) — done.** Same native keyset (`WHERE runner_id > @after ORDER BY runner_id` +
+`LIMIT @n+1` / SqlServer `TOP (@n+1)`), the cursor decoded once via the shared, bytes-native
+`RunnerRegistryContinuationToken.DecodeCursorToString` (base64url over the request UTF-8 into a pooled buffer, reified to a
+string only for the keyset `@after` param — the DB-param leaf). The cross-backend correctness point is the **collation**:
+the in-memory pager + the conformance assert *ordinal UTF-8 byte order*, but only SQLite's `TEXT` defaults to that
+(`BINARY`). So `runner_id` is declared byte-ordinal per backend, matching the `ObservedIdentityStore` precedent — Postgres
+`COLLATE "C"`, MySql `COLLATE utf8mb4_bin`, SqlServer `COLLATE Latin1_General_BIN2` (both the PK and the FK column, so the
+index serves the seek+order and the FK collations match) — and SqlServer reads the UTF-8 `doc` back as `VARBINARY` to stay
+bytes-native. Gotcha (caught by conformance, fixed): Npgsql can't infer the type of an untyped `DBNull` `@after` in
+`@after IS NULL` (error `42P08`) — bind it as explicitly-typed `NpgsqlDbType.Text` (as the runs store does). Container
+conformance (`RunnerRegistryConformance`, real containers via podman): **Postgres 12/12, MySql 12/12, SqlServer 12/12**
+(each incl. the keyset no-gaps/dupes walk + malformed-token). No per-backend benchmark — the win is the same structural
+full-read→`LIMIT` bounding the Sqlite figure measures; local-container latency under-measures the round-trip/payload win.
+
+**Remaining backends:** Cosmos/Mongo/AzureStorage (native range query/continuation), Redis/Nats (client-sorted scan +
+keyset+limit, as in the runs corpus) — each with container conformance.
