@@ -261,14 +261,14 @@ const rtRem = (src: string, ch: Partial<Entity>, rm: ReadonlyArray<keyof Entity>
   ok("31 patch overlay", p.seq === 99 && p.note === "added" && p.ratio === 0.5 && p.id === "x");
 }
 
-// --- build (construct canonical bytes from typed props) ---
-// 32) build round-trips, and is canonical (schema order, input-order-independent)
+// --- build (bytes from typed props at the native serialiser floor; canonical write is a separate opt-in) ---
+// 32) build round-trips and equals native JSON.stringify(props) (caller key order, NOT canonicalised)
 {
-  const out = dec.decode(buildEntity({ id: "x", seq: 1, active: true }));
+  const props = { id: "x", seq: 1, active: true };
+  const out = dec.decode(buildEntity(props));
   const p = JSON.parse(out);
   ok("32 build round-trips", p.id === "x" && p.seq === 1 && p.active === true);
-  const b2 = dec.decode(buildEntity({ seq: 1, active: true, id: "x" })); // different input key order
-  ok("32 build canonical (order-independent)", b2 === out);
+  ok("32 build = JSON.stringify (caller order)", out === JSON.stringify(props));
 }
 // 33) build empty -> {}
 {

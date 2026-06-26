@@ -999,7 +999,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         // (@corvus/json-runtime, §5.5) that every generated module imports — never inlined per module.
         var sb = new StringBuilder();
         sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n");
-        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, memberBytes, rmwJoinObject, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand } from \"./corvus-runtime.js\";\n\n");
+        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand } from \"./corvus-runtime.js\";\n\n");
         var moduleGuards = new HashSet<string>(StringComparer.Ordinal); // union guard names, unique per module
         foreach (TypeDeclaration td in types)
         {
@@ -1205,16 +1205,11 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         }
 
         string name = FinalName(td);
+        // build = bytes from a full typed T at the native serialiser's floor: one JSON.stringify + one UTF-8
+        // encode (caller key order). Deterministic/canonical byte output is a SEPARATE opt-in method (a future
+        // full recursive canonical-write, mirroring the C# canonicaliser) -- see design doc roadmap, not here.
         sb.Append("export function build").Append(name).Append("(props: ").Append(name).Append("): Uint8Array {\n");
-        sb.Append("  const enc = new TextEncoder();\n");
-        sb.Append("  const parts: Uint8Array[] = [];\n");
-        foreach (PropertyDeclaration p in td.PropertyDeclarations)
-        {
-            string k = TsEmit.Str(p.JsonPropertyName);
-            sb.Append("  if (props[").Append(k).Append("] !== undefined) { parts.push(memberBytes(enc.encode(").Append(k).Append("), enc.encode(JSON.stringify(props[").Append(k).Append("])))); }\n");
-        }
-
-        sb.Append("  return rmwJoinObject(parts);\n");
+        sb.Append("  return new TextEncoder().encode(JSON.stringify(props));\n");
         sb.Append("}\n\n");
     }
 

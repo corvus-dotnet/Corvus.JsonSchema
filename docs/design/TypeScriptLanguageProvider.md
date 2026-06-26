@@ -643,6 +643,17 @@ split is the same:
   convenience method `doc.produce(recipe)` lowers to the same thing. Proven: typed surface + safety in
   `prototypes/ts-output-shape/mutation-model.ts` (type-checked), and mechanism -> RFC 6902 -> byte patch in
   `prototypes/rmw-scanner/produce.mjs` (runnable, 11/11).
+* **Construction (`build`) is at the native floor.** `build<T>(props)` returns bytes from a full typed
+  value via **one `JSON.stringify` + one UTF-8 encode** (caller key order) — `build` cannot beat native
+  serialisation, so it *is* native (e2e benchmark `RMW-BENCH.md`: ~1.0×). An earlier top-level-only
+  key-sort was dropped: it is a half-measure (nested objects keep caller order, so it gives no true
+  determinism) and cost a few % at small sizes.
+* **TODO (roadmap) — standalone full canonicalisation writer.** Deterministic/canonical byte output is a
+  **separate, deliberate, opt-in** feature, *not* the `build` default: a recursive canonical writer
+  (recursive key-sort + canonical number/string forms), mirroring the **C# canonicaliser**, emitted as
+  e.g. `writeCanonical<T>` / `buildCanonical<T>`. Use cases: content-addressing, hashing/digests, cache
+  keys, signatures, golden-file determinism. Build it as its own method so the fast `build` path stays at
+  the native floor.
 
 So **"native parse beats the byte path" does not apply to the mutable model**: pure reads are just plain
 reads (no Model C in play), and *mutation* is Model C, which wins. The only result where native led was
