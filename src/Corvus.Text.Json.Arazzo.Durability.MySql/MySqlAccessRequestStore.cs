@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Globalization;
 using System.Text;
 using Corvus.Runtime.InteropServices;
@@ -176,6 +177,116 @@ public sealed class MySqlAccessRequestStore : IAccessRequestStore, IAsyncDisposa
     }
 
     /// <inheritdoc/>
+    public async ValueTask<AccessRequestPage> ListAsync(AccessRequestQuery query, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : AccessRequestPage.DefaultPageSize;
+
+        // Decode the keyset cursor; createdAt + id reify to the strings the MySqlConnector predicate needs (a genuine
+        // DB-param leaf) only here — createdAt as the ISO-8601 "o" form the CreatedAt column stores (reconstructed from the
+        // token's UTC ticks so it byte-matches the boundary row), id as its text. Undefined token = first page.
+        string? cursorCreatedAt = null;
+        string? cursorId = null;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(AccessRequestContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
+            try
+            {
+                if (AccessRequestContinuationToken.TryDecode(tokenUtf8.Span, buffer, out long cursorTicks, out ReadOnlySpan<byte> cursorIdUtf8))
+                {
+                    cursorCreatedAt = new DateTime(cursorTicks, DateTimeKind.Utc).ToString("o", CultureInfo.InvariantCulture);
+                    cursorId = Encoding.UTF8.GetString(cursorIdUtf8);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+        }
+
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand select = connection.CreateCommand();
+        var sql = new StringBuilder("SELECT Document FROM AccessRequests");
+        var conditions = new List<string>(5);
+        if (query.Status is { } status)
+        {
+            conditions.Add("Status = @status");
+            select.Parameters.AddWithValue("@status", AccessRequestStatusNames.ToWire(status));
+        }
+
+        if (query.BaseWorkflowId.IsNotUndefined())
+        {
+            conditions.Add("BaseWorkflowId = @bw");
+            select.Parameters.AddWithValue("@bw", (string)query.BaseWorkflowId);
+        }
+
+        if (query.SubjectClaimType is { } subjectType)
+        {
+            conditions.Add("SubjectClaimType = @st");
+            select.Parameters.AddWithValue("@st", subjectType);
+        }
+
+        if (query.SubjectClaimValue is { } subjectValue)
+        {
+            conditions.Add("SubjectClaimValue = @sv");
+            select.Parameters.AddWithValue("@sv", subjectValue);
+        }
+
+        if (cursorCreatedAt is not null)
+        {
+            // Keyset seek strictly past (createdAt, id): CreatedAt is the fixed-width ISO-8601 "o" UTC form (ordinal ==
+            // chronological), and Id is declared COLLATE utf8mb4_bin so its compare is byte-ordinal == the in-memory pager's.
+            conditions.Add("(CreatedAt > @ca OR (CreatedAt = @ca AND Id > @id))");
+            select.Parameters.AddWithValue("@ca", cursorCreatedAt);
+            select.Parameters.AddWithValue("@id", cursorId!);
+        }
+
+        if (conditions.Count > 0)
+        {
+            sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        // The IX_AccessRequests_Created index on (CreatedAt, Id) drives both the order and the seek; LIMIT bounds the read
+        // to one page + 1 (lookahead) — never a full read + parse of the whole queue.
+        sql.Append(" ORDER BY CreatedAt, Id LIMIT @limit;");
+        select.Parameters.AddWithValue("@limit", pageSize + 1);
+        select.CommandText = sql.ToString();
+
+        var page = new PooledDocumentList<AccessRequest>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            await using (MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    if (page.Count == pageSize)
+                    {
+                        hasMore = true; // the (pageSize+1)th row exists → a next page; don't parse it
+                        break;
+                    }
+
+                    page.Add(ParsedJsonDocument<AccessRequest>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
+                }
+            }
+
+            if (!hasMore)
+            {
+                return AccessRequestPage.Create(page);
+            }
+
+            AccessRequest last = page[page.Count - 1];
+            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+            return AccessRequestPage.Create(page, last.CreatedAtValue.UtcTicks, lastId.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<AccessRequest>?> DecideAsync(string id, AccessRequestDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -245,7 +356,7 @@ public sealed class MySqlAccessRequestStore : IAccessRequestStore, IAsyncDisposa
     private const string SchemaSql =
         """
         CREATE TABLE IF NOT EXISTS AccessRequests (
-            Id VARCHAR(255) NOT NULL PRIMARY KEY,
+            Id VARCHAR(255) COLLATE utf8mb4_bin NOT NULL PRIMARY KEY,
             BaseWorkflowId VARCHAR(255) NOT NULL,
             SubjectClaimType VARCHAR(255) NOT NULL,
             SubjectClaimValue VARCHAR(255) NOT NULL,
@@ -255,7 +366,8 @@ public sealed class MySqlAccessRequestStore : IAccessRequestStore, IAsyncDisposa
             Document LONGBLOB NOT NULL,
             INDEX IX_AccessRequests_Status (Status),
             INDEX IX_AccessRequests_Workflow (BaseWorkflowId),
-            INDEX IX_AccessRequests_Subject (SubjectClaimType, SubjectClaimValue)
+            INDEX IX_AccessRequests_Subject (SubjectClaimType, SubjectClaimValue),
+            INDEX IX_AccessRequests_Created (CreatedAt, Id)
         );
         """;
 }
