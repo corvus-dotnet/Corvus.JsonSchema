@@ -2,7 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Globalization;
+using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using MongoDB.Bson;
@@ -127,6 +129,98 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
         }
 
         return list;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<AccessRequestPage> ListAsync(AccessRequestQuery query, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : AccessRequestPage.DefaultPageSize;
+
+        // Decode the keyset cursor; createdAt + id reify to the strings the Mongo filter needs (the leaf) only here —
+        // createdAt as the ISO-8601 "o" form the createdAt field stores (reconstructed from the token's UTC ticks).
+        string? cursorCreatedAt = null;
+        string? cursorId = null;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(AccessRequestContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
+            try
+            {
+                if (AccessRequestContinuationToken.TryDecode(tokenUtf8.Span, buffer, out long cursorTicks, out ReadOnlySpan<byte> cursorIdUtf8))
+                {
+                    cursorCreatedAt = new DateTime(cursorTicks, DateTimeKind.Utc).ToString("o", CultureInfo.InvariantCulture);
+                    cursorId = Encoding.UTF8.GetString(cursorIdUtf8);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+        }
+
+        var b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.Empty;
+        if (query.Status is { } status)
+        {
+            filter &= b.Eq("status", AccessRequestStatusNames.ToWire(status));
+        }
+
+        if (query.BaseWorkflowId.IsNotUndefined())
+        {
+            filter &= b.Eq("baseWorkflowId", (string)query.BaseWorkflowId);
+        }
+
+        if (query.SubjectClaimType is { } subjectType)
+        {
+            filter &= b.Eq("subjectClaimType", subjectType);
+        }
+
+        if (query.SubjectClaimValue is { } subjectValue)
+        {
+            filter &= b.Eq("subjectClaimValue", subjectValue);
+        }
+
+        if (cursorCreatedAt is not null)
+        {
+            // Keyset seek strictly past (createdAt, id): BSON compares strings by bytes, so the ISO createdAt order is
+            // chronological and _id is byte-ordinal — the same total order OldestFirst / the in-memory pager uses.
+            filter &= b.Or(
+                b.Gt("createdAt", cursorCreatedAt),
+                b.And(b.Eq("createdAt", cursorCreatedAt), b.Gt("_id", cursorId)));
+        }
+
+        // The (createdAt, _id) sort + Limit(n+1) bounds the read to one page + 1 (lookahead) — never the whole queue.
+        var page = new PooledDocumentList<AccessRequest>(pageSize);
+        try
+        {
+            List<BsonDocument> documents = await this.requests
+                .Find(filter)
+                .Sort(OldestFirst)
+                .Limit(pageSize + 1)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            bool hasMore = documents.Count > pageSize;
+            int take = hasMore ? pageSize : documents.Count;
+            for (int i = 0; i < take; i++)
+            {
+                page.Add(ParsedJsonDocument<AccessRequest>.Parse(documents[i]["doc"].AsBsonBinaryData.Bytes.AsMemory()));
+            }
+
+            if (!hasMore)
+            {
+                return AccessRequestPage.Create(page);
+            }
+
+            AccessRequest last = page[page.Count - 1];
+            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+            return AccessRequestPage.Create(page, last.CreatedAtValue.UtcTicks, lastId.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>

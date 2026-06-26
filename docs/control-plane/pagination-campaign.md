@@ -382,5 +382,17 @@ MySql `utf8mb4_bin`, SqlServer `Latin1_General_BIN2`) so the id tie-breaker matc
 `IX_AccessRequests_Created (CreatedAt, Id)` index so the oldest-first queue read is an index seek (not a full sort) — the
 unbounded-queue case where the bound matters most. `CreatedAt` needs no collation (fixed-width ISO is ordinal-stable). The
 Npgsql `42P08` trap does not recur here — `@ca`/`@id` are bound only when a cursor is present, so they are never untyped
-`DBNull`. Container conformance: **Postgres 7/7, MySql 7/7, SqlServer 7/7**. **Remaining backends:** Cosmos/Mongo/AzureStorage
-(cursor predicate on the existing key fields), Redis/Nats (client-sorted id index, page-only document fetch).
+`DBNull`. Container conformance: **Postgres 7/7, MySql 7/7, SqlServer 7/7**.
+
+**Document-store backends (Cosmos, Mongo) — done.** The keyset fields are already mirrored top-level, so each adds the
+compound cursor predicate `(createdAt > @ca OR (createdAt = @ca AND id > @id))` on the existing ordered query, bounded to
+one page + 1: Cosmos `… ORDER BY c.createdAt, c.id` with the stream iterator drained only one beyond the page; Mongo the
+equivalent `Or(Gt(createdAt), And(Eq(createdAt), Gt(_id)))` filter + the existing `(createdAt, _id)` sort + `Limit(n+1)`.
+Both order strings ordinally (ISO createdAt == chronological; id byte-ordinal), matching the in-memory pager — no collation
+declaration needed. Cosmos per-root `JsonString` shadowing recurs (its generated model) → the seam param is the
+fully-qualified `global::…Durability.JsonString`. Container conformance: **Cosmos 7/7, Mongo 7/7**.
+
+**AzureStorage moves to the client-sorted group.** Unlike runners (whose `RowKey` *was* the keyset key), the access-request
+table keys `RowKey = Base64(id)` and has no server-side `ORDER BY` for `createdAt`, so it can't natively keyset on
+`(createdAt, id)` — it is handled with Redis/Nats below (project the key fields, sort client-side, fetch only the page's
+documents). **Remaining backends:** AzureStorage, Redis, Nats.
