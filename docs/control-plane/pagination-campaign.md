@@ -425,6 +425,14 @@ id) and the q LIKE pattern reify to strings only at the ADO parameter leaf; SQLi
 in-memory `OrdinalIgnoreCase`), `Name`/`Id` TEXT PK are BINARY (ordinal == the in-memory pager), and the existing
 `IX_SecurityBindings_Order (SortOrder, Id)` index serves the binding keyset. Default page sizes promoted to public
 `SecurityRulePage`/`SecurityBindingPage.DefaultPageSize` (no IVT). Warning-free slnx (0W/0E); Sqlite + InMemory
-`SecurityPolicyStoreConformance` (11 each, incl. rule/binding keyset no-gaps/dupes + `q` + malformed-token) green. **Remaining
-backends:** Postgres/MySql/SqlServer (q-columns + byte-ordinal `Name`/`Id` collation + the predicates), Cosmos/Mongo (mirror
-the q-fields + native range), Redis/Nats (keyset index + client-side `q` — no server-side `LIKE`).
+`SecurityPolicyStoreConformance` (11 each, incl. rule/binding keyset no-gaps/dupes + `q` + malformed-token) green.
+
+**SQL backends (Postgres, MySql, SqlServer) — done.** Same q-columns + the keyset predicate + `LIMIT @n+1` / SqlServer
+`TOP (@n+1)`, with conditional predicate building (cursor/q clauses added only when present, so no untyped `DBNull` reaches
+Npgsql — the `42P08` trap cannot recur). `Name`/`Id` declared byte-ordinal (`COLLATE "C"` / `utf8mb4_bin` /
+`Latin1_General_BIN2`). The case-insensitive `q` is the per-backend wrinkle: Postgres uses `ILIKE` (its `LIKE` is
+case-sensitive); MySql/SqlServer use `LIKE` on the case-insensitive default-collation q-columns, but because `Name` is
+binary-collated AND a q-target for rules, its name-LIKE gets a case-insensitive collation override (`Name COLLATE
+utf8mb4_0900_ai_ci` / `COLLATE DATABASE_DEFAULT`). Container conformance: **Postgres 11/11, MySql 11/11, SqlServer 11/11**.
+**Remaining backends:** Cosmos/Mongo (mirror the q-fields top-level + native range), Redis/Nats (keyset index + client-side
+`q` — no server-side `LIKE`).

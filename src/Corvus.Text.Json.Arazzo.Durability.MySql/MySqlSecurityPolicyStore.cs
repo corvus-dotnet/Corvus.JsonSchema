@@ -2,7 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Globalization;
+using System.Text;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -96,8 +98,9 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
             await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
             await using MySqlCommand insert = connection.CreateCommand();
-            insert.CommandText = "INSERT INTO SecurityRules (Name, Etag, Document) VALUES (@name, @etag, @doc);";
+            insert.CommandText = "INSERT INTO SecurityRules (Name, Expression, Etag, Document) VALUES (@name, @expression, @etag, @doc);";
             insert.Parameters.AddWithValue("@name", name);
+            insert.Parameters.AddWithValue("@expression", draft.ExpressionValue);
             insert.Parameters.AddWithValue("@etag", etag.Value!);
             insert.Parameters.AddWithValue("@doc", utf8);
             try
@@ -136,6 +139,74 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityRulePage> ListRulesAsync(int limit, JsonString pageToken, JsonString q, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : SecurityRulePage.DefaultPageSize;
+        string? after = DecodeRuleCursor(pageToken);
+        string? like = BuildLike(q);
+
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand select = connection.CreateCommand();
+        var sql = new StringBuilder("SELECT Document FROM SecurityRules");
+        var conditions = new List<string>(2);
+        if (after is not null)
+        {
+            // Name is the PRIMARY KEY declared COLLATE utf8mb4_bin → a byte-ordinal seek + order (the in-memory pager's).
+            conditions.Add("Name > @after");
+            select.Parameters.AddWithValue("@after", after);
+        }
+
+        if (like is not null)
+        {
+            // q is case-insensitive (in-memory OrdinalIgnoreCase); Name is binary-collated, so apply a case-insensitive
+            // collation for its LIKE only (Expression already uses the case-insensitive default collation).
+            conditions.Add("(Name COLLATE utf8mb4_0900_ai_ci LIKE @q ESCAPE '\\\\' OR Expression LIKE @q ESCAPE '\\\\')");
+            select.Parameters.AddWithValue("@q", like);
+        }
+
+        if (conditions.Count > 0)
+        {
+            sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        sql.Append(" ORDER BY Name LIMIT @limit;");
+        select.Parameters.AddWithValue("@limit", pageSize + 1);
+        select.CommandText = sql.ToString();
+
+        var page = new PooledDocumentList<SecurityRuleDocument>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            await using (MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    if (page.Count == pageSize)
+                    {
+                        hasMore = true; // the (pageSize+1)th row exists → a next page; don't parse it
+                        break;
+                    }
+
+                    page.Add(ParsedJsonDocument<SecurityRuleDocument>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
+                }
+            }
+
+            if (!hasMore)
+            {
+                return SecurityRulePage.Create(page);
+            }
+
+            using UnescapedUtf8JsonString lastName = page[page.Count - 1].Name.GetUtf8String();
+            return SecurityRulePage.Create(page, lastName.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -157,7 +228,8 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         {
             ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(updated.RootElement).Memory;
             await using MySqlCommand update = connection.CreateCommand();
-            update.CommandText = "UPDATE SecurityRules SET Etag = @etag, Document = @doc WHERE Name = @k;";
+            update.CommandText = "UPDATE SecurityRules SET Expression = @expression, Etag = @etag, Document = @doc WHERE Name = @k;";
+            update.Parameters.AddWithValue("@expression", draft.ExpressionValue);
             update.Parameters.AddWithValue("@etag", etag.Value!);
             update.Parameters.AddWithValue("@doc", utf8);
             update.Parameters.AddWithValue("@k", name);
@@ -190,9 +262,12 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
             await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
             await using MySqlCommand insert = connection.CreateCommand();
-            insert.CommandText = "INSERT INTO SecurityBindings (Id, SortOrder, Etag, Document) VALUES (@id, @order, @etag, @doc);";
+            insert.CommandText = "INSERT INTO SecurityBindings (Id, SortOrder, ClaimType, ClaimValue, Description, Etag, Document) VALUES (@id, @order, @claimType, @claimValue, @description, @etag, @doc);";
             insert.Parameters.AddWithValue("@id", id);
             insert.Parameters.AddWithValue("@order", draft.OrderValue);
+            insert.Parameters.AddWithValue("@claimType", draft.ClaimTypeValue);
+            insert.Parameters.AddWithValue("@claimValue", draft.ClaimValue.IsNotUndefined() ? (string)draft.ClaimValue : DBNull.Value);
+            insert.Parameters.AddWithValue("@description", draft.Description.IsNotUndefined() ? (string)draft.Description : DBNull.Value);
             insert.Parameters.AddWithValue("@etag", etag.Value!);
             insert.Parameters.AddWithValue("@doc", utf8);
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -223,6 +298,75 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, JsonString pageToken, JsonString q, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : SecurityBindingPage.DefaultPageSize;
+        bool hasCursor = DecodeBindingCursor(pageToken, out int cursorOrder, out string? cursorId);
+        string? like = BuildLike(q);
+
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand select = connection.CreateCommand();
+        var sql = new StringBuilder("SELECT Document FROM SecurityBindings");
+        var conditions = new List<string>(2);
+        if (hasCursor)
+        {
+            // Id is the PRIMARY KEY declared COLLATE utf8mb4_bin; IX_SecurityBindings_Order (SortOrder, Id) serves the keyset.
+            conditions.Add("(SortOrder > @order OR (SortOrder = @order AND Id > @id))");
+            select.Parameters.AddWithValue("@order", cursorOrder);
+            select.Parameters.AddWithValue("@id", cursorId!);
+        }
+
+        if (like is not null)
+        {
+            // The q columns use the case-insensitive default collation, so plain LIKE is case-insensitive (== in-memory).
+            conditions.Add("(ClaimType LIKE @q ESCAPE '\\\\' OR ClaimValue LIKE @q ESCAPE '\\\\' OR Description LIKE @q ESCAPE '\\\\')");
+            select.Parameters.AddWithValue("@q", like);
+        }
+
+        if (conditions.Count > 0)
+        {
+            sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        sql.Append(" ORDER BY SortOrder, Id LIMIT @limit;");
+        select.Parameters.AddWithValue("@limit", pageSize + 1);
+        select.CommandText = sql.ToString();
+
+        var page = new PooledDocumentList<SecurityBindingDocument>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            await using (MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    if (page.Count == pageSize)
+                    {
+                        hasMore = true; // the (pageSize+1)th row exists → a next page; don't parse it
+                        break;
+                    }
+
+                    page.Add(ParsedJsonDocument<SecurityBindingDocument>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
+                }
+            }
+
+            if (!hasMore)
+            {
+                return SecurityBindingPage.Create(page);
+            }
+
+            SecurityBindingDocument last = page[page.Count - 1];
+            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+            return SecurityBindingPage.Create(page, last.OrderValue, lastId.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -244,8 +388,11 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         {
             ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(updated.RootElement).Memory;
             await using MySqlCommand update = connection.CreateCommand();
-            update.CommandText = "UPDATE SecurityBindings SET SortOrder = @order, Etag = @etag, Document = @doc WHERE Id = @k;";
+            update.CommandText = "UPDATE SecurityBindings SET SortOrder = @order, ClaimType = @claimType, ClaimValue = @claimValue, Description = @description, Etag = @etag, Document = @doc WHERE Id = @k;";
             update.Parameters.AddWithValue("@order", draft.OrderValue);
+            update.Parameters.AddWithValue("@claimType", draft.ClaimTypeValue);
+            update.Parameters.AddWithValue("@claimValue", draft.ClaimValue.IsNotUndefined() ? (string)draft.ClaimValue : DBNull.Value);
+            update.Parameters.AddWithValue("@description", draft.Description.IsNotUndefined() ? (string)draft.Description : DBNull.Value);
             update.Parameters.AddWithValue("@etag", etag.Value!);
             update.Parameters.AddWithValue("@doc", utf8);
             update.Parameters.AddWithValue("@k", id);
@@ -293,6 +440,64 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
+
+    // Decodes the keyset cursor (rule name) from the request page token; the name reified to a string only for @after (leaf).
+    private static string? DecodeRuleCursor(JsonString pageToken)
+    {
+        if (!pageToken.IsNotUndefined())
+        {
+            return null;
+        }
+
+        using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(SecurityRuleContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
+        try
+        {
+            return SecurityRuleContinuationToken.TryDecode(tokenUtf8.Span, buffer, out ReadOnlySpan<byte> nameUtf8)
+                ? Encoding.UTF8.GetString(nameUtf8)
+                : null;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
+    // Decodes the keyset cursor (order, id) from the request page token; the id reified to a string only for @id (leaf).
+    private static bool DecodeBindingCursor(JsonString pageToken, out int order, out string? id)
+    {
+        order = 0;
+        id = null;
+        if (!pageToken.IsNotUndefined())
+        {
+            return false;
+        }
+
+        using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(SecurityBindingContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
+        try
+        {
+            if (SecurityBindingContinuationToken.TryDecode(tokenUtf8.Span, buffer, out order, out ReadOnlySpan<byte> idUtf8))
+            {
+                id = Encoding.UTF8.GetString(idUtf8);
+                return true;
+            }
+
+            return false;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
+    // Builds the case-insensitive substring LIKE pattern for the optional q filter ("%<escaped>%"), reifying q to a string
+    // only at this LIKE-parameter leaf; null when q is undefined (no filter).
+    private static string? BuildLike(JsonString q)
+        => q.IsNotUndefined() ? "%" + EscapeLike((string)q) + "%" : null;
+
+    private static string EscapeLike(string value)
+        => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 
     private static async ValueTask<byte[]?> DocumentAsync(MySqlConnection connection, string table, string column, string key, CancellationToken cancellationToken)
     {
@@ -366,13 +571,17 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     private const string SchemaSql =
         """
         CREATE TABLE IF NOT EXISTS SecurityRules (
-            Name VARCHAR(255) NOT NULL PRIMARY KEY,
+            Name VARCHAR(255) COLLATE utf8mb4_bin NOT NULL PRIMARY KEY,
+            Expression TEXT NOT NULL,
             Etag VARCHAR(255) NOT NULL,
             Document LONGBLOB NOT NULL
         );
         CREATE TABLE IF NOT EXISTS SecurityBindings (
-            Id VARCHAR(255) NOT NULL PRIMARY KEY,
+            Id VARCHAR(255) COLLATE utf8mb4_bin NOT NULL PRIMARY KEY,
             SortOrder INT NOT NULL,
+            ClaimType TEXT NOT NULL,
+            ClaimValue TEXT NULL,
+            Description TEXT NULL,
             Etag VARCHAR(255) NOT NULL,
             Document LONGBLOB NOT NULL,
             INDEX IX_SecurityBindings_Order (SortOrder, Id)
