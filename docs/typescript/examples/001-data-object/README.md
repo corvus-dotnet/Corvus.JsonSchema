@@ -8,7 +8,7 @@ It is very common to define a simple data object composed of primitive values fo
 
 The generator emits, for the root schema, a `readonly` **interface** whose name is derived from the schema (here `Person`). Required properties are `name: T`; optional properties are `name?: T`. JSON Schema scalar types map to TypeScript primitives (`string`, `number`, `boolean`), and a `format` keyword becomes a **branded** type with a validating factory (here `birthDate` is `Brand<string, "date">` with `asBirthDate(...)`).
 
-Unlike the .NET model, there is **nothing to wrap**: a JSON value parsed with `JSON.parse` *is* a `Person` once validated — you read it with ordinary property access. The generator adds only what the language can't express for free:
+There is **nothing to wrap**: a JSON value parsed with `JSON.parse` *is* a `Person` once validated — you read it with ordinary property access. The generator adds only what the language can't express for free:
 
 - `evaluateRoot(value)` / `evaluatePerson(value, ev)` — an AOT-compiled boolean validator (no exceptions, no error-object graph).
 - `buildPerson(props)` — construct canonical UTF-8 JSON **bytes** from plain values.
@@ -119,8 +119,8 @@ node dist/001-data-object/demo.js
 ## Related Patterns
 
 - [002-validation](../002-validation/) — adding validation constraints
-- [014-string-enums](../014-string-enums/) — `enum` as a string-literal union
-- [018-mutation](../018-mutation/) — `produce` / `patch` / `build` in depth
+- [013-string-enums](../013-string-enums/) — `enum` as a string-literal union
+- [016-mutation](../016-mutation/) — `produce` / `patch` / `build` in depth
 
 ## Frequently Asked Questions
 
