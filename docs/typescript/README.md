@@ -40,9 +40,7 @@ Each recipe under [`examples/`](./examples/) is a schema + the generated TypeScr
 
 ## Guides
 
-Prose documentation for the generated API (in progress):
-
-- **getting-started** — installing the runtime, generating, the shape of a module.
-- **reading-and-validating** — the `readonly` surface and the `evaluateRoot` / `evaluate*` boolean evaluators.
-- **mutation** — `build` / `patch` / `produce` and the byte-level engine.
-- **the-type-surface** — every construct → its generated TypeScript.
+- [getting-started](./getting-started.md) — generating, the runtime, the shape of a module.
+- [reading-and-validating](./reading-and-validating.md) — the `readonly` surface and the `evaluateRoot` / `evaluate*` evaluators.
+- [mutation](./mutation.md) — `build` / `patch` / `produce` and the byte-level engine.
+- [the-type-surface](./the-type-surface.md) — every construct → its generated TypeScript.
