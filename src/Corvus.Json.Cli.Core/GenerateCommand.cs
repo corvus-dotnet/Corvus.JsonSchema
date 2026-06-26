@@ -77,6 +77,10 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [Description("Format assertion mode overrides, comma-separated. Use '<format>=<assert|disable|warning>' for one format (e.g. 'date-time=disable,time=warning'), or a bare '<assert|disable|warning>' (equivalently '*=<mode>') to set the default for ALL formats — e.g. '--formatMode disable' for annotation-only output across every draft. May be specified more than once. An override takes precedence over the schema's format vocabulary and --assertFormat.")]
         public string[]? FormatMode { get; init; }
 
+        [CommandOption("--tsRuntimeModule <VALUE>")]
+        [Description("(TypeScript engine) The module specifier generated modules import the shared runtime from. Default './corvus-runtime.js' re-emits the runtime alongside each module (self-contained). Pass a package specifier (e.g. '@corvus/json-runtime') to import the installed runtime package instead, and skip re-emitting it.")]
+        public string? TsRuntimeModule { get; init; }
+
         [Description("The path to the schema file to process.")]
         [CommandArgument(0, "<schemaFile>")]
         [NotNull] // <> => NotNull
@@ -166,6 +170,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             optionalAsNullable: settings.OptionalAsNullable.ToString(),
             outputMapFile: settings.OutputMapFile.AsNullableJsonString(),
             outputPath: settings.OutputPath.AsNullableJsonString(),
+            tsRuntimeModule: settings.TsRuntimeModule.AsNullableJsonString(),
             useSchema: settings.UseSchema != SchemaVariant.NotSpecified ? (GeneratorConfig.UseSchema)settings.UseSchema.ToString() : default(GeneratorConfig.UseSchema?),
             useImplicitOperatorString: settings.UseImplicitOperatorString,
             useUnixLineEndings: settings.UseUnixLineEndings,
