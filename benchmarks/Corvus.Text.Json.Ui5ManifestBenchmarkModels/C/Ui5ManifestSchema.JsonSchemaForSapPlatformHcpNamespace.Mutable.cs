@@ -352,7 +352,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVersion(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.VersionEntity.Source value)
+            public void SetVersion(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.VersionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -397,7 +397,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>appName</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAppName(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.RepresentsTheHtml5ApplicationName.Source value)
+            public void SetAppName(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.RepresentsTheHtml5ApplicationName.Source value)
             {
                 CheckValidInstance();
 
@@ -442,7 +442,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>appVersion</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAppVersion(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetAppVersion(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -487,7 +487,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>multiVersionApp</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMultiVersionApp(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+            public void SetMultiVersionApp(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -532,7 +532,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>providerAccount</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetProviderAccount(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetProviderAccount(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -577,7 +577,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>uri</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUriValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetUriValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -622,7 +622,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>uriNwbc</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUriNwbc(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetUriNwbc(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -838,7 +838,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.VersionEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.RepresentsTheHtml5ApplicationName.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.VersionEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.RepresentsTheHtml5ApplicationName.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1186,7 +1186,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg6">The value of the property.</param>
             /// <param name="arg7">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.VersionEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.RepresentsTheHtml5ApplicationName.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.VersionEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.RepresentsTheHtml5ApplicationName.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
@@ -1234,7 +1234,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="uri">The value of the <c>"uri"</c> property.</param>
         /// <param name="uriNwbc">The value of the <c>"uriNwbc"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.RepresentsTheHtml5ApplicationName.Source appName = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source appVersion = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source multiVersionApp = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source providerAccount = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source uri = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source uriNwbc = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.VersionEntity.Source version = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.RepresentsTheHtml5ApplicationName.Source appName = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source appVersion = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source multiVersionApp = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source providerAccount = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source uri = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source uriNwbc = default)
         {
             return new Source(version, appName, appVersion, multiVersionApp, providerAccount, uri, uriNwbc);
         }

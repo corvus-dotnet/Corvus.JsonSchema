@@ -366,7 +366,7 @@ public readonly partial struct DenoSchema
                 /// Set the <c>exclude</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetExclude(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.JsonStringArray.Source value)
+                public void SetExclude(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.JsonStringArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -447,7 +447,7 @@ public readonly partial struct DenoSchema
                 /// Set the <c>include</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetInclude(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.ListOfFileArray.Source value)
+                public void SetInclude(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.ListOfFileArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -629,7 +629,7 @@ public readonly partial struct DenoSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -652,7 +652,7 @@ public readonly partial struct DenoSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -699,7 +699,7 @@ public readonly partial struct DenoSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -870,7 +870,7 @@ public readonly partial struct DenoSchema
 
                 internal Source(Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.JsonStringArray.Source arg1, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.ListOfFileArray.Source arg2)
+                internal Source(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.JsonStringArray.Source arg1, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.ListOfFileArray.Source arg2)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1036,7 +1036,7 @@ public readonly partial struct DenoSchema
 
                 internal Source(scoped in TContext context, Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.JsonStringArray.Source<TContext> arg1, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.ListOfFileArray.Source<TContext> arg2)
+                internal Source(scoped in TContext context, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.JsonStringArray.Source<TContext> arg1, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.ListOfFileArray.Source<TContext> arg2)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1336,7 +1336,7 @@ public readonly partial struct DenoSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.JsonStringArray.Source arg1, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.ListOfFileArray.Source arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.JsonStringArray.Source arg1, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.ListOfFileArray.Source arg2, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2);
@@ -1351,7 +1351,7 @@ public readonly partial struct DenoSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.JsonStringArray.Source<TContext> arg1, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.ListOfFileArray.Source<TContext> arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.JsonStringArray.Source<TContext> arg1, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.ListOfFileArray.Source<TContext> arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1397,7 +1397,7 @@ public readonly partial struct DenoSchema
             /// <param name="exclude">The value of the <c>"exclude"</c> property.</param>
             /// <param name="include">The value of the <c>"include"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.JsonStringArray.Source exclude = default, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.ListOfFileArray.Source include = default)
+            public static Source Build(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.JsonStringArray.Source exclude = default, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.ListOfFileArray.Source include = default)
             {
                 return new Source(exclude, include);
             }
@@ -1410,7 +1410,7 @@ public readonly partial struct DenoSchema
             /// <param name="exclude">The value of the <c>"exclude"</c> property.</param>
             /// <param name="include">The value of the <c>"include"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.JsonStringArray.Source<TContext> exclude = default, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.ListOfFileArray.Source<TContext> include = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.JsonStringArray.Source<TContext> exclude = default, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.FilesEntity.ListOfFileArray.Source<TContext> include = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

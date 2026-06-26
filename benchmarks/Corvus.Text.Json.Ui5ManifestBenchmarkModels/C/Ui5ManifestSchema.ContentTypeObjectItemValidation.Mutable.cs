@@ -373,7 +373,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>maxLength</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxLength(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheMaximumNumberOfCharacters.Source value)
+            public void SetMaxLength(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheMaximumNumberOfCharacters.Source value)
             {
                 CheckValidInstance();
 
@@ -418,7 +418,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>message</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMessage(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetMessage(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -463,7 +463,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>minLength</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMinLength(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheMinimumNumberOfCharacters.Source value)
+            public void SetMinLength(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheMinimumNumberOfCharacters.Source value)
             {
                 CheckValidInstance();
 
@@ -508,7 +508,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>pattern</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPattern(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetPattern(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -553,7 +553,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>required</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRequired(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesWhetherTheUserInputIsRequired.Source value)
+            public void SetRequired(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesWhetherTheUserInputIsRequired.Source value)
             {
                 CheckValidInstance();
 
@@ -598,7 +598,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>restrictToPredefinedOptions</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRestrictToPredefinedOptions(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesWhetherTheValueIsRestrictedToPredefinedOptions.Source value)
+            public void SetRestrictToPredefinedOptions(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesWhetherTheValueIsRestrictedToPredefinedOptions.Source value)
             {
                 CheckValidInstance();
 
@@ -643,7 +643,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheValidationType.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheValidationType.Source value)
             {
                 CheckValidInstance();
 
@@ -688,7 +688,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>validate</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetValidate(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetValidate(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -905,7 +905,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheMaximumNumberOfCharacters.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheMinimumNumberOfCharacters.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesWhetherTheUserInputIsRequired.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesWhetherTheValueIsRestrictedToPredefinedOptions.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheValidationType.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheMaximumNumberOfCharacters.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheMinimumNumberOfCharacters.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesWhetherTheUserInputIsRequired.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesWhetherTheValueIsRestrictedToPredefinedOptions.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheValidationType.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1258,7 +1258,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg7">The value of the property.</param>
             /// <param name="arg8">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheMaximumNumberOfCharacters.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheMinimumNumberOfCharacters.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesWhetherTheUserInputIsRequired.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesWhetherTheValueIsRestrictedToPredefinedOptions.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheValidationType.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheMaximumNumberOfCharacters.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheMinimumNumberOfCharacters.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesWhetherTheUserInputIsRequired.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesWhetherTheValueIsRestrictedToPredefinedOptions.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheValidationType.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
@@ -1307,7 +1307,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="type">The value of the <c>"type"</c> property.</param>
         /// <param name="validate">The value of the <c>"validate"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheMaximumNumberOfCharacters.Source maxLength = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source message = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheMinimumNumberOfCharacters.Source minLength = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source pattern = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesWhetherTheUserInputIsRequired.Source required = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesWhetherTheValueIsRestrictedToPredefinedOptions.Source restrictToPredefinedOptions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheValidationType.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source validate = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheMaximumNumberOfCharacters.Source maxLength = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source message = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheMinimumNumberOfCharacters.Source minLength = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source pattern = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesWhetherTheUserInputIsRequired.Source required = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesWhetherTheValueIsRestrictedToPredefinedOptions.Source restrictToPredefinedOptions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemValidation.DefinesTheValidationType.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source validate = default)
         {
             return new Source(maxLength, message, minLength, pattern, required, restrictToPredefinedOptions, type, validate);
         }

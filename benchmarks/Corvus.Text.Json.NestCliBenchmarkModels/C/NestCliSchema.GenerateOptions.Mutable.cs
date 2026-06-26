@@ -286,7 +286,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>baseDir</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBaseDir(in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateBaseDirOptions.Source value)
+            public void SetBaseDir(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateBaseDirOptions.Source value)
             {
                 CheckValidInstance();
 
@@ -331,7 +331,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>flat</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFlat(in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateFlatOptions.Source value)
+            public void SetFlat(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateFlatOptions.Source value)
             {
                 CheckValidInstance();
 
@@ -376,7 +376,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>spec</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpec(in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateSpecOptions.Source value)
+            public void SetSpec(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateSpecOptions.Source value)
             {
                 CheckValidInstance();
 
@@ -624,7 +624,7 @@ public readonly partial struct NestCliSchema
 
             internal Source(Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateBaseDirOptions.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateFlatOptions.Source arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateSpecOptions.Source arg3)
+            internal Source(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateBaseDirOptions.Source arg1, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateFlatOptions.Source arg2, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateSpecOptions.Source arg3)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -792,7 +792,7 @@ public readonly partial struct NestCliSchema
 
             internal Source(scoped in TContext context, Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateBaseDirOptions.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateFlatOptions.Source arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateSpecOptions.Source<TContext> arg3)
+            internal Source(scoped in TContext context, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateBaseDirOptions.Source arg1, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateFlatOptions.Source arg2, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateSpecOptions.Source<TContext> arg3)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1033,7 +1033,7 @@ public readonly partial struct NestCliSchema
             /// <param name="arg2">The value of the property.</param>
             /// <param name="arg3">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateBaseDirOptions.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateFlatOptions.Source arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateSpecOptions.Source arg3, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateBaseDirOptions.Source arg1, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateFlatOptions.Source arg2, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateSpecOptions.Source arg3, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3);
@@ -1049,7 +1049,7 @@ public readonly partial struct NestCliSchema
             /// <param name="arg2">The value of the property.</param>
             /// <param name="arg3">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateBaseDirOptions.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateFlatOptions.Source arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateSpecOptions.Source<TContext> arg3, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateBaseDirOptions.Source arg1, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateFlatOptions.Source arg2, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateSpecOptions.Source<TContext> arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1096,7 +1096,7 @@ public readonly partial struct NestCliSchema
         /// <param name="flat">The value of the <c>"flat"</c> property.</param>
         /// <param name="spec">The value of the <c>"spec"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateBaseDirOptions.Source baseDir = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateFlatOptions.Source flat = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateSpecOptions.Source spec = default)
+        public static Source Build(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateBaseDirOptions.Source baseDir = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateFlatOptions.Source flat = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateSpecOptions.Source spec = default)
         {
             return new Source(baseDir, flat, spec);
         }
@@ -1110,7 +1110,7 @@ public readonly partial struct NestCliSchema
         /// <param name="flat">The value of the <c>"flat"</c> property.</param>
         /// <param name="spec">The value of the <c>"spec"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateBaseDirOptions.Source baseDir = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateFlatOptions.Source flat = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateSpecOptions.Source<TContext> spec = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateBaseDirOptions.Source baseDir = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateFlatOptions.Source flat = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateSpecOptions.Source<TContext> spec = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

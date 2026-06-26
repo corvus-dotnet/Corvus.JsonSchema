@@ -466,7 +466,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>action</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAction(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsActionAnTheSemanticObject.Source value)
+                public void SetAction(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsActionAnTheSemanticObject.Source value)
                 {
                     CheckValidInstance();
 
@@ -497,7 +497,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>deviceTypes</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDeviceTypes(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DeviceType.Source value)
+                public void SetDeviceTypes(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DeviceType.Source value)
                 {
                     CheckValidInstance();
 
@@ -578,7 +578,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>displayMode</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDisplayMode(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsTheDisplayModeOfTheTile.Source value)
+                public void SetDisplayMode(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsTheDisplayModeOfTheTile.Source value)
                 {
                     CheckValidInstance();
 
@@ -623,7 +623,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>hideLauncher</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetHideLauncher(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+                public void SetHideLauncher(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -668,7 +668,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>icon</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetIcon(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                public void SetIcon(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -713,7 +713,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>indicatorDataSource</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetIndicatorDataSource(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsDataSource.Source value)
+                public void SetIndicatorDataSource(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsDataSource.Source value)
                 {
                     CheckValidInstance();
 
@@ -794,7 +794,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>info</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetInfo(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
+                public void SetInfo(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
                 {
                     CheckValidInstance();
 
@@ -839,7 +839,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>semanticObject</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSemanticObject(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsSemanticObject.Source value)
+                public void SetSemanticObject(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsSemanticObject.Source value)
                 {
                     CheckValidInstance();
 
@@ -870,7 +870,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>shortTitle</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetShortTitle(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
+                public void SetShortTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
                 {
                     CheckValidInstance();
 
@@ -915,7 +915,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>signature</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSignature(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.Source value)
+                public void SetSignature(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.Source value)
                 {
                     CheckValidInstance();
 
@@ -996,7 +996,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>subTitle</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSubTitle(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
+                public void SetSubTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
                 {
                     CheckValidInstance();
 
@@ -1041,7 +1041,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>title</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTitle(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
+                public void SetTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
                 {
                     CheckValidInstance();
 
@@ -1262,7 +1262,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsActionAnTheSemanticObject.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsSemanticObject.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DeviceType.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsTheDisplayModeOfTheTile.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsDataSource.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg12)
+                internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsActionAnTheSemanticObject.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsSemanticObject.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DeviceType.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsTheDisplayModeOfTheTile.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsDataSource.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg12)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1448,7 +1448,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsActionAnTheSemanticObject.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsSemanticObject.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DeviceType.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsTheDisplayModeOfTheTile.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsDataSource.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg12)
+                internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsActionAnTheSemanticObject.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsSemanticObject.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DeviceType.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsTheDisplayModeOfTheTile.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsDataSource.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.Source<TContext> arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg12)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1761,7 +1761,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg11">The value of the property.</param>
                 /// <param name="arg12">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsActionAnTheSemanticObject.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsSemanticObject.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DeviceType.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsTheDisplayModeOfTheTile.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsDataSource.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg12, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsActionAnTheSemanticObject.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsSemanticObject.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DeviceType.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsTheDisplayModeOfTheTile.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsDataSource.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg12, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
@@ -1786,7 +1786,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg11">The value of the property.</param>
                 /// <param name="arg12">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsActionAnTheSemanticObject.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsSemanticObject.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DeviceType.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsTheDisplayModeOfTheTile.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsDataSource.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg12, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsActionAnTheSemanticObject.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsSemanticObject.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DeviceType.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsTheDisplayModeOfTheTile.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsDataSource.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.Source<TContext> arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg12, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1842,7 +1842,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="subTitle">The value of the <c>"subTitle"</c> property.</param>
             /// <param name="title">The value of the <c>"title"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsActionAnTheSemanticObject.Source action, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsSemanticObject.Source semanticObject, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DeviceType.Source deviceTypes = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsTheDisplayModeOfTheTile.Source displayMode = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source hideLauncher = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsDataSource.Source indicatorDataSource = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source info = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source shortTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.Source signature = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default)
+            public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsActionAnTheSemanticObject.Source action, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsSemanticObject.Source semanticObject, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DeviceType.Source deviceTypes = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsTheDisplayModeOfTheTile.Source displayMode = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source hideLauncher = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source icon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsDataSource.Source indicatorDataSource = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source info = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source shortTitle = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.Source signature = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default)
             {
                 return new Source(action, semanticObject, deviceTypes, displayMode, hideLauncher, icon, indicatorDataSource, info, shortTitle, signature, subTitle, title);
             }
@@ -1865,7 +1865,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="subTitle">The value of the <c>"subTitle"</c> property.</param>
             /// <param name="title">The value of the <c>"title"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsActionAnTheSemanticObject.Source action, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsSemanticObject.Source semanticObject, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DeviceType.Source<TContext> deviceTypes = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsTheDisplayModeOfTheTile.Source displayMode = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source hideLauncher = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsDataSource.Source<TContext> indicatorDataSource = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source info = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source shortTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.Source<TContext> signature = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsActionAnTheSemanticObject.Source action, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsSemanticObject.Source semanticObject, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DeviceType.Source<TContext> deviceTypes = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsTheDisplayModeOfTheTile.Source displayMode = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source hideLauncher = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source icon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.RequiredActionAndSemanticObject.RepresentsDataSource.Source<TContext> indicatorDataSource = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source info = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source shortTitle = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SignatureDef.Source<TContext> signature = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

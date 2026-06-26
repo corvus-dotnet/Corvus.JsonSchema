@@ -350,7 +350,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>binding</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBinding(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetBinding(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -395,7 +395,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>headerTitle</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeaderTitle(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetHeaderTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -440,7 +440,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>noKey</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNoKey(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+            public void SetNoKey(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -485,7 +485,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>noOData</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNoOData(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+            public void SetNoOData(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -530,7 +530,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>routeName</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRouteName(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetRouteName(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -561,7 +561,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>semanticKey</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSemanticKey(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetSemanticKey(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -606,7 +606,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>typeImageUrl</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTypeImageUrl(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetTypeImageUrl(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -822,7 +822,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingSpecDef.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1170,7 +1170,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg6">The value of the property.</param>
             /// <param name="arg7">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
@@ -1218,7 +1218,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="semanticKey">The value of the <c>"semanticKey"</c> property.</param>
         /// <param name="typeImageUrl">The value of the <c>"typeImageUrl"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source routeName, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source binding = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source headerTitle = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source noKey = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source noOData = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source semanticKey = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source typeImageUrl = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source routeName, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source binding = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source headerTitle = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source noKey = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source noOData = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source semanticKey = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source typeImageUrl = default)
         {
             return new Source(routeName, binding, headerTitle, noKey, noOData, semanticKey, typeImageUrl);
         }

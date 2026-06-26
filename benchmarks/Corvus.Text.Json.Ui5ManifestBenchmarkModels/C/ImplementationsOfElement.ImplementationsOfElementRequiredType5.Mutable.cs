@@ -664,7 +664,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>columns</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetColumns(in Corvus.Ui5ManifestBenchmark.Current.Table.TableColumnDefinitionArray.Source value)
+            public void SetColumns(scoped in Corvus.Ui5ManifestBenchmark.Current.Table.TableColumnDefinitionArray.Source value)
             {
                 CheckValidInstance();
 
@@ -745,7 +745,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>fallback</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFallback(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetFallback(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -826,7 +826,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>firstRowAsHeader</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFirstRowAsHeader(in Corvus.Ui5ManifestBenchmark.Current.Table.FirstRowAsHeaderEntity.Source value)
+            public void SetFirstRowAsHeader(scoped in Corvus.Ui5ManifestBenchmark.Current.Table.FirstRowAsHeaderEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -871,7 +871,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>gridStyle</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGridStyle(in Corvus.Ui5ManifestBenchmark.Current.Table.GridStyleEntity.Source value)
+            public void SetGridStyle(scoped in Corvus.Ui5ManifestBenchmark.Current.Table.GridStyleEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -916,7 +916,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>height</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeight(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetHeight(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -997,7 +997,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>horizontalCellContentAlignment</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHorizontalCellContentAlignment(in Corvus.Ui5ManifestBenchmark.Current.Table.HorizontalCellContentAlignmentEntity.Source value)
+            public void SetHorizontalCellContentAlignment(scoped in Corvus.Ui5ManifestBenchmark.Current.Table.HorizontalCellContentAlignmentEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1042,7 +1042,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>id</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetId(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetId(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1123,7 +1123,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>isVisible</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIsVisible(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetIsVisible(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1204,7 +1204,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>requires</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRequires(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetRequires(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1285,7 +1285,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>rows</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRows(in Corvus.Ui5ManifestBenchmark.Current.Table.TableRowArray.Source value)
+            public void SetRows(scoped in Corvus.Ui5ManifestBenchmark.Current.Table.TableRowArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1366,7 +1366,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>separator</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSeparator(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetSeparator(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1447,7 +1447,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>showGridLines</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShowGridLines(in Corvus.Ui5ManifestBenchmark.Current.Table.SpecifiesWhetherGridLinesShouldBeDisplayed.Source value)
+            public void SetShowGridLines(scoped in Corvus.Ui5ManifestBenchmark.Current.Table.SpecifiesWhetherGridLinesShouldBeDisplayed.Source value)
             {
                 CheckValidInstance();
 
@@ -1492,7 +1492,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>spacing</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpacing(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetSpacing(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1573,7 +1573,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.Table.MustBeTable.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.Table.MustBeTable.Source value)
             {
                 CheckValidInstance();
 
@@ -1604,7 +1604,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>verticalCellContentAlignment</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVerticalCellContentAlignment(in Corvus.Ui5ManifestBenchmark.Current.Table.VerticalCellContentAlignmentEntity.Source value)
+            public void SetVerticalCellContentAlignment(scoped in Corvus.Ui5ManifestBenchmark.Current.Table.VerticalCellContentAlignmentEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1750,7 +1750,7 @@ public readonly partial struct ImplementationsOfElement
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1773,7 +1773,7 @@ public readonly partial struct ImplementationsOfElement
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1820,7 +1820,7 @@ public readonly partial struct ImplementationsOfElement
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -2021,7 +2021,7 @@ public readonly partial struct ImplementationsOfElement
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Table.MustBeTable.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Table.TableColumnDefinitionArray.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Table.FirstRowAsHeaderEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Table.GridStyleEntity.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Table.HorizontalCellContentAlignmentEntity.Source arg7, in Corvus.Text.Json.JsonElement.Source arg8, in Corvus.Text.Json.JsonElement.Source arg9, in Corvus.Text.Json.JsonElement.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Table.TableRowArray.Source arg11, in Corvus.Text.Json.JsonElement.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Table.SpecifiesWhetherGridLinesShouldBeDisplayed.Source arg13, in Corvus.Text.Json.JsonElement.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Table.VerticalCellContentAlignmentEntity.Source arg15)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Table.MustBeTable.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.TableColumnDefinitionArray.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.FirstRowAsHeaderEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.GridStyleEntity.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.HorizontalCellContentAlignmentEntity.Source arg7, scoped in Corvus.Text.Json.JsonElement.Source arg8, scoped in Corvus.Text.Json.JsonElement.Source arg9, scoped in Corvus.Text.Json.JsonElement.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.TableRowArray.Source arg11, scoped in Corvus.Text.Json.JsonElement.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.SpecifiesWhetherGridLinesShouldBeDisplayed.Source arg13, scoped in Corvus.Text.Json.JsonElement.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.VerticalCellContentAlignmentEntity.Source arg15)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -2213,7 +2213,7 @@ public readonly partial struct ImplementationsOfElement
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Table.MustBeTable.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Table.TableColumnDefinitionArray.Source<TContext> arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Table.FirstRowAsHeaderEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Table.GridStyleEntity.Source arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.Table.HorizontalCellContentAlignmentEntity.Source arg7, in Corvus.Text.Json.JsonElement.Source<TContext> arg8, in Corvus.Text.Json.JsonElement.Source<TContext> arg9, in Corvus.Text.Json.JsonElement.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Table.TableRowArray.Source<TContext> arg11, in Corvus.Text.Json.JsonElement.Source<TContext> arg12, in Corvus.Ui5ManifestBenchmark.Current.Table.SpecifiesWhetherGridLinesShouldBeDisplayed.Source arg13, in Corvus.Text.Json.JsonElement.Source<TContext> arg14, in Corvus.Ui5ManifestBenchmark.Current.Table.VerticalCellContentAlignmentEntity.Source arg15)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.MustBeTable.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.TableColumnDefinitionArray.Source<TContext> arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.FirstRowAsHeaderEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.GridStyleEntity.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.HorizontalCellContentAlignmentEntity.Source arg7, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg8, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg9, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.TableRowArray.Source<TContext> arg11, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.SpecifiesWhetherGridLinesShouldBeDisplayed.Source arg13, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.VerticalCellContentAlignmentEntity.Source arg15)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2619,7 +2619,7 @@ public readonly partial struct ImplementationsOfElement
             /// <param name="arg14">The value of the property.</param>
             /// <param name="arg15">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Table.MustBeTable.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Table.TableColumnDefinitionArray.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Table.FirstRowAsHeaderEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Table.GridStyleEntity.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Table.HorizontalCellContentAlignmentEntity.Source arg7, in Corvus.Text.Json.JsonElement.Source arg8, in Corvus.Text.Json.JsonElement.Source arg9, in Corvus.Text.Json.JsonElement.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Table.TableRowArray.Source arg11, in Corvus.Text.Json.JsonElement.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Table.SpecifiesWhetherGridLinesShouldBeDisplayed.Source arg13, in Corvus.Text.Json.JsonElement.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Table.VerticalCellContentAlignmentEntity.Source arg15, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Table.MustBeTable.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.TableColumnDefinitionArray.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.FirstRowAsHeaderEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.GridStyleEntity.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.HorizontalCellContentAlignmentEntity.Source arg7, scoped in Corvus.Text.Json.JsonElement.Source arg8, scoped in Corvus.Text.Json.JsonElement.Source arg9, scoped in Corvus.Text.Json.JsonElement.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.TableRowArray.Source arg11, scoped in Corvus.Text.Json.JsonElement.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.SpecifiesWhetherGridLinesShouldBeDisplayed.Source arg13, scoped in Corvus.Text.Json.JsonElement.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.VerticalCellContentAlignmentEntity.Source arg15, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
@@ -2647,7 +2647,7 @@ public readonly partial struct ImplementationsOfElement
             /// <param name="arg14">The value of the property.</param>
             /// <param name="arg15">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Table.MustBeTable.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Table.TableColumnDefinitionArray.Source<TContext> arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Table.FirstRowAsHeaderEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Table.GridStyleEntity.Source arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.Table.HorizontalCellContentAlignmentEntity.Source arg7, in Corvus.Text.Json.JsonElement.Source<TContext> arg8, in Corvus.Text.Json.JsonElement.Source<TContext> arg9, in Corvus.Text.Json.JsonElement.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Table.TableRowArray.Source<TContext> arg11, in Corvus.Text.Json.JsonElement.Source<TContext> arg12, in Corvus.Ui5ManifestBenchmark.Current.Table.SpecifiesWhetherGridLinesShouldBeDisplayed.Source arg13, in Corvus.Text.Json.JsonElement.Source<TContext> arg14, in Corvus.Ui5ManifestBenchmark.Current.Table.VerticalCellContentAlignmentEntity.Source arg15, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.MustBeTable.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.TableColumnDefinitionArray.Source<TContext> arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.FirstRowAsHeaderEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.GridStyleEntity.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.HorizontalCellContentAlignmentEntity.Source arg7, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg8, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg9, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.TableRowArray.Source<TContext> arg11, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.SpecifiesWhetherGridLinesShouldBeDisplayed.Source arg13, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.VerticalCellContentAlignmentEntity.Source arg15, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2706,7 +2706,7 @@ public readonly partial struct ImplementationsOfElement
         /// <param name="spacing">The value of the <c>"spacing"</c> property.</param>
         /// <param name="verticalCellContentAlignment">The value of the <c>"verticalCellContentAlignment"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Table.MustBeTable.Source type, in Corvus.Ui5ManifestBenchmark.Current.Table.TableColumnDefinitionArray.Source columns = default, in Corvus.Text.Json.JsonElement.Source fallback = default, in Corvus.Ui5ManifestBenchmark.Current.Table.FirstRowAsHeaderEntity.Source firstRowAsHeader = default, in Corvus.Ui5ManifestBenchmark.Current.Table.GridStyleEntity.Source gridStyle = default, in Corvus.Text.Json.JsonElement.Source height = default, in Corvus.Ui5ManifestBenchmark.Current.Table.HorizontalCellContentAlignmentEntity.Source horizontalCellContentAlignment = default, in Corvus.Text.Json.JsonElement.Source id = default, in Corvus.Text.Json.JsonElement.Source isVisible = default, in Corvus.Text.Json.JsonElement.Source requires = default, in Corvus.Ui5ManifestBenchmark.Current.Table.TableRowArray.Source rows = default, in Corvus.Text.Json.JsonElement.Source separator = default, in Corvus.Ui5ManifestBenchmark.Current.Table.SpecifiesWhetherGridLinesShouldBeDisplayed.Source showGridLines = default, in Corvus.Text.Json.JsonElement.Source spacing = default, in Corvus.Ui5ManifestBenchmark.Current.Table.VerticalCellContentAlignmentEntity.Source verticalCellContentAlignment = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Table.MustBeTable.Source type, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.TableColumnDefinitionArray.Source columns = default, scoped in Corvus.Text.Json.JsonElement.Source fallback = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.FirstRowAsHeaderEntity.Source firstRowAsHeader = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.GridStyleEntity.Source gridStyle = default, scoped in Corvus.Text.Json.JsonElement.Source height = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.HorizontalCellContentAlignmentEntity.Source horizontalCellContentAlignment = default, scoped in Corvus.Text.Json.JsonElement.Source id = default, scoped in Corvus.Text.Json.JsonElement.Source isVisible = default, scoped in Corvus.Text.Json.JsonElement.Source requires = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.TableRowArray.Source rows = default, scoped in Corvus.Text.Json.JsonElement.Source separator = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.SpecifiesWhetherGridLinesShouldBeDisplayed.Source showGridLines = default, scoped in Corvus.Text.Json.JsonElement.Source spacing = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.VerticalCellContentAlignmentEntity.Source verticalCellContentAlignment = default)
         {
             return new Source(type, columns, fallback, firstRowAsHeader, gridStyle, height, horizontalCellContentAlignment, id, isVisible, requires, rows, separator, showGridLines, spacing, verticalCellContentAlignment);
         }
@@ -2732,7 +2732,7 @@ public readonly partial struct ImplementationsOfElement
         /// <param name="spacing">The value of the <c>"spacing"</c> property.</param>
         /// <param name="verticalCellContentAlignment">The value of the <c>"verticalCellContentAlignment"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Table.MustBeTable.Source type, in Corvus.Ui5ManifestBenchmark.Current.Table.TableColumnDefinitionArray.Source<TContext> columns = default, in Corvus.Text.Json.JsonElement.Source<TContext> fallback = default, in Corvus.Ui5ManifestBenchmark.Current.Table.FirstRowAsHeaderEntity.Source firstRowAsHeader = default, in Corvus.Ui5ManifestBenchmark.Current.Table.GridStyleEntity.Source gridStyle = default, in Corvus.Text.Json.JsonElement.Source<TContext> height = default, in Corvus.Ui5ManifestBenchmark.Current.Table.HorizontalCellContentAlignmentEntity.Source horizontalCellContentAlignment = default, in Corvus.Text.Json.JsonElement.Source<TContext> id = default, in Corvus.Text.Json.JsonElement.Source<TContext> isVisible = default, in Corvus.Text.Json.JsonElement.Source<TContext> requires = default, in Corvus.Ui5ManifestBenchmark.Current.Table.TableRowArray.Source<TContext> rows = default, in Corvus.Text.Json.JsonElement.Source<TContext> separator = default, in Corvus.Ui5ManifestBenchmark.Current.Table.SpecifiesWhetherGridLinesShouldBeDisplayed.Source showGridLines = default, in Corvus.Text.Json.JsonElement.Source<TContext> spacing = default, in Corvus.Ui5ManifestBenchmark.Current.Table.VerticalCellContentAlignmentEntity.Source verticalCellContentAlignment = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.MustBeTable.Source type, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.TableColumnDefinitionArray.Source<TContext> columns = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> fallback = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.FirstRowAsHeaderEntity.Source firstRowAsHeader = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.GridStyleEntity.Source gridStyle = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> height = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.HorizontalCellContentAlignmentEntity.Source horizontalCellContentAlignment = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> id = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> isVisible = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> requires = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.TableRowArray.Source<TContext> rows = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> separator = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.SpecifiesWhetherGridLinesShouldBeDisplayed.Source showGridLines = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> spacing = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Table.VerticalCellContentAlignmentEntity.Source verticalCellContentAlignment = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

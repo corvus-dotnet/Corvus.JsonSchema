@@ -398,7 +398,7 @@ public readonly partial struct CompetedInYears
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void InsertItem(int itemIndex, in Corvus.PersonBenchmark.Current.JsonInt32.Source value)
+        public void InsertItem(int itemIndex, scoped in Corvus.PersonBenchmark.Current.JsonInt32.Source value)
         {
             CheckValidInstance();
 
@@ -424,7 +424,7 @@ public readonly partial struct CompetedInYears
         ///   The parent <see cref="JsonDocument"/> has been disposed.
         /// </exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddItem(in Corvus.PersonBenchmark.Current.JsonInt32.Source value)
+        public void AddItem(scoped in Corvus.PersonBenchmark.Current.JsonInt32.Source value)
         {
             InsertItem(GetArrayLength(), in value);
         }

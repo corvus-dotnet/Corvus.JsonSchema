@@ -396,7 +396,7 @@ public readonly partial struct Ui5Schema
                         ///   </para>
                         /// </remarks>
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                        public void InsertItem(int itemIndex, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.RequiredFiltersAndModeArray.RequiredFiltersAndMode.Source value)
+                        public void InsertItem(int itemIndex, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.RequiredFiltersAndModeArray.RequiredFiltersAndMode.Source value)
                         {
                             CheckValidInstance();
 
@@ -422,7 +422,7 @@ public readonly partial struct Ui5Schema
                         ///   The parent <see cref="JsonDocument"/> has been disposed.
                         /// </exception>
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                        public void AddItem(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.RequiredFiltersAndModeArray.RequiredFiltersAndMode.Source value)
+                        public void AddItem(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.RequiredFiltersAndModeArray.RequiredFiltersAndMode.Source value)
                         {
                             InsertItem(GetArrayLength(), in value);
                         }

@@ -407,7 +407,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>ratelimit</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetRatelimit(in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source value)
+                    public void SetRatelimit(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source value)
                     {
                         CheckValidInstance();
 
@@ -488,7 +488,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>tier_value</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetTierValueValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValue.Source value)
+                    public void SetTierValueValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValue.Source value)
                     {
                         CheckValidInstance();
 
@@ -533,7 +533,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>tier_value_as</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetTierValueAsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValueAs.Source value)
+                    public void SetTierValueAsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValueAs.Source value)
                     {
                         CheckValidInstance();
 
@@ -679,7 +679,7 @@ public readonly partial struct KrakendSchema
                     ///   </para>
                     /// </remarks>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void SetProperty(string propertyName, in JsonElement.Source value)
+                    public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                     {
                         SetProperty(propertyName.AsSpan(), value);
                     }
@@ -702,7 +702,7 @@ public readonly partial struct KrakendSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -749,7 +749,7 @@ public readonly partial struct KrakendSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -921,7 +921,7 @@ public readonly partial struct KrakendSchema
 
                     internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValue.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValueAs.Source arg3)
+                    internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValue.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValueAs.Source arg3)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -1089,7 +1089,7 @@ public readonly partial struct KrakendSchema
 
                     internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValue.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValueAs.Source arg3)
+                    internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValue.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValueAs.Source arg3)
                     {
                         _context = context;
                         _createArg1 = arg1;
@@ -1399,7 +1399,7 @@ public readonly partial struct KrakendSchema
                     /// <param name="arg2">The value of the property.</param>
                     /// <param name="arg3">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValue.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValueAs.Source arg3, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValue.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValueAs.Source arg3, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3);
@@ -1415,7 +1415,7 @@ public readonly partial struct KrakendSchema
                     /// <param name="arg2">The value of the property.</param>
                     /// <param name="arg3">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValue.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValueAs.Source arg3, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValue.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValueAs.Source arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -1462,7 +1462,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="tierValue">The value of the <c>"tier_value"</c> property.</param>
                 /// <param name="tierValueAs">The value of the <c>"tier_value_as"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source ratelimit = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValue.Source tierValue = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValueAs.Source tierValueAs = default)
+                public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source ratelimit = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValue.Source tierValue = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValueAs.Source tierValueAs = default)
                 {
                     return new Source(ratelimit, tierValue, tierValueAs);
                 }
@@ -1476,7 +1476,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="tierValue">The value of the <c>"tier_value"</c> property.</param>
                 /// <param name="tierValueAs">The value of the <c>"tier_value_as"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source<TContext> ratelimit = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValue.Source tierValue = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValueAs.Source tierValueAs = default)
+                public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source<TContext> ratelimit = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValue.Source tierValue = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.TiersEntityArray.TiersEntity.TierValueAs.Source tierValueAs = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif

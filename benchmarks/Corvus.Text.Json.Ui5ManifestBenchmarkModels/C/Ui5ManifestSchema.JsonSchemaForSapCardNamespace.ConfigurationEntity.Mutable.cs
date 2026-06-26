@@ -383,7 +383,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>actionHandlers</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetActionHandlers(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.Source value)
+                public void SetActionHandlers(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.Source value)
                 {
                     CheckValidInstance();
 
@@ -464,7 +464,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>csrfTokens</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCsrfTokens(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheCsrfTokensUsedByTheCard.Source value)
+                public void SetCsrfTokens(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheCsrfTokensUsedByTheCard.Source value)
                 {
                     CheckValidInstance();
 
@@ -545,7 +545,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>destinations</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDestinations(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesWhatDestinationsAreUsedByTheCard.Source value)
+                public void SetDestinations(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesWhatDestinationsAreUsedByTheCard.Source value)
                 {
                     CheckValidInstance();
 
@@ -626,7 +626,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>enableMarkdown</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetEnableMarkdown(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+                public void SetEnableMarkdown(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -671,7 +671,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>filters</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetFilters(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfFilters.Source value)
+                public void SetFilters(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfFilters.Source value)
                 {
                     CheckValidInstance();
 
@@ -752,7 +752,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>messages</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMessages(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheMessagesForTheCard.Source value)
+                public void SetMessages(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheMessagesForTheCard.Source value)
                 {
                     CheckValidInstance();
 
@@ -833,7 +833,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>modelSizeLimit</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetModelSizeLimit(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.ModelSizeLimitEntity.Source value)
+                public void SetModelSizeLimit(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.ModelSizeLimitEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -878,7 +878,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>parameters</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetParameters(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfParameters.Source value)
+                public void SetParameters(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfParameters.Source value)
                 {
                     CheckValidInstance();
 
@@ -1131,7 +1131,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheCsrfTokensUsedByTheCard.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesWhatDestinationsAreUsedByTheCard.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfFilters.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheMessagesForTheCard.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.ModelSizeLimitEntity.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfParameters.Source arg8)
+                internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheCsrfTokensUsedByTheCard.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesWhatDestinationsAreUsedByTheCard.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfFilters.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheMessagesForTheCard.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.ModelSizeLimitEntity.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfParameters.Source arg8)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1309,7 +1309,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheCsrfTokensUsedByTheCard.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesWhatDestinationsAreUsedByTheCard.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfFilters.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheMessagesForTheCard.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.ModelSizeLimitEntity.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfParameters.Source<TContext> arg8)
+                internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheCsrfTokensUsedByTheCard.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesWhatDestinationsAreUsedByTheCard.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfFilters.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheMessagesForTheCard.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.ModelSizeLimitEntity.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfParameters.Source<TContext> arg8)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1590,7 +1590,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg7">The value of the property.</param>
                 /// <param name="arg8">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheCsrfTokensUsedByTheCard.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesWhatDestinationsAreUsedByTheCard.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfFilters.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheMessagesForTheCard.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.ModelSizeLimitEntity.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfParameters.Source arg8, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheCsrfTokensUsedByTheCard.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesWhatDestinationsAreUsedByTheCard.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfFilters.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheMessagesForTheCard.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.ModelSizeLimitEntity.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfParameters.Source arg8, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
@@ -1611,7 +1611,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg7">The value of the property.</param>
                 /// <param name="arg8">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheCsrfTokensUsedByTheCard.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesWhatDestinationsAreUsedByTheCard.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfFilters.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheMessagesForTheCard.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.ModelSizeLimitEntity.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfParameters.Source<TContext> arg8, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheCsrfTokensUsedByTheCard.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesWhatDestinationsAreUsedByTheCard.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfFilters.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheMessagesForTheCard.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.ModelSizeLimitEntity.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfParameters.Source<TContext> arg8, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1663,7 +1663,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="modelSizeLimit">The value of the <c>"modelSizeLimit"</c> property.</param>
             /// <param name="parameters">The value of the <c>"parameters"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.Source actionHandlers = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheCsrfTokensUsedByTheCard.Source csrfTokens = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesWhatDestinationsAreUsedByTheCard.Source destinations = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source enableMarkdown = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfFilters.Source filters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheMessagesForTheCard.Source messages = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.ModelSizeLimitEntity.Source modelSizeLimit = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfParameters.Source parameters = default)
+            public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.Source actionHandlers = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheCsrfTokensUsedByTheCard.Source csrfTokens = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesWhatDestinationsAreUsedByTheCard.Source destinations = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source enableMarkdown = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfFilters.Source filters = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheMessagesForTheCard.Source messages = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.ModelSizeLimitEntity.Source modelSizeLimit = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfParameters.Source parameters = default)
             {
                 return new Source(actionHandlers, csrfTokens, destinations, enableMarkdown, filters, messages, modelSizeLimit, parameters);
             }
@@ -1682,7 +1682,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="modelSizeLimit">The value of the <c>"modelSizeLimit"</c> property.</param>
             /// <param name="parameters">The value of the <c>"parameters"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.Source<TContext> actionHandlers = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheCsrfTokensUsedByTheCard.Source<TContext> csrfTokens = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesWhatDestinationsAreUsedByTheCard.Source<TContext> destinations = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source enableMarkdown = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfFilters.Source<TContext> filters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheMessagesForTheCard.Source<TContext> messages = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.ModelSizeLimitEntity.Source modelSizeLimit = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfParameters.Source<TContext> parameters = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.Source<TContext> actionHandlers = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheCsrfTokensUsedByTheCard.Source<TContext> csrfTokens = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesWhatDestinationsAreUsedByTheCard.Source<TContext> destinations = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source enableMarkdown = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfFilters.Source<TContext> filters = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.DescribesTheMessagesForTheCard.Source<TContext> messages = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.ModelSizeLimitEntity.Source modelSizeLimit = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.MapOfParameters.Source<TContext> parameters = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

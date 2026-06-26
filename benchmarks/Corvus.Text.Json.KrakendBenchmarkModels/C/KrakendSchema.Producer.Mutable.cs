@@ -691,7 +691,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>backoff_strategy</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBackoffStrategyValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.BackoffStrategy.Source value)
+            public void SetBackoffStrategyValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.BackoffStrategy.Source value)
             {
                 CheckValidInstance();
 
@@ -736,7 +736,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>delete</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDeleteValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Delete.Source value)
+            public void SetDeleteValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Delete.Source value)
             {
                 CheckValidInstance();
 
@@ -781,7 +781,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>durable</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDurableValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Durable.Source value)
+            public void SetDurableValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Durable.Source value)
             {
                 CheckValidInstance();
 
@@ -826,7 +826,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>exchange</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExchange(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetExchange(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -857,7 +857,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>exclusive</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExclusiveValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Exclusive.Source value)
+            public void SetExclusiveValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Exclusive.Source value)
             {
                 CheckValidInstance();
 
@@ -902,7 +902,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>exp_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExpKey(in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ExpirationKey.Source value)
+            public void SetExpKey(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ExpirationKey.Source value)
             {
                 CheckValidInstance();
 
@@ -947,7 +947,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>immediate</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetImmediateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Immediate.Source value)
+            public void SetImmediateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Immediate.Source value)
             {
                 CheckValidInstance();
 
@@ -992,7 +992,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>mandatory</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMandatoryValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Mandatory.Source value)
+            public void SetMandatoryValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Mandatory.Source value)
             {
                 CheckValidInstance();
 
@@ -1037,7 +1037,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>max_retries</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxRetriesValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.MaxRetries.Source value)
+            public void SetMaxRetriesValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.MaxRetries.Source value)
             {
                 CheckValidInstance();
 
@@ -1082,7 +1082,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>msg_id_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMsgIdKey(in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey.Source value)
+            public void SetMsgIdKey(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey.Source value)
             {
                 CheckValidInstance();
 
@@ -1127,7 +1127,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetName(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetName(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1158,7 +1158,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>no_local</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNoLocal(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
+            public void SetNoLocal(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1203,7 +1203,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>no_wait</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNoWait(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
+            public void SetNoWait(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1248,7 +1248,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>priority_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPriorityKey(in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey1.Source value)
+            public void SetPriorityKey(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey1.Source value)
             {
                 CheckValidInstance();
 
@@ -1293,7 +1293,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>reply_to_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetReplyToKey(in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey2.Source value)
+            public void SetReplyToKey(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey2.Source value)
             {
                 CheckValidInstance();
 
@@ -1338,7 +1338,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>routing_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRoutingKeyValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.RoutingKey.Source value)
+            public void SetRoutingKeyValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.RoutingKey.Source value)
             {
                 CheckValidInstance();
 
@@ -1369,7 +1369,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>static_routing_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStaticRoutingKeyValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.StaticRoutingKey.Source value)
+            public void SetStaticRoutingKeyValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.StaticRoutingKey.Source value)
             {
                 CheckValidInstance();
 
@@ -1515,7 +1515,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1538,7 +1538,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1585,7 +1585,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1771,7 +1771,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.RoutingKey.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.BackoffStrategy.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Delete.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Durable.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Exclusive.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ExpirationKey.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Immediate.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Mandatory.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.MaxRetries.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey.Source arg12, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg13, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey1.Source arg15, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey2.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.StaticRoutingKey.Source arg17)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.RoutingKey.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.BackoffStrategy.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Delete.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Durable.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Exclusive.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ExpirationKey.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Immediate.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Mandatory.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.MaxRetries.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey.Source arg12, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg13, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey1.Source arg15, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey2.Source arg16, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.StaticRoutingKey.Source arg17)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -2238,7 +2238,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg16">The value of the property.</param>
             /// <param name="arg17">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.RoutingKey.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.BackoffStrategy.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Delete.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Durable.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Exclusive.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ExpirationKey.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Immediate.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Mandatory.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.MaxRetries.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey.Source arg12, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg13, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey1.Source arg15, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey2.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.StaticRoutingKey.Source arg17, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.RoutingKey.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.BackoffStrategy.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Delete.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Durable.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Exclusive.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ExpirationKey.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Immediate.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Mandatory.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.MaxRetries.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey.Source arg12, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg13, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey1.Source arg15, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey2.Source arg16, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.StaticRoutingKey.Source arg17, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17);
@@ -2296,7 +2296,7 @@ public readonly partial struct KrakendSchema
         /// <param name="replyToKey">The value of the <c>"reply_to_key"</c> property.</param>
         /// <param name="staticRoutingKey">The value of the <c>"static_routing_key"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.JsonString.Source exchange, in Corvus.KrakendBenchmark.Current.JsonString.Source name, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.RoutingKey.Source routingKey, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.BackoffStrategy.Source backoffStrategy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Delete.Source delete = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Durable.Source durable = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Exclusive.Source exclusive = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ExpirationKey.Source expKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Immediate.Source immediate = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Mandatory.Source mandatory = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.MaxRetries.Source maxRetries = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey.Source msgIdKey = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noLocal = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noWait = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey1.Source priorityKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey2.Source replyToKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.StaticRoutingKey.Source staticRoutingKey = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source exchange, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source name, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.RoutingKey.Source routingKey, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.BackoffStrategy.Source backoffStrategy = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Delete.Source delete = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Durable.Source durable = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Exclusive.Source exclusive = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ExpirationKey.Source expKey = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Immediate.Source immediate = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.Mandatory.Source mandatory = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.MaxRetries.Source maxRetries = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey.Source msgIdKey = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noLocal = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noWait = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey1.Source priorityKey = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.ProducerExpirationKey2.Source replyToKey = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Producer.StaticRoutingKey.Source staticRoutingKey = default)
         {
             return new Source(exchange, name, routingKey, backoffStrategy, delete, durable, exclusive, expKey, immediate, mandatory, maxRetries, msgIdKey, noLocal, noWait, priorityKey, replyToKey, staticRoutingKey);
         }

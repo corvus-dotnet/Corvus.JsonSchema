@@ -686,7 +686,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>allowCompoundWords</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAllowCompoundWords(in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.AllowCompoundWordsEntity.Source value)
+            public void SetAllowCompoundWords(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.AllowCompoundWordsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -731,7 +731,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>caseSensitive</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCaseSensitive(in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.CaseSensitiveEntity.Source value)
+            public void SetCaseSensitive(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.CaseSensitiveEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -776,7 +776,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+            public void SetDescription(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -821,7 +821,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>dictionaries</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDictionaries(in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryReferenceArray.Source value)
+            public void SetDictionaries(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryReferenceArray.Source value)
             {
                 CheckValidInstance();
 
@@ -902,7 +902,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>dictionaryDefinitions</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDictionaryDefinitions(in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryDefinitionArray.Source value)
+            public void SetDictionaryDefinitions(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryDefinitionArray.Source value)
             {
                 CheckValidInstance();
 
@@ -983,7 +983,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>enabled</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnabled(in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IsTheSpellCheckerEnabled.Source value)
+            public void SetEnabled(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IsTheSpellCheckerEnabled.Source value)
             {
                 CheckValidInstance();
 
@@ -1028,7 +1028,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>flagWords</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFlagWords(in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.JsonStringArray.Source value)
+            public void SetFlagWords(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1109,7 +1109,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>id</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetId(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+            public void SetId(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1154,7 +1154,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>ignoreRegExpList</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIgnoreRegExpList(in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source value)
+            public void SetIgnoreRegExpList(scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source value)
             {
                 CheckValidInstance();
 
@@ -1235,7 +1235,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>ignoreWords</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIgnoreWords(in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IgnoreWordArray.Source value)
+            public void SetIgnoreWords(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IgnoreWordArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1316,7 +1316,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>includeRegExpList</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIncludeRegExpList(in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source value)
+            public void SetIncludeRegExpList(scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source value)
             {
                 CheckValidInstance();
 
@@ -1397,7 +1397,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>languageId</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLanguageId(in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source value)
+            public void SetLanguageId(scoped in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source value)
             {
                 CheckValidInstance();
 
@@ -1462,7 +1462,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>local</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLocal(in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocalEntity.Source value)
+            public void SetLocal(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocalEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1543,7 +1543,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>locale</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLocale(in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocaleEntity.Source value)
+            public void SetLocale(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocaleEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1624,7 +1624,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetName(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+            public void SetName(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1669,7 +1669,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>noSuggestDictionaries</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNoSuggestDictionaries(in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.NoSuggestDictionariArray.Source value)
+            public void SetNoSuggestDictionaries(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.NoSuggestDictionariArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1750,7 +1750,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>patterns</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPatterns(in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.RegExpPatternDefinitionArray.Source value)
+            public void SetPatterns(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.RegExpPatternDefinitionArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1831,7 +1831,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>suggestWords</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSuggestWords(in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.SuggestWorArray.Source value)
+            public void SetSuggestWords(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.SuggestWorArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1912,7 +1912,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>words</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetWords(in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.ListOfWordArray.Source value)
+            public void SetWords(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.ListOfWordArray.Source value)
             {
                 CheckValidInstance();
 
@@ -2176,7 +2176,7 @@ public readonly partial struct CspellSchema
 
             internal Source(Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.AllowCompoundWordsEntity.Source arg2, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.CaseSensitiveEntity.Source arg3, in Corvus.CspellBenchmark.Current.JsonString.Source arg4, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryReferenceArray.Source arg5, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryDefinitionArray.Source arg6, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IsTheSpellCheckerEnabled.Source arg7, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.JsonStringArray.Source arg8, in Corvus.CspellBenchmark.Current.JsonString.Source arg9, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source arg10, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IgnoreWordArray.Source arg11, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source arg12, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocalEntity.Source arg13, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocaleEntity.Source arg14, in Corvus.CspellBenchmark.Current.JsonString.Source arg15, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.NoSuggestDictionariArray.Source arg16, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.RegExpPatternDefinitionArray.Source arg17, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.SuggestWorArray.Source arg18, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.ListOfWordArray.Source arg19)
+            internal Source(scoped in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.AllowCompoundWordsEntity.Source arg2, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.CaseSensitiveEntity.Source arg3, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg4, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryReferenceArray.Source arg5, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryDefinitionArray.Source arg6, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IsTheSpellCheckerEnabled.Source arg7, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.JsonStringArray.Source arg8, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg9, scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source arg10, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IgnoreWordArray.Source arg11, scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source arg12, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocalEntity.Source arg13, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocaleEntity.Source arg14, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg15, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.NoSuggestDictionariArray.Source arg16, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.RegExpPatternDefinitionArray.Source arg17, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.SuggestWorArray.Source arg18, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.ListOfWordArray.Source arg19)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -2376,7 +2376,7 @@ public readonly partial struct CspellSchema
 
             internal Source(scoped in TContext context, Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source<TContext> arg1, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.AllowCompoundWordsEntity.Source arg2, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.CaseSensitiveEntity.Source arg3, in Corvus.CspellBenchmark.Current.JsonString.Source arg4, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryReferenceArray.Source<TContext> arg5, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryDefinitionArray.Source<TContext> arg6, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IsTheSpellCheckerEnabled.Source arg7, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.JsonStringArray.Source<TContext> arg8, in Corvus.CspellBenchmark.Current.JsonString.Source arg9, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source<TContext> arg10, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IgnoreWordArray.Source<TContext> arg11, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source<TContext> arg12, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocalEntity.Source<TContext> arg13, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocaleEntity.Source<TContext> arg14, in Corvus.CspellBenchmark.Current.JsonString.Source arg15, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.NoSuggestDictionariArray.Source<TContext> arg16, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.RegExpPatternDefinitionArray.Source<TContext> arg17, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.SuggestWorArray.Source<TContext> arg18, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.ListOfWordArray.Source<TContext> arg19)
+            internal Source(scoped in TContext context, scoped in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source<TContext> arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.AllowCompoundWordsEntity.Source arg2, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.CaseSensitiveEntity.Source arg3, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg4, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryReferenceArray.Source<TContext> arg5, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryDefinitionArray.Source<TContext> arg6, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IsTheSpellCheckerEnabled.Source arg7, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.JsonStringArray.Source<TContext> arg8, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg9, scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source<TContext> arg10, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IgnoreWordArray.Source<TContext> arg11, scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source<TContext> arg12, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocalEntity.Source<TContext> arg13, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocaleEntity.Source<TContext> arg14, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg15, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.NoSuggestDictionariArray.Source<TContext> arg16, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.RegExpPatternDefinitionArray.Source<TContext> arg17, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.SuggestWorArray.Source<TContext> arg18, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.ListOfWordArray.Source<TContext> arg19)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2745,7 +2745,7 @@ public readonly partial struct CspellSchema
             /// <param name="arg18">The value of the property.</param>
             /// <param name="arg19">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.AllowCompoundWordsEntity.Source arg2, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.CaseSensitiveEntity.Source arg3, in Corvus.CspellBenchmark.Current.JsonString.Source arg4, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryReferenceArray.Source arg5, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryDefinitionArray.Source arg6, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IsTheSpellCheckerEnabled.Source arg7, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.JsonStringArray.Source arg8, in Corvus.CspellBenchmark.Current.JsonString.Source arg9, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source arg10, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IgnoreWordArray.Source arg11, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source arg12, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocalEntity.Source arg13, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocaleEntity.Source arg14, in Corvus.CspellBenchmark.Current.JsonString.Source arg15, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.NoSuggestDictionariArray.Source arg16, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.RegExpPatternDefinitionArray.Source arg17, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.SuggestWorArray.Source arg18, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.ListOfWordArray.Source arg19, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.AllowCompoundWordsEntity.Source arg2, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.CaseSensitiveEntity.Source arg3, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg4, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryReferenceArray.Source arg5, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryDefinitionArray.Source arg6, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IsTheSpellCheckerEnabled.Source arg7, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.JsonStringArray.Source arg8, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg9, scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source arg10, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IgnoreWordArray.Source arg11, scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source arg12, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocalEntity.Source arg13, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocaleEntity.Source arg14, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg15, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.NoSuggestDictionariArray.Source arg16, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.RegExpPatternDefinitionArray.Source arg17, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.SuggestWorArray.Source arg18, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.ListOfWordArray.Source arg19, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19);
@@ -2777,7 +2777,7 @@ public readonly partial struct CspellSchema
             /// <param name="arg18">The value of the property.</param>
             /// <param name="arg19">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source<TContext> arg1, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.AllowCompoundWordsEntity.Source arg2, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.CaseSensitiveEntity.Source arg3, in Corvus.CspellBenchmark.Current.JsonString.Source arg4, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryReferenceArray.Source<TContext> arg5, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryDefinitionArray.Source<TContext> arg6, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IsTheSpellCheckerEnabled.Source arg7, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.JsonStringArray.Source<TContext> arg8, in Corvus.CspellBenchmark.Current.JsonString.Source arg9, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source<TContext> arg10, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IgnoreWordArray.Source<TContext> arg11, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source<TContext> arg12, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocalEntity.Source<TContext> arg13, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocaleEntity.Source<TContext> arg14, in Corvus.CspellBenchmark.Current.JsonString.Source arg15, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.NoSuggestDictionariArray.Source<TContext> arg16, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.RegExpPatternDefinitionArray.Source<TContext> arg17, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.SuggestWorArray.Source<TContext> arg18, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.ListOfWordArray.Source<TContext> arg19, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source<TContext> arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.AllowCompoundWordsEntity.Source arg2, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.CaseSensitiveEntity.Source arg3, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg4, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryReferenceArray.Source<TContext> arg5, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryDefinitionArray.Source<TContext> arg6, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IsTheSpellCheckerEnabled.Source arg7, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.JsonStringArray.Source<TContext> arg8, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg9, scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source<TContext> arg10, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IgnoreWordArray.Source<TContext> arg11, scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source<TContext> arg12, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocalEntity.Source<TContext> arg13, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocaleEntity.Source<TContext> arg14, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg15, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.NoSuggestDictionariArray.Source<TContext> arg16, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.RegExpPatternDefinitionArray.Source<TContext> arg17, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.SuggestWorArray.Source<TContext> arg18, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.ListOfWordArray.Source<TContext> arg19, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2840,7 +2840,7 @@ public readonly partial struct CspellSchema
         /// <param name="suggestWords">The value of the <c>"suggestWords"</c> property.</param>
         /// <param name="words">The value of the <c>"words"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source languageId, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.AllowCompoundWordsEntity.Source allowCompoundWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.CaseSensitiveEntity.Source caseSensitive = default, in Corvus.CspellBenchmark.Current.JsonString.Source description = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryReferenceArray.Source dictionaries = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryDefinitionArray.Source dictionaryDefinitions = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IsTheSpellCheckerEnabled.Source enabled = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.JsonStringArray.Source flagWords = default, in Corvus.CspellBenchmark.Current.JsonString.Source id = default, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source ignoreRegExpList = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IgnoreWordArray.Source ignoreWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source includeRegExpList = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocalEntity.Source local = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocaleEntity.Source locale = default, in Corvus.CspellBenchmark.Current.JsonString.Source name = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.NoSuggestDictionariArray.Source noSuggestDictionaries = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.RegExpPatternDefinitionArray.Source patterns = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.SuggestWorArray.Source suggestWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.ListOfWordArray.Source words = default)
+        public static Source Build(scoped in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source languageId, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.AllowCompoundWordsEntity.Source allowCompoundWords = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.CaseSensitiveEntity.Source caseSensitive = default, scoped in Corvus.CspellBenchmark.Current.JsonString.Source description = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryReferenceArray.Source dictionaries = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryDefinitionArray.Source dictionaryDefinitions = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IsTheSpellCheckerEnabled.Source enabled = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.JsonStringArray.Source flagWords = default, scoped in Corvus.CspellBenchmark.Current.JsonString.Source id = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source ignoreRegExpList = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IgnoreWordArray.Source ignoreWords = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source includeRegExpList = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocalEntity.Source local = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocaleEntity.Source locale = default, scoped in Corvus.CspellBenchmark.Current.JsonString.Source name = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.NoSuggestDictionariArray.Source noSuggestDictionaries = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.RegExpPatternDefinitionArray.Source patterns = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.SuggestWorArray.Source suggestWords = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.ListOfWordArray.Source words = default)
         {
             return new Source(languageId, allowCompoundWords, caseSensitive, description, dictionaries, dictionaryDefinitions, enabled, flagWords, id, ignoreRegExpList, ignoreWords, includeRegExpList, local, locale, name, noSuggestDictionaries, patterns, suggestWords, words);
         }
@@ -2870,7 +2870,7 @@ public readonly partial struct CspellSchema
         /// <param name="suggestWords">The value of the <c>"suggestWords"</c> property.</param>
         /// <param name="words">The value of the <c>"words"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source<TContext> languageId, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.AllowCompoundWordsEntity.Source allowCompoundWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.CaseSensitiveEntity.Source caseSensitive = default, in Corvus.CspellBenchmark.Current.JsonString.Source description = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryReferenceArray.Source<TContext> dictionaries = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryDefinitionArray.Source<TContext> dictionaryDefinitions = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IsTheSpellCheckerEnabled.Source enabled = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.JsonStringArray.Source<TContext> flagWords = default, in Corvus.CspellBenchmark.Current.JsonString.Source id = default, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source<TContext> ignoreRegExpList = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IgnoreWordArray.Source<TContext> ignoreWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source<TContext> includeRegExpList = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocalEntity.Source<TContext> local = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocaleEntity.Source<TContext> locale = default, in Corvus.CspellBenchmark.Current.JsonString.Source name = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.NoSuggestDictionariArray.Source<TContext> noSuggestDictionaries = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.RegExpPatternDefinitionArray.Source<TContext> patterns = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.SuggestWorArray.Source<TContext> suggestWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.ListOfWordArray.Source<TContext> words = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source<TContext> languageId, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.AllowCompoundWordsEntity.Source allowCompoundWords = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.CaseSensitiveEntity.Source caseSensitive = default, scoped in Corvus.CspellBenchmark.Current.JsonString.Source description = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryReferenceArray.Source<TContext> dictionaries = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.DictionaryDefinitionArray.Source<TContext> dictionaryDefinitions = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IsTheSpellCheckerEnabled.Source enabled = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.JsonStringArray.Source<TContext> flagWords = default, scoped in Corvus.CspellBenchmark.Current.JsonString.Source id = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source<TContext> ignoreRegExpList = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.IgnoreWordArray.Source<TContext> ignoreWords = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source<TContext> includeRegExpList = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocalEntity.Source<TContext> local = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.LocaleEntity.Source<TContext> locale = default, scoped in Corvus.CspellBenchmark.Current.JsonString.Source name = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.NoSuggestDictionariArray.Source<TContext> noSuggestDictionaries = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.RegExpPatternDefinitionArray.Source<TContext> patterns = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.SuggestWorArray.Source<TContext> suggestWords = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.ListOfWordArray.Source<TContext> words = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

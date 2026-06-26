@@ -418,7 +418,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// Set the <c>exclude</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetExclude(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.FlagToExcludeValuesFromTheDatePicker.Source value)
+                    public void SetExclude(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.FlagToExcludeValuesFromTheDatePicker.Source value)
                     {
                         CheckValidInstance();
 
@@ -463,7 +463,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// Set the <c>fields</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetFields(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.RepresentsTheFilterFieldDefinitionForEachField.Source value)
+                    public void SetFields(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.RepresentsTheFilterFieldDefinitionForEachField.Source value)
                     {
                         CheckValidInstance();
 
@@ -544,7 +544,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// Set the <c>selectedValues</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetSelectedValues(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                    public void SetSelectedValues(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                     {
                         CheckValidInstance();
 
@@ -589,7 +589,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// Set the <c>useDateRange</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetUseDateRange(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.UseDateRangeEntity.Source value)
+                    public void SetUseDateRange(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.UseDateRangeEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -735,7 +735,7 @@ public readonly partial struct Ui5ManifestSchema
                     ///   </para>
                     /// </remarks>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void SetProperty(string propertyName, in JsonElement.Source value)
+                    public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                     {
                         SetProperty(propertyName.AsSpan(), value);
                     }
@@ -758,7 +758,7 @@ public readonly partial struct Ui5ManifestSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -805,7 +805,7 @@ public readonly partial struct Ui5ManifestSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -978,7 +978,7 @@ public readonly partial struct Ui5ManifestSchema
 
                     internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.FlagToExcludeValuesFromTheDatePicker.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.RepresentsTheFilterFieldDefinitionForEachField.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.UseDateRangeEntity.Source arg4)
+                    internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.FlagToExcludeValuesFromTheDatePicker.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.RepresentsTheFilterFieldDefinitionForEachField.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.UseDateRangeEntity.Source arg4)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -1148,7 +1148,7 @@ public readonly partial struct Ui5ManifestSchema
 
                     internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.FlagToExcludeValuesFromTheDatePicker.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.RepresentsTheFilterFieldDefinitionForEachField.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.UseDateRangeEntity.Source arg4)
+                    internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.FlagToExcludeValuesFromTheDatePicker.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.RepresentsTheFilterFieldDefinitionForEachField.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.UseDateRangeEntity.Source arg4)
                     {
                         _context = context;
                         _createArg1 = arg1;
@@ -1466,7 +1466,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// <param name="arg3">The value of the property.</param>
                     /// <param name="arg4">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.FlagToExcludeValuesFromTheDatePicker.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.RepresentsTheFilterFieldDefinitionForEachField.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.UseDateRangeEntity.Source arg4, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.FlagToExcludeValuesFromTheDatePicker.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.RepresentsTheFilterFieldDefinitionForEachField.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.UseDateRangeEntity.Source arg4, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3, arg4);
@@ -1483,7 +1483,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// <param name="arg3">The value of the property.</param>
                     /// <param name="arg4">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.FlagToExcludeValuesFromTheDatePicker.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.RepresentsTheFilterFieldDefinitionForEachField.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.UseDateRangeEntity.Source arg4, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.FlagToExcludeValuesFromTheDatePicker.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.RepresentsTheFilterFieldDefinitionForEachField.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.UseDateRangeEntity.Source arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -1531,7 +1531,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="selectedValues">The value of the <c>"selectedValues"</c> property.</param>
                 /// <param name="useDateRange">The value of the <c>"useDateRange"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.FlagToExcludeValuesFromTheDatePicker.Source exclude = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.RepresentsTheFilterFieldDefinitionForEachField.Source fields = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source selectedValues = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.UseDateRangeEntity.Source useDateRange = default)
+                public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.FlagToExcludeValuesFromTheDatePicker.Source exclude = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.RepresentsTheFilterFieldDefinitionForEachField.Source fields = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source selectedValues = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.UseDateRangeEntity.Source useDateRange = default)
                 {
                     return new Source(exclude, fields, selectedValues, useDateRange);
                 }
@@ -1546,7 +1546,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="selectedValues">The value of the <c>"selectedValues"</c> property.</param>
                 /// <param name="useDateRange">The value of the <c>"useDateRange"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.FlagToExcludeValuesFromTheDatePicker.Source exclude = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.RepresentsTheFilterFieldDefinitionForEachField.Source<TContext> fields = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source selectedValues = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.UseDateRangeEntity.Source useDateRange = default)
+                public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.FlagToExcludeValuesFromTheDatePicker.Source exclude = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.RepresentsTheFilterFieldDefinitionForEachField.Source<TContext> fields = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source selectedValues = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.RepresentsTheObjectToStoreFilterBarConfiguration.DateSettingsEntity.UseDateRangeEntity.Source useDateRange = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif

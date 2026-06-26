@@ -435,7 +435,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>annotations</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAnnotations(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.JsonStringArray.Source value)
+            public void SetAnnotations(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -516,7 +516,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>ignoreAnnotationsFromMetadata</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIgnoreAnnotationsFromMetadata(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+            public void SetIgnoreAnnotationsFromMetadata(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -561,7 +561,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>localUri</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLocalUri(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetLocalUri(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -606,7 +606,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>maxAge</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxAge(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.MaxAgeEntity.Source value)
+            public void SetMaxAge(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.MaxAgeEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -651,7 +651,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>objects</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetObjects(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.DictionaryOfCatalogObjectsOfferedByTheDatasource.Source value)
+            public void SetObjects(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.DictionaryOfCatalogObjectsOfferedByTheDatasource.Source value)
             {
                 CheckValidInstance();
 
@@ -732,7 +732,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>odataVersion</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOdataVersion(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.RepresentsVersionOfOData20IsDefault.Source value)
+            public void SetOdataVersion(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.RepresentsVersionOfOData20IsDefault.Source value)
             {
                 CheckValidInstance();
 
@@ -878,7 +878,7 @@ public readonly partial struct Ui5ManifestSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -901,7 +901,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -948,7 +948,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1123,7 +1123,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.JsonStringArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.MaxAgeEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.DictionaryOfCatalogObjectsOfferedByTheDatasource.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.RepresentsVersionOfOData20IsDefault.Source arg6)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.JsonStringArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.MaxAgeEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.DictionaryOfCatalogObjectsOfferedByTheDatasource.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.RepresentsVersionOfOData20IsDefault.Source arg6)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1297,7 +1297,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.JsonStringArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.MaxAgeEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.DictionaryOfCatalogObjectsOfferedByTheDatasource.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.RepresentsVersionOfOData20IsDefault.Source arg6)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.JsonStringArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.MaxAgeEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.DictionaryOfCatalogObjectsOfferedByTheDatasource.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.RepresentsVersionOfOData20IsDefault.Source arg6)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1631,7 +1631,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.JsonStringArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.MaxAgeEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.DictionaryOfCatalogObjectsOfferedByTheDatasource.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.RepresentsVersionOfOData20IsDefault.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.JsonStringArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.MaxAgeEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.DictionaryOfCatalogObjectsOfferedByTheDatasource.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.RepresentsVersionOfOData20IsDefault.Source arg6, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1650,7 +1650,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.JsonStringArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.MaxAgeEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.DictionaryOfCatalogObjectsOfferedByTheDatasource.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.RepresentsVersionOfOData20IsDefault.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.JsonStringArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.MaxAgeEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.DictionaryOfCatalogObjectsOfferedByTheDatasource.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.RepresentsVersionOfOData20IsDefault.Source arg6, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1700,7 +1700,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="objects">The value of the <c>"objects"</c> property.</param>
         /// <param name="odataVersion">The value of the <c>"odataVersion"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.JsonStringArray.Source annotations = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source ignoreAnnotationsFromMetadata = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source localUri = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.MaxAgeEntity.Source maxAge = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.DictionaryOfCatalogObjectsOfferedByTheDatasource.Source objects = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.RepresentsVersionOfOData20IsDefault.Source odataVersion = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.JsonStringArray.Source annotations = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source ignoreAnnotationsFromMetadata = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source localUri = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.MaxAgeEntity.Source maxAge = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.DictionaryOfCatalogObjectsOfferedByTheDatasource.Source objects = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.RepresentsVersionOfOData20IsDefault.Source odataVersion = default)
         {
             return new Source(annotations, ignoreAnnotationsFromMetadata, localUri, maxAge, objects, odataVersion);
         }
@@ -1717,7 +1717,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="objects">The value of the <c>"objects"</c> property.</param>
         /// <param name="odataVersion">The value of the <c>"odataVersion"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.JsonStringArray.Source<TContext> annotations = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source ignoreAnnotationsFromMetadata = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source localUri = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.MaxAgeEntity.Source maxAge = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.DictionaryOfCatalogObjectsOfferedByTheDatasource.Source<TContext> objects = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.RepresentsVersionOfOData20IsDefault.Source odataVersion = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.JsonStringArray.Source<TContext> annotations = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source ignoreAnnotationsFromMetadata = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source localUri = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.MaxAgeEntity.Source maxAge = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.DictionaryOfCatalogObjectsOfferedByTheDatasource.Source<TContext> objects = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.RepresentsVersionOfOData20IsDefault.Source odataVersion = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

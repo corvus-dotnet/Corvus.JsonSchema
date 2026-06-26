@@ -226,7 +226,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>shortcut</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShortcut(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Command.ShortcutEntity.Source value)
+            public void SetShortcut(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Command.ShortcutEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -436,7 +436,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Command.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Command.ShortcutEntity.Source arg1)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Command.ShortcutEntity.Source arg1)
             {
                 _createArg1 = arg1;
                 _kind = Kind.Create;
@@ -751,7 +751,7 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             /// <param name="arg1">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Command.ShortcutEntity.Source arg1, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Command.ShortcutEntity.Source arg1, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1);
@@ -793,7 +793,7 @@ public readonly partial struct Ui5ManifestSchema
         /// </summary>
         /// <param name="shortcut">The value of the <c>"shortcut"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Command.ShortcutEntity.Source shortcut = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Command.ShortcutEntity.Source shortcut = default)
         {
             return new Source(shortcut);
         }

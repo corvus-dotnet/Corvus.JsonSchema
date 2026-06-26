@@ -592,7 +592,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>AdditionalDependencies</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAdditionalDependencies(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.JsonStringArray.Source value)
+            public void SetAdditionalDependencies(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -673,7 +673,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>HasExplicitPlatforms</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHasExplicitPlatforms(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Source value)
+            public void SetHasExplicitPlatforms(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -718,7 +718,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>LoadingPhase</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLoadingPhase(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.LoadingPhaseEntity.Source value)
+            public void SetLoadingPhase(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.LoadingPhaseEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -763,7 +763,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>Name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetName(in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source value)
+            public void SetName(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -808,7 +808,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>PlatformAllowList</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPlatformAllowList(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source value)
+            public void SetPlatformAllowList(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source value)
             {
                 CheckValidInstance();
 
@@ -889,7 +889,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>PlatformDenyList</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPlatformDenyList(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source value)
+            public void SetPlatformDenyList(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source value)
             {
                 CheckValidInstance();
 
@@ -970,7 +970,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>ProgramAllowList</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetProgramAllowList(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source value)
+            public void SetProgramAllowList(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1051,7 +1051,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>ProgramDenyList</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetProgramDenyList(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source value)
+            public void SetProgramDenyList(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1132,7 +1132,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>TargetAllowList</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTargetAllowList(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildTargetTypeArray.Source value)
+            public void SetTargetAllowList(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildTargetTypeArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1213,7 +1213,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>TargetConfigurationAllowList</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTargetConfigurationAllowList(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildConfigurationArray.Source value)
+            public void SetTargetConfigurationAllowList(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildConfigurationArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1294,7 +1294,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>TargetConfigurationDenyList</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTargetConfigurationDenyList(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisallowedTaArray.Source value)
+            public void SetTargetConfigurationDenyList(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisallowedTaArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1375,7 +1375,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>TargetDenyList</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTargetDenyList(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisalloweArray.Source value)
+            public void SetTargetDenyList(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisalloweArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1456,7 +1456,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>Type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.UsageTypeOfModule.Source value)
+            public void SetType(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.UsageTypeOfModule.Source value)
             {
                 CheckValidInstance();
 
@@ -1602,7 +1602,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1625,7 +1625,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1672,7 +1672,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1854,7 +1854,7 @@ public readonly partial struct UnrealEngineUprojectSchema
 
             internal Source(Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.JsonStringArray.Source arg1, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Source arg2, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.LoadingPhaseEntity.Source arg3, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg4, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source arg5, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source arg6, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source arg7, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source arg8, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildTargetTypeArray.Source arg9, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildConfigurationArray.Source arg10, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisallowedTaArray.Source arg11, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisalloweArray.Source arg12, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.UsageTypeOfModule.Source arg13)
+            internal Source(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.JsonStringArray.Source arg1, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Source arg2, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.LoadingPhaseEntity.Source arg3, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg4, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source arg5, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source arg6, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source arg7, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source arg8, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildTargetTypeArray.Source arg9, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildConfigurationArray.Source arg10, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisallowedTaArray.Source arg11, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisalloweArray.Source arg12, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.UsageTypeOfModule.Source arg13)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -2042,7 +2042,7 @@ public readonly partial struct UnrealEngineUprojectSchema
 
             internal Source(scoped in TContext context, Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.JsonStringArray.Source<TContext> arg1, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Source arg2, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.LoadingPhaseEntity.Source arg3, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg4, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source<TContext> arg5, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source<TContext> arg6, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source<TContext> arg7, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source<TContext> arg8, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildTargetTypeArray.Source<TContext> arg9, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildConfigurationArray.Source<TContext> arg10, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisallowedTaArray.Source<TContext> arg11, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisalloweArray.Source<TContext> arg12, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.UsageTypeOfModule.Source arg13)
+            internal Source(scoped in TContext context, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.JsonStringArray.Source<TContext> arg1, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Source arg2, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.LoadingPhaseEntity.Source arg3, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg4, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source<TContext> arg5, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source<TContext> arg6, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source<TContext> arg7, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source<TContext> arg8, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildTargetTypeArray.Source<TContext> arg9, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildConfigurationArray.Source<TContext> arg10, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisallowedTaArray.Source<TContext> arg11, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisalloweArray.Source<TContext> arg12, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.UsageTypeOfModule.Source arg13)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2432,7 +2432,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// <param name="arg12">The value of the property.</param>
             /// <param name="arg13">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.JsonStringArray.Source arg1, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Source arg2, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.LoadingPhaseEntity.Source arg3, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg4, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source arg5, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source arg6, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source arg7, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source arg8, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildTargetTypeArray.Source arg9, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildConfigurationArray.Source arg10, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisallowedTaArray.Source arg11, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisalloweArray.Source arg12, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.UsageTypeOfModule.Source arg13, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.JsonStringArray.Source arg1, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Source arg2, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.LoadingPhaseEntity.Source arg3, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg4, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source arg5, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source arg6, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source arg7, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source arg8, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildTargetTypeArray.Source arg9, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildConfigurationArray.Source arg10, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisallowedTaArray.Source arg11, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisalloweArray.Source arg12, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.UsageTypeOfModule.Source arg13, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
@@ -2458,7 +2458,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// <param name="arg12">The value of the property.</param>
             /// <param name="arg13">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.JsonStringArray.Source<TContext> arg1, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Source arg2, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.LoadingPhaseEntity.Source arg3, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg4, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source<TContext> arg5, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source<TContext> arg6, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source<TContext> arg7, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source<TContext> arg8, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildTargetTypeArray.Source<TContext> arg9, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildConfigurationArray.Source<TContext> arg10, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisallowedTaArray.Source<TContext> arg11, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisalloweArray.Source<TContext> arg12, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.UsageTypeOfModule.Source arg13, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.JsonStringArray.Source<TContext> arg1, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Source arg2, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.LoadingPhaseEntity.Source arg3, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg4, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source<TContext> arg5, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source<TContext> arg6, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source<TContext> arg7, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source<TContext> arg8, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildTargetTypeArray.Source<TContext> arg9, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildConfigurationArray.Source<TContext> arg10, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisallowedTaArray.Source<TContext> arg11, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisalloweArray.Source<TContext> arg12, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.UsageTypeOfModule.Source arg13, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2515,7 +2515,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// <param name="targetDenyList">The value of the <c>"TargetDenyList"</c> property.</param>
         /// <param name="type">The value of the <c>"Type"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.JsonStringArray.Source additionalDependencies = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Source hasExplicitPlatforms = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.LoadingPhaseEntity.Source loadingPhase = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source name = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source platformAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source platformDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source programAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source programDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildTargetTypeArray.Source targetAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildConfigurationArray.Source targetConfigurationAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisallowedTaArray.Source targetConfigurationDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisalloweArray.Source targetDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.UsageTypeOfModule.Source type = default)
+        public static Source Build(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.JsonStringArray.Source additionalDependencies = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Source hasExplicitPlatforms = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.LoadingPhaseEntity.Source loadingPhase = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source name = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source platformAllowList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source platformDenyList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source programAllowList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source programDenyList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildTargetTypeArray.Source targetAllowList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildConfigurationArray.Source targetConfigurationAllowList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisallowedTaArray.Source targetConfigurationDenyList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisalloweArray.Source targetDenyList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.UsageTypeOfModule.Source type = default)
         {
             return new Source(additionalDependencies, hasExplicitPlatforms, loadingPhase, name, platformAllowList, platformDenyList, programAllowList, programDenyList, targetAllowList, targetConfigurationAllowList, targetConfigurationDenyList, targetDenyList, type);
         }
@@ -2539,7 +2539,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// <param name="targetDenyList">The value of the <c>"TargetDenyList"</c> property.</param>
         /// <param name="type">The value of the <c>"Type"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.JsonStringArray.Source<TContext> additionalDependencies = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Source hasExplicitPlatforms = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.LoadingPhaseEntity.Source loadingPhase = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source name = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source<TContext> platformAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source<TContext> platformDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source<TContext> programAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source<TContext> programDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildTargetTypeArray.Source<TContext> targetAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildConfigurationArray.Source<TContext> targetConfigurationAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisallowedTaArray.Source<TContext> targetConfigurationDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisalloweArray.Source<TContext> targetDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.UsageTypeOfModule.Source type = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.JsonStringArray.Source<TContext> additionalDependencies = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.HasExplicitPlatformsEntity.Source hasExplicitPlatforms = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.LoadingPhaseEntity.Source loadingPhase = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source name = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source<TContext> platformAllowList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source<TContext> platformDenyList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfAlloArray.Source<TContext> programAllowList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisaArray.Source<TContext> programDenyList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildTargetTypeArray.Source<TContext> targetAllowList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.BuildConfigurationArray.Source<TContext> targetConfigurationAllowList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisallowedTaArray.Source<TContext> targetConfigurationDenyList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.ListOfDisalloweArray.Source<TContext> targetDenyList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptor.UsageTypeOfModule.Source type = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

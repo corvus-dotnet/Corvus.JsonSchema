@@ -294,7 +294,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// Set the <c>objectName</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetObjectNameValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectName.Source value)
+                    public void SetObjectNameValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectName.Source value)
                     {
                         CheckValidInstance();
 
@@ -325,7 +325,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// Set the <c>objectType</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetObjectTypeValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectType.Source value)
+                    public void SetObjectTypeValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectType.Source value)
                     {
                         CheckValidInstance();
 
@@ -356,7 +356,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// Set the <c>packageName</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetPackageName(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                    public void SetPackageName(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                     {
                         CheckValidInstance();
 
@@ -401,7 +401,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// Set the <c>schemaName</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetSchemaName(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                    public void SetSchemaName(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                     {
                         CheckValidInstance();
 
@@ -614,7 +614,7 @@ public readonly partial struct Ui5ManifestSchema
 
                     internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.DictionaryOfCatalogObjectsOfferedByTheDatasource.ACatalogObjectOfAnInADataSource.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectName.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectType.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4)
+                    internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectName.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectType.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -947,7 +947,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// <param name="arg3">The value of the property.</param>
                     /// <param name="arg4">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectName.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectType.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectName.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectType.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3, arg4);
@@ -992,7 +992,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="packageName">The value of the <c>"packageName"</c> property.</param>
                 /// <param name="schemaName">The value of the <c>"schemaName"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectName.Source objectName, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectType.Source objectType, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source packageName = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source schemaName = default)
+                public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectName.Source objectName, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectType.Source objectType, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source packageName = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source schemaName = default)
                 {
                     return new Source(objectName, objectType, packageName, schemaName);
                 }

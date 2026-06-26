@@ -295,7 +295,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>action</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAction(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.ActionEntity.Source value)
+                public void SetAction(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.ActionEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -326,7 +326,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>additionalParameters</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAdditionalParameters(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.AdditionalParametersEntity.Source value)
+                public void SetAdditionalParameters(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.AdditionalParametersEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -371,7 +371,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>parameters</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetParameters(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsParametersOfNavigationIntents.Source value)
+                public void SetParameters(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsParametersOfNavigationIntents.Source value)
                 {
                     CheckValidInstance();
 
@@ -452,7 +452,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>semanticObject</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSemanticObject(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsABusinessEntityEGEmployee.Source value)
+                public void SetSemanticObject(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsABusinessEntityEGEmployee.Source value)
                 {
                     CheckValidInstance();
 
@@ -651,7 +651,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.ActionEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsABusinessEntityEGEmployee.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.AdditionalParametersEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsParametersOfNavigationIntents.Source arg4)
+                internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.ActionEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsABusinessEntityEGEmployee.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.AdditionalParametersEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsParametersOfNavigationIntents.Source arg4)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -821,7 +821,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.ActionEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsABusinessEntityEGEmployee.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.AdditionalParametersEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsParametersOfNavigationIntents.Source<TContext> arg4)
+                internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.ActionEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsABusinessEntityEGEmployee.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.AdditionalParametersEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsParametersOfNavigationIntents.Source<TContext> arg4)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1070,7 +1070,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.ActionEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsABusinessEntityEGEmployee.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.AdditionalParametersEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsParametersOfNavigationIntents.Source arg4, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.ActionEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsABusinessEntityEGEmployee.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.AdditionalParametersEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsParametersOfNavigationIntents.Source arg4, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4);
@@ -1087,7 +1087,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.ActionEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsABusinessEntityEGEmployee.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.AdditionalParametersEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsParametersOfNavigationIntents.Source<TContext> arg4, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.ActionEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsABusinessEntityEGEmployee.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.AdditionalParametersEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsParametersOfNavigationIntents.Source<TContext> arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1135,7 +1135,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="additionalParameters">The value of the <c>"additionalParameters"</c> property.</param>
             /// <param name="parameters">The value of the <c>"parameters"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.ActionEntity.Source action, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsABusinessEntityEGEmployee.Source semanticObject, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.AdditionalParametersEntity.Source additionalParameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsParametersOfNavigationIntents.Source parameters = default)
+            public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.ActionEntity.Source action, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsABusinessEntityEGEmployee.Source semanticObject, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.AdditionalParametersEntity.Source additionalParameters = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsParametersOfNavigationIntents.Source parameters = default)
             {
                 return new Source(action, semanticObject, additionalParameters, parameters);
             }
@@ -1150,7 +1150,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="additionalParameters">The value of the <c>"additionalParameters"</c> property.</param>
             /// <param name="parameters">The value of the <c>"parameters"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.ActionEntity.Source action, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsABusinessEntityEGEmployee.Source semanticObject, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.AdditionalParametersEntity.Source additionalParameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsParametersOfNavigationIntents.Source<TContext> parameters = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.ActionEntity.Source action, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsABusinessEntityEGEmployee.Source semanticObject, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.AdditionalParametersEntity.Source additionalParameters = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.RepresentsParametersOfNavigationIntents.Source<TContext> parameters = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

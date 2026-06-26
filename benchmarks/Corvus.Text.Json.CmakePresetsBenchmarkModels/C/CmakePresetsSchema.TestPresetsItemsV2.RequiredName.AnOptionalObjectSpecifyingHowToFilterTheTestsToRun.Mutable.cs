@@ -267,7 +267,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>exclude</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetExclude(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToExclude.Source value)
+                    public void SetExclude(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToExclude.Source value)
                     {
                         CheckValidInstance();
 
@@ -348,7 +348,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>include</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetInclude(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToInclude.Source value)
+                    public void SetInclude(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToInclude.Source value)
                     {
                         CheckValidInstance();
 
@@ -595,7 +595,7 @@ public readonly partial struct CmakePresetsSchema
 
                     internal Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToExclude.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToInclude.Source arg2)
+                    internal Source(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToExclude.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToInclude.Source arg2)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -761,7 +761,7 @@ public readonly partial struct CmakePresetsSchema
 
                     internal Source(scoped in TContext context, Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToExclude.Source<TContext> arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToInclude.Source<TContext> arg2)
+                    internal Source(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToExclude.Source<TContext> arg1, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToInclude.Source<TContext> arg2)
                     {
                         _context = context;
                         _createArg1 = arg1;
@@ -992,7 +992,7 @@ public readonly partial struct CmakePresetsSchema
                     /// <param name="arg1">The value of the property.</param>
                     /// <param name="arg2">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToExclude.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToInclude.Source arg2, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToExclude.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToInclude.Source arg2, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2);
@@ -1007,7 +1007,7 @@ public readonly partial struct CmakePresetsSchema
                     /// <param name="arg1">The value of the property.</param>
                     /// <param name="arg2">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToExclude.Source<TContext> arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToInclude.Source<TContext> arg2, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToExclude.Source<TContext> arg1, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToInclude.Source<TContext> arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -1053,7 +1053,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="exclude">The value of the <c>"exclude"</c> property.</param>
                 /// <param name="include">The value of the <c>"include"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToExclude.Source exclude = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToInclude.Source include = default)
+                public static Source Build(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToExclude.Source exclude = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToInclude.Source include = default)
                 {
                     return new Source(exclude, include);
                 }
@@ -1066,7 +1066,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="exclude">The value of the <c>"exclude"</c> property.</param>
                 /// <param name="include">The value of the <c>"include"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToExclude.Source<TContext> exclude = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToInclude.Source<TContext> include = default)
+                public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToExclude.Source<TContext> exclude = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.AnOptionalObjectSpecifyingWhichTestsToInclude.Source<TContext> include = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif

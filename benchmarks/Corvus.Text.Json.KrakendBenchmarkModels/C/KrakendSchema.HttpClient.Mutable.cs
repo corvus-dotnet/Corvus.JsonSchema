@@ -335,7 +335,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>client_tls</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetClientTlsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source value)
+            public void SetClientTlsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source value)
             {
                 CheckValidInstance();
 
@@ -416,7 +416,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>no_redirect</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNoRedirectValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.NoRedirect.Source value)
+            public void SetNoRedirectValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.NoRedirect.Source value)
             {
                 CheckValidInstance();
 
@@ -461,7 +461,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>proxy_address</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetProxyAddress(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProxyAddress(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -643,7 +643,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -666,7 +666,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -713,7 +713,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -885,7 +885,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.NoRedirect.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.NoRedirect.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1053,7 +1053,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.NoRedirect.Source arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.NoRedirect.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1363,7 +1363,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg2">The value of the property.</param>
             /// <param name="arg3">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.NoRedirect.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.NoRedirect.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3);
@@ -1379,7 +1379,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg2">The value of the property.</param>
             /// <param name="arg3">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.NoRedirect.Source arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.NoRedirect.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1426,7 +1426,7 @@ public readonly partial struct KrakendSchema
         /// <param name="noRedirect">The value of the <c>"no_redirect"</c> property.</param>
         /// <param name="proxyAddress">The value of the <c>"proxy_address"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source clientTls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.NoRedirect.Source noRedirect = default, in Corvus.Text.Json.JsonElement.Source proxyAddress = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source clientTls = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.NoRedirect.Source noRedirect = default, scoped in Corvus.Text.Json.JsonElement.Source proxyAddress = default)
         {
             return new Source(clientTls, noRedirect, proxyAddress);
         }
@@ -1440,7 +1440,7 @@ public readonly partial struct KrakendSchema
         /// <param name="noRedirect">The value of the <c>"no_redirect"</c> property.</param>
         /// <param name="proxyAddress">The value of the <c>"proxy_address"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> clientTls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.NoRedirect.Source noRedirect = default, in Corvus.Text.Json.JsonElement.Source<TContext> proxyAddress = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> clientTls = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpClient.NoRedirect.Source noRedirect = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> proxyAddress = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

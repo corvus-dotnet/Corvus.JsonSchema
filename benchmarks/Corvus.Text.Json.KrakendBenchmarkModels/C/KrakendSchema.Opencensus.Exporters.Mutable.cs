@@ -480,7 +480,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>datadog</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDatadogValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.Source value)
+                public void SetDatadogValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.Source value)
                 {
                     CheckValidInstance();
 
@@ -561,7 +561,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>influxdb</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetInfluxdbValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Influxdb.Source value)
+                public void SetInfluxdbValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Influxdb.Source value)
                 {
                     CheckValidInstance();
 
@@ -642,7 +642,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>jaeger</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetJaegerValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Jaeger.Source value)
+                public void SetJaegerValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Jaeger.Source value)
                 {
                     CheckValidInstance();
 
@@ -723,7 +723,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>logger</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetLoggerValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Logger.Source value)
+                public void SetLoggerValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Logger.Source value)
                 {
                     CheckValidInstance();
 
@@ -804,7 +804,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>ocagent</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOcagentValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Ocagent.Source value)
+                public void SetOcagentValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Ocagent.Source value)
                 {
                     CheckValidInstance();
 
@@ -885,7 +885,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>prometheus</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPrometheusValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Prometheus.Source value)
+                public void SetPrometheusValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Prometheus.Source value)
                 {
                     CheckValidInstance();
 
@@ -966,7 +966,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>stackdriver</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetStackdriverValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Stackdriver.Source value)
+                public void SetStackdriverValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Stackdriver.Source value)
                 {
                     CheckValidInstance();
 
@@ -1047,7 +1047,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>xray</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetXray(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.AwsXRay.Source value)
+                public void SetXray(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.AwsXRay.Source value)
                 {
                     CheckValidInstance();
 
@@ -1128,7 +1128,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>zipkin</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetZipkinValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Zipkin.Source value)
+                public void SetZipkinValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Zipkin.Source value)
                 {
                     CheckValidInstance();
 
@@ -1310,7 +1310,7 @@ public readonly partial struct KrakendSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -1333,7 +1333,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1380,7 +1380,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     CheckValidInstance();
 

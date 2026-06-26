@@ -2608,7 +2608,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>allowArbitraryExtensions</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowArbitraryExtensions(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetAllowArbitraryExtensions(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -2653,7 +2653,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>allowImportingTsExtensions</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowImportingTsExtensions(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetAllowImportingTsExtensions(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -2698,7 +2698,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>allowJs</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowJs(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source value)
+                public void SetAllowJs(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowJsEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -2743,7 +2743,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>allowSyntheticDefaultImports</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowSyntheticDefaultImports(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetAllowSyntheticDefaultImports(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -2788,7 +2788,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>allowUmdGlobalAccess</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowUmdGlobalAccess(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowAccessingUmdGlobalsFromModules.Source value)
+                public void SetAllowUmdGlobalAccess(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.AllowAccessingUmdGlobalsFromModules.Source value)
                 {
                     CheckValidInstance();
 
@@ -2833,7 +2833,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>allowUnreachableCode</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowUnreachableCode(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetAllowUnreachableCode(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -2878,7 +2878,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>allowUnusedLabels</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowUnusedLabels(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetAllowUnusedLabels(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -2923,7 +2923,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>alwaysStrict</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAlwaysStrict(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetAlwaysStrict(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -2968,7 +2968,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>assumeChangesOnlyAffectDirectDependencies</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAssumeChangesOnlyAffectDirectDependencies(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetAssumeChangesOnlyAffectDirectDependencies(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -3013,7 +3013,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>baseUrl</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetBaseUrl(in Corvus.JsconfigBenchmark.Current.JsonString.Source value)
+                public void SetBaseUrl(scoped in Corvus.JsconfigBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -3058,7 +3058,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>charset</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCharset(in Corvus.JsconfigBenchmark.Current.JsonString.Source value)
+                public void SetCharset(scoped in Corvus.JsconfigBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -3103,7 +3103,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>checkJs</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCheckJs(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source value)
+                public void SetCheckJs(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingInTypeCheckedJavaScriptFiles.Source value)
                 {
                     CheckValidInstance();
 
@@ -3148,7 +3148,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>composite</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetComposite(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CompositeEntity.Source value)
+                public void SetComposite(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CompositeEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -3193,7 +3193,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>customConditions</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCustomConditions(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source value)
+                public void SetCustomConditions(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsonStringArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -3274,7 +3274,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>declaration</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDeclaration(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DeclarationEntity.Source value)
+                public void SetDeclaration(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DeclarationEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -3319,7 +3319,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>declarationDir</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDeclarationDir(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyTheOutputDirectoryForGeneratedDeclarationFiles.Source value)
+                public void SetDeclarationDir(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyTheOutputDirectoryForGeneratedDeclarationFiles.Source value)
                 {
                     CheckValidInstance();
 
@@ -3364,7 +3364,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>declarationMap</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDeclarationMap(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourcemapsForDTsFiles.Source value)
+                public void SetDeclarationMap(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourcemapsForDTsFiles.Source value)
                 {
                     CheckValidInstance();
 
@@ -3409,7 +3409,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>diagnostics</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDiagnostics(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetDiagnostics(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -3454,7 +3454,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>disableReferencedProjectLoad</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDisableReferencedProjectLoad(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetDisableReferencedProjectLoad(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -3499,7 +3499,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>disableSizeLimit</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDisableSizeLimit(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableSizeLimitEntity.Source value)
+                public void SetDisableSizeLimit(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableSizeLimitEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -3544,7 +3544,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>disableSolutionSearching</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDisableSolutionSearching(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetDisableSolutionSearching(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -3589,7 +3589,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>disableSourceOfProjectReferenceRedirect</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDisableSourceOfProjectReferenceRedirect(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetDisableSourceOfProjectReferenceRedirect(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -3634,7 +3634,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>downlevelIteration</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDownlevelIteration(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DownlevelIterationEntity.Source value)
+                public void SetDownlevelIteration(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DownlevelIterationEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -3679,7 +3679,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>emitBOM</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetEmitBom(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitBomEntity.Source value)
+                public void SetEmitBom(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitBomEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -3724,7 +3724,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>emitDeclarationOnly</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetEmitDeclarationOnly(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.OnlyOutputDTsFilesAndNotJavaScriptFiles.Source value)
+                public void SetEmitDeclarationOnly(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.OnlyOutputDTsFilesAndNotJavaScriptFiles.Source value)
                 {
                     CheckValidInstance();
 
@@ -3769,7 +3769,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>emitDecoratorMetadata</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetEmitDecoratorMetadata(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetEmitDecoratorMetadata(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -3814,7 +3814,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>esModuleInterop</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetEsModuleInterop(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EsModuleInteropEntity.Source value)
+                public void SetEsModuleInterop(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EsModuleInteropEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -3859,7 +3859,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>exactOptionalPropertyTypes</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetExactOptionalPropertyTypes(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source value)
+                public void SetExactOptionalPropertyTypes(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExactOptionalPropertyTypesEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -3904,7 +3904,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>experimentalDecorators</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetExperimentalDecorators(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetExperimentalDecorators(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -3949,7 +3949,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>extendedDiagnostics</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetExtendedDiagnostics(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExtendedDiagnosticsEntity.Source value)
+                public void SetExtendedDiagnostics(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ExtendedDiagnosticsEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -3994,7 +3994,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>fallbackPolling</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetFallbackPolling(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.FallbackPollingEntity.Source value)
+                public void SetFallbackPolling(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.FallbackPollingEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -4039,7 +4039,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>forceConsistentCasingInFileNames</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetForceConsistentCasingInFileNames(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnsureThatCasingIsCorrectInImports.Source value)
+                public void SetForceConsistentCasingInFileNames(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnsureThatCasingIsCorrectInImports.Source value)
                 {
                     CheckValidInstance();
 
@@ -4084,7 +4084,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>generateCpuProfile</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetGenerateCpuProfile(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitAV8CpuProfileOfTheCompilerRunForDebugging.Source value)
+                public void SetGenerateCpuProfile(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitAV8CpuProfileOfTheCompilerRunForDebugging.Source value)
                 {
                     CheckValidInstance();
 
@@ -4129,7 +4129,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>importHelpers</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetImportHelpers(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportHelpersEntity.Source value)
+                public void SetImportHelpers(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportHelpersEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -4174,7 +4174,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>importsNotUsedAsValues</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetImportsNotUsedAsValues(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportsNotUsedAsValuesEntity.Source value)
+                public void SetImportsNotUsedAsValues(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ImportsNotUsedAsValuesEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -4219,7 +4219,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>incremental</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetIncremental(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetIncremental(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -4264,7 +4264,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>inlineSourceMap</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetInlineSourceMap(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IncludeSourcemapFilesInsideTheEmittedJavaScript.Source value)
+                public void SetInlineSourceMap(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IncludeSourcemapFilesInsideTheEmittedJavaScript.Source value)
                 {
                     CheckValidInstance();
 
@@ -4309,7 +4309,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>inlineSources</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetInlineSources(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.InlineSourcesEntity.Source value)
+                public void SetInlineSources(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.InlineSourcesEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -4354,7 +4354,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>isolatedModules</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetIsolatedModules(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IsolatedModulesEntity.Source value)
+                public void SetIsolatedModules(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.IsolatedModulesEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -4399,7 +4399,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>jsx</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetJsx(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source value)
+                public void SetJsx(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatJsxCodeIsGenerated.Source value)
                 {
                     CheckValidInstance();
 
@@ -4444,7 +4444,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>jsxFactory</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetJsxFactory(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source value)
+                public void SetJsxFactory(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFactoryEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -4489,7 +4489,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>jsxFragmentFactory</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetJsxFragmentFactory(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source value)
+                public void SetJsxFragmentFactory(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxFragmentFactoryEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -4534,7 +4534,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>jsxImportSource</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetJsxImportSource(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source value)
+                public void SetJsxImportSource(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.JsxImportSourceEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -4579,7 +4579,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>keyofStringsOnly</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetKeyofStringsOnly(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source value)
+                public void SetKeyofStringsOnly(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.KeyofStringsOnlyEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -4624,7 +4624,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>lib</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetLib(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.Source value)
+                public void SetLib(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.LibEntityArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -4705,7 +4705,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>listEmittedFiles</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetListEmittedFiles(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintTheNamesOfEmittedFilesAfterACompilation.Source value)
+                public void SetListEmittedFiles(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintTheNamesOfEmittedFilesAfterACompilation.Source value)
                 {
                     CheckValidInstance();
 
@@ -4750,7 +4750,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>listFiles</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetListFiles(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintAllOfTheFilesReadDuringTheCompilation.Source value)
+                public void SetListFiles(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrintAllOfTheFilesReadDuringTheCompilation.Source value)
                 {
                     CheckValidInstance();
 
@@ -4795,7 +4795,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>listFilesOnly</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetListFilesOnly(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetListFilesOnly(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -4840,7 +4840,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>mapRoot</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMapRoot(in Corvus.JsconfigBenchmark.Current.JsonString.Source value)
+                public void SetMapRoot(scoped in Corvus.JsconfigBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -4885,7 +4885,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>maxNodeModuleJsDepth</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMaxNodeModuleJsDepth(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.MaxNodeModuleJsDepthEntity.Source value)
+                public void SetMaxNodeModuleJsDepth(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.MaxNodeModuleJsDepthEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -4930,7 +4930,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>module</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetModule(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatModuleCodeIsGenerated.Source value)
+                public void SetModule(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyWhatModuleCodeIsGenerated.Source value)
                 {
                     CheckValidInstance();
 
@@ -4975,7 +4975,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>moduleResolution</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetModuleResolution(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ModuleResolutionEntity.Source value)
+                public void SetModuleResolution(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ModuleResolutionEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -5020,7 +5020,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>newLine</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNewLine(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SetTheNewlineCharacterForEmittingFiles.Source value)
+                public void SetNewLine(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SetTheNewlineCharacterForEmittingFiles.Source value)
                 {
                     CheckValidInstance();
 
@@ -5065,7 +5065,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noEmit</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoEmit(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingFileFromACompilation.Source value)
+                public void SetNoEmit(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingFileFromACompilation.Source value)
                 {
                     CheckValidInstance();
 
@@ -5110,7 +5110,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noEmitHelpers</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoEmitHelpers(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitHelpersEntity.Source value)
+                public void SetNoEmitHelpers(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitHelpersEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -5155,7 +5155,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noEmitOnError</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoEmitOnError(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitOnErrorEntity.Source value)
+                public void SetNoEmitOnError(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoEmitOnErrorEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -5200,7 +5200,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noErrorTruncation</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoErrorTruncation(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableTruncatingTypesInErrorMessages.Source value)
+                public void SetNoErrorTruncation(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableTruncatingTypesInErrorMessages.Source value)
                 {
                     CheckValidInstance();
 
@@ -5245,7 +5245,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noFallthroughCasesInSwitch</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoFallthroughCasesInSwitch(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source value)
+                public void SetNoFallthroughCasesInSwitch(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoFallthroughCasesInSwitchEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -5290,7 +5290,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noImplicitAny</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoImplicitAny(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetNoImplicitAny(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -5335,7 +5335,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noImplicitOverride</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoImplicitOverride(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source value)
+                public void SetNoImplicitOverride(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitOverrideEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -5380,7 +5380,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noImplicitReturns</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoImplicitReturns(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source value)
+                public void SetNoImplicitReturns(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitReturnsEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -5425,7 +5425,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noImplicitThis</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoImplicitThis(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetNoImplicitThis(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -5470,7 +5470,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noImplicitUseStrict</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoImplicitUseStrict(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source value)
+                public void SetNoImplicitUseStrict(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoImplicitUseStrictEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -5515,7 +5515,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noLib</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoLib(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoLibEntity.Source value)
+                public void SetNoLib(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoLibEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -5560,7 +5560,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noPropertyAccessFromIndexSignature</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoPropertyAccessFromIndexSignature(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetNoPropertyAccessFromIndexSignature(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -5605,7 +5605,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noResolve</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoResolve(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoResolveEntity.Source value)
+                public void SetNoResolve(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoResolveEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -5650,7 +5650,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noStrictGenericChecks</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoStrictGenericChecks(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source value)
+                public void SetNoStrictGenericChecks(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.NoStrictGenericChecksEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -5695,7 +5695,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noUncheckedIndexedAccess</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoUncheckedIndexedAccess(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetNoUncheckedIndexedAccess(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -5740,7 +5740,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noUnusedLocals</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoUnusedLocals(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source value)
+                public void SetNoUnusedLocals(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableErrorReportingWhenALocalVariablesArenTRead.Source value)
                 {
                     CheckValidInstance();
 
@@ -5785,7 +5785,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>noUnusedParameters</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNoUnusedParameters(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source value)
+                public void SetNoUnusedParameters(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RaiseAnErrorWhenAFunctionParameterIsnTRead.Source value)
                 {
                     CheckValidInstance();
 
@@ -5830,7 +5830,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>outDir</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOutDir(in Corvus.JsconfigBenchmark.Current.JsonString.Source value)
+                public void SetOutDir(scoped in Corvus.JsconfigBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -5875,7 +5875,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>outFile</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOutFile(in Corvus.JsconfigBenchmark.Current.JsonString.Source value)
+                public void SetOutFile(scoped in Corvus.JsconfigBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -5920,7 +5920,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>paths</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPaths(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PathsEntity.Source value)
+                public void SetPaths(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PathsEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -6001,7 +6001,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>plugins</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPlugins(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PluginsEntityArray.Source value)
+                public void SetPlugins(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PluginsEntityArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -6082,7 +6082,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>preserveConstEnums</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPreserveConstEnums(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErasingConstEnumDeclarationsInGeneratedCode.Source value)
+                public void SetPreserveConstEnums(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableErasingConstEnumDeclarationsInGeneratedCode.Source value)
                 {
                     CheckValidInstance();
 
@@ -6127,7 +6127,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>preserveSymlinks</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPreserveSymlinks(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveSymlinksEntity.Source value)
+                public void SetPreserveSymlinks(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveSymlinksEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -6172,7 +6172,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>preserveValueImports</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPreserveValueImports(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveValueImportsEntity.Source value)
+                public void SetPreserveValueImports(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PreserveValueImportsEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -6217,7 +6217,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>preserveWatchOutput</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPreserveWatchOutput(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetPreserveWatchOutput(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -6262,7 +6262,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>pretty</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPretty(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrettyEntity.Source value)
+                public void SetPretty(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.PrettyEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -6307,7 +6307,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>reactNamespace</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetReactNamespace(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ReactNamespaceEntity.Source value)
+                public void SetReactNamespace(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ReactNamespaceEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -6352,7 +6352,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>removeComments</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRemoveComments(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingComments.Source value)
+                public void SetRemoveComments(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DisableEmittingComments.Source value)
                 {
                     CheckValidInstance();
 
@@ -6397,7 +6397,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>resolveJsonModule</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetResolveJsonModule(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableImportingJsonFiles.Source value)
+                public void SetResolveJsonModule(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableImportingJsonFiles.Source value)
                 {
                     CheckValidInstance();
 
@@ -6442,7 +6442,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>resolvePackageJsonExports</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetResolvePackageJsonExports(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ResolvePackageJsonExportsEntity.Source value)
+                public void SetResolvePackageJsonExports(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.ResolvePackageJsonExportsEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -6487,7 +6487,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>resolvePackageJsonImports</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetResolvePackageJsonImports(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.UseThePackageJsonImportsFieldWhenResolvingImports.Source value)
+                public void SetResolvePackageJsonImports(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.UseThePackageJsonImportsFieldWhenResolvingImports.Source value)
                 {
                     CheckValidInstance();
 
@@ -6532,7 +6532,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>rootDir</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRootDir(in Corvus.JsconfigBenchmark.Current.JsonString.Source value)
+                public void SetRootDir(scoped in Corvus.JsconfigBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -6577,7 +6577,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>rootDirs</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRootDirs(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RootDirsJsArray.Source value)
+                public void SetRootDirs(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.RootDirsJsArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -6658,7 +6658,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>skipDefaultLibCheck</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSkipDefaultLibCheck(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipDefaultLibCheckEntity.Source value)
+                public void SetSkipDefaultLibCheck(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipDefaultLibCheckEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -6703,7 +6703,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>skipLibCheck</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSkipLibCheck(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipTypeCheckingAllDTsFiles.Source value)
+                public void SetSkipLibCheck(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SkipTypeCheckingAllDTsFiles.Source value)
                 {
                     CheckValidInstance();
 
@@ -6748,7 +6748,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>sourceMap</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSourceMap(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourceMapFilesForEmittedJavaScriptFiles.Source value)
+                public void SetSourceMap(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.CreateSourceMapFilesForEmittedJavaScriptFiles.Source value)
                 {
                     CheckValidInstance();
 
@@ -6793,7 +6793,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>sourceRoot</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSourceRoot(in Corvus.JsconfigBenchmark.Current.JsonString.Source value)
+                public void SetSourceRoot(scoped in Corvus.JsconfigBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -6838,7 +6838,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>strict</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetStrict(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source value)
+                public void SetStrict(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EnableAllStrictTypeCheckingOptions.Source value)
                 {
                     CheckValidInstance();
 
@@ -6883,7 +6883,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>strictBindCallApply</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetStrictBindCallApply(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source value)
+                public void SetStrictBindCallApply(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictBindCallApplyEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -6928,7 +6928,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>strictFunctionTypes</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetStrictFunctionTypes(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source value)
+                public void SetStrictFunctionTypes(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictFunctionTypesEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -6973,7 +6973,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>strictNullChecks</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetStrictNullChecks(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source value)
+                public void SetStrictNullChecks(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WhenTypeCheckingTakeIntoAccountNullAndUndefined.Source value)
                 {
                     CheckValidInstance();
 
@@ -7018,7 +7018,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>strictPropertyInitialization</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetStrictPropertyInitialization(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source value)
+                public void SetStrictPropertyInitialization(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.StrictPropertyInitializationEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -7063,7 +7063,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>stripInternal</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetStripInternal(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetStripInternal(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -7108,7 +7108,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>suppressExcessPropertyErrors</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSuppressExcessPropertyErrors(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source value)
+                public void SetSuppressExcessPropertyErrors(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -7153,7 +7153,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>suppressImplicitAnyIndexErrors</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSuppressImplicitAnyIndexErrors(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source value)
+                public void SetSuppressImplicitAnyIndexErrors(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -7198,7 +7198,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>target</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTarget(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.Source value)
+                public void SetTarget(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TargetEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -7243,7 +7243,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>traceResolution</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTraceResolution(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TraceResolutionEntity.Source value)
+                public void SetTraceResolution(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TraceResolutionEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -7288,7 +7288,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>tsBuildInfoFile</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTsBuildInfoFile(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TsBuildInfoFileEntity.Source value)
+                public void SetTsBuildInfoFile(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TsBuildInfoFileEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -7333,7 +7333,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>typeRoots</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTypeRoots(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray.Source value)
+                public void SetTypeRoots(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SpecifyMulArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -7414,7 +7414,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>types</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTypes(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypesJsonSArray.Source value)
+                public void SetTypes(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.TypesJsonSArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -7495,7 +7495,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>useDefineForClassFields</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetUseDefineForClassFields(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitEcmaScriptStandardCompliantClassFields.Source value)
+                public void SetUseDefineForClassFields(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.EmitEcmaScriptStandardCompliantClassFields.Source value)
                 {
                     CheckValidInstance();
 
@@ -7540,7 +7540,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>useUnknownInCatchVariables</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetUseUnknownInCatchVariables(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DefaultCatchClauseVariablesAsUnknownInsteadOfAny.Source value)
+                public void SetUseUnknownInCatchVariables(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.DefaultCatchClauseVariablesAsUnknownInsteadOfAny.Source value)
                 {
                     CheckValidInstance();
 
@@ -7585,7 +7585,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>verbatimModuleSyntax</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetVerbatimModuleSyntax(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetVerbatimModuleSyntax(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -7630,7 +7630,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>watch</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetWatch(in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
+                public void SetWatch(scoped in Corvus.JsconfigBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -7675,7 +7675,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>watchDirectory</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetWatchDirectory(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchDirectoryEntity.Source value)
+                public void SetWatchDirectory(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchDirectoryEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -7720,7 +7720,7 @@ public readonly partial struct JsconfigSchema
                 /// Set the <c>watchFile</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetWatchFile(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchFileEntity.Source value)
+                public void SetWatchFile(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.CompilerOptionsDefinition.InstructsTheTypeScriptCompilerHowToCompileTsFiles.WatchFileEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -7866,7 +7866,7 @@ public readonly partial struct JsconfigSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -7889,7 +7889,7 @@ public readonly partial struct JsconfigSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -7936,7 +7936,7 @@ public readonly partial struct JsconfigSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 

@@ -394,7 +394,7 @@ public readonly partial struct KrakendSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void InsertItem(int itemIndex, in JsonElement.Source value)
+                public void InsertItem(int itemIndex, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -420,7 +420,7 @@ public readonly partial struct KrakendSchema
                 ///   The parent <see cref="JsonDocument"/> has been disposed.
                 /// </exception>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void AddItem(in JsonElement.Source value)
+                public void AddItem(scoped in JsonElement.Source value)
                 {
                     InsertItem(GetArrayLength(), in value);
                 }

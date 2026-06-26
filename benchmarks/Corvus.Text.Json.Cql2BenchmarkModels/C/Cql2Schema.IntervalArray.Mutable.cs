@@ -376,7 +376,7 @@ public readonly partial struct Cql2Schema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalArray.IntervalArrayEntity.Source value)
+            public void InsertItem(int itemIndex, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalArray.IntervalArrayEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -402,7 +402,7 @@ public readonly partial struct Cql2Schema
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalArray.IntervalArrayEntity.Source value)
+            public void AddItem(scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.IntervalArray.IntervalArrayEntity.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }

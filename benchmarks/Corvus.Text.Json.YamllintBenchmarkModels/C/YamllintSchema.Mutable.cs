@@ -348,7 +348,7 @@ public readonly partial struct YamllintSchema
         /// Set the <c>ignore</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIgnoreValue(in Corvus.YamllintBenchmark.Current.JsonString.Source value)
+        public void SetIgnoreValue(scoped in Corvus.YamllintBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -512,7 +512,7 @@ public readonly partial struct YamllintSchema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -535,7 +535,7 @@ public readonly partial struct YamllintSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -582,7 +582,7 @@ public readonly partial struct YamllintSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -769,7 +769,7 @@ public readonly partial struct YamllintSchema
 
         internal Source(Corvus.YamllintBenchmark.Current.YamllintSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.YamllintBenchmark.Current.JsonString.Source arg1)
+        internal Source(scoped in Corvus.YamllintBenchmark.Current.JsonString.Source arg1)
         {
             _createArg1 = arg1;
             _kind = Kind.Create;
@@ -1153,7 +1153,7 @@ public readonly partial struct YamllintSchema
         /// </summary>
         /// <param name="arg1">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.YamllintBenchmark.Current.JsonString.Source arg1, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.YamllintBenchmark.Current.JsonString.Source arg1, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1);
@@ -1195,7 +1195,7 @@ public readonly partial struct YamllintSchema
     /// </summary>
     /// <param name="ignore">The value of the <c>"ignore"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.YamllintBenchmark.Current.JsonString.Source ignore = default)
+    public static Source Build(scoped in Corvus.YamllintBenchmark.Current.JsonString.Source ignore = default)
     {
         return new Source(ignore);
     }

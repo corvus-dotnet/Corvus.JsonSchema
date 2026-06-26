@@ -378,7 +378,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>before</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetBefore(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
+                public void SetBefore(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -423,7 +423,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>command</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCommand(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
+                public void SetCommand(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -468,7 +468,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>env</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetEnv(in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source value)
+                public void SetEnv(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source value)
                 {
                     CheckValidInstance();
 
@@ -549,7 +549,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>init</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetInit(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
+                public void SetInit(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -594,7 +594,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>name</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetName(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
+                public void SetName(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -639,7 +639,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>openIn</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOpenIn(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source value)
+                public void SetOpenIn(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -684,7 +684,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>openMode</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOpenMode(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source value)
+                public void SetOpenMode(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source value)
                 {
                     CheckValidInstance();
 
@@ -729,7 +729,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>prebuild</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPrebuild(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
+                public void SetPrebuild(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -946,7 +946,7 @@ public readonly partial struct GitpodConfigurationSchema
 
                 internal Source(Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source arg3, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg4, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg5, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source arg6, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source arg7, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg8)
+                internal Source(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source arg3, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg4, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg5, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source arg6, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source arg7, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg8)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1124,7 +1124,7 @@ public readonly partial struct GitpodConfigurationSchema
 
                 internal Source(scoped in TContext context, Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source<TContext> arg3, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg4, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg5, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source arg6, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source arg7, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg8)
+                internal Source(scoped in TContext context, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source<TContext> arg3, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg4, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg5, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source arg6, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source arg7, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg8)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1405,7 +1405,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// <param name="arg7">The value of the property.</param>
                 /// <param name="arg8">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source arg3, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg4, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg5, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source arg6, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source arg7, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg8, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source arg3, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg4, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg5, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source arg6, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source arg7, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg8, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
@@ -1426,7 +1426,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// <param name="arg7">The value of the property.</param>
                 /// <param name="arg8">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source<TContext> arg3, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg4, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg5, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source arg6, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source arg7, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg8, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source<TContext> arg3, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg4, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg5, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source arg6, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source arg7, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg8, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1478,7 +1478,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// <param name="openMode">The value of the <c>"openMode"</c> property.</param>
             /// <param name="prebuild">The value of the <c>"prebuild"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source before = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source command = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source env = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source init = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source name = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source openIn = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source openMode = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source prebuild = default)
+            public static Source Build(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source before = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source command = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source env = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source init = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source name = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source openIn = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source openMode = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source prebuild = default)
             {
                 return new Source(before, command, env, init, name, openIn, openMode, prebuild);
             }
@@ -1497,7 +1497,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// <param name="openMode">The value of the <c>"openMode"</c> property.</param>
             /// <param name="prebuild">The value of the <c>"prebuild"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source before = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source command = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source<TContext> env = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source init = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source name = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source openIn = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source openMode = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source prebuild = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source before = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source command = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source<TContext> env = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source init = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source name = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source openIn = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source openMode = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source prebuild = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

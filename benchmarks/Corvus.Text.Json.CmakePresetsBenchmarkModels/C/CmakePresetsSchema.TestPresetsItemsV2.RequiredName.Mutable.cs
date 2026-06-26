@@ -616,7 +616,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>configuration</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetConfiguration(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
+                public void SetConfiguration(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -661,7 +661,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>configurePreset</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetConfigurePreset(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.ConfigurePresetEntity.Source value)
+                public void SetConfigurePreset(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.ConfigurePresetEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -706,7 +706,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>description</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDescription(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
+                public void SetDescription(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -751,7 +751,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>displayName</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDisplayName(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
+                public void SetDisplayName(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -796,7 +796,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>environment</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetEnvironment(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.EnvironmentEntity.Source value)
+                public void SetEnvironment(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.EnvironmentEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -877,7 +877,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>execution</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetExecution(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.Source value)
+                public void SetExecution(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.Source value)
                 {
                     CheckValidInstance();
 
@@ -958,7 +958,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>filter</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetFilter(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.Source value)
+                public void SetFilter(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingHowToFilterTheTestsToRun.Source value)
                 {
                     CheckValidInstance();
 
@@ -1039,7 +1039,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>hidden</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetHidden(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
+                public void SetHidden(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -1084,7 +1084,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>inheritConfigureEnvironment</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetInheritConfigureEnvironment(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
+                public void SetInheritConfigureEnvironment(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -1129,7 +1129,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>inherits</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetInherits(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.InheritsEntity.Source value)
+                public void SetInherits(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.InheritsEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -1210,7 +1210,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>name</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetName(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.NameEntity.Source value)
+                public void SetName(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.NameEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -1241,7 +1241,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>output</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOutput(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOutputOptions.Source value)
+                public void SetOutput(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOutputOptions.Source value)
                 {
                     CheckValidInstance();
 
@@ -1322,7 +1322,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>overwriteConfigurationFile</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOverwriteConfigurationFile(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.JsonStringArray.Source value)
+                public void SetOverwriteConfigurationFile(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.JsonStringArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -1403,7 +1403,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>vendor</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetVendor(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.VendorEntity.Source value)
+                public void SetVendor(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.VendorEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -1585,7 +1585,7 @@ public readonly partial struct CmakePresetsSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -1608,7 +1608,7 @@ public readonly partial struct CmakePresetsSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1655,7 +1655,7 @@ public readonly partial struct CmakePresetsSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 

@@ -420,7 +420,7 @@ public readonly partial struct GeoJsonSchema
                             ///   </para>
                             /// </remarks>
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                            public void InsertItem(int itemIndex, in Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.CoordinatesArray2Array.ItemsArrayArray.ItemsArray2Array.Source value)
+                            public void InsertItem(int itemIndex, scoped in Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.CoordinatesArray2Array.ItemsArrayArray.ItemsArray2Array.Source value)
                             {
                                 CheckValidInstance();
 
@@ -446,7 +446,7 @@ public readonly partial struct GeoJsonSchema
                             ///   The parent <see cref="JsonDocument"/> has been disposed.
                             /// </exception>
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                            public void AddItem(in Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.CoordinatesArray2Array.ItemsArrayArray.ItemsArray2Array.Source value)
+                            public void AddItem(scoped in Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.GeometryEntity.GeoJsonMultiPolygon.CoordinatesArray2Array.ItemsArrayArray.ItemsArray2Array.Source value)
                             {
                                 InsertItem(GetArrayLength(), in value);
                             }

@@ -324,7 +324,7 @@ public readonly partial struct ExtendableItem
         /// Set the <c>requires</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRequires(in Corvus.Ui5ManifestBenchmark.Current.ExtendableItem.RequiresEntity.Source value)
+        public void SetRequires(scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableItem.RequiresEntity.Source value)
         {
             CheckValidInstance();
 
@@ -506,7 +506,7 @@ public readonly partial struct ExtendableItem
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -529,7 +529,7 @@ public readonly partial struct ExtendableItem
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -576,7 +576,7 @@ public readonly partial struct ExtendableItem
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -746,7 +746,7 @@ public readonly partial struct ExtendableItem
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.ExtendableItem.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Ui5ManifestBenchmark.Current.ExtendableItem.RequiresEntity.Source arg1)
+        internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableItem.RequiresEntity.Source arg1)
         {
             _createArg1 = arg1;
             _kind = Kind.Create;
@@ -910,7 +910,7 @@ public readonly partial struct ExtendableItem
 
         internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.ExtendableItem.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.ExtendableItem.RequiresEntity.Source<TContext> arg1)
+        internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableItem.RequiresEntity.Source<TContext> arg1)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1199,7 +1199,7 @@ public readonly partial struct ExtendableItem
         /// </summary>
         /// <param name="arg1">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.ExtendableItem.RequiresEntity.Source arg1, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableItem.RequiresEntity.Source arg1, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1);
@@ -1213,7 +1213,7 @@ public readonly partial struct ExtendableItem
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="arg1">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.ExtendableItem.RequiresEntity.Source<TContext> arg1, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableItem.RequiresEntity.Source<TContext> arg1, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1258,7 +1258,7 @@ public readonly partial struct ExtendableItem
     /// </summary>
     /// <param name="requires">The value of the <c>"requires"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.ExtendableItem.RequiresEntity.Source requires = default)
+    public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableItem.RequiresEntity.Source requires = default)
     {
         return new Source(requires);
     }
@@ -1270,7 +1270,7 @@ public readonly partial struct ExtendableItem
     /// <param name="context">The context to pass to the builder.</param>
     /// <param name="requires">The value of the <c>"requires"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.ExtendableItem.RequiresEntity.Source<TContext> requires = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableItem.RequiresEntity.Source<TContext> requires = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

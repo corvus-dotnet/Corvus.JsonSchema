@@ -643,7 +643,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVersion(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source value)
+            public void SetVersion(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -688,7 +688,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>configuration</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetConfiguration(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source value)
+            public void SetConfiguration(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -769,7 +769,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>content</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetContent(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetContent(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -850,7 +850,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>data</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDataValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source value)
+            public void SetDataValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source value)
             {
                 CheckValidInstance();
 
@@ -931,7 +931,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>designtime</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDesigntime(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetDesigntime(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -976,7 +976,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>extension</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExtension(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetExtension(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1021,7 +1021,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>footer</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFooter(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source value)
+            public void SetFooter(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source value)
             {
                 CheckValidInstance();
 
@@ -1102,7 +1102,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>header</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeader(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source value)
+            public void SetHeader(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source value)
             {
                 CheckValidInstance();
 
@@ -1167,7 +1167,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>headerPosition</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeaderPosition(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source value)
+            public void SetHeaderPosition(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source value)
             {
                 CheckValidInstance();
 
@@ -1212,7 +1212,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>requiredHeight</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRequiredHeight(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetRequiredHeight(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1257,7 +1257,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>requiredWidth</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRequiredWidth(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetRequiredWidth(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1302,7 +1302,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source value)
             {
                 CheckValidInstance();
 
@@ -2029,7 +2029,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -2215,7 +2215,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source<TContext> arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source<TContext> arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2528,7 +2528,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg11">The value of the property.</param>
             /// <param name="arg12">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
@@ -2553,7 +2553,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg11">The value of the property.</param>
             /// <param name="arg12">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source<TContext> arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source<TContext> arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2609,7 +2609,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="requiredHeight">The value of the <c>"requiredHeight"</c> property.</param>
         /// <param name="requiredWidth">The value of the <c>"requiredWidth"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source header, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source configuration = default, in Corvus.Text.Json.JsonElement.Source content = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source designtime = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source extension = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source footer = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source headerPosition = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source requiredHeight = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source requiredWidth = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source header, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source type, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source version = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source configuration = default, scoped in Corvus.Text.Json.JsonElement.Source content = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source designtime = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source extension = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source footer = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source headerPosition = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source requiredHeight = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source requiredWidth = default)
         {
             return new Source(header, type, version, configuration, content, data, designtime, extension, footer, headerPosition, requiredHeight, requiredWidth);
         }
@@ -2632,7 +2632,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="requiredHeight">The value of the <c>"requiredHeight"</c> property.</param>
         /// <param name="requiredWidth">The value of the <c>"requiredWidth"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source<TContext> header, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source<TContext> configuration = default, in Corvus.Text.Json.JsonElement.Source<TContext> content = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source designtime = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source extension = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source<TContext> footer = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source headerPosition = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source requiredHeight = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source requiredWidth = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderType.Source<TContext> header, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsTheTypeOfTheCardSContent.Source type, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.VersionEntity.Source version = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.Source<TContext> configuration = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> content = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source designtime = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source extension = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentCardFooterAttributes.Source<TContext> footer = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.RepresentsCardHeaderPositionUnderOrOverTheContent.Source headerPosition = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source requiredHeight = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source requiredWidth = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

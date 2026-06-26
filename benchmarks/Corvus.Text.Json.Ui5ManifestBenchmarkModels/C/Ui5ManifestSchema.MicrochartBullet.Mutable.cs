@@ -413,7 +413,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>color</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetColor(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheStateColorOfTheBar.Source value)
+            public void SetColor(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheStateColorOfTheBar.Source value)
             {
                 CheckValidInstance();
 
@@ -458,7 +458,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>displayValue</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisplayValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetDisplayValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -503,7 +503,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>maxValue</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMaximumScaleValueForTheBarChart.Source value)
+            public void SetMaxValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMaximumScaleValueForTheBarChart.Source value)
             {
                 CheckValidInstance();
 
@@ -548,7 +548,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>minValue</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMinValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMinimumScaleValueForTheBarChart.Source value)
+            public void SetMinValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMinimumScaleValueForTheBarChart.Source value)
             {
                 CheckValidInstance();
 
@@ -593,7 +593,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>scale</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetScale(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetScale(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -638,7 +638,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>target</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTarget(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheTargetValueDisplayedAsAVerticalLineMarker.Source value)
+            public void SetTarget(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheTargetValueDisplayedAsAVerticalLineMarker.Source value)
             {
                 CheckValidInstance();
 
@@ -683,7 +683,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>thresholds</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetThresholds(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.MicrochartBulletThresholdArray.Source value)
+            public void SetThresholds(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.MicrochartBulletThresholdArray.Source value)
             {
                 CheckValidInstance();
 
@@ -764,7 +764,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.RepresentsTheTypeOfTheMicrochart.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.RepresentsTheTypeOfTheMicrochart.Source value)
             {
                 CheckValidInstance();
 
@@ -795,7 +795,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>value</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheActualValueShownAsAColoredHorizontalBar.Source value)
+            public void SetValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheActualValueShownAsAColoredHorizontalBar.Source value)
             {
                 CheckValidInstance();
 
@@ -840,7 +840,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>visible</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVisible(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source value)
+            public void SetVisible(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source value)
             {
                 CheckValidInstance();
 
@@ -1058,7 +1058,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheStateColorOfTheBar.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMaximumScaleValueForTheBarChart.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMinimumScaleValueForTheBarChart.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheTargetValueDisplayedAsAVerticalLineMarker.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.MicrochartBulletThresholdArray.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheActualValueShownAsAColoredHorizontalBar.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg9)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheStateColorOfTheBar.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMaximumScaleValueForTheBarChart.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMinimumScaleValueForTheBarChart.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheTargetValueDisplayedAsAVerticalLineMarker.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.MicrochartBulletThresholdArray.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheActualValueShownAsAColoredHorizontalBar.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg9)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1238,7 +1238,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheStateColorOfTheBar.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMaximumScaleValueForTheBarChart.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMinimumScaleValueForTheBarChart.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheTargetValueDisplayedAsAVerticalLineMarker.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.MicrochartBulletThresholdArray.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheActualValueShownAsAColoredHorizontalBar.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg9)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheStateColorOfTheBar.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMaximumScaleValueForTheBarChart.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMinimumScaleValueForTheBarChart.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheTargetValueDisplayedAsAVerticalLineMarker.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.MicrochartBulletThresholdArray.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheActualValueShownAsAColoredHorizontalBar.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg9)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1529,7 +1529,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg8">The value of the property.</param>
             /// <param name="arg9">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheStateColorOfTheBar.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMaximumScaleValueForTheBarChart.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMinimumScaleValueForTheBarChart.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheTargetValueDisplayedAsAVerticalLineMarker.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.MicrochartBulletThresholdArray.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheActualValueShownAsAColoredHorizontalBar.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg9, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheStateColorOfTheBar.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMaximumScaleValueForTheBarChart.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMinimumScaleValueForTheBarChart.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheTargetValueDisplayedAsAVerticalLineMarker.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.MicrochartBulletThresholdArray.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheActualValueShownAsAColoredHorizontalBar.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg9, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
@@ -1551,7 +1551,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg8">The value of the property.</param>
             /// <param name="arg9">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheStateColorOfTheBar.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMaximumScaleValueForTheBarChart.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMinimumScaleValueForTheBarChart.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheTargetValueDisplayedAsAVerticalLineMarker.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.MicrochartBulletThresholdArray.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheActualValueShownAsAColoredHorizontalBar.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg9, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheStateColorOfTheBar.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMaximumScaleValueForTheBarChart.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMinimumScaleValueForTheBarChart.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheTargetValueDisplayedAsAVerticalLineMarker.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.MicrochartBulletThresholdArray.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheActualValueShownAsAColoredHorizontalBar.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg9, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1604,7 +1604,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="value">The value of the <c>"value"</c> property.</param>
         /// <param name="visible">The value of the <c>"visible"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheStateColorOfTheBar.Source color = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source displayValue = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMaximumScaleValueForTheBarChart.Source maxValue = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMinimumScaleValueForTheBarChart.Source minValue = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source scale = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheTargetValueDisplayedAsAVerticalLineMarker.Source target = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.MicrochartBulletThresholdArray.Source thresholds = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheActualValueShownAsAColoredHorizontalBar.Source value = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheStateColorOfTheBar.Source color = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source displayValue = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMaximumScaleValueForTheBarChart.Source maxValue = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMinimumScaleValueForTheBarChart.Source minValue = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source scale = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheTargetValueDisplayedAsAVerticalLineMarker.Source target = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.MicrochartBulletThresholdArray.Source thresholds = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheActualValueShownAsAColoredHorizontalBar.Source value = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default)
         {
             return new Source(color, displayValue, maxValue, minValue, scale, target, thresholds, value, visible);
         }
@@ -1624,7 +1624,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="value">The value of the <c>"value"</c> property.</param>
         /// <param name="visible">The value of the <c>"visible"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheStateColorOfTheBar.Source color = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source displayValue = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMaximumScaleValueForTheBarChart.Source maxValue = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMinimumScaleValueForTheBarChart.Source minValue = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source scale = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheTargetValueDisplayedAsAVerticalLineMarker.Source target = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.MicrochartBulletThresholdArray.Source<TContext> thresholds = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheActualValueShownAsAColoredHorizontalBar.Source value = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheStateColorOfTheBar.Source color = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source displayValue = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMaximumScaleValueForTheBarChart.Source maxValue = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheMinimumScaleValueForTheBarChart.Source minValue = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source scale = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheTargetValueDisplayedAsAVerticalLineMarker.Source target = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.MicrochartBulletThresholdArray.Source<TContext> thresholds = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheActualValueShownAsAColoredHorizontalBar.Source value = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

@@ -345,7 +345,7 @@ public readonly partial struct DependabotSchema
         /// Set the <c>update_configs</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUpdateConfigs(in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.Source value)
+        public void SetUpdateConfigs(scoped in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.Source value)
         {
             CheckValidInstance();
 
@@ -410,7 +410,7 @@ public readonly partial struct DependabotSchema
         /// Set the <c>version</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVersion(in Corvus.DependabotBenchmark.Current.DependabotSchema.VersionEntity.Source value)
+        public void SetVersion(scoped in Corvus.DependabotBenchmark.Current.DependabotSchema.VersionEntity.Source value)
         {
             CheckValidInstance();
 
@@ -542,7 +542,7 @@ public readonly partial struct DependabotSchema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -565,7 +565,7 @@ public readonly partial struct DependabotSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -612,7 +612,7 @@ public readonly partial struct DependabotSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -783,7 +783,7 @@ public readonly partial struct DependabotSchema
 
         internal Source(Corvus.DependabotBenchmark.Current.DependabotSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.Source arg1, in Corvus.DependabotBenchmark.Current.DependabotSchema.VersionEntity.Source arg2)
+        internal Source(scoped in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.Source arg1, scoped in Corvus.DependabotBenchmark.Current.DependabotSchema.VersionEntity.Source arg2)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -949,7 +949,7 @@ public readonly partial struct DependabotSchema
 
         internal Source(scoped in TContext context, Corvus.DependabotBenchmark.Current.DependabotSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.Source<TContext> arg1, in Corvus.DependabotBenchmark.Current.DependabotSchema.VersionEntity.Source arg2)
+        internal Source(scoped in TContext context, scoped in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.Source<TContext> arg1, scoped in Corvus.DependabotBenchmark.Current.DependabotSchema.VersionEntity.Source arg2)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1249,7 +1249,7 @@ public readonly partial struct DependabotSchema
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.Source arg1, in Corvus.DependabotBenchmark.Current.DependabotSchema.VersionEntity.Source arg2, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.Source arg1, scoped in Corvus.DependabotBenchmark.Current.DependabotSchema.VersionEntity.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2);
@@ -1264,7 +1264,7 @@ public readonly partial struct DependabotSchema
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.Source<TContext> arg1, in Corvus.DependabotBenchmark.Current.DependabotSchema.VersionEntity.Source arg2, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.Source<TContext> arg1, scoped in Corvus.DependabotBenchmark.Current.DependabotSchema.VersionEntity.Source arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1310,7 +1310,7 @@ public readonly partial struct DependabotSchema
     /// <param name="updateConfigs">The value of the <c>"update_configs"</c> property.</param>
     /// <param name="version">The value of the <c>"version"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.Source updateConfigs, in Corvus.DependabotBenchmark.Current.DependabotSchema.VersionEntity.Source version)
+    public static Source Build(scoped in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.Source updateConfigs, scoped in Corvus.DependabotBenchmark.Current.DependabotSchema.VersionEntity.Source version)
     {
         return new Source(updateConfigs, version);
     }
@@ -1323,7 +1323,7 @@ public readonly partial struct DependabotSchema
     /// <param name="updateConfigs">The value of the <c>"update_configs"</c> property.</param>
     /// <param name="version">The value of the <c>"version"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.Source<TContext> updateConfigs, in Corvus.DependabotBenchmark.Current.DependabotSchema.VersionEntity.Source version)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.Source<TContext> updateConfigs, scoped in Corvus.DependabotBenchmark.Current.DependabotSchema.VersionEntity.Source version)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

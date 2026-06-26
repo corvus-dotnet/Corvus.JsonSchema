@@ -413,7 +413,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+            public void SetDescription(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -458,7 +458,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetName(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source value)
+            public void SetName(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source value)
             {
                 CheckValidInstance();
 
@@ -489,7 +489,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>noSuggest</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNoSuggest(in Corvus.CspellBenchmark.Current.JsonBoolean.Source value)
+            public void SetNoSuggest(scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -534,7 +534,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>path</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPath(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryPath.Source value)
+            public void SetPath(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryPath.Source value)
             {
                 CheckValidInstance();
 
@@ -565,7 +565,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>repMap</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRepMap(in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source value)
+            public void SetRepMap(scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source value)
             {
                 CheckValidInstance();
 
@@ -646,7 +646,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source value)
+            public void SetType(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source value)
             {
                 CheckValidInstance();
 
@@ -691,7 +691,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>useCompounds</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUseCompounds(in Corvus.CspellBenchmark.Current.JsonBoolean.Source value)
+            public void SetUseCompounds(scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -907,7 +907,7 @@ public readonly partial struct CspellSchema
 
             internal Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryPath.Source arg2, in Corvus.CspellBenchmark.Current.JsonString.Source arg3, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg4, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source arg5, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg6, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg7)
+            internal Source(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryPath.Source arg2, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source arg5, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg6, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg7)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1083,7 +1083,7 @@ public readonly partial struct CspellSchema
 
             internal Source(scoped in TContext context, Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionPreferred.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryPath.Source arg2, in Corvus.CspellBenchmark.Current.JsonString.Source arg3, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg4, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source<TContext> arg5, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg6, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg7)
+            internal Source(scoped in TContext context, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryPath.Source arg2, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source<TContext> arg5, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg6, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg7)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1356,7 +1356,7 @@ public readonly partial struct CspellSchema
             /// <param name="arg6">The value of the property.</param>
             /// <param name="arg7">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryPath.Source arg2, in Corvus.CspellBenchmark.Current.JsonString.Source arg3, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg4, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source arg5, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg6, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg7, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryPath.Source arg2, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source arg5, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg6, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg7, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
@@ -1376,7 +1376,7 @@ public readonly partial struct CspellSchema
             /// <param name="arg6">The value of the property.</param>
             /// <param name="arg7">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryPath.Source arg2, in Corvus.CspellBenchmark.Current.JsonString.Source arg3, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg4, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source<TContext> arg5, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg6, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg7, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryPath.Source arg2, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source<TContext> arg5, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg6, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg7, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1427,7 +1427,7 @@ public readonly partial struct CspellSchema
         /// <param name="type">The value of the <c>"type"</c> property.</param>
         /// <param name="useCompounds">The value of the <c>"useCompounds"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source name, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryPath.Source path, in Corvus.CspellBenchmark.Current.JsonString.Source description = default, in Corvus.CspellBenchmark.Current.JsonBoolean.Source noSuggest = default, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source repMap = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source type = default, in Corvus.CspellBenchmark.Current.JsonBoolean.Source useCompounds = default)
+        public static Source Build(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source name, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryPath.Source path, scoped in Corvus.CspellBenchmark.Current.JsonString.Source description = default, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source noSuggest = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source repMap = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source type = default, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source useCompounds = default)
         {
             return new Source(name, path, description, noSuggest, repMap, type, useCompounds);
         }
@@ -1445,7 +1445,7 @@ public readonly partial struct CspellSchema
         /// <param name="type">The value of the <c>"type"</c> property.</param>
         /// <param name="useCompounds">The value of the <c>"useCompounds"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source name, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryPath.Source path, in Corvus.CspellBenchmark.Current.JsonString.Source description = default, in Corvus.CspellBenchmark.Current.JsonBoolean.Source noSuggest = default, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source<TContext> repMap = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source type = default, in Corvus.CspellBenchmark.Current.JsonBoolean.Source useCompounds = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source name, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryPath.Source path, scoped in Corvus.CspellBenchmark.Current.JsonString.Source description = default, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source noSuggest = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source<TContext> repMap = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source type = default, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source useCompounds = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

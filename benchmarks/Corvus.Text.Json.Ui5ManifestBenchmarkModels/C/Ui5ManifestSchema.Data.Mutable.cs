@@ -373,7 +373,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>extension</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExtensionValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.Source value)
+            public void SetExtensionValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.Source value)
             {
                 CheckValidInstance();
 
@@ -454,7 +454,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>json</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetJson(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.TheDataToBeUsedDirectlyWithoutMakingRequests.Source value)
+            public void SetJson(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.TheDataToBeUsedDirectlyWithoutMakingRequests.Source value)
             {
                 CheckValidInstance();
 
@@ -535,7 +535,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>mockData</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMockData(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.Source value)
+            public void SetMockData(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.Source value)
             {
                 CheckValidInstance();
 
@@ -616,7 +616,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetName(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetName(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -661,7 +661,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>path</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ThePathFromTheJsonToBeUsedAsRoot.Source value)
+            public void SetPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ThePathFromTheJsonToBeUsedAsRoot.Source value)
             {
                 CheckValidInstance();
 
@@ -706,7 +706,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>request</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRequestValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Source value)
+            public void SetRequestValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Source value)
             {
                 CheckValidInstance();
 
@@ -787,7 +787,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>service</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetServiceValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Service.Source value)
+            public void SetServiceValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Service.Source value)
             {
                 CheckValidInstance();
 
@@ -868,7 +868,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>updateInterval</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUpdateInterval(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.UpdateIntervalEntity.Source value)
+            public void SetUpdateInterval(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.UpdateIntervalEntity.Source value)
             {
                 CheckValidInstance();
 

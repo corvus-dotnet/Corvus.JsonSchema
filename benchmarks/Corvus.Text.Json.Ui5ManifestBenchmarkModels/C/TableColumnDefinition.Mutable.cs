@@ -283,7 +283,7 @@ public readonly partial struct TableColumnDefinition
         /// Set the <c>horizontalCellContentAlignment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHorizontalCellContentAlignment(in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.HorizontalCellContentAlignmentEntity.Source value)
+        public void SetHorizontalCellContentAlignment(scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.HorizontalCellContentAlignmentEntity.Source value)
         {
             CheckValidInstance();
 
@@ -328,7 +328,7 @@ public readonly partial struct TableColumnDefinition
         /// Set the <c>type</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetType(in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.MustBeTableColumnDefinition.Source value)
+        public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.MustBeTableColumnDefinition.Source value)
         {
             CheckValidInstance();
 
@@ -373,7 +373,7 @@ public readonly partial struct TableColumnDefinition
         /// Set the <c>verticalCellContentAlignment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVerticalCellContentAlignment(in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.VerticalCellContentAlignmentEntity.Source value)
+        public void SetVerticalCellContentAlignment(scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.VerticalCellContentAlignmentEntity.Source value)
         {
             CheckValidInstance();
 
@@ -418,7 +418,7 @@ public readonly partial struct TableColumnDefinition
         /// Set the <c>width</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetWidth(in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.WidthEntity.Source value)
+        public void SetWidth(scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.WidthEntity.Source value)
         {
             CheckValidInstance();
 
@@ -631,7 +631,7 @@ public readonly partial struct TableColumnDefinition
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.HorizontalCellContentAlignmentEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.MustBeTableColumnDefinition.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.VerticalCellContentAlignmentEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.WidthEntity.Source arg4)
+        internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.HorizontalCellContentAlignmentEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.MustBeTableColumnDefinition.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.VerticalCellContentAlignmentEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.WidthEntity.Source arg4)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -964,7 +964,7 @@ public readonly partial struct TableColumnDefinition
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.HorizontalCellContentAlignmentEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.MustBeTableColumnDefinition.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.VerticalCellContentAlignmentEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.WidthEntity.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.HorizontalCellContentAlignmentEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.MustBeTableColumnDefinition.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.VerticalCellContentAlignmentEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.WidthEntity.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4);
@@ -1009,7 +1009,7 @@ public readonly partial struct TableColumnDefinition
     /// <param name="verticalCellContentAlignment">The value of the <c>"verticalCellContentAlignment"</c> property.</param>
     /// <param name="width">The value of the <c>"width"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.HorizontalCellContentAlignmentEntity.Source horizontalCellContentAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.MustBeTableColumnDefinition.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.VerticalCellContentAlignmentEntity.Source verticalCellContentAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.WidthEntity.Source width = default)
+    public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.HorizontalCellContentAlignmentEntity.Source horizontalCellContentAlignment = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.MustBeTableColumnDefinition.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.VerticalCellContentAlignmentEntity.Source verticalCellContentAlignment = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.WidthEntity.Source width = default)
     {
         return new Source(horizontalCellContentAlignment, type, verticalCellContentAlignment, width);
     }

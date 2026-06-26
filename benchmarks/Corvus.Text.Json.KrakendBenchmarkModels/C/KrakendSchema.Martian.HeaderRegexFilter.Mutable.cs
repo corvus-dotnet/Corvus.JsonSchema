@@ -433,7 +433,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>header</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetHeader(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetHeader(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -464,7 +464,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>modifier</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetModifier(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.Source value)
+                public void SetModifier(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.Source value)
                 {
                     CheckValidInstance();
 
@@ -529,7 +529,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>regex</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRegex(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetRegex(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -560,7 +560,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>scope</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScopeValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderRegexFilter.Scope.Source value)
+                public void SetScopeValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderRegexFilter.Scope.Source value)
                 {
                     CheckValidInstance();
 
@@ -726,7 +726,7 @@ public readonly partial struct KrakendSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -749,7 +749,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -796,7 +796,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 

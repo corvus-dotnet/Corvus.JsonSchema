@@ -439,7 +439,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>host</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetHost(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetHost(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -484,7 +484,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>path</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPath(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetPath(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -529,7 +529,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>query</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetQuery(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetQuery(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -574,7 +574,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>scheme</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScheme(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetScheme(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -619,7 +619,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>scope</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScopeValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.UrlModifier.Scope.Source value)
+                public void SetScopeValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.UrlModifier.Scope.Source value)
                 {
                     CheckValidInstance();
 
@@ -785,7 +785,7 @@ public readonly partial struct KrakendSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -808,7 +808,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -855,7 +855,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1028,7 +1028,7 @@ public readonly partial struct KrakendSchema
 
                 internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.UrlModifier.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4)
+                internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg4)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1431,7 +1431,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4);
@@ -1476,7 +1476,7 @@ public readonly partial struct KrakendSchema
             /// <param name="query">The value of the <c>"query"</c> property.</param>
             /// <param name="scheme">The value of the <c>"scheme"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.KrakendBenchmark.Current.JsonString.Source host = default, in Corvus.KrakendBenchmark.Current.JsonString.Source path = default, in Corvus.KrakendBenchmark.Current.JsonString.Source query = default, in Corvus.KrakendBenchmark.Current.JsonString.Source scheme = default)
+            public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source host = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source path = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source query = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source scheme = default)
             {
                 return new Source(host, path, query, scheme);
             }

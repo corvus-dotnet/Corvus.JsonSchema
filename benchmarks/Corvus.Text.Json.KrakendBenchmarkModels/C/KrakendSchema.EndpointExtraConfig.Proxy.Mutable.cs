@@ -357,7 +357,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>combiner</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCombiner(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetCombiner(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -402,7 +402,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>flatmap_filter</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetFlatmapFilter(in Corvus.KrakendBenchmark.Current.KrakendSchema.Flatmap.Source value)
+                public void SetFlatmapFilter(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Flatmap.Source value)
                 {
                     CheckValidInstance();
 
@@ -483,7 +483,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>sequential</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSequential(in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.SequentialProxy.Source value)
+                public void SetSequential(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.SequentialProxy.Source value)
                 {
                     CheckValidInstance();
 
@@ -528,7 +528,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>static</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetStatic(in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.StaticResponse.Source value)
+                public void SetStatic(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.StaticResponse.Source value)
                 {
                     CheckValidInstance();
 
@@ -710,7 +710,7 @@ public readonly partial struct KrakendSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -733,7 +733,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -780,7 +780,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -953,7 +953,7 @@ public readonly partial struct KrakendSchema
 
                 internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Flatmap.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.SequentialProxy.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.StaticResponse.Source arg4)
+                internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Flatmap.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.SequentialProxy.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.StaticResponse.Source arg4)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1123,7 +1123,7 @@ public readonly partial struct KrakendSchema
 
                 internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Flatmap.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.SequentialProxy.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.StaticResponse.Source<TContext> arg4)
+                internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Flatmap.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.SequentialProxy.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.StaticResponse.Source<TContext> arg4)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1441,7 +1441,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Flatmap.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.SequentialProxy.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.StaticResponse.Source arg4, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Flatmap.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.SequentialProxy.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.StaticResponse.Source arg4, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4);
@@ -1458,7 +1458,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Flatmap.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.SequentialProxy.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.StaticResponse.Source<TContext> arg4, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Flatmap.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.SequentialProxy.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.StaticResponse.Source<TContext> arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1506,7 +1506,7 @@ public readonly partial struct KrakendSchema
             /// <param name="sequential">The value of the <c>"sequential"</c> property.</param>
             /// <param name="staticValue">The value of the <c>"static"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.KrakendBenchmark.Current.JsonString.Source combiner = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Flatmap.Source flatmapFilter = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.SequentialProxy.Source sequential = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.StaticResponse.Source staticValue = default)
+            public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source combiner = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Flatmap.Source flatmapFilter = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.SequentialProxy.Source sequential = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.StaticResponse.Source staticValue = default)
             {
                 return new Source(combiner, flatmapFilter, sequential, staticValue);
             }
@@ -1521,7 +1521,7 @@ public readonly partial struct KrakendSchema
             /// <param name="sequential">The value of the <c>"sequential"</c> property.</param>
             /// <param name="staticValue">The value of the <c>"static"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source combiner = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Flatmap.Source<TContext> flatmapFilter = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.SequentialProxy.Source sequential = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.StaticResponse.Source<TContext> staticValue = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source combiner = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Flatmap.Source<TContext> flatmapFilter = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.SequentialProxy.Source sequential = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointExtraConfig.Proxy.StaticResponse.Source<TContext> staticValue = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

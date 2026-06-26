@@ -430,7 +430,7 @@ public readonly partial struct NestCliSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectConfiguration.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectConfiguration.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -453,7 +453,7 @@ public readonly partial struct NestCliSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectConfiguration.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectConfiguration.Source value)
             {
                 CheckValidInstance();
 
@@ -500,7 +500,7 @@ public readonly partial struct NestCliSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectConfiguration.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectConfiguration.Source value)
             {
                 CheckValidInstance();
 

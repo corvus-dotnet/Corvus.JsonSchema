@@ -926,7 +926,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>_version</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVersion(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.VersionEntity.Source value)
+        public void SetVersion(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.VersionEntity.Source value)
         {
             CheckValidInstance();
 
@@ -957,7 +957,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>$schema</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSchemaValue(in Corvus.Ui5ManifestBenchmark.Current.JsonUri.Source value)
+        public void SetSchemaValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUri.Source value)
         {
             CheckValidInstance();
 
@@ -1002,7 +1002,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.apf</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapApf(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.Source value)
+        public void SetSapApf(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -1083,7 +1083,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.app</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapApp(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.Source value)
+        public void SetSapApp(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -1148,7 +1148,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.artifact</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapArtifact(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapArtifactNamespace.Source value)
+        public void SetSapArtifact(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapArtifactNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -1229,7 +1229,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.bpa.task</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapBpaTask(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.Source value)
+        public void SetSapBpaTask(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -1310,7 +1310,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.card</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapCard(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Source value)
+        public void SetSapCard(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -1391,7 +1391,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.cloud</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapCloud(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudNamespace.Source value)
+        public void SetSapCloud(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -1472,7 +1472,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.cloud.portal</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapCloudPortal(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
+        public void SetSapCloudPortal(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -1553,7 +1553,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.copilot</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapCopilot(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCopilotNamespace.Source value)
+        public void SetSapCopilot(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCopilotNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -1634,7 +1634,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.fe</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapFe(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
+        public void SetSapFe(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -1715,7 +1715,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.fiori</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapFiori(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.Source value)
+        public void SetSapFiori(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -1796,7 +1796,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.flp</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapFlp(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.Source value)
+        public void SetSapFlp(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -1877,7 +1877,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.gui</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapGui(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapGuiNamespace.Source value)
+        public void SetSapGui(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapGuiNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -1958,7 +1958,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.insights</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapInsights(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.Source value)
+        public void SetSapInsights(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -2039,7 +2039,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.integration</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapIntegration(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapIntegrationNamespace.Source value)
+        public void SetSapIntegration(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapIntegrationNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -2120,7 +2120,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.map</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapMap(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
+        public void SetSapMap(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -2201,7 +2201,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.mobile</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapMobile(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMobileNamespace.Source value)
+        public void SetSapMobile(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMobileNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -2282,7 +2282,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.ovp</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapOvp(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.Source value)
+        public void SetSapOvp(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -2363,7 +2363,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.package</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapPackage(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.Source value)
+        public void SetSapPackage(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -2444,7 +2444,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.platform.abap</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapPlatformAbap(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformAbapNamespace.Source value)
+        public void SetSapPlatformAbap(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformAbapNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -2525,7 +2525,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.platform.cf</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapPlatformCf(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformCfNamespace.Source value)
+        public void SetSapPlatformCf(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformCfNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -2606,7 +2606,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.platform.hcp</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapPlatformHcp(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.Source value)
+        public void SetSapPlatformHcp(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -2687,7 +2687,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.platform.mobilecards</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapPlatformMobilecards(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformMobilecardsNamespace.Source value)
+        public void SetSapPlatformMobilecards(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformMobilecardsNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -2768,7 +2768,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.platform.sfsf</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapPlatformSfsf(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformSfsfNamespace.Source value)
+        public void SetSapPlatformSfsf(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformSfsfNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -2849,7 +2849,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.ui</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapUi(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.Source value)
+        public void SetSapUi(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -2914,7 +2914,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.ui.generic.app</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapUiGenericApp(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.Source value)
+        public void SetSapUiGenericApp(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -2995,7 +2995,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.ui.smartbusiness.app</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapUiSmartbusinessApp(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
+        public void SetSapUiSmartbusinessApp(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -3076,7 +3076,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.ui5</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapUi5(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.Source value)
+        public void SetSapUi5(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.Source value)
         {
             CheckValidInstance();
 
@@ -3157,7 +3157,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.url</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapUrl(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUrlNamespace.Source value)
+        public void SetSapUrl(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUrlNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -3238,7 +3238,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.wcf</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapWcf(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWcfNamespace.Source value)
+        public void SetSapWcf(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWcfNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -3319,7 +3319,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.wda</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapWda(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWdaNamespace.Source value)
+        public void SetSapWda(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWdaNamespace.Source value)
         {
             CheckValidInstance();
 
@@ -3400,7 +3400,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>start_url</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStartUrl(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetStartUrl(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 

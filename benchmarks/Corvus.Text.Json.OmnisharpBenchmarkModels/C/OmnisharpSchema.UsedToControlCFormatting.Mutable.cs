@@ -1146,7 +1146,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>EnableEditorConfigSupport</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnableEditorConfigSupport(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.EnableEditorConfigSupportEntity.Source value)
+            public void SetEnableEditorConfigSupport(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.EnableEditorConfigSupportEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1191,7 +1191,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>IndentationSize</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIndentationSize(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentationSizeEntity.Source value)
+            public void SetIndentationSize(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentationSizeEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1236,7 +1236,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>IndentBlock</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIndentBlock(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentBlockEntity.Source value)
+            public void SetIndentBlock(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentBlockEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1281,7 +1281,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>IndentBraces</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIndentBraces(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentBracesEntity.Source value)
+            public void SetIndentBraces(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentBracesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1326,7 +1326,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>IndentSwitchCaseSection</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIndentSwitchCaseSection(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentSwitchCaseSectionEntity.Source value)
+            public void SetIndentSwitchCaseSection(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentSwitchCaseSectionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1371,7 +1371,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>IndentSwitchCaseSectionWhenBlock</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIndentSwitchCaseSectionWhenBlock(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentSwitchCaseSectionWhenBlockEntity.Source value)
+            public void SetIndentSwitchCaseSectionWhenBlock(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentSwitchCaseSectionWhenBlockEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1416,7 +1416,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>IndentSwitchSection</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIndentSwitchSection(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentSwitchSectionEntity.Source value)
+            public void SetIndentSwitchSection(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.IndentSwitchSectionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1461,7 +1461,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>LabelPositioning</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLabelPositioning(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.LabelPositioningEntity.Source value)
+            public void SetLabelPositioning(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.LabelPositioningEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1506,7 +1506,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>NewLine</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNewLine(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineEntity.Source value)
+            public void SetNewLine(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1551,7 +1551,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>NewLineForCatch</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNewLineForCatch(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForCatchEntity.Source value)
+            public void SetNewLineForCatch(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForCatchEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1596,7 +1596,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>NewLineForClausesInQuery</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNewLineForClausesInQuery(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForClausesInQueryEntity.Source value)
+            public void SetNewLineForClausesInQuery(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForClausesInQueryEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1641,7 +1641,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>NewLineForElse</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNewLineForElse(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForElseEntity.Source value)
+            public void SetNewLineForElse(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForElseEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1686,7 +1686,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>NewLineForFinally</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNewLineForFinally(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForFinallyEntity.Source value)
+            public void SetNewLineForFinally(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForFinallyEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1731,7 +1731,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>NewLineForMembersInAnonymousTypes</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNewLineForMembersInAnonymousTypes(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForMembersInAnonymousTypesEntity.Source value)
+            public void SetNewLineForMembersInAnonymousTypes(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForMembersInAnonymousTypesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1776,7 +1776,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>NewLineForMembersInObjectInit</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNewLineForMembersInObjectInit(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForMembersInObjectInitEntity.Source value)
+            public void SetNewLineForMembersInObjectInit(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLineForMembersInObjectInitEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1821,7 +1821,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>NewLinesForBracesInAccessors</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNewLinesForBracesInAccessors(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInAccessorsEntity.Source value)
+            public void SetNewLinesForBracesInAccessors(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInAccessorsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1866,7 +1866,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>NewLinesForBracesInAnonymousMethods</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNewLinesForBracesInAnonymousMethods(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInAnonymousMethodsEntity.Source value)
+            public void SetNewLinesForBracesInAnonymousMethods(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInAnonymousMethodsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1911,7 +1911,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>NewLinesForBracesInAnonymousTypes</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNewLinesForBracesInAnonymousTypes(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInAnonymousTypesEntity.Source value)
+            public void SetNewLinesForBracesInAnonymousTypes(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInAnonymousTypesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1956,7 +1956,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>NewLinesForBracesInControlBlocks</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNewLinesForBracesInControlBlocks(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInControlBlocksEntity.Source value)
+            public void SetNewLinesForBracesInControlBlocks(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInControlBlocksEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2001,7 +2001,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>NewLinesForBracesInLambdaExpressionBody</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNewLinesForBracesInLambdaExpressionBody(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInLambdaExpressionBodyEntity.Source value)
+            public void SetNewLinesForBracesInLambdaExpressionBody(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInLambdaExpressionBodyEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2046,7 +2046,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>NewLinesForBracesInMethods</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNewLinesForBracesInMethods(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInMethodsEntity.Source value)
+            public void SetNewLinesForBracesInMethods(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInMethodsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2091,7 +2091,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>NewLinesForBracesInObjectCollectionArrayInitializers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNewLinesForBracesInObjectCollectionArrayInitializers(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInObjectCollectionArrayInitializersEntity.Source value)
+            public void SetNewLinesForBracesInObjectCollectionArrayInitializers(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInObjectCollectionArrayInitializersEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2136,7 +2136,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>NewLinesForBracesInProperties</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNewLinesForBracesInProperties(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInPropertiesEntity.Source value)
+            public void SetNewLinesForBracesInProperties(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInPropertiesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2181,7 +2181,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>NewLinesForBracesInTypes</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNewLinesForBracesInTypes(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInTypesEntity.Source value)
+            public void SetNewLinesForBracesInTypes(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.NewLinesForBracesInTypesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2226,7 +2226,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceAfterCast</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceAfterCast(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterCastEntity.Source value)
+            public void SetSpaceAfterCast(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterCastEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2271,7 +2271,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceAfterColonInBaseTypeDeclaration</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceAfterColonInBaseTypeDeclaration(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterColonInBaseTypeDeclarationEntity.Source value)
+            public void SetSpaceAfterColonInBaseTypeDeclaration(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterColonInBaseTypeDeclarationEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2316,7 +2316,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceAfterComma</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceAfterComma(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterCommaEntity.Source value)
+            public void SetSpaceAfterComma(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterCommaEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2361,7 +2361,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceAfterControlFlowStatementKeyword</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceAfterControlFlowStatementKeyword(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterControlFlowStatementKeywordEntity.Source value)
+            public void SetSpaceAfterControlFlowStatementKeyword(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterControlFlowStatementKeywordEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2406,7 +2406,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceAfterDot</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceAfterDot(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterDotEntity.Source value)
+            public void SetSpaceAfterDot(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterDotEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2451,7 +2451,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceAfterMethodCallName</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceAfterMethodCallName(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterMethodCallNameEntity.Source value)
+            public void SetSpaceAfterMethodCallName(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterMethodCallNameEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2496,7 +2496,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceAfterSemicolonsInForStatement</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceAfterSemicolonsInForStatement(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterSemicolonsInForStatementEntity.Source value)
+            public void SetSpaceAfterSemicolonsInForStatement(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceAfterSemicolonsInForStatementEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2541,7 +2541,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceBeforeColonInBaseTypeDeclaration</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceBeforeColonInBaseTypeDeclaration(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeColonInBaseTypeDeclarationEntity.Source value)
+            public void SetSpaceBeforeColonInBaseTypeDeclaration(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeColonInBaseTypeDeclarationEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2586,7 +2586,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceBeforeComma</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceBeforeComma(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeCommaEntity.Source value)
+            public void SetSpaceBeforeComma(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeCommaEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2631,7 +2631,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceBeforeDot</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceBeforeDot(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeDotEntity.Source value)
+            public void SetSpaceBeforeDot(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeDotEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2676,7 +2676,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceBeforeOpenSquareBracket</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceBeforeOpenSquareBracket(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeOpenSquareBracketEntity.Source value)
+            public void SetSpaceBeforeOpenSquareBracket(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeOpenSquareBracketEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2721,7 +2721,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceBeforeSemicolonsInForStatement</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceBeforeSemicolonsInForStatement(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeSemicolonsInForStatementEntity.Source value)
+            public void SetSpaceBeforeSemicolonsInForStatement(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBeforeSemicolonsInForStatementEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2766,7 +2766,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceBetweenEmptyMethodCallParentheses</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceBetweenEmptyMethodCallParentheses(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBetweenEmptyMethodCallParenthesesEntity.Source value)
+            public void SetSpaceBetweenEmptyMethodCallParentheses(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBetweenEmptyMethodCallParenthesesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2811,7 +2811,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceBetweenEmptyMethodDeclarationParentheses</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceBetweenEmptyMethodDeclarationParentheses(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBetweenEmptyMethodDeclarationParenthesesEntity.Source value)
+            public void SetSpaceBetweenEmptyMethodDeclarationParentheses(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBetweenEmptyMethodDeclarationParenthesesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2856,7 +2856,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceBetweenEmptySquareBrackets</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceBetweenEmptySquareBrackets(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBetweenEmptySquareBracketsEntity.Source value)
+            public void SetSpaceBetweenEmptySquareBrackets(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceBetweenEmptySquareBracketsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2901,7 +2901,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpacesIgnoreAroundVariableDeclaration</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpacesIgnoreAroundVariableDeclaration(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpacesIgnoreAroundVariableDeclarationEntity.Source value)
+            public void SetSpacesIgnoreAroundVariableDeclaration(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpacesIgnoreAroundVariableDeclarationEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2946,7 +2946,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceWithinCastParentheses</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceWithinCastParentheses(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinCastParenthesesEntity.Source value)
+            public void SetSpaceWithinCastParentheses(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinCastParenthesesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2991,7 +2991,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceWithinExpressionParentheses</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceWithinExpressionParentheses(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinExpressionParenthesesEntity.Source value)
+            public void SetSpaceWithinExpressionParentheses(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinExpressionParenthesesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -3036,7 +3036,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceWithinMethodCallParentheses</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceWithinMethodCallParentheses(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinMethodCallParenthesesEntity.Source value)
+            public void SetSpaceWithinMethodCallParentheses(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinMethodCallParenthesesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -3081,7 +3081,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceWithinMethodDeclarationParenthesis</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceWithinMethodDeclarationParenthesis(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinMethodDeclarationParenthesisEntity.Source value)
+            public void SetSpaceWithinMethodDeclarationParenthesis(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinMethodDeclarationParenthesisEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -3126,7 +3126,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceWithinOtherParentheses</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceWithinOtherParentheses(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinOtherParenthesesEntity.Source value)
+            public void SetSpaceWithinOtherParentheses(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinOtherParenthesesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -3171,7 +3171,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpaceWithinSquareBrackets</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpaceWithinSquareBrackets(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinSquareBracketsEntity.Source value)
+            public void SetSpaceWithinSquareBrackets(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpaceWithinSquareBracketsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -3216,7 +3216,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpacingAfterMethodDeclarationName</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpacingAfterMethodDeclarationName(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpacingAfterMethodDeclarationNameEntity.Source value)
+            public void SetSpacingAfterMethodDeclarationName(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpacingAfterMethodDeclarationNameEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -3261,7 +3261,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>SpacingAroundBinaryOperator</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpacingAroundBinaryOperator(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpacingAroundBinaryOperatorEntity.Source value)
+            public void SetSpacingAroundBinaryOperator(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.SpacingAroundBinaryOperatorEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -3306,7 +3306,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>TabSize</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTabSize(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.TabSizeEntity.Source value)
+            public void SetTabSize(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.TabSizeEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -3351,7 +3351,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>UseTabs</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUseTabs(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.UseTabsEntity.Source value)
+            public void SetUseTabs(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.UseTabsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -3396,7 +3396,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>WrappingKeepStatementsOnSingleLine</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetWrappingKeepStatementsOnSingleLine(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.WrappingKeepStatementsOnSingleLineEntity.Source value)
+            public void SetWrappingKeepStatementsOnSingleLine(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.WrappingKeepStatementsOnSingleLineEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -3441,7 +3441,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>WrappingPreserveSingleLine</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetWrappingPreserveSingleLine(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.WrappingPreserveSingleLineEntity.Source value)
+            public void SetWrappingPreserveSingleLine(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.WrappingPreserveSingleLineEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -3587,7 +3587,7 @@ public readonly partial struct OmnisharpSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -3610,7 +3610,7 @@ public readonly partial struct OmnisharpSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -3657,7 +3657,7 @@ public readonly partial struct OmnisharpSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 

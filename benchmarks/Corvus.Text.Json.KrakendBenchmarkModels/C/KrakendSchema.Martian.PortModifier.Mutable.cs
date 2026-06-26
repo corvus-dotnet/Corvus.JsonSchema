@@ -469,7 +469,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>defaultForScheme</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDefaultForScheme(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
+                public void SetDefaultForScheme(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -514,7 +514,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>port</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPort(in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
+                public void SetPort(scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
                 {
                     CheckValidInstance();
 
@@ -559,7 +559,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>remove</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRemoveValue(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
+                public void SetRemoveValue(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -604,7 +604,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>scope</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScopeValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.Scope.Source value)
+                public void SetScopeValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.Scope.Source value)
                 {
                     CheckValidInstance();
 
@@ -840,7 +840,7 @@ public readonly partial struct KrakendSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -863,7 +863,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -910,7 +910,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1209,7 +1209,7 @@ public readonly partial struct KrakendSchema
 
                 internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg1, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg2, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.Scope.Source arg4)
+                internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.Scope.Source arg4)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1614,7 +1614,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg1, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg2, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.Scope.Source arg4, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.Scope.Source arg4, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4);
@@ -1659,7 +1659,7 @@ public readonly partial struct KrakendSchema
             /// <param name="remove">The value of the <c>"remove"</c> property.</param>
             /// <param name="scope">The value of the <c>"scope"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source defaultForScheme = default, in Corvus.KrakendBenchmark.Current.JsonInteger.Source port = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source remove = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.Scope.Source scope = default)
+            public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source defaultForScheme = default, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source port = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source remove = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.Scope.Source scope = default)
             {
                 return new Source(defaultForScheme, port, remove, scope);
             }

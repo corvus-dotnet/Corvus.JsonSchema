@@ -389,7 +389,7 @@ public readonly partial struct CypressSchema
                                 /// Set the <c>passphrase</c> property.
                                 /// </summary>
                                 /// <param name="value">The value of the property to add.</param>
-                                public void SetPassphrase(in Corvus.CypressBenchmark.Current.JsonString.Source value)
+                                public void SetPassphrase(scoped in Corvus.CypressBenchmark.Current.JsonString.Source value)
                                 {
                                     CheckValidInstance();
 
@@ -434,7 +434,7 @@ public readonly partial struct CypressSchema
                                 /// Set the <c>pfx</c> property.
                                 /// </summary>
                                 /// <param name="value">The value of the property to add.</param>
-                                public void SetPfx(in Corvus.CypressBenchmark.Current.JsonString.Source value)
+                                public void SetPfx(scoped in Corvus.CypressBenchmark.Current.JsonString.Source value)
                                 {
                                     CheckValidInstance();
 
@@ -566,7 +566,7 @@ public readonly partial struct CypressSchema
                                 ///   </para>
                                 /// </remarks>
                                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                                public void SetProperty(string propertyName, in JsonElement.Source value)
+                                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                                 {
                                     SetProperty(propertyName.AsSpan(), value);
                                 }
@@ -589,7 +589,7 @@ public readonly partial struct CypressSchema
                                 ///     If the property doesn't exist, it will be added to the object.
                                 ///   </para>
                                 /// </remarks>
-                                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                                 {
                                     CheckValidInstance();
 
@@ -636,7 +636,7 @@ public readonly partial struct CypressSchema
                                 ///     If the property doesn't exist, it will be added to the object.
                                 ///   </para>
                                 /// </remarks>
-                                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                                 {
                                     CheckValidInstance();
 
@@ -807,7 +807,7 @@ public readonly partial struct CypressSchema
 
                                 internal Source(Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.RequiredCertsAndUrl.CertsEntityArray.CertsEntity.PfxFileSpecificProperties.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                                internal Source(in Corvus.CypressBenchmark.Current.JsonString.Source arg1, in Corvus.CypressBenchmark.Current.JsonString.Source arg2)
+                                internal Source(scoped in Corvus.CypressBenchmark.Current.JsonString.Source arg1, scoped in Corvus.CypressBenchmark.Current.JsonString.Source arg2)
                                 {
                                     _createArg1 = arg1;
                                     _createArg2 = arg2;
@@ -1197,7 +1197,7 @@ public readonly partial struct CypressSchema
                                 /// <param name="arg1">The value of the property.</param>
                                 /// <param name="arg2">The value of the property.</param>
                                 /// <param name="o">The complex value builder into which to write the object.</param>
-                                internal static void BuildCreateValue(in Corvus.CypressBenchmark.Current.JsonString.Source arg1, in Corvus.CypressBenchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
+                                internal static void BuildCreateValue(scoped in Corvus.CypressBenchmark.Current.JsonString.Source arg1, scoped in Corvus.CypressBenchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
                                 {
                                     o.StartObject();
                                     Create(ref o, arg1, arg2);
@@ -1240,7 +1240,7 @@ public readonly partial struct CypressSchema
                             /// <param name="pfx">The value of the <c>"pfx"</c> property.</param>
                             /// <param name="passphrase">The value of the <c>"passphrase"</c> property.</param>
                             /// <returns>The source from which to build the value.</returns>
-                            public static Source Build(in Corvus.CypressBenchmark.Current.JsonString.Source pfx, in Corvus.CypressBenchmark.Current.JsonString.Source passphrase = default)
+                            public static Source Build(scoped in Corvus.CypressBenchmark.Current.JsonString.Source pfx, scoped in Corvus.CypressBenchmark.Current.JsonString.Source passphrase = default)
                             {
                                 return new Source(pfx, passphrase);
                             }

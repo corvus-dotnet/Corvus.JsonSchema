@@ -268,7 +268,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>defaultFileTypes</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetDefaultFileTypes(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.JsonStringArray.Source value)
+                    public void SetDefaultFileTypes(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.JsonStringArray.Source value)
                     {
                         CheckValidInstance();
 
@@ -349,7 +349,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>name</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetName(in Corvus.Ui5Benchmark.Current.JsonString.Source value)
+                    public void SetName(scoped in Corvus.Ui5Benchmark.Current.JsonString.Source value)
                     {
                         CheckValidInstance();
 
@@ -380,7 +380,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>sections</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetSections(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.Source value)
+                    public void SetSections(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.Source value)
                     {
                         CheckValidInstance();
 
@@ -628,7 +628,7 @@ public readonly partial struct Ui5Schema
 
                     internal Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.Ui5Benchmark.Current.JsonString.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.JsonStringArray.Source arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.Source arg3)
+                    internal Source(scoped in Corvus.Ui5Benchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.JsonStringArray.Source arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.Source arg3)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -796,7 +796,7 @@ public readonly partial struct Ui5Schema
 
                     internal Source(scoped in TContext context, Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(scoped in TContext context, in Corvus.Ui5Benchmark.Current.JsonString.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.JsonStringArray.Source<TContext> arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.Source<TContext> arg3)
+                    internal Source(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.JsonStringArray.Source<TContext> arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.Source<TContext> arg3)
                     {
                         _context = context;
                         _createArg1 = arg1;
@@ -1037,7 +1037,7 @@ public readonly partial struct Ui5Schema
                     /// <param name="arg2">The value of the property.</param>
                     /// <param name="arg3">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.Ui5Benchmark.Current.JsonString.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.JsonStringArray.Source arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.Source arg3, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.Ui5Benchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.JsonStringArray.Source arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.Source arg3, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3);
@@ -1053,7 +1053,7 @@ public readonly partial struct Ui5Schema
                     /// <param name="arg2">The value of the property.</param>
                     /// <param name="arg3">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5Benchmark.Current.JsonString.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.JsonStringArray.Source<TContext> arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.Source<TContext> arg3, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.JsonStringArray.Source<TContext> arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.Source<TContext> arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -1100,7 +1100,7 @@ public readonly partial struct Ui5Schema
                 /// <param name="defaultFileTypes">The value of the <c>"defaultFileTypes"</c> property.</param>
                 /// <param name="sections">The value of the <c>"sections"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.Ui5Benchmark.Current.JsonString.Source name, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.JsonStringArray.Source defaultFileTypes = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.Source sections = default)
+                public static Source Build(scoped in Corvus.Ui5Benchmark.Current.JsonString.Source name, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.JsonStringArray.Source defaultFileTypes = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.Source sections = default)
                 {
                     return new Source(name, defaultFileTypes, sections);
                 }
@@ -1114,7 +1114,7 @@ public readonly partial struct Ui5Schema
                 /// <param name="defaultFileTypes">The value of the <c>"defaultFileTypes"</c> property.</param>
                 /// <param name="sections">The value of the <c>"sections"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5Benchmark.Current.JsonString.Source name, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.JsonStringArray.Source<TContext> defaultFileTypes = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.Source<TContext> sections = default)
+                public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.JsonString.Source name, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.JsonStringArray.Source<TContext> defaultFileTypes = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName2.RequiredFiltersAndModeArray.Source<TContext> sections = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif

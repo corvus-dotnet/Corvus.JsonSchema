@@ -423,7 +423,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>desktop</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDesktop(in Corvus.Text.Json.JsonElement.Source value)
+                public void SetDesktop(scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -488,7 +488,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>phone</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPhone(in Corvus.Text.Json.JsonElement.Source value)
+                public void SetPhone(scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -553,7 +553,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>tablet</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTablet(in Corvus.Text.Json.JsonElement.Source value)
+                public void SetTablet(scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -737,7 +737,7 @@ public readonly partial struct Ui5ManifestSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -760,7 +760,7 @@ public readonly partial struct Ui5ManifestSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -807,7 +807,7 @@ public readonly partial struct Ui5ManifestSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1071,7 +1071,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.DeviceTypesEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.Text.Json.JsonElement.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3)
+                internal Source(scoped in Corvus.Text.Json.JsonElement.Source arg1, scoped in Corvus.Text.Json.JsonElement.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1239,7 +1239,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.DeviceTypesEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.Text.Json.JsonElement.Source<TContext> arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3)
+                internal Source(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1549,7 +1549,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.Text.Json.JsonElement.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.Text.Json.JsonElement.Source arg1, scoped in Corvus.Text.Json.JsonElement.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3);
@@ -1565,7 +1565,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.Text.Json.JsonElement.Source<TContext> arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1612,7 +1612,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="phone">The value of the <c>"phone"</c> property.</param>
             /// <param name="tablet">The value of the <c>"tablet"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.Text.Json.JsonElement.Source desktop, in Corvus.Text.Json.JsonElement.Source phone, in Corvus.Text.Json.JsonElement.Source tablet)
+            public static Source Build(scoped in Corvus.Text.Json.JsonElement.Source desktop, scoped in Corvus.Text.Json.JsonElement.Source phone, scoped in Corvus.Text.Json.JsonElement.Source tablet)
             {
                 return new Source(desktop, phone, tablet);
             }
@@ -1626,7 +1626,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="phone">The value of the <c>"phone"</c> property.</param>
             /// <param name="tablet">The value of the <c>"tablet"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> desktop, in Corvus.Text.Json.JsonElement.Source<TContext> phone, in Corvus.Text.Json.JsonElement.Source<TContext> tablet)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> desktop, scoped in Corvus.Text.Json.JsonElement.Source<TContext> phone, scoped in Corvus.Text.Json.JsonElement.Source<TContext> tablet)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

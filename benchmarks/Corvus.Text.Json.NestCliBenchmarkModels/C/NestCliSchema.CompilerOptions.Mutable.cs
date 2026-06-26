@@ -423,7 +423,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>assets</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAssets(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Source value)
+            public void SetAssets(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Source value)
             {
                 CheckValidInstance();
 
@@ -504,7 +504,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>builder</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBuilderValue(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.Source value)
+            public void SetBuilderValue(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -585,7 +585,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>deleteOutDir</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDeleteOutDir(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Source value)
+            public void SetDeleteOutDir(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -630,7 +630,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>manualRestart</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetManualRestart(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Source value)
+            public void SetManualRestart(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -675,7 +675,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>plugins</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPlugins(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Source value)
+            public void SetPlugins(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Source value)
             {
                 CheckValidInstance();
 
@@ -756,7 +756,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>tsConfigPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTsConfigPath(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Source value)
+            public void SetTsConfigPath(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -801,7 +801,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>typeCheck</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTypeCheck(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Source value)
+            public void SetTypeCheck(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -846,7 +846,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>watchAssets</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetWatchAssets(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Source value)
+            public void SetWatchAssets(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -891,7 +891,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>webpack</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetWebpack(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source value)
+            public void SetWebpack(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -936,7 +936,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>webpackConfigPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetWebpackConfigPath(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source value)
+            public void SetWebpackConfigPath(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1155,7 +1155,7 @@ public readonly partial struct NestCliSchema
 
             internal Source(Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.Source arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Source arg3, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Source arg4, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Source arg5, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Source arg6, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Source arg7, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Source arg8, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source arg9, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source arg10)
+            internal Source(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Source arg1, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.Source arg2, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Source arg3, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Source arg4, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Source arg5, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Source arg6, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Source arg7, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Source arg8, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source arg9, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source arg10)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1337,7 +1337,7 @@ public readonly partial struct NestCliSchema
 
             internal Source(scoped in TContext context, Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Source<TContext> arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.Source<TContext> arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Source arg3, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Source arg4, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Source<TContext> arg5, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Source arg6, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Source arg7, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Source arg8, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source arg9, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source arg10)
+            internal Source(scoped in TContext context, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Source<TContext> arg1, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.Source<TContext> arg2, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Source arg3, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Source arg4, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Source<TContext> arg5, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Source arg6, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Source arg7, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Source arg8, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source arg9, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source arg10)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1634,7 +1634,7 @@ public readonly partial struct NestCliSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.Source arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Source arg3, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Source arg4, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Source arg5, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Source arg6, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Source arg7, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Source arg8, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source arg9, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Source arg1, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.Source arg2, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Source arg3, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Source arg4, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Source arg5, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Source arg6, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Source arg7, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Source arg8, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source arg9, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source arg10, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
@@ -1657,7 +1657,7 @@ public readonly partial struct NestCliSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Source<TContext> arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.Source<TContext> arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Source arg3, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Source arg4, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Source<TContext> arg5, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Source arg6, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Source arg7, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Source arg8, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source arg9, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Source<TContext> arg1, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.Source<TContext> arg2, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Source arg3, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Source arg4, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Source<TContext> arg5, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Source arg6, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Source arg7, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Source arg8, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source arg9, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source arg10, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1711,7 +1711,7 @@ public readonly partial struct NestCliSchema
         /// <param name="webpack">The value of the <c>"webpack"</c> property.</param>
         /// <param name="webpackConfigPath">The value of the <c>"webpackConfigPath"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Source assets = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.Source builder = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Source deleteOutDir = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Source manualRestart = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Source plugins = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Source tsConfigPath = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Source typeCheck = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Source watchAssets = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source webpack = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source webpackConfigPath = default)
+        public static Source Build(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Source assets = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.Source builder = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Source deleteOutDir = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Source manualRestart = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Source plugins = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Source tsConfigPath = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Source typeCheck = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Source watchAssets = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source webpack = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source webpackConfigPath = default)
         {
             return new Source(assets, builder, deleteOutDir, manualRestart, plugins, tsConfigPath, typeCheck, watchAssets, webpack, webpackConfigPath);
         }
@@ -1732,7 +1732,7 @@ public readonly partial struct NestCliSchema
         /// <param name="webpack">The value of the <c>"webpack"</c> property.</param>
         /// <param name="webpackConfigPath">The value of the <c>"webpackConfigPath"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Source<TContext> assets = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.Source<TContext> builder = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Source deleteOutDir = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Source manualRestart = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Source<TContext> plugins = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Source tsConfigPath = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Source typeCheck = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Source watchAssets = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source webpack = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source webpackConfigPath = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.AssetsOptionsArray.Source<TContext> assets = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.Source<TContext> builder = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.DeleteOutDirEntity.Source deleteOutDir = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.ManualRestartEntity.Source manualRestart = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.PluginItemsArray.Source<TContext> plugins = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TsConfigPathEntity.Source tsConfigPath = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.TypeCheckEntity.Source typeCheck = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WatchAssetsEntity.Source watchAssets = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source webpack = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source webpackConfigPath = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

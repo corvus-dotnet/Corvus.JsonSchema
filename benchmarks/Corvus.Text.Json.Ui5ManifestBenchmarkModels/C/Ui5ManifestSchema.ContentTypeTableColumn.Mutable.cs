@@ -521,7 +521,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>actions</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetActions(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.ActionArray.Source value)
+            public void SetActions(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.ActionArray.Source value)
             {
                 CheckValidInstance();
 
@@ -602,7 +602,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>additionalText</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAdditionalText(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetAdditionalText(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -647,7 +647,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>customStateIcon</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCustomStateIcon(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetCustomStateIcon(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -692,7 +692,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>hAlign</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHAlign(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheHorizontalAlignmentOfTheColumnContent.Source value)
+            public void SetHAlign(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheHorizontalAlignmentOfTheColumnContent.Source value)
             {
                 CheckValidInstance();
 
@@ -737,7 +737,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>icon</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIconValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source value)
+            public void SetIconValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source value)
             {
                 CheckValidInstance();
 
@@ -818,7 +818,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>identifier</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIdentifier(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.IdentifierEntity.Source value)
+            public void SetIdentifier(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.IdentifierEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -899,7 +899,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>progressIndicator</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetProgressIndicatorValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ProgressIndicator.Source value)
+            public void SetProgressIndicatorValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ProgressIndicator.Source value)
             {
                 CheckValidInstance();
 
@@ -980,7 +980,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>showStateIcon</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShowStateIcon(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesIfADefaultStateIconIsShown.Source value)
+            public void SetShowStateIcon(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesIfADefaultStateIconIsShown.Source value)
             {
                 CheckValidInstance();
 
@@ -1025,7 +1025,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>state</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetState(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheStateOfTheColumn.Source value)
+            public void SetState(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheStateOfTheColumn.Source value)
             {
                 CheckValidInstance();
 
@@ -1070,7 +1070,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>target</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTarget(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.TargetEntity.Source value)
+            public void SetTarget(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.TargetEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1151,7 +1151,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>title</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTitle(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
+            public void SetTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
             {
                 CheckValidInstance();
 
@@ -1196,7 +1196,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>url</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUrl(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetUrl(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1241,7 +1241,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>value</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1286,7 +1286,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>visible</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVisible(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source value)
+            public void SetVisible(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source value)
             {
                 CheckValidInstance();
 
@@ -1331,7 +1331,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>width</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetWidth(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetWidth(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1555,7 +1555,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.ActionArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheHorizontalAlignmentOfTheColumnContent.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.IdentifierEntity.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ProgressIndicator.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesIfADefaultStateIconIsShown.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheStateOfTheColumn.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.TargetEntity.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg15)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.ActionArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheHorizontalAlignmentOfTheColumnContent.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.IdentifierEntity.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ProgressIndicator.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesIfADefaultStateIconIsShown.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheStateOfTheColumn.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.TargetEntity.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg13, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg15)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1747,7 +1747,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.ActionArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheHorizontalAlignmentOfTheColumnContent.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.IdentifierEntity.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ProgressIndicator.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesIfADefaultStateIconIsShown.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheStateOfTheColumn.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.TargetEntity.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg15)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.ActionArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheHorizontalAlignmentOfTheColumnContent.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.IdentifierEntity.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ProgressIndicator.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesIfADefaultStateIconIsShown.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheStateOfTheColumn.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.TargetEntity.Source<TContext> arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg13, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg15)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2084,7 +2084,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg14">The value of the property.</param>
             /// <param name="arg15">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.ActionArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheHorizontalAlignmentOfTheColumnContent.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.IdentifierEntity.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ProgressIndicator.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesIfADefaultStateIconIsShown.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheStateOfTheColumn.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.TargetEntity.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg15, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.ActionArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheHorizontalAlignmentOfTheColumnContent.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.IdentifierEntity.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ProgressIndicator.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesIfADefaultStateIconIsShown.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheStateOfTheColumn.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.TargetEntity.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg13, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg15, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
@@ -2112,7 +2112,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg14">The value of the property.</param>
             /// <param name="arg15">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.ActionArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheHorizontalAlignmentOfTheColumnContent.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.IdentifierEntity.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ProgressIndicator.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesIfADefaultStateIconIsShown.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheStateOfTheColumn.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.TargetEntity.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg15, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.ActionArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheHorizontalAlignmentOfTheColumnContent.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.IdentifierEntity.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ProgressIndicator.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesIfADefaultStateIconIsShown.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheStateOfTheColumn.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.TargetEntity.Source<TContext> arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg13, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg15, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2171,7 +2171,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="visible">The value of the <c>"visible"</c> property.</param>
         /// <param name="width">The value of the <c>"width"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.ActionArray.Source actions = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source additionalText = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source customStateIcon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheHorizontalAlignmentOfTheColumnContent.Source hAlign = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.IdentifierEntity.Source identifier = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ProgressIndicator.Source progressIndicator = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesIfADefaultStateIconIsShown.Source showStateIcon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheStateOfTheColumn.Source state = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.TargetEntity.Source target = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source width = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.ActionArray.Source actions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source additionalText = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source customStateIcon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheHorizontalAlignmentOfTheColumnContent.Source hAlign = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source icon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.IdentifierEntity.Source identifier = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ProgressIndicator.Source progressIndicator = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesIfADefaultStateIconIsShown.Source showStateIcon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheStateOfTheColumn.Source state = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.TargetEntity.Source target = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source width = default)
         {
             return new Source(actions, additionalText, customStateIcon, hAlign, icon, identifier, progressIndicator, showStateIcon, state, target, title, url, value, visible, width);
         }
@@ -2197,7 +2197,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="visible">The value of the <c>"visible"</c> property.</param>
         /// <param name="width">The value of the <c>"width"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.ActionArray.Source<TContext> actions = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source additionalText = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source customStateIcon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheHorizontalAlignmentOfTheColumnContent.Source hAlign = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source<TContext> icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.IdentifierEntity.Source<TContext> identifier = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ProgressIndicator.Source<TContext> progressIndicator = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesIfADefaultStateIconIsShown.Source showStateIcon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheStateOfTheColumn.Source state = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.TargetEntity.Source<TContext> target = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source width = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.ActionArray.Source<TContext> actions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source additionalText = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source customStateIcon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheHorizontalAlignmentOfTheColumnContent.Source hAlign = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source<TContext> icon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.IdentifierEntity.Source<TContext> identifier = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ProgressIndicator.Source<TContext> progressIndicator = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesIfADefaultStateIconIsShown.Source showStateIcon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.DefinesTheStateOfTheColumn.Source state = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTableColumn.TargetEntity.Source<TContext> target = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source width = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

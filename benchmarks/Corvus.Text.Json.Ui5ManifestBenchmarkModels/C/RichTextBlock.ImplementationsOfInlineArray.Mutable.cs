@@ -386,7 +386,7 @@ public readonly partial struct RichTextBlock
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.Source value)
+            public void InsertItem(int itemIndex, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.Source value)
             {
                 CheckValidInstance();
 
@@ -412,7 +412,7 @@ public readonly partial struct RichTextBlock
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.Source value)
+            public void AddItem(scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfInline.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }

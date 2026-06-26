@@ -903,7 +903,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>app_engine</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAppEngine(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
+            public void SetAppEngine(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -948,7 +948,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>auto_options</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAutoOptions(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
+            public void SetAutoOptions(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -993,7 +993,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>decompress_gzip</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDecompressGzipValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source value)
+            public void SetDecompressGzipValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source value)
             {
                 CheckValidInstance();
 
@@ -1038,7 +1038,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>disable_access_log</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisableAccessLogValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source value)
+            public void SetDisableAccessLogValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source value)
             {
                 CheckValidInstance();
 
@@ -1083,7 +1083,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>disable_gzip</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisableGzip(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source value)
+            public void SetDisableGzip(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source value)
             {
                 CheckValidInstance();
 
@@ -1128,7 +1128,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>disable_handle_method_not_allowed</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisableHandleMethodNotAllowed(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
+            public void SetDisableHandleMethodNotAllowed(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1173,7 +1173,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>disable_health</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisableHealthValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source value)
+            public void SetDisableHealthValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source value)
             {
                 CheckValidInstance();
 
@@ -1218,7 +1218,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>disable_path_decoding</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisablePathDecoding(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
+            public void SetDisablePathDecoding(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1263,7 +1263,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>disable_redirect_fixed_path</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisableRedirectFixedPath(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
+            public void SetDisableRedirectFixedPath(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1308,7 +1308,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>disable_redirect_trailing_slash</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisableRedirectTrailingSlash(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
+            public void SetDisableRedirectTrailingSlash(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1353,7 +1353,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>error_body</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetErrorBody(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source value)
+            public void SetErrorBody(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source value)
             {
                 CheckValidInstance();
 
@@ -1434,7 +1434,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>forwarded_by_client_ip</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetForwardedByClientIpValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source value)
+            public void SetForwardedByClientIpValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source value)
             {
                 CheckValidInstance();
 
@@ -1479,7 +1479,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>health_path</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHealthPath(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source value)
+            public void SetHealthPath(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source value)
             {
                 CheckValidInstance();
 
@@ -1524,7 +1524,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>hide_version_header</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHideVersionHeaderValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source value)
+            public void SetHideVersionHeaderValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source value)
             {
                 CheckValidInstance();
 
@@ -1569,7 +1569,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>logger_skip_paths</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLoggerSkipPaths(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source value)
+            public void SetLoggerSkipPaths(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1650,7 +1650,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>max_multipart_memory</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxMultipartMemory(in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
+            public void SetMaxMultipartMemory(scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -1695,7 +1695,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>max_payload</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxPayload(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source value)
+            public void SetMaxPayload(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source value)
             {
                 CheckValidInstance();
 
@@ -1740,7 +1740,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>remote_ip_headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRemoteIpHeaders(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
+            public void SetRemoteIpHeaders(scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1821,7 +1821,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>remove_extra_slash</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRemoveExtraSlashValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source value)
+            public void SetRemoveExtraSlashValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source value)
             {
                 CheckValidInstance();
 
@@ -1866,7 +1866,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>return_error_msg</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetReturnErrorMsg(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source value)
+            public void SetReturnErrorMsg(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source value)
             {
                 CheckValidInstance();
 
@@ -1911,7 +1911,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>trusted_proxies</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTrustedProxies(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
+            public void SetTrustedProxies(scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1992,7 +1992,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>use_h2c</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUseH2c(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source value)
+            public void SetUseH2c(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source value)
             {
                 CheckValidInstance();
 
@@ -2187,7 +2187,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in JsonElement.Source value)
+            public void InsertItem(int itemIndex, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -2213,7 +2213,7 @@ public readonly partial struct KrakendSchema
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in JsonElement.Source value)
+            public void AddItem(scoped in JsonElement.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }
@@ -2490,7 +2490,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -2513,7 +2513,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -2560,7 +2560,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -2753,7 +2753,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ObjectBuilder.Build value) {_objectBuilder = value; _kind = Kind.ObjectBuilder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg1, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source arg5, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source arg7, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg8, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg9, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source arg15, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source arg17, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg18, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source arg19, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source arg20, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg21, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source arg22)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source arg5, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg8, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source arg13, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source arg15, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg16, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source arg17, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg18, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source arg19, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source arg20, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg21, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source arg22)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -2978,7 +2978,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ObjectBuilder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.ObjectBuilder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg1, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source arg5, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source arg7, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg8, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg9, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source<TContext> arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source<TContext> arg15, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source arg17, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg18, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source arg19, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source arg20, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg21, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source arg22)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source arg5, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg8, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source<TContext> arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source arg13, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source<TContext> arg15, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg16, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source arg17, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg18, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source arg19, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source arg20, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg21, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source arg22)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -3518,7 +3518,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg21">The value of the property.</param>
             /// <param name="arg22">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg1, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source arg5, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source arg7, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg8, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg9, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source arg15, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source arg17, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg18, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source arg19, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source arg20, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg21, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source arg22, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source arg5, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg8, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source arg13, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source arg15, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg16, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source arg17, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg18, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source arg19, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source arg20, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg21, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source arg22, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22);
@@ -3553,7 +3553,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg21">The value of the property.</param>
             /// <param name="arg22">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg1, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source arg5, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source arg7, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg8, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg9, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source<TContext> arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source<TContext> arg15, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source arg17, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg18, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source arg19, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source arg20, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg21, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source arg22, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source arg5, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg8, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source<TContext> arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source arg13, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source<TContext> arg15, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg16, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source arg17, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg18, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source arg19, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source arg20, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg21, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source arg22, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -3619,7 +3619,7 @@ public readonly partial struct KrakendSchema
         /// <param name="trustedProxies">The value of the <c>"trusted_proxies"</c> property.</param>
         /// <param name="useH2c">The value of the <c>"use_h2c"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source appEngine = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source autoOptions = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source decompressGzip = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source disableAccessLog = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source disableGzip = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableHandleMethodNotAllowed = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source disableHealth = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disablePathDecoding = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectFixedPath = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectTrailingSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source errorBody = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source forwardedByClientIp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source healthPath = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source hideVersionHeader = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source loggerSkipPaths = default, in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxMultipartMemory = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source maxPayload = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source remoteIpHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source removeExtraSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source returnErrorMsg = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source trustedProxies = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source useH2c = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source appEngine = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source autoOptions = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source decompressGzip = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source disableAccessLog = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source disableGzip = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableHandleMethodNotAllowed = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source disableHealth = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disablePathDecoding = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectFixedPath = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectTrailingSlash = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source errorBody = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source forwardedByClientIp = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source healthPath = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source hideVersionHeader = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source loggerSkipPaths = default, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxMultipartMemory = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source maxPayload = default, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source remoteIpHeaders = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source removeExtraSlash = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source returnErrorMsg = default, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source trustedProxies = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source useH2c = default)
         {
             return new Source(appEngine, autoOptions, decompressGzip, disableAccessLog, disableGzip, disableHandleMethodNotAllowed, disableHealth, disablePathDecoding, disableRedirectFixedPath, disableRedirectTrailingSlash, errorBody, forwardedByClientIp, healthPath, hideVersionHeader, loggerSkipPaths, maxMultipartMemory, maxPayload, remoteIpHeaders, removeExtraSlash, returnErrorMsg, trustedProxies, useH2c);
         }
@@ -3652,7 +3652,7 @@ public readonly partial struct KrakendSchema
         /// <param name="trustedProxies">The value of the <c>"trusted_proxies"</c> property.</param>
         /// <param name="useH2c">The value of the <c>"use_h2c"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source appEngine = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source autoOptions = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source decompressGzip = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source disableAccessLog = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source disableGzip = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableHandleMethodNotAllowed = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source disableHealth = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disablePathDecoding = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectFixedPath = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectTrailingSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source<TContext> errorBody = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source forwardedByClientIp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source healthPath = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source hideVersionHeader = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source<TContext> loggerSkipPaths = default, in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxMultipartMemory = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source maxPayload = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> remoteIpHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source removeExtraSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source returnErrorMsg = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> trustedProxies = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source useH2c = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source appEngine = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source autoOptions = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DecompressGzip.Source decompressGzip = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableAccessLog.Source disableAccessLog = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableGzipCompression.Source disableGzip = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableHandleMethodNotAllowed = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.DisableHealth.Source disableHealth = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disablePathDecoding = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectFixedPath = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectTrailingSlash = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.CustomErrorBody.Source<TContext> errorBody = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ForwardedByClientIp.Source forwardedByClientIp = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HealthEndpointPath.Source healthPath = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.HideVersionHeader.Source hideVersionHeader = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.JsonStringArray.Source<TContext> loggerSkipPaths = default, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxMultipartMemory = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.MaximumPayload.Source maxPayload = default, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> remoteIpHeaders = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.RemoveExtraSlash.Source removeExtraSlash = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.ReturningTheGatewayErrorMessage.Source returnErrorMsg = default, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> trustedProxies = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.EnableH2c.Source useH2c = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

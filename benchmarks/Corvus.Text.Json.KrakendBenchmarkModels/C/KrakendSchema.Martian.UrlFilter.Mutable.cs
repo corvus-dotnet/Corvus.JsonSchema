@@ -496,7 +496,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>else</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetElse(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.Source value)
+                public void SetElse(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.Source value)
                 {
                     CheckValidInstance();
 
@@ -577,7 +577,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>host</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetHost(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetHost(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -622,7 +622,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>modifier</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetModifier(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.Source value)
+                public void SetModifier(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.Source value)
                 {
                     CheckValidInstance();
 
@@ -687,7 +687,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>path</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPath(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetPath(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -732,7 +732,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>query</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetQuery(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetQuery(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -777,7 +777,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>scheme</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScheme(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetScheme(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -822,7 +822,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>scope</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScopeValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.UrlFilter.Scope.Source value)
+                public void SetScopeValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.UrlFilter.Scope.Source value)
                 {
                     CheckValidInstance();
 
@@ -988,7 +988,7 @@ public readonly partial struct KrakendSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -1011,7 +1011,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1058,7 +1058,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 

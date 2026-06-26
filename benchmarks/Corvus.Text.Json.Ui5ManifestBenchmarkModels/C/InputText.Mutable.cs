@@ -553,7 +553,7 @@ public readonly partial struct InputText
         /// Set the <c>errorMessage</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetErrorMessage(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetErrorMessage(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -634,7 +634,7 @@ public readonly partial struct InputText
         /// Set the <c>fallback</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFallback(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetFallback(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -715,7 +715,7 @@ public readonly partial struct InputText
         /// Set the <c>height</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHeight(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetHeight(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -796,7 +796,7 @@ public readonly partial struct InputText
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetId(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -861,7 +861,7 @@ public readonly partial struct InputText
         /// Set the <c>inlineAction</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetInlineAction(in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source value)
+        public void SetInlineAction(scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source value)
         {
             CheckValidInstance();
 
@@ -942,7 +942,7 @@ public readonly partial struct InputText
         /// Set the <c>isMultiline</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIsMultiline(in Corvus.Ui5ManifestBenchmark.Current.InputText.IfTrueAllowMultipleLinesOfInput.Source value)
+        public void SetIsMultiline(scoped in Corvus.Ui5ManifestBenchmark.Current.InputText.IfTrueAllowMultipleLinesOfInput.Source value)
         {
             CheckValidInstance();
 
@@ -987,7 +987,7 @@ public readonly partial struct InputText
         /// Set the <c>isRequired</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIsRequired(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetIsRequired(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1068,7 +1068,7 @@ public readonly partial struct InputText
         /// Set the <c>isVisible</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIsVisible(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetIsVisible(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1149,7 +1149,7 @@ public readonly partial struct InputText
         /// Set the <c>label</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLabel(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetLabel(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1230,7 +1230,7 @@ public readonly partial struct InputText
         /// Set the <c>maxLength</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMaxLength(in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source value)
+        public void SetMaxLength(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source value)
         {
             CheckValidInstance();
 
@@ -1275,7 +1275,7 @@ public readonly partial struct InputText
         /// Set the <c>placeholder</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPlaceholder(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetPlaceholder(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1320,7 +1320,7 @@ public readonly partial struct InputText
         /// Set the <c>regex</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRegex(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetRegex(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1365,7 +1365,7 @@ public readonly partial struct InputText
         /// Set the <c>requires</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRequires(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetRequires(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1446,7 +1446,7 @@ public readonly partial struct InputText
         /// Set the <c>separator</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSeparator(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetSeparator(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1527,7 +1527,7 @@ public readonly partial struct InputText
         /// Set the <c>spacing</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpacing(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetSpacing(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1608,7 +1608,7 @@ public readonly partial struct InputText
         /// Set the <c>style</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStyle(in Corvus.Ui5ManifestBenchmark.Current.TextInputStyle.Source value)
+        public void SetStyle(scoped in Corvus.Ui5ManifestBenchmark.Current.TextInputStyle.Source value)
         {
             CheckValidInstance();
 
@@ -1653,7 +1653,7 @@ public readonly partial struct InputText
         /// Set the <c>type</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetType(in Corvus.Ui5ManifestBenchmark.Current.InputText.MustBeInputText.Source value)
+        public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.InputText.MustBeInputText.Source value)
         {
             CheckValidInstance();
 
@@ -1698,7 +1698,7 @@ public readonly partial struct InputText
         /// Set the <c>value</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1960,7 +1960,7 @@ public readonly partial struct InputText
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.InputText.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.Text.Json.JsonElement.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.InputText.IfTrueAllowMultipleLinesOfInput.Source arg6, in Corvus.Text.Json.JsonElement.Source arg7, in Corvus.Text.Json.JsonElement.Source arg8, in Corvus.Text.Json.JsonElement.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Text.Json.JsonElement.Source arg13, in Corvus.Text.Json.JsonElement.Source arg14, in Corvus.Text.Json.JsonElement.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.TextInputStyle.Source arg16, in Corvus.Ui5ManifestBenchmark.Current.InputText.MustBeInputText.Source arg17, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg18)
+        internal Source(scoped in Corvus.Text.Json.JsonElement.Source arg1, scoped in Corvus.Text.Json.JsonElement.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, scoped in Corvus.Text.Json.JsonElement.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.InputText.IfTrueAllowMultipleLinesOfInput.Source arg6, scoped in Corvus.Text.Json.JsonElement.Source arg7, scoped in Corvus.Text.Json.JsonElement.Source arg8, scoped in Corvus.Text.Json.JsonElement.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, scoped in Corvus.Text.Json.JsonElement.Source arg13, scoped in Corvus.Text.Json.JsonElement.Source arg14, scoped in Corvus.Text.Json.JsonElement.Source arg15, scoped in Corvus.Ui5ManifestBenchmark.Current.TextInputStyle.Source arg16, scoped in Corvus.Ui5ManifestBenchmark.Current.InputText.MustBeInputText.Source arg17, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg18)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -2158,7 +2158,7 @@ public readonly partial struct InputText
 
         internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.InputText.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.Text.Json.JsonElement.Source<TContext> arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.InputText.IfTrueAllowMultipleLinesOfInput.Source arg6, in Corvus.Text.Json.JsonElement.Source<TContext> arg7, in Corvus.Text.Json.JsonElement.Source<TContext> arg8, in Corvus.Text.Json.JsonElement.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Text.Json.JsonElement.Source<TContext> arg13, in Corvus.Text.Json.JsonElement.Source<TContext> arg14, in Corvus.Text.Json.JsonElement.Source<TContext> arg15, in Corvus.Ui5ManifestBenchmark.Current.TextInputStyle.Source arg16, in Corvus.Ui5ManifestBenchmark.Current.InputText.MustBeInputText.Source arg17, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg18)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.InputText.IfTrueAllowMultipleLinesOfInput.Source arg6, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg7, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg8, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg13, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg14, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg15, scoped in Corvus.Ui5ManifestBenchmark.Current.TextInputStyle.Source arg16, scoped in Corvus.Ui5ManifestBenchmark.Current.InputText.MustBeInputText.Source arg17, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg18)
         {
             _context = context;
             _createArg1 = arg1;
@@ -2519,7 +2519,7 @@ public readonly partial struct InputText
         /// <param name="arg17">The value of the property.</param>
         /// <param name="arg18">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.Text.Json.JsonElement.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.InputText.IfTrueAllowMultipleLinesOfInput.Source arg6, in Corvus.Text.Json.JsonElement.Source arg7, in Corvus.Text.Json.JsonElement.Source arg8, in Corvus.Text.Json.JsonElement.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Text.Json.JsonElement.Source arg13, in Corvus.Text.Json.JsonElement.Source arg14, in Corvus.Text.Json.JsonElement.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.TextInputStyle.Source arg16, in Corvus.Ui5ManifestBenchmark.Current.InputText.MustBeInputText.Source arg17, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg18, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.JsonElement.Source arg1, scoped in Corvus.Text.Json.JsonElement.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, scoped in Corvus.Text.Json.JsonElement.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.InputText.IfTrueAllowMultipleLinesOfInput.Source arg6, scoped in Corvus.Text.Json.JsonElement.Source arg7, scoped in Corvus.Text.Json.JsonElement.Source arg8, scoped in Corvus.Text.Json.JsonElement.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, scoped in Corvus.Text.Json.JsonElement.Source arg13, scoped in Corvus.Text.Json.JsonElement.Source arg14, scoped in Corvus.Text.Json.JsonElement.Source arg15, scoped in Corvus.Ui5ManifestBenchmark.Current.TextInputStyle.Source arg16, scoped in Corvus.Ui5ManifestBenchmark.Current.InputText.MustBeInputText.Source arg17, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg18, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18);
@@ -2550,7 +2550,7 @@ public readonly partial struct InputText
         /// <param name="arg17">The value of the property.</param>
         /// <param name="arg18">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.Text.Json.JsonElement.Source<TContext> arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.InputText.IfTrueAllowMultipleLinesOfInput.Source arg6, in Corvus.Text.Json.JsonElement.Source<TContext> arg7, in Corvus.Text.Json.JsonElement.Source<TContext> arg8, in Corvus.Text.Json.JsonElement.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Text.Json.JsonElement.Source<TContext> arg13, in Corvus.Text.Json.JsonElement.Source<TContext> arg14, in Corvus.Text.Json.JsonElement.Source<TContext> arg15, in Corvus.Ui5ManifestBenchmark.Current.TextInputStyle.Source arg16, in Corvus.Ui5ManifestBenchmark.Current.InputText.MustBeInputText.Source arg17, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg18, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.InputText.IfTrueAllowMultipleLinesOfInput.Source arg6, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg7, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg8, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg13, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg14, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg15, scoped in Corvus.Ui5ManifestBenchmark.Current.TextInputStyle.Source arg16, scoped in Corvus.Ui5ManifestBenchmark.Current.InputText.MustBeInputText.Source arg17, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg18, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -2612,7 +2612,7 @@ public readonly partial struct InputText
     /// <param name="type">The value of the <c>"type"</c> property.</param>
     /// <param name="value">The value of the <c>"value"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.JsonElement.Source id, in Corvus.Text.Json.JsonElement.Source errorMessage = default, in Corvus.Text.Json.JsonElement.Source fallback = default, in Corvus.Text.Json.JsonElement.Source height = default, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source inlineAction = default, in Corvus.Ui5ManifestBenchmark.Current.InputText.IfTrueAllowMultipleLinesOfInput.Source isMultiline = default, in Corvus.Text.Json.JsonElement.Source isRequired = default, in Corvus.Text.Json.JsonElement.Source isVisible = default, in Corvus.Text.Json.JsonElement.Source label = default, in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source maxLength = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source placeholder = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source regex = default, in Corvus.Text.Json.JsonElement.Source requires = default, in Corvus.Text.Json.JsonElement.Source separator = default, in Corvus.Text.Json.JsonElement.Source spacing = default, in Corvus.Ui5ManifestBenchmark.Current.TextInputStyle.Source style = default, in Corvus.Ui5ManifestBenchmark.Current.InputText.MustBeInputText.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default)
+    public static Source Build(scoped in Corvus.Text.Json.JsonElement.Source id, scoped in Corvus.Text.Json.JsonElement.Source errorMessage = default, scoped in Corvus.Text.Json.JsonElement.Source fallback = default, scoped in Corvus.Text.Json.JsonElement.Source height = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source inlineAction = default, scoped in Corvus.Ui5ManifestBenchmark.Current.InputText.IfTrueAllowMultipleLinesOfInput.Source isMultiline = default, scoped in Corvus.Text.Json.JsonElement.Source isRequired = default, scoped in Corvus.Text.Json.JsonElement.Source isVisible = default, scoped in Corvus.Text.Json.JsonElement.Source label = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source maxLength = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source placeholder = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source regex = default, scoped in Corvus.Text.Json.JsonElement.Source requires = default, scoped in Corvus.Text.Json.JsonElement.Source separator = default, scoped in Corvus.Text.Json.JsonElement.Source spacing = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TextInputStyle.Source style = default, scoped in Corvus.Ui5ManifestBenchmark.Current.InputText.MustBeInputText.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default)
     {
         return new Source(id, errorMessage, fallback, height, inlineAction, isMultiline, isRequired, isVisible, label, maxLength, placeholder, regex, requires, separator, spacing, style, type, value);
     }
@@ -2641,7 +2641,7 @@ public readonly partial struct InputText
     /// <param name="type">The value of the <c>"type"</c> property.</param>
     /// <param name="value">The value of the <c>"value"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> id, in Corvus.Text.Json.JsonElement.Source<TContext> errorMessage = default, in Corvus.Text.Json.JsonElement.Source<TContext> fallback = default, in Corvus.Text.Json.JsonElement.Source<TContext> height = default, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> inlineAction = default, in Corvus.Ui5ManifestBenchmark.Current.InputText.IfTrueAllowMultipleLinesOfInput.Source isMultiline = default, in Corvus.Text.Json.JsonElement.Source<TContext> isRequired = default, in Corvus.Text.Json.JsonElement.Source<TContext> isVisible = default, in Corvus.Text.Json.JsonElement.Source<TContext> label = default, in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source maxLength = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source placeholder = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source regex = default, in Corvus.Text.Json.JsonElement.Source<TContext> requires = default, in Corvus.Text.Json.JsonElement.Source<TContext> separator = default, in Corvus.Text.Json.JsonElement.Source<TContext> spacing = default, in Corvus.Ui5ManifestBenchmark.Current.TextInputStyle.Source style = default, in Corvus.Ui5ManifestBenchmark.Current.InputText.MustBeInputText.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> id, scoped in Corvus.Text.Json.JsonElement.Source<TContext> errorMessage = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> fallback = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> height = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> inlineAction = default, scoped in Corvus.Ui5ManifestBenchmark.Current.InputText.IfTrueAllowMultipleLinesOfInput.Source isMultiline = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> isRequired = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> isVisible = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> label = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source maxLength = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source placeholder = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source regex = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> requires = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> separator = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> spacing = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TextInputStyle.Source style = default, scoped in Corvus.Ui5ManifestBenchmark.Current.InputText.MustBeInputText.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

@@ -300,7 +300,7 @@ public readonly partial struct VercelSchema
                         /// Set the <c>cookie</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetCookie(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.CookieEntity.Source value)
+                        public void SetCookie(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.CookieEntity.Source value)
                         {
                             CheckValidInstance();
 
@@ -345,7 +345,7 @@ public readonly partial struct VercelSchema
                         /// Set the <c>default</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetDefault(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.DefaultEntity.Source value)
+                        public void SetDefault(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.DefaultEntity.Source value)
                         {
                             CheckValidInstance();
 
@@ -390,7 +390,7 @@ public readonly partial struct VercelSchema
                         /// Set the <c>path</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetPath(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.PathEntity.Source value)
+                        public void SetPath(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.PathEntity.Source value)
                         {
                             CheckValidInstance();
 
@@ -435,7 +435,7 @@ public readonly partial struct VercelSchema
                         /// Set the <c>redirect</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetRedirect(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.RedirectEntity.Source value)
+                        public void SetRedirect(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.RedirectEntity.Source value)
                         {
                             CheckValidInstance();
 
@@ -516,7 +516,7 @@ public readonly partial struct VercelSchema
                         /// Set the <c>value</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetValue(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.ValueEntity.Source value)
+                        public void SetValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.ValueEntity.Source value)
                         {
                             CheckValidInstance();
 
@@ -730,7 +730,7 @@ public readonly partial struct VercelSchema
 
                         internal Source(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                        internal Source(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.CookieEntity.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.DefaultEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.PathEntity.Source arg3, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.RedirectEntity.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.ValueEntity.Source arg5)
+                        internal Source(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.CookieEntity.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.DefaultEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.PathEntity.Source arg3, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.RedirectEntity.Source arg4, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.ValueEntity.Source arg5)
                         {
                             _createArg1 = arg1;
                             _createArg2 = arg2;
@@ -902,7 +902,7 @@ public readonly partial struct VercelSchema
 
                         internal Source(scoped in TContext context, Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                        internal Source(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.CookieEntity.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.DefaultEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.PathEntity.Source arg3, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.RedirectEntity.Source<TContext> arg4, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.ValueEntity.Source arg5)
+                        internal Source(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.CookieEntity.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.DefaultEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.PathEntity.Source arg3, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.RedirectEntity.Source<TContext> arg4, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.ValueEntity.Source arg5)
                         {
                             _context = context;
                             _createArg1 = arg1;
@@ -1159,7 +1159,7 @@ public readonly partial struct VercelSchema
                         /// <param name="arg4">The value of the property.</param>
                         /// <param name="arg5">The value of the property.</param>
                         /// <param name="o">The complex value builder into which to write the object.</param>
-                        internal static void BuildCreateValue(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.CookieEntity.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.DefaultEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.PathEntity.Source arg3, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.RedirectEntity.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.ValueEntity.Source arg5, ref ComplexValueBuilder o)
+                        internal static void BuildCreateValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.CookieEntity.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.DefaultEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.PathEntity.Source arg3, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.RedirectEntity.Source arg4, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.ValueEntity.Source arg5, ref ComplexValueBuilder o)
                         {
                             o.StartObject();
                             Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1177,7 +1177,7 @@ public readonly partial struct VercelSchema
                         /// <param name="arg4">The value of the property.</param>
                         /// <param name="arg5">The value of the property.</param>
                         /// <param name="o">The complex value builder into which to write the object.</param>
-                        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.CookieEntity.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.DefaultEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.PathEntity.Source arg3, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.RedirectEntity.Source<TContext> arg4, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.ValueEntity.Source arg5, ref ComplexValueBuilder o)
+                        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.CookieEntity.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.DefaultEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.PathEntity.Source arg3, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.RedirectEntity.Source<TContext> arg4, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.ValueEntity.Source arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                             where TContext : allows ref struct
 #endif
@@ -1226,7 +1226,7 @@ public readonly partial struct VercelSchema
                     /// <param name="redirect">The value of the <c>"redirect"</c> property.</param>
                     /// <param name="value">The value of the <c>"value"</c> property.</param>
                     /// <returns>The source from which to build the value.</returns>
-                    public static Source Build(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.CookieEntity.Source cookie = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.DefaultEntity.Source defaultValue = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.PathEntity.Source path = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.RedirectEntity.Source redirect = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.ValueEntity.Source value = default)
+                    public static Source Build(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.CookieEntity.Source cookie = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.DefaultEntity.Source defaultValue = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.PathEntity.Source path = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.RedirectEntity.Source redirect = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.ValueEntity.Source value = default)
                     {
                         return new Source(cookie, defaultValue, path, redirect, value);
                     }
@@ -1242,7 +1242,7 @@ public readonly partial struct VercelSchema
                     /// <param name="redirect">The value of the <c>"redirect"</c> property.</param>
                     /// <param name="value">The value of the <c>"value"</c> property.</param>
                     /// <returns>The source from which to build the value.</returns>
-                    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.CookieEntity.Source cookie = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.DefaultEntity.Source defaultValue = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.PathEntity.Source path = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.RedirectEntity.Source<TContext> redirect = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.ValueEntity.Source value = default)
+                    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.CookieEntity.Source cookie = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.DefaultEntity.Source defaultValue = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.PathEntity.Source path = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.RedirectEntity.Source<TContext> redirect = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.ValueEntity.Source value = default)
                         #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
                         #endif

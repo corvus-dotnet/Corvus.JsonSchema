@@ -266,7 +266,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetName(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetName(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -297,7 +297,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>packagedWithMySelf</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPackagedWithMySelf(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+            public void SetPackagedWithMySelf(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -342,7 +342,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVersion(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetVersion(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -554,7 +554,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.OpenSource.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -882,7 +882,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg2">The value of the property.</param>
             /// <param name="arg3">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3);
@@ -926,7 +926,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="packagedWithMySelf">The value of the <c>"packagedWithMySelf"</c> property.</param>
         /// <param name="version">The value of the <c>"version"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source name, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source packagedWithMySelf = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source version = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source name, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source packagedWithMySelf = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source version = default)
         {
             return new Source(name, packagedWithMySelf, version);
         }

@@ -446,7 +446,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVersion(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.VersionEntity.Source value)
+            public void SetVersion(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.VersionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -491,7 +491,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>deviceTypes</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDeviceTypes(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.DeviceTypesEntity.Source value)
+            public void SetDeviceTypes(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.DeviceTypesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -556,7 +556,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>fullWidth</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFullWidth(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+            public void SetFullWidth(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -601,7 +601,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>icons</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIcons(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.RepresentsIconsWhichUsedInApplication.Source value)
+            public void SetIcons(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.RepresentsIconsWhichUsedInApplication.Source value)
             {
                 CheckValidInstance();
 
@@ -682,7 +682,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>supportedThemes</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSupportedThemes(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.JsonStringArray.Source value)
+            public void SetSupportedThemes(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -763,7 +763,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>technology</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTechnology(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.TechnologyEntity.Source value)
+            public void SetTechnology(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.TechnologyEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -895,7 +895,7 @@ public readonly partial struct Ui5ManifestSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -918,7 +918,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -965,7 +965,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1140,7 +1140,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.DeviceTypesEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.TechnologyEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.RepresentsIconsWhichUsedInApplication.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.JsonStringArray.Source arg6)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.DeviceTypesEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.TechnologyEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.VersionEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.RepresentsIconsWhichUsedInApplication.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.JsonStringArray.Source arg6)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1314,7 +1314,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.DeviceTypesEntity.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.TechnologyEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.RepresentsIconsWhichUsedInApplication.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.JsonStringArray.Source<TContext> arg6)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.DeviceTypesEntity.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.TechnologyEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.VersionEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.RepresentsIconsWhichUsedInApplication.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.JsonStringArray.Source<TContext> arg6)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1648,7 +1648,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.DeviceTypesEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.TechnologyEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.RepresentsIconsWhichUsedInApplication.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.JsonStringArray.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.DeviceTypesEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.TechnologyEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.VersionEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.RepresentsIconsWhichUsedInApplication.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.JsonStringArray.Source arg6, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1667,7 +1667,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.DeviceTypesEntity.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.TechnologyEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.RepresentsIconsWhichUsedInApplication.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.JsonStringArray.Source<TContext> arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.DeviceTypesEntity.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.TechnologyEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.VersionEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.RepresentsIconsWhichUsedInApplication.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.JsonStringArray.Source<TContext> arg6, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1717,7 +1717,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="icons">The value of the <c>"icons"</c> property.</param>
         /// <param name="supportedThemes">The value of the <c>"supportedThemes"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.DeviceTypesEntity.Source deviceTypes, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.TechnologyEntity.Source technology, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source fullWidth = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.RepresentsIconsWhichUsedInApplication.Source icons = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.JsonStringArray.Source supportedThemes = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.DeviceTypesEntity.Source deviceTypes, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.TechnologyEntity.Source technology, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.VersionEntity.Source version = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source fullWidth = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.RepresentsIconsWhichUsedInApplication.Source icons = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.JsonStringArray.Source supportedThemes = default)
         {
             return new Source(deviceTypes, technology, version, fullWidth, icons, supportedThemes);
         }
@@ -1734,7 +1734,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="icons">The value of the <c>"icons"</c> property.</param>
         /// <param name="supportedThemes">The value of the <c>"supportedThemes"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.DeviceTypesEntity.Source<TContext> deviceTypes, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.TechnologyEntity.Source technology, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source fullWidth = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.RepresentsIconsWhichUsedInApplication.Source<TContext> icons = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.JsonStringArray.Source<TContext> supportedThemes = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.DeviceTypesEntity.Source<TContext> deviceTypes, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.TechnologyEntity.Source technology, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.VersionEntity.Source version = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source fullWidth = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.RepresentsIconsWhichUsedInApplication.Source<TContext> icons = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.JsonStringArray.Source<TContext> supportedThemes = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

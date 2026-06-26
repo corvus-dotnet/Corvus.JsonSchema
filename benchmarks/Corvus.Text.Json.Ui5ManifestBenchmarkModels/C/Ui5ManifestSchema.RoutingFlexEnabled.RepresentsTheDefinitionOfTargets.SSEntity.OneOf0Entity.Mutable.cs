@@ -649,7 +649,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// Set the <c>clearControlAggregation</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetClearControlAggregation(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+                        public void SetClearControlAggregation(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
                         {
                             CheckValidInstance();
 
@@ -694,7 +694,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// Set the <c>controlAggregation</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetControlAggregation(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                        public void SetControlAggregation(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                         {
                             CheckValidInstance();
 
@@ -739,7 +739,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// Set the <c>controlId</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetControlId(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                        public void SetControlId(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                         {
                             CheckValidInstance();
 
@@ -784,7 +784,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// Set the <c>parent</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetParent(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                        public void SetParent(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                         {
                             CheckValidInstance();
 
@@ -829,7 +829,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// Set the <c>targetParent</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetTargetParent(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                        public void SetTargetParent(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                         {
                             CheckValidInstance();
 
@@ -874,7 +874,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// Set the <c>title</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetTitle(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                        public void SetTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                         {
                             CheckValidInstance();
 
@@ -919,7 +919,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// Set the <c>transition</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetTransition(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source value)
+                        public void SetTransition(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source value)
                         {
                             CheckValidInstance();
 
@@ -964,7 +964,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// Set the <c>transitionParameters</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetTransitionParameters(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
+                        public void SetTransitionParameters(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
                         {
                             CheckValidInstance();
 
@@ -1045,7 +1045,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// Set the <c>viewId</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetViewId(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                        public void SetViewId(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                         {
                             CheckValidInstance();
 
@@ -1076,7 +1076,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// Set the <c>viewLevel</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetViewLevel(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source value)
+                        public void SetViewLevel(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source value)
                         {
                             CheckValidInstance();
 
@@ -1121,7 +1121,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// Set the <c>viewName</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetViewName(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                        public void SetViewName(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                         {
                             CheckValidInstance();
 
@@ -1152,7 +1152,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// Set the <c>viewPath</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetViewPath(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                        public void SetViewPath(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                         {
                             CheckValidInstance();
 
@@ -1197,7 +1197,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// Set the <c>viewType</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetViewType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source value)
+                        public void SetViewType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source value)
                         {
                             CheckValidInstance();
 
@@ -1379,7 +1379,7 @@ public readonly partial struct Ui5ManifestSchema
                         ///   </para>
                         /// </remarks>
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                        public void SetProperty(string propertyName, in JsonElement.Source value)
+                        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                         {
                             SetProperty(propertyName.AsSpan(), value);
                         }
@@ -1402,7 +1402,7 @@ public readonly partial struct Ui5ManifestSchema
                         ///     If the property doesn't exist, it will be added to the object.
                         ///   </para>
                         /// </remarks>
-                        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                         {
                             CheckValidInstance();
 
@@ -1449,7 +1449,7 @@ public readonly partial struct Ui5ManifestSchema
                         ///     If the property doesn't exist, it will be added to the object.
                         ///   </para>
                         /// </remarks>
-                        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                         {
                             CheckValidInstance();
 
@@ -1723,7 +1723,7 @@ public readonly partial struct Ui5ManifestSchema
 
                         internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf0Entity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                        internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source arg13)
+                        internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source arg13)
                         {
                             _createArg1 = arg1;
                             _createArg2 = arg2;
@@ -1911,7 +1911,7 @@ public readonly partial struct Ui5ManifestSchema
 
                         internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf0Entity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                        internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source arg13)
+                        internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source arg13)
                         {
                             _context = context;
                             _createArg1 = arg1;
@@ -2301,7 +2301,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// <param name="arg12">The value of the property.</param>
                         /// <param name="arg13">The value of the property.</param>
                         /// <param name="o">The complex value builder into which to write the object.</param>
-                        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source arg13, ref ComplexValueBuilder o)
+                        internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source arg13, ref ComplexValueBuilder o)
                         {
                             o.StartObject();
                             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
@@ -2327,7 +2327,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// <param name="arg12">The value of the property.</param>
                         /// <param name="arg13">The value of the property.</param>
                         /// <param name="o">The complex value builder into which to write the object.</param>
-                        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source arg13, ref ComplexValueBuilder o)
+                        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source arg13, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                             where TContext : allows ref struct
 #endif
@@ -2384,7 +2384,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// <param name="viewPath">The value of the <c>"viewPath"</c> property.</param>
                     /// <param name="viewType">The value of the <c>"viewType"</c> property.</param>
                     /// <returns>The source from which to build the value.</returns>
-                    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewId, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewName, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source clearControlAggregation = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlAggregation = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlId = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source parent = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source targetParent = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source transition = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source transitionParameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source viewLevel = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source viewType = default)
+                    public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewId, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewName, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source clearControlAggregation = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlAggregation = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlId = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source parent = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source targetParent = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source transition = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source transitionParameters = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source viewLevel = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewPath = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source viewType = default)
                     {
                         return new Source(viewId, viewName, clearControlAggregation, controlAggregation, controlId, parent, targetParent, title, transition, transitionParameters, viewLevel, viewPath, viewType);
                     }
@@ -2408,7 +2408,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// <param name="viewPath">The value of the <c>"viewPath"</c> property.</param>
                     /// <param name="viewType">The value of the <c>"viewType"</c> property.</param>
                     /// <returns>The source from which to build the value.</returns>
-                    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewId, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewName, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source clearControlAggregation = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlAggregation = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlId = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source parent = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source targetParent = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source transition = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> transitionParameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source viewLevel = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source viewType = default)
+                    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewId, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewName, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source clearControlAggregation = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlAggregation = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlId = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source parent = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source targetParent = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source transition = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> transitionParameters = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source viewLevel = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewPath = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source viewType = default)
                         #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
                         #endif

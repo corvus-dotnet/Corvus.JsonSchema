@@ -403,7 +403,7 @@ public readonly partial struct CodeClimateSchema
         /// Set the <c>checks</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetChecksValue(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Checks.Source value)
+        public void SetChecksValue(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Checks.Source value)
         {
             CheckValidInstance();
 
@@ -484,7 +484,7 @@ public readonly partial struct CodeClimateSchema
         /// Set the <c>exclude_patterns</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExcludePatterns(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.JsonStringArray.Source value)
+        public void SetExcludePatterns(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -565,7 +565,7 @@ public readonly partial struct CodeClimateSchema
         /// Set the <c>plugins</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPluginsValue(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Plugins.Source value)
+        public void SetPluginsValue(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Plugins.Source value)
         {
             CheckValidInstance();
 
@@ -646,7 +646,7 @@ public readonly partial struct CodeClimateSchema
         /// Set the <c>prepare</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPrepare(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.Source value)
+        public void SetPrepare(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.Source value)
         {
             CheckValidInstance();
 
@@ -727,7 +727,7 @@ public readonly partial struct CodeClimateSchema
         /// Set the <c>version</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVersionValue(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Version.Source value)
+        public void SetVersionValue(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Version.Source value)
         {
             CheckValidInstance();
 
@@ -873,7 +873,7 @@ public readonly partial struct CodeClimateSchema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -896,7 +896,7 @@ public readonly partial struct CodeClimateSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -943,7 +943,7 @@ public readonly partial struct CodeClimateSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1117,7 +1117,7 @@ public readonly partial struct CodeClimateSchema
 
         internal Source(Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Checks.Source arg1, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.JsonStringArray.Source arg2, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Plugins.Source arg3, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.Source arg4, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Version.Source arg5)
+        internal Source(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Checks.Source arg1, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.JsonStringArray.Source arg2, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Plugins.Source arg3, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.Source arg4, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Version.Source arg5)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1289,7 +1289,7 @@ public readonly partial struct CodeClimateSchema
 
         internal Source(scoped in TContext context, Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Checks.Source<TContext> arg1, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.JsonStringArray.Source<TContext> arg2, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Plugins.Source<TContext> arg3, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.Source<TContext> arg4, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Version.Source arg5)
+        internal Source(scoped in TContext context, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Checks.Source<TContext> arg1, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.JsonStringArray.Source<TContext> arg2, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Plugins.Source<TContext> arg3, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.Source<TContext> arg4, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Version.Source arg5)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1615,7 +1615,7 @@ public readonly partial struct CodeClimateSchema
         /// <param name="arg4">The value of the property.</param>
         /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Checks.Source arg1, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.JsonStringArray.Source arg2, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Plugins.Source arg3, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.Source arg4, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Version.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Checks.Source arg1, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.JsonStringArray.Source arg2, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Plugins.Source arg3, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.Source arg4, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Version.Source arg5, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1633,7 +1633,7 @@ public readonly partial struct CodeClimateSchema
         /// <param name="arg4">The value of the property.</param>
         /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Checks.Source<TContext> arg1, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.JsonStringArray.Source<TContext> arg2, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Plugins.Source<TContext> arg3, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.Source<TContext> arg4, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Version.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Checks.Source<TContext> arg1, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.JsonStringArray.Source<TContext> arg2, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Plugins.Source<TContext> arg3, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.Source<TContext> arg4, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Version.Source arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1682,7 +1682,7 @@ public readonly partial struct CodeClimateSchema
     /// <param name="prepare">The value of the <c>"prepare"</c> property.</param>
     /// <param name="version">The value of the <c>"version"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Checks.Source checks = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.JsonStringArray.Source excludePatterns = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Plugins.Source plugins = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.Source prepare = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Version.Source version = default)
+    public static Source Build(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Checks.Source checks = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.JsonStringArray.Source excludePatterns = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Plugins.Source plugins = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.Source prepare = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Version.Source version = default)
     {
         return new Source(checks, excludePatterns, plugins, prepare, version);
     }
@@ -1698,7 +1698,7 @@ public readonly partial struct CodeClimateSchema
     /// <param name="prepare">The value of the <c>"prepare"</c> property.</param>
     /// <param name="version">The value of the <c>"version"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Checks.Source<TContext> checks = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.JsonStringArray.Source<TContext> excludePatterns = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Plugins.Source<TContext> plugins = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.Source<TContext> prepare = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Version.Source version = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Checks.Source<TContext> checks = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.JsonStringArray.Source<TContext> excludePatterns = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Plugins.Source<TContext> plugins = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.PrepareEntityArray.Source<TContext> prepare = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Version.Source version = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

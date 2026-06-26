@@ -410,7 +410,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>backend_disabled</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBackendDisabledValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.BackendDisabled.Source value)
+            public void SetBackendDisabledValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.BackendDisabled.Source value)
             {
                 CheckValidInstance();
 
@@ -455,7 +455,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>collection_time</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCollectionTime(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+            public void SetCollectionTime(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
             {
                 CheckValidInstance();
 
@@ -500,7 +500,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>endpoint_disabled</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEndpointDisabledValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.EndpointDisabled.Source value)
+            public void SetEndpointDisabledValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.EndpointDisabled.Source value)
             {
                 CheckValidInstance();
 
@@ -545,7 +545,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>listen_address</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetListenAddressValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.ListenAddress.Source value)
+            public void SetListenAddressValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.ListenAddress.Source value)
             {
                 CheckValidInstance();
 
@@ -590,7 +590,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>proxy_disabled</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetProxyDisabledValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.ProxyDisabled.Source value)
+            public void SetProxyDisabledValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.ProxyDisabled.Source value)
             {
                 CheckValidInstance();
 
@@ -635,7 +635,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>router_disabled</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRouterDisabledValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.RouterDisabled.Source value)
+            public void SetRouterDisabledValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.RouterDisabled.Source value)
             {
                 CheckValidInstance();
 
@@ -781,7 +781,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -804,7 +804,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -851,7 +851,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1026,7 +1026,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.BackendDisabled.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.EndpointDisabled.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.ListenAddress.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.ProxyDisabled.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.RouterDisabled.Source arg6)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.BackendDisabled.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.EndpointDisabled.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.ListenAddress.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.ProxyDisabled.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.RouterDisabled.Source arg6)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1438,7 +1438,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.BackendDisabled.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.EndpointDisabled.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.ListenAddress.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.ProxyDisabled.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.RouterDisabled.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.BackendDisabled.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.EndpointDisabled.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.ListenAddress.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.ProxyDisabled.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.RouterDisabled.Source arg6, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1485,7 +1485,7 @@ public readonly partial struct KrakendSchema
         /// <param name="proxyDisabled">The value of the <c>"proxy_disabled"</c> property.</param>
         /// <param name="routerDisabled">The value of the <c>"router_disabled"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.BackendDisabled.Source backendDisabled = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source collectionTime = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.EndpointDisabled.Source endpointDisabled = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.ListenAddress.Source listenAddress = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.ProxyDisabled.Source proxyDisabled = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.RouterDisabled.Source routerDisabled = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.BackendDisabled.Source backendDisabled = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source collectionTime = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.EndpointDisabled.Source endpointDisabled = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.ListenAddress.Source listenAddress = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.ProxyDisabled.Source proxyDisabled = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.RouterDisabled.Source routerDisabled = default)
         {
             return new Source(backendDisabled, collectionTime, endpointDisabled, listenAddress, proxyDisabled, routerDisabled);
         }

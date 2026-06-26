@@ -403,7 +403,7 @@ public readonly partial struct PulumiSchema
             /// Set the <c>config</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetConfig(in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.Source value)
+            public void SetConfig(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.Source value)
             {
                 CheckValidInstance();
 
@@ -484,7 +484,7 @@ public readonly partial struct PulumiSchema
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.DescriptionOfTheTemplate.Source value)
+            public void SetDescription(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.DescriptionOfTheTemplate.Source value)
             {
                 CheckValidInstance();
 
@@ -529,7 +529,7 @@ public readonly partial struct PulumiSchema
             /// Set the <c>important</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetImportant(in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ImportantEntity.Source value)
+            public void SetImportant(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ImportantEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -574,7 +574,7 @@ public readonly partial struct PulumiSchema
             /// Set the <c>quickstart</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetQuickstart(in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.QuickstartEntity.Source value)
+            public void SetQuickstart(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.QuickstartEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -720,7 +720,7 @@ public readonly partial struct PulumiSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -743,7 +743,7 @@ public readonly partial struct PulumiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -790,7 +790,7 @@ public readonly partial struct PulumiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -966,7 +966,7 @@ public readonly partial struct PulumiSchema
 
             internal Source(Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.Source arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.DescriptionOfTheTemplate.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ImportantEntity.Source arg3, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.QuickstartEntity.Source arg4)
+            internal Source(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.Source arg1, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.DescriptionOfTheTemplate.Source arg2, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ImportantEntity.Source arg3, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.QuickstartEntity.Source arg4)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1154,7 +1154,7 @@ public readonly partial struct PulumiSchema
 
             internal Source(scoped in TContext context, Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.Source<TContext> arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.DescriptionOfTheTemplate.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ImportantEntity.Source arg3, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.QuickstartEntity.Source arg4)
+            internal Source(scoped in TContext context, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.Source<TContext> arg1, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.DescriptionOfTheTemplate.Source arg2, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ImportantEntity.Source arg3, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.QuickstartEntity.Source arg4)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1472,7 +1472,7 @@ public readonly partial struct PulumiSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.Source arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.DescriptionOfTheTemplate.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ImportantEntity.Source arg3, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.QuickstartEntity.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.Source arg1, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.DescriptionOfTheTemplate.Source arg2, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ImportantEntity.Source arg3, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.QuickstartEntity.Source arg4, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4);
@@ -1489,7 +1489,7 @@ public readonly partial struct PulumiSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.Source<TContext> arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.DescriptionOfTheTemplate.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ImportantEntity.Source arg3, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.QuickstartEntity.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.Source<TContext> arg1, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.DescriptionOfTheTemplate.Source arg2, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ImportantEntity.Source arg3, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.QuickstartEntity.Source arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1537,7 +1537,7 @@ public readonly partial struct PulumiSchema
         /// <param name="important">The value of the <c>"important"</c> property.</param>
         /// <param name="quickstart">The value of the <c>"quickstart"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.Source config = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.DescriptionOfTheTemplate.Source description = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ImportantEntity.Source important = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.QuickstartEntity.Source quickstart = default)
+        public static Source Build(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.Source config = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.DescriptionOfTheTemplate.Source description = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ImportantEntity.Source important = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.QuickstartEntity.Source quickstart = default)
         {
             return new Source(config, description, important, quickstart);
         }
@@ -1552,7 +1552,7 @@ public readonly partial struct PulumiSchema
         /// <param name="important">The value of the <c>"important"</c> property.</param>
         /// <param name="quickstart">The value of the <c>"quickstart"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.Source<TContext> config = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.DescriptionOfTheTemplate.Source description = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ImportantEntity.Source important = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.QuickstartEntity.Source quickstart = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ConfigToApplyToEachStackInTheProject.Source<TContext> config = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.DescriptionOfTheTemplate.Source description = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.ImportantEntity.Source important = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.QuickstartEntity.Source quickstart = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

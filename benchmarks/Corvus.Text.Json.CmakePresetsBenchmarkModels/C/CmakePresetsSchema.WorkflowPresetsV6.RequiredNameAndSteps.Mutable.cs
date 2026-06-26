@@ -305,7 +305,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>description</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDescription(in Corvus.Text.Json.JsonElement.Source value)
+                public void SetDescription(scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -386,7 +386,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>displayName</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDisplayName(in Corvus.Text.Json.JsonElement.Source value)
+                public void SetDisplayName(scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -467,7 +467,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>name</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetName(in Corvus.Text.Json.JsonElement.Source value)
+                public void SetName(scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -532,7 +532,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>steps</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSteps(in Corvus.Text.Json.JsonElement.Source value)
+                public void SetSteps(scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -597,7 +597,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>vendor</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetVendor(in Corvus.Text.Json.JsonElement.Source value)
+                public void SetVendor(scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -847,7 +847,7 @@ public readonly partial struct CmakePresetsSchema
 
                 internal Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.RequiredNameAndSteps.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.Text.Json.JsonElement.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5)
+                internal Source(scoped in Corvus.Text.Json.JsonElement.Source arg1, scoped in Corvus.Text.Json.JsonElement.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, scoped in Corvus.Text.Json.JsonElement.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1019,7 +1019,7 @@ public readonly partial struct CmakePresetsSchema
 
                 internal Source(scoped in TContext context, Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsV6.RequiredNameAndSteps.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.Text.Json.JsonElement.Source<TContext> arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5)
+                internal Source(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1276,7 +1276,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.Text.Json.JsonElement.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.Text.Json.JsonElement.Source arg1, scoped in Corvus.Text.Json.JsonElement.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, scoped in Corvus.Text.Json.JsonElement.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1294,7 +1294,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.Text.Json.JsonElement.Source<TContext> arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1343,7 +1343,7 @@ public readonly partial struct CmakePresetsSchema
             /// <param name="displayName">The value of the <c>"displayName"</c> property.</param>
             /// <param name="vendor">The value of the <c>"vendor"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.Text.Json.JsonElement.Source name, in Corvus.Text.Json.JsonElement.Source steps, in Corvus.Text.Json.JsonElement.Source description = default, in Corvus.Text.Json.JsonElement.Source displayName = default, in Corvus.Text.Json.JsonElement.Source vendor = default)
+            public static Source Build(scoped in Corvus.Text.Json.JsonElement.Source name, scoped in Corvus.Text.Json.JsonElement.Source steps, scoped in Corvus.Text.Json.JsonElement.Source description = default, scoped in Corvus.Text.Json.JsonElement.Source displayName = default, scoped in Corvus.Text.Json.JsonElement.Source vendor = default)
             {
                 return new Source(name, steps, description, displayName, vendor);
             }
@@ -1359,7 +1359,7 @@ public readonly partial struct CmakePresetsSchema
             /// <param name="displayName">The value of the <c>"displayName"</c> property.</param>
             /// <param name="vendor">The value of the <c>"vendor"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> name, in Corvus.Text.Json.JsonElement.Source<TContext> steps, in Corvus.Text.Json.JsonElement.Source<TContext> description = default, in Corvus.Text.Json.JsonElement.Source<TContext> displayName = default, in Corvus.Text.Json.JsonElement.Source<TContext> vendor = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> name, scoped in Corvus.Text.Json.JsonElement.Source<TContext> steps, scoped in Corvus.Text.Json.JsonElement.Source<TContext> description = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> displayName = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> vendor = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

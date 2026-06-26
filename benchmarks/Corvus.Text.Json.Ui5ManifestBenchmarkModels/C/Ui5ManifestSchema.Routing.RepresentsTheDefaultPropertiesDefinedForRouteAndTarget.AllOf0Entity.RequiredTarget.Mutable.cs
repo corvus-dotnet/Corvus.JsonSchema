@@ -257,7 +257,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// Set the <c>target</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetTarget(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source value)
+                        public void SetTarget(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source value)
                         {
                             CheckValidInstance();
 
@@ -487,7 +487,7 @@ public readonly partial struct Ui5ManifestSchema
 
                         internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Routing.RepresentsTheDefaultPropertiesDefinedForRouteAndTarget.AllOf0Entity.RequiredTarget.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                        internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source arg1)
+                        internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source arg1)
                         {
                             _createArg1 = arg1;
                             _kind = Kind.Create;
@@ -651,7 +651,7 @@ public readonly partial struct Ui5ManifestSchema
 
                         internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Routing.RepresentsTheDefaultPropertiesDefinedForRouteAndTarget.AllOf0Entity.RequiredTarget.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                        internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source<TContext> arg1)
+                        internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source<TContext> arg1)
                         {
                             _context = context;
                             _createArg1 = arg1;
@@ -871,7 +871,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// </summary>
                         /// <param name="arg1">The value of the property.</param>
                         /// <param name="o">The complex value builder into which to write the object.</param>
-                        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source arg1, ref ComplexValueBuilder o)
+                        internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source arg1, ref ComplexValueBuilder o)
                         {
                             o.StartObject();
                             Create(ref o, arg1);
@@ -885,7 +885,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// <param name="context">The context to pass to the builder.</param>
                         /// <param name="arg1">The value of the property.</param>
                         /// <param name="o">The complex value builder into which to write the object.</param>
-                        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source<TContext> arg1, ref ComplexValueBuilder o)
+                        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source<TContext> arg1, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                             where TContext : allows ref struct
 #endif
@@ -930,7 +930,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// </summary>
                     /// <param name="target">The value of the <c>"target"</c> property.</param>
                     /// <returns>The source from which to build the value.</returns>
-                    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source target)
+                    public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source target)
                     {
                         return new Source(target);
                     }
@@ -942,7 +942,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// <param name="context">The context to pass to the builder.</param>
                     /// <param name="target">The value of the <c>"target"</c> property.</param>
                     /// <returns>The source from which to build the value.</returns>
-                    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source<TContext> target)
+                    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source<TContext> target)
                         #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
                         #endif

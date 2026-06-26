@@ -366,7 +366,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>products</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetProducts(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.JsonStringArray.Source value)
+                public void SetProducts(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.JsonStringArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -447,7 +447,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>services</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetServices(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.ListOfServArray.Source value)
+                public void SetServices(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.ListOfServArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -629,7 +629,7 @@ public readonly partial struct Ui5ManifestSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -652,7 +652,7 @@ public readonly partial struct Ui5ManifestSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -699,7 +699,7 @@ public readonly partial struct Ui5ManifestSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -870,7 +870,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.JsonStringArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.ListOfServArray.Source arg2)
+                internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.JsonStringArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.ListOfServArray.Source arg2)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1036,7 +1036,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.JsonStringArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.ListOfServArray.Source<TContext> arg2)
+                internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.JsonStringArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.ListOfServArray.Source<TContext> arg2)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1336,7 +1336,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.JsonStringArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.ListOfServArray.Source arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.JsonStringArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.ListOfServArray.Source arg2, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2);
@@ -1351,7 +1351,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.JsonStringArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.ListOfServArray.Source<TContext> arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.JsonStringArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.ListOfServArray.Source<TContext> arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1397,7 +1397,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="products">The value of the <c>"products"</c> property.</param>
             /// <param name="services">The value of the <c>"services"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.JsonStringArray.Source products = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.ListOfServArray.Source services = default)
+            public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.JsonStringArray.Source products = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.ListOfServArray.Source services = default)
             {
                 return new Source(products, services);
             }
@@ -1410,7 +1410,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="products">The value of the <c>"products"</c> property.</param>
             /// <param name="services">The value of the <c>"services"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.JsonStringArray.Source<TContext> products = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.ListOfServArray.Source<TContext> services = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.JsonStringArray.Source<TContext> products = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.ListOfServArray.Source<TContext> services = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

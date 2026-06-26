@@ -305,7 +305,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>accentCosts</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAccentCosts(in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.AccentCostsEntity.Source value)
+            public void SetAccentCosts(scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.AccentCostsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -350,7 +350,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>baseCost</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBaseCost(in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheBaseCostForMakingAnEdit.Source value)
+            public void SetBaseCost(scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheBaseCostForMakingAnEdit.Source value)
             {
                 CheckValidInstance();
 
@@ -395,7 +395,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>capsCosts</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCapsCosts(in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.CapsCostsEntity.Source value)
+            public void SetCapsCosts(scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.CapsCostsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -440,7 +440,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>firstLetterPenalty</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFirstLetterPenalty(in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.FirstLetterPenaltyEntity.Source value)
+            public void SetFirstLetterPenalty(scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.FirstLetterPenaltyEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -485,7 +485,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>nonAlphabetCosts</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNonAlphabetCosts(in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheCostForCharactersNotInTheAlphabet.Source value)
+            public void SetNonAlphabetCosts(scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheCostForCharactersNotInTheAlphabet.Source value)
             {
                 CheckValidInstance();
 
@@ -699,7 +699,7 @@ public readonly partial struct CspellSchema
 
             internal Source(Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.AccentCostsEntity.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheBaseCostForMakingAnEdit.Source arg2, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.CapsCostsEntity.Source arg3, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.FirstLetterPenaltyEntity.Source arg4, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheCostForCharactersNotInTheAlphabet.Source arg5)
+            internal Source(scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.AccentCostsEntity.Source arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheBaseCostForMakingAnEdit.Source arg2, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.CapsCostsEntity.Source arg3, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.FirstLetterPenaltyEntity.Source arg4, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheCostForCharactersNotInTheAlphabet.Source arg5)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1037,7 +1037,7 @@ public readonly partial struct CspellSchema
             /// <param name="arg4">The value of the property.</param>
             /// <param name="arg5">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.AccentCostsEntity.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheBaseCostForMakingAnEdit.Source arg2, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.CapsCostsEntity.Source arg3, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.FirstLetterPenaltyEntity.Source arg4, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheCostForCharactersNotInTheAlphabet.Source arg5, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.AccentCostsEntity.Source arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheBaseCostForMakingAnEdit.Source arg2, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.CapsCostsEntity.Source arg3, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.FirstLetterPenaltyEntity.Source arg4, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheCostForCharactersNotInTheAlphabet.Source arg5, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1083,7 +1083,7 @@ public readonly partial struct CspellSchema
         /// <param name="firstLetterPenalty">The value of the <c>"firstLetterPenalty"</c> property.</param>
         /// <param name="nonAlphabetCosts">The value of the <c>"nonAlphabetCosts"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.AccentCostsEntity.Source accentCosts = default, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheBaseCostForMakingAnEdit.Source baseCost = default, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.CapsCostsEntity.Source capsCosts = default, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.FirstLetterPenaltyEntity.Source firstLetterPenalty = default, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheCostForCharactersNotInTheAlphabet.Source nonAlphabetCosts = default)
+        public static Source Build(scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.AccentCostsEntity.Source accentCosts = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheBaseCostForMakingAnEdit.Source baseCost = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.CapsCostsEntity.Source capsCosts = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.FirstLetterPenaltyEntity.Source firstLetterPenalty = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.ThisIsTheCostForCharactersNotInTheAlphabet.Source nonAlphabetCosts = default)
         {
             return new Source(accentCosts, baseCost, capsCosts, firstLetterPenalty, nonAlphabetCosts);
         }

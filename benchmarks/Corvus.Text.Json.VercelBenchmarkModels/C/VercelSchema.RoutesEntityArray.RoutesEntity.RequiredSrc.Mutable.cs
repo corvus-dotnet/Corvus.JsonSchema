@@ -518,7 +518,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>caseSensitive</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetCaseSensitive(in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
+                    public void SetCaseSensitive(scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -563,7 +563,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>check</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetCheck(in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
+                    public void SetCheck(scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -608,7 +608,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>continue</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetContinue(in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
+                    public void SetContinue(scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -653,7 +653,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>dest</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetDest(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.DestEntity.Source value)
+                    public void SetDest(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.DestEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -698,7 +698,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>has</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetHas(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.Source value)
+                    public void SetHas(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.Source value)
                     {
                         CheckValidInstance();
 
@@ -779,7 +779,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>headers</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetHeaders(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HeadersEntity.Source value)
+                    public void SetHeaders(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HeadersEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -860,7 +860,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>important</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetImportant(in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
+                    public void SetImportant(scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -905,7 +905,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>isInternal</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetIsInternal(in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
+                    public void SetIsInternal(scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -950,7 +950,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>locale</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetLocale(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Source value)
+                    public void SetLocale(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -1031,7 +1031,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>methods</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetMethods(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MethodsEntityArray.Source value)
+                    public void SetMethods(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MethodsEntityArray.Source value)
                     {
                         CheckValidInstance();
 
@@ -1112,7 +1112,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>middleware</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetMiddleware(in Corvus.VercelBenchmark.Current.JsonNumber.Source value)
+                    public void SetMiddleware(scoped in Corvus.VercelBenchmark.Current.JsonNumber.Source value)
                     {
                         CheckValidInstance();
 
@@ -1157,7 +1157,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>middlewarePath</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetMiddlewarePath(in Corvus.VercelBenchmark.Current.JsonString.Source value)
+                    public void SetMiddlewarePath(scoped in Corvus.VercelBenchmark.Current.JsonString.Source value)
                     {
                         CheckValidInstance();
 
@@ -1202,7 +1202,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>middlewareRawSrc</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetMiddlewareRawSrc(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonStringArray.Source value)
+                    public void SetMiddlewareRawSrc(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonStringArray.Source value)
                     {
                         CheckValidInstance();
 
@@ -1283,7 +1283,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>missing</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetMissing(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.Source value)
+                    public void SetMissing(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.Source value)
                     {
                         CheckValidInstance();
 
@@ -1364,7 +1364,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>override</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetOverride(in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
+                    public void SetOverride(scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -1409,7 +1409,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>src</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetSrc(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.SrcEntity.Source value)
+                    public void SetSrc(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.SrcEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -1440,7 +1440,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>status</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetStatus(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source value)
+                    public void SetStatus(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -1485,7 +1485,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>user</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetUser(in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
+                    public void SetUser(scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -1712,7 +1712,7 @@ public readonly partial struct VercelSchema
 
                     internal Source(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.SrcEntity.Source arg1, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg2, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg3, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.DestEntity.Source arg5, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.Source arg6, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HeadersEntity.Source arg7, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg8, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg9, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Source arg10, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MethodsEntityArray.Source arg11, in Corvus.VercelBenchmark.Current.JsonNumber.Source arg12, in Corvus.VercelBenchmark.Current.JsonString.Source arg13, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonStringArray.Source arg14, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.Source arg15, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg16, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source arg17, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg18)
+                    internal Source(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.SrcEntity.Source arg1, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.DestEntity.Source arg5, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.Source arg6, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HeadersEntity.Source arg7, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg8, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Source arg10, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MethodsEntityArray.Source arg11, scoped in Corvus.VercelBenchmark.Current.JsonNumber.Source arg12, scoped in Corvus.VercelBenchmark.Current.JsonString.Source arg13, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonStringArray.Source arg14, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.Source arg15, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg16, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source arg17, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg18)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -1910,7 +1910,7 @@ public readonly partial struct VercelSchema
 
                     internal Source(scoped in TContext context, Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.SrcEntity.Source arg1, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg2, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg3, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.DestEntity.Source arg5, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.Source<TContext> arg6, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HeadersEntity.Source<TContext> arg7, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg8, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg9, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Source<TContext> arg10, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MethodsEntityArray.Source<TContext> arg11, in Corvus.VercelBenchmark.Current.JsonNumber.Source arg12, in Corvus.VercelBenchmark.Current.JsonString.Source arg13, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonStringArray.Source<TContext> arg14, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.Source<TContext> arg15, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg16, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source arg17, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg18)
+                    internal Source(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.SrcEntity.Source arg1, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.DestEntity.Source arg5, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.Source<TContext> arg6, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HeadersEntity.Source<TContext> arg7, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg8, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Source<TContext> arg10, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MethodsEntityArray.Source<TContext> arg11, scoped in Corvus.VercelBenchmark.Current.JsonNumber.Source arg12, scoped in Corvus.VercelBenchmark.Current.JsonString.Source arg13, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonStringArray.Source<TContext> arg14, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.Source<TContext> arg15, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg16, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source arg17, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg18)
                     {
                         _context = context;
                         _createArg1 = arg1;
@@ -2271,7 +2271,7 @@ public readonly partial struct VercelSchema
                     /// <param name="arg17">The value of the property.</param>
                     /// <param name="arg18">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.SrcEntity.Source arg1, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg2, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg3, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.DestEntity.Source arg5, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.Source arg6, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HeadersEntity.Source arg7, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg8, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg9, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Source arg10, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MethodsEntityArray.Source arg11, in Corvus.VercelBenchmark.Current.JsonNumber.Source arg12, in Corvus.VercelBenchmark.Current.JsonString.Source arg13, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonStringArray.Source arg14, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.Source arg15, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg16, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source arg17, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg18, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.SrcEntity.Source arg1, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.DestEntity.Source arg5, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.Source arg6, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HeadersEntity.Source arg7, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg8, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Source arg10, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MethodsEntityArray.Source arg11, scoped in Corvus.VercelBenchmark.Current.JsonNumber.Source arg12, scoped in Corvus.VercelBenchmark.Current.JsonString.Source arg13, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonStringArray.Source arg14, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.Source arg15, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg16, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source arg17, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg18, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18);
@@ -2302,7 +2302,7 @@ public readonly partial struct VercelSchema
                     /// <param name="arg17">The value of the property.</param>
                     /// <param name="arg18">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.SrcEntity.Source arg1, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg2, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg3, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.DestEntity.Source arg5, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.Source<TContext> arg6, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HeadersEntity.Source<TContext> arg7, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg8, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg9, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Source<TContext> arg10, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MethodsEntityArray.Source<TContext> arg11, in Corvus.VercelBenchmark.Current.JsonNumber.Source arg12, in Corvus.VercelBenchmark.Current.JsonString.Source arg13, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonStringArray.Source<TContext> arg14, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.Source<TContext> arg15, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg16, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source arg17, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg18, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.SrcEntity.Source arg1, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.DestEntity.Source arg5, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.Source<TContext> arg6, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HeadersEntity.Source<TContext> arg7, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg8, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Source<TContext> arg10, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MethodsEntityArray.Source<TContext> arg11, scoped in Corvus.VercelBenchmark.Current.JsonNumber.Source arg12, scoped in Corvus.VercelBenchmark.Current.JsonString.Source arg13, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonStringArray.Source<TContext> arg14, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.Source<TContext> arg15, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg16, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source arg17, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg18, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -2364,7 +2364,7 @@ public readonly partial struct VercelSchema
                 /// <param name="status">The value of the <c>"status"</c> property.</param>
                 /// <param name="user">The value of the <c>"user"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.SrcEntity.Source src, in Corvus.VercelBenchmark.Current.JsonBoolean.Source caseSensitive = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source check = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source continueValue = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.DestEntity.Source dest = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.Source has = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HeadersEntity.Source headers = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source important = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source isInternal = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Source locale = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MethodsEntityArray.Source methods = default, in Corvus.VercelBenchmark.Current.JsonNumber.Source middleware = default, in Corvus.VercelBenchmark.Current.JsonString.Source middlewarePath = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonStringArray.Source middlewareRawSrc = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.Source missing = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source overrideValue = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source status = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source user = default)
+                public static Source Build(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.SrcEntity.Source src, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source caseSensitive = default, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source check = default, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source continueValue = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.DestEntity.Source dest = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.Source has = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HeadersEntity.Source headers = default, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source important = default, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source isInternal = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Source locale = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MethodsEntityArray.Source methods = default, scoped in Corvus.VercelBenchmark.Current.JsonNumber.Source middleware = default, scoped in Corvus.VercelBenchmark.Current.JsonString.Source middlewarePath = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonStringArray.Source middlewareRawSrc = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.Source missing = default, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source overrideValue = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source status = default, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source user = default)
                 {
                     return new Source(src, caseSensitive, check, continueValue, dest, has, headers, important, isInternal, locale, methods, middleware, middlewarePath, middlewareRawSrc, missing, overrideValue, status, user);
                 }
@@ -2393,7 +2393,7 @@ public readonly partial struct VercelSchema
                 /// <param name="status">The value of the <c>"status"</c> property.</param>
                 /// <param name="user">The value of the <c>"user"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.SrcEntity.Source src, in Corvus.VercelBenchmark.Current.JsonBoolean.Source caseSensitive = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source check = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source continueValue = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.DestEntity.Source dest = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.Source<TContext> has = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HeadersEntity.Source<TContext> headers = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source important = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source isInternal = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Source<TContext> locale = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MethodsEntityArray.Source<TContext> methods = default, in Corvus.VercelBenchmark.Current.JsonNumber.Source middleware = default, in Corvus.VercelBenchmark.Current.JsonString.Source middlewarePath = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonStringArray.Source<TContext> middlewareRawSrc = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.Source<TContext> missing = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source overrideValue = default, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source status = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source user = default)
+                public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.SrcEntity.Source src, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source caseSensitive = default, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source check = default, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source continueValue = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.DestEntity.Source dest = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.Source<TContext> has = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HeadersEntity.Source<TContext> headers = default, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source important = default, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source isInternal = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.LocaleEntity.Source<TContext> locale = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MethodsEntityArray.Source<TContext> methods = default, scoped in Corvus.VercelBenchmark.Current.JsonNumber.Source middleware = default, scoped in Corvus.VercelBenchmark.Current.JsonString.Source middlewarePath = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.JsonStringArray.Source<TContext> middlewareRawSrc = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.MissingEntityArray.Source<TContext> missing = default, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source overrideValue = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source status = default, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source user = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif

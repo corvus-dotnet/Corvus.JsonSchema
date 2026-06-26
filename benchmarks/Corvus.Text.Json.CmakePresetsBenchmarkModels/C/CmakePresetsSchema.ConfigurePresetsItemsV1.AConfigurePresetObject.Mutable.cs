@@ -650,7 +650,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>architecture</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetArchitecture(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ArchitectureEntity.Source value)
+                public void SetArchitecture(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ArchitectureEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -731,7 +731,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>binaryDir</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetBinaryDir(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
+                public void SetBinaryDir(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -776,7 +776,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>cacheVariables</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCacheVariables(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.Source value)
+                public void SetCacheVariables(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -857,7 +857,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>cmakeExecutable</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCmakeExecutable(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
+                public void SetCmakeExecutable(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -902,7 +902,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>debug</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDebugValue(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingDebugOptions.Source value)
+                public void SetDebugValue(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingDebugOptions.Source value)
                 {
                     CheckValidInstance();
 
@@ -983,7 +983,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>description</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDescription(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
+                public void SetDescription(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -1028,7 +1028,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>displayName</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDisplayName(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
+                public void SetDisplayName(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -1073,7 +1073,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>environment</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetEnvironment(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.EnvironmentEntity.Source value)
+                public void SetEnvironment(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.EnvironmentEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -1154,7 +1154,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>errors</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetErrors(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingErrors.Source value)
+                public void SetErrors(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingErrors.Source value)
                 {
                     CheckValidInstance();
 
@@ -1235,7 +1235,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>generator</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetGenerator(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
+                public void SetGenerator(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -1280,7 +1280,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>hidden</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetHidden(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
+                public void SetHidden(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -1325,7 +1325,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>inherits</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetInherits(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.InheritsEntity.Source value)
+                public void SetInherits(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.InheritsEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -1406,7 +1406,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>name</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetName(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.NameEntity.Source value)
+                public void SetName(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.NameEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -1451,7 +1451,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>toolset</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetToolset(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ToolsetEntity.Source value)
+                public void SetToolset(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ToolsetEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -1532,7 +1532,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>vendor</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetVendor(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.VendorEntity.Source value)
+                public void SetVendor(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.VendorEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -1613,7 +1613,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>warnings</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetWarnings(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingWarnings.Source value)
+                public void SetWarnings(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingWarnings.Source value)
                 {
                     CheckValidInstance();
 
@@ -1795,7 +1795,7 @@ public readonly partial struct CmakePresetsSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -1818,7 +1818,7 @@ public readonly partial struct CmakePresetsSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1865,7 +1865,7 @@ public readonly partial struct CmakePresetsSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -2050,7 +2050,7 @@ public readonly partial struct CmakePresetsSchema
 
                 internal Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ArchitectureEntity.Source arg1, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg2, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.Source arg3, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingDebugOptions.Source arg5, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg6, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg7, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.EnvironmentEntity.Source arg8, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingErrors.Source arg9, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg10, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg11, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.InheritsEntity.Source arg12, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.NameEntity.Source arg13, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ToolsetEntity.Source arg14, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.VendorEntity.Source arg15, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingWarnings.Source arg16)
+                internal Source(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ArchitectureEntity.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg2, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.Source arg3, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg4, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingDebugOptions.Source arg5, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg6, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg7, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.EnvironmentEntity.Source arg8, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingErrors.Source arg9, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg10, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.InheritsEntity.Source arg12, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.NameEntity.Source arg13, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ToolsetEntity.Source arg14, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.VendorEntity.Source arg15, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingWarnings.Source arg16)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -2244,7 +2244,7 @@ public readonly partial struct CmakePresetsSchema
 
                 internal Source(scoped in TContext context, Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ArchitectureEntity.Source<TContext> arg1, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg2, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.Source<TContext> arg3, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingDebugOptions.Source<TContext> arg5, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg6, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg7, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.EnvironmentEntity.Source<TContext> arg8, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingErrors.Source<TContext> arg9, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg10, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg11, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.InheritsEntity.Source<TContext> arg12, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.NameEntity.Source arg13, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ToolsetEntity.Source<TContext> arg14, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.VendorEntity.Source<TContext> arg15, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingWarnings.Source<TContext> arg16)
+                internal Source(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ArchitectureEntity.Source<TContext> arg1, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg2, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.Source<TContext> arg3, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg4, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingDebugOptions.Source<TContext> arg5, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg6, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg7, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.EnvironmentEntity.Source<TContext> arg8, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingErrors.Source<TContext> arg9, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg10, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.InheritsEntity.Source<TContext> arg12, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.NameEntity.Source arg13, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ToolsetEntity.Source<TContext> arg14, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.VendorEntity.Source<TContext> arg15, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingWarnings.Source<TContext> arg16)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -2658,7 +2658,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="arg15">The value of the property.</param>
                 /// <param name="arg16">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ArchitectureEntity.Source arg1, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg2, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.Source arg3, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingDebugOptions.Source arg5, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg6, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg7, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.EnvironmentEntity.Source arg8, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingErrors.Source arg9, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg10, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg11, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.InheritsEntity.Source arg12, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.NameEntity.Source arg13, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ToolsetEntity.Source arg14, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.VendorEntity.Source arg15, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingWarnings.Source arg16, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ArchitectureEntity.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg2, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.Source arg3, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg4, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingDebugOptions.Source arg5, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg6, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg7, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.EnvironmentEntity.Source arg8, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingErrors.Source arg9, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg10, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.InheritsEntity.Source arg12, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.NameEntity.Source arg13, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ToolsetEntity.Source arg14, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.VendorEntity.Source arg15, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingWarnings.Source arg16, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16);
@@ -2687,7 +2687,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="arg15">The value of the property.</param>
                 /// <param name="arg16">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ArchitectureEntity.Source<TContext> arg1, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg2, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.Source<TContext> arg3, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingDebugOptions.Source<TContext> arg5, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg6, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg7, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.EnvironmentEntity.Source<TContext> arg8, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingErrors.Source<TContext> arg9, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg10, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg11, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.InheritsEntity.Source<TContext> arg12, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.NameEntity.Source arg13, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ToolsetEntity.Source<TContext> arg14, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.VendorEntity.Source<TContext> arg15, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingWarnings.Source<TContext> arg16, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ArchitectureEntity.Source<TContext> arg1, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg2, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.Source<TContext> arg3, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg4, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingDebugOptions.Source<TContext> arg5, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg6, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg7, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.EnvironmentEntity.Source<TContext> arg8, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingErrors.Source<TContext> arg9, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg10, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.InheritsEntity.Source<TContext> arg12, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.NameEntity.Source arg13, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ToolsetEntity.Source<TContext> arg14, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.VendorEntity.Source<TContext> arg15, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingWarnings.Source<TContext> arg16, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -2747,7 +2747,7 @@ public readonly partial struct CmakePresetsSchema
             /// <param name="vendor">The value of the <c>"vendor"</c> property.</param>
             /// <param name="warnings">The value of the <c>"warnings"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ArchitectureEntity.Source architecture = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source binaryDir = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.Source cacheVariables = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source cmakeExecutable = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingDebugOptions.Source debug = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source description = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source displayName = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.EnvironmentEntity.Source environment = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingErrors.Source errors = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source generator = default, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source hidden = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.InheritsEntity.Source inherits = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.NameEntity.Source name = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ToolsetEntity.Source toolset = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.VendorEntity.Source vendor = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingWarnings.Source warnings = default)
+            public static Source Build(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ArchitectureEntity.Source architecture = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source binaryDir = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.Source cacheVariables = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source cmakeExecutable = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingDebugOptions.Source debug = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source description = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source displayName = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.EnvironmentEntity.Source environment = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingErrors.Source errors = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source generator = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source hidden = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.InheritsEntity.Source inherits = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.NameEntity.Source name = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ToolsetEntity.Source toolset = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.VendorEntity.Source vendor = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingWarnings.Source warnings = default)
             {
                 return new Source(architecture, binaryDir, cacheVariables, cmakeExecutable, debug, description, displayName, environment, errors, generator, hidden, inherits, name, toolset, vendor, warnings);
             }
@@ -2774,7 +2774,7 @@ public readonly partial struct CmakePresetsSchema
             /// <param name="vendor">The value of the <c>"vendor"</c> property.</param>
             /// <param name="warnings">The value of the <c>"warnings"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ArchitectureEntity.Source<TContext> architecture = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source binaryDir = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.Source<TContext> cacheVariables = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source cmakeExecutable = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingDebugOptions.Source<TContext> debug = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source description = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source displayName = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.EnvironmentEntity.Source<TContext> environment = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingErrors.Source<TContext> errors = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source generator = default, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source hidden = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.InheritsEntity.Source<TContext> inherits = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.NameEntity.Source name = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ToolsetEntity.Source<TContext> toolset = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.VendorEntity.Source<TContext> vendor = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingWarnings.Source<TContext> warnings = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ArchitectureEntity.Source<TContext> architecture = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source binaryDir = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.CacheVariablesEntity.Source<TContext> cacheVariables = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source cmakeExecutable = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingDebugOptions.Source<TContext> debug = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source description = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source displayName = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.EnvironmentEntity.Source<TContext> environment = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingErrors.Source<TContext> errors = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source generator = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source hidden = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.InheritsEntity.Source<TContext> inherits = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.NameEntity.Source name = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.ToolsetEntity.Source<TContext> toolset = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.VendorEntity.Source<TContext> vendor = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingWarnings.Source<TContext> warnings = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

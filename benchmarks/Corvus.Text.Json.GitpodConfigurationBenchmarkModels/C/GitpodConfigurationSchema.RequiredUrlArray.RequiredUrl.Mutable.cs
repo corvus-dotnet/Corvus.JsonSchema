@@ -255,7 +255,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>checkoutLocation</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCheckoutLocation(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
+                public void SetCheckoutLocation(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -300,7 +300,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>url</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetUrl(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
+                public void SetUrl(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -497,7 +497,7 @@ public readonly partial struct GitpodConfigurationSchema
 
                 internal Source(Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.RequiredUrl.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2)
+                internal Source(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -818,7 +818,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2);
@@ -861,7 +861,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// <param name="url">The value of the <c>"url"</c> property.</param>
             /// <param name="checkoutLocation">The value of the <c>"checkoutLocation"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source url, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source checkoutLocation = default)
+            public static Source Build(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source url, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source checkoutLocation = default)
             {
                 return new Source(url, checkoutLocation);
             }

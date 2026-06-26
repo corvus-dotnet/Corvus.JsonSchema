@@ -268,7 +268,7 @@ public readonly partial struct InputChoice
         /// Set the <c>title</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTitle(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -299,7 +299,7 @@ public readonly partial struct InputChoice
         /// Set the <c>type</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetType(in Corvus.Ui5ManifestBenchmark.Current.InputChoice.MustBeInputChoice.Source value)
+        public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.InputChoice.MustBeInputChoice.Source value)
         {
             CheckValidInstance();
 
@@ -344,7 +344,7 @@ public readonly partial struct InputChoice
         /// Set the <c>value</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -542,7 +542,7 @@ public readonly partial struct InputChoice
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.InputChoice.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.InputChoice.MustBeInputChoice.Source arg3)
+        internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.InputChoice.MustBeInputChoice.Source arg3)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -870,7 +870,7 @@ public readonly partial struct InputChoice
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.InputChoice.MustBeInputChoice.Source arg3, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.InputChoice.MustBeInputChoice.Source arg3, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3);
@@ -914,7 +914,7 @@ public readonly partial struct InputChoice
     /// <param name="value">The value of the <c>"value"</c> property.</param>
     /// <param name="type">The value of the <c>"type"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value, in Corvus.Ui5ManifestBenchmark.Current.InputChoice.MustBeInputChoice.Source type = default)
+    public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value, scoped in Corvus.Ui5ManifestBenchmark.Current.InputChoice.MustBeInputChoice.Source type = default)
     {
         return new Source(title, value, type);
     }

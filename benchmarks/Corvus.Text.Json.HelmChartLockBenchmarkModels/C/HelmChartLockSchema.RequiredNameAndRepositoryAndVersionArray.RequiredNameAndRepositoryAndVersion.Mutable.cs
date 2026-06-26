@@ -285,7 +285,7 @@ public readonly partial struct HelmChartLockSchema
                 /// Set the <c>name</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetName(in Corvus.HelmChartLockBenchmark.Current.JsonString.Source value)
+                public void SetName(scoped in Corvus.HelmChartLockBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -316,7 +316,7 @@ public readonly partial struct HelmChartLockSchema
                 /// Set the <c>repository</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRepository(in Corvus.HelmChartLockBenchmark.Current.JsonUri.Source value)
+                public void SetRepository(scoped in Corvus.HelmChartLockBenchmark.Current.JsonUri.Source value)
                 {
                     CheckValidInstance();
 
@@ -347,7 +347,7 @@ public readonly partial struct HelmChartLockSchema
                 /// Set the <c>version</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetVersion(in Corvus.HelmChartLockBenchmark.Current.JsonString.Source value)
+                public void SetVersion(scoped in Corvus.HelmChartLockBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -545,7 +545,7 @@ public readonly partial struct HelmChartLockSchema
 
                 internal Source(Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.RequiredNameAndRepositoryAndVersion.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.HelmChartLockBenchmark.Current.JsonString.Source arg1, in Corvus.HelmChartLockBenchmark.Current.JsonUri.Source arg2, in Corvus.HelmChartLockBenchmark.Current.JsonString.Source arg3)
+                internal Source(scoped in Corvus.HelmChartLockBenchmark.Current.JsonString.Source arg1, scoped in Corvus.HelmChartLockBenchmark.Current.JsonUri.Source arg2, scoped in Corvus.HelmChartLockBenchmark.Current.JsonString.Source arg3)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -873,7 +873,7 @@ public readonly partial struct HelmChartLockSchema
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.HelmChartLockBenchmark.Current.JsonString.Source arg1, in Corvus.HelmChartLockBenchmark.Current.JsonUri.Source arg2, in Corvus.HelmChartLockBenchmark.Current.JsonString.Source arg3, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.HelmChartLockBenchmark.Current.JsonString.Source arg1, scoped in Corvus.HelmChartLockBenchmark.Current.JsonUri.Source arg2, scoped in Corvus.HelmChartLockBenchmark.Current.JsonString.Source arg3, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3);
@@ -917,7 +917,7 @@ public readonly partial struct HelmChartLockSchema
             /// <param name="repository">The value of the <c>"repository"</c> property.</param>
             /// <param name="version">The value of the <c>"version"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.HelmChartLockBenchmark.Current.JsonString.Source name, in Corvus.HelmChartLockBenchmark.Current.JsonUri.Source repository, in Corvus.HelmChartLockBenchmark.Current.JsonString.Source version)
+            public static Source Build(scoped in Corvus.HelmChartLockBenchmark.Current.JsonString.Source name, scoped in Corvus.HelmChartLockBenchmark.Current.JsonUri.Source repository, scoped in Corvus.HelmChartLockBenchmark.Current.JsonString.Source version)
             {
                 return new Source(name, repository, version);
             }

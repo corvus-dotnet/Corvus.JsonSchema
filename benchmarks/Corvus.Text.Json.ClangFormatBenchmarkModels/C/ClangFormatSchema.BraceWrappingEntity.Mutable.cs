@@ -697,7 +697,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>AfterCaseLabel</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAfterCaseLabel(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetAfterCaseLabel(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -742,7 +742,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>AfterClass</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAfterClass(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetAfterClass(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -787,7 +787,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>AfterControlStatement</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAfterControlStatement(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.WrapControlStatementsIfForWhileSwitch.Source value)
+            public void SetAfterControlStatement(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.WrapControlStatementsIfForWhileSwitch.Source value)
             {
                 CheckValidInstance();
 
@@ -832,7 +832,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>AfterEnum</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAfterEnum(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetAfterEnum(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -877,7 +877,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>AfterExternBlock</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAfterExternBlock(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetAfterExternBlock(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -922,7 +922,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>AfterFunction</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAfterFunction(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetAfterFunction(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -967,7 +967,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>AfterNamespace</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAfterNamespace(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetAfterNamespace(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1012,7 +1012,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>AfterObjCDeclaration</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAfterObjCDeclaration(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetAfterObjCDeclaration(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1057,7 +1057,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>AfterStruct</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAfterStruct(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetAfterStruct(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1102,7 +1102,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>AfterUnion</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAfterUnion(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetAfterUnion(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1147,7 +1147,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>BeforeCatch</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBeforeCatch(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetBeforeCatch(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1192,7 +1192,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>BeforeElse</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBeforeElse(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetBeforeElse(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1237,7 +1237,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>BeforeLambdaBody</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBeforeLambdaBody(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetBeforeLambdaBody(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1282,7 +1282,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>BeforeWhile</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBeforeWhile(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetBeforeWhile(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1327,7 +1327,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>IndentBraces</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIndentBraces(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetIndentBraces(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1372,7 +1372,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>SplitEmptyFunction</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSplitEmptyFunction(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetSplitEmptyFunction(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1417,7 +1417,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>SplitEmptyNamespace</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSplitEmptyNamespace(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetSplitEmptyNamespace(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1462,7 +1462,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>SplitEmptyRecord</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSplitEmptyRecord(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+            public void SetSplitEmptyRecord(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1608,7 +1608,7 @@ public readonly partial struct ClangFormatSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1631,7 +1631,7 @@ public readonly partial struct ClangFormatSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1678,7 +1678,7 @@ public readonly partial struct ClangFormatSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1865,7 +1865,7 @@ public readonly partial struct ClangFormatSchema
 
             internal Source(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg1, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg2, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.WrapControlStatementsIfForWhileSwitch.Source arg3, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg4, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg5, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg6, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg7, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg8, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg9, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg10, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg11, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg12, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg13, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg14, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg15, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg16, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg17, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg18)
+            internal Source(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.WrapControlStatementsIfForWhileSwitch.Source arg3, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg7, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg8, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg10, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg12, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg13, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg14, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg15, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg16, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg17, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg18)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -2337,7 +2337,7 @@ public readonly partial struct ClangFormatSchema
             /// <param name="arg17">The value of the property.</param>
             /// <param name="arg18">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg1, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg2, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.WrapControlStatementsIfForWhileSwitch.Source arg3, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg4, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg5, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg6, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg7, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg8, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg9, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg10, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg11, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg12, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg13, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg14, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg15, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg16, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg17, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg18, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.WrapControlStatementsIfForWhileSwitch.Source arg3, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg7, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg8, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg10, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg12, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg13, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg14, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg15, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg16, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg17, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg18, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18);
@@ -2396,7 +2396,7 @@ public readonly partial struct ClangFormatSchema
         /// <param name="splitEmptyNamespace">The value of the <c>"SplitEmptyNamespace"</c> property.</param>
         /// <param name="splitEmptyRecord">The value of the <c>"SplitEmptyRecord"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterCaseLabel = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterClass = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.WrapControlStatementsIfForWhileSwitch.Source afterControlStatement = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterEnum = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterExternBlock = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterFunction = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterNamespace = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterObjCDeclaration = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterStruct = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterUnion = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source beforeCatch = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source beforeElse = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source beforeLambdaBody = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source beforeWhile = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentBraces = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source splitEmptyFunction = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source splitEmptyNamespace = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source splitEmptyRecord = default)
+        public static Source Build(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterCaseLabel = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterClass = default, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.WrapControlStatementsIfForWhileSwitch.Source afterControlStatement = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterEnum = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterExternBlock = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterFunction = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterNamespace = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterObjCDeclaration = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterStruct = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterUnion = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source beforeCatch = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source beforeElse = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source beforeLambdaBody = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source beforeWhile = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentBraces = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source splitEmptyFunction = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source splitEmptyNamespace = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source splitEmptyRecord = default)
         {
             return new Source(afterCaseLabel, afterClass, afterControlStatement, afterEnum, afterExternBlock, afterFunction, afterNamespace, afterObjCDeclaration, afterStruct, afterUnion, beforeCatch, beforeElse, beforeLambdaBody, beforeWhile, indentBraces, splitEmptyFunction, splitEmptyNamespace, splitEmptyRecord);
         }

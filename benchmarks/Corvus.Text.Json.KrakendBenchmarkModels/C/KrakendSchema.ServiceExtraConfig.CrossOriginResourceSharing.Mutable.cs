@@ -517,7 +517,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>allow_credentials</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowCredentialsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowCredentials.Source value)
+                public void SetAllowCredentialsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowCredentials.Source value)
                 {
                     CheckValidInstance();
 
@@ -562,7 +562,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>allow_headers</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowHeaders(in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowedHeaders.Source value)
+                public void SetAllowHeaders(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowedHeaders.Source value)
                 {
                     CheckValidInstance();
 
@@ -643,7 +643,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>allow_methods</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowMethods(in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ObjectInArrayArray.Source value)
+                public void SetAllowMethods(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ObjectInArrayArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -724,7 +724,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>allow_origins</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowOrigins(in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.JsonStringArray.Source value)
+                public void SetAllowOrigins(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.JsonStringArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -789,7 +789,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>debug</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDebugValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ShowDebug.Source value)
+                public void SetDebugValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ShowDebug.Source value)
                 {
                     CheckValidInstance();
 
@@ -834,7 +834,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>expose_headers</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetExposeHeadersValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ExposeHeaders.Source value)
+                public void SetExposeHeadersValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ExposeHeaders.Source value)
                 {
                     CheckValidInstance();
 
@@ -915,7 +915,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>max_age</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMaxAge(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+                public void SetMaxAge(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
                 {
                     CheckValidInstance();
 
@@ -1061,7 +1061,7 @@ public readonly partial struct KrakendSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -1084,7 +1084,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1131,7 +1131,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1307,7 +1307,7 @@ public readonly partial struct KrakendSchema
 
                 internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.JsonStringArray.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowCredentials.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowedHeaders.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ObjectInArrayArray.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ShowDebug.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ExposeHeaders.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg7)
+                internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.JsonStringArray.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowCredentials.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowedHeaders.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ObjectInArrayArray.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ShowDebug.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ExposeHeaders.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg7)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1483,7 +1483,7 @@ public readonly partial struct KrakendSchema
 
                 internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.JsonStringArray.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowCredentials.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowedHeaders.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ObjectInArrayArray.Source<TContext> arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ShowDebug.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ExposeHeaders.Source<TContext> arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg7)
+                internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.JsonStringArray.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowCredentials.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowedHeaders.Source<TContext> arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ObjectInArrayArray.Source<TContext> arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ShowDebug.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ExposeHeaders.Source<TContext> arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg7)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1825,7 +1825,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="arg6">The value of the property.</param>
                 /// <param name="arg7">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.JsonStringArray.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowCredentials.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowedHeaders.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ObjectInArrayArray.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ShowDebug.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ExposeHeaders.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg7, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.JsonStringArray.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowCredentials.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowedHeaders.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ObjectInArrayArray.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ShowDebug.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ExposeHeaders.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg7, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
@@ -1845,7 +1845,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="arg6">The value of the property.</param>
                 /// <param name="arg7">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.JsonStringArray.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowCredentials.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowedHeaders.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ObjectInArrayArray.Source<TContext> arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ShowDebug.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ExposeHeaders.Source<TContext> arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg7, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.JsonStringArray.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowCredentials.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowedHeaders.Source<TContext> arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ObjectInArrayArray.Source<TContext> arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ShowDebug.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ExposeHeaders.Source<TContext> arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg7, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1896,7 +1896,7 @@ public readonly partial struct KrakendSchema
             /// <param name="exposeHeaders">The value of the <c>"expose_headers"</c> property.</param>
             /// <param name="maxAge">The value of the <c>"max_age"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.JsonStringArray.Source allowOrigins, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowCredentials.Source allowCredentials = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowedHeaders.Source allowHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ObjectInArrayArray.Source allowMethods = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ShowDebug.Source debug = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ExposeHeaders.Source exposeHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source maxAge = default)
+            public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.JsonStringArray.Source allowOrigins, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowCredentials.Source allowCredentials = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowedHeaders.Source allowHeaders = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ObjectInArrayArray.Source allowMethods = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ShowDebug.Source debug = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ExposeHeaders.Source exposeHeaders = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source maxAge = default)
             {
                 return new Source(allowOrigins, allowCredentials, allowHeaders, allowMethods, debug, exposeHeaders, maxAge);
             }
@@ -1914,7 +1914,7 @@ public readonly partial struct KrakendSchema
             /// <param name="exposeHeaders">The value of the <c>"expose_headers"</c> property.</param>
             /// <param name="maxAge">The value of the <c>"max_age"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.JsonStringArray.Source<TContext> allowOrigins, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowCredentials.Source allowCredentials = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowedHeaders.Source<TContext> allowHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ObjectInArrayArray.Source<TContext> allowMethods = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ShowDebug.Source debug = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ExposeHeaders.Source<TContext> exposeHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source maxAge = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.JsonStringArray.Source<TContext> allowOrigins, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowCredentials.Source allowCredentials = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.AllowedHeaders.Source<TContext> allowHeaders = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ObjectInArrayArray.Source<TContext> allowMethods = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ShowDebug.Source debug = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.ExposeHeaders.Source<TContext> exposeHeaders = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source maxAge = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

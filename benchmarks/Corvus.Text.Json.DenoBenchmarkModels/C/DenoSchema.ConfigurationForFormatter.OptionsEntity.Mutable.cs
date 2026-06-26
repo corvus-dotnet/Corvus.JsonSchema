@@ -450,7 +450,7 @@ public readonly partial struct DenoSchema
                 /// Set the <c>indentWidth</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetIndentWidth(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.TheNumberOfCharactersForAnIndent.Source value)
+                public void SetIndentWidth(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.TheNumberOfCharactersForAnIndent.Source value)
                 {
                     CheckValidInstance();
 
@@ -495,7 +495,7 @@ public readonly partial struct DenoSchema
                 /// Set the <c>lineWidth</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetLineWidth(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.LineWidthEntity.Source value)
+                public void SetLineWidth(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.LineWidthEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -540,7 +540,7 @@ public readonly partial struct DenoSchema
                 /// Set the <c>proseWrap</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetProseWrap(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.DefineHowProseShouldBeWrappedInMarkdownFiles.Source value)
+                public void SetProseWrap(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.DefineHowProseShouldBeWrappedInMarkdownFiles.Source value)
                 {
                     CheckValidInstance();
 
@@ -585,7 +585,7 @@ public readonly partial struct DenoSchema
                 /// Set the <c>semiColons</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSemiColons(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToPreferUsingSemicolons.Source value)
+                public void SetSemiColons(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToPreferUsingSemicolons.Source value)
                 {
                     CheckValidInstance();
 
@@ -630,7 +630,7 @@ public readonly partial struct DenoSchema
                 /// Set the <c>singleQuote</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSingleQuote(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.SingleQuoteEntity.Source value)
+                public void SetSingleQuote(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.SingleQuoteEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -675,7 +675,7 @@ public readonly partial struct DenoSchema
                 /// Set the <c>useTabs</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetUseTabs(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToUseTabsTrueOrSpacesFalseForIndentation.Source value)
+                public void SetUseTabs(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToUseTabsTrueOrSpacesFalseForIndentation.Source value)
                 {
                     CheckValidInstance();
 
@@ -821,7 +821,7 @@ public readonly partial struct DenoSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -844,7 +844,7 @@ public readonly partial struct DenoSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -891,7 +891,7 @@ public readonly partial struct DenoSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1066,7 +1066,7 @@ public readonly partial struct DenoSchema
 
                 internal Source(Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.TheNumberOfCharactersForAnIndent.Source arg1, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.LineWidthEntity.Source arg2, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.DefineHowProseShouldBeWrappedInMarkdownFiles.Source arg3, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToPreferUsingSemicolons.Source arg4, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.SingleQuoteEntity.Source arg5, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToUseTabsTrueOrSpacesFalseForIndentation.Source arg6)
+                internal Source(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.TheNumberOfCharactersForAnIndent.Source arg1, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.LineWidthEntity.Source arg2, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.DefineHowProseShouldBeWrappedInMarkdownFiles.Source arg3, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToPreferUsingSemicolons.Source arg4, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.SingleQuoteEntity.Source arg5, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToUseTabsTrueOrSpacesFalseForIndentation.Source arg6)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1478,7 +1478,7 @@ public readonly partial struct DenoSchema
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="arg6">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.TheNumberOfCharactersForAnIndent.Source arg1, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.LineWidthEntity.Source arg2, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.DefineHowProseShouldBeWrappedInMarkdownFiles.Source arg3, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToPreferUsingSemicolons.Source arg4, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.SingleQuoteEntity.Source arg5, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToUseTabsTrueOrSpacesFalseForIndentation.Source arg6, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.TheNumberOfCharactersForAnIndent.Source arg1, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.LineWidthEntity.Source arg2, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.DefineHowProseShouldBeWrappedInMarkdownFiles.Source arg3, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToPreferUsingSemicolons.Source arg4, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.SingleQuoteEntity.Source arg5, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToUseTabsTrueOrSpacesFalseForIndentation.Source arg6, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1525,7 +1525,7 @@ public readonly partial struct DenoSchema
             /// <param name="singleQuote">The value of the <c>"singleQuote"</c> property.</param>
             /// <param name="useTabs">The value of the <c>"useTabs"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.TheNumberOfCharactersForAnIndent.Source indentWidth = default, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.LineWidthEntity.Source lineWidth = default, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.DefineHowProseShouldBeWrappedInMarkdownFiles.Source proseWrap = default, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToPreferUsingSemicolons.Source semiColons = default, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.SingleQuoteEntity.Source singleQuote = default, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToUseTabsTrueOrSpacesFalseForIndentation.Source useTabs = default)
+            public static Source Build(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.TheNumberOfCharactersForAnIndent.Source indentWidth = default, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.LineWidthEntity.Source lineWidth = default, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.DefineHowProseShouldBeWrappedInMarkdownFiles.Source proseWrap = default, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToPreferUsingSemicolons.Source semiColons = default, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.SingleQuoteEntity.Source singleQuote = default, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.OptionsEntity.WhetherToUseTabsTrueOrSpacesFalseForIndentation.Source useTabs = default)
             {
                 return new Source(indentWidth, lineWidth, proseWrap, semiColons, singleQuote, useTabs);
             }

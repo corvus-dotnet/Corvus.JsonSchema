@@ -554,7 +554,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>checkoutBranchByName</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCheckoutBranchByName(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetCheckoutBranchByName(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -599,7 +599,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>createPullRequest</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCreatePullRequest(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetCreatePullRequest(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -644,7 +644,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>createTag</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCreateTag(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetCreateTag(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -689,7 +689,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>fastForward</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetFastForward(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetFastForward(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -734,7 +734,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>fetchRemote</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetFetchRemote(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetFetchRemote(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -779,7 +779,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>forceCheckoutBranch</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetForceCheckoutBranch(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetForceCheckoutBranch(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -824,7 +824,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>mergeIntoCurrentBranch</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMergeIntoCurrentBranch(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetMergeIntoCurrentBranch(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -869,7 +869,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>pushTag</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPushTag(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetPushTag(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -914,7 +914,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>rebaseBranch</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRebaseBranch(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetRebaseBranch(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -959,7 +959,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>renameBranch</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRenameBranch(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetRenameBranch(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1004,7 +1004,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>setUpstream</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSetUpstream(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetSetUpstream(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1049,7 +1049,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>viewGitFlowOptions</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetViewGitFlowOptions(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetViewGitFlowOptions(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1094,7 +1094,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>viewPullRequestOptions</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetViewPullRequestOptions(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetViewPullRequestOptions(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1316,7 +1316,7 @@ public readonly partial struct LazygitSchema
 
                 internal Source(Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Branches.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg10, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg11, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg12, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg13)
+                internal Source(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg10, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg11, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg12, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg13)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1694,7 +1694,7 @@ public readonly partial struct LazygitSchema
                 /// <param name="arg12">The value of the property.</param>
                 /// <param name="arg13">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg10, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg11, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg12, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg13, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg10, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg11, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg12, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg13, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
@@ -1748,7 +1748,7 @@ public readonly partial struct LazygitSchema
             /// <param name="viewGitFlowOptions">The value of the <c>"viewGitFlowOptions"</c> property.</param>
             /// <param name="viewPullRequestOptions">The value of the <c>"viewPullRequestOptions"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source checkoutBranchByName = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source createPullRequest = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source createTag = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source fastForward = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source fetchRemote = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source forceCheckoutBranch = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source mergeIntoCurrentBranch = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source pushTag = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source rebaseBranch = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source renameBranch = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source setUpstream = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source viewGitFlowOptions = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source viewPullRequestOptions = default)
+            public static Source Build(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source checkoutBranchByName = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source createPullRequest = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source createTag = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source fastForward = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source fetchRemote = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source forceCheckoutBranch = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source mergeIntoCurrentBranch = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source pushTag = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source rebaseBranch = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source renameBranch = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source setUpstream = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source viewGitFlowOptions = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source viewPullRequestOptions = default)
             {
                 return new Source(checkoutBranchByName, createPullRequest, createTag, fastForward, fetchRemote, forceCheckoutBranch, mergeIntoCurrentBranch, pushTag, rebaseBranch, renameBranch, setUpstream, viewGitFlowOptions, viewPullRequestOptions);
             }

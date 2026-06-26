@@ -326,7 +326,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>authorizationCode</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAuthorizationCode(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl.Source value)
+            public void SetAuthorizationCode(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl.Source value)
             {
                 CheckValidInstance();
 
@@ -407,7 +407,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>clientCredentials</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetClientCredentials(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredScopesAndTokenUrl.Source value)
+            public void SetClientCredentials(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredScopesAndTokenUrl.Source value)
             {
                 CheckValidInstance();
 
@@ -488,7 +488,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>implicit</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetImplicit(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopes.Source value)
+            public void SetImplicit(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopes.Source value)
             {
                 CheckValidInstance();
 
@@ -569,7 +569,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>password</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPassword(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl.Source value)
+            public void SetPassword(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl.Source value)
             {
                 CheckValidInstance();
 
@@ -769,7 +769,7 @@ public readonly partial struct OpenapiSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -792,7 +792,7 @@ public readonly partial struct OpenapiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -839,7 +839,7 @@ public readonly partial struct OpenapiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1029,7 +1029,7 @@ public readonly partial struct OpenapiSchema
 
             internal Source(Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl.Source arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredScopesAndTokenUrl.Source arg2, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopes.Source arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl.Source arg4)
+            internal Source(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredScopesAndTokenUrl.Source arg2, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopes.Source arg3, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl.Source arg4)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1199,7 +1199,7 @@ public readonly partial struct OpenapiSchema
 
             internal Source(scoped in TContext context, Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl.Source<TContext> arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredScopesAndTokenUrl.Source<TContext> arg2, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopes.Source<TContext> arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl.Source<TContext> arg4)
+            internal Source(scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl.Source<TContext> arg1, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredScopesAndTokenUrl.Source<TContext> arg2, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopes.Source<TContext> arg3, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl.Source<TContext> arg4)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1517,7 +1517,7 @@ public readonly partial struct OpenapiSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl.Source arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredScopesAndTokenUrl.Source arg2, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopes.Source arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredScopesAndTokenUrl.Source arg2, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopes.Source arg3, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl.Source arg4, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4);
@@ -1534,7 +1534,7 @@ public readonly partial struct OpenapiSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl.Source<TContext> arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredScopesAndTokenUrl.Source<TContext> arg2, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopes.Source<TContext> arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl.Source<TContext> arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl.Source<TContext> arg1, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredScopesAndTokenUrl.Source<TContext> arg2, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopes.Source<TContext> arg3, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl.Source<TContext> arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1582,7 +1582,7 @@ public readonly partial struct OpenapiSchema
         /// <param name="implicitValue">The value of the <c>"implicit"</c> property.</param>
         /// <param name="password">The value of the <c>"password"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl.Source authorizationCode = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredScopesAndTokenUrl.Source clientCredentials = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopes.Source implicitValue = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl.Source password = default)
+        public static Source Build(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl.Source authorizationCode = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredScopesAndTokenUrl.Source clientCredentials = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopes.Source implicitValue = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl.Source password = default)
         {
             return new Source(authorizationCode, clientCredentials, implicitValue, password);
         }
@@ -1597,7 +1597,7 @@ public readonly partial struct OpenapiSchema
         /// <param name="implicitValue">The value of the <c>"implicit"</c> property.</param>
         /// <param name="password">The value of the <c>"password"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl.Source<TContext> authorizationCode = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredScopesAndTokenUrl.Source<TContext> clientCredentials = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopes.Source<TContext> implicitValue = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl.Source<TContext> password = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopesAndTokenUrl.Source<TContext> authorizationCode = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredScopesAndTokenUrl.Source<TContext> clientCredentials = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.RequiredAuthorizationUrlAndScopes.Source<TContext> implicitValue = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.OauthFlowsRequiredScopesAndTokenUrl.Source<TContext> password = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

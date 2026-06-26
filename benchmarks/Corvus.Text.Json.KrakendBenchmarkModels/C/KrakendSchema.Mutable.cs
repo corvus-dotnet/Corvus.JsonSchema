@@ -1128,7 +1128,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>async_agent</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAsyncAgentValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.Source value)
+        public void SetAsyncAgentValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.Source value)
         {
             CheckValidInstance();
 
@@ -1209,7 +1209,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>cache_ttl</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCacheTtl(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+        public void SetCacheTtl(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
         {
             CheckValidInstance();
 
@@ -1254,7 +1254,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>client_tls</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetClientTlsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source value)
+        public void SetClientTlsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source value)
         {
             CheckValidInstance();
 
@@ -1335,7 +1335,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>debug_endpoint</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDebugEndpointValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.DebugEndpoint.Source value)
+        public void SetDebugEndpointValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.DebugEndpoint.Source value)
         {
             CheckValidInstance();
 
@@ -1380,7 +1380,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>dialer_fallback_delay</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDialerFallbackDelay(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+        public void SetDialerFallbackDelay(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
         {
             CheckValidInstance();
 
@@ -1425,7 +1425,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>dialer_keep_alive</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDialerKeepAlive(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+        public void SetDialerKeepAlive(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
         {
             CheckValidInstance();
 
@@ -1470,7 +1470,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>dialer_timeout</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDialerTimeout(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+        public void SetDialerTimeout(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
         {
             CheckValidInstance();
 
@@ -1515,7 +1515,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>disable_compression</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDisableCompressionValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableCompression.Source value)
+        public void SetDisableCompressionValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableCompression.Source value)
         {
             CheckValidInstance();
 
@@ -1560,7 +1560,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>disable_keep_alives</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDisableKeepAlivesValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableKeepAlives.Source value)
+        public void SetDisableKeepAlivesValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableKeepAlives.Source value)
         {
             CheckValidInstance();
 
@@ -1605,7 +1605,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>disable_rest</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDisableRest(in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableResTfulUrLs.Source value)
+        public void SetDisableRest(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableResTfulUrLs.Source value)
         {
             CheckValidInstance();
 
@@ -1650,7 +1650,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>dns_cache_ttl</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDnsCacheTtl(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+        public void SetDnsCacheTtl(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
         {
             CheckValidInstance();
 
@@ -1695,7 +1695,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>echo_endpoint</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEchoEndpointValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.EchoEndpoint.Source value)
+        public void SetEchoEndpointValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EchoEndpoint.Source value)
         {
             CheckValidInstance();
 
@@ -1740,7 +1740,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>endpoints</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEndpoints(in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray.Source value)
+        public void SetEndpoints(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray.Source value)
         {
             CheckValidInstance();
 
@@ -1821,7 +1821,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>expect_continue_timeout</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExpectContinueTimeout(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+        public void SetExpectContinueTimeout(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
         {
             CheckValidInstance();
 
@@ -1866,7 +1866,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>extra_config</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExtraConfig(in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.Source value)
+        public void SetExtraConfig(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.Source value)
         {
             CheckValidInstance();
 
@@ -1947,7 +1947,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>host</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHost(in Corvus.KrakendBenchmark.Current.KrakendSchema.JsonStringArray.Source value)
+        public void SetHost(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -2028,7 +2028,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>idle_connection_timeout</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIdleConnectionTimeout(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+        public void SetIdleConnectionTimeout(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
         {
             CheckValidInstance();
 
@@ -2073,7 +2073,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>idle_timeout</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIdleTimeout(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+        public void SetIdleTimeout(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
         {
             CheckValidInstance();
 
@@ -2118,7 +2118,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>listen_ip</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetListenIpValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ListenIp.Source value)
+        public void SetListenIpValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ListenIp.Source value)
         {
             CheckValidInstance();
 
@@ -2163,7 +2163,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>max_header_bytes</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMaxHeaderBytesValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxHeaderBytes.Source value)
+        public void SetMaxHeaderBytesValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxHeaderBytes.Source value)
         {
             CheckValidInstance();
 
@@ -2208,7 +2208,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>max_idle_connections</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMaxIdleConnectionsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxIdleConnections.Source value)
+        public void SetMaxIdleConnectionsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxIdleConnections.Source value)
         {
             CheckValidInstance();
 
@@ -2253,7 +2253,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>max_idle_connections_per_host</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMaxIdleConnectionsPerHostValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxIdleConnectionsPerHost.Source value)
+        public void SetMaxIdleConnectionsPerHostValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxIdleConnectionsPerHost.Source value)
         {
             CheckValidInstance();
 
@@ -2298,7 +2298,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetNameValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Name.Source value)
+        public void SetNameValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Name.Source value)
         {
             CheckValidInstance();
 
@@ -2343,7 +2343,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>output_encoding</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOutputEncodingValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.OutputEncoding.Source value)
+        public void SetOutputEncodingValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.OutputEncoding.Source value)
         {
             CheckValidInstance();
 
@@ -2388,7 +2388,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>plugin</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPluginValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Plugin.Source value)
+        public void SetPluginValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Plugin.Source value)
         {
             CheckValidInstance();
 
@@ -2469,7 +2469,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>port</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPortValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Port.Source value)
+        public void SetPortValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Port.Source value)
         {
             CheckValidInstance();
 
@@ -2514,7 +2514,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>read_header_timeout</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetReadHeaderTimeout(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+        public void SetReadHeaderTimeout(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
         {
             CheckValidInstance();
 
@@ -2559,7 +2559,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>read_timeout</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetReadTimeout(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+        public void SetReadTimeout(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
         {
             CheckValidInstance();
 
@@ -2604,7 +2604,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>response_header_timeout</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetResponseHeaderTimeout(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+        public void SetResponseHeaderTimeout(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
         {
             CheckValidInstance();
 
@@ -2649,7 +2649,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>sequential_start</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSequentialStartValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.SequentialStart.Source value)
+        public void SetSequentialStartValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SequentialStart.Source value)
         {
             CheckValidInstance();
 
@@ -2694,7 +2694,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>timeout</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTimeout(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+        public void SetTimeout(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
         {
             CheckValidInstance();
 
@@ -2739,7 +2739,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>tls</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTlsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.Source value)
+        public void SetTlsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.Source value)
         {
             CheckValidInstance();
 
@@ -2820,7 +2820,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>use_h2c</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUseH2c(in Corvus.KrakendBenchmark.Current.KrakendSchema.EnableH2c.Source value)
+        public void SetUseH2c(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.EnableH2c.Source value)
         {
             CheckValidInstance();
 
@@ -2865,7 +2865,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>version</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVersion(in Corvus.KrakendBenchmark.Current.KrakendSchema.VersionOfThisSyntax.Source value)
+        public void SetVersion(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.VersionOfThisSyntax.Source value)
         {
             CheckValidInstance();
 
@@ -2896,7 +2896,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>write_timeout</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetWriteTimeout(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+        public void SetWriteTimeout(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
         {
             CheckValidInstance();
 
@@ -3042,7 +3042,7 @@ public readonly partial struct KrakendSchema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -3065,7 +3065,7 @@ public readonly partial struct KrakendSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -3112,7 +3112,7 @@ public readonly partial struct KrakendSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 

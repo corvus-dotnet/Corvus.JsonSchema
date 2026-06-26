@@ -424,7 +424,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>batch</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBatch(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.MapOfRequestsToBeBatched.Source value)
+            public void SetBatch(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.MapOfRequestsToBeBatched.Source value)
             {
                 CheckValidInstance();
 
@@ -505,7 +505,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>cache</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCacheValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.Source value)
+            public void SetCacheValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.Source value)
             {
                 CheckValidInstance();
 
@@ -586,7 +586,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeaders(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RepresentsHttpHeaders.Source value)
+            public void SetHeaders(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RepresentsHttpHeaders.Source value)
             {
                 CheckValidInstance();
 
@@ -667,7 +667,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>method</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMethod(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheHttpMethod.Source value)
+            public void SetMethod(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheHttpMethod.Source value)
             {
                 CheckValidInstance();
 
@@ -712,7 +712,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>mode</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMode(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheModeOfTheRequest.Source value)
+            public void SetMode(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheModeOfTheRequest.Source value)
             {
                 CheckValidInstance();
 
@@ -757,7 +757,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>parameters</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetParametersValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source value)
+            public void SetParametersValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source value)
             {
                 CheckValidInstance();
 
@@ -838,7 +838,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>retryAfter</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRetryAfter(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RetryAfterEntity.Source value)
+            public void SetRetryAfter(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RetryAfterEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -883,7 +883,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>timeout</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTimeout(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TimeoutEntity.Source value)
+            public void SetTimeout(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TimeoutEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -928,7 +928,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>url</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUrl(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetUrl(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -959,7 +959,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>withCredentials</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetWithCredentials(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.WithCredentialsEntity.Source value)
+            public void SetWithCredentials(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.WithCredentialsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1178,7 +1178,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.MapOfRequestsToBeBatched.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RepresentsHttpHeaders.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheHttpMethod.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheModeOfTheRequest.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RetryAfterEntity.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TimeoutEntity.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.WithCredentialsEntity.Source arg10)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.MapOfRequestsToBeBatched.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RepresentsHttpHeaders.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheHttpMethod.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheModeOfTheRequest.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RetryAfterEntity.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TimeoutEntity.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.WithCredentialsEntity.Source arg10)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1360,7 +1360,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.MapOfRequestsToBeBatched.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RepresentsHttpHeaders.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheHttpMethod.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheModeOfTheRequest.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RetryAfterEntity.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TimeoutEntity.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.WithCredentialsEntity.Source arg10)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.MapOfRequestsToBeBatched.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RepresentsHttpHeaders.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheHttpMethod.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheModeOfTheRequest.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RetryAfterEntity.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TimeoutEntity.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.WithCredentialsEntity.Source arg10)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1657,7 +1657,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.MapOfRequestsToBeBatched.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RepresentsHttpHeaders.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheHttpMethod.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheModeOfTheRequest.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RetryAfterEntity.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TimeoutEntity.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.WithCredentialsEntity.Source arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.MapOfRequestsToBeBatched.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RepresentsHttpHeaders.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheHttpMethod.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheModeOfTheRequest.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RetryAfterEntity.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TimeoutEntity.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.WithCredentialsEntity.Source arg10, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
@@ -1680,7 +1680,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.MapOfRequestsToBeBatched.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RepresentsHttpHeaders.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheHttpMethod.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheModeOfTheRequest.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RetryAfterEntity.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TimeoutEntity.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.WithCredentialsEntity.Source arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.MapOfRequestsToBeBatched.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RepresentsHttpHeaders.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheHttpMethod.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheModeOfTheRequest.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RetryAfterEntity.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TimeoutEntity.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.WithCredentialsEntity.Source arg10, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1734,7 +1734,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="timeout">The value of the <c>"timeout"</c> property.</param>
         /// <param name="withCredentials">The value of the <c>"withCredentials"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.MapOfRequestsToBeBatched.Source batch = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.Source cache = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RepresentsHttpHeaders.Source headers = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheHttpMethod.Source method = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheModeOfTheRequest.Source mode = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source parameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RetryAfterEntity.Source retryAfter = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TimeoutEntity.Source timeout = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.WithCredentialsEntity.Source withCredentials = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.MapOfRequestsToBeBatched.Source batch = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.Source cache = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RepresentsHttpHeaders.Source headers = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheHttpMethod.Source method = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheModeOfTheRequest.Source mode = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source parameters = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RetryAfterEntity.Source retryAfter = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TimeoutEntity.Source timeout = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.WithCredentialsEntity.Source withCredentials = default)
         {
             return new Source(url, batch, cache, headers, method, mode, parameters, retryAfter, timeout, withCredentials);
         }
@@ -1755,7 +1755,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="timeout">The value of the <c>"timeout"</c> property.</param>
         /// <param name="withCredentials">The value of the <c>"withCredentials"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.MapOfRequestsToBeBatched.Source<TContext> batch = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.Source<TContext> cache = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RepresentsHttpHeaders.Source<TContext> headers = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheHttpMethod.Source method = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheModeOfTheRequest.Source mode = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source<TContext> parameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RetryAfterEntity.Source retryAfter = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TimeoutEntity.Source timeout = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.WithCredentialsEntity.Source withCredentials = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.MapOfRequestsToBeBatched.Source<TContext> batch = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.Source<TContext> cache = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RepresentsHttpHeaders.Source<TContext> headers = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheHttpMethod.Source method = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TheModeOfTheRequest.Source mode = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Parameters.Source<TContext> parameters = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.RetryAfterEntity.Source retryAfter = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.TimeoutEntity.Source timeout = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.WithCredentialsEntity.Source withCredentials = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

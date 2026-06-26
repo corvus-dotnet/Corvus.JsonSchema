@@ -396,7 +396,7 @@ public readonly partial struct ClangFormatSchema
                     ///   </para>
                     /// </remarks>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void InsertItem(int itemIndex, in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
+                    public void InsertItem(int itemIndex, scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
                     {
                         CheckValidInstance();
 
@@ -422,7 +422,7 @@ public readonly partial struct ClangFormatSchema
                     ///   The parent <see cref="JsonDocument"/> has been disposed.
                     /// </exception>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void AddItem(in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
+                    public void AddItem(scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
                     {
                         InsertItem(GetArrayLength(), in value);
                     }

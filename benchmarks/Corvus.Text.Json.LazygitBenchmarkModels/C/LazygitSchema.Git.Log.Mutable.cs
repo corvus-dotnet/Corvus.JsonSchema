@@ -304,7 +304,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>order</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOrderValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Order.Source value)
+                public void SetOrderValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Order.Source value)
                 {
                     CheckValidInstance();
 
@@ -349,7 +349,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>showGraph</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetShowGraphValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowGraph.Source value)
+                public void SetShowGraphValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowGraph.Source value)
                 {
                     CheckValidInstance();
 
@@ -394,7 +394,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>showWholeGraph</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetShowWholeGraphValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowWholeGraph.Source value)
+                public void SetShowWholeGraphValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowWholeGraph.Source value)
                 {
                     CheckValidInstance();
 
@@ -606,7 +606,7 @@ public readonly partial struct LazygitSchema
 
                 internal Source(Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Order.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowGraph.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowWholeGraph.Source arg3)
+                internal Source(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Order.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowGraph.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowWholeGraph.Source arg3)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -934,7 +934,7 @@ public readonly partial struct LazygitSchema
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Order.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowGraph.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowWholeGraph.Source arg3, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Order.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowGraph.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowWholeGraph.Source arg3, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3);
@@ -978,7 +978,7 @@ public readonly partial struct LazygitSchema
             /// <param name="showGraph">The value of the <c>"showGraph"</c> property.</param>
             /// <param name="showWholeGraph">The value of the <c>"showWholeGraph"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Order.Source order = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowGraph.Source showGraph = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowWholeGraph.Source showWholeGraph = default)
+            public static Source Build(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Order.Source order = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowGraph.Source showGraph = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowWholeGraph.Source showWholeGraph = default)
             {
                 return new Source(order, showGraph, showWholeGraph);
             }

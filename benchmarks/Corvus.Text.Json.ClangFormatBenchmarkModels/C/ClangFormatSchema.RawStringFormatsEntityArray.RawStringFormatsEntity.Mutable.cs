@@ -414,7 +414,7 @@ public readonly partial struct ClangFormatSchema
                 /// Set the <c>BasedOnStyle</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetBasedOnStyle(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source value)
+                public void SetBasedOnStyle(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -459,7 +459,7 @@ public readonly partial struct ClangFormatSchema
                 /// Set the <c>CanonicalDelimiter</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCanonicalDelimiter(in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
+                public void SetCanonicalDelimiter(scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -504,7 +504,7 @@ public readonly partial struct ClangFormatSchema
                 /// Set the <c>Delimiters</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDelimiters(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.JsonStringArray.Source value)
+                public void SetDelimiters(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.JsonStringArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -585,7 +585,7 @@ public readonly partial struct ClangFormatSchema
                 /// Set the <c>EnclosingFunctions</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetEnclosingFunctions(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.EnclosingFArray.Source value)
+                public void SetEnclosingFunctions(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.EnclosingFArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -666,7 +666,7 @@ public readonly partial struct ClangFormatSchema
                 /// Set the <c>Language</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetLanguage(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source value)
+                public void SetLanguage(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source value)
                 {
                     CheckValidInstance();
 
@@ -812,7 +812,7 @@ public readonly partial struct ClangFormatSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -835,7 +835,7 @@ public readonly partial struct ClangFormatSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -882,7 +882,7 @@ public readonly partial struct ClangFormatSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1056,7 +1056,7 @@ public readonly partial struct ClangFormatSchema
 
                 internal Source(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source arg1, in Corvus.ClangFormatBenchmark.Current.JsonString.Source arg2, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.JsonStringArray.Source arg3, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.EnclosingFArray.Source arg4, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source arg5)
+                internal Source(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source arg1, scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source arg2, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.JsonStringArray.Source arg3, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.EnclosingFArray.Source arg4, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source arg5)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1228,7 +1228,7 @@ public readonly partial struct ClangFormatSchema
 
                 internal Source(scoped in TContext context, Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source arg1, in Corvus.ClangFormatBenchmark.Current.JsonString.Source arg2, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.JsonStringArray.Source<TContext> arg3, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.EnclosingFArray.Source<TContext> arg4, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source arg5)
+                internal Source(scoped in TContext context, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source arg1, scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source arg2, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.JsonStringArray.Source<TContext> arg3, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.EnclosingFArray.Source<TContext> arg4, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source arg5)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1554,7 +1554,7 @@ public readonly partial struct ClangFormatSchema
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source arg1, in Corvus.ClangFormatBenchmark.Current.JsonString.Source arg2, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.JsonStringArray.Source arg3, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.EnclosingFArray.Source arg4, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source arg5, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source arg1, scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source arg2, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.JsonStringArray.Source arg3, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.EnclosingFArray.Source arg4, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source arg5, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1572,7 +1572,7 @@ public readonly partial struct ClangFormatSchema
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source arg1, in Corvus.ClangFormatBenchmark.Current.JsonString.Source arg2, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.JsonStringArray.Source<TContext> arg3, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.EnclosingFArray.Source<TContext> arg4, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source arg5, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source arg1, scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source arg2, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.JsonStringArray.Source<TContext> arg3, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.EnclosingFArray.Source<TContext> arg4, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1621,7 +1621,7 @@ public readonly partial struct ClangFormatSchema
             /// <param name="enclosingFunctions">The value of the <c>"EnclosingFunctions"</c> property.</param>
             /// <param name="language">The value of the <c>"Language"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source basedOnStyle = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source canonicalDelimiter = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.JsonStringArray.Source delimiters = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.EnclosingFArray.Source enclosingFunctions = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source language = default)
+            public static Source Build(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source basedOnStyle = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source canonicalDelimiter = default, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.JsonStringArray.Source delimiters = default, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.EnclosingFArray.Source enclosingFunctions = default, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source language = default)
             {
                 return new Source(basedOnStyle, canonicalDelimiter, delimiters, enclosingFunctions, language);
             }
@@ -1637,7 +1637,7 @@ public readonly partial struct ClangFormatSchema
             /// <param name="enclosingFunctions">The value of the <c>"EnclosingFunctions"</c> property.</param>
             /// <param name="language">The value of the <c>"Language"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source basedOnStyle = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source canonicalDelimiter = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.JsonStringArray.Source<TContext> delimiters = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.EnclosingFArray.Source<TContext> enclosingFunctions = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source language = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source basedOnStyle = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source canonicalDelimiter = default, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.JsonStringArray.Source<TContext> delimiters = default, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.RawStringFormatsEntity.EnclosingFArray.Source<TContext> enclosingFunctions = default, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source language = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

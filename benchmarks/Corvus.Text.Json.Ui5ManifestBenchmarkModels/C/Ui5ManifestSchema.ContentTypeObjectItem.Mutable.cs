@@ -905,7 +905,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>actions</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetActions(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.ActionArray.Source value)
+            public void SetActions(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.ActionArray.Source value)
             {
                 CheckValidInstance();
 
@@ -986,7 +986,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>alt</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAlt(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetAlt(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1031,7 +1031,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>customStateIcon</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCustomStateIcon(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetCustomStateIcon(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1076,7 +1076,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>details</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDetails(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetDetails(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1121,7 +1121,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>emailSubject</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEmailSubject(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetEmailSubject(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1166,7 +1166,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>fullWidth</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFullWidth(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.FullWidthEntity.Source value)
+            public void SetFullWidth(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.FullWidthEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1211,7 +1211,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>icon</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIconValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source value)
+            public void SetIconValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source value)
             {
                 CheckValidInstance();
 
@@ -1292,7 +1292,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>id</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetId(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetId(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1337,7 +1337,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>item</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetItemValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.BindingInfoForComboBoxItems.Source value)
+            public void SetItemValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.BindingInfoForComboBoxItems.Source value)
             {
                 CheckValidInstance();
 
@@ -1418,7 +1418,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>label</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLabel(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetLabel(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1463,7 +1463,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>mainIndicator</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMainIndicator(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemMainIndicator.Source value)
+            public void SetMainIndicator(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemMainIndicator.Source value)
             {
                 CheckValidInstance();
 
@@ -1544,7 +1544,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>maxLines</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxLines(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.MaximumNumberOfLines.Source value)
+            public void SetMaxLines(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.MaximumNumberOfLines.Source value)
             {
                 CheckValidInstance();
 
@@ -1589,7 +1589,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>maxValue</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.TheNumberOfDisplayedSymbolsForRatingIndicator.Source value)
+            public void SetMaxValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.TheNumberOfDisplayedSymbolsForRatingIndicator.Source value)
             {
                 CheckValidInstance();
 
@@ -1634,7 +1634,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>path</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPath(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetPath(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1679,7 +1679,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>placeholder</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPlaceholder(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetPlaceholder(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1724,7 +1724,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>rows</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRows(in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source value)
+            public void SetRows(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonNumber.Source value)
             {
                 CheckValidInstance();
 
@@ -1769,7 +1769,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>selectedKey</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSelectedKey(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetSelectedKey(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1814,7 +1814,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>showColon</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShowColon(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.DefinesWhetherTheColonNextToTheLabelIsShown.Source value)
+            public void SetShowColon(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.DefinesWhetherTheColonNextToTheLabelIsShown.Source value)
             {
                 CheckValidInstance();
 
@@ -1859,7 +1859,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>showStateIcon</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShowStateIcon(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.DefinesIfADefaultStateIconIsShown.Source value)
+            public void SetShowStateIcon(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.DefinesIfADefaultStateIconIsShown.Source value)
             {
                 CheckValidInstance();
 
@@ -1904,7 +1904,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>sideIndicators</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSideIndicators(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.HeaderTypeNumericSideIndicatorArray.Source value)
+            public void SetSideIndicators(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.HeaderTypeNumericSideIndicatorArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1985,7 +1985,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>sideIndicatorsAlignment</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSideIndicatorsAlignment(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.ExperimentalTheAlignmentOfTheSideIndicators.Source value)
+            public void SetSideIndicatorsAlignment(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.ExperimentalTheAlignmentOfTheSideIndicators.Source value)
             {
                 CheckValidInstance();
 
@@ -2030,7 +2030,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>size</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSize(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.ExperimentalTheSizeOfTheIconsInAnIconGroup.Source value)
+            public void SetSize(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.ExperimentalTheSizeOfTheIconsInAnIconGroup.Source value)
             {
                 CheckValidInstance();
 
@@ -2075,7 +2075,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>src</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSrc(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetSrc(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -2120,7 +2120,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>state</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.State.Source value)
+            public void SetStateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.State.Source value)
             {
                 CheckValidInstance();
 
@@ -2165,7 +2165,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>target</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTarget(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.TargetEntity.Source value)
+            public void SetTarget(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.TargetEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2246,7 +2246,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>template</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTemplate(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemIconGroupTemplate.Source value)
+            public void SetTemplate(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItemIconGroupTemplate.Source value)
             {
                 CheckValidInstance();
 
@@ -2327,7 +2327,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>tooltip</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTooltip(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetTooltip(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -2372,7 +2372,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.TypeEntity.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.TypeEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2417,7 +2417,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>url</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUrl(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetUrl(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -2462,7 +2462,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>validations</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetValidations(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.ContentTypeObjectItemValidationArray.Source value)
+            public void SetValidations(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.ContentTypeObjectItemValidationArray.Source value)
             {
                 CheckValidInstance();
 
@@ -2543,7 +2543,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>value</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.RepresentsTheTextWhichIsAssociatedWithTheLabel.Source value)
+            public void SetValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.RepresentsTheTextWhichIsAssociatedWithTheLabel.Source value)
             {
                 CheckValidInstance();
 
@@ -2624,7 +2624,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>visible</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVisible(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source value)
+            public void SetVisible(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source value)
             {
                 CheckValidInstance();
 
@@ -2669,7 +2669,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>visualMode</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVisualMode(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.VisualModeEntity.Source value)
+            public void SetVisualMode(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectItem.VisualModeEntity.Source value)
             {
                 CheckValidInstance();
 

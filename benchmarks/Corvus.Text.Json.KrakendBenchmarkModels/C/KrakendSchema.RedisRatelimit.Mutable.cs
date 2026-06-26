@@ -425,7 +425,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>burst</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBurst(in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
+            public void SetBurst(scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -456,7 +456,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>host</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHost(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetHost(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -487,7 +487,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>period</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPeriod(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+            public void SetPeriod(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
             {
                 CheckValidInstance();
 
@@ -518,7 +518,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>rate</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRate(in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
+            public void SetRate(scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -549,7 +549,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>tokenizer</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTokenizerValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Tokenizer.Source value)
+            public void SetTokenizerValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Tokenizer.Source value)
             {
                 CheckValidInstance();
 
@@ -580,7 +580,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>tokenizer_field</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTokenizerField(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetTokenizerField(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -726,7 +726,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -749,7 +749,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -796,7 +796,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -971,7 +971,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg3, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Tokenizer.Source arg5, in Corvus.KrakendBenchmark.Current.JsonString.Source arg6)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Tokenizer.Source arg5, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg6)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1383,7 +1383,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg3, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Tokenizer.Source arg5, in Corvus.KrakendBenchmark.Current.JsonString.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Tokenizer.Source arg5, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg6, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1430,7 +1430,7 @@ public readonly partial struct KrakendSchema
         /// <param name="tokenizer">The value of the <c>"tokenizer"</c> property.</param>
         /// <param name="tokenizerField">The value of the <c>"tokenizer_field"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.JsonInteger.Source burst, in Corvus.KrakendBenchmark.Current.JsonString.Source host, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source period, in Corvus.KrakendBenchmark.Current.JsonInteger.Source rate, in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Tokenizer.Source tokenizer, in Corvus.KrakendBenchmark.Current.JsonString.Source tokenizerField = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source burst, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source host, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source period, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source rate, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Tokenizer.Source tokenizer, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source tokenizerField = default)
         {
             return new Source(burst, host, period, rate, tokenizer, tokenizerField);
         }

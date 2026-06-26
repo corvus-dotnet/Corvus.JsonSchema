@@ -494,7 +494,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+            public void SetDescription(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -539,7 +539,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>flagWords</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFlagWords(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.JsonStringArray.Source value)
+            public void SetFlagWords(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -604,7 +604,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>ignoreWords</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIgnoreWords(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.IgnoreWordArray.Source value)
+            public void SetIgnoreWords(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.IgnoreWordArray.Source value)
             {
                 CheckValidInstance();
 
@@ -685,7 +685,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetName(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source value)
+            public void SetName(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source value)
             {
                 CheckValidInstance();
 
@@ -716,7 +716,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>noSuggest</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNoSuggest(in Corvus.CspellBenchmark.Current.JsonBoolean.Source value)
+            public void SetNoSuggest(scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -761,7 +761,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>repMap</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRepMap(in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source value)
+            public void SetRepMap(scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source value)
             {
                 CheckValidInstance();
 
@@ -842,7 +842,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>suggestWords</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSuggestWords(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.SuggestWorArray.Source value)
+            public void SetSuggestWords(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.SuggestWorArray.Source value)
             {
                 CheckValidInstance();
 
@@ -923,7 +923,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source value)
+            public void SetType(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source value)
             {
                 CheckValidInstance();
 
@@ -968,7 +968,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>useCompounds</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUseCompounds(in Corvus.CspellBenchmark.Current.JsonBoolean.Source value)
+            public void SetUseCompounds(scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1013,7 +1013,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>words</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetWords(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.ListOfWordArray.Source value)
+            public void SetWords(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.ListOfWordArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1268,7 +1268,7 @@ public readonly partial struct CspellSchema
 
             internal Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.JsonStringArray.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg2, in Corvus.CspellBenchmark.Current.JsonString.Source arg3, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.IgnoreWordArray.Source arg4, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg5, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source arg6, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.SuggestWorArray.Source arg7, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg8, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg9, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.ListOfWordArray.Source arg10)
+            internal Source(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.JsonStringArray.Source arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg2, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.IgnoreWordArray.Source arg4, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source arg6, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.SuggestWorArray.Source arg7, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg8, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.ListOfWordArray.Source arg10)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1450,7 +1450,7 @@ public readonly partial struct CspellSchema
 
             internal Source(scoped in TContext context, Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.JsonStringArray.Source<TContext> arg1, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg2, in Corvus.CspellBenchmark.Current.JsonString.Source arg3, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.IgnoreWordArray.Source<TContext> arg4, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg5, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source<TContext> arg6, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.SuggestWorArray.Source<TContext> arg7, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg8, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg9, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.ListOfWordArray.Source<TContext> arg10)
+            internal Source(scoped in TContext context, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.JsonStringArray.Source<TContext> arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg2, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.IgnoreWordArray.Source<TContext> arg4, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source<TContext> arg6, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.SuggestWorArray.Source<TContext> arg7, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg8, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.ListOfWordArray.Source<TContext> arg10)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1747,7 +1747,7 @@ public readonly partial struct CspellSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.JsonStringArray.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg2, in Corvus.CspellBenchmark.Current.JsonString.Source arg3, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.IgnoreWordArray.Source arg4, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg5, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source arg6, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.SuggestWorArray.Source arg7, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg8, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg9, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.ListOfWordArray.Source arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.JsonStringArray.Source arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg2, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.IgnoreWordArray.Source arg4, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source arg6, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.SuggestWorArray.Source arg7, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg8, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.ListOfWordArray.Source arg10, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
@@ -1770,7 +1770,7 @@ public readonly partial struct CspellSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.JsonStringArray.Source<TContext> arg1, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg2, in Corvus.CspellBenchmark.Current.JsonString.Source arg3, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.IgnoreWordArray.Source<TContext> arg4, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg5, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source<TContext> arg6, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.SuggestWorArray.Source<TContext> arg7, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg8, in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg9, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.ListOfWordArray.Source<TContext> arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.JsonStringArray.Source<TContext> arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source arg2, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.IgnoreWordArray.Source<TContext> arg4, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source<TContext> arg6, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.SuggestWorArray.Source<TContext> arg7, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source arg8, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.ListOfWordArray.Source<TContext> arg10, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1824,7 +1824,7 @@ public readonly partial struct CspellSchema
         /// <param name="useCompounds">The value of the <c>"useCompounds"</c> property.</param>
         /// <param name="words">The value of the <c>"words"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.JsonStringArray.Source flagWords, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source name, in Corvus.CspellBenchmark.Current.JsonString.Source description = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.IgnoreWordArray.Source ignoreWords = default, in Corvus.CspellBenchmark.Current.JsonBoolean.Source noSuggest = default, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source repMap = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.SuggestWorArray.Source suggestWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source type = default, in Corvus.CspellBenchmark.Current.JsonBoolean.Source useCompounds = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.ListOfWordArray.Source words = default)
+        public static Source Build(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.JsonStringArray.Source flagWords, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source name, scoped in Corvus.CspellBenchmark.Current.JsonString.Source description = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.IgnoreWordArray.Source ignoreWords = default, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source noSuggest = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source repMap = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.SuggestWorArray.Source suggestWords = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source type = default, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source useCompounds = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.ListOfWordArray.Source words = default)
         {
             return new Source(flagWords, name, description, ignoreWords, noSuggest, repMap, suggestWords, type, useCompounds, words);
         }
@@ -1845,7 +1845,7 @@ public readonly partial struct CspellSchema
         /// <param name="useCompounds">The value of the <c>"useCompounds"</c> property.</param>
         /// <param name="words">The value of the <c>"words"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.JsonStringArray.Source<TContext> flagWords, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source name, in Corvus.CspellBenchmark.Current.JsonString.Source description = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.IgnoreWordArray.Source<TContext> ignoreWords = default, in Corvus.CspellBenchmark.Current.JsonBoolean.Source noSuggest = default, in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source<TContext> repMap = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.SuggestWorArray.Source<TContext> suggestWords = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source type = default, in Corvus.CspellBenchmark.Current.JsonBoolean.Source useCompounds = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.ListOfWordArray.Source<TContext> words = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.JsonStringArray.Source<TContext> flagWords, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source name, scoped in Corvus.CspellBenchmark.Current.JsonString.Source description = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.IgnoreWordArray.Source<TContext> ignoreWords = default, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source noSuggest = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source<TContext> repMap = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.SuggestWorArray.Source<TContext> suggestWords = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source type = default, scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source useCompounds = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.ListOfWordArray.Source<TContext> words = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

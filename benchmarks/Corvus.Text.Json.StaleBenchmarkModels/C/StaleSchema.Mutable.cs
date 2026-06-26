@@ -634,7 +634,7 @@ public readonly partial struct StaleSchema
         /// Set the <c>closeComment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCloseComment(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ClosedComment.Source value)
+        public void SetCloseComment(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ClosedComment.Source value)
         {
             CheckValidInstance();
 
@@ -679,7 +679,7 @@ public readonly partial struct StaleSchema
         /// Set the <c>daysUntilClose</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDaysUntilClose(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Source value)
+        public void SetDaysUntilClose(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Source value)
         {
             CheckValidInstance();
 
@@ -724,7 +724,7 @@ public readonly partial struct StaleSchema
         /// Set the <c>daysUntilStale</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDaysUntilStale(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Source value)
+        public void SetDaysUntilStale(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Source value)
         {
             CheckValidInstance();
 
@@ -769,7 +769,7 @@ public readonly partial struct StaleSchema
         /// Set the <c>exemptAssignees</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExemptAssignees(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Source value)
+        public void SetExemptAssignees(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Source value)
         {
             CheckValidInstance();
 
@@ -814,7 +814,7 @@ public readonly partial struct StaleSchema
         /// Set the <c>exemptLabels</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExemptLabels(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Source value)
+        public void SetExemptLabels(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -895,7 +895,7 @@ public readonly partial struct StaleSchema
         /// Set the <c>exemptProjects</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExemptProjects(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Source value)
+        public void SetExemptProjects(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Source value)
         {
             CheckValidInstance();
 
@@ -940,7 +940,7 @@ public readonly partial struct StaleSchema
         /// Set the <c>issues</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIssues(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Source value)
+        public void SetIssues(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Source value)
         {
             CheckValidInstance();
 
@@ -1021,7 +1021,7 @@ public readonly partial struct StaleSchema
         /// Set the <c>limitPerRun</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLimitPerRun(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Source value)
+        public void SetLimitPerRun(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Source value)
         {
             CheckValidInstance();
 
@@ -1066,7 +1066,7 @@ public readonly partial struct StaleSchema
         /// Set the <c>markComment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMarkComment(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Source value)
+        public void SetMarkComment(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Source value)
         {
             CheckValidInstance();
 
@@ -1111,7 +1111,7 @@ public readonly partial struct StaleSchema
         /// Set the <c>only</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOnly(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Only.Source value)
+        public void SetOnly(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Only.Source value)
         {
             CheckValidInstance();
 
@@ -1156,7 +1156,7 @@ public readonly partial struct StaleSchema
         /// Set the <c>onlyLabels</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOnlyLabels(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Source value)
+        public void SetOnlyLabels(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Source value)
         {
             CheckValidInstance();
 
@@ -1237,7 +1237,7 @@ public readonly partial struct StaleSchema
         /// Set the <c>pulls</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPulls(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Source value)
+        public void SetPulls(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Source value)
         {
             CheckValidInstance();
 
@@ -1318,7 +1318,7 @@ public readonly partial struct StaleSchema
         /// Set the <c>staleLabel</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStaleLabel(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source value)
+        public void SetStaleLabel(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source value)
         {
             CheckValidInstance();
 
@@ -1363,7 +1363,7 @@ public readonly partial struct StaleSchema
         /// Set the <c>unmarkComment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUnmarkComment(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source value)
+        public void SetUnmarkComment(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source value)
         {
             CheckValidInstance();
 
@@ -1527,7 +1527,7 @@ public readonly partial struct StaleSchema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -1550,7 +1550,7 @@ public readonly partial struct StaleSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1597,7 +1597,7 @@ public readonly partial struct StaleSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 

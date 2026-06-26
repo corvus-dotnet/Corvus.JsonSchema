@@ -255,7 +255,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>condition</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetConditionValue(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source value)
+                public void SetConditionValue(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source value)
                 {
                     CheckValidInstance();
 
@@ -320,7 +320,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>type</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetType(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType.ARequiredStringSpecifyingTheTypeOfTheCondition.Source value)
+                public void SetType(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType.ARequiredStringSpecifyingTheTypeOfTheCondition.Source value)
                 {
                     CheckValidInstance();
 
@@ -516,7 +516,7 @@ public readonly partial struct CmakePresetsSchema
 
                 internal Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source arg1)
+                internal Source(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source arg1)
                 {
                     _createArg1 = arg1;
                     _kind = Kind.Create;
@@ -680,7 +680,7 @@ public readonly partial struct CmakePresetsSchema
 
                 internal Source(scoped in TContext context, Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source<TContext> arg1)
+                internal Source(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source<TContext> arg1)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -902,7 +902,7 @@ public readonly partial struct CmakePresetsSchema
                 /// </summary>
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source arg1, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source arg1, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1);
@@ -916,7 +916,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="context">The context to pass to the builder.</param>
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source<TContext> arg1, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source<TContext> arg1, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -961,7 +961,7 @@ public readonly partial struct CmakePresetsSchema
             /// </summary>
             /// <param name="condition">The value of the <c>"condition"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source condition)
+            public static Source Build(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source condition)
             {
                 return new Source(condition);
             }
@@ -973,7 +973,7 @@ public readonly partial struct CmakePresetsSchema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="condition">The value of the <c>"condition"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source<TContext> condition)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source<TContext> condition)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

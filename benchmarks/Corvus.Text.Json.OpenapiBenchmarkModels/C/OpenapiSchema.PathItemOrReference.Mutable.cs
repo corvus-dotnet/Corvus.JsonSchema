@@ -522,7 +522,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>$ref</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRef(in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source value)
+            public void SetRef(scoped in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source value)
             {
                 CheckValidInstance();
 
@@ -567,7 +567,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>delete</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDelete(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Operation.Source value)
+            public void SetDelete(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Operation.Source value)
             {
                 CheckValidInstance();
 
@@ -648,7 +648,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
+            public void SetDescription(scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -693,7 +693,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>get</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGet(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Operation.Source value)
+            public void SetGet(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Operation.Source value)
             {
                 CheckValidInstance();
 
@@ -774,7 +774,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>head</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHead(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Operation.Source value)
+            public void SetHead(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Operation.Source value)
             {
                 CheckValidInstance();
 
@@ -855,7 +855,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>options</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOptions(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Operation.Source value)
+            public void SetOptions(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Operation.Source value)
             {
                 CheckValidInstance();
 
@@ -936,7 +936,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>parameters</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetParameters(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OpenapiSchemaParametArray.Source value)
+            public void SetParameters(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OpenapiSchemaParametArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1017,7 +1017,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>patch</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPatch(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Operation.Source value)
+            public void SetPatch(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Operation.Source value)
             {
                 CheckValidInstance();
 
@@ -1098,7 +1098,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>post</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPost(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Operation.Source value)
+            public void SetPost(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Operation.Source value)
             {
                 CheckValidInstance();
 
@@ -1179,7 +1179,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>put</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPut(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Operation.Source value)
+            public void SetPut(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Operation.Source value)
             {
                 CheckValidInstance();
 
@@ -1260,7 +1260,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>servers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetServers(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.PathItem.ServerArray.Source value)
+            public void SetServers(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.PathItem.ServerArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1341,7 +1341,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>summary</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSummary(in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
+            public void SetSummary(scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1386,7 +1386,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>trace</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTrace(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Operation.Source value)
+            public void SetTrace(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Operation.Source value)
             {
                 CheckValidInstance();
 
@@ -1568,7 +1568,7 @@ public readonly partial struct OpenapiSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1591,7 +1591,7 @@ public readonly partial struct OpenapiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1638,7 +1638,7 @@ public readonly partial struct OpenapiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 

@@ -350,7 +350,7 @@ public readonly partial struct Ui5ManifestSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -373,7 +373,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.Source value)
             {
                 CheckValidInstance();
 
@@ -420,7 +420,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.RequiredActionAndSemanticObject.Source value)
             {
                 CheckValidInstance();
 

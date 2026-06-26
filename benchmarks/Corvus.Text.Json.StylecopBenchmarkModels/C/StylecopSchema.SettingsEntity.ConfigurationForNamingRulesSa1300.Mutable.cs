@@ -325,7 +325,7 @@ public readonly partial struct StylecopSchema
                 /// Set the <c>allowCommonHungarianPrefixes</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowCommonHungarianPrefixes(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowCommonHungarianPrefixesEntity.Source value)
+                public void SetAllowCommonHungarianPrefixes(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowCommonHungarianPrefixesEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -370,7 +370,7 @@ public readonly partial struct StylecopSchema
                 /// Set the <c>allowedHungarianPrefixes</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowedHungarianPrefixes(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.Source value)
+                public void SetAllowedHungarianPrefixes(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -451,7 +451,7 @@ public readonly partial struct StylecopSchema
                 /// Set the <c>allowedNamespaceComponents</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowedNamespaceComponents(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.Source value)
+                public void SetAllowedNamespaceComponents(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -532,7 +532,7 @@ public readonly partial struct StylecopSchema
                 /// Set the <c>includeInferredTupleElementNames</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetIncludeInferredTupleElementNames(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.IncludeInferredTupleElementNamesEntity.Source value)
+                public void SetIncludeInferredTupleElementNames(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.IncludeInferredTupleElementNamesEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -577,7 +577,7 @@ public readonly partial struct StylecopSchema
                 /// Set the <c>tupleElementNameCasing</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTupleElementNameCasing(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.SpecifiesTheCasingConventionUsedForTupleElementNames.Source value)
+                public void SetTupleElementNameCasing(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.SpecifiesTheCasingConventionUsedForTupleElementNames.Source value)
                 {
                     CheckValidInstance();
 
@@ -791,7 +791,7 @@ public readonly partial struct StylecopSchema
 
                 internal Source(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowCommonHungarianPrefixesEntity.Source arg1, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.Source arg2, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.Source arg3, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.IncludeInferredTupleElementNamesEntity.Source arg4, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.SpecifiesTheCasingConventionUsedForTupleElementNames.Source arg5)
+                internal Source(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowCommonHungarianPrefixesEntity.Source arg1, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.Source arg2, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.Source arg3, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.IncludeInferredTupleElementNamesEntity.Source arg4, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.SpecifiesTheCasingConventionUsedForTupleElementNames.Source arg5)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -963,7 +963,7 @@ public readonly partial struct StylecopSchema
 
                 internal Source(scoped in TContext context, Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowCommonHungarianPrefixesEntity.Source arg1, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.Source<TContext> arg2, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.Source<TContext> arg3, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.IncludeInferredTupleElementNamesEntity.Source arg4, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.SpecifiesTheCasingConventionUsedForTupleElementNames.Source arg5)
+                internal Source(scoped in TContext context, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowCommonHungarianPrefixesEntity.Source arg1, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.Source<TContext> arg2, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.Source<TContext> arg3, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.IncludeInferredTupleElementNamesEntity.Source arg4, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.SpecifiesTheCasingConventionUsedForTupleElementNames.Source arg5)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1220,7 +1220,7 @@ public readonly partial struct StylecopSchema
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowCommonHungarianPrefixesEntity.Source arg1, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.Source arg2, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.Source arg3, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.IncludeInferredTupleElementNamesEntity.Source arg4, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.SpecifiesTheCasingConventionUsedForTupleElementNames.Source arg5, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowCommonHungarianPrefixesEntity.Source arg1, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.Source arg2, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.Source arg3, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.IncludeInferredTupleElementNamesEntity.Source arg4, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.SpecifiesTheCasingConventionUsedForTupleElementNames.Source arg5, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1238,7 +1238,7 @@ public readonly partial struct StylecopSchema
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowCommonHungarianPrefixesEntity.Source arg1, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.Source<TContext> arg2, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.Source<TContext> arg3, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.IncludeInferredTupleElementNamesEntity.Source arg4, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.SpecifiesTheCasingConventionUsedForTupleElementNames.Source arg5, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowCommonHungarianPrefixesEntity.Source arg1, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.Source<TContext> arg2, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.Source<TContext> arg3, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.IncludeInferredTupleElementNamesEntity.Source arg4, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.SpecifiesTheCasingConventionUsedForTupleElementNames.Source arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1287,7 +1287,7 @@ public readonly partial struct StylecopSchema
             /// <param name="includeInferredTupleElementNames">The value of the <c>"includeInferredTupleElementNames"</c> property.</param>
             /// <param name="tupleElementNameCasing">The value of the <c>"tupleElementNameCasing"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowCommonHungarianPrefixesEntity.Source allowCommonHungarianPrefixes = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.Source allowedHungarianPrefixes = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.Source allowedNamespaceComponents = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.IncludeInferredTupleElementNamesEntity.Source includeInferredTupleElementNames = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.SpecifiesTheCasingConventionUsedForTupleElementNames.Source tupleElementNameCasing = default)
+            public static Source Build(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowCommonHungarianPrefixesEntity.Source allowCommonHungarianPrefixes = default, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.Source allowedHungarianPrefixes = default, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.Source allowedNamespaceComponents = default, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.IncludeInferredTupleElementNamesEntity.Source includeInferredTupleElementNames = default, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.SpecifiesTheCasingConventionUsedForTupleElementNames.Source tupleElementNameCasing = default)
             {
                 return new Source(allowCommonHungarianPrefixes, allowedHungarianPrefixes, allowedNamespaceComponents, includeInferredTupleElementNames, tupleElementNameCasing);
             }
@@ -1303,7 +1303,7 @@ public readonly partial struct StylecopSchema
             /// <param name="includeInferredTupleElementNames">The value of the <c>"includeInferredTupleElementNames"</c> property.</param>
             /// <param name="tupleElementNameCasing">The value of the <c>"tupleElementNameCasing"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowCommonHungarianPrefixesEntity.Source allowCommonHungarianPrefixes = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.Source<TContext> allowedHungarianPrefixes = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.Source<TContext> allowedNamespaceComponents = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.IncludeInferredTupleElementNamesEntity.Source includeInferredTupleElementNames = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.SpecifiesTheCasingConventionUsedForTupleElementNames.Source tupleElementNameCasing = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowCommonHungarianPrefixesEntity.Source allowCommonHungarianPrefixes = default, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedHungarianPrefixesEntityArray.Source<TContext> allowedHungarianPrefixes = default, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.Source<TContext> allowedNamespaceComponents = default, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.IncludeInferredTupleElementNamesEntity.Source includeInferredTupleElementNames = default, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.SpecifiesTheCasingConventionUsedForTupleElementNames.Source tupleElementNameCasing = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

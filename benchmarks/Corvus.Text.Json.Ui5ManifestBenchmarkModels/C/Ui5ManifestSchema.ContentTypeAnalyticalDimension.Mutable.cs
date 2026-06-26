@@ -310,7 +310,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>dataType</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDataType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalDimension.DataTypeEntity.Source value)
+            public void SetDataType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalDimension.DataTypeEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -355,7 +355,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>displayValue</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisplayValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetDisplayValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -400,7 +400,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>label</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLabel(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetLabel(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -445,7 +445,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetName(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetName(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -490,7 +490,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>value</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -704,7 +704,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalDimension.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalDimension.DataTypeEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalDimension.DataTypeEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1042,7 +1042,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg4">The value of the property.</param>
             /// <param name="arg5">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalDimension.DataTypeEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalDimension.DataTypeEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1088,7 +1088,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="name">The value of the <c>"name"</c> property.</param>
         /// <param name="value">The value of the <c>"value"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalDimension.DataTypeEntity.Source dataType = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source displayValue = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source label = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source name = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalDimension.DataTypeEntity.Source dataType = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source displayValue = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source label = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source name = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default)
         {
             return new Source(dataType, displayValue, label, name, value);
         }

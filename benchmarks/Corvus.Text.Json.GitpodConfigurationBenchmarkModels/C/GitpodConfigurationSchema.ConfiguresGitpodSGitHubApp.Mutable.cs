@@ -226,7 +226,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// Set the <c>prebuilds</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPrebuilds(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.Source value)
+            public void SetPrebuilds(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -472,7 +472,7 @@ public readonly partial struct GitpodConfigurationSchema
 
             internal Source(Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.Source arg1)
+            internal Source(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.Source arg1)
             {
                 _createArg1 = arg1;
                 _kind = Kind.Create;
@@ -636,7 +636,7 @@ public readonly partial struct GitpodConfigurationSchema
 
             internal Source(scoped in TContext context, Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.Source<TContext> arg1)
+            internal Source(scoped in TContext context, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.Source<TContext> arg1)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -856,7 +856,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// </summary>
             /// <param name="arg1">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.Source arg1, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.Source arg1, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1);
@@ -870,7 +870,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="arg1">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.Source<TContext> arg1, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.Source<TContext> arg1, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -915,7 +915,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// </summary>
         /// <param name="prebuilds">The value of the <c>"prebuilds"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.Source prebuilds = default)
+        public static Source Build(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.Source prebuilds = default)
         {
             return new Source(prebuilds);
         }
@@ -927,7 +927,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="prebuilds">The value of the <c>"prebuilds"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.Source<TContext> prebuilds = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.Source<TContext> prebuilds = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

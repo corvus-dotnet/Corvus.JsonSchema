@@ -313,7 +313,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>model</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetModel(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheModelForTheCard.Source value)
+            public void SetModel(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheModelForTheCard.Source value)
             {
                 CheckValidInstance();
 
@@ -358,7 +358,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>sequencePos</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSequencePos(in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source value)
+            public void SetSequencePos(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -403,7 +403,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>settings</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSettings(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.Source value)
+            public void SetSettings(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.Source value)
             {
                 CheckValidInstance();
 
@@ -484,7 +484,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>tabs</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTabs(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.TabSettingArray.Source value)
+            public void SetTabs(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.TabSettingArray.Source value)
             {
                 CheckValidInstance();
 
@@ -565,7 +565,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>template</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTemplate(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheCardComponentPathToUseForThisCard.Source value)
+            public void SetTemplate(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheCardComponentPathToUseForThisCard.Source value)
             {
                 CheckValidInstance();
 
@@ -765,7 +765,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheCardComponentPathToUseForThisCard.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheModelForTheCard.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.TabSettingArray.Source arg5)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheCardComponentPathToUseForThisCard.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheModelForTheCard.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.TabSettingArray.Source arg5)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -937,7 +937,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheCardComponentPathToUseForThisCard.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheModelForTheCard.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.TabSettingArray.Source<TContext> arg5)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheCardComponentPathToUseForThisCard.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheModelForTheCard.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.TabSettingArray.Source<TContext> arg5)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1194,7 +1194,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg4">The value of the property.</param>
             /// <param name="arg5">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheCardComponentPathToUseForThisCard.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheModelForTheCard.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.TabSettingArray.Source arg5, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheCardComponentPathToUseForThisCard.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheModelForTheCard.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.TabSettingArray.Source arg5, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1212,7 +1212,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg4">The value of the property.</param>
             /// <param name="arg5">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheCardComponentPathToUseForThisCard.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheModelForTheCard.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.TabSettingArray.Source<TContext> arg5, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheCardComponentPathToUseForThisCard.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheModelForTheCard.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.TabSettingArray.Source<TContext> arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1261,7 +1261,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="settings">The value of the <c>"settings"</c> property.</param>
         /// <param name="tabs">The value of the <c>"tabs"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheCardComponentPathToUseForThisCard.Source template, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheModelForTheCard.Source model = default, in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source sequencePos = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.Source settings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.TabSettingArray.Source tabs = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheCardComponentPathToUseForThisCard.Source template, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheModelForTheCard.Source model = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source sequencePos = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.Source settings = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.TabSettingArray.Source tabs = default)
         {
             return new Source(template, model, sequencePos, settings, tabs);
         }
@@ -1277,7 +1277,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="settings">The value of the <c>"settings"</c> property.</param>
         /// <param name="tabs">The value of the <c>"tabs"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheCardComponentPathToUseForThisCard.Source template, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheModelForTheCard.Source model = default, in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source sequencePos = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.Source<TContext> settings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.TabSettingArray.Source<TContext> tabs = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheCardComponentPathToUseForThisCard.Source template, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.RepresentsTheModelForTheCard.Source model = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source sequencePos = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.Source<TContext> settings = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Card.TabSettingArray.Source<TContext> tabs = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

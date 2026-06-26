@@ -371,7 +371,7 @@ public readonly partial struct KrakendSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetProperty(string propertyName, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -394,7 +394,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -441,7 +441,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 

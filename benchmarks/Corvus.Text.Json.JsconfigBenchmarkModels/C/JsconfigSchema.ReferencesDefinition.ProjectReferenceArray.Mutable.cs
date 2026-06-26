@@ -386,7 +386,7 @@ public readonly partial struct JsconfigSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void InsertItem(int itemIndex, in Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.ProjectReferenceArray.ProjectReference.Source value)
+                public void InsertItem(int itemIndex, scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.ProjectReferenceArray.ProjectReference.Source value)
                 {
                     CheckValidInstance();
 
@@ -412,7 +412,7 @@ public readonly partial struct JsconfigSchema
                 ///   The parent <see cref="JsonDocument"/> has been disposed.
                 /// </exception>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void AddItem(in Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.ProjectReferenceArray.ProjectReference.Source value)
+                public void AddItem(scoped in Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.ProjectReferenceArray.ProjectReference.Source value)
                 {
                     InsertItem(GetArrayLength(), in value);
                 }

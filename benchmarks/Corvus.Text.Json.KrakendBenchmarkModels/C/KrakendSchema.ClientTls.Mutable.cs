@@ -454,7 +454,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>allow_insecure_connections</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAllowInsecureConnectionsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.AllowInsecureConnections.Source value)
+            public void SetAllowInsecureConnectionsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.AllowInsecureConnections.Source value)
             {
                 CheckValidInstance();
 
@@ -499,7 +499,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>ca_certs</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCaCerts(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CaCertificates.Source value)
+            public void SetCaCerts(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CaCertificates.Source value)
             {
                 CheckValidInstance();
 
@@ -580,7 +580,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>cipher_suites</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCipherSuitesValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CipherSuites.Source value)
+            public void SetCipherSuitesValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CipherSuites.Source value)
             {
                 CheckValidInstance();
 
@@ -661,7 +661,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>client_certs</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetClientCerts(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.RequiredCertificateAndPrivateKeyArray.Source value)
+            public void SetClientCerts(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.RequiredCertificateAndPrivateKeyArray.Source value)
             {
                 CheckValidInstance();
 
@@ -742,7 +742,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>curve_preferences</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCurvePreferences(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CurvePreferencesEntityArray.Source value)
+            public void SetCurvePreferences(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CurvePreferencesEntityArray.Source value)
             {
                 CheckValidInstance();
 
@@ -823,7 +823,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>disable_system_ca_pool</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisableSystemCaPool(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.DisableSystemSCa.Source value)
+            public void SetDisableSystemCaPool(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.DisableSystemSCa.Source value)
             {
                 CheckValidInstance();
 
@@ -868,7 +868,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>max_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxVersion(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MaximumTlsVersion.Source value)
+            public void SetMaxVersion(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MaximumTlsVersion.Source value)
             {
                 CheckValidInstance();
 
@@ -913,7 +913,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>min_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMinVersion(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MinimumTlsVersion.Source value)
+            public void SetMinVersion(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MinimumTlsVersion.Source value)
             {
                 CheckValidInstance();
 
@@ -1059,7 +1059,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1082,7 +1082,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1129,7 +1129,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1306,7 +1306,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.AllowInsecureConnections.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CaCertificates.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CipherSuites.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.RequiredCertificateAndPrivateKeyArray.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CurvePreferencesEntityArray.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.DisableSystemSCa.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MaximumTlsVersion.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MinimumTlsVersion.Source arg8)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.AllowInsecureConnections.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CaCertificates.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CipherSuites.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.RequiredCertificateAndPrivateKeyArray.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CurvePreferencesEntityArray.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.DisableSystemSCa.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MaximumTlsVersion.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MinimumTlsVersion.Source arg8)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1484,7 +1484,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.AllowInsecureConnections.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CaCertificates.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CipherSuites.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.RequiredCertificateAndPrivateKeyArray.Source<TContext> arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CurvePreferencesEntityArray.Source<TContext> arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.DisableSystemSCa.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MaximumTlsVersion.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MinimumTlsVersion.Source arg8)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.AllowInsecureConnections.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CaCertificates.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CipherSuites.Source<TContext> arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.RequiredCertificateAndPrivateKeyArray.Source<TContext> arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CurvePreferencesEntityArray.Source<TContext> arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.DisableSystemSCa.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MaximumTlsVersion.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MinimumTlsVersion.Source arg8)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1834,7 +1834,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg7">The value of the property.</param>
             /// <param name="arg8">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.AllowInsecureConnections.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CaCertificates.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CipherSuites.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.RequiredCertificateAndPrivateKeyArray.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CurvePreferencesEntityArray.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.DisableSystemSCa.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MaximumTlsVersion.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MinimumTlsVersion.Source arg8, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.AllowInsecureConnections.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CaCertificates.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CipherSuites.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.RequiredCertificateAndPrivateKeyArray.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CurvePreferencesEntityArray.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.DisableSystemSCa.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MaximumTlsVersion.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MinimumTlsVersion.Source arg8, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
@@ -1855,7 +1855,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg7">The value of the property.</param>
             /// <param name="arg8">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.AllowInsecureConnections.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CaCertificates.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CipherSuites.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.RequiredCertificateAndPrivateKeyArray.Source<TContext> arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CurvePreferencesEntityArray.Source<TContext> arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.DisableSystemSCa.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MaximumTlsVersion.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MinimumTlsVersion.Source arg8, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.AllowInsecureConnections.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CaCertificates.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CipherSuites.Source<TContext> arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.RequiredCertificateAndPrivateKeyArray.Source<TContext> arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CurvePreferencesEntityArray.Source<TContext> arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.DisableSystemSCa.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MaximumTlsVersion.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MinimumTlsVersion.Source arg8, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1907,7 +1907,7 @@ public readonly partial struct KrakendSchema
         /// <param name="maxVersion">The value of the <c>"max_version"</c> property.</param>
         /// <param name="minVersion">The value of the <c>"min_version"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.AllowInsecureConnections.Source allowInsecureConnections = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CaCertificates.Source caCerts = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CipherSuites.Source cipherSuites = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.RequiredCertificateAndPrivateKeyArray.Source clientCerts = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CurvePreferencesEntityArray.Source curvePreferences = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.DisableSystemSCa.Source disableSystemCaPool = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MaximumTlsVersion.Source maxVersion = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MinimumTlsVersion.Source minVersion = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.AllowInsecureConnections.Source allowInsecureConnections = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CaCertificates.Source caCerts = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CipherSuites.Source cipherSuites = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.RequiredCertificateAndPrivateKeyArray.Source clientCerts = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CurvePreferencesEntityArray.Source curvePreferences = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.DisableSystemSCa.Source disableSystemCaPool = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MaximumTlsVersion.Source maxVersion = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MinimumTlsVersion.Source minVersion = default)
         {
             return new Source(allowInsecureConnections, caCerts, cipherSuites, clientCerts, curvePreferences, disableSystemCaPool, maxVersion, minVersion);
         }
@@ -1926,7 +1926,7 @@ public readonly partial struct KrakendSchema
         /// <param name="maxVersion">The value of the <c>"max_version"</c> property.</param>
         /// <param name="minVersion">The value of the <c>"min_version"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.AllowInsecureConnections.Source allowInsecureConnections = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CaCertificates.Source<TContext> caCerts = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CipherSuites.Source<TContext> cipherSuites = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.RequiredCertificateAndPrivateKeyArray.Source<TContext> clientCerts = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CurvePreferencesEntityArray.Source<TContext> curvePreferences = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.DisableSystemSCa.Source disableSystemCaPool = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MaximumTlsVersion.Source maxVersion = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MinimumTlsVersion.Source minVersion = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.AllowInsecureConnections.Source allowInsecureConnections = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CaCertificates.Source<TContext> caCerts = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CipherSuites.Source<TContext> cipherSuites = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.RequiredCertificateAndPrivateKeyArray.Source<TContext> clientCerts = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.CurvePreferencesEntityArray.Source<TContext> curvePreferences = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.DisableSystemSCa.Source disableSystemCaPool = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MaximumTlsVersion.Source maxVersion = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.MinimumTlsVersion.Source minVersion = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

@@ -268,7 +268,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>category</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCategory(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetCategory(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -313,7 +313,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>text</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetText(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetText(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -358,7 +358,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItemTemplate.TypeEntity.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItemTemplate.TypeEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -570,7 +570,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItemTemplate.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItemTemplate.TypeEntity.Source arg3)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItemTemplate.TypeEntity.Source arg3)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -898,7 +898,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg2">The value of the property.</param>
             /// <param name="arg3">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItemTemplate.TypeEntity.Source arg3, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItemTemplate.TypeEntity.Source arg3, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3);
@@ -942,7 +942,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="text">The value of the <c>"text"</c> property.</param>
         /// <param name="type">The value of the <c>"type"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source category = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItemTemplate.TypeEntity.Source type = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source category = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItemTemplate.TypeEntity.Source type = default)
         {
             return new Source(category, text, type);
         }

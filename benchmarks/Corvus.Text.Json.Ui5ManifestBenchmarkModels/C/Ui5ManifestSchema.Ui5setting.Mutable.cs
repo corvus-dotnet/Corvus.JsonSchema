@@ -477,7 +477,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>bundleName</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBundleName(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetBundleName(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -522,7 +522,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>bundleUrl</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBundleUrl(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetBundleUrl(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -567,7 +567,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>bundleUrlRelativeTo</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBundleUrlRelativeTo(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.BundleUrlRelativeToEntity.Source value)
+            public void SetBundleUrlRelativeTo(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.BundleUrlRelativeToEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -612,7 +612,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>defaultBindingMode</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDefaultBindingMode(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.DefaultBindingModeEntity.Source value)
+            public void SetDefaultBindingMode(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.DefaultBindingModeEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -657,7 +657,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>enhanceWith</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnhanceWith(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.EnhanceWithSettingArray.Source value)
+            public void SetEnhanceWith(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.EnhanceWithSettingArray.Source value)
             {
                 CheckValidInstance();
 
@@ -738,7 +738,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>fallbackLocale</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFallbackLocale(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetFallbackLocale(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -783,7 +783,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>supportedLocales</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSupportedLocales(in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source value)
+            public void SetSupportedLocales(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -864,7 +864,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>terminologies</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTerminologies(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.RepresentsTerminologiesWithAdditionalPropertiesFiles.Source value)
+            public void SetTerminologies(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.RepresentsTerminologiesWithAdditionalPropertiesFiles.Source value)
             {
                 CheckValidInstance();
 
@@ -1046,7 +1046,7 @@ public readonly partial struct Ui5ManifestSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1069,7 +1069,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1116,7 +1116,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1293,7 +1293,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.BundleUrlRelativeToEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.DefaultBindingModeEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.EnhanceWithSettingArray.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.RepresentsTerminologiesWithAdditionalPropertiesFiles.Source arg8)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.BundleUrlRelativeToEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.DefaultBindingModeEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.EnhanceWithSettingArray.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.RepresentsTerminologiesWithAdditionalPropertiesFiles.Source arg8)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1471,7 +1471,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.BundleUrlRelativeToEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.DefaultBindingModeEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.EnhanceWithSettingArray.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.RepresentsTerminologiesWithAdditionalPropertiesFiles.Source<TContext> arg8)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.BundleUrlRelativeToEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.DefaultBindingModeEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.EnhanceWithSettingArray.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.RepresentsTerminologiesWithAdditionalPropertiesFiles.Source<TContext> arg8)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1821,7 +1821,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg7">The value of the property.</param>
             /// <param name="arg8">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.BundleUrlRelativeToEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.DefaultBindingModeEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.EnhanceWithSettingArray.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.RepresentsTerminologiesWithAdditionalPropertiesFiles.Source arg8, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.BundleUrlRelativeToEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.DefaultBindingModeEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.EnhanceWithSettingArray.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.RepresentsTerminologiesWithAdditionalPropertiesFiles.Source arg8, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
@@ -1842,7 +1842,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg7">The value of the property.</param>
             /// <param name="arg8">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.BundleUrlRelativeToEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.DefaultBindingModeEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.EnhanceWithSettingArray.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.RepresentsTerminologiesWithAdditionalPropertiesFiles.Source<TContext> arg8, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.BundleUrlRelativeToEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.DefaultBindingModeEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.EnhanceWithSettingArray.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.RepresentsTerminologiesWithAdditionalPropertiesFiles.Source<TContext> arg8, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1894,7 +1894,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="supportedLocales">The value of the <c>"supportedLocales"</c> property.</param>
         /// <param name="terminologies">The value of the <c>"terminologies"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleName = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleUrl = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.BundleUrlRelativeToEntity.Source bundleUrlRelativeTo = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.DefaultBindingModeEntity.Source defaultBindingMode = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.EnhanceWithSettingArray.Source enhanceWith = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source fallbackLocale = default, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source supportedLocales = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.RepresentsTerminologiesWithAdditionalPropertiesFiles.Source terminologies = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleName = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleUrl = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.BundleUrlRelativeToEntity.Source bundleUrlRelativeTo = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.DefaultBindingModeEntity.Source defaultBindingMode = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.EnhanceWithSettingArray.Source enhanceWith = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source fallbackLocale = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source supportedLocales = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.RepresentsTerminologiesWithAdditionalPropertiesFiles.Source terminologies = default)
         {
             return new Source(bundleName, bundleUrl, bundleUrlRelativeTo, defaultBindingMode, enhanceWith, fallbackLocale, supportedLocales, terminologies);
         }
@@ -1913,7 +1913,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="supportedLocales">The value of the <c>"supportedLocales"</c> property.</param>
         /// <param name="terminologies">The value of the <c>"terminologies"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleName = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleUrl = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.BundleUrlRelativeToEntity.Source bundleUrlRelativeTo = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.DefaultBindingModeEntity.Source defaultBindingMode = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.EnhanceWithSettingArray.Source<TContext> enhanceWith = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source fallbackLocale = default, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> supportedLocales = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.RepresentsTerminologiesWithAdditionalPropertiesFiles.Source<TContext> terminologies = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleName = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleUrl = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.BundleUrlRelativeToEntity.Source bundleUrlRelativeTo = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.DefaultBindingModeEntity.Source defaultBindingMode = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.EnhanceWithSettingArray.Source<TContext> enhanceWith = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source fallbackLocale = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> supportedLocales = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Ui5setting.RepresentsTerminologiesWithAdditionalPropertiesFiles.Source<TContext> terminologies = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

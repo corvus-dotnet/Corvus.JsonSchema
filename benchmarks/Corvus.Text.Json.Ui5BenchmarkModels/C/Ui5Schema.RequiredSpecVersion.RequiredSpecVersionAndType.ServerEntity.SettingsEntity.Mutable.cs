@@ -252,7 +252,7 @@ public readonly partial struct Ui5Schema
                         /// Set the <c>httpPort</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetHttpPort(in Corvus.Ui5Benchmark.Current.JsonNumber.Source value)
+                        public void SetHttpPort(scoped in Corvus.Ui5Benchmark.Current.JsonNumber.Source value)
                         {
                             CheckValidInstance();
 
@@ -297,7 +297,7 @@ public readonly partial struct Ui5Schema
                         /// Set the <c>httpsPort</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetHttpsPort(in Corvus.Ui5Benchmark.Current.JsonNumber.Source value)
+                        public void SetHttpsPort(scoped in Corvus.Ui5Benchmark.Current.JsonNumber.Source value)
                         {
                             CheckValidInstance();
 
@@ -508,7 +508,7 @@ public readonly partial struct Ui5Schema
 
                         internal Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.SettingsEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                        internal Source(in Corvus.Ui5Benchmark.Current.JsonNumber.Source arg1, in Corvus.Ui5Benchmark.Current.JsonNumber.Source arg2)
+                        internal Source(scoped in Corvus.Ui5Benchmark.Current.JsonNumber.Source arg1, scoped in Corvus.Ui5Benchmark.Current.JsonNumber.Source arg2)
                         {
                             _createArg1 = arg1;
                             _createArg2 = arg2;
@@ -829,7 +829,7 @@ public readonly partial struct Ui5Schema
                         /// <param name="arg1">The value of the property.</param>
                         /// <param name="arg2">The value of the property.</param>
                         /// <param name="o">The complex value builder into which to write the object.</param>
-                        internal static void BuildCreateValue(in Corvus.Ui5Benchmark.Current.JsonNumber.Source arg1, in Corvus.Ui5Benchmark.Current.JsonNumber.Source arg2, ref ComplexValueBuilder o)
+                        internal static void BuildCreateValue(scoped in Corvus.Ui5Benchmark.Current.JsonNumber.Source arg1, scoped in Corvus.Ui5Benchmark.Current.JsonNumber.Source arg2, ref ComplexValueBuilder o)
                         {
                             o.StartObject();
                             Create(ref o, arg1, arg2);
@@ -872,7 +872,7 @@ public readonly partial struct Ui5Schema
                     /// <param name="httpPort">The value of the <c>"httpPort"</c> property.</param>
                     /// <param name="httpsPort">The value of the <c>"httpsPort"</c> property.</param>
                     /// <returns>The source from which to build the value.</returns>
-                    public static Source Build(in Corvus.Ui5Benchmark.Current.JsonNumber.Source httpPort = default, in Corvus.Ui5Benchmark.Current.JsonNumber.Source httpsPort = default)
+                    public static Source Build(scoped in Corvus.Ui5Benchmark.Current.JsonNumber.Source httpPort = default, scoped in Corvus.Ui5Benchmark.Current.JsonNumber.Source httpsPort = default)
                     {
                         return new Source(httpPort, httpsPort);
                     }

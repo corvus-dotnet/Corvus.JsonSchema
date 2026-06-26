@@ -226,7 +226,7 @@ public readonly partial struct VercelSchema
             /// Set the <c>env</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnv(in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.EnvEntity.Source value)
+            public void SetEnv(scoped in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.EnvEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -472,7 +472,7 @@ public readonly partial struct VercelSchema
 
             internal Source(Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.EnvEntity.Source arg1)
+            internal Source(scoped in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.EnvEntity.Source arg1)
             {
                 _createArg1 = arg1;
                 _kind = Kind.Create;
@@ -636,7 +636,7 @@ public readonly partial struct VercelSchema
 
             internal Source(scoped in TContext context, Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.EnvEntity.Source<TContext> arg1)
+            internal Source(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.EnvEntity.Source<TContext> arg1)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -856,7 +856,7 @@ public readonly partial struct VercelSchema
             /// </summary>
             /// <param name="arg1">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.EnvEntity.Source arg1, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.EnvEntity.Source arg1, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1);
@@ -870,7 +870,7 @@ public readonly partial struct VercelSchema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="arg1">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.EnvEntity.Source<TContext> arg1, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.EnvEntity.Source<TContext> arg1, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -915,7 +915,7 @@ public readonly partial struct VercelSchema
         /// </summary>
         /// <param name="env">The value of the <c>"env"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.EnvEntity.Source env = default)
+        public static Source Build(scoped in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.EnvEntity.Source env = default)
         {
             return new Source(env);
         }
@@ -927,7 +927,7 @@ public readonly partial struct VercelSchema
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="env">The value of the <c>"env"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.EnvEntity.Source<TContext> env = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.EnvEntity.Source<TContext> env = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
