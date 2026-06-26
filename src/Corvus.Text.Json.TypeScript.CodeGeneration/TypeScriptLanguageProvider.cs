@@ -886,10 +886,14 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         TypeDeclaration reduced = rootType.ReducedTypeDeclaration().ReducedType;
         string rootName = reduced.TryGetMetadata<string>(TsFinalKey, out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "Entity";
 
-        string entry = "validate";
+        // The root entry point is an EVALUATOR (it will gain an optional results collector, like the .NET
+        // EvaluateSchema), so it is named `evaluateRoot` — consistent with the per-type evaluate{Type} and
+        // the suite/spike harnesses, NOT `validate`. It seeds a fresh evaluation tracker so callers don't
+        // pass one for a whole-document check. (Dedup guards the rare root-type-named-"Root" collision.)
+        string entry = "evaluateRoot";
         for (int i = 2; this.moduleTopLevelNames.Contains(entry); i++)
         {
-            entry = "validate" + i;
+            entry = "evaluateRoot" + i;
         }
 
         this.moduleTopLevelNames.Add(entry);
