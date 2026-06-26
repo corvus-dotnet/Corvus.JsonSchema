@@ -435,7 +435,7 @@ public readonly partial struct PostAdoptionApplyBody
         /// Set the <c>applicantName</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetApplicantName(in Petstore.Extended.Models.JsonString.Source value)
+        public void SetApplicantName(scoped in Petstore.Extended.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -466,7 +466,7 @@ public readonly partial struct PostAdoptionApplyBody
         /// Set the <c>email</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEmail(in Petstore.Extended.Models.JsonEmail.Source value)
+        public void SetEmail(scoped in Petstore.Extended.Models.JsonEmail.Source value)
         {
             CheckValidInstance();
 
@@ -497,7 +497,7 @@ public readonly partial struct PostAdoptionApplyBody
         /// Set the <c>experience</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExperience(in Petstore.Extended.Models.JsonString.Source value)
+        public void SetExperience(scoped in Petstore.Extended.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -542,7 +542,7 @@ public readonly partial struct PostAdoptionApplyBody
         /// Set the <c>hasGarden</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHasGarden(in Petstore.Extended.Models.JsonBoolean.Source value)
+        public void SetHasGarden(scoped in Petstore.Extended.Models.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -587,7 +587,7 @@ public readonly partial struct PostAdoptionApplyBody
         /// Set the <c>housingType</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHousingType(in Petstore.Extended.Models.PostAdoptionApplyBody.HousingTypeEntity.Source value)
+        public void SetHousingType(scoped in Petstore.Extended.Models.PostAdoptionApplyBody.HousingTypeEntity.Source value)
         {
             CheckValidInstance();
 
@@ -618,7 +618,7 @@ public readonly partial struct PostAdoptionApplyBody
         /// Set the <c>petId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPetId(in Petstore.Extended.Models.JsonString.Source value)
+        public void SetPetId(scoped in Petstore.Extended.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -649,7 +649,7 @@ public readonly partial struct PostAdoptionApplyBody
         /// Set the <c>phone</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPhone(in Petstore.Extended.Models.JsonString.Source value)
+        public void SetPhone(scoped in Petstore.Extended.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -795,7 +795,7 @@ public readonly partial struct PostAdoptionApplyBody
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -818,7 +818,7 @@ public readonly partial struct PostAdoptionApplyBody
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -865,7 +865,7 @@ public readonly partial struct PostAdoptionApplyBody
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1041,7 +1041,7 @@ public readonly partial struct PostAdoptionApplyBody
 
         internal Source(Petstore.Extended.Models.PostAdoptionApplyBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Petstore.Extended.Models.JsonString.Source arg1, in Petstore.Extended.Models.JsonEmail.Source arg2, in Petstore.Extended.Models.PostAdoptionApplyBody.HousingTypeEntity.Source arg3, in Petstore.Extended.Models.JsonString.Source arg4, in Petstore.Extended.Models.JsonString.Source arg5, in Petstore.Extended.Models.JsonBoolean.Source arg6, in Petstore.Extended.Models.JsonString.Source arg7)
+        internal Source(scoped in Petstore.Extended.Models.JsonString.Source arg1, scoped in Petstore.Extended.Models.JsonEmail.Source arg2, scoped in Petstore.Extended.Models.PostAdoptionApplyBody.HousingTypeEntity.Source arg3, scoped in Petstore.Extended.Models.JsonString.Source arg4, scoped in Petstore.Extended.Models.JsonString.Source arg5, scoped in Petstore.Extended.Models.JsonBoolean.Source arg6, scoped in Petstore.Extended.Models.JsonString.Source arg7)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1458,7 +1458,7 @@ public readonly partial struct PostAdoptionApplyBody
         /// <param name="arg6">The value of the property.</param>
         /// <param name="arg7">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Petstore.Extended.Models.JsonString.Source arg1, in Petstore.Extended.Models.JsonEmail.Source arg2, in Petstore.Extended.Models.PostAdoptionApplyBody.HousingTypeEntity.Source arg3, in Petstore.Extended.Models.JsonString.Source arg4, in Petstore.Extended.Models.JsonString.Source arg5, in Petstore.Extended.Models.JsonBoolean.Source arg6, in Petstore.Extended.Models.JsonString.Source arg7, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Petstore.Extended.Models.JsonString.Source arg1, scoped in Petstore.Extended.Models.JsonEmail.Source arg2, scoped in Petstore.Extended.Models.PostAdoptionApplyBody.HousingTypeEntity.Source arg3, scoped in Petstore.Extended.Models.JsonString.Source arg4, scoped in Petstore.Extended.Models.JsonString.Source arg5, scoped in Petstore.Extended.Models.JsonBoolean.Source arg6, scoped in Petstore.Extended.Models.JsonString.Source arg7, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
@@ -1506,7 +1506,7 @@ public readonly partial struct PostAdoptionApplyBody
     /// <param name="hasGarden">The value of the <c>"hasGarden"</c> property.</param>
     /// <param name="phone">The value of the <c>"phone"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Petstore.Extended.Models.JsonString.Source applicantName, in Petstore.Extended.Models.JsonEmail.Source email, in Petstore.Extended.Models.PostAdoptionApplyBody.HousingTypeEntity.Source housingType, in Petstore.Extended.Models.JsonString.Source petId, in Petstore.Extended.Models.JsonString.Source experience = default, in Petstore.Extended.Models.JsonBoolean.Source hasGarden = default, in Petstore.Extended.Models.JsonString.Source phone = default)
+    public static Source Build(scoped in Petstore.Extended.Models.JsonString.Source applicantName, scoped in Petstore.Extended.Models.JsonEmail.Source email, scoped in Petstore.Extended.Models.PostAdoptionApplyBody.HousingTypeEntity.Source housingType, scoped in Petstore.Extended.Models.JsonString.Source petId, scoped in Petstore.Extended.Models.JsonString.Source experience = default, scoped in Petstore.Extended.Models.JsonBoolean.Source hasGarden = default, scoped in Petstore.Extended.Models.JsonString.Source phone = default)
     {
         return new Source(applicantName, email, housingType, petId, experience, hasGarden, phone);
     }

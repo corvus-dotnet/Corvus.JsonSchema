@@ -367,7 +367,7 @@ public readonly partial struct GetPetsFilter
         /// Set the <c>breed</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreed(in Petstore.EndToEnd.Client.Models.JsonString.Source value)
+        public void SetBreed(scoped in Petstore.EndToEnd.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -412,7 +412,7 @@ public readonly partial struct GetPetsFilter
         /// Set the <c>maxAge</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMaxAge(in Petstore.EndToEnd.Client.Models.JsonInteger.Source value)
+        public void SetMaxAge(scoped in Petstore.EndToEnd.Client.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -457,7 +457,7 @@ public readonly partial struct GetPetsFilter
         /// Set the <c>minAge</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMinAge(in Petstore.EndToEnd.Client.Models.JsonInteger.Source value)
+        public void SetMinAge(scoped in Petstore.EndToEnd.Client.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -502,7 +502,7 @@ public readonly partial struct GetPetsFilter
         /// Set the <c>status</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStatus(in Petstore.EndToEnd.Client.Models.GetPetsFilter.StatusEntity.Source value)
+        public void SetStatus(scoped in Petstore.EndToEnd.Client.Models.GetPetsFilter.StatusEntity.Source value)
         {
             CheckValidInstance();
 
@@ -648,7 +648,7 @@ public readonly partial struct GetPetsFilter
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -671,7 +671,7 @@ public readonly partial struct GetPetsFilter
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -718,7 +718,7 @@ public readonly partial struct GetPetsFilter
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -891,7 +891,7 @@ public readonly partial struct GetPetsFilter
 
         internal Source(Petstore.EndToEnd.Client.Models.GetPetsFilter.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Petstore.EndToEnd.Client.Models.JsonString.Source arg1, in Petstore.EndToEnd.Client.Models.JsonInteger.Source arg2, in Petstore.EndToEnd.Client.Models.JsonInteger.Source arg3, in Petstore.EndToEnd.Client.Models.GetPetsFilter.StatusEntity.Source arg4)
+        internal Source(scoped in Petstore.EndToEnd.Client.Models.JsonString.Source arg1, scoped in Petstore.EndToEnd.Client.Models.JsonInteger.Source arg2, scoped in Petstore.EndToEnd.Client.Models.JsonInteger.Source arg3, scoped in Petstore.EndToEnd.Client.Models.GetPetsFilter.StatusEntity.Source arg4)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1293,7 +1293,7 @@ public readonly partial struct GetPetsFilter
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Petstore.EndToEnd.Client.Models.JsonString.Source arg1, in Petstore.EndToEnd.Client.Models.JsonInteger.Source arg2, in Petstore.EndToEnd.Client.Models.JsonInteger.Source arg3, in Petstore.EndToEnd.Client.Models.GetPetsFilter.StatusEntity.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Petstore.EndToEnd.Client.Models.JsonString.Source arg1, scoped in Petstore.EndToEnd.Client.Models.JsonInteger.Source arg2, scoped in Petstore.EndToEnd.Client.Models.JsonInteger.Source arg3, scoped in Petstore.EndToEnd.Client.Models.GetPetsFilter.StatusEntity.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4);
@@ -1338,7 +1338,7 @@ public readonly partial struct GetPetsFilter
     /// <param name="minAge">The value of the <c>"minAge"</c> property.</param>
     /// <param name="status">The value of the <c>"status"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Petstore.EndToEnd.Client.Models.JsonString.Source breed = default, in Petstore.EndToEnd.Client.Models.JsonInteger.Source maxAge = default, in Petstore.EndToEnd.Client.Models.JsonInteger.Source minAge = default, in Petstore.EndToEnd.Client.Models.GetPetsFilter.StatusEntity.Source status = default)
+    public static Source Build(scoped in Petstore.EndToEnd.Client.Models.JsonString.Source breed = default, scoped in Petstore.EndToEnd.Client.Models.JsonInteger.Source maxAge = default, scoped in Petstore.EndToEnd.Client.Models.JsonInteger.Source minAge = default, scoped in Petstore.EndToEnd.Client.Models.GetPetsFilter.StatusEntity.Source status = default)
     {
         return new Source(breed, maxAge, minAge, status);
     }

@@ -382,7 +382,7 @@ public readonly partial struct Schema1
         /// Set the <c>eventId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEventId(in EventSubscription.CallbackServer.Models.JsonString.Source value)
+        public void SetEventId(scoped in EventSubscription.CallbackServer.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -413,7 +413,7 @@ public readonly partial struct Schema1
         /// Set the <c>eventType</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEventType(in EventSubscription.CallbackServer.Models.JsonString.Source value)
+        public void SetEventType(scoped in EventSubscription.CallbackServer.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -444,7 +444,7 @@ public readonly partial struct Schema1
         /// Set the <c>payload</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPayload(in EventSubscription.CallbackServer.Models.JsonObject.Source value)
+        public void SetPayload(scoped in EventSubscription.CallbackServer.Models.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -525,7 +525,7 @@ public readonly partial struct Schema1
         /// Set the <c>timestamp</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTimestamp(in EventSubscription.CallbackServer.Models.JsonDateTime.Source value)
+        public void SetTimestamp(scoped in EventSubscription.CallbackServer.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -657,7 +657,7 @@ public readonly partial struct Schema1
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -680,7 +680,7 @@ public readonly partial struct Schema1
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -727,7 +727,7 @@ public readonly partial struct Schema1
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -900,7 +900,7 @@ public readonly partial struct Schema1
 
         internal Source(EventSubscription.CallbackServer.Models.Schema1.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in EventSubscription.CallbackServer.Models.JsonString.Source arg1, in EventSubscription.CallbackServer.Models.JsonString.Source arg2, in EventSubscription.CallbackServer.Models.JsonDateTime.Source arg3, in EventSubscription.CallbackServer.Models.JsonObject.Source arg4)
+        internal Source(scoped in EventSubscription.CallbackServer.Models.JsonString.Source arg1, scoped in EventSubscription.CallbackServer.Models.JsonString.Source arg2, scoped in EventSubscription.CallbackServer.Models.JsonDateTime.Source arg3, scoped in EventSubscription.CallbackServer.Models.JsonObject.Source arg4)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1070,7 +1070,7 @@ public readonly partial struct Schema1
 
         internal Source(scoped in TContext context, EventSubscription.CallbackServer.Models.Schema1.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in EventSubscription.CallbackServer.Models.JsonString.Source arg1, in EventSubscription.CallbackServer.Models.JsonString.Source arg2, in EventSubscription.CallbackServer.Models.JsonDateTime.Source arg3, in EventSubscription.CallbackServer.Models.JsonObject.Source<TContext> arg4)
+        internal Source(scoped in TContext context, scoped in EventSubscription.CallbackServer.Models.JsonString.Source arg1, scoped in EventSubscription.CallbackServer.Models.JsonString.Source arg2, scoped in EventSubscription.CallbackServer.Models.JsonDateTime.Source arg3, scoped in EventSubscription.CallbackServer.Models.JsonObject.Source<TContext> arg4)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1388,7 +1388,7 @@ public readonly partial struct Schema1
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in EventSubscription.CallbackServer.Models.JsonString.Source arg1, in EventSubscription.CallbackServer.Models.JsonString.Source arg2, in EventSubscription.CallbackServer.Models.JsonDateTime.Source arg3, in EventSubscription.CallbackServer.Models.JsonObject.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in EventSubscription.CallbackServer.Models.JsonString.Source arg1, scoped in EventSubscription.CallbackServer.Models.JsonString.Source arg2, scoped in EventSubscription.CallbackServer.Models.JsonDateTime.Source arg3, scoped in EventSubscription.CallbackServer.Models.JsonObject.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4);
@@ -1405,7 +1405,7 @@ public readonly partial struct Schema1
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in EventSubscription.CallbackServer.Models.JsonString.Source arg1, in EventSubscription.CallbackServer.Models.JsonString.Source arg2, in EventSubscription.CallbackServer.Models.JsonDateTime.Source arg3, in EventSubscription.CallbackServer.Models.JsonObject.Source<TContext> arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in EventSubscription.CallbackServer.Models.JsonString.Source arg1, scoped in EventSubscription.CallbackServer.Models.JsonString.Source arg2, scoped in EventSubscription.CallbackServer.Models.JsonDateTime.Source arg3, scoped in EventSubscription.CallbackServer.Models.JsonObject.Source<TContext> arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1453,7 +1453,7 @@ public readonly partial struct Schema1
     /// <param name="timestamp">The value of the <c>"timestamp"</c> property.</param>
     /// <param name="payload">The value of the <c>"payload"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in EventSubscription.CallbackServer.Models.JsonString.Source eventId, in EventSubscription.CallbackServer.Models.JsonString.Source eventType, in EventSubscription.CallbackServer.Models.JsonDateTime.Source timestamp, in EventSubscription.CallbackServer.Models.JsonObject.Source payload = default)
+    public static Source Build(scoped in EventSubscription.CallbackServer.Models.JsonString.Source eventId, scoped in EventSubscription.CallbackServer.Models.JsonString.Source eventType, scoped in EventSubscription.CallbackServer.Models.JsonDateTime.Source timestamp, scoped in EventSubscription.CallbackServer.Models.JsonObject.Source payload = default)
     {
         return new Source(eventId, eventType, timestamp, payload);
     }
@@ -1468,7 +1468,7 @@ public readonly partial struct Schema1
     /// <param name="timestamp">The value of the <c>"timestamp"</c> property.</param>
     /// <param name="payload">The value of the <c>"payload"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in EventSubscription.CallbackServer.Models.JsonString.Source eventId, in EventSubscription.CallbackServer.Models.JsonString.Source eventType, in EventSubscription.CallbackServer.Models.JsonDateTime.Source timestamp, in EventSubscription.CallbackServer.Models.JsonObject.Source<TContext> payload = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in EventSubscription.CallbackServer.Models.JsonString.Source eventId, scoped in EventSubscription.CallbackServer.Models.JsonString.Source eventType, scoped in EventSubscription.CallbackServer.Models.JsonDateTime.Source timestamp, scoped in EventSubscription.CallbackServer.Models.JsonObject.Source<TContext> payload = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

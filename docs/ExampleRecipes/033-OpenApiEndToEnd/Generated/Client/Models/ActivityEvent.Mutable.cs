@@ -382,7 +382,7 @@ public readonly partial struct ActivityEvent
         /// Set the <c>description</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDescription(in Petstore.EndToEnd.Client.Models.JsonString.Source value)
+        public void SetDescription(scoped in Petstore.EndToEnd.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -427,7 +427,7 @@ public readonly partial struct ActivityEvent
         /// Set the <c>eventId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEventId(in Petstore.EndToEnd.Client.Models.JsonString.Source value)
+        public void SetEventId(scoped in Petstore.EndToEnd.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -458,7 +458,7 @@ public readonly partial struct ActivityEvent
         /// Set the <c>timestamp</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTimestamp(in Petstore.EndToEnd.Client.Models.JsonDateTime.Source value)
+        public void SetTimestamp(scoped in Petstore.EndToEnd.Client.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -489,7 +489,7 @@ public readonly partial struct ActivityEvent
         /// Set the <c>type</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetType(in Petstore.EndToEnd.Client.Models.ActivityEvent.TypeEntity.Source value)
+        public void SetType(scoped in Petstore.EndToEnd.Client.Models.ActivityEvent.TypeEntity.Source value)
         {
             CheckValidInstance();
 
@@ -621,7 +621,7 @@ public readonly partial struct ActivityEvent
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -644,7 +644,7 @@ public readonly partial struct ActivityEvent
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -691,7 +691,7 @@ public readonly partial struct ActivityEvent
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -864,7 +864,7 @@ public readonly partial struct ActivityEvent
 
         internal Source(Petstore.EndToEnd.Client.Models.ActivityEvent.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Petstore.EndToEnd.Client.Models.JsonString.Source arg1, in Petstore.EndToEnd.Client.Models.JsonDateTime.Source arg2, in Petstore.EndToEnd.Client.Models.ActivityEvent.TypeEntity.Source arg3, in Petstore.EndToEnd.Client.Models.JsonString.Source arg4)
+        internal Source(scoped in Petstore.EndToEnd.Client.Models.JsonString.Source arg1, scoped in Petstore.EndToEnd.Client.Models.JsonDateTime.Source arg2, scoped in Petstore.EndToEnd.Client.Models.ActivityEvent.TypeEntity.Source arg3, scoped in Petstore.EndToEnd.Client.Models.JsonString.Source arg4)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1266,7 +1266,7 @@ public readonly partial struct ActivityEvent
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Petstore.EndToEnd.Client.Models.JsonString.Source arg1, in Petstore.EndToEnd.Client.Models.JsonDateTime.Source arg2, in Petstore.EndToEnd.Client.Models.ActivityEvent.TypeEntity.Source arg3, in Petstore.EndToEnd.Client.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Petstore.EndToEnd.Client.Models.JsonString.Source arg1, scoped in Petstore.EndToEnd.Client.Models.JsonDateTime.Source arg2, scoped in Petstore.EndToEnd.Client.Models.ActivityEvent.TypeEntity.Source arg3, scoped in Petstore.EndToEnd.Client.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4);
@@ -1311,7 +1311,7 @@ public readonly partial struct ActivityEvent
     /// <param name="type">The value of the <c>"type"</c> property.</param>
     /// <param name="description">The value of the <c>"description"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Petstore.EndToEnd.Client.Models.JsonString.Source eventId, in Petstore.EndToEnd.Client.Models.JsonDateTime.Source timestamp, in Petstore.EndToEnd.Client.Models.ActivityEvent.TypeEntity.Source type, in Petstore.EndToEnd.Client.Models.JsonString.Source description = default)
+    public static Source Build(scoped in Petstore.EndToEnd.Client.Models.JsonString.Source eventId, scoped in Petstore.EndToEnd.Client.Models.JsonDateTime.Source timestamp, scoped in Petstore.EndToEnd.Client.Models.ActivityEvent.TypeEntity.Source type, scoped in Petstore.EndToEnd.Client.Models.JsonString.Source description = default)
     {
         return new Source(eventId, timestamp, type, description);
     }

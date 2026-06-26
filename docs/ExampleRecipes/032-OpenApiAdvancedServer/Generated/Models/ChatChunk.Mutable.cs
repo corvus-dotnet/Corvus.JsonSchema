@@ -356,7 +356,7 @@ public readonly partial struct ChatChunk
         /// Set the <c>delta</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDelta(in Petstore.Extended.Server.Models.JsonString.Source value)
+        public void SetDelta(scoped in Petstore.Extended.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -401,7 +401,7 @@ public readonly partial struct ChatChunk
         /// Set the <c>done</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDone(in Petstore.Extended.Server.Models.JsonBoolean.Source value)
+        public void SetDone(scoped in Petstore.Extended.Server.Models.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -446,7 +446,7 @@ public readonly partial struct ChatChunk
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in Petstore.Extended.Server.Models.JsonString.Source value)
+        public void SetId(scoped in Petstore.Extended.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -578,7 +578,7 @@ public readonly partial struct ChatChunk
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -601,7 +601,7 @@ public readonly partial struct ChatChunk
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -648,7 +648,7 @@ public readonly partial struct ChatChunk
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -820,7 +820,7 @@ public readonly partial struct ChatChunk
 
         internal Source(Petstore.Extended.Server.Models.ChatChunk.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Petstore.Extended.Server.Models.JsonString.Source arg1, in Petstore.Extended.Server.Models.JsonString.Source arg2, in Petstore.Extended.Server.Models.JsonBoolean.Source arg3)
+        internal Source(scoped in Petstore.Extended.Server.Models.JsonString.Source arg1, scoped in Petstore.Extended.Server.Models.JsonString.Source arg2, scoped in Petstore.Extended.Server.Models.JsonBoolean.Source arg3)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1217,7 +1217,7 @@ public readonly partial struct ChatChunk
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Petstore.Extended.Server.Models.JsonString.Source arg1, in Petstore.Extended.Server.Models.JsonString.Source arg2, in Petstore.Extended.Server.Models.JsonBoolean.Source arg3, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Petstore.Extended.Server.Models.JsonString.Source arg1, scoped in Petstore.Extended.Server.Models.JsonString.Source arg2, scoped in Petstore.Extended.Server.Models.JsonBoolean.Source arg3, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3);
@@ -1261,7 +1261,7 @@ public readonly partial struct ChatChunk
     /// <param name="delta">The value of the <c>"delta"</c> property.</param>
     /// <param name="done">The value of the <c>"done"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Petstore.Extended.Server.Models.JsonString.Source id, in Petstore.Extended.Server.Models.JsonString.Source delta = default, in Petstore.Extended.Server.Models.JsonBoolean.Source done = default)
+    public static Source Build(scoped in Petstore.Extended.Server.Models.JsonString.Source id, scoped in Petstore.Extended.Server.Models.JsonString.Source delta = default, scoped in Petstore.Extended.Server.Models.JsonBoolean.Source done = default)
     {
         return new Source(id, delta, done);
     }
