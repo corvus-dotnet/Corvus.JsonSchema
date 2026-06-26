@@ -1434,7 +1434,17 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 
         if (IsObject(td))
         {
-            return FinalName(td);
+            // Pure object -> the interface. Object as ONE branch of a multi-type (`type: ["object",
+            // "string"]`) -> a union of the object-shape interface and the other branches (the same
+            // drop-fix as for arrays, applied in the object path).
+            List<string> objOthers = ScalarAndArrayBranches(td);
+            if (objOthers.Count == 0)
+            {
+                return FinalName(td);
+            }
+
+            objOthers.Insert(0, FinalName(td));
+            return string.Join(" | ", objOthers);
         }
 
         if (IsUnion(td))
@@ -1453,38 +1463,67 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             return "bigint";
         }
 
+        // A multi-type schema is the UNION of its per-type branches. Object is handled above (it owns the
+        // generated interface); here a schema is the union of its primitive branches and its array branch.
+        List<string> branches = ScalarAndArrayBranches(td);
+        return branches.Count > 0 ? string.Join(" | ", branches) : "unknown";
+    }
+
+    // The non-object type branches of a (possibly multi-type) schema: each primitive kind mapped to its TS
+    // primitive, plus the array branch if present. The object branch (if any) is the caller's
+    // responsibility (it owns the generated interface). This is what stops a multi-type collapsing to a
+    // single branch — `type: ["string","array"]` was becoming `readonly unknown[]` (dropping `string`),
+    // and `type: ["object","string"]` an object-only interface (dropping `string`).
+    private static List<string> ScalarAndArrayBranches(TypeDeclaration td)
+    {
         List<string> kinds = SchemaTypes(td);
-        if (kinds.Contains("array") || td.ExplicitTupleType() is not null || (td.ExplicitNonTupleItemsType() ?? td.ArrayItemsType()) is not null)
-        {
-            // Guard against recursive array schemas (e.g. items: {$ref: '#'}): a revisited type degrades
-            // to the safe `readonly unknown[]` rather than recursing forever.
-            visiting ??= new HashSet<TypeDeclaration>();
-            if (!visiting.Add(td))
-            {
-                return "readonly unknown[]";
-            }
+        bool hasArray = kinds.Contains("array") || td.ExplicitTupleType() is not null || (td.ExplicitNonTupleItemsType() ?? td.ArrayItemsType()) is not null;
 
-            try
-            {
-                return TsArrayTypeRef(td);
-            }
-            finally
-            {
-                visiting.Remove(td);
-            }
-        }
-
-        var prims = new List<string>();
+        var parts = new List<string>();
         foreach (string k in kinds)
         {
-            string? p = Prim(k);
-            if (p is not null && !prims.Contains(p))
+            if (k is "array" or "object")
             {
-                prims.Add(p);
+                continue;
+            }
+
+            string? p = Prim(k);
+            if (p is not null && !parts.Contains(p))
+            {
+                parts.Add(p);
             }
         }
 
-        return prims.Count > 0 ? string.Join(" | ", prims) : "unknown";
+        if (hasArray)
+        {
+            string arr = ArrayRefGuarded(td);
+            if (!parts.Contains(arr))
+            {
+                parts.Add(arr);
+            }
+        }
+
+        return parts;
+    }
+
+    // TsArrayTypeRef with the recursion guard: a recursive array schema (e.g. items: {$ref: '#'}) degrades
+    // to the safe `readonly unknown[]` rather than recursing forever.
+    private static string ArrayRefGuarded(TypeDeclaration td)
+    {
+        visiting ??= new HashSet<TypeDeclaration>();
+        if (!visiting.Add(td))
+        {
+            return "readonly unknown[]";
+        }
+
+        try
+        {
+            return TsArrayTypeRef(td);
+        }
+        finally
+        {
+            visiting.Remove(td);
+        }
     }
 
     // Array/tuple element typing (design §5.3): plain `readonly T[]`, pure tuple `readonly [A,B,C]`,
