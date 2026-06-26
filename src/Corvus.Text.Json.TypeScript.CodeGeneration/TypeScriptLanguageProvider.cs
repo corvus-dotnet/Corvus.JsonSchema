@@ -356,7 +356,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
           return { next, patches };
         }
         
-        interface __DraftOp { path: string[]; op: "replace" | "add" | "remove"; value?: unknown; }
+        interface __DraftOp { path: string[]; op: "replace" | "add" | "remove" | "append"; value?: unknown; }
         function __groupHead(ops: __DraftOp[]): Map<string, __DraftOp[]> {
           const g = new Map<string, __DraftOp[]>();
           for (const op of ops) { const h = op.path[0]; const cur = g.get(h); if (cur) cur.push(op); else g.set(h, [op]); }
@@ -378,7 +378,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
           const adds: Array<{ name: string; value: unknown }> = [];
           for (const [key, group] of __groupHead(ops)) {
             const idx = findMember(bytes, members, enc.encode(key));
-            const direct = group.find((o) => o.path.length === 1);
+            const direct = group.find((o) => o.path.length === 1 && o.op !== "append");
             if (direct) {
               if (direct.op === "remove") { if (idx < 0) throw new Error("produce: remove of missing member"); removed[idx] = true; }
               else if (idx < 0) adds.push({ name: key, value: direct.value });
@@ -413,9 +413,16 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
           const enc = new TextEncoder();
           const scan = scanArrayElements(bytes); const elems = scan.elems;
           const edits: RmwEdit[] = [];
-          for (const [idx, group] of __groupHead(ops)) {
+          // append ops (empty path) -> insert tail elements before the closing ']' (existing element bytes untouched)
+          const appendOps = ops.filter((o) => o.path.length === 0 && o.op === "append");
+          if (appendOps.length > 0) {
+            const parts: Uint8Array[] = []; let had = elems.length > 0;
+            for (const ao of appendOps) for (const el of (ao.value as unknown[])) { parts.push(enc.encode((had ? "," : "") + JSON.stringify(el))); had = true; }
+            edits.push({ offset: scan.close, length: 0, content: concatBytes(parts) });
+          }
+          for (const [idx, group] of __groupHead(ops.filter((o) => o.path.length > 0))) {
             const i = Number(idx);
-            const direct = group.find((o) => o.path.length === 1);
+            const direct = group.find((o) => o.path.length === 1 && o.op !== "append");
             if (direct) edits.push({ offset: elems[i].vs, length: elems[i].ve - elems[i].vs, content: enc.encode(JSON.stringify(direct.value)) });
             else {
               const newSub = __lower(bytes.subarray(elems[i].vs, elems[i].ve), group.map((o) => ({ path: o.path.slice(1), op: o.op, value: o.value })));
@@ -426,16 +433,21 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
           return applyEditsBytes(bytes, edits);
         }
         // §13.3 lazy-read produce: a lazy overlay draft replaces JSON.parse(whole-doc). Objects AND arrays
-        // navigate by byte span (no value decode); scalars decode on read; an array element edit touches only
-        // that element's span, and only a structural array op materialises (see __makeArrayDraft). Writes
-        // record a change-set the byte lowering (__lower) consumes -- a pure overwrite decodes nothing.
+        // navigate by byte span (no value decode); scalars decode on read; an array element edit or a trailing
+        // push touches ~nothing (see __makeArrayDraft); only a reordering array op materialises. Writes record
+        // a change-set the byte lowering (__lower) consumes -- a pure overwrite (or push) decodes nothing.
         function __decodeValue(bytes: Uint8Array, vs: number, ve: number): unknown { return JSON.parse(new TextDecoder().decode(bytes.subarray(vs, ve))); }
         function __spanKind(bytes: Uint8Array, vs: number): number { const c = bytes[vs]; return c === 0x7b ? 0 : c === 0x5b ? 1 : 2; }
         // Lazy drafts. An object navigates by byte span (no value decode); a scalar decodes on read; an
         // array is element-lazy too: items[i].field = v touches only element i's span, an in-bounds index
-        // set becomes a per-element edit, and only a STRUCTURAL op (push/splice/pop/length) materialises
-        // (decode + fold prior edits) then whole-replaces. Both draft kinds share { proxy, value, finalize }.
+        // set becomes a per-element edit, and a trailing push records into `appends` (no decode) -> an
+        // 'append' op that inserts before ']'. Only a reordering op (splice/unshift/pop/length-shrink, or a
+        // proxy stored at the tail) materialises (decode + fold). Both draft kinds share { proxy, value, finalize }.
         const __ISIDX = /^(0|[1-9][0-9]*)$/;
+        const __DRAFT = Symbol("draft");      // tags our draft proxies so a shift (unshift/splice) storing a proxy is detectable
+        const __DRAFTVAL = Symbol("draftval"); // reads a draft proxy's resolved plain value (for a relocated element)
+        function __isDraftP(v: any): boolean { return v !== null && typeof v === "object" && v[__DRAFT] === true; }
+        function __resolveV(v: any): any { return __isDraftP(v) ? v[__DRAFTVAL] : v; }
         interface __Draft { proxy: any; value: () => any; finalize: (out: __DraftOp[]) => void; }
         type __Kid = { kind: 0 | 1; d: __Draft };
         function __makeObjectDraft(bytes: Uint8Array, vs: number, ve: number, path: string[]): __Draft {
@@ -456,6 +468,8 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
           }
           const proxy: any = new Proxy({}, {
             get(_t, key) {
+              if (key === __DRAFT) return true;
+              if (key === __DRAFTVAL) return value();
               if (typeof key === "symbol") return undefined;
               const k = String(key);
               if (deleted.has(k)) return undefined;
@@ -485,6 +499,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
           let elems: Array<{ vs: number; ve: number }> | null = null;
           const overrides = new Map<number, unknown>();
           const children = new Map<number, __Kid>();
+          const appends: unknown[] = [];   // trailing pushes (no decode); finalize emits an 'append' op
           let materialized: any[] | null = null;
           function scan(): Array<{ vs: number; ve: number }> {
             if (elems) return elems;
@@ -492,36 +507,43 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             elems = s.elems.map((x) => ({ vs: vs + x.vs, ve: vs + x.ve }));
             return elems;
           }
-          function len(): number { return materialized ? materialized.length : scan().length; }
+          function baseLen(): number { return scan().length; }
+          function len(): number { return materialized ? materialized.length : baseLen() + appends.length; }
           function value(): any[] {
             if (materialized) return materialized;
             const es = scan();
-            return es.map((e, i) => { const c = children.get(i); if (c) return c.d.value(); if (overrides.has(i)) return overrides.get(i); return __decodeValue(bytes, e.vs, e.ve); });
+            const arr = es.map((e, i) => { const c = children.get(i); if (c) return c.d.value(); if (overrides.has(i)) return overrides.get(i); return __decodeValue(bytes, e.vs, e.ve); });
+            for (const a of appends) arr.push(a);
+            return arr;
           }
-          function materialize(): void { if (!materialized) materialized = value(); }
+          function materialize(): void { if (!materialized) { materialized = value(); appends.length = 0; } }
           const proxy: any = new Proxy([] as any[], {
             get(_t, key) {
+              if (key === __DRAFT) return true;
+              if (key === __DRAFTVAL) return value();
               if (key === "length") return len();
               if (typeof key === "symbol") return materialized ? (materialized as any)[key] : (Array.prototype as any)[key];
               if (materialized) return (materialized as any)[key];
               if (!__ISIDX.test(key)) return (Array.prototype as any)[key];
-              const i = Number(key);
+              const i = Number(key); const bl = baseLen();
+              if (i >= bl) return (i - bl < appends.length) ? appends[i - bl] : undefined;
               if (overrides.has(i)) return overrides.get(i);
               const c = children.get(i); if (c) return c.d.proxy;
-              const es = scan(); if (i >= es.length) return undefined;
-              const e = es[i]; const kind = __spanKind(bytes, e.vs);
+              const e = scan()[i]; const kind = __spanKind(bytes, e.vs);
               if (kind === 0) { const d = __makeObjectDraft(bytes, e.vs, e.ve, [...path, String(i)]); children.set(i, { kind: 0, d }); return d.proxy; }
               if (kind === 1) { const d = __makeArrayDraft(bytes, e.vs, e.ve, [...path, String(i)]); children.set(i, { kind: 1, d }); return d.proxy; }
               return __decodeValue(bytes, e.vs, e.ve);
             },
             set(_t, key, val) {
-              if (key === "length") { materialize(); materialized!.length = Number(val); return true; }
+              if (key === "length") { const n = Number(val); if (!materialized && n === len()) return true; materialize(); materialized!.length = n; return true; }
               if (typeof key === "symbol") return true;
               if (!__ISIDX.test(key)) return true;
               const i = Number(key);
-              if (materialized) { materialized[i] = val; return true; }
-              if (i < len()) { overrides.set(i, val); children.delete(i); return true; }
-              materialize(); materialized![i] = val; return true;
+              if (materialized) { materialized[i] = __resolveV(val); return true; }
+              const bl = baseLen();
+              if (i < bl) { if (appends.length > 0) { materialize(); materialized![i] = __resolveV(val); return true; } overrides.set(i, __resolveV(val)); children.delete(i); return true; }
+              if (i === bl + appends.length && !__isDraftP(val)) { appends.push(val); return true; }  // trailing push -> lazy append
+              materialize(); materialized![i] = __resolveV(val); return true;   // proxy-at-tail (shift) or sparse growth -> fold
             },
             deleteProperty(_t, key) { if (typeof key === "symbol") return true; if (!__ISIDX.test(key)) return true; materialize(); delete materialized![Number(key)]; return true; },
             has(_t, key) { if (key === "length") return true; const sk = String(key); if (__ISIDX.test(sk)) return Number(sk) < len(); return sk in Array.prototype; },
@@ -530,6 +552,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             if (materialized) { out.push({ path, op: "replace", value: materialized }); return; }
             for (const [i, v] of overrides) out.push({ path: [...path, String(i)], op: "replace", value: v });
             for (const [, c] of children) c.d.finalize(out);
+            if (appends.length > 0) out.push({ path, op: "append", value: appends.slice() });
           }
           return { proxy, value, finalize };
         }
