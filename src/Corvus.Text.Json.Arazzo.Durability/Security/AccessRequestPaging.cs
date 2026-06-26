@@ -18,8 +18,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.Security;
 /// </summary>
 internal static class AccessRequestPaging
 {
-    /// <summary>The page size used when a caller passes a non-positive limit.</summary>
-    internal const int DefaultPageSize = 50;
+    /// <summary>The page size used when a caller passes a non-positive limit (the public store-contract default).</summary>
+    internal const int DefaultPageSize = AccessRequestPage.DefaultPageSize;
 
     /// <summary>Pages <paramref name="filtered"/> (an already-filtered read) in memory: oldest-first by
     /// <c>(createdAt, id)</c>, resuming strictly after the cursor decoded from <paramref name="pageToken"/> (undefined =

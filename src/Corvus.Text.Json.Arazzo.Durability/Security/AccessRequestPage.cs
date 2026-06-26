@@ -20,6 +20,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.Security;
 /// </remarks>
 public sealed class AccessRequestPage : IDisposable
 {
+    /// <summary>The page size used when a caller passes a non-positive limit — the store contract's default, shared by the
+    /// in-memory pager and every backend's native keyset query so they page identically.</summary>
+    public const int DefaultPageSize = 50;
+
     private byte[]? rentedToken;
 
     private AccessRequestPage(PooledDocumentList<AccessRequest> requests, ReadOnlyMemory<byte> nextPageToken, byte[]? rentedToken)
