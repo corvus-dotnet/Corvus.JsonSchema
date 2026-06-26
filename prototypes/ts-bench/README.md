@@ -39,22 +39,23 @@ consensus valid-count is ground truth, wrong/err results are discounted, and we 
 
 | Validator | Correct on | **Fastest *correct* on** | Geomean over its correct schemas |
 |---|:---:|:---:|---:|
-| **corvus-ts** | **37 / 37** | **18** | 2,431 ns |
-| ajv | 33 / 37 | 15 | 2,289 ns |
-| @exodus/schemasafe | 27 / 37 | 3 | 2,033 ns |
-| @hyperjump/json-schema | 35 / 37 | 1 | 31,576 ns |
+| **corvus-ts** | **37 / 37** | **26** | 1,853 ns |
+| ajv | 33 / 37 | 7 | 2,593 ns |
+| @exodus/schemasafe | 27 / 37 | 4 | 2,316 ns |
+| @hyperjump/json-schema | 35 / 37 | 0 | 39,598 ns |
 
 **corvus-ts is the only validator correct on all 37 schemas, and it is the fastest *correct* validator on
-the most schemas (18, vs ajv's 15).** ajv is wrong on **openapi (0/107)** and **code-climate** and fails to
+the most schemas (26, vs ajv's 7).** ajv is wrong on **openapi (0/107)** and **code-climate** and fails to
 compile 2; schemasafe is wrong on draft-04/helm-chart-lock and fails to compile 8; hyperjump is correct but
 ~13–50× slower. The geomean columns are over **different schema sets** (each validator's *correct* ones), so
-they are not directly comparable — schemasafe's 2,033 ns is only over the 27 easy schemas it can handle;
-corvus's 2,431 is over all 37, including hard ones like openapi (~280 µs of fully-correct `$dynamicRef` +
-`unevaluatedProperties` validation, which ajv "does" in 42 µs by accepting **none** of them).
+they are not directly comparable — yet corvus's **1,853 ns over all 37** (including hard ones like openapi,
+~210 µs of fully-correct `$dynamicRef` + `unevaluatedProperties` validation that ajv "does" in 42 µs by
+accepting **none** of them) still beats ajv's 2,593 ns over its easier 33.
 
-corvus wins large on complex schemas (cypress 15–22×, jsconfig/omnisharp/jshintrc 4–6×, geojson ~3×) and
-loses on small/flat schemas to ajv's hand-tuned dispatch, mostly by < 2×, several within noise. It **never**
-loses to hyperjump.
+corvus wins large on complex schemas (cypress 15–22×, jsconfig/omnisharp/jshintrc 4–6×, geojson ~3×) **and
+now on most small/flat schemas too** (nest-cli, gitpod, pulumi, semantic-release, lerna, omnisharp, …); ajv
+edges it only on the very tiniest hand-tuned cases (aws-cdk, jasmine, importmap, stale), mostly by < 2×. It
+**never** loses to hyperjump.
 
 **Dispatch micro-optimizations don't help in JS (A/B-disproven).** We tried, behind the controlled
 `bench-compare.mjs` A/B: Ajv-style direct property access (33% *slower* — our O(instanceKeys) loop beats
@@ -62,6 +63,16 @@ O(declaredProps) on sparse instances), a name→validator **Map** (the C# genera
 **0.99×**, a wash), and a **`switch`** (**1.015×**, within noise, with an unexplained ui5 deopt). Reason:
 V8 compares interned-string `k === "name"` by pointer identity, so the if/else-if chain is already
 near-optimal — unlike C#'s UTF-8 `SequenceEqual`, where the dictionary is a real win.
+
+**What *did* move the needle: per-validation allocation.** Replacing the per-object `Object.keys` array
+with an allocation-free `for...in` over own keys (no `hasOwn` guard — a JSON instance owns every key
+`for...in` yields; it differs only under a globally-polluted `Object.prototype`, the host's concern) and
+**fusing** `properties`/`patternProperties`/`additionalProperties` into a single enumeration cut the
+validator's *own* allocation ~3× (it had rivalled `JSON.parse` itself) at **neutral warm time**. That moved
+corvus from **18 → 26** fastest-*correct* schemas — the small/flat schemas it used to lose to ajv flipped
+(nest-cli, gitpod, pulumi, semantic-release, …), because the per-object key-array allocation isn't free even
+warm. The allocation win is *understated* by this warm microbenchmark (no GC-pause time) and is larger under
+sustained-load GC pressure — the actual server target.
 
 ## Correctness
 
