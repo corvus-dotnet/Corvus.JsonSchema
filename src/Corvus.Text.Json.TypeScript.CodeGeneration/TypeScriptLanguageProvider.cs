@@ -54,11 +54,12 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         "  constructor(readonly verbose = false) {}\n" +
         "  get valid(): boolean { return this.failures.length === 0; }\n" +
         "  fail(keywordLocation: string, instanceLocation: string, absoluteKeywordLocation?: string): void { this.failures.push({ keywordLocation, instanceLocation, absoluteKeywordLocation }); }\n" +
-        "}\n\n";
+        "}\n" +
+        "function __ptr(s: string): string { return s.indexOf(\"~\") < 0 && s.indexOf(\"/\") < 0 ? s : s.replace(/~/g, \"~0\").replace(/\\//g, \"~1\"); }\n\n";
 
     private const string EvRuntime =
         "class Ev {\n" +
-        "  n = false; pl = 0; pa = 0; il = 0; ia = 0; r: Results | null = null;\n" +
+        "  n = false; pl = 0; pa = 0; il = 0; ia = 0;\n" +
         "  po: Set<number> | null = null; poa: Set<number> | null = null; io: Set<number> | null = null; ioa: Set<number> | null = null;\n" +
         "  markProp(i: number): void { if (this.n) { return; } if (i < 32) { this.pl |= (1 << i) >>> 0; } else { (this.po ??= new Set<number>()).add(i); } }\n" +
         "  hasProp(i: number): boolean { return i < 32 ? (((this.pl | this.pa) & ((1 << i) >>> 0)) !== 0) : ((this.po !== null && this.po.has(i)) || (this.poa !== null && this.poa.has(i))); }\n" +
@@ -914,7 +915,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         }
 
         this.moduleTopLevelNames.Add(entry);
-        return $"\nexport const {entry} = (v: unknown, results?: Results): boolean => {{ const ev = fresh(); ev.r = results ?? null; return evaluate{rootName}(v, ev); }};\nexport default {entry};\n";
+        return $"\nexport const {entry} = (v: unknown, results?: Results): boolean => evaluate{rootName}(v, fresh(), \"\", results ?? null);\nexport default {entry};\n";
     }
 
     public static TypeScriptLanguageProvider CreateDefault()
@@ -1024,7 +1025,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         // (@corvus/json-runtime, §5.5) that every generated module imports — never inlined per module.
         var sb = new StringBuilder();
         sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n");
-        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, type Results } from \"").Append(this.runtimeModuleSpecifier).Append("\";\n\n");
+        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, type Results } from \"").Append(this.runtimeModuleSpecifier).Append("\";\n\n");
         var moduleGuards = new HashSet<string>(StringComparer.Ordinal); // union guard names, unique per module
         foreach (TypeDeclaration td in types)
         {
@@ -1848,14 +1849,19 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     // ---- validators: composed from the core handler registry (§13.13) ----
     private void EmitValidator(StringBuilder sb, TypeDeclaration td)
     {
-        sb.Append("export function evaluate").Append(FinalName(td)).Append("(value: unknown, ev: Ev): boolean {\n");
+        // `il` is the instance-location JSON Pointer (built only when collecting; see §15). `ok` accumulates
+        // the verdict: on the boolean hot path a failing check `return false`s immediately (ev.r === null);
+        // when collecting it records via ev.r and sets ok = false, falling through to gather every failure.
+        sb.Append("export function evaluate").Append(FinalName(td)).Append("(value: unknown, ev: Ev, il: string = \"\", r: Results | null = null): boolean {\n");
 
         // boolean schemas: `false` matches nothing, `true` matches everything.
         if (td.LocatedSchema.Schema.ValueKind == JsonValueKind.False)
         {
-            sb.Append("  return false;\n}\n\n");
+            sb.Append("  if (r !== null) { ").Append(TsEmit.FailRecord(td)).Append(" } return false;\n}\n\n");
             return;
         }
+
+        sb.Append("  let ok = true;\n");
 
         var steps = new List<(uint Priority, ITsKeywordEmitter Emitter, IKeyword Keyword)>();
         foreach (IKeyword keyword in td.Keywords())
@@ -1877,7 +1883,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             emitter.Emit(sb, td, keyword);
         }
 
-        sb.Append("  return true;\n}\n\n");
+        sb.Append("  return ok;\n}\n\n");
     }
 
     private static string Pascal(string value)
