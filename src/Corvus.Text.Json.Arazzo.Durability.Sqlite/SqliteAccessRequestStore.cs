@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Globalization;
 using System.Text;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -162,6 +163,124 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
             }
 
             return list;
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<AccessRequestPage> ListAsync(AccessRequestQuery query, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : AccessRequestPage.DefaultPageSize;
+
+        // Decode the keyset cursor; createdAt + id reify to the strings the ADO predicate needs (a genuine DB-param leaf)
+        // only here — createdAt as the ISO-8601 "o" form the CreatedAt column stores (reconstructed from the token's UTC
+        // ticks), id as its text. Undefined token = first page; a malformed token throws FormatException.
+        string? cursorCreatedAt = null;
+        string? cursorId = null;
+        if (pageToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(AccessRequestContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
+            try
+            {
+                if (AccessRequestContinuationToken.TryDecode(tokenUtf8.Span, buffer, out long cursorTicks, out ReadOnlySpan<byte> cursorIdUtf8))
+                {
+                    cursorCreatedAt = new DateTime(cursorTicks, DateTimeKind.Utc).ToString("o", CultureInfo.InvariantCulture);
+                    cursorId = Encoding.UTF8.GetString(cursorIdUtf8);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+        }
+
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            using SqliteCommand select = this.connection.CreateCommand();
+            var sql = new StringBuilder("SELECT Document FROM AccessRequests");
+            var conditions = new List<string>(5);
+            if (query.Status is { } status)
+            {
+                conditions.Add("Status = @status");
+                select.Parameters.AddWithValue("@status", AccessRequestStatusNames.ToWire(status));
+            }
+
+            if (query.BaseWorkflowId.IsNotUndefined())
+            {
+                conditions.Add("BaseWorkflowId = @bw");
+                select.Parameters.AddWithValue("@bw", (string)query.BaseWorkflowId);
+            }
+
+            if (query.SubjectClaimType is { } subjectType)
+            {
+                conditions.Add("SubjectClaimType = @st");
+                select.Parameters.AddWithValue("@st", subjectType);
+            }
+
+            if (query.SubjectClaimValue is { } subjectValue)
+            {
+                conditions.Add("SubjectClaimValue = @sv");
+                select.Parameters.AddWithValue("@sv", subjectValue);
+            }
+
+            if (cursorCreatedAt is not null)
+            {
+                // Keyset seek strictly past (createdAt, id): CreatedAt is the fixed-width ISO-8601 "o" UTC form so its
+                // ordinal/lexicographic order is chronological, and Id is the TEXT primary key (SQLite BINARY collation ==
+                // ordinal byte order == the in-memory pager's id span compare).
+                conditions.Add("(CreatedAt > @ca OR (CreatedAt = @ca AND Id > @id))");
+                select.Parameters.AddWithValue("@ca", cursorCreatedAt);
+                select.Parameters.AddWithValue("@id", cursorId!);
+            }
+
+            if (conditions.Count > 0)
+            {
+                sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+            }
+
+            // ORDER BY the keyset and LIMIT one beyond the page (lookahead) — the IX_AccessRequests on (CreatedAt, Id) is
+            // not declared, but ORDER BY drives the bounded read; never a full read + re-parse of the whole queue.
+            sql.Append(" ORDER BY CreatedAt, Id LIMIT @limit;");
+            select.Parameters.AddWithValue("@limit", pageSize + 1);
+            select.CommandText = sql.ToString();
+
+            var page = new PooledDocumentList<AccessRequest>(pageSize);
+            try
+            {
+                bool hasMore = false;
+                using (SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                    {
+                        if (page.Count == pageSize)
+                        {
+                            hasMore = true; // the (pageSize+1)th row exists → a next page; don't parse it
+                            break;
+                        }
+
+                        page.Add(ParsedJsonDocument<AccessRequest>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
+                    }
+                }
+
+                if (!hasMore)
+                {
+                    return AccessRequestPage.Create(page);
+                }
+
+                AccessRequest last = page[page.Count - 1];
+                using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+                return AccessRequestPage.Create(page, last.CreatedAtValue.UtcTicks, lastId.Span);
+            }
+            catch
+            {
+                page.Dispose();
+                throw;
+            }
         }
         finally
         {

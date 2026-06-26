@@ -351,6 +351,29 @@ entries. Both sort ordinal (== the in-memory pager's order). Container conforman
 **`listRunners` Phase 2 — COMPLETE across all 10 backends.** InMemory (the reference in-memory pager) + Sqlite/Postgres/
 MySql/SqlServer (SQL keyset, byte-ordinal collation) + Cosmos/Mongo/AzureStorage (native range) + Redis/Nats (client-sorted
 id index, page-only document fetch). Every backend pages by ordinal `runnerId`, validated by the shared
-`RunnerRegistryConformance` (12 tests each). **Next Phase 2 stores:** `listSecurityRules`/`listSecurityBindings` and
-`listAccessRequests` — their keys live inside the JSON blob, so each needs a key-extraction column (SQL) / queryable field
-(doc) / id-index decode (KV) before the same keyset shape applies.
+`RunnerRegistryConformance` (12 tests each).
+
+**Reframing the remaining stores (grounding correction).** The keyset key fields for the other three endpoints turn out to
+be **already queryable columns/properties** on the SQL and document backends (the runner row had to rely on a natural PK,
+but these stores already mirror their keys): access-requests store `Id`/`CreatedAt`/`BaseWorkflowId`/`Status` as columns and
+already `ORDER BY CreatedAt, Id`; security rules key on a `Name` PK; bindings on `SortOrder, Id` columns. So Phase 2 for
+these is mostly *adding the cursor predicate + `LIMIT` to the existing ordered query* (+ a byte-ordinal `Id` collation on the
+non-SQLite SQL backends, as for runners), not new columns. Only Redis/Nats page client-side (KV, inherent), and only the
+security stores' free-text **`q`** fields (rule expression; binding claimType/claimValue/description) genuinely live in the
+blob — so server-side `q` is the one place key-extraction is still needed (resolved when those stores are tackled).
+
+### `listAccessRequests` — native keyset on `(createdAt, id)` (per backend)
+
+The unbounded approval queue. Keyset `(createdAt, id)` oldest-first; the existing filter columns
+(`status`/`baseWorkflowId`/`subjectClaim*`) are untouched. **Sqlite — done.** The native override adds the keyset seek
+`(CreatedAt > @ca OR (CreatedAt = @ca AND Id > @id)) ORDER BY CreatedAt, Id LIMIT @n+1` to the existing filtered query. The
+cursor reifies (only at the ADO param leaf) to the ISO-8601 `"o"` form the `CreatedAt` column stores — reconstructed from
+the token's UTC ticks (`new DateTime(ticks, Utc).ToString("o")`), so it byte-matches the boundary row — plus the `Id` text;
+`CreatedAt` is fixed-width ISO (ordinal == chronological) and SQLite `Id TEXT PK` is BINARY (ordinal == the in-memory
+pager's id span compare). The page carries pooled `PooledDocumentList<AccessRequest>` documents (parsed only for the page,
+not the whole queue) + the pooled token, disposed together. `corvus-bytes-to-bytes` self-audit: token in via pooled decode →
+strings only at the `@ca`/`@id` DB-param leaf; page docs parsed bytes-native; token out via the last row's
+`(CreatedAtValue.UtcTicks, Id UTF-8)` → pooled encode. Default page size promoted to public `AccessRequestPage.DefaultPageSize`
+(no IVT). Warning-free slnx (0W/0E); Sqlite + InMemory `AccessRequestStoreConformance` (7 each) green. **Remaining backends:**
+Postgres/MySql/SqlServer (Id byte-ordinal collation + the same predicate), Cosmos/Mongo/AzureStorage (cursor predicate on
+the existing key fields), Redis/Nats (client-sorted id index, page-only document fetch).
