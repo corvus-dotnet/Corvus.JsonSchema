@@ -1815,3 +1815,107 @@ TypeScript engine is wired per §7.6. End-to-end: `corvus jsonschema <schema> --
 migrated provider. Pragmatic scope: the project builds clean without the full StyleCop/XML-doc polish
 (a tracked follow-up); the §7.2 `Options` surface is minimal (`AlwaysAssertFormat`). Next: the Sourcemeta
 benchmark uses this CLI.
+
+---
+
+## 14. Gap matrix — implementation backlog
+
+Writing the documentation and the 19 worked examples (`docs/typescript/`) was a forcing
+function: producing exhaustive, *runnable* coverage of every construct surfaced every place the
+engine is not yet complete. This section consolidates those findings — together with the remaining
+items from §9 (Phasing) and §10 (Open questions) — into one prioritised backlog to work through.
+
+**Not in scope here:** validation correctness. The generated validators are 100% on the JSON Schema
+Test Suite across all five dialects (draft 4/6/7/2019‑09/2020‑12). Every gap below is in the
+*type‑surface polish, value‑type richness, evaluator output modes, annotations, or delivery* — not
+in whether a value is judged valid.
+
+Severity = impact on a production‑quality engine. Effort = S / M / L.
+
+### A — Type surface & output structure
+
+| # | Gap | Now | Desired | Sev | Eff |
+|---|-----|-----|---------|-----|-----|
+| A1 | **Multi‑file output / barrel `index.ts`** | one `generated.ts` per schema (all types in one module) | one module per type + a barrel `index.ts` (§7.4); enables tree‑shaking + IDE navigation; needed for cross‑file `$ref` | High | L |
+| A2 | **`if`/`then`/`else` subschemas reified as named types** | emits `If` / `Then` / `Method2` interfaces for the conditional subschemas | keep conditional subschemas anonymous (validator‑only); don't pollute the type surface | Med | M |
+| A3 | **Reserved‑word / global‑shadow property names** | property names emitted verbatim (type names are guarded; members aren't) | sanitise member names that collide with TS keywords | Low | S |
+| A4 | **Combined `oneOf` + `allOf` + `type:[…]`** | degrades to a sound `unknown` when the `oneOf` branches are constraint‑only | resolve to the structural `type` union (e.g. `string \| readonly number[]`) | Low | M |
+| A5 | **Collision/fallback name polish** | numeric suffixes (`Entity2`, `evaluateKind2`) | qualified/hierarchical names where they read better | Low | M |
+| A6 | **Numeric typed‑array views** | `readonly number[]` for dense numeric arrays | optional `Float64Array`/typed‑array view for numeric hot paths (Model A/C) | Low | M |
+
+> Not a gap: a multi‑type array branch stays `readonly unknown[]` (the core exposes no
+> `ArrayItemsType` for a non‑pure‑array schema) — this matches the C# engine's fidelity.
+
+### B — Value types
+
+| # | Gap | Now | Desired | Sev | Eff |
+|---|-----|-----|---------|-----|-----|
+| B1 | **`default` not applied** | annotation‑only: the property is made optional, the value is not surfaced | apply defaults on read/build (or a `withDefaults` helper); at minimum a JSDoc note | Med | S |
+| B2 | **Temporal value accessors** | date/time/duration are branded *strings* (Temporal is used internally for validation only) | generated accessors returning `Temporal.PlainDate` / `ZonedDateTime` / `Duration` via a pluggable adapter (§5.3.1) | Med | M |
+| B3 | **Arbitrary‑precision number value** | type is `number`; the *evaluator* is exact (lossless‑json) but the *value* isn't a big‑number | a first‑class big‑number value via a pluggable adapter (bignumber.js/decimal.js seam) | Low | M |
+| B4 | **Smaller numeric formats** | `int64`/`uint64`/`int128`/`uint128` → `bigint` (done) | `int16`/`int32`/`uint16`/`uint32` → `number` + range brand & check; currently no range emitted | Med | M |
+| B5 | **Exotic numeric formats** | none | `half`/`single`/`double`/`decimal`/`byte` typed treatment | Low | M |
+
+### C — Annotations & developer experience
+
+| # | Gap | Now | Desired | Sev | Eff |
+|---|-----|-----|---------|-----|-----|
+| C1 | **`description`/`title` → JSDoc** | not emitted (IDE hover is empty) | `/** … */` on interfaces & properties from `description` | High | M |
+| C2 | **`deprecated` → `@deprecated`** | not emitted | `@deprecated` JSDoc tag so call sites warn | Med | S |
+| C3 | **`readOnly` / `writeOnly`** | not reflected | reflect in JSDoc and/or split read/write types | Med | M |
+| C4 | **`examples` → `@example`** | not emitted | `@example` JSDoc from the schema's examples | Low | S |
+
+### D — Evaluator output modes (the results‑collector family)
+
+| # | Gap | Now | Desired | Sev | Eff |
+|---|-----|-----|---------|-----|-----|
+| D1 | **Results collector** | `evaluateRoot` / `evaluate{Type}` are boolean‑only; `Ev` tracks only evaluated props/items for `unevaluated*` | an optional collector that records *why* a value failed (per‑keyword failures) — the `evaluateRoot(value, results?)` the user has flagged; the TS analog of C#'s `JsonSchemaContext` | High | M‑L |
+| D2 | **Spec‑output location constants** | none emitted | per‑subschema schema‑location + evaluation‑path constants (the analog of `EmitPathProviderFields`) so failures/annotations carry `instanceLocation`/`keywordLocation`/`absoluteKeywordLocation` (§5.6). Prerequisite for D1 locations, D4, and Bowtie | High | M |
+| D3 | **`SchemaEvaluationOnly` / `Both` modes** | always emits the full type+validator surface; the CLI `codeGenerationMode` is accepted but ignored | honour the mode (validators‑only standalone evaluator) | Med | S |
+| D4 | **Annotation collection (verbose)** | none | collect annotations (title/default/examples…) during evaluation in verbose mode | Med | S‑M |
+
+### E — Dialects
+
+| # | Gap | Now | Desired | Sev | Eff |
+|---|-----|-----|---------|-----|-----|
+| E1 | **OpenAPI 3.0/3.1** | `discriminator` works via `oneOf`+`match`; `nullable` likely falls through composition (unverified); OpenAPI vocabularies not explicitly wired for TS | explicit `nullable` → `T \| null`; confirm OpenAPI 3.0/3.1 end‑to‑end | Med | M |
+
+### F — Mutation & write
+
+| # | Gap | Now | Desired | Sev | Eff |
+|---|-----|-----|---------|-----|-----|
+| F1 | **Canonical write** | `build` preserves caller key order | a separate, opt‑in `buildCanonical` (recursive key sort + canonical number/string forms) for hashing/content‑addressing (§5.7) | Med | M |
+| F2 | **`applyTo` mixin helper** | emits `applyTo{T}(source, A \| B)` for allOf mixins — clunky signature | smoother composition/apply ergonomics | Low | M |
+| F3 | **Change‑set as RFC 6902** | recorded internally, not a public API | surface the recorded change‑set as JSON Patch | Low | S |
+
+### G — Delivery: packaging, tooling, CI, playground
+
+| # | Gap | Now | Desired | Sev | Eff |
+|---|-----|-----|---------|-----|-----|
+| G1 | **`@corvus/json-runtime` as an npm package** | `corvus-runtime.ts` is re‑emitted source (the examples share one copy by hand) | a real publishable ESM package (own `package.json`, `exports`, `.d.ts`, tree‑shakeable, peer deps lossless‑json/tr46/temporal); generated modules `import` from it | High | M |
+| G2 | **CLI `Options` wiring** | only `AlwaysAssertFormat`; `outputPath`/`codeGenerationMode`/format‑mode/naming/file options ignored or hard‑coded | wire the full options surface (§7.2) from the CLI config | Med | S |
+| G3 | **Compliance harness in CI** | lives only in `prototypes/ts-provider-spike` (SuiteHarness + suite‑runner.mjs) | a graduated `tests/` project that runs the suite (all 5 dialects) in CI with the exclusion model | High | M‑L |
+| G4 | **Bowtie TS harness** | none | a Node/TS harness speaking Bowtie's stdio protocol for cross‑implementation conformance (§8) | Med | M |
+| G5 | **Sustained‑load benchmark, permanent** | one‑off in `prototypes/ts-bench` | a permanent throughput‑under‑GC‑pressure benchmark (validation + RMW) | Med | M |
+| G6 | **Consumer build story** | minimal example tsconfig; runtime inline | documented tsconfig/bundler guidance, `.d.ts`/source‑map story, consumption pattern (once G1 lands) | Med | S |
+| G7 | **Blazor‑WASM playground** | none (the other six engines have one) | a playground that runs the codegen in‑browser AND *runs* the emitted JS — paste schema → generated TS → live evaluate/mutate (the differentiator the C# playground can't match) | Med | L |
+
+### H — Deferred by design
+
+| # | Item | Note |
+|---|------|------|
+| H1 | LSP / UTF‑16 dual‑offset projection | the editor path (§13); engineer when the VS Code use case is taken up |
+| H2 | Model A lazy‑read views | only if large‑payload *partial* read becomes an independent target (§7 of §9) |
+
+### Suggested order to work through
+
+1. **Foundational / unblocking** — G1 (`@corvus/json-runtime` package), G2 (CLI options),
+   D2 (location‑path constants). G1 unblocks consumption + the playground; D2 unblocks D1/D4/G4.
+2. **High DX / high value** — C1 (`description` → JSDoc), D1 (results collector), A1 (multi‑file +
+   barrel), G3 (compliance harness in CI).
+3. **Value‑type completeness** — B1 (defaults), B2 (Temporal accessors), B4 (int16/32 + range),
+   C2/C3/C4 (deprecated/readOnly/examples).
+4. **Polish** — A2/A5 (naming artifacts), A3 (reserved words), A4/A6, B3/B5, E1 (OpenAPI nullable),
+   F1 (canonical write) / F2 / F3, D3 (eval‑only mode), G4 (Bowtie), G5 (benchmark), G6 (consumer docs).
+5. **Showcase** — G7 (playground).
+6. **Deferred** — H1 (LSP), H2 (Model A), unless their use case is taken up.
