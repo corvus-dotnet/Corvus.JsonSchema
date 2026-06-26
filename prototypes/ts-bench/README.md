@@ -25,10 +25,16 @@ fast-but-wrong validator is meaningless, so disagreements are surfaced.
 ```
 npm install
 # generate validators for all 37 schemas via the production CLI, then compile:
-#   for each schema: corvus jsonschema <schema> --engine TypeScript --outputPath bench-gen/<name>
+#   for each schema: corvus jsonschema <schema> --engine TypeScript --assertFormat false --outputPath bench-gen/<name>
 #   npx tsc -p tsconfig.bench.json
 node bench.mjs /path/to/jsonschema-benchmark      # WARMUP=N to override
 ```
+
+> **`--assertFormat false` is required.** The dataset's expected valid-counts (and the other
+> validators ajv/hyperjump/schemasafe) treat `format` as **annotation-only** (the 2020-12 default).
+> The CLI asserts formats by default, so the benchmark must opt out — otherwise corvus-ts would
+> reject `format`-violating instances the consensus accepts, producing spurious disagreements and an
+> unfair comparison.
 
 ## Results (WARMUP=30, ROUNDS=7 median; see `RESULTS.txt` for the full per-schema table)
 
