@@ -374,6 +374,13 @@ pager's id span compare). The page carries pooled `PooledDocumentList<AccessRequ
 not the whole queue) + the pooled token, disposed together. `corvus-bytes-to-bytes` self-audit: token in via pooled decode →
 strings only at the `@ca`/`@id` DB-param leaf; page docs parsed bytes-native; token out via the last row's
 `(CreatedAtValue.UtcTicks, Id UTF-8)` → pooled encode. Default page size promoted to public `AccessRequestPage.DefaultPageSize`
-(no IVT). Warning-free slnx (0W/0E); Sqlite + InMemory `AccessRequestStoreConformance` (7 each) green. **Remaining backends:**
-Postgres/MySql/SqlServer (Id byte-ordinal collation + the same predicate), Cosmos/Mongo/AzureStorage (cursor predicate on
-the existing key fields), Redis/Nats (client-sorted id index, page-only document fetch).
+(no IVT). Warning-free slnx (0W/0E); Sqlite + InMemory `AccessRequestStoreConformance` (7 each) green.
+
+**SQL backends (Postgres, MySql, SqlServer) — done.** Same keyset predicate + `LIMIT @n+1` / SqlServer `TOP (@n+1)` added to
+the existing filtered, ordered query. Two schema additions per backend: `Id` declared byte-ordinal (Postgres `COLLATE "C"`,
+MySql `utf8mb4_bin`, SqlServer `Latin1_General_BIN2`) so the id tie-breaker matches the in-memory pager, and a composite
+`IX_AccessRequests_Created (CreatedAt, Id)` index so the oldest-first queue read is an index seek (not a full sort) — the
+unbounded-queue case where the bound matters most. `CreatedAt` needs no collation (fixed-width ISO is ordinal-stable). The
+Npgsql `42P08` trap does not recur here — `@ca`/`@id` are bound only when a cursor is present, so they are never untyped
+`DBNull`. Container conformance: **Postgres 7/7, MySql 7/7, SqlServer 7/7**. **Remaining backends:** Cosmos/Mongo/AzureStorage
+(cursor predicate on the existing key fields), Redis/Nats (client-sorted id index, page-only document fetch).
