@@ -228,11 +228,15 @@ internal sealed class TsPropertiesHandler : IKeywordValidationHandler, ITsKeywor
         sb.Append("  if (__isObj(value)) {\n");
         sb.Append("    const o = value as Record<string, unknown>;\n");
 
-        // Enumerate the instance once; mark each evaluated property's index into the tracker (a no-op on
-        // NOEV). Marking is unconditional so that an in-place applicator member credits its evaluations
-        // into the parent's tracker (mirrors the C# generator's unconditional AddLocalEvaluatedProperty).
-        sb.Append("    const keys = Object.keys(o);\n");
-        sb.Append("    for (let i = 0; i < keys.length; i++) {\n      const k = keys[i];\n");
+        // Enumerate own keys allocation-free via for..in + a position counter -- NOT Object.keys, which
+        // allocates a fresh key array per object (~3x the validator's own allocation under sustained load).
+        // No hasOwn guard: a JSON instance's own keys are exactly what for..in yields; it would differ only
+        // under a globally-polluted Object.prototype (the host's concern, not the data's -- JSON cannot inject
+        // prototype-chain keys). Mark each evaluated property's index into the tracker (a no-op on NOEV);
+        // marking is unconditional so an in-place applicator member credits its evaluations into the parent's
+        // tracker (mirrors the C# generator's unconditional AddLocalEvaluatedProperty).
+        sb.Append("    let i = -1;\n");
+        sb.Append("    for (const k in o) {\n      i++;\n");
         bool first = true;
         foreach (PropertyDeclaration p in locals)
         {
@@ -296,7 +300,7 @@ internal sealed class TsPatternPropertiesHandler : IKeywordValidationHandler, IT
         if (entries.Count == 0) { return; }
         sb.Append("  if (__isObj(value)) {\n");
         sb.Append("    const o = value as Record<string, unknown>;\n");
-        sb.Append("    const keys = Object.keys(o);\n    for (let i = 0; i < keys.length; i++) {\n      const k = keys[i];\n");
+        sb.Append("    let i = -1;\n    for (const k in o) {\n      i++;\n");
         foreach ((string pattern, string name, string subEv) in entries)
         {
             // Pass the pattern-property type its OWN tracker when it needs one (SubEv, like properties/
@@ -342,7 +346,7 @@ internal sealed class TsAdditionalPropertiesHandler : IKeywordValidationHandler,
         sb.Append("    const o = value as Record<string, unknown>;\n");
         sb.Append("    const known = new Set<string>([").Append(string.Join(", ", known)).Append("]);\n");
         sb.Append("    const patterns: RegExp[] = [").Append(string.Join(", ", patterns)).Append("];\n");
-        sb.Append("    const keys = Object.keys(o);\n    for (let i = 0; i < keys.length; i++) {\n      const k = keys[i];\n");
+        sb.Append("    let i = -1;\n    for (const k in o) {\n      i++;\n");
         sb.Append("      if (known.has(k)) { continue; }\n");
         sb.Append("      if (patterns.some((p) => p.test(k))) { continue; }\n");
         sb.Append("      if (!").Append(name).Append("(o[k], ").Append(subEv).Append(")) { return false; } ev.markProp(i);\n");
@@ -489,7 +493,7 @@ internal sealed class TsPropertyNamesHandler : IKeywordValidationHandler, ITsKey
         SingleSubschemaKeywordTypeDeclaration? pn = td.PropertyNamesSubschemaType();
         string? e = pn is null ? null : TsEmit.EvalName(pn.ReducedType);
         if (e is null) { return; }
-        sb.Append("  if (__isObj(value)) { for (const k of Object.keys(value)) { if (!").Append(e).Append("(k, NOEV)) { return false; } } }\n");
+        sb.Append("  if (__isObj(value)) { for (const k in value) { if (!").Append(e).Append("(k, NOEV)) { return false; } } }\n");
     }
 }
 
@@ -648,9 +652,9 @@ internal sealed class TsUnevaluatedPropertiesHandler : IKeywordValidationHandler
         string subEv = TsEmit.SubEv(fb!.ReducedType);
         sb.Append("  if (__isObj(value)) {\n");
         sb.Append("    const o = value as Record<string, unknown>;\n");
-        sb.Append("    const keys = Object.keys(o);\n");
-        sb.Append("    for (let i = 0; i < keys.length; i++) {\n");
-        sb.Append("      if (!ev.hasProp(i) && !").Append(name).Append("(o[keys[i]], ").Append(subEv).Append(")) { return false; }\n");
+        sb.Append("    let i = -1;\n");
+        sb.Append("    for (const k in o) {\n      i++;\n");
+        sb.Append("      if (!ev.hasProp(i) && !").Append(name).Append("(o[k], ").Append(subEv).Append(")) { return false; }\n");
         sb.Append("      ev.markProp(i);\n");
         sb.Append("    }\n  }\n");
     }
