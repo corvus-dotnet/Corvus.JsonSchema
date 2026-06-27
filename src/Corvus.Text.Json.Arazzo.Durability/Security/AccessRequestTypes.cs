@@ -44,11 +44,41 @@ public readonly record struct AccessRequestDecision(
 /// <param name="BaseWorkflowId">Only requests targeting this base workflow id, carried as its request JSON value (undefined matches anything); the store reifies it at its own leaf (a DB parameter, or a bytes-native span compare).</param>
 /// <param name="SubjectClaimType">Only requests whose subject keys on this claim type (with <paramref name="SubjectClaimValue"/>, "mine"); a server-derived/config string leaf.</param>
 /// <param name="SubjectClaimValue">Only requests whose subject value matches; a server-derived (ClaimsPrincipal) string leaf.</param>
+/// <param name="AdministeredBaseWorkflowIds">The approver inbox (design §15.4/§16.5): only requests targeting one of these
+/// base workflow ids — the set the caller administers, resolved server-side from the reverse administration index (a
+/// genuine server-derived leaf, like <paramref name="SubjectClaimValue"/>). <see langword="null"/> matches anything; a
+/// caller administering nothing is short-circuited to an empty page before the store, so the set is never empty here.</param>
 public readonly record struct AccessRequestQuery(
     AccessRequestStatus? Status = null,
     JsonString BaseWorkflowId = default,
     string? SubjectClaimType = null,
-    string? SubjectClaimValue = null);
+    string? SubjectClaimValue = null,
+    IReadOnlyList<string>? AdministeredBaseWorkflowIds = null)
+{
+    /// <summary>Whether a row's base workflow id passes the approver-inbox filter: <see langword="true"/> when no
+    /// administered set is constrained, or when the set contains <paramref name="rowBaseWorkflowId"/> (ordinal). The
+    /// shared client-side membership test for stores that filter in memory (the in-memory store and the KV/table
+    /// backends, which scan their keyset index and apply this per row).</summary>
+    /// <param name="rowBaseWorkflowId">The candidate row's base workflow id.</param>
+    /// <returns><see langword="true"/> if the row is admitted by the administered-set filter.</returns>
+    public bool MatchesAdministeredSet(string rowBaseWorkflowId)
+    {
+        if (this.AdministeredBaseWorkflowIds is not { } administered)
+        {
+            return true;
+        }
+
+        foreach (string administeredBaseWorkflowId in administered)
+        {
+            if (string.Equals(administeredBaseWorkflowId, rowBaseWorkflowId, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
 
 /// <summary>The wire (persisted) names for <see cref="AccessRequestStatus"/>.</summary>
 public static class AccessRequestStatusNames

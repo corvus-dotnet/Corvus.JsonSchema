@@ -225,6 +225,75 @@ public abstract class AccessRequestStoreConformance
         });
     }
 
+    [TestMethod]
+    public async Task Listing_filters_by_the_administered_workflow_set_for_the_approver_inbox()
+    {
+        IAccessRequestStore store = await this.NewStoreAsync();
+        string aliceReconcile = await this.CreateAsync(store, "nightly-reconcile", "alice");
+        string bobReconcile = await this.CreateAsync(store, "nightly-reconcile", "bob");
+        string aliceOnboard = await this.CreateAsync(store, "onboard-customer", "alice");
+        string carolExport = await this.CreateAsync(store, "daily-export", "carol");
+
+        // The approver inbox: every request targeting a workflow in the administered set (reconcile + export), across all
+        // subjects — onboard-customer is outside the set and never surfaced.
+        (await this.IdsAsync(store, new AccessRequestQuery(AdministeredBaseWorkflowIds: ["nightly-reconcile", "daily-export"])))
+            .ShouldBe([aliceReconcile, bobReconcile, carolExport], ignoreOrder: true);
+
+        // Combined with a status filter (the inbox's optional status filter).
+        await store.DecideAsync(bobReconcile, new AccessRequestDecision(AccessRequestStatus.Denied), WorkflowEtag.None, "admin", default);
+        (await this.IdsAsync(store, new AccessRequestQuery(Status: AccessRequestStatus.Pending, AdministeredBaseWorkflowIds: ["nightly-reconcile", "daily-export"])))
+            .ShouldBe([aliceReconcile, carolExport], ignoreOrder: true);
+
+        // A single-workflow administered set is exactly that workflow's queue.
+        (await this.IdsAsync(store, new AccessRequestQuery(AdministeredBaseWorkflowIds: ["onboard-customer"]))).ShouldBe([aliceOnboard]);
+    }
+
+    [TestMethod]
+    public async Task The_approver_inbox_keyset_pages_oldest_first_across_the_administered_set()
+    {
+        var clock = new StepClock(new DateTimeOffset(2026, 6, 1, 9, 0, 0, TimeSpan.Zero));
+        IAccessRequestStore store = await this.NewStoreAsync(clock);
+
+        // Interleave requests across two administered workflows and one the caller does NOT administer; the inbox must
+        // page the administered two oldest-first and never surface the third.
+        string[] workflows = ["alpha", "beta", "gamma"]; // gamma is not administered
+        var expected = new List<string>();
+        for (int i = 0; i < 9; i++)
+        {
+            string workflow = workflows[i % 3];
+            string id = await this.CreateAsync(store, workflow, $"user-{i}");
+            if (workflow != "gamma")
+            {
+                expected.Add(id);
+            }
+
+            clock.Advance(TimeSpan.FromSeconds(1));
+        }
+
+        var query = new AccessRequestQuery(AdministeredBaseWorkflowIds: ["alpha", "beta"]);
+        var seen = new List<string>();
+        byte[]? token = null;
+        int pages = 0;
+        do
+        {
+            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>? tokenDoc = token is null ? null : AsJsonString(token);
+            using AccessRequestPage page = await store.ListAsync(query, 2, tokenDoc?.RootElement ?? default, default);
+            page.Requests.Count.ShouldBeLessThanOrEqualTo(2);
+            foreach (AccessRequest request in page.Requests)
+            {
+                seen.Add(request.IdValue);
+            }
+
+            token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
+            pages++;
+        }
+        while (token is not null);
+
+        // 6 administered requests, 2 per page → 3 pages; oldest-first, no duplicates, gamma excluded.
+        pages.ShouldBe(3);
+        seen.ShouldBe(expected);
+    }
+
     // Wraps a value as the JSON string a request carries it as — the conformance carries a filter value as the request
     // JSON the store reifies at its own leaf, and round-trips a page token (the store's emitted bytes) the same way.
     private static ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString> AsJsonString(ReadOnlySpan<byte> valueUtf8)

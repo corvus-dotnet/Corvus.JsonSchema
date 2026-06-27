@@ -311,6 +311,20 @@ public sealed class AzureStorageAccessRequestStore : IAccessRequestStore
             conditions.Add(TableClient.CreateQueryFilter($"SubjectClaimValue eq {subjectValue}"));
         }
 
+        if (query.AdministeredBaseWorkflowIds is { Count: > 0 } administered)
+        {
+            // The approver inbox (§16.5): BaseWorkflowId IN (the administered set) — Azure Table has no IN, so it is an OR
+            // group over the server-derived base ids (each value quoted by CreateQueryFilter). The set is never empty here
+            // (the handler short-circuits a caller who administers nothing to an empty page before the store).
+            var anyOf = new List<string>(administered.Count);
+            foreach (string baseWorkflowId in administered)
+            {
+                anyOf.Add(TableClient.CreateQueryFilter($"BaseWorkflowId eq {baseWorkflowId}"));
+            }
+
+            conditions.Add("(" + string.Join(" or ", anyOf) + ")");
+        }
+
         return conditions.Count == 0 ? null : string.Join(" and ", conditions);
     }
 

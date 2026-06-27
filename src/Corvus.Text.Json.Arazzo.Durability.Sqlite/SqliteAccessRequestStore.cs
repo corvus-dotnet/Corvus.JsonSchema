@@ -149,6 +149,8 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
                 select.Parameters.AddWithValue("@sv", subjectValue);
             }
 
+            AppendAdministeredFilter(conditions, select, query.AdministeredBaseWorkflowIds);
+
             if (conditions.Count > 0)
             {
                 sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
@@ -227,6 +229,8 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
                 conditions.Add("SubjectClaimValue = @sv");
                 select.Parameters.AddWithValue("@sv", subjectValue);
             }
+
+            AppendAdministeredFilter(conditions, select, query.AdministeredBaseWorkflowIds);
 
             if (cursorCreatedAt is not null)
             {
@@ -325,6 +329,26 @@ public sealed class SqliteAccessRequestStore : IAccessRequestStore, IAsyncDispos
     {
         this.gate.Dispose();
         return this.connection.DisposeAsync();
+    }
+
+    // Appends the approver-inbox filter (design §16.5): BaseWorkflowId IN (the administered set) — server-derived strings
+    // reified as @adm{i} parameters (the SQL leaf). The set is never empty here (the handler short-circuits a caller who
+    // administers nothing to an empty page before the store), but a null set (the non-inbox modes) adds nothing.
+    private static void AppendAdministeredFilter(List<string> conditions, SqliteCommand command, IReadOnlyList<string>? administered)
+    {
+        if (administered is not { Count: > 0 } set)
+        {
+            return;
+        }
+
+        var names = new string[set.Count];
+        for (int i = 0; i < set.Count; i++)
+        {
+            names[i] = "@adm" + i.ToString(CultureInfo.InvariantCulture);
+            command.Parameters.AddWithValue(names[i], set[i]);
+        }
+
+        conditions.Add("BaseWorkflowId IN (" + string.Join(", ", names) + ")");
     }
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
