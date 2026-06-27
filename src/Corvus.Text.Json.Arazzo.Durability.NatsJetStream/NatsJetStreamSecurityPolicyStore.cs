@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Buffers.Text;
 using System.Globalization;
 using System.Text;
@@ -26,6 +27,15 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
     private const string RulePrefix = "rule.";
     private const string BindingPrefix = "binding.";
     private const string GenerationKey = "generation";
+
+    // A keyset index for native binding paging by (order, id): one marker key per binding of the form
+    // "bidx.{orderKey}.{Base64Url(id)}", where orderKey is a sign-preserving fixed-width hex of the int order. KV listing is
+    // unordered, so the (order, id) order is materialised client-side by decoding orderKey + id from each index key — cheap
+    // (no documents). Rules need no index: their keyset is the name, recoverable from the rule key. The index is maintained
+    // on add/update (a binding update can change the order → old marker removed, new added) and delete.
+    private const string BindingOrderIndexPrefix = "bidx.";
+
+    private static readonly byte[] IndexMarker = "1"u8.ToArray();
 
     // Singleton comparers (created once) for the client-side snapshot ordering, since the KV key listing is unordered:
     // rules by their name and bindings by Order then id.
@@ -134,6 +144,75 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
         => this.ReadRulesAsync(cancellationToken);
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityRulePage> ListRulesAsync(int limit, JsonString pageToken, JsonString q, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : SecurityRulePage.DefaultPageSize;
+        string? after = DecodeRuleCursor(pageToken);
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        // Rule keys encode the name (rule.{Base64Url(name)}); recover the name to materialise the keyset order client-side
+        // (KV listing is unordered), then fetch only the page's documents and apply q (name/expression) client-side.
+        var names = new List<string>();
+        await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (key.StartsWith(RulePrefix, StringComparison.Ordinal))
+            {
+                names.Add(Dec(key[RulePrefix.Length..]));
+            }
+        }
+
+        names.Sort(StringComparer.Ordinal);
+
+        var page = new PooledDocumentList<SecurityRuleDocument>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            foreach (string name in names)
+            {
+                if (after is not null && string.CompareOrdinal(name, after) <= 0)
+                {
+                    continue; // at or before the cursor — already returned in an earlier page
+                }
+
+                NatsKVEntry<byte[]>? entry = await this.TryGetAsync(RulePrefix + Enc(name), cancellationToken).ConfigureAwait(false);
+                if (entry is not { Value: { } bytes })
+                {
+                    continue; // indexed but record gone — skip
+                }
+
+                ParsedJsonDocument<SecurityRuleDocument> document = ParsedJsonDocument<SecurityRuleDocument>.Parse(bytes.AsMemory());
+                if (qText is not null && !RuleMatches(document.RootElement, qText))
+                {
+                    document.Dispose();
+                    continue;
+                }
+
+                if (page.Count == pageSize)
+                {
+                    hasMore = true; // one matching row beyond the page → a next page exists
+                    document.Dispose();
+                    break;
+                }
+
+                page.Add(document);
+            }
+
+            if (!hasMore)
+            {
+                return SecurityRulePage.Create(page);
+            }
+
+            using UnescapedUtf8JsonString lastName = page[page.Count - 1].Name.GetUtf8String();
+            return SecurityRulePage.Create(page, lastName.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -164,6 +243,7 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
         WorkflowEtag etag = NewEtag();
         byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
         await this.store.PutAsync(BindingPrefix + Enc(id), json, cancellationToken: cancellationToken).ConfigureAwait(false);
+        await this.store.PutAsync(BindingIndexKey(draft.OrderValue, id), IndexMarker, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
     }
@@ -181,6 +261,96 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
         => this.ReadBindingsAsync(cancellationToken);
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, JsonString pageToken, JsonString q, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : SecurityBindingPage.DefaultPageSize;
+        bool hasCursor = DecodeBindingCursor(pageToken, out int cursorOrder, out string? cursorId);
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+        string? cursorOrderKey = hasCursor ? OrderKey(cursorOrder) : null;
+
+        // Enumerate the order-index marker keys (cheap, no docs); recover (orderKey, id) from each and sort client-side by
+        // (order, id) — orderKey lex == order numeric, the id decoded for the ordinal tiebreak. Then fetch only the page's
+        // documents and apply q (claimType/claimValue/description) client-side.
+        var entries = new List<(string OrderKey, string Id)>();
+        await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (!key.StartsWith(BindingOrderIndexPrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            string rest = key[BindingOrderIndexPrefix.Length..];
+            int dot = rest.IndexOf('.');
+            if (dot < 0)
+            {
+                continue;
+            }
+
+            entries.Add((rest[..dot], Dec(rest[(dot + 1)..])));
+        }
+
+        entries.Sort(static (a, b) =>
+        {
+            int byOrder = string.CompareOrdinal(a.OrderKey, b.OrderKey);
+            return byOrder != 0 ? byOrder : string.CompareOrdinal(a.Id, b.Id);
+        });
+
+        var page = new PooledDocumentList<SecurityBindingDocument>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            foreach ((string orderKey, string id) in entries)
+            {
+                if (hasCursor)
+                {
+                    int byOrder = string.CompareOrdinal(orderKey, cursorOrderKey);
+                    bool after = byOrder > 0 || (byOrder == 0 && string.CompareOrdinal(id, cursorId) > 0);
+                    if (!after)
+                    {
+                        continue; // at or before the cursor — already returned in an earlier page
+                    }
+                }
+
+                NatsKVEntry<byte[]>? entry = await this.TryGetAsync(BindingPrefix + Enc(id), cancellationToken).ConfigureAwait(false);
+                if (entry is not { Value: { } bytes })
+                {
+                    continue; // indexed but record gone — skip
+                }
+
+                ParsedJsonDocument<SecurityBindingDocument> document = ParsedJsonDocument<SecurityBindingDocument>.Parse(bytes.AsMemory());
+                if (qText is not null && !BindingMatches(document.RootElement, qText))
+                {
+                    document.Dispose();
+                    continue;
+                }
+
+                if (page.Count == pageSize)
+                {
+                    hasMore = true; // one matching row beyond the page → a next page exists
+                    document.Dispose();
+                    break;
+                }
+
+                page.Add(document);
+            }
+
+            if (!hasMore)
+            {
+                return SecurityBindingPage.Create(page);
+            }
+
+            SecurityBindingDocument last = page[page.Count - 1];
+            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+            return SecurityBindingPage.Create(page, last.OrderValue, lastId.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -195,13 +365,42 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
         using ParsedJsonDocument<SecurityBindingDocument> current = ParsedJsonDocument<SecurityBindingDocument>.Parse(bytes.AsMemory());
         byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(current.RootElement, "binding", id, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
         await this.store.PutAsync(BindingPrefix + Enc(id), json, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        // The order keyset can change on update, so refresh the order index: drop the old marker key and add the new one.
+        int oldOrder = current.RootElement.OrderValue;
+        int newOrder = draft.OrderValue;
+        if (oldOrder != newOrder)
+        {
+            await this.DeleteKeyAsync(BindingIndexKey(oldOrder, id), cancellationToken).ConfigureAwait(false);
+            await this.store.PutAsync(BindingIndexKey(newOrder, id), IndexMarker, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
     }
 
     /// <inheritdoc/>
-    public ValueTask<bool> DeleteBindingAsync(string id, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(BindingPrefix, "binding", id, expectedEtag, SecurityPolicySerialization.BindingEtagOf, cancellationToken);
+    public async ValueTask<bool> DeleteBindingAsync(string id, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(BindingPrefix + Enc(id), cancellationToken).ConfigureAwait(false);
+        if (entry is not { Value: { } bytes })
+        {
+            return false;
+        }
+
+        SecurityPolicySerialization.EnsureEtag("binding", id, expectedEtag, SecurityPolicySerialization.BindingEtagOf(bytes));
+
+        // Remove the order-index marker too (its order comes from the stored document).
+        using (ParsedJsonDocument<SecurityBindingDocument> current = ParsedJsonDocument<SecurityBindingDocument>.Parse(bytes.AsMemory()))
+        {
+            await this.DeleteKeyAsync(BindingIndexKey(current.RootElement.OrderValue, id), cancellationToken).ConfigureAwait(false);
+        }
+
+        await this.store.DeleteAsync(BindingPrefix + Enc(id), cancellationToken: cancellationToken).ConfigureAwait(false);
+        await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
+        return true;
+    }
 
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
@@ -225,6 +424,103 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
     private static string Enc(string value) => Base64Url.EncodeToString(Encoding.UTF8.GetBytes(value));
+
+    // The inverse of Enc: recovers a key segment's original text. Only ever applied to segments this store wrote.
+    private static string Dec(string segment) => Encoding.UTF8.GetString(Base64Url.DecodeFromChars(segment));
+
+    // The order-index marker key for a binding: "bidx.{orderKey}.{Base64Url(id)}". orderKey is the int order with its sign
+    // bit flipped, fixed-width hex (KV-key-safe, no '.'), so decoding (orderKey, id) and sorting client-side yields
+    // (order asc, id asc) even across negative orders. KV listing is unordered, so the order is materialised client-side.
+    private static string BindingIndexKey(int order, string id)
+        => string.Concat(BindingOrderIndexPrefix, OrderKey(order), ".", Enc(id));
+
+    private static string OrderKey(int order)
+        => ((uint)(order ^ int.MinValue)).ToString("x8", CultureInfo.InvariantCulture);
+
+    // q matchers — KV has no server-side substring, so q is applied client-side over the parsed page document; the compared
+    // fields realise to managed strings only for this comparison (the documents themselves stay pooled/bytes-native).
+    private static bool RuleMatches(in SecurityRuleDocument rule, string q)
+        => rule.NameValue.Contains(q, StringComparison.OrdinalIgnoreCase)
+        || rule.ExpressionValue.Contains(q, StringComparison.OrdinalIgnoreCase);
+
+    private static bool BindingMatches(in SecurityBindingDocument binding, string q)
+    {
+        if (binding.ClaimTypeValue.Contains(q, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (binding.ClaimValue.IsNotUndefined() && ((string)binding.ClaimValue).Contains(q, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return binding.Description.IsNotUndefined() && ((string)binding.Description).Contains(q, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // Decodes the keyset cursor (rule name) from the request page token; reified to a string for the client-side compare.
+    private static string? DecodeRuleCursor(JsonString pageToken)
+    {
+        if (!pageToken.IsNotUndefined())
+        {
+            return null;
+        }
+
+        using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(SecurityRuleContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
+        try
+        {
+            return SecurityRuleContinuationToken.TryDecode(tokenUtf8.Span, buffer, out ReadOnlySpan<byte> nameUtf8)
+                ? Encoding.UTF8.GetString(nameUtf8)
+                : null;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
+    // Decodes the keyset cursor (order, id) from the request page token; the id reified to a string for the compare.
+    private static bool DecodeBindingCursor(JsonString pageToken, out int order, out string? id)
+    {
+        order = 0;
+        id = null;
+        if (!pageToken.IsNotUndefined())
+        {
+            return false;
+        }
+
+        using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(SecurityBindingContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
+        try
+        {
+            if (SecurityBindingContinuationToken.TryDecode(tokenUtf8.Span, buffer, out order, out ReadOnlySpan<byte> idUtf8))
+            {
+                id = Encoding.UTF8.GetString(idUtf8);
+                return true;
+            }
+
+            return false;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
+    private async ValueTask DeleteKeyAsync(string key, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await this.store.DeleteAsync(key, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch (NatsKVKeyNotFoundException)
+        {
+        }
+        catch (NatsKVKeyDeletedException)
+        {
+        }
+    }
 
     private async ValueTask<PooledDocumentList<SecurityRuleDocument>> ReadRulesAsync(CancellationToken cancellationToken)
     {
