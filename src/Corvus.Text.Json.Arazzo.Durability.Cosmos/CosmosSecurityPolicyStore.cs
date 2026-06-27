@@ -2,9 +2,11 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Globalization;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Internal;
@@ -118,6 +120,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             (name, draft, actor, this.timeProvider.GetUtcNow(), NewEtag()),
             static (Utf8JsonWriter writer, in (string Name, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
                 => SecurityRuleDocument.WriteNew(writer, c.Name, c.Draft, c.Actor, c.At, c.Tag),
+            mirrorOrder: null,
             out ParsedJsonDocument<SecurityRuleDocument> document);
         try
         {
@@ -159,6 +162,70 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         => this.ReadRulesAsync(cancellationToken);
 
     /// <inheritdoc/>
+    // This project generates its own Cosmos-namespace JsonString (per-root type identity), so the seam parameters are fully
+    // qualified to the core JsonString ISecurityPolicyStore's signature uses.
+    public async ValueTask<SecurityRulePage> ListRulesAsync(int limit, global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, global::Corvus.Text.Json.Arazzo.Durability.JsonString q, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : SecurityRulePage.DefaultPageSize;
+        string? after = DecodeRuleCursor(pageToken);
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        // Keyset on c.id (== the rule name; top-level, ordinal); q matches the name (c.id) or the expression in place under
+        // c.doc.expression via the case-insensitive 3-arg CONTAINS (q is the raw substring, not a LIKE pattern).
+        var sql = new StringBuilder("SELECT c.doc FROM c WHERE c.pk = @pk");
+        if (after is not null)
+        {
+            sql.Append(" AND c.id > @after");
+        }
+
+        if (qText is not null)
+        {
+            sql.Append(" AND (CONTAINS(c.id, @q, true) OR CONTAINS(c.doc.expression, @q, true))");
+        }
+
+        sql.Append(" ORDER BY c.id");
+        var definition = new QueryDefinition(sql.ToString()).WithParameter("@pk", RulePartition);
+        if (after is not null)
+        {
+            definition = definition.WithParameter("@after", after);
+        }
+
+        if (qText is not null)
+        {
+            definition = definition.WithParameter("@q", qText);
+        }
+
+        var page = new PooledDocumentList<SecurityRuleDocument>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            await foreach (ReadOnlyMemory<byte> doc in this.QueryDocumentsAsync(definition, RulePartition, cancellationToken).ConfigureAwait(false))
+            {
+                if (page.Count == pageSize)
+                {
+                    hasMore = true; // a row beyond the page exists → a next page; stop early
+                    break;
+                }
+
+                page.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc.Span));
+            }
+
+            if (!hasMore)
+            {
+                return SecurityRulePage.Create(page);
+            }
+
+            using UnescapedUtf8JsonString lastName = page[page.Count - 1].Name.GetUtf8String();
+            return SecurityRulePage.Create(page, lastName.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -190,6 +257,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
                 (current.RootElement, draft, actor, this.timeProvider.GetUtcNow(), NewEtag()),
                 static (Utf8JsonWriter writer, in (SecurityRuleDocument Cur, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
                     => c.Cur.WriteUpdated(writer, c.Draft, c.Actor, c.At, c.Tag),
+                mirrorOrder: null,
                 out document);
         }
 
@@ -225,6 +293,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             (id, draft, actor, this.timeProvider.GetUtcNow(), NewEtag()),
             static (Utf8JsonWriter writer, in (string Id, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
                 => SecurityBindingDocument.WriteNew(writer, c.Id, c.Draft, c.Actor, c.At, c.Tag),
+            mirrorOrder: draft.OrderValue,
             out ParsedJsonDocument<SecurityBindingDocument> document);
         try
         {
@@ -261,6 +330,70 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         => this.ReadBindingsAsync(cancellationToken);
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, global::Corvus.Text.Json.Arazzo.Durability.JsonString q, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : SecurityBindingPage.DefaultPageSize;
+        bool hasCursor = DecodeBindingCursor(pageToken, out int cursorOrder, out string? cursorId);
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        // Keyset on (order, c.id) — order is mirrored top-level so the two-field ORDER BY is over top-level fields. NB:
+        // `order` is a reserved word in the Cosmos query language, so the property is referenced as c["order"] (the @order
+        // PARAMETER is fine). q matches claimType/claimValue/description in place under c.doc.* via case-insensitive CONTAINS.
+        var sql = new StringBuilder("SELECT c.doc FROM c WHERE c.pk = @pk");
+        if (hasCursor)
+        {
+            sql.Append(" AND (c[\"order\"] > @order OR (c[\"order\"] = @order AND c.id > @id))");
+        }
+
+        if (qText is not null)
+        {
+            sql.Append(" AND (CONTAINS(c.doc.claimType, @q, true) OR CONTAINS(c.doc.claimValue, @q, true) OR CONTAINS(c.doc.description, @q, true))");
+        }
+
+        sql.Append(" ORDER BY c[\"order\"], c.id");
+        var definition = new QueryDefinition(sql.ToString()).WithParameter("@pk", BindingPartition);
+        if (hasCursor)
+        {
+            definition = definition.WithParameter("@order", cursorOrder).WithParameter("@id", cursorId);
+        }
+
+        if (qText is not null)
+        {
+            definition = definition.WithParameter("@q", qText);
+        }
+
+        var page = new PooledDocumentList<SecurityBindingDocument>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            await foreach (ReadOnlyMemory<byte> doc in this.QueryDocumentsAsync(definition, BindingPartition, cancellationToken).ConfigureAwait(false))
+            {
+                if (page.Count == pageSize)
+                {
+                    hasMore = true; // a row beyond the page exists → a next page; stop early
+                    break;
+                }
+
+                page.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc.Span));
+            }
+
+            if (!hasMore)
+            {
+                return SecurityBindingPage.Create(page);
+            }
+
+            SecurityBindingDocument last = page[page.Count - 1];
+            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+            return SecurityBindingPage.Create(page, last.OrderValue, lastId.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -292,6 +425,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
                 (current.RootElement, draft, actor, this.timeProvider.GetUtcNow(), NewEtag()),
                 static (Utf8JsonWriter writer, in (SecurityBindingDocument Cur, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
                     => c.Cur.WriteUpdated(writer, c.Draft, c.Actor, c.At, c.Tag),
+                mirrorOrder: draft.OrderValue,
                 out document);
         }
 
@@ -338,6 +472,56 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
+    // Decodes the keyset cursor (rule name) from the request page token; the name reified to a string only for @after (leaf).
+    private static string? DecodeRuleCursor(global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken)
+    {
+        if (!pageToken.IsNotUndefined())
+        {
+            return null;
+        }
+
+        using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(SecurityRuleContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
+        try
+        {
+            return SecurityRuleContinuationToken.TryDecode(tokenUtf8.Span, buffer, out ReadOnlySpan<byte> nameUtf8)
+                ? Encoding.UTF8.GetString(nameUtf8)
+                : null;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
+    // Decodes the keyset cursor (order, id) from the request page token; the id reified to a string only for @id (leaf).
+    private static bool DecodeBindingCursor(global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, out int order, out string? id)
+    {
+        order = 0;
+        id = null;
+        if (!pageToken.IsNotUndefined())
+        {
+            return false;
+        }
+
+        using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(SecurityBindingContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
+        try
+        {
+            if (SecurityBindingContinuationToken.TryDecode(tokenUtf8.Span, buffer, out order, out ReadOnlySpan<byte> idUtf8))
+            {
+                id = Encoding.UTF8.GetString(idUtf8);
+                return true;
+            }
+
+            return false;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
     // Serializes the rule/binding ONCE into a pooled buffer (CosmosJson.RentJson), builds the caller's pooled return
     // document from it, then writes the {id, pk, doc:base64} envelope into a pooled stream (CosmosJson.WriteToStream),
     // base64-ing the same bytes. No owned byte[] and no nested writer rent: the doc lives only in the pooled rent
@@ -348,6 +532,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         string partition,
         in TContext context,
         PersistedJson.WriteCallback<TContext> writeDocument,
+        int? mirrorOrder,
         out ParsedJsonDocument<T> document)
         where T : struct, IJsonElement<T>
     {
@@ -356,12 +541,20 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         try
         {
             return CosmosJson.WriteToStream(
-                (Id: id, Partition: partition, Doc: docJson),
-                static (Utf8JsonWriter writer, in (string Id, string Partition, CosmosJson.RentedJson Doc) c) =>
+                (Id: id, Partition: partition, Doc: docJson, MirrorOrder: mirrorOrder),
+                static (Utf8JsonWriter writer, in (string Id, string Partition, CosmosJson.RentedJson Doc, int? MirrorOrder) c) =>
                 {
                     writer.WriteStartObject();
                     writer.WriteString("id"u8, c.Id);
                     writer.WriteString("pk"u8, c.Partition);
+
+                    // A binding mirrors its Order top-level so the (order, id) keyset can ORDER BY two top-level fields
+                    // (c.order, c.id); rules keyset on c.id (== name) alone and pass no mirror. The other keyset/q fields are
+                    // queried in place under c.doc.* (CONTAINS), so no further mirroring is needed.
+                    if (c.MirrorOrder is { } order)
+                    {
+                        writer.WriteNumber("order"u8, order);
+                    }
 
                     // The policy document is JSON — embed it verbatim as a nested value, not base64 (which would be a
                     // spurious encode here + decode on read). It is valid JSON we produced, so skip validation.
@@ -431,9 +624,11 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
 
     // Yields each embedded policy document's raw UTF-8 bytes (a slice into the pooled response page) — no base64
     // decode. The consumer copies it (ToPooledDocument into the list) within the iteration step, before the page rolls.
-    private async IAsyncEnumerable<ReadOnlyMemory<byte>> QueryDocumentsAsync(string partition, [EnumeratorCancellation] CancellationToken cancellationToken)
+    private IAsyncEnumerable<ReadOnlyMemory<byte>> QueryDocumentsAsync(string partition, CancellationToken cancellationToken)
+        => this.QueryDocumentsAsync(new QueryDefinition("SELECT c.doc FROM c WHERE c.pk = @pk").WithParameter("@pk", partition), partition, cancellationToken);
+
+    private async IAsyncEnumerable<ReadOnlyMemory<byte>> QueryDocumentsAsync(QueryDefinition query, string partition, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var query = new QueryDefinition("SELECT c.doc FROM c WHERE c.pk = @pk").WithParameter("@pk", partition);
         using FeedIterator iterator = this.container.GetItemQueryStreamIterator(
             query, requestOptions: new QueryRequestOptions { PartitionKey = new PartitionKey(partition) });
         while (iterator.HasMoreResults)
