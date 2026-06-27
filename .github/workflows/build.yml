@@ -230,6 +230,61 @@ jobs:
           path: '**/integration-tests.trx'
           reporter: dotnet-trx
 
+  typescript-compliance:
+    name: TypeScript Engine Compliance
+    needs:
+      - build
+      - setCachePathsConfig
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: recursive
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: |
+            10.0.x
+            9.0.x
+
+      - name: Restore build cache
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            .nuget-packages
+            Solutions
+            solutions
+            ${{ needs.setCachePathsConfig.outputs.additionalCachePaths }}
+          key: build-state-${{ github.run_id }}-compile
+          enableCrossOsArchive: true
+
+      # ubuntu-latest ships Node 20 + npm; the compliance/access runners use esbuild and the generated-code
+      # runtime deps (lossless-json / @js-temporal/polyfill / tr46) from prototypes/ts-bench/node_modules.
+      - name: Install TypeScript harness dependencies
+        run: npm ci
+        working-directory: prototypes/ts-bench
+        timeout-minutes: 5
+
+      # Full JSON-Schema-Test-Suite: codegen every test-group (in-process, public codegen libs),
+      # esbuild-transpile, validate, and assert the pass/errored thresholds. Exits non-zero on any
+      # non-allow-listed failure (KNOWN_FAILURES gates exactly one pre-existing engine gap, always printed).
+      - name: JSON-Schema-Test-Suite compliance
+        run: bash run-compliance.sh
+        working-directory: prototypes/ts-bench/compliance
+        timeout-minutes: 25
+        env:
+          NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
+
+      # Generated-code accessor suites (produce / RMW / build / collector / ...); exits non-zero on any failure.
+      - name: Generated-code access tests
+        run: bash run-access.sh
+        working-directory: prototypes/ts-bench/compliance/access
+        timeout-minutes: 15
+        env:
+          NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
+
   deploy-docs:
     name: Deploy Documentation
     needs:
