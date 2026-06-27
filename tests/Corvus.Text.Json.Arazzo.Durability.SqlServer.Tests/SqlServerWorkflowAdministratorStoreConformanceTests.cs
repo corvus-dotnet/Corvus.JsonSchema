@@ -46,7 +46,7 @@ public sealed class SqlServerWorkflowAdministratorStoreConformanceTests : Workfl
         {
             await connection.OpenAsync();
             await using SqlCommand reset = connection.CreateCommand();
-            reset.CommandText = "DROP TABLE IF EXISTS WorkflowAdministrators;";
+            reset.CommandText = "DROP TABLE IF EXISTS WorkflowAdministrators; DROP TABLE IF EXISTS WorkflowAdministratorIndex;";
             await reset.ExecuteNonQueryAsync();
         }
 

@@ -50,7 +50,7 @@ public sealed class MySqlWorkflowAdministratorStoreConformanceTests : WorkflowAd
         await using (MySqlConnection connection = await dataSource.OpenConnectionAsync())
         {
             await using MySqlCommand reset = connection.CreateCommand();
-            reset.CommandText = "DROP TABLE IF EXISTS WorkflowAdministrators;";
+            reset.CommandText = "DROP TABLE IF EXISTS WorkflowAdministrators; DROP TABLE IF EXISTS WorkflowAdministratorIndex;";
             await reset.ExecuteNonQueryAsync();
         }
 
