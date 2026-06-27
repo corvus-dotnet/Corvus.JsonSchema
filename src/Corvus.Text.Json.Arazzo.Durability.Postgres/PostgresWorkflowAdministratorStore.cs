@@ -106,62 +106,98 @@ public sealed class PostgresWorkflowAdministratorStore : IWorkflowAdministratorS
         await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         byte[]? existing = await ReadDocumentAsync(connection, baseWorkflowId, cancellationToken).ConfigureAwait(false);
         WorkflowEtag etag = NewEtag();
+
+        // Build the document to persist (and decide insert vs update) BEFORE the transaction: the etag conflict is the
+        // caller's error and must throw before any write. The returned document owns its pooled buffer; current (parsed
+        // non-copying over the driver array) need only outlive the synchronous serialize.
+        ParsedJsonDocument<WorkflowAdministrators> result;
+        bool isUpdate;
         if (existing is not null)
         {
-            // Parse the existing record ONCE, NON-COPYING over the driver's array (the read leaf) — used for both the etag
-            // check and the carried-forward merge. Serialize the result into the pooled buffer the returned document owns and
-            // bind its exact bytes via ReadOnlyMemory (no GC document array, no second copy); the column etag is the one we
-            // just generated.
             using ParsedJsonDocument<WorkflowAdministrators> current = ParsedJsonDocument<WorkflowAdministrators>.Parse(existing.AsMemory());
-
-            // A record exists: the caller must hold its current etag (None means "I expected no record").
             if (expectedEtag.IsNone || expectedEtag != current.RootElement.EtagValue)
             {
                 throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
             }
 
-            ParsedJsonDocument<WorkflowAdministrators> updated = WorkflowAdministratorsSerialization.SerializeUpdatedDoc(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), etag);
-            try
-            {
-                ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(updated.RootElement).Memory;
-                await using NpgsqlCommand update = connection.CreateCommand();
-                update.CommandText = "UPDATE WorkflowAdministrators SET Etag = @etag, Document = @doc WHERE BaseWorkflowId = @id;";
-                update.Parameters.AddWithValue("etag", etag.Value!);
-                update.Parameters.Add(new NpgsqlParameter<ReadOnlyMemory<byte>>("doc", utf8));
-                update.Parameters.AddWithValue("id", baseWorkflowId);
-                await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-                return updated;
-            }
-            catch
-            {
-                updated.Dispose();
-                throw;
-            }
+            result = WorkflowAdministratorsSerialization.SerializeUpdatedDoc(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), etag);
+            isUpdate = true;
         }
-
-        // No record yet: materialization is only valid against the None etag (the v1-derived default).
-        if (!expectedEtag.IsNone)
+        else
         {
-            throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
+            // No record yet: materialization is only valid against the None etag (the v1-derived default).
+            if (!expectedEtag.IsNone)
+            {
+                throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
+            }
+
+            result = WorkflowAdministratorsSerialization.SerializeNewDoc(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), etag);
+            isUpdate = false;
         }
 
-        ParsedJsonDocument<WorkflowAdministrators> doc = WorkflowAdministratorsSerialization.SerializeNewDoc(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), etag);
         try
         {
-            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
-            await using NpgsqlCommand insert = connection.CreateCommand();
-            insert.CommandText = "INSERT INTO WorkflowAdministrators (BaseWorkflowId, Etag, Document) VALUES (@id, @etag, @doc);";
-            insert.Parameters.AddWithValue("id", baseWorkflowId);
-            insert.Parameters.AddWithValue("etag", etag.Value!);
-            insert.Parameters.Add(new NpgsqlParameter<ReadOnlyMemory<byte>>("doc", utf8));
-            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            return doc;
+            ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(result.RootElement).Memory;
+
+            // The document write and the reverse-index rewrite are atomic (design §15.4): the inbox must never observe a
+            // base id indexed under a digest its current administrator set no longer holds, or vice versa.
+            await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+            await using (NpgsqlCommand write = connection.CreateCommand())
+            {
+                write.Transaction = transaction;
+                write.CommandText = isUpdate
+                    ? "UPDATE WorkflowAdministrators SET Etag = @etag, Document = @doc WHERE BaseWorkflowId = @id;"
+                    : "INSERT INTO WorkflowAdministrators (BaseWorkflowId, Etag, Document) VALUES (@id, @etag, @doc);";
+                write.Parameters.AddWithValue("etag", etag.Value!);
+                write.Parameters.Add(new NpgsqlParameter<ReadOnlyMemory<byte>>("doc", utf8));
+                write.Parameters.AddWithValue("id", baseWorkflowId);
+                await write.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            await RewriteIndexAsync(connection, transaction, baseWorkflowId, administrators, cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return result;
         }
         catch
         {
-            doc.Dispose();
+            result.Dispose();
             throw;
         }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        int pageSize = limit > 0 ? limit : WorkflowAdministeredPage.DefaultPageSize;
+
+        // The keyset cursor (the base id to page strictly after) reifies once here for the @after parameter — the SQL
+        // leaf — never per row. The index columns are COLLATE "C" so the keyset compare is ordinal (the contract's order).
+        string? after = WorkflowAdministeredContinuationToken.DecodeCursorToString(pageToken);
+
+        await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlCommand select = connection.CreateCommand();
+        select.CommandText = after is null
+            ? "SELECT BaseWorkflowId FROM WorkflowAdministratorIndex WHERE AdminDigest = @digest ORDER BY BaseWorkflowId LIMIT @n;"
+            : "SELECT BaseWorkflowId FROM WorkflowAdministratorIndex WHERE AdminDigest = @digest AND BaseWorkflowId > @after ORDER BY BaseWorkflowId LIMIT @n;";
+        select.Parameters.AddWithValue("digest", adminDigest);
+        select.Parameters.AddWithValue("n", pageSize + 1);
+        if (after is not null)
+        {
+            select.Parameters.AddWithValue("after", after);
+        }
+
+        var rows = new List<string>(pageSize + 1);
+        await using (NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+        {
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                rows.Add(reader.GetString(0));
+            }
+        }
+
+        return WorkflowAdministeredPaging.ToPage(rows, pageSize);
     }
 
     /// <inheritdoc/>
@@ -170,6 +206,29 @@ public sealed class PostgresWorkflowAdministratorStore : IWorkflowAdministratorS
         if (this.ownsDataSource)
         {
             await this.dataSource.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    // Rewrites this base id's reverse-index rows within the write transaction (§15.4): retract the stale digests, then
+    // index the current ones. The administrator set is small, so a delete-all-then-insert is simplest and correct.
+    private static async ValueTask RewriteIndexAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string baseWorkflowId, IReadOnlyList<WorkflowAdministrators.AdministratorIdentity> administrators, CancellationToken cancellationToken)
+    {
+        await using (NpgsqlCommand clear = connection.CreateCommand())
+        {
+            clear.Transaction = transaction;
+            clear.CommandText = "DELETE FROM WorkflowAdministratorIndex WHERE BaseWorkflowId = @id;";
+            clear.Parameters.AddWithValue("id", baseWorkflowId);
+            await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        foreach (string digest in WorkflowAdministeredPaging.DistinctDigests(administrators))
+        {
+            await using NpgsqlCommand index = connection.CreateCommand();
+            index.Transaction = transaction;
+            index.CommandText = "INSERT INTO WorkflowAdministratorIndex (AdminDigest, BaseWorkflowId) VALUES (@digest, @id);";
+            index.Parameters.AddWithValue("digest", digest);
+            index.Parameters.AddWithValue("id", baseWorkflowId);
+            await index.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -197,6 +256,11 @@ public sealed class PostgresWorkflowAdministratorStore : IWorkflowAdministratorS
             BaseWorkflowId TEXT NOT NULL PRIMARY KEY,
             Etag TEXT NOT NULL,
             Document BYTEA NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS WorkflowAdministratorIndex (
+            AdminDigest TEXT COLLATE "C" NOT NULL,
+            BaseWorkflowId TEXT COLLATE "C" NOT NULL,
+            PRIMARY KEY (AdminDigest, BaseWorkflowId)
         );
         """;
 }
