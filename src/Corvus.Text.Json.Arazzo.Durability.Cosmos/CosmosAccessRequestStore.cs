@@ -176,6 +176,8 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
             conditions.Add("c.sv = @sv");
         }
 
+        string[]? adminNames = AppendAdministeredCondition(conditions, query.AdministeredBaseWorkflowIds);
+
         string where = conditions.Count == 0 ? string.Empty : " WHERE " + string.Join(" AND ", conditions);
         var definition = new QueryDefinition("SELECT c.doc FROM c" + where + " ORDER BY c.createdAt, c.id");
         if (query.Status is { } statusFilter)
@@ -197,6 +199,8 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
         {
             definition = definition.WithParameter("@sv", subjectValue);
         }
+
+        definition = WithAdministeredParameters(definition, query.AdministeredBaseWorkflowIds, adminNames);
 
         var list = new PooledDocumentList<AccessRequest>();
         try
@@ -265,6 +269,8 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
             conditions.Add("c.sv = @sv");
         }
 
+        string[]? adminNames = AppendAdministeredCondition(conditions, query.AdministeredBaseWorkflowIds);
+
         if (cursorCreatedAt is not null)
         {
             // Keyset seek strictly past (createdAt, id): Cosmos orders strings ordinally, so the ISO createdAt order is
@@ -298,6 +304,8 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
         {
             definition = definition.WithParameter("@ca", cursorCreatedAt).WithParameter("@id", cursorId);
         }
+
+        definition = WithAdministeredParameters(definition, query.AdministeredBaseWorkflowIds, adminNames);
 
         var page = new PooledDocumentList<AccessRequest>(pageSize);
         try
@@ -394,6 +402,42 @@ public sealed class CosmosAccessRequestStore : IAccessRequestStore, IAsyncDispos
         }
 
         return default;
+    }
+
+    // The approver-inbox filter (design §16.5): adds "c.bw IN (@adm0, ...)" to the conditions and returns the parameter
+    // names so the caller can bind the (server-derived) administered base ids. The set is never empty here (the handler
+    // short-circuits a caller who administers nothing); a null set (the non-inbox modes) adds nothing and returns null.
+    private static string[]? AppendAdministeredCondition(List<string> conditions, IReadOnlyList<string>? administered)
+    {
+        if (administered is not { Count: > 0 } set)
+        {
+            return null;
+        }
+
+        var names = new string[set.Count];
+        for (int i = 0; i < set.Count; i++)
+        {
+            names[i] = "@adm" + i.ToString(CultureInfo.InvariantCulture);
+        }
+
+        conditions.Add("c.bw IN (" + string.Join(", ", names) + ")");
+        return names;
+    }
+
+    // Binds the administered-base-id parameters produced by AppendAdministeredCondition onto the query definition.
+    private static QueryDefinition WithAdministeredParameters(QueryDefinition definition, IReadOnlyList<string>? administered, string[]? names)
+    {
+        if (names is null || administered is null)
+        {
+            return definition;
+        }
+
+        for (int i = 0; i < names.Length; i++)
+        {
+            definition = definition.WithParameter(names[i], administered[i]);
+        }
+
+        return definition;
     }
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
