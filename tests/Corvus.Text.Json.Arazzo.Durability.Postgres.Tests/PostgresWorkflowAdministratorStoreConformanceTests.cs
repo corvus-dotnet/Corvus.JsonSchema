@@ -50,7 +50,7 @@ public sealed class PostgresWorkflowAdministratorStoreConformanceTests : Workflo
         await using (NpgsqlConnection connection = await dataSource.OpenConnectionAsync())
         {
             await using NpgsqlCommand reset = connection.CreateCommand();
-            reset.CommandText = "DROP TABLE IF EXISTS WorkflowAdministrators;";
+            reset.CommandText = "DROP TABLE IF EXISTS WorkflowAdministrators; DROP TABLE IF EXISTS WorkflowAdministratorIndex;";
             await reset.ExecuteNonQueryAsync();
         }
 
