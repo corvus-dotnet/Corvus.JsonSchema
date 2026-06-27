@@ -121,6 +121,12 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
             filter &= Builders<BsonDocument>.Filter.Eq("subjectClaimValue", subjectValue);
         }
 
+        if (query.AdministeredBaseWorkflowIds is { } administered)
+        {
+            // The approver inbox (§16.5): the request's baseWorkflowId must be one the caller administers (server-derived strings).
+            filter &= Builders<BsonDocument>.Filter.In("baseWorkflowId", administered);
+        }
+
         var list = new PooledDocumentList<AccessRequest>();
         List<BsonDocument> documents = await this.requests.Find(filter).Sort(OldestFirst).ToListAsync(cancellationToken).ConfigureAwait(false);
         foreach (BsonDocument document in documents)
@@ -178,6 +184,12 @@ public sealed class MongoAccessRequestStore : IAccessRequestStore, IAsyncDisposa
         if (query.SubjectClaimValue is { } subjectValue)
         {
             filter &= b.Eq("subjectClaimValue", subjectValue);
+        }
+
+        if (query.AdministeredBaseWorkflowIds is { } administered)
+        {
+            // The approver inbox (§16.5): the request's baseWorkflowId must be one the caller administers (server-derived strings).
+            filter &= b.In("baseWorkflowId", administered);
         }
 
         if (cursorCreatedAt is not null)

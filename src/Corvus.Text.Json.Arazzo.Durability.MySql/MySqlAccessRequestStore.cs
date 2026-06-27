@@ -160,6 +160,8 @@ public sealed class MySqlAccessRequestStore : IAccessRequestStore, IAsyncDisposa
             select.Parameters.AddWithValue("@sv", subjectValue);
         }
 
+        AppendAdministeredFilter(conditions, select, query.AdministeredBaseWorkflowIds);
+
         if (conditions.Count > 0)
         {
             sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
@@ -231,6 +233,8 @@ public sealed class MySqlAccessRequestStore : IAccessRequestStore, IAsyncDisposa
             conditions.Add("SubjectClaimValue = @sv");
             select.Parameters.AddWithValue("@sv", subjectValue);
         }
+
+        AppendAdministeredFilter(conditions, select, query.AdministeredBaseWorkflowIds);
 
         if (cursorCreatedAt is not null)
         {
@@ -337,6 +341,26 @@ public sealed class MySqlAccessRequestStore : IAccessRequestStore, IAsyncDisposa
         await using MySqlCommand schema = connection.CreateCommand();
         schema.CommandText = SchemaSql;
         await schema.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    // Appends the approver-inbox filter (design §16.5): BaseWorkflowId IN (the administered set) — server-derived strings
+    // reified as @adm{i} parameters (the SQL leaf). The set is never empty here (the handler short-circuits a caller who
+    // administers nothing to an empty page before the store); a null set (the non-inbox modes) adds nothing.
+    private static void AppendAdministeredFilter(List<string> conditions, MySqlCommand command, IReadOnlyList<string>? administered)
+    {
+        if (administered is not { Count: > 0 } set)
+        {
+            return;
+        }
+
+        var names = new string[set.Count];
+        for (int i = 0; i < set.Count; i++)
+        {
+            names[i] = "@adm" + i.ToString(CultureInfo.InvariantCulture);
+            command.Parameters.AddWithValue(names[i], set[i]);
+        }
+
+        conditions.Add("BaseWorkflowId IN (" + string.Join(", ", names) + ")");
     }
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));

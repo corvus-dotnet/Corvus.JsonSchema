@@ -128,6 +128,12 @@ public sealed class InMemoryAccessRequestStore : IAccessRequestStore
             return false;
         }
 
+        // The approver inbox: the row's base workflow id must be one the caller administers (server-derived strings).
+        if (!query.MatchesAdministeredSet(request.BaseWorkflowIdValue))
+        {
+            return false;
+        }
+
         return query.SubjectClaimValue is not { } subjectValue || string.Equals(request.SubjectClaimValueValue, subjectValue, StringComparison.Ordinal);
     }
 

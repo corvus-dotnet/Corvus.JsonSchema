@@ -319,6 +319,7 @@ public sealed class RedisAccessRequestStore : IAccessRequestStore, IAsyncDisposa
             return false;
         }
 
-        return true;
+        // The approver inbox (§16.5): the request's baseWorkflowId must be one the caller administers (server-derived set).
+        return query.MatchesAdministeredSet(request.BaseWorkflowIdValue);
     }
 }
