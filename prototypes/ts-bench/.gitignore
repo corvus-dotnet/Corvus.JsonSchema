@@ -2,3 +2,4 @@ node_modules/
 bench-gen*/
 jsonschema-benchmark/
 dist/
+bowtie-work/

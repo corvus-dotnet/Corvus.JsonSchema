@@ -1,0 +1,6 @@
+{"cmd":"start","version":1}
+{"cmd":"dialect","dialect":"https://json-schema.org/draft/2020-12/schema"}
+{"cmd":"run","seq":1,"case":{"description":"int>=1","schema":{"type":"integer","minimum":1},"tests":[{"description":"ok","instance":5,"valid":true},{"description":"too small","instance":0,"valid":false},{"description":"not int","instance":"x","valid":false}]}}
+{"cmd":"run","seq":2,"case":{"description":"obj","schema":{"type":"object","required":["a"],"properties":{"a":{"type":"string","minLength":2}}},"tests":[{"description":"ok","instance":{"a":"hi"},"valid":true},{"description":"missing","instance":{},"valid":false},{"description":"short","instance":{"a":"x"},"valid":false}]}}
+{"cmd":"run","seq":3,"case":{"description":"$ref+multipleOf","schema":{"$defs":{"tenth":{"type":"number","multipleOf":0.1}},"$ref":"#/$defs/tenth"},"tests":[{"description":"exact","instance":0.3,"valid":true},{"description":"not multiple","instance":0.31,"valid":false}]}}
+{"cmd":"stop"}
