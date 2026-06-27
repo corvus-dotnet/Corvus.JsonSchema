@@ -22,6 +22,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage.Tests;
 public sealed class AzureStorageWorkflowAdministratorStoreConformanceTests : WorkflowAdministratorStoreConformance
 {
     private const string AdministratorsTable = "arazzoWorkflowAdministrators";
+    private const string IndexTable = "arazzoWorkflowAdministratorIndex";
     private static AzuriteContainer container = null!;
 
     [ClassInitialize]
@@ -47,10 +48,13 @@ public sealed class AzureStorageWorkflowAdministratorStoreConformanceTests : Wor
         var tableService = new TableServiceClient(container.GetConnectionString());
         await AzureStorageWorkflowAdministratorStore.PrepareAsync(tableService);
 
-        TableClient client = tableService.GetTableClient(AdministratorsTable);
-        await foreach (TableEntity entity in client.QueryAsync<TableEntity>())
+        foreach (string table in new[] { AdministratorsTable, IndexTable })
         {
-            await client.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All);
+            TableClient client = tableService.GetTableClient(table);
+            await foreach (TableEntity entity in client.QueryAsync<TableEntity>())
+            {
+                await client.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All);
+            }
         }
 
         return await AzureStorageWorkflowAdministratorStore.ConnectAsync(tableService, timeProvider);
