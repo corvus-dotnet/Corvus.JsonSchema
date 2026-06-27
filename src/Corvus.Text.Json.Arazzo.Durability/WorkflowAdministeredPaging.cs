@@ -35,6 +35,28 @@ public static class WorkflowAdministeredPaging
         return digests;
     }
 
+    /// <summary>Computes the distinct collision-probe digests of a persisted administration record's current administrator
+    /// set — used by stores that must retract a base id's <em>previous</em> index entries before writing its new ones (the
+    /// old digests are read back from the record on disk, since no atomic server-side script holds them).</summary>
+    /// <param name="record">The current persisted administration record for a base id.</param>
+    /// <returns>The distinct administrator digests currently indexed for the base id.</returns>
+    public static IReadOnlyList<string> DistinctDigests(WorkflowAdministrators record)
+    {
+        var digests = new List<string>(record.AdministratorCount);
+        if (record.Administrators.IsNotUndefined())
+        {
+            foreach (WorkflowAdministrators.AdministratorIdentity administrator in record.Administrators.EnumerateArray())
+            {
+                if (SecurityIdentityDigest.Compute(SecurityTagSet.CopyFrom(administrator.Tags)) is { } digest && !digests.Contains(digest))
+                {
+                    digests.Add(digest);
+                }
+            }
+        }
+
+        return digests;
+    }
+
     /// <summary>Builds a <see cref="WorkflowAdministeredPage"/> from the keyset rows a store read for one page, where a store
     /// reads up to <paramref name="pageSize"/> + 1 rows (the +1 lookahead detects "more remain"). When more rows than the
     /// page were read, the lookahead is trimmed and a continuation token is encoded from the last returned base id's UTF-8.</summary>

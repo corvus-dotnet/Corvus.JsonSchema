@@ -41,9 +41,18 @@ public sealed class RedisWorkflowAdministratorStore : IWorkflowAdministratorStor
     // etag because real etags are 32-char hex GUIDs.
     private const string NoneSentinel = "";
 
-    // Create-or-replace the record under an etag check-and-set, atomically. KEYS[1]: the per-base-id hash key.
-    // ARGV[1]: the caller's expected etag (or the None sentinel for "must not exist"). ARGV[2]/ARGV[3]: the new
-    // document bytes and new etag. Returns 1 on success, 0 on an etag mismatch (the caller maps 0 to a conflict).
+    // The reverse administration index (design §15.4): one zero-scored sorted set per administrator digest,
+    // arazzo:wadminidx:{digest}, whose members are the base ids that digest administers — a ZRANGEBYLEX is then an ordinal
+    // keyset over base ids. The per-base digests set arazzo:wadmindigests:{baseWorkflowId} holds a base id's current
+    // digests so a PutAsync that changes the administrator set can retract the stale ones before indexing the new ones.
+    private const string IndexPrefix = "arazzo:wadminidx:";
+    private const string DigestsPrefix = "arazzo:wadmindigests:";
+
+    // Create-or-replace the record under an etag check-and-set, AND rewrite its reverse-index entries, atomically.
+    // KEYS[1]: the per-base-id hash key. KEYS[2]: the per-base digests set. ARGV[1]: the caller's expected etag (or the
+    // None sentinel for "must not exist"). ARGV[2]/ARGV[3]: the new document bytes and new etag. ARGV[4]: the base id (the
+    // index member). ARGV[5]: the per-digest index-set key prefix. ARGV[6..]: the current administrator digests. Returns 1
+    // on success, 0 on an etag mismatch (the caller maps 0 to a conflict).
     private const string PutScript =
         """
         local expected = ARGV[1]
@@ -55,6 +64,17 @@ public sealed class RedisWorkflowAdministratorStore : IWorkflowAdministratorStor
             if redis.call('HGET', KEYS[1], 'etag') ~= expected then return 0 end
         end
         redis.call('HSET', KEYS[1], 'doc', ARGV[2], 'etag', ARGV[3])
+        local member = ARGV[4]
+        local indexPrefix = ARGV[5]
+        local previous = redis.call('SMEMBERS', KEYS[2])
+        for i = 1, #previous do
+            redis.call('ZREM', indexPrefix .. previous[i], member)
+        end
+        redis.call('DEL', KEYS[2])
+        for i = 6, #ARGV do
+            redis.call('ZADD', indexPrefix .. ARGV[i], 0, member)
+            redis.call('SADD', KEYS[2], ARGV[i])
+        end
         return 1
         """;
 
@@ -158,8 +178,21 @@ public sealed class RedisWorkflowAdministratorStore : IWorkflowAdministratorStor
         try
         {
             ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
-            RedisKey[] keys = [key];
-            RedisValue[] argv = [expectedEtag.IsNone ? NoneSentinel : expectedEtag.Value!, utf8, etag.Value!];
+
+            // The reverse-index digests (the exact digests the forward IsAdministeredBy compares) are passed to the script
+            // so the document write and the index rewrite are one atomic Lua call.
+            IReadOnlyList<string> digests = WorkflowAdministeredPaging.DistinctDigests(administrators);
+            RedisKey[] keys = [key, DigestsKey(baseWorkflowId)];
+            var argv = new RedisValue[5 + digests.Count];
+            argv[0] = expectedEtag.IsNone ? NoneSentinel : expectedEtag.Value!;
+            argv[1] = utf8;
+            argv[2] = etag.Value!;
+            argv[3] = baseWorkflowId;
+            argv[4] = IndexPrefix;
+            for (int i = 0; i < digests.Count; i++)
+            {
+                argv[5 + i] = digests[i];
+            }
 
             RedisResult result = await this.database.ScriptEvaluateAsync(PutScript, keys, argv).ConfigureAwait(false);
             if ((long)result == 0)
@@ -177,6 +210,35 @@ public sealed class RedisWorkflowAdministratorStore : IWorkflowAdministratorStor
     }
 
     /// <inheritdoc/>
+    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        cancellationToken.ThrowIfCancellationRequested();
+        int pageSize = limit > 0 ? limit : WorkflowAdministeredPage.DefaultPageSize;
+
+        // The keyset cursor (the base id to page strictly after) reifies once here, never per row. The digest's sorted-set
+        // members are the administered base ids (score 0), so a ZRANGEBYLEX is an ordinal keyset over base ids — the
+        // contract's order; seek strictly past the cursor and take pageSize+1 for the lookahead.
+        string? after = WorkflowAdministeredContinuationToken.DecodeCursorToString(pageToken);
+        RedisValue[] members = await this.database.SortedSetRangeByValueAsync(
+            IndexKey(adminDigest),
+            min: after is null ? default : after,
+            max: default,
+            exclude: after is null ? Exclude.None : Exclude.Start,
+            order: Order.Ascending,
+            skip: 0,
+            take: pageSize + 1).ConfigureAwait(false);
+
+        var rows = new List<string>(members.Length);
+        foreach (RedisValue member in members)
+        {
+            rows.Add((string)member!);
+        }
+
+        return WorkflowAdministeredPaging.ToPage(rows, pageSize);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
         if (this.ownsConnection)
@@ -188,4 +250,8 @@ public sealed class RedisWorkflowAdministratorStore : IWorkflowAdministratorStor
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
     private static RedisKey RecordKey(string baseWorkflowId) => Prefix + baseWorkflowId;
+
+    private static RedisKey DigestsKey(string baseWorkflowId) => DigestsPrefix + baseWorkflowId;
+
+    private static RedisKey IndexKey(string adminDigest) => IndexPrefix + adminDigest;
 }
