@@ -14,13 +14,9 @@
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
 
-// Load the full scope vocabulary, accumulating every keyset page (find, not scale: the panel lists and filters the
-// whole set client-side, so it must walk past the server's first page rather than silently stop at it).
-async function loadAllRules(client) {
-  const rules = [];
-  for await (const page of client.listSecurityRulesPaged()) rules.push(...page.rules);
-  return rules;
-}
+// How long to wait after the last keystroke before issuing a server-side search (so typing doesn't fire a request per
+// character). The list is paged + searched on the server, so search scales to any number of scopes.
+const SEARCH_DEBOUNCE_MS = 250;
 
 // The template-first goals. `build` writes the expression; `suggest` proposes a name from the fields.
 const TEMPLATES = [
@@ -55,8 +51,11 @@ class ArazzoScopesPanel extends ArazzoElement {
     super();
     /** @private */ this._scopes = [];
     /** @private */ this._orderings = [];
+    /** @private */ this._orderingsLoaded = false;
     /** @private */ this._loading = false;
+    /** @private */ this._loadingMore = false;
     /** @private */ this._error = null;
+    /** @private */ this._nextPageToken = null;
     /** @private */ this._reqSeq = 0;
     /** @private */ this._query = '';
     /** @private */ this._form = null;
@@ -93,18 +92,23 @@ class ArazzoScopesPanel extends ArazzoElement {
     const seq = ++this._reqSeq;
     this._loading = true;
     this._error = null;
+    this._scopes = [];
+    this._nextPageToken = null;
     this.renderBody();
     try {
-      const [rules, orderingsResult] = await Promise.all([
-        loadAllRules(client),
-        client.listSecurityOrderings().catch(() => ({ orderings: [] })),
-      ]);
+      const q = this._query.trim();
+      // The first keyset page, filtered server-side by q. Orderings are small config (the classification templates) —
+      // fetch them once and reuse across searches rather than on every keystroke-triggered reload.
+      const tasks = [client.listSecurityRules({ q: q || undefined })];
+      if (!this._orderingsLoaded) tasks.push(client.listSecurityOrderings().catch(() => ({ orderings: [] })));
+      const [page, orderingsResult] = await Promise.all(tasks);
       if (seq !== this._reqSeq) return;
-      this._scopes = rules;
-      this._orderings = orderingsResult.orderings ?? [];
+      this._scopes = page.rules;
+      this._nextPageToken = page.nextPageToken;
+      if (orderingsResult) { this._orderings = orderingsResult.orderings ?? []; this._orderingsLoaded = true; }
       this._loading = false;
       this.renderBody();
-      this.emit('loaded', { count: this._scopes.length });
+      this.emit('loaded', { count: this._scopes.length, hasMore: !!this._nextPageToken });
     } catch (err) {
       if (seq !== this._reqSeq) return;
       this._loading = false;
@@ -114,10 +118,26 @@ class ArazzoScopesPanel extends ArazzoElement {
     }
   }
 
-  filtered() {
-    const q = this._query.trim().toLowerCase();
-    if (!q) return this._scopes;
-    return this._scopes.filter((s) => `${s.name} ${s.expression} ${s.description || ''}`.toLowerCase().includes(q));
+  /** Fetch and append the next keyset page (the "Load more" action), keeping the current search term. */
+  async loadMore() {
+    const client = this.client;
+    if (!client || !this._nextPageToken || this._loadingMore) return;
+    const seq = this._reqSeq;
+    this._loadingMore = true;
+    this.renderBody();
+    try {
+      const page = await client.listSecurityRules({ q: this._query.trim() || undefined, pageToken: this._nextPageToken });
+      if (seq !== this._reqSeq) return;
+      this._scopes.push(...page.rules);
+      this._nextPageToken = page.nextPageToken;
+      this._loadingMore = false;
+      this.renderBody();
+    } catch (err) {
+      if (seq !== this._reqSeq) return;
+      this._loadingMore = false;
+      this._error = err.problem || { title: err.message };
+      this.renderBody();
+    }
   }
 
   // ---- editor (modal dialog) --------------------------------------------------------------------
@@ -198,9 +218,8 @@ class ArazzoScopesPanel extends ArazzoElement {
   }
 
   async reloadAndEmit() {
-    this._scopes = await loadAllRules(this.client);
-    this._error = null;
-    this.renderBody();
+    // Reload the first page under the current search term (a mutation may have added/removed a matching scope).
+    await this.load();
     this.emit('scopes-changed', { scopes: this._scopes });
   }
 
@@ -218,6 +237,7 @@ class ArazzoScopesPanel extends ArazzoElement {
         .list { display: grid; }
         .srow { display: flex; align-items: baseline; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--_border); }
         .srow:last-child { border-bottom: none; }
+        .more-row { display: flex; justify-content: center; padding: 10px; border-top: 1px solid var(--_border); }
         .smeta { flex: 1; min-width: 0; }
         .sname { font-weight: 600; }
         .sexpr { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); display: block; margin-top: 2px; overflow-wrap: anywhere; }
@@ -262,7 +282,11 @@ class ArazzoScopesPanel extends ArazzoElement {
       </dialog>
     `;
     this.$('.new').addEventListener('click', () => this.openCreate());
-    this.$('.search').addEventListener('input', (e) => { this._query = e.target.value; this.renderBody(); });
+    this.$('.search').addEventListener('input', (e) => {
+      this._query = e.target.value;
+      clearTimeout(this._searchTimer);
+      this._searchTimer = setTimeout(() => this.load(), SEARCH_DEBOUNCE_MS);
+    });
     this.$('.cancel').addEventListener('click', () => this.closeEditor());
     this.$('.confirm').addEventListener('click', () => this.submitForm());
     this.$('dialog').addEventListener('close', () => { this._form = null; });
@@ -282,13 +306,12 @@ class ArazzoScopesPanel extends ArazzoElement {
       list.innerHTML = '<div class="skl"></div><div class="skl"></div>';
       return;
     }
-    const items = this.filtered();
-    if (items.length === 0) {
-      list.innerHTML = `<div class="empty">${this._scopes.length === 0 ? 'No scopes defined.' : 'No scopes match your search.'}</div>`;
+    if (this._scopes.length === 0) {
+      list.innerHTML = `<div class="empty">${this._query.trim() ? `No scopes match “${escapeHtml(this._query.trim())}”.` : 'No scopes defined.'}</div>`;
       return;
     }
 
-    list.innerHTML = items.map((s) => `
+    const rows = this._scopes.map((s) => `
       <div class="srow" part="row">
         <div class="smeta">
           <span class="sname">${escapeHtml(s.name)}</span>
@@ -299,8 +322,14 @@ class ArazzoScopesPanel extends ArazzoElement {
           <button class="edit ghost" type="button" data-name="${escapeHtml(s.name)}">Edit</button>
           <button class="del ghost" type="button" data-name="${escapeHtml(s.name)}">Delete</button>` : ''}
       </div>`).join('');
+    const more = this._nextPageToken
+      ? `<div class="more-row"><button class="more ghost" type="button"${this._loadingMore ? ' disabled' : ''}>${this._loadingMore ? 'Loading…' : 'Load more'}</button></div>`
+      : '';
+    list.innerHTML = rows + more;
     this.$$('.edit').forEach((b) => b.addEventListener('click', () => this.openEdit(b.dataset.name)));
     this.$$('.del').forEach((b) => b.addEventListener('click', () => this.deleteScope(b.dataset.name)));
+    const moreBtn = this.$('.more');
+    if (moreBtn) moreBtn.addEventListener('click', () => this.loadMore());
   }
 
   fieldsHtml(form) {
