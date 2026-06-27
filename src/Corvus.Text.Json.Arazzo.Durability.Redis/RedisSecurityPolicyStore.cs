@@ -2,7 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Globalization;
+using System.Text;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -24,6 +26,15 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     private const string BindingPrefix = "arazzo:secbinding:";
     private const string BindingIndexKey = "arazzo:secbindings";
     private const string GenerationKey = "arazzo:secgen";
+
+    // A keyset index for native binding paging by (order, id): a zero-scored sorted set whose members are
+    // "{orderKey}\0{id}", where orderKey is a sign-preserving fixed-width hex of the int order so a lexicographic
+    // (ZRANGEBYLEX) compare of members is (order asc, id asc) — the same total order the in-memory pager uses. Rules need
+    // no such index: their keyset is the name, which is already the member of RuleIndexKey. Maintained on add/update/delete
+    // (a binding update CAN change the order, so the old member is removed and the new one added).
+    private const string BindingOrderIndexKey = "arazzo:secbindings:byorder";
+
+    private const char MemberSeparator = '\0';
 
     // Singleton comparers (created once) for the client-side snapshot ordering, since the index sets are unordered: rules
     // by their name and bindings by Order then id.
@@ -130,6 +141,74 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityRulePage> ListRulesAsync(int limit, JsonString pageToken, JsonString q, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        int pageSize = limit > 0 ? limit : SecurityRulePage.DefaultPageSize;
+        string? after = DecodeRuleCursor(pageToken);
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        // Names are the set members (the keyset); sort ordinal client-side, skip past the cursor, then fetch only the page's
+        // documents and apply q (name or expression) client-side — Redis has no server-side substring.
+        RedisValue[] members = await this.database.SetMembersAsync(RuleIndexKey).ConfigureAwait(false);
+        var names = new List<string>(members.Length);
+        foreach (RedisValue m in members)
+        {
+            names.Add((string)m!);
+        }
+
+        names.Sort(StringComparer.Ordinal);
+
+        var page = new PooledDocumentList<SecurityRuleDocument>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            foreach (string name in names)
+            {
+                if (after is not null && string.CompareOrdinal(name, after) <= 0)
+                {
+                    continue; // at or before the cursor — already returned in an earlier page
+                }
+
+                using Lease<byte>? lease = await this.database.StringGetLeaseAsync(RulePrefix + name).ConfigureAwait(false);
+                if (lease is not { Length: > 0 })
+                {
+                    continue; // indexed but doc gone — skip
+                }
+
+                ParsedJsonDocument<SecurityRuleDocument> document = PersistedJson.ToPooledDocument<SecurityRuleDocument>(lease.Span);
+                if (qText is not null && !RuleMatches(document.RootElement, qText))
+                {
+                    document.Dispose();
+                    continue;
+                }
+
+                if (page.Count == pageSize)
+                {
+                    hasMore = true; // one matching row beyond the page → a next page exists
+                    document.Dispose();
+                    break;
+                }
+
+                page.Add(document);
+            }
+
+            if (!hasMore)
+            {
+                return SecurityRulePage.Create(page);
+            }
+
+            using UnescapedUtf8JsonString lastName = page[page.Count - 1].Name.GetUtf8String();
+            return SecurityRulePage.Create(page, lastName.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -182,6 +261,7 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
             await this.database.StringSetAsync(BindingPrefix + id, utf8).ConfigureAwait(false);
             await this.database.SetAddAsync(BindingIndexKey, id).ConfigureAwait(false);
+            await this.database.SortedSetAddAsync(BindingOrderIndexKey, BindingMember(draft.OrderValue, id), 0).ConfigureAwait(false);
             await this.BumpGenerationAsync().ConfigureAwait(false);
             return doc;
         }
@@ -212,6 +292,72 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, JsonString pageToken, JsonString q, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        int pageSize = limit > 0 ? limit : SecurityBindingPage.DefaultPageSize;
+        bool hasCursor = DecodeBindingCursor(pageToken, out int cursorOrder, out string? cursorId);
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        // ZRANGEBYLEX returns the order-index members in (order, id) order; parse the id, fetch only the page's documents,
+        // and apply q (claimType/claimValue/description) client-side.
+        string? cursorMember = hasCursor ? BindingMember(cursorOrder, cursorId!) : null;
+        RedisValue[] entries = await this.database.SortedSetRangeByValueAsync(BindingOrderIndexKey).ConfigureAwait(false);
+
+        var page = new PooledDocumentList<SecurityBindingDocument>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            foreach (RedisValue value in entries)
+            {
+                string member = (string)value!;
+                if (cursorMember is not null && string.CompareOrdinal(member, cursorMember) <= 0)
+                {
+                    continue; // at or before the cursor — already returned in an earlier page
+                }
+
+                int sep = member.IndexOf(MemberSeparator);
+                string id = sep < 0 ? member : member[(sep + 1)..];
+                using Lease<byte>? lease = await this.database.StringGetLeaseAsync(BindingPrefix + id).ConfigureAwait(false);
+                if (lease is not { Length: > 0 })
+                {
+                    continue; // indexed but doc gone — skip
+                }
+
+                ParsedJsonDocument<SecurityBindingDocument> document = PersistedJson.ToPooledDocument<SecurityBindingDocument>(lease.Span);
+                if (qText is not null && !BindingMatches(document.RootElement, qText))
+                {
+                    document.Dispose();
+                    continue;
+                }
+
+                if (page.Count == pageSize)
+                {
+                    hasMore = true; // one matching row beyond the page → a next page exists
+                    document.Dispose();
+                    break;
+                }
+
+                page.Add(document);
+            }
+
+            if (!hasMore)
+            {
+                return SecurityBindingPage.Create(page);
+            }
+
+            SecurityBindingDocument last = page[page.Count - 1];
+            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+            return SecurityBindingPage.Create(page, last.OrderValue, lastId.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -235,6 +381,16 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         {
             ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(updated.RootElement).Memory;
             await this.database.StringSetAsync(BindingPrefix + id, utf8).ConfigureAwait(false);
+
+            // The order keyset can change on update, so refresh the order index: drop the old member and add the new one.
+            int oldOrder = current.RootElement.OrderValue;
+            int newOrder = draft.OrderValue;
+            if (oldOrder != newOrder)
+            {
+                await this.database.SortedSetRemoveAsync(BindingOrderIndexKey, BindingMember(oldOrder, id)).ConfigureAwait(false);
+                await this.database.SortedSetAddAsync(BindingOrderIndexKey, BindingMember(newOrder, id), 0).ConfigureAwait(false);
+            }
+
             await this.BumpGenerationAsync().ConfigureAwait(false);
             return updated;
         }
@@ -246,8 +402,29 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
-    public ValueTask<bool> DeleteBindingAsync(string id, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(BindingPrefix, BindingIndexKey, "binding", id, expectedEtag, SecurityPolicySerialization.BindingEtagOf);
+    public async ValueTask<bool> DeleteBindingAsync(string id, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        RedisValue value = await this.database.StringGetAsync(BindingPrefix + id).ConfigureAwait(false);
+        if (value.IsNullOrEmpty)
+        {
+            return false;
+        }
+
+        var raw = (byte[])value!;
+        SecurityPolicySerialization.EnsureEtag("binding", id, expectedEtag, SecurityPolicySerialization.BindingEtagOf(raw));
+
+        // Remove the order-index member too (its order comes from the stored document).
+        using (ParsedJsonDocument<SecurityBindingDocument> current = ParsedJsonDocument<SecurityBindingDocument>.Parse(raw.AsMemory()))
+        {
+            await this.database.SortedSetRemoveAsync(BindingOrderIndexKey, BindingMember(current.RootElement.OrderValue, id)).ConfigureAwait(false);
+        }
+
+        await this.database.KeyDeleteAsync(BindingPrefix + id).ConfigureAwait(false);
+        await this.database.SetRemoveAsync(BindingIndexKey, id).ConfigureAwait(false);
+        await this.BumpGenerationAsync().ConfigureAwait(false);
+        return true;
+    }
 
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
@@ -269,6 +446,83 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
+
+    // The order-index member for a binding: "{orderKey}\0{id}". orderKey is the int order with its sign bit flipped,
+    // formatted as fixed-width hex, so a lexicographic compare of members is (order asc, id asc) — even across negative
+    // orders — matching the in-memory pager and the ByBindingOrder comparer.
+    private static string BindingMember(int order, string id)
+        => string.Concat(((uint)(order ^ int.MinValue)).ToString("x8", CultureInfo.InvariantCulture), MemberSeparator.ToString(), id);
+
+    // q matchers — Redis has no server-side substring, so q is applied client-side over the parsed page document; the
+    // compared fields realise to managed strings only for this comparison (the documents themselves stay pooled/bytes-native).
+    private static bool RuleMatches(in SecurityRuleDocument rule, string q)
+        => rule.NameValue.Contains(q, StringComparison.OrdinalIgnoreCase)
+        || rule.ExpressionValue.Contains(q, StringComparison.OrdinalIgnoreCase);
+
+    private static bool BindingMatches(in SecurityBindingDocument binding, string q)
+    {
+        if (binding.ClaimTypeValue.Contains(q, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (binding.ClaimValue.IsNotUndefined() && ((string)binding.ClaimValue).Contains(q, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return binding.Description.IsNotUndefined() && ((string)binding.Description).Contains(q, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // Decodes the keyset cursor (rule name) from the request page token; reified to a string for the client-side compare.
+    private static string? DecodeRuleCursor(JsonString pageToken)
+    {
+        if (!pageToken.IsNotUndefined())
+        {
+            return null;
+        }
+
+        using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(SecurityRuleContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
+        try
+        {
+            return SecurityRuleContinuationToken.TryDecode(tokenUtf8.Span, buffer, out ReadOnlySpan<byte> nameUtf8)
+                ? Encoding.UTF8.GetString(nameUtf8)
+                : null;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
+    // Decodes the keyset cursor (order, id) from the request page token; the id reified to a string for the member compare.
+    private static bool DecodeBindingCursor(JsonString pageToken, out int order, out string? id)
+    {
+        order = 0;
+        id = null;
+        if (!pageToken.IsNotUndefined())
+        {
+            return false;
+        }
+
+        using UnescapedUtf8JsonString tokenUtf8 = pageToken.GetUtf8String();
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(SecurityBindingContinuationToken.GetMaxDecodedLength(tokenUtf8.Span.Length));
+        try
+        {
+            if (SecurityBindingContinuationToken.TryDecode(tokenUtf8.Span, buffer, out order, out ReadOnlySpan<byte> idUtf8))
+            {
+                id = Encoding.UTF8.GetString(idUtf8);
+                return true;
+            }
+
+            return false;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
 
     private async ValueTask<PooledDocumentList<SecurityRuleDocument>> ReadRulesAsync()
     {
