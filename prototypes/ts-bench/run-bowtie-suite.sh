@@ -9,7 +9,10 @@ for d in "$@"; do
   WP=$(wslpath -w "$SUITE/$d")
   echo "=== running bowtie suite: $d ($(ls "$SUITE/$d"/*.json | wc -l) files) ==="
   t0=$(date +%s)
-  bowtie.exe suite -i "$IMG" "$WP" 2>/tmp/bt-$d.err > /tmp/bt-$d.json
+  # PYTHONUTF8=1 (propagated to the Windows bowtie.exe via WSLENV): bowtie.exe otherwise reads the UTF-8 suite
+  # files as cp1252 and sends mojibake (e.g. "π" -> "Ï€"), corrupting non-ASCII instances. Not needed for the
+  # Linux bowtie.
+  env PYTHONUTF8=1 WSLENV=PYTHONUTF8 bowtie.exe suite -i "$IMG" "$WP" 2>/tmp/bt-$d.err > /tmp/bt-$d.json
   t1=$(date +%s)
   python3 - "$d" "$((t1-t0))" <<'PY'
 import sys, json
