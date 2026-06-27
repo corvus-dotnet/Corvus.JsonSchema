@@ -1403,10 +1403,14 @@ export function createMockControlPlane(options = {}) {
   }
 
   // ---- access requests (§16.5) ------------------------------------------------------------------
-  // The mock is identity-less, so "my requests" (no baseWorkflowId) returns the whole list and the workflow
-  // queue (with baseWorkflowId) filters to that workflow; the requester-only / administrator-only 403s are
-  // exercised by the server/CLI tests and by component tests with a fake client. State transitions ARE modelled
-  // (a non-pending request conflicts, etc.) so the UI's optimistic flows and conflict banners are exercised.
+  // The mock has a single fixed identity ('demo-user'), enough to make the panel's two views distinct:
+  //   • scope=mine (or absent, no baseWorkflowId) → the demo user's OWN requests (empty until they submit one).
+  //   • scope=queue → the approver INBOX: every request across all workflows (the mock treats the demo user as an
+  //     administrator of everything), so the seeded cross-workflow set stands in for "what you can act on".
+  //   • baseWorkflowId → that one workflow's queue.
+  // The requester-only / administrator-only 403s are exercised by the server/CLI tests; state transitions ARE
+  // modelled (a non-pending request conflicts, etc.) so the UI's optimistic flows and conflict banners are exercised.
+  const demoUser = 'demo-user';
 
   function handleAccessRequests(fullPath, method, params, body) {
     const idx = fullPath.indexOf('/accessRequests');
@@ -1435,9 +1439,18 @@ export function createMockControlPlane(options = {}) {
   function listAccessRequests(params) {
     const status = params.get('status');
     const base = params.get('baseWorkflowId');
+    const scope = params.get('scope');
     const limit = Math.max(1, Number(params.get('limit')) || 50);
     let rows = [...accessRequests].sort((a, b) => (Date.parse(a.createdAt) - Date.parse(b.createdAt)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-    if (base) rows = rows.filter((r) => r.baseWorkflowId === base);
+    if (base) {
+      // A single workflow's queue (the demo user administers everything in the mock).
+      rows = rows.filter((r) => r.baseWorkflowId === base);
+    } else if (scope === 'queue') {
+      // The approver inbox: every request across all workflows (no subject filter).
+    } else {
+      // The caller's own requests (scope=mine / absent).
+      rows = rows.filter((r) => r.subjectClaimValue === demoUser);
+    }
     if (status) rows = rows.filter((r) => r.status === status);
     const tok = params.get('pageToken') ? atobSafe(params.get('pageToken')).split(' ') : null;
     const afterTicks = tok ? Number(tok[0]) : null;
