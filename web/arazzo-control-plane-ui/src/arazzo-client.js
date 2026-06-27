@@ -788,16 +788,18 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
-   * `listAccessRequests` — a keyset page (oldest first by `(createdAt, id)`). Without `baseWorkflowId`, the caller's own
-   * requests; with it, that workflow's request queue (the caller must be an administrator of it, `403` otherwise).
-   * Optionally filtered by `status`; `limit`/`pageToken` page.
-   * @param {{ status?: string, baseWorkflowId?: string, limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * `listAccessRequests` — a keyset page (oldest first by `(createdAt, id)`). With `baseWorkflowId`, that workflow's
+   * request queue (the caller must be an administrator of it, `403` otherwise). Without `baseWorkflowId`, `scope` selects
+   * the view: `'mine'` (default) the caller's own requests; `'queue'` the approver inbox — every request across the
+   * workflows the caller administers. Optionally filtered by `status`; `limit`/`pageToken` page.
+   * @param {{ status?: string, baseWorkflowId?: string, scope?: ('mine'|'queue'), limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
    * @returns {Promise<{ accessRequests: object[], nextPageToken: (string|null) }>} An {@link AccessRequestList}, oldest first.
    */
   async listAccessRequests(query = {}) {
     const search = new URLSearchParams();
     if (query.status) search.set('status', query.status);
     if (query.baseWorkflowId) search.set('baseWorkflowId', query.baseWorkflowId);
+    if (query.scope) search.set('scope', query.scope);
     if (query.limit != null) search.set('limit', String(query.limit));
     if (query.pageToken) search.set('pageToken', query.pageToken);
     const result = await this._request('GET', `/accessRequests${qs(search)}`, { signal: query.signal });
@@ -806,7 +808,7 @@ export class ArazzoControlPlaneClient {
 
   /**
    * `listAccessRequests`, as an async iterator that walks every page via the keyset `nextPageToken`.
-   * @param {{ status?: string, baseWorkflowId?: string, limit?: number, signal?: AbortSignal }} [query]
+   * @param {{ status?: string, baseWorkflowId?: string, scope?: ('mine'|'queue'), limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ accessRequests: object[], nextPageToken: (string|null) }>}
    */
   async *listAccessRequestsPaged(query = {}) {
