@@ -9,11 +9,14 @@
 // Parts      : panel, tabs, toolbar, table, row
 //
 // Two views over the same identity-gated API:
-//   • "My requests" — GET /accessRequests (no workflow) returns the caller's own; submit a new request, or
-//     withdraw a pending one.
-//   • "Approver queue" — GET /accessRequests?baseWorkflowId=… returns that workflow's queue (the caller must
-//     administer it, 403 otherwise, shown as a plain banner). Approve / approve-as-eligible / deny a pending
-//     request; revoke an approved grant.
+//   • "My requests" — GET /accessRequests?scope=mine returns the caller's own; submit a new request, or withdraw a
+//     pending one.
+//   • "Approver queue" — an INBOX of everything the caller can act on: GET /accessRequests?scope=queue returns every
+//     request across the workflows the caller administers (§15.4 reverse index), defaulting to Pending (the actionable
+//     to-do), oldest-first. Status and a single workflow are OPTIONAL filters, never a gate — choosing a workflow
+//     switches to GET /accessRequests?baseWorkflowId=… (that one workflow's queue; 403 if not its administrator, shown
+//     as a plain banner). Approve / approve-as-eligible / deny a pending request; revoke an approved grant.
+// Both views page with an explicit "Load more" (keyset, server-side status filter) rather than loading the whole queue.
 // Capability is never ambient (§16.5.3): a grant is what lets a principal act, and only on the workflow it names.
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
@@ -43,8 +46,12 @@ class ArazzoAccessRequests extends ArazzoElement {
     /** @private */ this._authProvider = undefined;
     /** @private */ this._requests = [];
     /** @private */ this._loading = false;
+    /** @private */ this._loadingMore = false;
     /** @private */ this._error = null;
-    /** @private */ this._statusFilter = '';
+    // null = "use the view's default status" (Pending for the approver inbox — the actionable to-do; all for My requests).
+    /** @private */ this._statusFilter = null;
+    /** @private */ this._nextPageToken = null;
+    /** @private */ this._query = {};
     /** @private */ this._reqSeq = 0;
   }
 
@@ -53,10 +60,16 @@ class ArazzoAccessRequests extends ArazzoElement {
     this.load();
   }
 
-  attributeChangedCallback(name) {
+  attributeChangedCallback(name, oldValue, newValue) {
     if (!this.isConnected) return;
     if (name === 'base-url') { this._client = undefined; this.load(); }
     else if (name === 'base-workflow-id') { if (this.view === 'queue') this.load(); }
+    else if (name === 'view' && oldValue !== newValue) {
+      // Switching tabs resets the status filter to the new view's default (Pending for the inbox, all for mine).
+      this._statusFilter = null;
+      this.renderShell();
+      this.load();
+    }
     else { this.renderShell(); this.load(); }
   }
 
@@ -97,6 +110,22 @@ class ArazzoAccessRequests extends ArazzoElement {
 
   refresh() { this.load(); }
 
+  /** The status filter actually in effect: the explicit choice, or the view default (Pending for the inbox, all for mine). */
+  effectiveStatus() {
+    return this._statusFilter ?? (this.view === 'queue' ? 'Pending' : '');
+  }
+
+  /** The server query for the current view + filters (status server-side; the approver inbox is scope=queue unless a
+   *  single workflow is chosen, which narrows to that workflow's admin-checked queue). */
+  buildQuery() {
+    const query = this.view === 'queue'
+      ? (this.baseWorkflowId ? { baseWorkflowId: this.baseWorkflowId } : { scope: 'queue' })
+      : { scope: 'mine' };
+    const status = this.effectiveStatus();
+    if (status) query.status = status;
+    return query;
+  }
+
   async load() {
     const client = this.buildClient();
     if (!client) {
@@ -105,33 +134,23 @@ class ArazzoAccessRequests extends ArazzoElement {
       return;
     }
 
-    // The approver queue is per-workflow; without one chosen there is nothing to fetch.
-    if (this.view === 'queue' && !this.baseWorkflowId) {
-      this._requests = [];
-      this._error = null;
-      this._loading = false;
-      this.renderBody();
-      return;
-    }
-
     const seq = ++this._reqSeq;
     this._loading = true;
     this._error = null;
+    this._requests = [];
+    this._nextPageToken = null;
+    this._query = this.buildQuery();
     this.renderBody();
     try {
-      const query = this.view === 'queue' ? { baseWorkflowId: this.baseWorkflowId } : {};
-      // Accumulate every keyset page (the panel lists and filters the whole queue client-side, so it must walk past the
-      // server's first page rather than silently stop at it).
-      const accessRequests = [];
-      for await (const page of client.listAccessRequestsPaged(query)) {
-        if (seq !== this._reqSeq) return;
-        accessRequests.push(...page.accessRequests);
-      }
+      // One keyset page; "Load more" fetches the next. Status is filtered server-side, so a page never hides matches on a
+      // later page (the old client-side status filter over an accumulate-all read could).
+      const page = await client.listAccessRequests(this._query);
       if (seq !== this._reqSeq) return;
-      this._requests = accessRequests;
+      this._requests = page.accessRequests;
+      this._nextPageToken = page.nextPageToken;
       this._loading = false;
       this.renderBody();
-      this.emit('loaded', { count: accessRequests.length, view: this.view });
+      this.emit('loaded', { count: this._requests.length, view: this.view, hasMore: !!this._nextPageToken });
     } catch (err) {
       if (seq !== this._reqSeq) return;
       this._loading = false;
@@ -141,8 +160,25 @@ class ArazzoAccessRequests extends ArazzoElement {
     }
   }
 
-  visibleRequests() {
-    return this._statusFilter ? this._requests.filter((r) => r.status === this._statusFilter) : this._requests;
+  /** Fetch and append the next keyset page (the "Load more" action). */
+  async loadMore() {
+    const client = this.buildClient();
+    if (!client || !this._nextPageToken || this._loadingMore) return;
+    const seq = this._reqSeq;
+    this._loadingMore = true;
+    this.renderFoot();
+    try {
+      const page = await client.listAccessRequests({ ...this._query, pageToken: this._nextPageToken });
+      if (seq !== this._reqSeq) return; // a reload superseded this
+      this._requests.push(...page.accessRequests);
+      this._nextPageToken = page.nextPageToken;
+      this._loadingMore = false;
+      this.renderBody();
+    } catch (err) {
+      if (seq !== this._reqSeq) return;
+      this._loadingMore = false;
+      this.showError(err.problem || { title: err.message }, err);
+    }
   }
 
   // ---- mutations --------------------------------------------------------------------------------
@@ -265,8 +301,9 @@ class ArazzoAccessRequests extends ArazzoElement {
   renderToolbar() {
     const toolbar = this.$('.toolbar');
     if (!toolbar) return;
+    const current = this.effectiveStatus();
     const statusOptions = STATUS_FILTERS.map((s) =>
-      `<option value="${s}"${s === this._statusFilter ? ' selected' : ''}>${s || 'all statuses'}</option>`).join('');
+      `<option value="${s}"${s === current ? ' selected' : ''}>${s || 'all statuses'}</option>`).join('');
     if (this.view === 'mine') {
       toolbar.innerHTML = `
         <button class="new primary" type="button">Request access…</button>
@@ -275,8 +312,9 @@ class ArazzoAccessRequests extends ArazzoElement {
         <button class="refresh ghost" type="button" title="Refresh">↻</button>`;
       this.$('.new').addEventListener('click', () => this.openSubmitDialog());
     } else {
+      // The approver inbox: a single workflow is an OPTIONAL filter (absent = every workflow you administer), never a gate.
       toolbar.innerHTML = `
-        <arazzo-workflow-id-input class="wf" placeholder="Workflow you administer…"></arazzo-workflow-id-input>
+        <arazzo-workflow-id-input class="wf" placeholder="All workflows you administer"></arazzo-workflow-id-input>
         <span class="grow"></span>
         <label class="sub">Status <select class="status">${statusOptions}</select></label>
         <button class="refresh ghost" type="button" title="Refresh">↻</button>`;
@@ -289,7 +327,8 @@ class ArazzoAccessRequests extends ArazzoElement {
         this._wfTimer = setTimeout(() => { this.baseWorkflowId = value; }, 300);
       });
     }
-    this.$('.status').addEventListener('change', (e) => { this._statusFilter = e.target.value; this.renderBody(); });
+    // Status is a server-side filter now, so a change reloads the first page (it cannot just re-filter a partial page).
+    this.$('.status').addEventListener('change', (e) => { this._statusFilter = e.target.value; this.load(); });
     this.$('.refresh').addEventListener('click', () => this.load());
   }
 
@@ -298,13 +337,40 @@ class ArazzoAccessRequests extends ArazzoElement {
     if (!thead) return;
     thead.innerHTML = this.view === 'mine'
       ? '<tr><th>Workflow</th><th>Scopes</th><th>Status</th><th>Requested</th><th>Expires</th><th></th></tr>'
-      : '<tr><th>Requester</th><th>Scopes</th><th>Status</th><th>Requested</th><th>Decision</th><th></th></tr>';
+      : '<tr><th>Workflow</th><th>Requester</th><th>Scopes</th><th>Status</th><th>Requested</th><th>Decision</th><th></th></tr>';
+  }
+
+  /** The number of table columns for the current view (My requests: 6; the approver inbox adds a Workflow column: 7). */
+  columnCount() {
+    return this.view === 'mine' ? 6 : 7;
+  }
+
+  /** A contextual empty-state message for the current view + filters. */
+  emptyMessage() {
+    const status = this.effectiveStatus();
+    if (this.view === 'mine') {
+      return status
+        ? `You have no ${status.toLowerCase()} requests.`
+        : 'You have no access requests. Use “Request access…” to ask for run access to a workflow.';
+    }
+    if (this.baseWorkflowId) {
+      return status
+        ? `No ${status.toLowerCase()} requests for ‘${this.baseWorkflowId}’.`
+        : `No access requests for ‘${this.baseWorkflowId}’.`;
+    }
+    // The inbox: a positive "inbox zero" when nothing is pending, else a plain no-match for a broader filter.
+    return status === 'Pending'
+      ? '🎉 You’re all caught up — no pending requests across the workflows you administer.'
+      : status
+        ? `No ${status.toLowerCase()} requests across the workflows you administer.`
+        : 'No access requests across the workflows you administer.';
   }
 
   renderBody() {
     const tbody = this.$('tbody');
     if (!tbody) return;
     this.renderHead();
+    const cols = this.columnCount();
 
     const err = this.$('.err');
     if (err) {
@@ -314,28 +380,18 @@ class ArazzoAccessRequests extends ArazzoElement {
     }
 
     if (this._loading && this._requests.length === 0) {
-      tbody.innerHTML = Array.from({ length: 3 }, () => `<tr>${'<td><div class="skl"></div></td>'.repeat(6)}</tr>`).join('');
+      tbody.innerHTML = Array.from({ length: 3 }, () => `<tr>${'<td><div class="skl"></div></td>'.repeat(cols)}</tr>`).join('');
       this.renderFoot();
       return;
     }
 
-    if (this.view === 'queue' && !this.baseWorkflowId) {
-      tbody.innerHTML = `<tr><td colspan="6"><div class="empty">Choose a workflow you administer to see its access-request queue.</div></td></tr>`;
+    if (this._requests.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="${cols}"><div class="empty">${escapeHtml(this.emptyMessage())}</div></td></tr>`;
       this.renderFoot();
       return;
     }
 
-    const rows = this.visibleRequests();
-    if (rows.length === 0) {
-      const msg = this.view === 'mine'
-        ? 'You have no access requests. Use “Request access…” to ask for run access to a workflow.'
-        : 'No access requests for this workflow match the current filter.';
-      tbody.innerHTML = `<tr><td colspan="6"><div class="empty">${escapeHtml(msg)}</div></td></tr>`;
-      this.renderFoot();
-      return;
-    }
-
-    tbody.innerHTML = rows.map((r) => this.view === 'mine' ? this.renderMineRow(r) : this.renderQueueRow(r)).join('');
+    tbody.innerHTML = this._requests.map((r) => this.view === 'mine' ? this.renderMineRow(r) : this.renderQueueRow(r)).join('');
     this.wireRowActions();
     this.renderFoot();
   }
@@ -373,6 +429,7 @@ class ArazzoAccessRequests extends ArazzoElement {
     }
     return `
       <tr part="row" data-id="${escapeHtml(r.id)}">
+        <td><span class="wf-id">${escapeHtml(r.baseWorkflowId)}</span></td>
         <td><span class="who">${escapeHtml(r.requesterLabel || r.subjectClaimValue)}</span><div class="sub">${escapeHtml(r.subjectClaimType)}=${escapeHtml(r.subjectClaimValue)}</div>${r.reason ? `<div class="reason">${escapeHtml(r.reason)}</div>` : ''}</td>
         <td>${this.scopeChips(r.requestedScopes)}</td>
         <td>${this.statusBadge(r)}</td>
@@ -402,11 +459,18 @@ class ArazzoAccessRequests extends ArazzoElement {
     const foot = this.$('.foot');
     if (!foot) return;
     if (this._loading) { foot.textContent = 'Loading…'; return; }
-    const total = this.visibleRequests().length;
-    const pending = this.visibleRequests().filter((r) => r.status === 'Pending').length;
-    const parts = [`${total} request${total === 1 ? '' : 's'}`];
+    const total = this._requests.length;
+    // The keyset page count is not a total; show what's loaded, and a Load-more when the server has another page. When the
+    // status filter is not Pending, surface the pending count among the loaded rows as the actionable subset.
+    const label = `${total} request${total === 1 ? '' : 's'}${this._nextPageToken ? ' loaded' : ''}`;
+    const pending = this.effectiveStatus() !== 'Pending' ? this._requests.filter((r) => r.status === 'Pending').length : 0;
+    const parts = [label];
     if (pending > 0) parts.push(`${pending} pending`);
-    foot.textContent = parts.join(' · ');
+    foot.innerHTML = `<span>${escapeHtml(parts.join(' · '))}</span><span style="flex:1"></span>${
+      this._nextPageToken ? `<button class="more ghost" type="button"${this._loadingMore ? ' disabled' : ''}>${this._loadingMore ? 'Loading…' : 'Load more'}</button>` : ''
+    }`;
+    const more = this.$('.more');
+    if (more) more.addEventListener('click', () => this.loadMore());
   }
 
   // ---- dialogs ----------------------------------------------------------------------------------
