@@ -13,7 +13,8 @@ than spawn the CLI per schema, the harness drives a **long-running in-process co
 1. the worker generates the module in-process, registering Bowtie's per-case `registry` of remote schemas in
    the document resolver via `AddDocument` (the v5-harness approach — no HTTP/file remote resolution, **no
    server**), and writes `generated.ts` + `corvus-runtime.ts`;
-2. the harness `tsc`-compiles them and dynamic-imports the default `evaluateRoot`;
+2. the harness **transpiles** them with esbuild (type-stripping only — the validators are already correct, so
+   a per-case `tsc` type-check is pure overhead and ~20× slower) and dynamic-imports the default `evaluateRoot`;
 3. it validates each instance — parsed with the source-preserving `parseInstance` (numbers → `LosslessNumber`
    for exact `multipleOf`/big-int, objects → null-prototype so `"__proto__"` is an ordinary own key).
 
@@ -31,17 +32,18 @@ The self-test must print, for each `seq`, the expected validity list (e.g. `seq 
 
 ## Notes / follow-ups
 
-- Lives in `ts-bench` to reuse its `node_modules` (the generated-code runtime deps + `tsc`) — a standalone
+- Lives in `ts-bench` to reuse its `node_modules` (the generated-code runtime deps + esbuild) — a standalone
   npm package + Docker image (for registering with Bowtie proper) is a follow-up.
-- Per-schema codegen + `tsc` is the cost of an AOT engine under Bowtie; correctness is unaffected, throughput
-  is bounded by the .NET CLI start + compile per schema.
+- Per-schema codegen (in-process, via the long-running worker) + esbuild transpile is the cost of an AOT engine
+  under Bowtie. Using esbuild instead of a per-case `tsc` keeps the harness fast enough to stay in lockstep with
+  bowtie's pacing under load — a slow `tsc` made it fall behind and desync seq numbers.
 - Compliance itself is already proven by the in-repo suite-runner (7848/7849 over 5 dialects); this harness is
   about standardized Bowtie tooling integration.
 
 ## Running under real Bowtie (Podman)
 
 corvus-ts is a code generator, so the harness is packaged as an OCI image bundling a self-contained linux-x64
-CLI + Node + tsc; per Bowtie `run` it codegens, compiles, and runs. Build it and run the official suite with
+CLI + Node + esbuild; per Bowtie `run` it codegens, transpiles, and runs. Build it and run the official suite with
 the real Bowtie tooling:
 
 ```
@@ -61,5 +63,5 @@ builds from a `\\wsl.localhost\...` path). `bowtie summary` has an id-keying bug
 - **Registry supported** — the `codegen-worker` registers Bowtie's per-case remote-schema registry in the
   document resolver via `AddDocument` (no server), so `bowtie smoke` no longer reports `"registry": false` and
   `refRemote` passes (31/31 on draft2020-12).
-- Per-schema codegen happens in the long-running worker (no per-schema process); `tsc` inside the container is
-  the remaining throughput cost of an AOT engine under Bowtie.
+- Per-schema codegen happens in the long-running worker (no per-schema process) and an esbuild type-strip (~ms),
+  so the harness keeps pace with bowtie under load — the remaining throughput cost of an AOT engine under Bowtie.

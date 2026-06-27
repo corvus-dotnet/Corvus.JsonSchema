@@ -6,6 +6,6 @@
     "@js-temporal/polyfill": "^0.5.1",
     "lossless-json": "^4.0.2",
     "tr46": "^5.0.0",
-    "typescript": "^5.6.3"
+    "esbuild": "^0.28.1"
   }
 }

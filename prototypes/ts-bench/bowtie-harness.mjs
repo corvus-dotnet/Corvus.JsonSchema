@@ -6,21 +6,20 @@
 // and dynamic-imports the default evaluateRoot to validate each instance.
 //
 // Protocol: newline-delimited JSON commands on stdin -> NDJSON responses on stdout (start/dialect/run/stop).
-// Lives in ts-bench to reuse its node_modules (lossless-json + the generated-code runtime deps) and tsc.
+// Lives in ts-bench to reuse its node_modules (lossless-json + the generated-code runtime deps + esbuild).
 import { createInterface } from "node:readline";
-import { execFileSync, spawn } from "node:child_process";
-import { mkdirSync, rmSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { mkdirSync, rmSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { LosslessNumber } from "lossless-json";
+import { transformSync } from "esbuild";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
 // CORVUS_CLI = a self-contained CLI binary (the container image sets it to /opt/cli/Corvus.Json.Cli); without
 // it, fall back to the dev DLL via `dotnet`.
 const CLI_RUN = process.env.CORVUS_CLI ? [process.env.CORVUS_CLI] : ["dotnet", join(ROOT, "src", "Corvus.Json.Cli", "bin", "Debug", "net9.0", "Corvus.Json.Cli.dll")];
-const TSC = join(HERE, "node_modules", ".bin", "tsc");
-const GLOBALS = join(HERE, "bowtie-globals.d.ts");
 const WORK = join(HERE, "bowtie-work");
 
 // The long-running codegen worker: one process for the whole run (no per-schema spawn). Each request is one
@@ -129,8 +128,13 @@ async function compile(schema, registry) {
   mkdirSync(dir, { recursive: true });
   const resp = JSON.parse(await codegen(schema, reg, dir));
   if (resp.error) { throw new Error(resp.error); }
-  execFileSync(TSC, [join(dir, "generated.ts"), join(dir, "corvus-runtime.ts"), GLOBALS,
-    "--target", "es2022", "--module", "esnext", "--moduleResolution", "bundler", "--lib", "es2022,dom", "--outDir", dir], { stdio: "ignore" });
+  // Fast type-STRIPPING transpile (esbuild), not a per-case `tsc` type-check: the generated validators are
+  // already correct, so type-checking each schema is pure overhead — and a ~1-2s tsc per case makes the
+  // harness fall behind bowtie's pacing under load (the source of the draft4 desync). esbuild is ~ms/case.
+  for (const name of ["corvus-runtime", "generated"]) {
+    const js = transformSync(readFileSync(join(dir, name + ".ts"), "utf8"), { loader: "ts", format: "esm", target: "es2022" }).code;
+    writeFileSync(join(dir, name + ".js"), js);
+  }
   return dir;
 }
 
