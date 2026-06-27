@@ -199,6 +199,26 @@ ask for run access. *Approver:* clear the inbox of requests they can act on.
 ### 7.3 Terminology (a cross-cutting note)
 The UI deliberately renames API concepts for users — **Scopes** = security *rules*, **Sources** = source *credentials* / connections, **Grants** = *bindings*. The renames are reasonable (more human), but a one-line glossary somewhere in-product (or a tooltip) would help operators who also read the API/CLI, where the original names surface. Worth a deliberate decision rather than drift.
 
+### 7.4 Tenant is the ambient boundary, not a user-facing dimension (P1, conceptual)
+Tenant isolation is **system-enforced and ambient**: the deployment's row-security policy stamps the caller's
+`sys:tenant` automatically (§14.3/§14.4) and scopes every list/read/write to the caller's *current* tenant. It
+follows that a user **never authors or sees a `tenant` constraint** — within their tenant they reason about
+**domains, teams, roles, and classifications**, never the tenant itself. Surfacing `tenant` as a user choice leaks a
+system concept into the user surface and is wrong for multi-tenant SaaS. Two concrete corrections:
+
+- **Drop `tenant` from the authoring UIs.** The administrator grant input offers a `{ workflow | tenant }` dimension,
+  and the scope library shipped tenant-isolation rules (`tenant == $claim.tenant`, `tenant in (…)`) as if they were
+  optional reach vocabulary. Neither belongs in a single-tenant view — administration and reach should be expressed in
+  team/role/domain/classification terms. *(The demo's example data has been corrected to reflect this — see below;
+  removing the `tenant` option from the components themselves is the matching code change.)*
+- **Multi-tenant membership is a tenant switcher, not a grant.** An identity that belongs to more than one tenant needs
+  a dedicated **tenant switcher** in the console chrome that sets the active tenant for the whole session (re-scoping
+  everything), distinct from anything in the grant/admin surfaces. This is new UI, not a tweak.
+
+**Demo data (done):** the example seed is now separate from the test fixtures (`demo/demo-seed.js`, passed to
+`createMockControlPlane`) and is tenant-free — within-tenant reach vocabulary, team/role grants, team administrators,
+and run labels by domain rather than tenant — so the walkthroughs show the product as a tenant actually experiences it.
+
 ---
 
 ## 8. Video shot-list (ready to record)
