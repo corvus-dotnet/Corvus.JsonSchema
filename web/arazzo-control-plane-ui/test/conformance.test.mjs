@@ -341,4 +341,11 @@ test('access requests: each client method emits the contract method + templated 
   await client.revokeAccessRequest('req-1');
   assert.equal(calls[7].method, OPS.revokeAccessRequest.method);
   assert.equal(calls[7].path, OPS.revokeAccessRequest.path.replace('{requestId}', 'req-1'));
+
+  // The approver inbox lists across every administered workflow via the declared scope=queue query parameter.
+  await client.listAccessRequests({ scope: 'queue', status: 'Pending' });
+  assert.equal(calls[8].query.get('scope'), 'queue');
+  for (const key of calls[8].query.keys()) {
+    assert.ok(OPS.listAccessRequests.queryParams.has(key), `query param '${key}' is declared`);
+  }
 });
