@@ -54,6 +54,90 @@ public static class GenerationDriverTypeScript
         return 0;
     }
 
+    /// <summary>
+    /// In-process codegen worker for the TypeScript Bowtie harness. Reads NDJSON requests
+    /// { "schema": &lt;schema&gt;, "registry"?: { uri: &lt;schema&gt; }, "out": &lt;dir&gt; } on stdin and, for each,
+    /// generates the module — registering the Bowtie registry of remote schemas in the document resolver via
+    /// <c>AddDocument</c> (the v5-harness approach: no HTTP/file remote resolution, no server) — then writes
+    /// { "ok": true } or { "error": ... }. Long-running, so there is no per-schema process spawn.
+    /// </summary>
+    /// <returns>The process exit code.</returns>
+    public static async Task<int> RunBowtieCodegenLoopAsync()
+    {
+        string? line;
+        while ((line = await Console.In.ReadLineAsync()) is not null)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            try
+            {
+                using System.Text.Json.JsonDocument req = System.Text.Json.JsonDocument.Parse(line);
+                System.Text.Json.JsonElement r = req.RootElement;
+                string schema = r.GetProperty("schema").GetRawText();
+                string outDir = r.GetProperty("out").GetString()!;
+                var registry = new Dictionary<string, System.Text.Json.JsonDocument>();
+                if (r.TryGetProperty("registry", out System.Text.Json.JsonElement reg) && reg.ValueKind == System.Text.Json.JsonValueKind.Object)
+                {
+                    foreach (System.Text.Json.JsonProperty p in reg.EnumerateObject())
+                    {
+                        registry[p.Name] = System.Text.Json.JsonDocument.Parse(p.Value.GetRawText());
+                    }
+                }
+
+                await GenerateBowtieModuleAsync(schema, registry, outDir);
+                await Console.Out.WriteLineAsync("{\"ok\":true}");
+            }
+            catch (Exception ex)
+            {
+                await Console.Out.WriteLineAsync(System.Text.Json.JsonSerializer.Serialize(new { error = ex.Message }));
+            }
+
+            await Console.Out.FlushAsync();
+        }
+
+        return 0;
+    }
+
+    private static async Task GenerateBowtieModuleAsync(string schemaJson, Dictionary<string, System.Text.Json.JsonDocument> registry, string outDir)
+    {
+        // No FileSystem/HTTP remote resolution (cf. the v5 harness' allowFileSystemAndHttpResolution:false):
+        // the metaschemas come from AddMetaschema and every remote $ref comes from the prepopulated registry.
+        CompoundDocumentResolver resolver = new(new FileSystemDocumentResolver());
+        resolver.AddMetaschema();
+        foreach ((string uri, System.Text.Json.JsonDocument doc) in registry)
+        {
+            resolver.AddDocument(uri, doc);
+        }
+
+        VocabularyRegistry vocabularyRegistry = GenerationDriverV5.RegisterVocabularies(resolver);
+        IVocabulary fallback = GenerationDriverV5.GetFallbackVocabulary(GeneratorConfig.UseSchema.DefaultInstance);
+        JsonSchemaTypeBuilder typeBuilder = new(resolver, vocabularyRegistry);
+
+        // Normalize the synthetic main reference the same way the SuiteHarness does, so the AddDocument key and
+        // the JsonReference lookup agree (an un-normalized ref collapses its slashes and the lookup misses).
+        string mainRef = Path.Combine(outDir, "__corvus_main.json");
+        if (SchemaReferenceNormalization.TryNormalizeSchemaReference(mainRef, out string? normalized))
+        {
+            mainRef = normalized;
+        }
+
+        typeBuilder.AddDocument(mainRef, System.Text.Json.JsonDocument.Parse(schemaJson));
+        TypeDeclaration root = await typeBuilder.AddTypeDeclarationsAsync(new JsonReference(mainRef), fallback, true);
+
+        TypeScriptLanguageProvider provider = TypeScriptLanguageProvider.DefaultWithOptions(
+            new TypeScriptLanguageProvider.Options(AlwaysAssertFormat: true));
+        IReadOnlyCollection<GeneratedCodeFile> files = typeBuilder.GenerateCodeUsing(provider, new[] { root }, CancellationToken.None);
+        string export = provider.RootEvaluatorExport(root);
+
+        Directory.CreateDirectory(outDir);
+        File.WriteAllText(Path.Combine(outDir, "corvus-runtime.ts"), TypeScriptLanguageProvider.RuntimeModuleSource());
+        GeneratedCodeFile generated = files.First(f => f.FileName == "generated.ts");
+        File.WriteAllText(Path.Combine(outDir, "generated.ts"), generated.FileContent + export);
+    }
+
     private static async Task ExecuteTask(GeneratorConfig generatorConfig, ProgressContext context, IVocabulary defaultVocabulary, JsonSchemaTypeBuilder typeBuilder)
     {
         ProgressTask outerTask = context.AddTask("Generating TypeScript types", maxValue: generatorConfig.TypesToGenerate.GetArrayLength());

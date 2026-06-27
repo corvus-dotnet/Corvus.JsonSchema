@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 // Bowtie (bowtie.report) test harness for corvus-ts — the AOT TypeScript JSON Schema engine. corvus-ts is a
-// code GENERATOR, so each schema is compiled on the fly: write it, run the production CLI (--engine
-// TypeScript), tsc-compile, dynamic-import the default evaluateRoot, then validate each instance.
+// code GENERATOR, so each schema is compiled on the fly. Rather than spawn the CLI per schema, this drives a
+// LONG-RUNNING in-process codegen worker (`Corvus.Json.Cli codegen-worker`) that uses the generator directly
+// and registers Bowtie's per-case `registry` of remote schemas via AddDocument (no server) — then tsc-compiles
+// and dynamic-imports the default evaluateRoot to validate each instance.
 //
 // Protocol: newline-delimited JSON commands on stdin -> NDJSON responses on stdout (start/dialect/run/stop).
-// Lives in ts-bench to reuse its node_modules (lossless-json + the generated-code runtime deps) and tsc;
-// a standalone npm package + Docker image is a follow-up. Run:  node bowtie-harness.mjs  (feed it commands).
+// Lives in ts-bench to reuse its node_modules (lossless-json + the generated-code runtime deps) and tsc.
 import { createInterface } from "node:readline";
-import { execFileSync } from "node:child_process";
-import { writeFileSync, mkdirSync, rmSync } from "node:fs";
+import { execFileSync, spawn } from "node:child_process";
+import { mkdirSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { LosslessNumber, parse as ljParse, stringify as ljStringify } from "lossless-json";
@@ -21,6 +22,20 @@ const CLI_RUN = process.env.CORVUS_CLI ? [process.env.CORVUS_CLI] : ["dotnet", j
 const TSC = join(HERE, "node_modules", ".bin", "tsc");
 const GLOBALS = join(HERE, "bowtie-globals.d.ts");
 const WORK = join(HERE, "bowtie-work");
+
+// The long-running codegen worker: one process for the whole run (no per-schema spawn). Each request is one
+// NDJSON line { schema, registry, out }; the worker writes the TS module to `out` and replies { ok | error }.
+const worker = spawn(CLI_RUN[0], [...CLI_RUN.slice(1), "codegen-worker"], { stdio: ["pipe", "pipe", "inherit"] });
+worker.on("exit", (code) => { process.stderr.write(`codegen worker exited (${code})\n`); process.exit(1); });
+const workerOut = createInterface({ input: worker.stdout });
+const pending = [];
+workerOut.on("line", (line) => { const resolve = pending.shift(); if (resolve) { resolve(line); } });
+function codegen(schema, registry, out) {
+  return new Promise((resolve) => {
+    pending.push(resolve);
+    worker.stdin.write(ljStringify({ schema, registry, out }) + "\n");
+  });
+}
 
 // Source-preserving single-pass parser (from suite-runner.mjs): numbers -> LosslessNumber (exact source for
 // multipleOf/big-int), objects -> null-prototype (so "__proto__" is an ordinary own key). The Model C model.
@@ -88,17 +103,20 @@ const msg = (e) => String((e && e.stack) || e);
 
 let dialect = "https://json-schema.org/draft/2020-12/schema";
 let n = 0;
-function compile(schema) {
-  // Suite schemas usually omit $schema; the Bowtie `dialect` command tells us which one to assume, so inject
-  // it (the CLI infers the draft from $schema). Object schemas only; booleans/already-dialected are left as-is.
-  if (schema && typeof schema === "object" && !Array.isArray(schema) && !("$schema" in schema)) {
-    schema.$schema = dialect;
-  }
+// Suite schemas usually omit $schema; the Bowtie `dialect` command tells us which one to assume, so inject it
+// (the generator infers the draft from $schema). Object schemas only; booleans / already-dialected unchanged.
+function injectDialect(s) {
+  if (s && typeof s === "object" && !Array.isArray(s) && !("$schema" in s)) { s.$schema = dialect; }
+}
+async function compile(schema, registry) {
+  injectDialect(schema);
+  const reg = {};
+  if (registry) { for (const [uri, s] of Object.entries(registry)) { injectDialect(s); reg[uri] = s; } }
   const dir = join(WORK, String(n++));
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, "schema.json"), ljStringify(schema));
-  execFileSync(CLI_RUN[0], [...CLI_RUN.slice(1), "jsonschema", join(dir, "schema.json"), "--engine", "TypeScript", "--outputPath", dir], { stdio: "ignore" });
+  const resp = JSON.parse(await codegen(schema, reg, dir));
+  if (resp.error) { throw new Error(resp.error); }
   execFileSync(TSC, [join(dir, "generated.ts"), join(dir, "corvus-runtime.ts"), GLOBALS,
     "--target", "es2022", "--module", "esnext", "--moduleResolution", "bundler", "--lib", "es2022,dom", "--outDir", dir], { stdio: "ignore" });
   return dir;
@@ -120,7 +138,7 @@ for await (const line of rl) {
   } else if (c === "run") {
     const seq = cmd.seq instanceof LosslessNumber ? Number(cmd.seq.toString()) : cmd.seq;
     try {
-      const dir = compile(cmd.case.schema);
+      const dir = await compile(cmd.case.schema, cmd.case.registry);
       const evaluateRoot = (await import(pathToFileURL(join(dir, "generated.js")).href)).default;
       const results = cmd.case.tests.map((t) => {
         try { return { valid: evaluateRoot(parseInstance(ljStringify(t.instance))) === true }; }
