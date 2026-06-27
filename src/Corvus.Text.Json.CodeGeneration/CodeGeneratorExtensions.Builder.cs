@@ -4786,7 +4786,7 @@ internal static partial class CodeGeneratorExtensions
                 generator.Append(", ");
             }
 
-            generator.Append("in ").Append(args[i].Type).Append(" arg").Append(i + 1);
+            generator.Append("scoped in ").Append(args[i].Type).Append(" arg").Append(i + 1);
 
             if (includeDefaults && args[i].IsOptional)
             {
@@ -4821,7 +4821,7 @@ internal static partial class CodeGeneratorExtensions
                 generator.Append(", ");
             }
 
-            generator.Append("in ").Append(args[i].Type).Append(" ").Append(names[i]);
+            generator.Append("scoped in ").Append(args[i].Type).Append(" ").Append(names[i]);
 
             if (args[i].IsOptional)
             {

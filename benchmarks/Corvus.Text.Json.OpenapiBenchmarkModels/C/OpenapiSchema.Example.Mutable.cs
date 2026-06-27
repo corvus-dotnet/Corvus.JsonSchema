@@ -326,7 +326,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
+            public void SetDescription(scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -371,7 +371,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>externalValue</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExternalValue(in Corvus.OpenapiBenchmark.Current.JsonUri.Source value)
+            public void SetExternalValue(scoped in Corvus.OpenapiBenchmark.Current.JsonUri.Source value)
             {
                 CheckValidInstance();
 
@@ -416,7 +416,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>summary</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSummary(in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
+            public void SetSummary(scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -461,7 +461,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>value</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetValue(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetValue(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -661,7 +661,7 @@ public readonly partial struct OpenapiSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -684,7 +684,7 @@ public readonly partial struct OpenapiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -731,7 +731,7 @@ public readonly partial struct OpenapiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -921,7 +921,7 @@ public readonly partial struct OpenapiSchema
 
             internal Source(Corvus.OpenapiBenchmark.Current.OpenapiSchema.Example.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.OpenapiBenchmark.Current.JsonString.Source arg1, in Corvus.OpenapiBenchmark.Current.JsonUri.Source arg2, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4)
+            internal Source(scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.JsonUri.Source arg2, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Text.Json.JsonElement.Source arg4)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1091,7 +1091,7 @@ public readonly partial struct OpenapiSchema
 
             internal Source(scoped in TContext context, Corvus.OpenapiBenchmark.Current.OpenapiSchema.Example.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg1, in Corvus.OpenapiBenchmark.Current.JsonUri.Source arg2, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4)
+            internal Source(scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.JsonUri.Source arg2, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg4)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1409,7 +1409,7 @@ public readonly partial struct OpenapiSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.OpenapiBenchmark.Current.JsonString.Source arg1, in Corvus.OpenapiBenchmark.Current.JsonUri.Source arg2, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.JsonUri.Source arg2, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Text.Json.JsonElement.Source arg4, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4);
@@ -1426,7 +1426,7 @@ public readonly partial struct OpenapiSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg1, in Corvus.OpenapiBenchmark.Current.JsonUri.Source arg2, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.JsonUri.Source arg2, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1474,7 +1474,7 @@ public readonly partial struct OpenapiSchema
         /// <param name="summary">The value of the <c>"summary"</c> property.</param>
         /// <param name="value">The value of the <c>"value"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, in Corvus.OpenapiBenchmark.Current.JsonUri.Source externalValue = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source summary = default, in Corvus.Text.Json.JsonElement.Source value = default)
+        public static Source Build(scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, scoped in Corvus.OpenapiBenchmark.Current.JsonUri.Source externalValue = default, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source summary = default, scoped in Corvus.Text.Json.JsonElement.Source value = default)
         {
             return new Source(description, externalValue, summary, value);
         }
@@ -1489,7 +1489,7 @@ public readonly partial struct OpenapiSchema
         /// <param name="summary">The value of the <c>"summary"</c> property.</param>
         /// <param name="value">The value of the <c>"value"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, in Corvus.OpenapiBenchmark.Current.JsonUri.Source externalValue = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source summary = default, in Corvus.Text.Json.JsonElement.Source<TContext> value = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, scoped in Corvus.OpenapiBenchmark.Current.JsonUri.Source externalValue = default, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source summary = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> value = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

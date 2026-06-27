@@ -644,7 +644,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>backoff_strategy</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBackoffStrategyValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Source value)
+            public void SetBackoffStrategyValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Source value)
             {
                 CheckValidInstance();
 
@@ -689,7 +689,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>connect_event</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetConnectEvent(in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Source value)
+            public void SetConnectEvent(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Source value)
             {
                 CheckValidInstance();
 
@@ -734,7 +734,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>disconnect_event</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisconnectEvent(in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Source value)
+            public void SetDisconnectEvent(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Source value)
             {
                 CheckValidInstance();
 
@@ -779,7 +779,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>enable_direct_communication</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnableDirectCommunication(in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Source value)
+            public void SetEnableDirectCommunication(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Source value)
             {
                 CheckValidInstance();
 
@@ -824,7 +824,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>input_headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetInputHeaders(in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Source value)
+            public void SetInputHeaders(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -905,7 +905,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>max_message_size</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxMessageSize(in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Source value)
+            public void SetMaxMessageSize(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Source value)
             {
                 CheckValidInstance();
 
@@ -950,7 +950,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>max_retries</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxRetriesValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Source value)
+            public void SetMaxRetriesValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Source value)
             {
                 CheckValidInstance();
 
@@ -995,7 +995,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>message_buffer_size</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMessageBufferSizeValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Source value)
+            public void SetMessageBufferSizeValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Source value)
             {
                 CheckValidInstance();
 
@@ -1040,7 +1040,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>ping_period</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPingPeriod(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+            public void SetPingPeriod(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
             {
                 CheckValidInstance();
 
@@ -1085,7 +1085,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>pong_wait</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPongWait(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+            public void SetPongWait(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
             {
                 CheckValidInstance();
 
@@ -1130,7 +1130,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>read_buffer_size</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetReadBufferSizeValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Source value)
+            public void SetReadBufferSizeValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Source value)
             {
                 CheckValidInstance();
 
@@ -1175,7 +1175,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>return_error_details</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetReturnErrorDetailsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Source value)
+            public void SetReturnErrorDetailsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Source value)
             {
                 CheckValidInstance();
 
@@ -1220,7 +1220,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>timeout</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTimeout(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+            public void SetTimeout(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
             {
                 CheckValidInstance();
 
@@ -1265,7 +1265,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>write_buffer_size</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetWriteBufferSizeValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Source value)
+            public void SetWriteBufferSizeValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Source value)
             {
                 CheckValidInstance();
 
@@ -1310,7 +1310,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>write_wait</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetWriteWait(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+            public void SetWriteWait(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
             {
                 CheckValidInstance();
 
@@ -1456,7 +1456,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1479,7 +1479,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1526,7 +1526,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1710,7 +1710,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg15)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Source arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg13, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Source arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg15)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1902,7 +1902,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Source<TContext> arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg15)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Source<TContext> arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Source arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg13, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Source arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg15)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2308,7 +2308,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg14">The value of the property.</param>
             /// <param name="arg15">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg15, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Source arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg13, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Source arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg15, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
@@ -2336,7 +2336,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg14">The value of the property.</param>
             /// <param name="arg15">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Source<TContext> arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg15, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Source<TContext> arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Source arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg13, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Source arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg15, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2395,7 +2395,7 @@ public readonly partial struct KrakendSchema
         /// <param name="writeBufferSize">The value of the <c>"write_buffer_size"</c> property.</param>
         /// <param name="writeWait">The value of the <c>"write_wait"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Source backoffStrategy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Source connectEvent = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Source disconnectEvent = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Source enableDirectCommunication = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Source inputHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Source maxMessageSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Source maxRetries = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Source messageBufferSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source pingPeriod = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source pongWait = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Source readBufferSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Source returnErrorDetails = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Source writeBufferSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source writeWait = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Source backoffStrategy = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Source connectEvent = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Source disconnectEvent = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Source enableDirectCommunication = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Source inputHeaders = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Source maxMessageSize = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Source maxRetries = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Source messageBufferSize = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source pingPeriod = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source pongWait = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Source readBufferSize = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Source returnErrorDetails = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Source writeBufferSize = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source writeWait = default)
         {
             return new Source(backoffStrategy, connectEvent, disconnectEvent, enableDirectCommunication, inputHeaders, maxMessageSize, maxRetries, messageBufferSize, pingPeriod, pongWait, readBufferSize, returnErrorDetails, timeout, writeBufferSize, writeWait);
         }
@@ -2421,7 +2421,7 @@ public readonly partial struct KrakendSchema
         /// <param name="writeBufferSize">The value of the <c>"write_buffer_size"</c> property.</param>
         /// <param name="writeWait">The value of the <c>"write_wait"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Source backoffStrategy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Source connectEvent = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Source disconnectEvent = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Source enableDirectCommunication = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Source<TContext> inputHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Source maxMessageSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Source maxRetries = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Source messageBufferSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source pingPeriod = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source pongWait = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Source readBufferSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Source returnErrorDetails = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Source writeBufferSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source writeWait = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.BackoffStrategy.Source backoffStrategy = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyConnections.Source connectEvent = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.NotifyDisconnections.Source disconnectEvent = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.DirectCommunicationNoMultiplexing.Source enableDirectCommunication = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.JsonStringArray.Source<TContext> inputHeaders = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaximumMessageSize.Source maxMessageSize = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MaxRetries.Source maxRetries = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.MessageBufferSize.Source messageBufferSize = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source pingPeriod = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source pongWait = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReadBufferSize.Source readBufferSize = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.ReturnErrorDetails.Source returnErrorDetails = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Websocket.WriteBufferSize.Source writeBufferSize = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source writeWait = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

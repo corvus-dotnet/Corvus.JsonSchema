@@ -304,7 +304,7 @@ public readonly partial struct VercelSchema
                                 /// Set the <c>key</c> property.
                                 /// </summary>
                                 /// <param name="value">The value of the property to add.</param>
-                                public void SetKey(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source value)
+                                public void SetKey(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source value)
                                 {
                                     CheckValidInstance();
 
@@ -335,7 +335,7 @@ public readonly partial struct VercelSchema
                                 /// Set the <c>type</c> property.
                                 /// </summary>
                                 /// <param name="value">The value of the property to add.</param>
-                                public void SetType(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source value)
+                                public void SetType(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source value)
                                 {
                                     CheckValidInstance();
 
@@ -366,7 +366,7 @@ public readonly partial struct VercelSchema
                                 /// Set the <c>value</c> property.
                                 /// </summary>
                                 /// <param name="value">The value of the property to add.</param>
-                                public void SetValue(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.ValueEntity.Source value)
+                                public void SetValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.ValueEntity.Source value)
                                 {
                                     CheckValidInstance();
 
@@ -578,7 +578,7 @@ public readonly partial struct VercelSchema
 
                                 internal Source(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                                internal Source(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.ValueEntity.Source arg3)
+                                internal Source(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.ValueEntity.Source arg3)
                                 {
                                     _createArg1 = arg1;
                                     _createArg2 = arg2;
@@ -906,7 +906,7 @@ public readonly partial struct VercelSchema
                                 /// <param name="arg2">The value of the property.</param>
                                 /// <param name="arg3">The value of the property.</param>
                                 /// <param name="o">The complex value builder into which to write the object.</param>
-                                internal static void BuildCreateValue(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.ValueEntity.Source arg3, ref ComplexValueBuilder o)
+                                internal static void BuildCreateValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.ValueEntity.Source arg3, ref ComplexValueBuilder o)
                                 {
                                     o.StartObject();
                                     Create(ref o, arg1, arg2, arg3);
@@ -950,7 +950,7 @@ public readonly partial struct VercelSchema
                             /// <param name="type">The value of the <c>"type"</c> property.</param>
                             /// <param name="value">The value of the <c>"value"</c> property.</param>
                             /// <returns>The source from which to build the value.</returns>
-                            public static Source Build(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source key, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source type, in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.ValueEntity.Source value = default)
+                            public static Source Build(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.TheNameOfTheElementContainedInTheParticularType.Source key, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.TheTypeOfRequestElementToCheck.Source type, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.HasEntityArray.HasEntity.RequiredKeyAndType.ValueEntity.Source value = default)
                             {
                                 return new Source(key, type, value);
                             }

@@ -428,7 +428,7 @@ public readonly partial struct KrakendSchema
                             ///   </para>
                             /// </remarks>
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                            public void InsertItem(int itemIndex, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.RequiredKeyAndValueArray.RequiredKeyAndValue.Source value)
+                            public void InsertItem(int itemIndex, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.RequiredKeyAndValueArray.RequiredKeyAndValue.Source value)
                             {
                                 CheckValidInstance();
 
@@ -454,7 +454,7 @@ public readonly partial struct KrakendSchema
                             ///   The parent <see cref="JsonDocument"/> has been disposed.
                             /// </exception>
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                            public void AddItem(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.RequiredKeyAndValueArray.RequiredKeyAndValue.Source value)
+                            public void AddItem(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.RequiredKeyAndValueArray.RequiredKeyAndValue.Source value)
                             {
                                 InsertItem(GetArrayLength(), in value);
                             }

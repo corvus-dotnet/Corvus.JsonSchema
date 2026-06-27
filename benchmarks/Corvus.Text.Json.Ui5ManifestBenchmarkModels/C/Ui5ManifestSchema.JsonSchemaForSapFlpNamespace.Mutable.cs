@@ -313,7 +313,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVersion(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.VersionEntity.Source value)
+            public void SetVersion(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.VersionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -358,7 +358,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>config</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetConfig(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsConfigurationParametersOfTheFlpEntry.Source value)
+            public void SetConfig(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsConfigurationParametersOfTheFlpEntry.Source value)
             {
                 CheckValidInstance();
 
@@ -439,7 +439,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>origin</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOrigin(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.OriginEntity.Source value)
+            public void SetOrigin(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.OriginEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -520,7 +520,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>tileSize</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTileSize(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsSizeOfTheTile.Source value)
+            public void SetTileSize(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsSizeOfTheTile.Source value)
             {
                 CheckValidInstance();
 
@@ -565,7 +565,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.TypeEntity.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.TypeEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -765,7 +765,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.TypeEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.VersionEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsConfigurationParametersOfTheFlpEntry.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.OriginEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsSizeOfTheTile.Source arg5)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.TypeEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.VersionEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsConfigurationParametersOfTheFlpEntry.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.OriginEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsSizeOfTheTile.Source arg5)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -937,7 +937,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.TypeEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.VersionEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsConfigurationParametersOfTheFlpEntry.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.OriginEntity.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsSizeOfTheTile.Source arg5)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.TypeEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.VersionEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsConfigurationParametersOfTheFlpEntry.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.OriginEntity.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsSizeOfTheTile.Source arg5)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1194,7 +1194,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg4">The value of the property.</param>
             /// <param name="arg5">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.TypeEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.VersionEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsConfigurationParametersOfTheFlpEntry.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.OriginEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsSizeOfTheTile.Source arg5, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.TypeEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.VersionEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsConfigurationParametersOfTheFlpEntry.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.OriginEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsSizeOfTheTile.Source arg5, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1212,7 +1212,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg4">The value of the property.</param>
             /// <param name="arg5">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.TypeEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.VersionEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsConfigurationParametersOfTheFlpEntry.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.OriginEntity.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsSizeOfTheTile.Source arg5, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.TypeEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.VersionEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsConfigurationParametersOfTheFlpEntry.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.OriginEntity.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsSizeOfTheTile.Source arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1261,7 +1261,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="origin">The value of the <c>"origin"</c> property.</param>
         /// <param name="tileSize">The value of the <c>"tileSize"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.TypeEntity.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsConfigurationParametersOfTheFlpEntry.Source config = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.OriginEntity.Source origin = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsSizeOfTheTile.Source tileSize = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.TypeEntity.Source type, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.VersionEntity.Source version = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsConfigurationParametersOfTheFlpEntry.Source config = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.OriginEntity.Source origin = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsSizeOfTheTile.Source tileSize = default)
         {
             return new Source(type, version, config, origin, tileSize);
         }
@@ -1277,7 +1277,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="origin">The value of the <c>"origin"</c> property.</param>
         /// <param name="tileSize">The value of the <c>"tileSize"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.TypeEntity.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsConfigurationParametersOfTheFlpEntry.Source<TContext> config = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.OriginEntity.Source<TContext> origin = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsSizeOfTheTile.Source tileSize = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.TypeEntity.Source type, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.VersionEntity.Source version = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsConfigurationParametersOfTheFlpEntry.Source<TContext> config = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.OriginEntity.Source<TContext> origin = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.RepresentsSizeOfTheTile.Source tileSize = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

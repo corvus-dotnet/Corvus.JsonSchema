@@ -554,7 +554,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>$ref</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRef(in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source value)
+            public void SetRef(scoped in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source value)
             {
                 CheckValidInstance();
 
@@ -599,7 +599,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>allowEmptyValue</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAllowEmptyValue(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Source value)
+            public void SetAllowEmptyValue(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -644,7 +644,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>allowReserved</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAllowReserved(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source value)
+            public void SetAllowReserved(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -689,7 +689,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>content</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetContent(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ContentEntity.Source value)
+            public void SetContent(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ContentEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -770,7 +770,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>deprecated</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDeprecated(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Source value)
+            public void SetDeprecated(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -815,7 +815,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
+            public void SetDescription(scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -860,7 +860,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>example</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExample(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetExample(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -941,7 +941,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>examples</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExamples(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Examples.ExamplesEntity.Source value)
+            public void SetExamples(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Examples.ExamplesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1022,7 +1022,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>explode</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExplode(in Corvus.OpenapiBenchmark.Current.JsonBoolean.Source value)
+            public void SetExplode(scoped in Corvus.OpenapiBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1067,7 +1067,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>in</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIn(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.InEntity.Source value)
+            public void SetIn(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.InEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1112,7 +1112,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetName(in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
+            public void SetName(scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1157,7 +1157,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>required</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRequired(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Source value)
+            public void SetRequired(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1202,7 +1202,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>schema</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSchema(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.Source value)
+            public void SetSchema(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.Source value)
             {
                 CheckValidInstance();
 
@@ -1283,7 +1283,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>style</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStyle(in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
+            public void SetStyle(scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1328,7 +1328,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>summary</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSummary(in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
+            public void SetSummary(scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1474,7 +1474,7 @@ public readonly partial struct OpenapiSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1497,7 +1497,7 @@ public readonly partial struct OpenapiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1544,7 +1544,7 @@ public readonly partial struct OpenapiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1831,7 +1831,7 @@ public readonly partial struct OpenapiSchema
 
             internal Source(Corvus.OpenapiBenchmark.Current.OpenapiSchema.ParameterOrReference.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Source arg2, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ContentEntity.Source arg4, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Source arg5, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg6, in Corvus.Text.Json.JsonElement.Source arg7, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Examples.ExamplesEntity.Source arg8, in Corvus.OpenapiBenchmark.Current.JsonBoolean.Source arg9, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.InEntity.Source arg10, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg11, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Source arg12, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.Source arg13, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg14, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg15)
+            internal Source(scoped in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Source arg2, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source arg3, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ContentEntity.Source arg4, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Source arg5, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Text.Json.JsonElement.Source arg7, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Examples.ExamplesEntity.Source arg8, scoped in Corvus.OpenapiBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.InEntity.Source arg10, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg11, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Source arg12, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.Source arg13, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg14, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg15)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -2023,7 +2023,7 @@ public readonly partial struct OpenapiSchema
 
             internal Source(scoped in TContext context, Corvus.OpenapiBenchmark.Current.OpenapiSchema.ParameterOrReference.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Source arg2, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ContentEntity.Source<TContext> arg4, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Source arg5, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg6, in Corvus.Text.Json.JsonElement.Source<TContext> arg7, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Examples.ExamplesEntity.Source<TContext> arg8, in Corvus.OpenapiBenchmark.Current.JsonBoolean.Source arg9, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.InEntity.Source arg10, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg11, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Source arg12, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.Source<TContext> arg13, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg14, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg15)
+            internal Source(scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Source arg2, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source arg3, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ContentEntity.Source<TContext> arg4, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Source arg5, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg7, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Examples.ExamplesEntity.Source<TContext> arg8, scoped in Corvus.OpenapiBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.InEntity.Source arg10, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg11, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Source arg12, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.Source<TContext> arg13, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg14, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg15)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2429,7 +2429,7 @@ public readonly partial struct OpenapiSchema
             /// <param name="arg14">The value of the property.</param>
             /// <param name="arg15">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Source arg2, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ContentEntity.Source arg4, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Source arg5, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg6, in Corvus.Text.Json.JsonElement.Source arg7, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Examples.ExamplesEntity.Source arg8, in Corvus.OpenapiBenchmark.Current.JsonBoolean.Source arg9, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.InEntity.Source arg10, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg11, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Source arg12, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.Source arg13, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg14, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg15, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Source arg2, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source arg3, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ContentEntity.Source arg4, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Source arg5, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Text.Json.JsonElement.Source arg7, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Examples.ExamplesEntity.Source arg8, scoped in Corvus.OpenapiBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.InEntity.Source arg10, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg11, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Source arg12, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.Source arg13, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg14, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg15, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
@@ -2457,7 +2457,7 @@ public readonly partial struct OpenapiSchema
             /// <param name="arg14">The value of the property.</param>
             /// <param name="arg15">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Source arg2, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ContentEntity.Source<TContext> arg4, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Source arg5, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg6, in Corvus.Text.Json.JsonElement.Source<TContext> arg7, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Examples.ExamplesEntity.Source<TContext> arg8, in Corvus.OpenapiBenchmark.Current.JsonBoolean.Source arg9, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.InEntity.Source arg10, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg11, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Source arg12, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.Source<TContext> arg13, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg14, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg15, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Source arg2, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source arg3, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ContentEntity.Source<TContext> arg4, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Source arg5, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg7, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Examples.ExamplesEntity.Source<TContext> arg8, scoped in Corvus.OpenapiBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.InEntity.Source arg10, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg11, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Source arg12, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.Source<TContext> arg13, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg14, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg15, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2516,7 +2516,7 @@ public readonly partial struct OpenapiSchema
         /// <param name="style">The value of the <c>"style"</c> property.</param>
         /// <param name="summary">The value of the <c>"summary"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source refValue = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Source allowEmptyValue = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source allowReserved = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ContentEntity.Source content = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Source deprecated = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, in Corvus.Text.Json.JsonElement.Source example = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Examples.ExamplesEntity.Source examples = default, in Corvus.OpenapiBenchmark.Current.JsonBoolean.Source explode = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.InEntity.Source inValue = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Source required = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.Source schema = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source style = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source summary = default)
+        public static Source Build(scoped in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source refValue = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Source allowEmptyValue = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source allowReserved = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ContentEntity.Source content = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Source deprecated = default, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, scoped in Corvus.Text.Json.JsonElement.Source example = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Examples.ExamplesEntity.Source examples = default, scoped in Corvus.OpenapiBenchmark.Current.JsonBoolean.Source explode = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.InEntity.Source inValue = default, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Source required = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.Source schema = default, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source style = default, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source summary = default)
         {
             return new Source(refValue, allowEmptyValue, allowReserved, content, deprecated, description, example, examples, explode, inValue, name, required, schema, style, summary);
         }
@@ -2542,7 +2542,7 @@ public readonly partial struct OpenapiSchema
         /// <param name="style">The value of the <c>"style"</c> property.</param>
         /// <param name="summary">The value of the <c>"summary"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source refValue = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Source allowEmptyValue = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source allowReserved = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ContentEntity.Source<TContext> content = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Source deprecated = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, in Corvus.Text.Json.JsonElement.Source<TContext> example = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Examples.ExamplesEntity.Source<TContext> examples = default, in Corvus.OpenapiBenchmark.Current.JsonBoolean.Source explode = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.InEntity.Source inValue = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Source required = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.Source<TContext> schema = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source style = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source summary = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source refValue = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ThenEntity.AllowEmptyValueEntity.Source allowEmptyValue = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source allowReserved = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.ContentEntity.Source<TContext> content = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.DeprecatedEntity.Source deprecated = default, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> example = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Examples.ExamplesEntity.Source<TContext> examples = default, scoped in Corvus.OpenapiBenchmark.Current.JsonBoolean.Source explode = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.InEntity.Source inValue = default, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.RequiredEntity.Source required = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Schema.Source<TContext> schema = default, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source style = default, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source summary = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

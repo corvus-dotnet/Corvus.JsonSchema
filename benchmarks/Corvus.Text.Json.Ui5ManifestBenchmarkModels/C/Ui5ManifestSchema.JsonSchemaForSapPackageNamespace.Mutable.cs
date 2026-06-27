@@ -738,7 +738,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVersion(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.VersionEntity.Source value)
+            public void SetVersion(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.VersionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -783,7 +783,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>consumption</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetConsumption(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.JsonStringArray.Source value)
+            public void SetConsumption(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -864,7 +864,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>contents</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetContents(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.ContentitemArray.Source value)
+            public void SetContents(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.ContentitemArray.Source value)
             {
                 CheckValidInstance();
 
@@ -945,7 +945,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>dependencies</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDependencies(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.Source value)
+            public void SetDependencies(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsTheProductsAndServiceThatThePacakgeDependsOn.Source value)
             {
                 CheckValidInstance();
 
@@ -1026,7 +1026,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
+            public void SetDescription(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
             {
                 CheckValidInstance();
 
@@ -1057,7 +1057,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>documentation</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDocumentation(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source value)
+            public void SetDocumentation(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source value)
             {
                 CheckValidInstance();
 
@@ -1138,7 +1138,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>homepage</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHomepage(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source value)
+            public void SetHomepage(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source value)
             {
                 CheckValidInstance();
 
@@ -1219,7 +1219,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>i18n</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetI18n(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.I18nEntity.Source value)
+            public void SetI18n(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.I18nEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1264,7 +1264,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>icon</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIcon(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetIcon(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1309,7 +1309,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>id</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetId(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Iddef.Source value)
+            public void SetId(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Iddef.Source value)
             {
                 CheckValidInstance();
 
@@ -1340,7 +1340,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>info</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetInfo(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
+            public void SetInfo(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
             {
                 CheckValidInstance();
 
@@ -1385,7 +1385,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>packageVersion</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPackageVersion(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RequiredVersion.Source value)
+            public void SetPackageVersion(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RequiredVersion.Source value)
             {
                 CheckValidInstance();
 
@@ -1450,7 +1450,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>shortTitle</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShortTitle(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
+            public void SetShortTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
             {
                 CheckValidInstance();
 
@@ -1495,7 +1495,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>subTitle</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSubTitle(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
+            public void SetSubTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
             {
                 CheckValidInstance();
 
@@ -1540,7 +1540,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>support</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSupport(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source value)
+            public void SetSupport(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Infolink.Source value)
             {
                 CheckValidInstance();
 
@@ -1605,7 +1605,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>tags</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTags(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsArrayOfKeywordsUsedToFindThePackage.Source value)
+            public void SetTags(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.RepresentsArrayOfKeywordsUsedToFindThePackage.Source value)
             {
                 CheckValidInstance();
 
@@ -1686,7 +1686,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>title</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTitle(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
+            public void SetTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
             {
                 CheckValidInstance();
 
@@ -1717,7 +1717,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.TypeEntity.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.TypeEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1762,7 +1762,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>vendor</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVendorValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Vendor.Source value)
+            public void SetVendorValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Vendor.Source value)
             {
                 CheckValidInstance();
 
@@ -1928,7 +1928,7 @@ public readonly partial struct Ui5ManifestSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1951,7 +1951,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1998,7 +1998,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 

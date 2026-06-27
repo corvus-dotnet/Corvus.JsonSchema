@@ -378,7 +378,7 @@ public readonly partial struct StylecopSchema
             /// Set the <c>documentationRules</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDocumentationRules(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.Source value)
+            public void SetDocumentationRules(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForDocumentationRulesSa1600.Source value)
             {
                 CheckValidInstance();
 
@@ -459,7 +459,7 @@ public readonly partial struct StylecopSchema
             /// Set the <c>indentation</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIndentation(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.Source value)
+            public void SetIndentation(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.Source value)
             {
                 CheckValidInstance();
 
@@ -540,7 +540,7 @@ public readonly partial struct StylecopSchema
             /// Set the <c>layoutRules</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLayoutRules(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.Source value)
+            public void SetLayoutRules(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.Source value)
             {
                 CheckValidInstance();
 
@@ -621,7 +621,7 @@ public readonly partial struct StylecopSchema
             /// Set the <c>maintainabilityRules</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaintainabilityRules(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.Source value)
+            public void SetMaintainabilityRules(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.Source value)
             {
                 CheckValidInstance();
 
@@ -702,7 +702,7 @@ public readonly partial struct StylecopSchema
             /// Set the <c>namingRules</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNamingRules(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.Source value)
+            public void SetNamingRules(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.Source value)
             {
                 CheckValidInstance();
 
@@ -783,7 +783,7 @@ public readonly partial struct StylecopSchema
             /// Set the <c>orderingRules</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOrderingRules(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.Source value)
+            public void SetOrderingRules(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1200.Source value)
             {
                 CheckValidInstance();
 
@@ -864,7 +864,7 @@ public readonly partial struct StylecopSchema
             /// Set the <c>readabilityRules</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetReadabilityRules(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForReadabilityRulesSa1100.Source value)
+            public void SetReadabilityRules(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForReadabilityRulesSa1100.Source value)
             {
                 CheckValidInstance();
 
@@ -945,7 +945,7 @@ public readonly partial struct StylecopSchema
             /// Set the <c>spacingRules</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpacingRules(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForSpacingRulesSa1000.Source value)
+            public void SetSpacingRules(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForSpacingRulesSa1000.Source value)
             {
                 CheckValidInstance();
 

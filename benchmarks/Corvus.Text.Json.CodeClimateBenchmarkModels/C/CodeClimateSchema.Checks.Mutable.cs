@@ -484,7 +484,7 @@ public readonly partial struct CodeClimateSchema
             /// Set the <c>argument-count</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetArgumentCount(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
+            public void SetArgumentCount(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
             {
                 CheckValidInstance();
 
@@ -565,7 +565,7 @@ public readonly partial struct CodeClimateSchema
             /// Set the <c>complex-logic</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetComplexLogic(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
+            public void SetComplexLogic(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
             {
                 CheckValidInstance();
 
@@ -646,7 +646,7 @@ public readonly partial struct CodeClimateSchema
             /// Set the <c>file-lines</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFileLines(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
+            public void SetFileLines(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
             {
                 CheckValidInstance();
 
@@ -727,7 +727,7 @@ public readonly partial struct CodeClimateSchema
             /// Set the <c>identical-code</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIdenticalCode(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
+            public void SetIdenticalCode(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
             {
                 CheckValidInstance();
 
@@ -808,7 +808,7 @@ public readonly partial struct CodeClimateSchema
             /// Set the <c>method-complexity</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMethodComplexity(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
+            public void SetMethodComplexity(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
             {
                 CheckValidInstance();
 
@@ -889,7 +889,7 @@ public readonly partial struct CodeClimateSchema
             /// Set the <c>method-count</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMethodCount(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
+            public void SetMethodCount(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
             {
                 CheckValidInstance();
 
@@ -970,7 +970,7 @@ public readonly partial struct CodeClimateSchema
             /// Set the <c>method-lines</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMethodLines(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
+            public void SetMethodLines(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
             {
                 CheckValidInstance();
 
@@ -1051,7 +1051,7 @@ public readonly partial struct CodeClimateSchema
             /// Set the <c>nested-control-flow</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNestedControlFlow(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
+            public void SetNestedControlFlow(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
             {
                 CheckValidInstance();
 
@@ -1132,7 +1132,7 @@ public readonly partial struct CodeClimateSchema
             /// Set the <c>return-statements</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetReturnStatements(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
+            public void SetReturnStatements(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
             {
                 CheckValidInstance();
 
@@ -1213,7 +1213,7 @@ public readonly partial struct CodeClimateSchema
             /// Set the <c>similar-code</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSimilarCode(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
+            public void SetSimilarCode(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source value)
             {
                 CheckValidInstance();
 
@@ -1395,7 +1395,7 @@ public readonly partial struct CodeClimateSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1418,7 +1418,7 @@ public readonly partial struct CodeClimateSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1465,7 +1465,7 @@ public readonly partial struct CodeClimateSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1644,7 +1644,7 @@ public readonly partial struct CodeClimateSchema
 
             internal Source(Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Checks.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg1, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg2, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg3, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg4, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg5, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg6, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg7, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg8, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg9, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg10)
+            internal Source(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg1, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg2, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg3, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg4, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg5, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg6, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg7, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg8, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg9, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg10)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1826,7 +1826,7 @@ public readonly partial struct CodeClimateSchema
 
             internal Source(scoped in TContext context, Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Checks.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg1, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg2, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg3, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg4, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg5, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg6, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg7, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg8, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg9, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg10)
+            internal Source(scoped in TContext context, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg1, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg2, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg3, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg4, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg5, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg6, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg7, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg8, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg9, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg10)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2192,7 +2192,7 @@ public readonly partial struct CodeClimateSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg1, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg2, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg3, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg4, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg5, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg6, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg7, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg8, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg9, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg1, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg2, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg3, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg4, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg5, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg6, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg7, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg8, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg9, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source arg10, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
@@ -2215,7 +2215,7 @@ public readonly partial struct CodeClimateSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg1, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg2, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg3, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg4, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg5, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg6, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg7, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg8, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg9, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg1, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg2, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg3, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg4, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg5, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg6, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg7, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg8, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg9, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> arg10, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2269,7 +2269,7 @@ public readonly partial struct CodeClimateSchema
         /// <param name="returnStatements">The value of the <c>"return-statements"</c> property.</param>
         /// <param name="similarCode">The value of the <c>"similar-code"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source argumentCount = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source complexLogic = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source fileLines = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source identicalCode = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source methodComplexity = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source methodCount = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source methodLines = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source nestedControlFlow = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source returnStatements = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source similarCode = default)
+        public static Source Build(scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source argumentCount = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source complexLogic = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source fileLines = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source identicalCode = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source methodComplexity = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source methodCount = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source methodLines = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source nestedControlFlow = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source returnStatements = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source similarCode = default)
         {
             return new Source(argumentCount, complexLogic, fileLines, identicalCode, methodComplexity, methodCount, methodLines, nestedControlFlow, returnStatements, similarCode);
         }
@@ -2290,7 +2290,7 @@ public readonly partial struct CodeClimateSchema
         /// <param name="returnStatements">The value of the <c>"return-statements"</c> property.</param>
         /// <param name="similarCode">The value of the <c>"similar-code"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> argumentCount = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> complexLogic = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> fileLines = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> identicalCode = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> methodComplexity = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> methodCount = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> methodLines = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> nestedControlFlow = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> returnStatements = default, in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> similarCode = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> argumentCount = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> complexLogic = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> fileLines = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> identicalCode = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> methodComplexity = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> methodCount = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> methodLines = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> nestedControlFlow = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> returnStatements = default, scoped in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source<TContext> similarCode = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

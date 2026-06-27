@@ -359,7 +359,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+            public void SetDescription(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -404,7 +404,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>insDel</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetInsDel(in Corvus.CspellBenchmark.Current.JsonNumber.Source value)
+            public void SetInsDel(scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source value)
             {
                 CheckValidInstance();
 
@@ -449,7 +449,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>map</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMap(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+            public void SetMap(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -480,7 +480,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>penalty</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPenalty(in Corvus.CspellBenchmark.Current.JsonNumber.Source value)
+            public void SetPenalty(scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source value)
             {
                 CheckValidInstance();
 
@@ -525,7 +525,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>replace</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetReplace(in Corvus.CspellBenchmark.Current.JsonNumber.Source value)
+            public void SetReplace(scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source value)
             {
                 CheckValidInstance();
 
@@ -556,7 +556,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>swap</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSwap(in Corvus.CspellBenchmark.Current.JsonNumber.Source value)
+            public void SetSwap(scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source value)
             {
                 CheckValidInstance();
 
@@ -771,7 +771,7 @@ public readonly partial struct CspellSchema
 
             internal Source(Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.CspellBenchmark.Current.JsonString.Source arg1, in Corvus.CspellBenchmark.Current.JsonNumber.Source arg2, in Corvus.CspellBenchmark.Current.JsonString.Source arg3, in Corvus.CspellBenchmark.Current.JsonNumber.Source arg4, in Corvus.CspellBenchmark.Current.JsonNumber.Source arg5, in Corvus.CspellBenchmark.Current.JsonNumber.Source arg6)
+            internal Source(scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg1, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source arg2, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source arg4, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source arg5, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source arg6)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1114,7 +1114,7 @@ public readonly partial struct CspellSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.CspellBenchmark.Current.JsonString.Source arg1, in Corvus.CspellBenchmark.Current.JsonNumber.Source arg2, in Corvus.CspellBenchmark.Current.JsonString.Source arg3, in Corvus.CspellBenchmark.Current.JsonNumber.Source arg4, in Corvus.CspellBenchmark.Current.JsonNumber.Source arg5, in Corvus.CspellBenchmark.Current.JsonNumber.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg1, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source arg2, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source arg4, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source arg5, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source arg6, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1161,7 +1161,7 @@ public readonly partial struct CspellSchema
         /// <param name="penalty">The value of the <c>"penalty"</c> property.</param>
         /// <param name="swap">The value of the <c>"swap"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.CspellBenchmark.Current.JsonString.Source map, in Corvus.CspellBenchmark.Current.JsonNumber.Source replace, in Corvus.CspellBenchmark.Current.JsonString.Source description = default, in Corvus.CspellBenchmark.Current.JsonNumber.Source insDel = default, in Corvus.CspellBenchmark.Current.JsonNumber.Source penalty = default, in Corvus.CspellBenchmark.Current.JsonNumber.Source swap = default)
+        public static Source Build(scoped in Corvus.CspellBenchmark.Current.JsonString.Source map, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source replace, scoped in Corvus.CspellBenchmark.Current.JsonString.Source description = default, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source insDel = default, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source penalty = default, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source swap = default)
         {
             return new Source(map, replace, description, insDel, penalty, swap);
         }

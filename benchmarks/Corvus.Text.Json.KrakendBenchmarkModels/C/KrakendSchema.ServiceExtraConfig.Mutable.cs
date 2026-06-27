@@ -910,7 +910,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>auth/api-keys</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAuthApiKeys(in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Source value)
+            public void SetAuthApiKeys(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Source value)
             {
                 CheckValidInstance();
 
@@ -991,7 +991,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>auth/basic</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAuthBasic(in Corvus.KrakendBenchmark.Current.KrakendSchema.Basic.Source value)
+            public void SetAuthBasic(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Basic.Source value)
             {
                 CheckValidInstance();
 
@@ -1072,7 +1072,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>auth/revoker</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAuthRevoker(in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.Source value)
+            public void SetAuthRevoker(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.Source value)
             {
                 CheckValidInstance();
 
@@ -1153,7 +1153,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>auth/validator</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAuthValidator(in Corvus.KrakendBenchmark.Current.KrakendSchema.Jose.Source value)
+            public void SetAuthValidator(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Jose.Source value)
             {
                 CheckValidInstance();
 
@@ -1234,7 +1234,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>documentation/openapi</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDocumentationOpenapi(in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.Source value)
+            public void SetDocumentationOpenapi(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Openapi.Source value)
             {
                 CheckValidInstance();
 
@@ -1315,7 +1315,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>github_com/letgoapp/krakend-influx</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGithubComLetgoappKrakendInflux(in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.Source value)
+            public void SetGithubComLetgoappKrakendInflux(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.Source value)
             {
                 CheckValidInstance();
 
@@ -1396,7 +1396,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>grpc</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGrpc(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.Source value)
+            public void SetGrpc(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.Source value)
             {
                 CheckValidInstance();
 
@@ -1477,7 +1477,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>modifier/lua-endpoint</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetModifierLuaEndpoint(in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.Source value)
+            public void SetModifierLuaEndpoint(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.Source value)
             {
                 CheckValidInstance();
 
@@ -1558,7 +1558,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>modifier/response-headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetModifierResponseHeaders(in Corvus.KrakendBenchmark.Current.KrakendSchema.ResponseHeaders.Source value)
+            public void SetModifierResponseHeaders(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ResponseHeaders.Source value)
             {
                 CheckValidInstance();
 
@@ -1639,7 +1639,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>plugin/http-server</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPluginHttpServer(in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.Source value)
+            public void SetPluginHttpServer(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.Source value)
             {
                 CheckValidInstance();
 
@@ -1720,7 +1720,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>qos/ratelimit/service</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetQosRatelimitService(in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source value)
+            public void SetQosRatelimitService(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Source value)
             {
                 CheckValidInstance();
 
@@ -1801,7 +1801,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>qos/ratelimit/tiered</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetQosRatelimitTiered(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.Source value)
+            public void SetQosRatelimitTiered(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tiered.Source value)
             {
                 CheckValidInstance();
 
@@ -1882,7 +1882,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>router</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRouterValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.Source value)
+            public void SetRouterValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaRouter.Source value)
             {
                 CheckValidInstance();
 
@@ -1963,7 +1963,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>security/bot-detector</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSecurityBotDetector(in Corvus.KrakendBenchmark.Current.KrakendSchema.BotDetector.Source value)
+            public void SetSecurityBotDetector(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.BotDetector.Source value)
             {
                 CheckValidInstance();
 
@@ -2044,7 +2044,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>security/cors</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSecurityCors(in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.Source value)
+            public void SetSecurityCors(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.CrossOriginResourceSharing.Source value)
             {
                 CheckValidInstance();
 
@@ -2125,7 +2125,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>security/http</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSecurityHttp(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Source value)
+            public void SetSecurityHttp(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Source value)
             {
                 CheckValidInstance();
 
@@ -2206,7 +2206,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>server/static-filesystem</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetServerStaticFilesystemValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ServerStaticFilesystem.Source value)
+            public void SetServerStaticFilesystemValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServerStaticFilesystem.Source value)
             {
                 CheckValidInstance();
 
@@ -2287,7 +2287,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>server/virtualhost</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetServerVirtualhostValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ServerVirtualhost.Source value)
+            public void SetServerVirtualhostValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ServerVirtualhost.Source value)
             {
                 CheckValidInstance();
 
@@ -2368,7 +2368,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>telemetry/gelf</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTelemetryGelf(in Corvus.KrakendBenchmark.Current.KrakendSchema.Gelf.Source value)
+            public void SetTelemetryGelf(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Gelf.Source value)
             {
                 CheckValidInstance();
 
@@ -2449,7 +2449,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>telemetry/influx</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTelemetryInflux(in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.Source value)
+            public void SetTelemetryInflux(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.Source value)
             {
                 CheckValidInstance();
 
@@ -2530,7 +2530,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>telemetry/logging</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTelemetryLogging(in Corvus.KrakendBenchmark.Current.KrakendSchema.Logging.Source value)
+            public void SetTelemetryLogging(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Logging.Source value)
             {
                 CheckValidInstance();
 
@@ -2611,7 +2611,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>telemetry/logstash</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTelemetryLogstash(in Corvus.KrakendBenchmark.Current.KrakendSchema.Logstash.Source value)
+            public void SetTelemetryLogstash(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Logstash.Source value)
             {
                 CheckValidInstance();
 
@@ -2692,7 +2692,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>telemetry/metrics</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTelemetryMetrics(in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.Source value)
+            public void SetTelemetryMetrics(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Metrics.Source value)
             {
                 CheckValidInstance();
 
@@ -2773,7 +2773,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>telemetry/moesif</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTelemetryMoesif(in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.Source value)
+            public void SetTelemetryMoesif(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.Source value)
             {
                 CheckValidInstance();
 
@@ -2854,7 +2854,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>telemetry/newrelic</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTelemetryNewrelic(in Corvus.KrakendBenchmark.Current.KrakendSchema.Newrelic.Source value)
+            public void SetTelemetryNewrelic(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Newrelic.Source value)
             {
                 CheckValidInstance();
 
@@ -2935,7 +2935,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>telemetry/opencensus</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTelemetryOpencensus(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Source value)
+            public void SetTelemetryOpencensus(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Source value)
             {
                 CheckValidInstance();
 
@@ -3016,7 +3016,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>telemetry/opentelemetry</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTelemetryOpentelemetry(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Source value)
+            public void SetTelemetryOpentelemetry(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Source value)
             {
                 CheckValidInstance();
 
@@ -3097,7 +3097,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>telemetry/opentelemetry-security</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTelemetryOpentelemetrySecurity(in Corvus.KrakendBenchmark.Current.KrakendSchema.OpentelemetrySecurity.Source value)
+            public void SetTelemetryOpentelemetrySecurity(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.OpentelemetrySecurity.Source value)
             {
                 CheckValidInstance();
 
@@ -3279,7 +3279,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -3302,7 +3302,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -3349,7 +3349,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 

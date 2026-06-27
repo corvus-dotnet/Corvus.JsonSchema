@@ -480,7 +480,7 @@ public readonly partial struct OpenapiSchema
         /// Set the <c>components</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetComponentsValue(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.Source value)
+        public void SetComponentsValue(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.Source value)
         {
             CheckValidInstance();
 
@@ -561,7 +561,7 @@ public readonly partial struct OpenapiSchema
         /// Set the <c>externalDocs</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExternalDocs(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.ExternalDocumentation.Source value)
+        public void SetExternalDocs(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.ExternalDocumentation.Source value)
         {
             CheckValidInstance();
 
@@ -642,7 +642,7 @@ public readonly partial struct OpenapiSchema
         /// Set the <c>info</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetInfoValue(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Info.Source value)
+        public void SetInfoValue(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Info.Source value)
         {
             CheckValidInstance();
 
@@ -707,7 +707,7 @@ public readonly partial struct OpenapiSchema
         /// Set the <c>jsonSchemaDialect</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetJsonSchemaDialect(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.JsonSchemaDialectEntity.Source value)
+        public void SetJsonSchemaDialect(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.JsonSchemaDialectEntity.Source value)
         {
             CheckValidInstance();
 
@@ -752,7 +752,7 @@ public readonly partial struct OpenapiSchema
         /// Set the <c>openapi</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOpenapi(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OpenapiEntity.Source value)
+        public void SetOpenapi(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OpenapiEntity.Source value)
         {
             CheckValidInstance();
 
@@ -783,7 +783,7 @@ public readonly partial struct OpenapiSchema
         /// Set the <c>paths</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPathsValue(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Paths.Source value)
+        public void SetPathsValue(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Paths.Source value)
         {
             CheckValidInstance();
 
@@ -864,7 +864,7 @@ public readonly partial struct OpenapiSchema
         /// Set the <c>security</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSecurity(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityRequirementArray.Source value)
+        public void SetSecurity(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityRequirementArray.Source value)
         {
             CheckValidInstance();
 
@@ -945,7 +945,7 @@ public readonly partial struct OpenapiSchema
         /// Set the <c>servers</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetServers(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.ServerArray.Source value)
+        public void SetServers(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.ServerArray.Source value)
         {
             CheckValidInstance();
 
@@ -1026,7 +1026,7 @@ public readonly partial struct OpenapiSchema
         /// Set the <c>tags</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTags(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.TagArray.Source value)
+        public void SetTags(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.TagArray.Source value)
         {
             CheckValidInstance();
 
@@ -1107,7 +1107,7 @@ public readonly partial struct OpenapiSchema
         /// Set the <c>webhooks</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetWebhooks(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.WebhooksEntity.Source value)
+        public void SetWebhooks(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.WebhooksEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1361,7 +1361,7 @@ public readonly partial struct OpenapiSchema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -1384,7 +1384,7 @@ public readonly partial struct OpenapiSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1431,7 +1431,7 @@ public readonly partial struct OpenapiSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 

@@ -550,7 +550,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>hash_name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHashName(in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.HashFunctionName.Source value)
+            public void SetHashName(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.HashFunctionName.Source value)
             {
                 CheckValidInstance();
 
@@ -581,7 +581,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>N</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetN(in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
+            public void SetN(scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -612,7 +612,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>P</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetP(in Corvus.KrakendBenchmark.Current.JsonNumber.Source value)
+            public void SetP(scoped in Corvus.KrakendBenchmark.Current.JsonNumber.Source value)
             {
                 CheckValidInstance();
 
@@ -643,7 +643,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>port</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPort(in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
+            public void SetPort(scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -674,7 +674,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>revoke_server_api_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRevokeServerApiKey(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetRevokeServerApiKey(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -719,7 +719,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>revoke_server_max_retries</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRevokeServerMaxRetriesValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Source value)
+            public void SetRevokeServerMaxRetriesValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Source value)
             {
                 CheckValidInstance();
 
@@ -764,7 +764,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>revoke_server_max_workers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRevokeServerMaxWorkers(in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Source value)
+            public void SetRevokeServerMaxWorkers(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Source value)
             {
                 CheckValidInstance();
 
@@ -809,7 +809,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>revoke_server_ping_interval</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRevokeServerPingInterval(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+            public void SetRevokeServerPingInterval(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
             {
                 CheckValidInstance();
 
@@ -854,7 +854,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>revoke_server_ping_url</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRevokeServerPingUrl(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetRevokeServerPingUrl(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -899,7 +899,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>token_keys</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTokenKeys(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
+            public void SetTokenKeys(scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -964,7 +964,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>TTL</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTtl(in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
+            public void SetTtl(scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -1096,7 +1096,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1119,7 +1119,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1166,7 +1166,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1346,7 +1346,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.HashFunctionName.Source arg1, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg2, in Corvus.KrakendBenchmark.Current.JsonNumber.Source arg3, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg4, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg5, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg6, in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, in Corvus.KrakendBenchmark.Current.JsonString.Source arg11)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.HashFunctionName.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonNumber.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg4, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg5, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg6, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg11)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1530,7 +1530,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.HashFunctionName.Source arg1, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg2, in Corvus.KrakendBenchmark.Current.JsonNumber.Source arg3, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg4, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg5, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg6, in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, in Corvus.KrakendBenchmark.Current.JsonString.Source arg11)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.HashFunctionName.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonNumber.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg4, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg5, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg6, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg11)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1904,7 +1904,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg10">The value of the property.</param>
             /// <param name="arg11">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.HashFunctionName.Source arg1, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg2, in Corvus.KrakendBenchmark.Current.JsonNumber.Source arg3, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg4, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg5, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg6, in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.HashFunctionName.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonNumber.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg4, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg5, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg6, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
@@ -1928,7 +1928,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg10">The value of the property.</param>
             /// <param name="arg11">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.HashFunctionName.Source arg1, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg2, in Corvus.KrakendBenchmark.Current.JsonNumber.Source arg3, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg4, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg5, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg6, in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.HashFunctionName.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonNumber.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg4, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg5, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg6, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1983,7 +1983,7 @@ public readonly partial struct KrakendSchema
         /// <param name="revokeServerPingInterval">The value of the <c>"revoke_server_ping_interval"</c> property.</param>
         /// <param name="revokeServerPingUrl">The value of the <c>"revoke_server_ping_url"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.HashFunctionName.Source hashName, in Corvus.KrakendBenchmark.Current.JsonInteger.Source n, in Corvus.KrakendBenchmark.Current.JsonNumber.Source p, in Corvus.KrakendBenchmark.Current.JsonInteger.Source port, in Corvus.KrakendBenchmark.Current.JsonArray.Source tokenKeys, in Corvus.KrakendBenchmark.Current.JsonInteger.Source tTl, in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerApiKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Source revokeServerMaxRetries = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Source revokeServerMaxWorkers = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source revokeServerPingInterval = default, in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerPingUrl = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.HashFunctionName.Source hashName, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source n, scoped in Corvus.KrakendBenchmark.Current.JsonNumber.Source p, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source port, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source tokenKeys, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source tTl, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerApiKey = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Source revokeServerMaxRetries = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Source revokeServerMaxWorkers = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source revokeServerPingInterval = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerPingUrl = default)
         {
             return new Source(hashName, n, p, port, tokenKeys, tTl, revokeServerApiKey, revokeServerMaxRetries, revokeServerMaxWorkers, revokeServerPingInterval, revokeServerPingUrl);
         }
@@ -2005,7 +2005,7 @@ public readonly partial struct KrakendSchema
         /// <param name="revokeServerPingInterval">The value of the <c>"revoke_server_ping_interval"</c> property.</param>
         /// <param name="revokeServerPingUrl">The value of the <c>"revoke_server_ping_url"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.HashFunctionName.Source hashName, in Corvus.KrakendBenchmark.Current.JsonInteger.Source n, in Corvus.KrakendBenchmark.Current.JsonNumber.Source p, in Corvus.KrakendBenchmark.Current.JsonInteger.Source port, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> tokenKeys, in Corvus.KrakendBenchmark.Current.JsonInteger.Source tTl, in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerApiKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Source revokeServerMaxRetries = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Source revokeServerMaxWorkers = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source revokeServerPingInterval = default, in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerPingUrl = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.HashFunctionName.Source hashName, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source n, scoped in Corvus.KrakendBenchmark.Current.JsonNumber.Source p, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source port, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> tokenKeys, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source tTl, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerApiKey = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.RevokeServerMaxRetries.Source revokeServerMaxRetries = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Revoker.MaxWorkers.Source revokeServerMaxWorkers = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source revokeServerPingInterval = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerPingUrl = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

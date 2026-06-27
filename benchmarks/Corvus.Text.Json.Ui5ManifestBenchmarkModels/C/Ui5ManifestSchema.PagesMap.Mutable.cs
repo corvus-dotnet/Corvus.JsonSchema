@@ -411,7 +411,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>component</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetComponent(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ComponentDef.Source value)
+            public void SetComponent(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ComponentDef.Source value)
             {
                 CheckValidInstance();
 
@@ -476,7 +476,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>defaultLayoutType</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDefaultLayoutType(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetDefaultLayoutType(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -521,7 +521,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>defaultLayoutTypeIfExternalNavigation</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDefaultLayoutTypeIfExternalNavigation(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetDefaultLayoutTypeIfExternalNavigation(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -566,7 +566,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>embeddedComponents</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEmbeddedComponents(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.Source value)
+            public void SetEmbeddedComponents(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.Source value)
             {
                 CheckValidInstance();
 
@@ -647,7 +647,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>entitySet</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEntitySet(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetEntitySet(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -692,7 +692,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>implementingComponent</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetImplementingComponent(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ImplementingComponentDef.Source value)
+            public void SetImplementingComponent(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ImplementingComponentDef.Source value)
             {
                 CheckValidInstance();
 
@@ -773,7 +773,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>navigation</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNavigation(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.NavigationDef.Source value)
+            public void SetNavigation(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.NavigationDef.Source value)
             {
                 CheckValidInstance();
 
@@ -854,7 +854,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>navigationProperty</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNavigationProperty(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetNavigationProperty(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -899,7 +899,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>pages</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPages(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PagesMap.PagesEntity.Source value)
+            public void SetPages(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PagesMap.PagesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -980,7 +980,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>routingSpec</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRoutingSpec(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingSpecDef.Source value)
+            public void SetRoutingSpec(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingSpecDef.Source value)
             {
                 CheckValidInstance();
 

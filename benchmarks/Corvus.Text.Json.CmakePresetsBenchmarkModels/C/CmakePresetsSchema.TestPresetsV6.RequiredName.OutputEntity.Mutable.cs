@@ -428,7 +428,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>debug</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetDebugValue(in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetDebugValue(scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -509,7 +509,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>labelSummary</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetLabelSummary(in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetLabelSummary(scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -590,7 +590,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>maxFailedTestOutputSize</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetMaxFailedTestOutputSize(in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetMaxFailedTestOutputSize(scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -671,7 +671,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>maxPassedTestOutputSize</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetMaxPassedTestOutputSize(in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetMaxPassedTestOutputSize(scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -752,7 +752,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>maxTestNameWidth</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetMaxTestNameWidth(in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetMaxTestNameWidth(scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -833,7 +833,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>outputJUnitFile</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetOutputJUnitFile(in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetOutputJUnitFile(scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -914,7 +914,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>outputLogFile</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetOutputLogFile(in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetOutputLogFile(scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -995,7 +995,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>outputOnFailure</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetOutputOnFailure(in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetOutputOnFailure(scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -1076,7 +1076,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>quiet</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetQuiet(in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetQuiet(scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -1157,7 +1157,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>shortProgress</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetShortProgress(in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetShortProgress(scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -1238,7 +1238,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>subprojectSummary</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetSubprojectSummary(in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetSubprojectSummary(scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -1319,7 +1319,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>testOutputTruncation</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetTestOutputTruncation(in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetTestOutputTruncation(scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -1400,7 +1400,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>verbosity</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetVerbosity(in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetVerbosity(scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -1658,7 +1658,7 @@ public readonly partial struct CmakePresetsSchema
 
                     internal Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.RequiredName.OutputEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.Text.Json.JsonElement.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Text.Json.JsonElement.Source arg7, in Corvus.Text.Json.JsonElement.Source arg8, in Corvus.Text.Json.JsonElement.Source arg9, in Corvus.Text.Json.JsonElement.Source arg10, in Corvus.Text.Json.JsonElement.Source arg11, in Corvus.Text.Json.JsonElement.Source arg12, in Corvus.Text.Json.JsonElement.Source arg13)
+                    internal Source(scoped in Corvus.Text.Json.JsonElement.Source arg1, scoped in Corvus.Text.Json.JsonElement.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, scoped in Corvus.Text.Json.JsonElement.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Text.Json.JsonElement.Source arg7, scoped in Corvus.Text.Json.JsonElement.Source arg8, scoped in Corvus.Text.Json.JsonElement.Source arg9, scoped in Corvus.Text.Json.JsonElement.Source arg10, scoped in Corvus.Text.Json.JsonElement.Source arg11, scoped in Corvus.Text.Json.JsonElement.Source arg12, scoped in Corvus.Text.Json.JsonElement.Source arg13)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -1846,7 +1846,7 @@ public readonly partial struct CmakePresetsSchema
 
                     internal Source(scoped in TContext context, Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsV6.RequiredName.OutputEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.Text.Json.JsonElement.Source<TContext> arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Text.Json.JsonElement.Source<TContext> arg7, in Corvus.Text.Json.JsonElement.Source<TContext> arg8, in Corvus.Text.Json.JsonElement.Source<TContext> arg9, in Corvus.Text.Json.JsonElement.Source<TContext> arg10, in Corvus.Text.Json.JsonElement.Source<TContext> arg11, in Corvus.Text.Json.JsonElement.Source<TContext> arg12, in Corvus.Text.Json.JsonElement.Source<TContext> arg13)
+                    internal Source(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg7, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg8, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg9, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg10, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg11, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg12, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg13)
                     {
                         _context = context;
                         _createArg1 = arg1;
@@ -2167,7 +2167,7 @@ public readonly partial struct CmakePresetsSchema
                     /// <param name="arg12">The value of the property.</param>
                     /// <param name="arg13">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.Text.Json.JsonElement.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Text.Json.JsonElement.Source arg7, in Corvus.Text.Json.JsonElement.Source arg8, in Corvus.Text.Json.JsonElement.Source arg9, in Corvus.Text.Json.JsonElement.Source arg10, in Corvus.Text.Json.JsonElement.Source arg11, in Corvus.Text.Json.JsonElement.Source arg12, in Corvus.Text.Json.JsonElement.Source arg13, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.Text.Json.JsonElement.Source arg1, scoped in Corvus.Text.Json.JsonElement.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, scoped in Corvus.Text.Json.JsonElement.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Text.Json.JsonElement.Source arg7, scoped in Corvus.Text.Json.JsonElement.Source arg8, scoped in Corvus.Text.Json.JsonElement.Source arg9, scoped in Corvus.Text.Json.JsonElement.Source arg10, scoped in Corvus.Text.Json.JsonElement.Source arg11, scoped in Corvus.Text.Json.JsonElement.Source arg12, scoped in Corvus.Text.Json.JsonElement.Source arg13, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
@@ -2193,7 +2193,7 @@ public readonly partial struct CmakePresetsSchema
                     /// <param name="arg12">The value of the property.</param>
                     /// <param name="arg13">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.Text.Json.JsonElement.Source<TContext> arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Text.Json.JsonElement.Source<TContext> arg7, in Corvus.Text.Json.JsonElement.Source<TContext> arg8, in Corvus.Text.Json.JsonElement.Source<TContext> arg9, in Corvus.Text.Json.JsonElement.Source<TContext> arg10, in Corvus.Text.Json.JsonElement.Source<TContext> arg11, in Corvus.Text.Json.JsonElement.Source<TContext> arg12, in Corvus.Text.Json.JsonElement.Source<TContext> arg13, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg7, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg8, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg9, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg10, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg11, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg12, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg13, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -2250,7 +2250,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="testOutputTruncation">The value of the <c>"testOutputTruncation"</c> property.</param>
                 /// <param name="verbosity">The value of the <c>"verbosity"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.Text.Json.JsonElement.Source debug = default, in Corvus.Text.Json.JsonElement.Source labelSummary = default, in Corvus.Text.Json.JsonElement.Source maxFailedTestOutputSize = default, in Corvus.Text.Json.JsonElement.Source maxPassedTestOutputSize = default, in Corvus.Text.Json.JsonElement.Source maxTestNameWidth = default, in Corvus.Text.Json.JsonElement.Source outputJUnitFile = default, in Corvus.Text.Json.JsonElement.Source outputLogFile = default, in Corvus.Text.Json.JsonElement.Source outputOnFailure = default, in Corvus.Text.Json.JsonElement.Source quiet = default, in Corvus.Text.Json.JsonElement.Source shortProgress = default, in Corvus.Text.Json.JsonElement.Source subprojectSummary = default, in Corvus.Text.Json.JsonElement.Source testOutputTruncation = default, in Corvus.Text.Json.JsonElement.Source verbosity = default)
+                public static Source Build(scoped in Corvus.Text.Json.JsonElement.Source debug = default, scoped in Corvus.Text.Json.JsonElement.Source labelSummary = default, scoped in Corvus.Text.Json.JsonElement.Source maxFailedTestOutputSize = default, scoped in Corvus.Text.Json.JsonElement.Source maxPassedTestOutputSize = default, scoped in Corvus.Text.Json.JsonElement.Source maxTestNameWidth = default, scoped in Corvus.Text.Json.JsonElement.Source outputJUnitFile = default, scoped in Corvus.Text.Json.JsonElement.Source outputLogFile = default, scoped in Corvus.Text.Json.JsonElement.Source outputOnFailure = default, scoped in Corvus.Text.Json.JsonElement.Source quiet = default, scoped in Corvus.Text.Json.JsonElement.Source shortProgress = default, scoped in Corvus.Text.Json.JsonElement.Source subprojectSummary = default, scoped in Corvus.Text.Json.JsonElement.Source testOutputTruncation = default, scoped in Corvus.Text.Json.JsonElement.Source verbosity = default)
                 {
                     return new Source(debug, labelSummary, maxFailedTestOutputSize, maxPassedTestOutputSize, maxTestNameWidth, outputJUnitFile, outputLogFile, outputOnFailure, quiet, shortProgress, subprojectSummary, testOutputTruncation, verbosity);
                 }
@@ -2274,7 +2274,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="testOutputTruncation">The value of the <c>"testOutputTruncation"</c> property.</param>
                 /// <param name="verbosity">The value of the <c>"verbosity"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> debug = default, in Corvus.Text.Json.JsonElement.Source<TContext> labelSummary = default, in Corvus.Text.Json.JsonElement.Source<TContext> maxFailedTestOutputSize = default, in Corvus.Text.Json.JsonElement.Source<TContext> maxPassedTestOutputSize = default, in Corvus.Text.Json.JsonElement.Source<TContext> maxTestNameWidth = default, in Corvus.Text.Json.JsonElement.Source<TContext> outputJUnitFile = default, in Corvus.Text.Json.JsonElement.Source<TContext> outputLogFile = default, in Corvus.Text.Json.JsonElement.Source<TContext> outputOnFailure = default, in Corvus.Text.Json.JsonElement.Source<TContext> quiet = default, in Corvus.Text.Json.JsonElement.Source<TContext> shortProgress = default, in Corvus.Text.Json.JsonElement.Source<TContext> subprojectSummary = default, in Corvus.Text.Json.JsonElement.Source<TContext> testOutputTruncation = default, in Corvus.Text.Json.JsonElement.Source<TContext> verbosity = default)
+                public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> debug = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> labelSummary = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> maxFailedTestOutputSize = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> maxPassedTestOutputSize = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> maxTestNameWidth = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> outputJUnitFile = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> outputLogFile = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> outputOnFailure = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> quiet = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> shortProgress = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> subprojectSummary = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> testOutputTruncation = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> verbosity = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif

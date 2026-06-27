@@ -442,7 +442,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+            public void SetDescription(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -487,7 +487,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>dictionaryInformation</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDictionaryInformationValue(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.Source value)
+            public void SetDictionaryInformationValue(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.Source value)
             {
                 CheckValidInstance();
 
@@ -568,7 +568,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetName(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source value)
+            public void SetName(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryId.Source value)
             {
                 CheckValidInstance();
 
@@ -599,7 +599,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>noSuggest</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNoSuggest(in Corvus.CspellBenchmark.Current.JsonBoolean.Source value)
+            public void SetNoSuggest(scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -644,7 +644,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>path</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPath(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryPath.Source value)
+            public void SetPath(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryPath.Source value)
             {
                 CheckValidInstance();
 
@@ -675,7 +675,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>repMap</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRepMap(in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source value)
+            public void SetRepMap(scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReplaceMap.Source value)
             {
                 CheckValidInstance();
 
@@ -756,7 +756,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source value)
+            public void SetType(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryFileTypes.Source value)
             {
                 CheckValidInstance();
 
@@ -801,7 +801,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>useCompounds</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUseCompounds(in Corvus.CspellBenchmark.Current.JsonBoolean.Source value)
+            public void SetUseCompounds(scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 

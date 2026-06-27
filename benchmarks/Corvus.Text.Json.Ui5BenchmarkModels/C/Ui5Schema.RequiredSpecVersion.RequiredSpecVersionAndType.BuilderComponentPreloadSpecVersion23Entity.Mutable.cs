@@ -263,7 +263,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>excludes</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetExcludes(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.JsonStringArray.Source value)
+                    public void SetExcludes(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.JsonStringArray.Source value)
                     {
                         CheckValidInstance();
 
@@ -344,7 +344,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>namespaces</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetNamespaces(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.NamespacesArray.Source value)
+                    public void SetNamespaces(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.NamespacesArray.Source value)
                     {
                         CheckValidInstance();
 
@@ -425,7 +425,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>paths</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetPaths(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.PathsJsonSArray.Source value)
+                    public void SetPaths(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.PathsJsonSArray.Source value)
                     {
                         CheckValidInstance();
 
@@ -673,7 +673,7 @@ public readonly partial struct Ui5Schema
 
                     internal Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.JsonStringArray.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.NamespacesArray.Source arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.PathsJsonSArray.Source arg3)
+                    internal Source(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.JsonStringArray.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.NamespacesArray.Source arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.PathsJsonSArray.Source arg3)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -841,7 +841,7 @@ public readonly partial struct Ui5Schema
 
                     internal Source(scoped in TContext context, Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(scoped in TContext context, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.JsonStringArray.Source<TContext> arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.NamespacesArray.Source<TContext> arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.PathsJsonSArray.Source<TContext> arg3)
+                    internal Source(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.JsonStringArray.Source<TContext> arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.NamespacesArray.Source<TContext> arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.PathsJsonSArray.Source<TContext> arg3)
                     {
                         _context = context;
                         _createArg1 = arg1;
@@ -1082,7 +1082,7 @@ public readonly partial struct Ui5Schema
                     /// <param name="arg2">The value of the property.</param>
                     /// <param name="arg3">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.JsonStringArray.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.NamespacesArray.Source arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.PathsJsonSArray.Source arg3, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.JsonStringArray.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.NamespacesArray.Source arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.PathsJsonSArray.Source arg3, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3);
@@ -1098,7 +1098,7 @@ public readonly partial struct Ui5Schema
                     /// <param name="arg2">The value of the property.</param>
                     /// <param name="arg3">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.JsonStringArray.Source<TContext> arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.NamespacesArray.Source<TContext> arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.PathsJsonSArray.Source<TContext> arg3, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.JsonStringArray.Source<TContext> arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.NamespacesArray.Source<TContext> arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.PathsJsonSArray.Source<TContext> arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -1145,7 +1145,7 @@ public readonly partial struct Ui5Schema
                 /// <param name="namespaces">The value of the <c>"namespaces"</c> property.</param>
                 /// <param name="paths">The value of the <c>"paths"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.JsonStringArray.Source excludes = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.NamespacesArray.Source namespaces = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.PathsJsonSArray.Source paths = default)
+                public static Source Build(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.JsonStringArray.Source excludes = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.NamespacesArray.Source namespaces = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.PathsJsonSArray.Source paths = default)
                 {
                     return new Source(excludes, namespaces, paths);
                 }
@@ -1159,7 +1159,7 @@ public readonly partial struct Ui5Schema
                 /// <param name="namespaces">The value of the <c>"namespaces"</c> property.</param>
                 /// <param name="paths">The value of the <c>"paths"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.JsonStringArray.Source<TContext> excludes = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.NamespacesArray.Source<TContext> namespaces = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.PathsJsonSArray.Source<TContext> paths = default)
+                public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.JsonStringArray.Source<TContext> excludes = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.NamespacesArray.Source<TContext> namespaces = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadSpecVersion23Entity.PathsJsonSArray.Source<TContext> paths = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif

@@ -335,7 +335,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>deprecated</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetDeprecated(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
+                    public void SetDeprecated(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -380,7 +380,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>dev</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetDev(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
+                    public void SetDev(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -425,7 +425,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>systemVars</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetSystemVars(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
+                    public void SetSystemVars(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -470,7 +470,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>uninitialized</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetUninitialized(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
+                    public void SetUninitialized(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -515,7 +515,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>unusedCli</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetUnusedCli(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
+                    public void SetUnusedCli(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -729,7 +729,7 @@ public readonly partial struct CmakePresetsSchema
 
                     internal Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV1.AConfigurePresetObject.AnOptionalObjectSpecifyingWarnings.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg1, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg2, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg3, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg4, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg5)
+                    internal Source(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg5)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -1067,7 +1067,7 @@ public readonly partial struct CmakePresetsSchema
                     /// <param name="arg4">The value of the property.</param>
                     /// <param name="arg5">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg1, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg2, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg3, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg4, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg5, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg5, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1113,7 +1113,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="uninitialized">The value of the <c>"uninitialized"</c> property.</param>
                 /// <param name="unusedCli">The value of the <c>"unusedCli"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source deprecated = default, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source dev = default, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source systemVars = default, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source uninitialized = default, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source unusedCli = default)
+                public static Source Build(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source deprecated = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source dev = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source systemVars = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source uninitialized = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source unusedCli = default)
                 {
                     return new Source(deprecated, dev, systemVars, uninitialized, unusedCli);
                 }

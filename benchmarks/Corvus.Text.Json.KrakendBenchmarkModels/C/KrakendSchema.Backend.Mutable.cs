@@ -648,7 +648,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>allow</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAllow(in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowDataManipulation.Source value)
+            public void SetAllow(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowDataManipulation.Source value)
             {
                 CheckValidInstance();
 
@@ -729,7 +729,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>deny</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDeny(in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DenyDataManipulation.Source value)
+            public void SetDeny(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DenyDataManipulation.Source value)
             {
                 CheckValidInstance();
 
@@ -810,7 +810,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>disable_host_sanitize</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisableHostSanitizeValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DisableHostSanitize.Source value)
+            public void SetDisableHostSanitizeValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DisableHostSanitize.Source value)
             {
                 CheckValidInstance();
 
@@ -855,7 +855,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>encoding</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEncoding(in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.BackendEncoding.Source value)
+            public void SetEncoding(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.BackendEncoding.Source value)
             {
                 CheckValidInstance();
 
@@ -900,7 +900,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>extra_config</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExtraConfig(in Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Source value)
+            public void SetExtraConfig(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Source value)
             {
                 CheckValidInstance();
 
@@ -981,7 +981,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>group</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGroup(in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.GroupDataManipulation.Source value)
+            public void SetGroup(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.GroupDataManipulation.Source value)
             {
                 CheckValidInstance();
 
@@ -1026,7 +1026,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>host</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHost(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
+            public void SetHost(scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1107,7 +1107,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>input_headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetInputHeaders(in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.JsonStringArray.Source value)
+            public void SetInputHeaders(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1188,7 +1188,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>input_query_strings</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetInputQueryStrings(in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowedQueArray.Source value)
+            public void SetInputQueryStrings(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowedQueArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1269,7 +1269,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>is_collection</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIsCollection(in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.IsACollectionArray.Source value)
+            public void SetIsCollection(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.IsACollectionArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1314,7 +1314,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>mapping</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMapping(in Corvus.KrakendBenchmark.Current.JsonObject.Source value)
+            public void SetMapping(scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source value)
             {
                 CheckValidInstance();
 
@@ -1395,7 +1395,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>method</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMethodValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Method.Source value)
+            public void SetMethodValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Method.Source value)
             {
                 CheckValidInstance();
 
@@ -1440,7 +1440,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>sd</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSd(in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscovery.Source value)
+            public void SetSd(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscovery.Source value)
             {
                 CheckValidInstance();
 
@@ -1485,7 +1485,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>sd_scheme</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSdScheme(in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscoveryScheme.Source value)
+            public void SetSdScheme(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscoveryScheme.Source value)
             {
                 CheckValidInstance();
 
@@ -1530,7 +1530,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>target</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTarget(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetTarget(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1575,7 +1575,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>url_pattern</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUrlPattern(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetUrlPattern(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1707,7 +1707,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1730,7 +1730,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1777,7 +1777,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1962,7 +1962,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowDataManipulation.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DenyDataManipulation.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DisableHostSanitize.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.BackendEncoding.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.GroupDataManipulation.Source arg7, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.JsonStringArray.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowedQueArray.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.IsACollectionArray.Source arg11, in Corvus.KrakendBenchmark.Current.JsonObject.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Method.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscovery.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscoveryScheme.Source arg15, in Corvus.KrakendBenchmark.Current.JsonString.Source arg16)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowDataManipulation.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DenyDataManipulation.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DisableHostSanitize.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.BackendEncoding.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.GroupDataManipulation.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.JsonStringArray.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowedQueArray.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.IsACollectionArray.Source arg11, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Method.Source arg13, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscovery.Source arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscoveryScheme.Source arg15, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg16)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -2156,7 +2156,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowDataManipulation.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DenyDataManipulation.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DisableHostSanitize.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.BackendEncoding.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Source<TContext> arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.GroupDataManipulation.Source arg7, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.JsonStringArray.Source<TContext> arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowedQueArray.Source<TContext> arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.IsACollectionArray.Source arg11, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Method.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscovery.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscoveryScheme.Source arg15, in Corvus.KrakendBenchmark.Current.JsonString.Source arg16)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowDataManipulation.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DenyDataManipulation.Source<TContext> arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DisableHostSanitize.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.BackendEncoding.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Source<TContext> arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.GroupDataManipulation.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.JsonStringArray.Source<TContext> arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowedQueArray.Source<TContext> arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.IsACollectionArray.Source arg11, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Method.Source arg13, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscovery.Source arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscoveryScheme.Source arg15, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg16)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2570,7 +2570,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg15">The value of the property.</param>
             /// <param name="arg16">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowDataManipulation.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DenyDataManipulation.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DisableHostSanitize.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.BackendEncoding.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.GroupDataManipulation.Source arg7, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.JsonStringArray.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowedQueArray.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.IsACollectionArray.Source arg11, in Corvus.KrakendBenchmark.Current.JsonObject.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Method.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscovery.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscoveryScheme.Source arg15, in Corvus.KrakendBenchmark.Current.JsonString.Source arg16, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowDataManipulation.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DenyDataManipulation.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DisableHostSanitize.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.BackendEncoding.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.GroupDataManipulation.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.JsonStringArray.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowedQueArray.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.IsACollectionArray.Source arg11, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Method.Source arg13, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscovery.Source arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscoveryScheme.Source arg15, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg16, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16);
@@ -2599,7 +2599,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg15">The value of the property.</param>
             /// <param name="arg16">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowDataManipulation.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DenyDataManipulation.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DisableHostSanitize.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.BackendEncoding.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Source<TContext> arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.GroupDataManipulation.Source arg7, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.JsonStringArray.Source<TContext> arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowedQueArray.Source<TContext> arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.IsACollectionArray.Source arg11, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Method.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscovery.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscoveryScheme.Source arg15, in Corvus.KrakendBenchmark.Current.JsonString.Source arg16, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowDataManipulation.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DenyDataManipulation.Source<TContext> arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DisableHostSanitize.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.BackendEncoding.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Source<TContext> arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.GroupDataManipulation.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.JsonStringArray.Source<TContext> arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowedQueArray.Source<TContext> arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.IsACollectionArray.Source arg11, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Method.Source arg13, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscovery.Source arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscoveryScheme.Source arg15, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg16, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2659,7 +2659,7 @@ public readonly partial struct KrakendSchema
         /// <param name="sdScheme">The value of the <c>"sd_scheme"</c> property.</param>
         /// <param name="target">The value of the <c>"target"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.JsonString.Source urlPattern, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowDataManipulation.Source allow = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DenyDataManipulation.Source deny = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DisableHostSanitize.Source disableHostSanitize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.BackendEncoding.Source encoding = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Source extraConfig = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.GroupDataManipulation.Source group = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source host = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.JsonStringArray.Source inputHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowedQueArray.Source inputQueryStrings = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.IsACollectionArray.Source isCollection = default, in Corvus.KrakendBenchmark.Current.JsonObject.Source mapping = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Method.Source method = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscovery.Source sd = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscoveryScheme.Source sdScheme = default, in Corvus.KrakendBenchmark.Current.JsonString.Source target = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source urlPattern, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowDataManipulation.Source allow = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DenyDataManipulation.Source deny = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DisableHostSanitize.Source disableHostSanitize = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.BackendEncoding.Source encoding = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Source extraConfig = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.GroupDataManipulation.Source group = default, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source host = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.JsonStringArray.Source inputHeaders = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowedQueArray.Source inputQueryStrings = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.IsACollectionArray.Source isCollection = default, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source mapping = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Method.Source method = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscovery.Source sd = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscoveryScheme.Source sdScheme = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source target = default)
         {
             return new Source(urlPattern, allow, deny, disableHostSanitize, encoding, extraConfig, group, host, inputHeaders, inputQueryStrings, isCollection, mapping, method, sd, sdScheme, target);
         }
@@ -2686,7 +2686,7 @@ public readonly partial struct KrakendSchema
         /// <param name="sdScheme">The value of the <c>"sd_scheme"</c> property.</param>
         /// <param name="target">The value of the <c>"target"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source urlPattern, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowDataManipulation.Source<TContext> allow = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DenyDataManipulation.Source<TContext> deny = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DisableHostSanitize.Source disableHostSanitize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.BackendEncoding.Source encoding = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Source<TContext> extraConfig = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.GroupDataManipulation.Source group = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> host = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.JsonStringArray.Source<TContext> inputHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowedQueArray.Source<TContext> inputQueryStrings = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.IsACollectionArray.Source isCollection = default, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> mapping = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Method.Source method = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscovery.Source sd = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscoveryScheme.Source sdScheme = default, in Corvus.KrakendBenchmark.Current.JsonString.Source target = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source urlPattern, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowDataManipulation.Source<TContext> allow = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DenyDataManipulation.Source<TContext> deny = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.DisableHostSanitize.Source disableHostSanitize = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.BackendEncoding.Source encoding = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.BackendExtraConfig.Source<TContext> extraConfig = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.GroupDataManipulation.Source group = default, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> host = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.JsonStringArray.Source<TContext> inputHeaders = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.AllowedQueArray.Source<TContext> inputQueryStrings = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.IsACollectionArray.Source isCollection = default, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> mapping = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.Method.Source method = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscovery.Source sd = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Backend.ServiceDiscoveryScheme.Source sdScheme = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source target = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

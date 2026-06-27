@@ -427,7 +427,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>disable_metrics</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetDisableMetrics(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalMetrics.Source value)
+                    public void SetDisableMetrics(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalMetrics.Source value)
                     {
                         CheckValidInstance();
 
@@ -472,7 +472,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>disable_propagation</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetDisablePropagationValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisablePropagation.Source value)
+                    public void SetDisablePropagationValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisablePropagation.Source value)
                     {
                         CheckValidInstance();
 
@@ -517,7 +517,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>disable_traces</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetDisableTraces(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalTrace.Source value)
+                    public void SetDisableTraces(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalTrace.Source value)
                     {
                         CheckValidInstance();
 
@@ -562,7 +562,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>metrics_static_attributes</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetMetricsStaticAttributes(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.Source value)
+                    public void SetMetricsStaticAttributes(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.Source value)
                     {
                         CheckValidInstance();
 
@@ -643,7 +643,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>report_headers</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetReportHeadersValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.ReportHeaders.Source value)
+                    public void SetReportHeadersValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.ReportHeaders.Source value)
                     {
                         CheckValidInstance();
 
@@ -688,7 +688,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>traces_static_attributes</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetTracesStaticAttributes(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.TracesStaticAttributesEntityArray.Source value)
+                    public void SetTracesStaticAttributes(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.TracesStaticAttributesEntityArray.Source value)
                     {
                         CheckValidInstance();
 
@@ -870,7 +870,7 @@ public readonly partial struct KrakendSchema
                     ///   </para>
                     /// </remarks>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         SetProperty(propertyName.AsSpan(), value);
                     }
@@ -893,7 +893,7 @@ public readonly partial struct KrakendSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -940,7 +940,7 @@ public readonly partial struct KrakendSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -1115,7 +1115,7 @@ public readonly partial struct KrakendSchema
 
                     internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalMetrics.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisablePropagation.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalTrace.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.ReportHeaders.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.TracesStaticAttributesEntityArray.Source arg6)
+                    internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalMetrics.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisablePropagation.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalTrace.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.ReportHeaders.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.TracesStaticAttributesEntityArray.Source arg6)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -1289,7 +1289,7 @@ public readonly partial struct KrakendSchema
 
                     internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalMetrics.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisablePropagation.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalTrace.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.Source<TContext> arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.ReportHeaders.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.TracesStaticAttributesEntityArray.Source<TContext> arg6)
+                    internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalMetrics.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisablePropagation.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalTrace.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.Source<TContext> arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.ReportHeaders.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.TracesStaticAttributesEntityArray.Source<TContext> arg6)
                     {
                         _context = context;
                         _createArg1 = arg1;
@@ -1623,7 +1623,7 @@ public readonly partial struct KrakendSchema
                     /// <param name="arg5">The value of the property.</param>
                     /// <param name="arg6">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalMetrics.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisablePropagation.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalTrace.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.ReportHeaders.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.TracesStaticAttributesEntityArray.Source arg6, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalMetrics.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisablePropagation.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalTrace.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.ReportHeaders.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.TracesStaticAttributesEntityArray.Source arg6, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1642,7 +1642,7 @@ public readonly partial struct KrakendSchema
                     /// <param name="arg5">The value of the property.</param>
                     /// <param name="arg6">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalMetrics.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisablePropagation.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalTrace.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.Source<TContext> arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.ReportHeaders.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.TracesStaticAttributesEntityArray.Source<TContext> arg6, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalMetrics.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisablePropagation.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalTrace.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.Source<TContext> arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.ReportHeaders.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.TracesStaticAttributesEntityArray.Source<TContext> arg6, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -1692,7 +1692,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="reportHeaders">The value of the <c>"report_headers"</c> property.</param>
                 /// <param name="tracesStaticAttributes">The value of the <c>"traces_static_attributes"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalMetrics.Source disableMetrics = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisablePropagation.Source disablePropagation = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalTrace.Source disableTraces = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.Source metricsStaticAttributes = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.ReportHeaders.Source reportHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.TracesStaticAttributesEntityArray.Source tracesStaticAttributes = default)
+                public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalMetrics.Source disableMetrics = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisablePropagation.Source disablePropagation = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalTrace.Source disableTraces = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.Source metricsStaticAttributes = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.ReportHeaders.Source reportHeaders = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.TracesStaticAttributesEntityArray.Source tracesStaticAttributes = default)
                 {
                     return new Source(disableMetrics, disablePropagation, disableTraces, metricsStaticAttributes, reportHeaders, tracesStaticAttributes);
                 }
@@ -1709,7 +1709,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="reportHeaders">The value of the <c>"report_headers"</c> property.</param>
                 /// <param name="tracesStaticAttributes">The value of the <c>"traces_static_attributes"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalMetrics.Source disableMetrics = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisablePropagation.Source disablePropagation = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalTrace.Source disableTraces = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.Source<TContext> metricsStaticAttributes = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.ReportHeaders.Source reportHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.TracesStaticAttributesEntityArray.Source<TContext> tracesStaticAttributes = default)
+                public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalMetrics.Source disableMetrics = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisablePropagation.Source disablePropagation = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.DisableGlobalTrace.Source disableTraces = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.MetricsStaticAttributesEntityArray.Source<TContext> metricsStaticAttributes = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.ReportHeaders.Source reportHeaders = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportGlobalActivity.TracesStaticAttributesEntityArray.Source<TContext> tracesStaticAttributes = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif

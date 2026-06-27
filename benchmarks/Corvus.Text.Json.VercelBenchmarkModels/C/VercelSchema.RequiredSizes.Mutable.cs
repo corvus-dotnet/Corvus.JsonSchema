@@ -333,7 +333,7 @@ public readonly partial struct VercelSchema
             /// Set the <c>contentDispositionType</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetContentDispositionType(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source value)
+            public void SetContentDispositionType(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -378,7 +378,7 @@ public readonly partial struct VercelSchema
             /// Set the <c>contentSecurityPolicy</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetContentSecurityPolicy(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source value)
+            public void SetContentSecurityPolicy(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -423,7 +423,7 @@ public readonly partial struct VercelSchema
             /// Set the <c>dangerouslyAllowSVG</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDangerouslyAllowSvg(in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
+            public void SetDangerouslyAllowSvg(scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -468,7 +468,7 @@ public readonly partial struct VercelSchema
             /// Set the <c>domains</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDomains(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source value)
+            public void SetDomains(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source value)
             {
                 CheckValidInstance();
 
@@ -549,7 +549,7 @@ public readonly partial struct VercelSchema
             /// Set the <c>formats</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFormats(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source value)
+            public void SetFormats(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source value)
             {
                 CheckValidInstance();
 
@@ -630,7 +630,7 @@ public readonly partial struct VercelSchema
             /// Set the <c>minimumCacheTTL</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMinimumCacheTtl(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source value)
+            public void SetMinimumCacheTtl(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -675,7 +675,7 @@ public readonly partial struct VercelSchema
             /// Set the <c>remotePatterns</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRemotePatterns(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source value)
+            public void SetRemotePatterns(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source value)
             {
                 CheckValidInstance();
 
@@ -756,7 +756,7 @@ public readonly partial struct VercelSchema
             /// Set the <c>sizes</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSizes(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source value)
+            public void SetSizes(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source value)
             {
                 CheckValidInstance();
 
@@ -993,7 +993,7 @@ public readonly partial struct VercelSchema
 
             internal Source(Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source arg3, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source arg5, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source arg6, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source arg7, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source arg8)
+            internal Source(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source arg3, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source arg5, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source arg6, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source arg7, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source arg8)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1171,7 +1171,7 @@ public readonly partial struct VercelSchema
 
             internal Source(scoped in TContext context, Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source<TContext> arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source arg3, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source<TContext> arg5, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source<TContext> arg6, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source arg7, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source<TContext> arg8)
+            internal Source(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source<TContext> arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source arg3, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source<TContext> arg5, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source<TContext> arg6, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source arg7, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source<TContext> arg8)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1452,7 +1452,7 @@ public readonly partial struct VercelSchema
             /// <param name="arg7">The value of the property.</param>
             /// <param name="arg8">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source arg3, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source arg5, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source arg6, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source arg7, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source arg8, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source arg3, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source arg5, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source arg6, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source arg7, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source arg8, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
@@ -1473,7 +1473,7 @@ public readonly partial struct VercelSchema
             /// <param name="arg7">The value of the property.</param>
             /// <param name="arg8">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source<TContext> arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source arg3, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source<TContext> arg5, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source<TContext> arg6, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source arg7, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source<TContext> arg8, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source<TContext> arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source arg3, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source<TContext> arg5, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source<TContext> arg6, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source arg7, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source<TContext> arg8, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1525,7 +1525,7 @@ public readonly partial struct VercelSchema
         /// <param name="minimumCacheTtl">The value of the <c>"minimumCacheTTL"</c> property.</param>
         /// <param name="remotePatterns">The value of the <c>"remotePatterns"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source sizes, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source contentDispositionType = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source contentSecurityPolicy = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source dangerouslyAllowSvg = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source domains = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source formats = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source minimumCacheTtl = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source remotePatterns = default)
+        public static Source Build(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source sizes, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source contentDispositionType = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source contentSecurityPolicy = default, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source dangerouslyAllowSvg = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source domains = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source formats = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source minimumCacheTtl = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source remotePatterns = default)
         {
             return new Source(sizes, contentDispositionType, contentSecurityPolicy, dangerouslyAllowSvg, domains, formats, minimumCacheTtl, remotePatterns);
         }
@@ -1544,7 +1544,7 @@ public readonly partial struct VercelSchema
         /// <param name="minimumCacheTtl">The value of the <c>"minimumCacheTTL"</c> property.</param>
         /// <param name="remotePatterns">The value of the <c>"remotePatterns"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source<TContext> sizes, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source contentDispositionType = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source contentSecurityPolicy = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source dangerouslyAllowSvg = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source<TContext> domains = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source<TContext> formats = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source minimumCacheTtl = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source<TContext> remotePatterns = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.JsonNumberArray.Source<TContext> sizes, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentDispositionTypeEntity.Source contentDispositionType = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.ContentSecurityPolicyEntity.Source contentSecurityPolicy = default, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source dangerouslyAllowSvg = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.DomainsEntityArray.Source<TContext> domains = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.Source<TContext> formats = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.MinimumCacheTtlEntity.Source minimumCacheTtl = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.Source<TContext> remotePatterns = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

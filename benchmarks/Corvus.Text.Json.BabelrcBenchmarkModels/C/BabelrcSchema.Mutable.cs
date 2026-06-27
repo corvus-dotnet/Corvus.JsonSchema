@@ -864,7 +864,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>ast</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAst(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source value)
+        public void SetAst(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source value)
         {
             CheckValidInstance();
 
@@ -909,7 +909,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>auxiliaryCommentAfter</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAuxiliaryCommentAfter(in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
+        public void SetAuxiliaryCommentAfter(scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -954,7 +954,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>auxiliaryCommentBefore</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAuxiliaryCommentBefore(in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
+        public void SetAuxiliaryCommentBefore(scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -999,7 +999,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>code</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCode(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source value)
+        public void SetCode(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source value)
         {
             CheckValidInstance();
 
@@ -1044,7 +1044,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>comments</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetComments(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source value)
+        public void SetComments(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source value)
         {
             CheckValidInstance();
 
@@ -1089,7 +1089,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>compact</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCompact(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source value)
+        public void SetCompact(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1134,7 +1134,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>env</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEnv(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Source value)
+        public void SetEnv(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1215,7 +1215,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>extends</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExtends(in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
+        public void SetExtends(scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1260,7 +1260,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>filename</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFilename(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source value)
+        public void SetFilename(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source value)
         {
             CheckValidInstance();
 
@@ -1305,7 +1305,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>filenameRelative</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFilenameRelative(in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
+        public void SetFilenameRelative(scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1350,7 +1350,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>highlightCode</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHighlightCode(in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source value)
+        public void SetHighlightCode(scoped in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -1395,7 +1395,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>ignore</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIgnore(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source value)
+        public void SetIgnore(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source value)
         {
             CheckValidInstance();
 
@@ -1476,7 +1476,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>inputSourceMap</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetInputSourceMap(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source value)
+        public void SetInputSourceMap(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1557,7 +1557,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>keepModuleIdExtensions</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetKeepModuleIdExtensions(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source value)
+        public void SetKeepModuleIdExtensions(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source value)
         {
             CheckValidInstance();
 
@@ -1602,7 +1602,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>moduleId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetModuleId(in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
+        public void SetModuleId(scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1647,7 +1647,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>moduleIds</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetModuleIds(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source value)
+        public void SetModuleIds(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1692,7 +1692,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>moduleRoot</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetModuleRoot(in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
+        public void SetModuleRoot(scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1737,7 +1737,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>only</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOnly(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source value)
+        public void SetOnly(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source value)
         {
             CheckValidInstance();
 
@@ -1818,7 +1818,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>plugins</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPlugins(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source value)
+        public void SetPlugins(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source value)
         {
             CheckValidInstance();
 
@@ -1899,7 +1899,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>presets</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPresets(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source value)
+        public void SetPresets(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source value)
         {
             CheckValidInstance();
 
@@ -1980,7 +1980,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>retainLines</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRetainLines(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source value)
+        public void SetRetainLines(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source value)
         {
             CheckValidInstance();
 
@@ -2025,7 +2025,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>sourceFileName</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSourceFileName(in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
+        public void SetSourceFileName(scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -2070,7 +2070,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>sourceMaps</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSourceMaps(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source value)
+        public void SetSourceMaps(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -2115,7 +2115,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>sourceMapTarget</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSourceMapTarget(in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
+        public void SetSourceMapTarget(scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -2160,7 +2160,7 @@ public readonly partial struct BabelrcSchema
         /// Set the <c>sourceRoot</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSourceRoot(in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
+        public void SetSourceRoot(scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -2342,7 +2342,7 @@ public readonly partial struct BabelrcSchema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -2365,7 +2365,7 @@ public readonly partial struct BabelrcSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -2412,7 +2412,7 @@ public readonly partial struct BabelrcSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -2698,7 +2698,7 @@ public readonly partial struct BabelrcSchema
 
         internal Source(Corvus.BabelrcBenchmark.Current.BabelrcSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source arg1, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg2, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg3, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source arg4, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source arg5, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source arg6, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Source arg7, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg8, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source arg9, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg10, in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source arg11, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source arg12, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source arg13, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source arg14, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg15, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source arg16, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg17, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source arg18, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source arg19, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source arg20, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source arg21, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg22, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source arg23, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg24, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg25)
+        internal Source(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source arg1, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg2, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg3, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source arg4, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source arg5, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source arg6, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Source arg7, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg8, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source arg9, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg10, scoped in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source arg12, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source arg13, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source arg14, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg15, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source arg16, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg17, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source arg18, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source arg19, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source arg20, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source arg21, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg22, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source arg23, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg24, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg25)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -2910,7 +2910,7 @@ public readonly partial struct BabelrcSchema
 
         internal Source(scoped in TContext context, Corvus.BabelrcBenchmark.Current.BabelrcSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source arg1, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg2, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg3, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source arg4, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source arg5, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source arg6, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Source<TContext> arg7, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg8, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source arg9, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg10, in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source arg11, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source<TContext> arg12, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source<TContext> arg13, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source arg14, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg15, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source arg16, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg17, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source<TContext> arg18, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source<TContext> arg19, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source<TContext> arg20, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source arg21, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg22, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source arg23, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg24, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg25)
+        internal Source(scoped in TContext context, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source arg1, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg2, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg3, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source arg4, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source arg5, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source arg6, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Source<TContext> arg7, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg8, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source arg9, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg10, scoped in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source<TContext> arg12, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source<TContext> arg13, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source arg14, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg15, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source arg16, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg17, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source<TContext> arg18, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source<TContext> arg19, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source<TContext> arg20, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source arg21, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg22, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source arg23, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg24, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg25)
         {
             _context = context;
             _createArg1 = arg1;
@@ -3396,7 +3396,7 @@ public readonly partial struct BabelrcSchema
         /// <param name="arg24">The value of the property.</param>
         /// <param name="arg25">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source arg1, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg2, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg3, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source arg4, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source arg5, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source arg6, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Source arg7, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg8, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source arg9, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg10, in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source arg11, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source arg12, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source arg13, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source arg14, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg15, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source arg16, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg17, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source arg18, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source arg19, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source arg20, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source arg21, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg22, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source arg23, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg24, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg25, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source arg1, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg2, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg3, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source arg4, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source arg5, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source arg6, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Source arg7, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg8, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source arg9, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg10, scoped in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source arg12, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source arg13, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source arg14, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg15, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source arg16, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg17, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source arg18, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source arg19, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source arg20, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source arg21, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg22, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source arg23, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg24, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg25, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25);
@@ -3434,7 +3434,7 @@ public readonly partial struct BabelrcSchema
         /// <param name="arg24">The value of the property.</param>
         /// <param name="arg25">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source arg1, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg2, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg3, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source arg4, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source arg5, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source arg6, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Source<TContext> arg7, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg8, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source arg9, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg10, in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source arg11, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source<TContext> arg12, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source<TContext> arg13, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source arg14, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg15, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source arg16, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg17, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source<TContext> arg18, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source<TContext> arg19, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source<TContext> arg20, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source arg21, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg22, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source arg23, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg24, in Corvus.BabelrcBenchmark.Current.JsonString.Source arg25, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source arg1, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg2, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg3, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source arg4, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source arg5, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source arg6, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Source<TContext> arg7, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg8, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source arg9, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg10, scoped in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source<TContext> arg12, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source<TContext> arg13, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source arg14, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg15, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source arg16, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg17, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source<TContext> arg18, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source<TContext> arg19, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source<TContext> arg20, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source arg21, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg22, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source arg23, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg24, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source arg25, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -3503,7 +3503,7 @@ public readonly partial struct BabelrcSchema
     /// <param name="sourceMapTarget">The value of the <c>"sourceMapTarget"</c> property.</param>
     /// <param name="sourceRoot">The value of the <c>"sourceRoot"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source ast = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source auxiliaryCommentAfter = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source auxiliaryCommentBefore = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source code = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source comments = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source compact = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Source env = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source extends = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source filename = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source filenameRelative = default, in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source highlightCode = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source ignore = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source inputSourceMap = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source keepModuleIdExtensions = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source moduleId = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source moduleIds = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source moduleRoot = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source only = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source plugins = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source presets = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source retainLines = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceFileName = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source sourceMaps = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceMapTarget = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceRoot = default)
+    public static Source Build(scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source ast = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source auxiliaryCommentAfter = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source auxiliaryCommentBefore = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source code = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source comments = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source compact = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Source env = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source extends = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source filename = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source filenameRelative = default, scoped in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source highlightCode = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source ignore = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source inputSourceMap = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source keepModuleIdExtensions = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source moduleId = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source moduleIds = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source moduleRoot = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source only = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source plugins = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source presets = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source retainLines = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceFileName = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source sourceMaps = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceMapTarget = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceRoot = default)
     {
         return new Source(ast, auxiliaryCommentAfter, auxiliaryCommentBefore, code, comments, compact, env, extends, filename, filenameRelative, highlightCode, ignore, inputSourceMap, keepModuleIdExtensions, moduleId, moduleIds, moduleRoot, only, plugins, presets, retainLines, sourceFileName, sourceMaps, sourceMapTarget, sourceRoot);
     }
@@ -3539,7 +3539,7 @@ public readonly partial struct BabelrcSchema
     /// <param name="sourceMapTarget">The value of the <c>"sourceMapTarget"</c> property.</param>
     /// <param name="sourceRoot">The value of the <c>"sourceRoot"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source ast = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source auxiliaryCommentAfter = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source auxiliaryCommentBefore = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source code = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source comments = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source compact = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Source<TContext> env = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source extends = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source filename = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source filenameRelative = default, in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source highlightCode = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source<TContext> ignore = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source<TContext> inputSourceMap = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source keepModuleIdExtensions = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source moduleId = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source moduleIds = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source moduleRoot = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source<TContext> only = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source<TContext> plugins = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source<TContext> presets = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source retainLines = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceFileName = default, in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source sourceMaps = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceMapTarget = default, in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceRoot = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.IncludeTheAstInTheReturnedObject.Source ast = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source auxiliaryCommentAfter = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source auxiliaryCommentBefore = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.EnableCodeGeneration.Source code = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OutputCommentsInGeneratedOutput.Source comments = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.CompactEntity.Source compact = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.AllOf1Entity.EnvEntity.Source<TContext> env = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source extends = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.FilenameForUseInErrorsEtc.Source filename = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source filenameRelative = default, scoped in Corvus.BabelrcBenchmark.Current.JsonBoolean.Source highlightCode = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OppositeOfTheOnlyOption.Source<TContext> ignore = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.InputSourceMapEntity.Source<TContext> inputSourceMap = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.KeepExtensionsInModuleIds.Source keepModuleIdExtensions = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source moduleId = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.ModuleIdsEntity.Source moduleIds = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source moduleRoot = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.OnlyArray.Source<TContext> only = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PluginsArrayArray.Source<TContext> plugins = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.PresetsArrayArray.Source<TContext> presets = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.RetainLinesEntity.Source retainLines = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceFileName = default, scoped in Corvus.BabelrcBenchmark.Current.BabelrcSchema.Options.SourceMapsEntity.Source sourceMaps = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceMapTarget = default, scoped in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceRoot = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

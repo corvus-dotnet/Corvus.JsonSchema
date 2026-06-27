@@ -451,7 +451,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>modifier/jmespath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetModifierJmespath(in Corvus.KrakendBenchmark.Current.KrakendSchema.Jmespath.Source value)
+            public void SetModifierJmespath(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Jmespath.Source value)
             {
                 CheckValidInstance();
 
@@ -532,7 +532,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>modifier/lua-proxy</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetModifierLuaProxy(in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.Source value)
+            public void SetModifierLuaProxy(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Lua.Source value)
             {
                 CheckValidInstance();
 
@@ -613,7 +613,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>modifier/request-body-generator</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetModifierRequestBodyGenerator(in Corvus.KrakendBenchmark.Current.KrakendSchema.BodyGenerator.Source value)
+            public void SetModifierRequestBodyGenerator(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.BodyGenerator.Source value)
             {
                 CheckValidInstance();
 
@@ -694,7 +694,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>modifier/response-body-generator</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetModifierResponseBodyGenerator(in Corvus.KrakendBenchmark.Current.KrakendSchema.BodyGenerator.Source value)
+            public void SetModifierResponseBodyGenerator(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.BodyGenerator.Source value)
             {
                 CheckValidInstance();
 
@@ -775,7 +775,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>plugin/req-resp-modifier</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPluginReqRespModifier(in Corvus.KrakendBenchmark.Current.KrakendSchema.ReqRespModifier.Source value)
+            public void SetPluginReqRespModifier(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ReqRespModifier.Source value)
             {
                 CheckValidInstance();
 
@@ -856,7 +856,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>proxy</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetProxyValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.WorkflowExtraConfig.Proxy.Source value)
+            public void SetProxyValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.WorkflowExtraConfig.Proxy.Source value)
             {
                 CheckValidInstance();
 
@@ -937,7 +937,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>security/policies</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSecurityPolicies(in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.Source value)
+            public void SetSecurityPolicies(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.Source value)
             {
                 CheckValidInstance();
 
@@ -1018,7 +1018,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>validation/cel</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetValidationCel(in Corvus.KrakendBenchmark.Current.KrakendSchema.Cel.Source value)
+            public void SetValidationCel(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Cel.Source value)
             {
                 CheckValidInstance();
 
@@ -1099,7 +1099,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>validation/json-schema</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetValidationJsonSchema(in Corvus.KrakendBenchmark.Current.JsonObject.Source value)
+            public void SetValidationJsonSchema(scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source value)
             {
                 CheckValidInstance();
 
@@ -1281,7 +1281,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1304,7 +1304,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1351,7 +1351,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 

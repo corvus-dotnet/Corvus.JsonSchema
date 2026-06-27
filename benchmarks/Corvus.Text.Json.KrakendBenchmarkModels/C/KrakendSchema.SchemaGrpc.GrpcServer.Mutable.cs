@@ -314,7 +314,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>opentelemetry</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOpentelemetry(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.OpenTelemetrySettings.Source value)
+                public void SetOpentelemetry(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.OpenTelemetrySettings.Source value)
                 {
                     CheckValidInstance();
 
@@ -395,7 +395,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>services</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetServices(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.ServicesEntityArray.Source value)
+                public void SetServices(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.ServicesEntityArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -577,7 +577,7 @@ public readonly partial struct KrakendSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -600,7 +600,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -647,7 +647,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -818,7 +818,7 @@ public readonly partial struct KrakendSchema
 
                 internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.OpenTelemetrySettings.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.ServicesEntityArray.Source arg2)
+                internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.OpenTelemetrySettings.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.ServicesEntityArray.Source arg2)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -984,7 +984,7 @@ public readonly partial struct KrakendSchema
 
                 internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.OpenTelemetrySettings.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.ServicesEntityArray.Source<TContext> arg2)
+                internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.OpenTelemetrySettings.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.ServicesEntityArray.Source<TContext> arg2)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1284,7 +1284,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.OpenTelemetrySettings.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.ServicesEntityArray.Source arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.OpenTelemetrySettings.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.ServicesEntityArray.Source arg2, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2);
@@ -1299,7 +1299,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.OpenTelemetrySettings.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.ServicesEntityArray.Source<TContext> arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.OpenTelemetrySettings.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.ServicesEntityArray.Source<TContext> arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1345,7 +1345,7 @@ public readonly partial struct KrakendSchema
             /// <param name="opentelemetry">The value of the <c>"opentelemetry"</c> property.</param>
             /// <param name="services">The value of the <c>"services"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.OpenTelemetrySettings.Source opentelemetry = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.ServicesEntityArray.Source services = default)
+            public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.OpenTelemetrySettings.Source opentelemetry = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.ServicesEntityArray.Source services = default)
             {
                 return new Source(opentelemetry, services);
             }
@@ -1358,7 +1358,7 @@ public readonly partial struct KrakendSchema
             /// <param name="opentelemetry">The value of the <c>"opentelemetry"</c> property.</param>
             /// <param name="services">The value of the <c>"services"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.OpenTelemetrySettings.Source<TContext> opentelemetry = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.ServicesEntityArray.Source<TContext> services = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.OpenTelemetrySettings.Source<TContext> opentelemetry = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.SchemaGrpc.GrpcServer.ServicesEntityArray.Source<TContext> services = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

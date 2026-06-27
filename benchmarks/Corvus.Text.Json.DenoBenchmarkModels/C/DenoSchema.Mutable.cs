@@ -581,7 +581,7 @@ public readonly partial struct DenoSchema
         /// Set the <c>bench</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBench(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForDenoBench.Source value)
+        public void SetBench(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForDenoBench.Source value)
         {
             CheckValidInstance();
 
@@ -662,7 +662,7 @@ public readonly partial struct DenoSchema
         /// Set the <c>compilerOptions</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCompilerOptions(in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.Source value)
+        public void SetCompilerOptions(scoped in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.Source value)
         {
             CheckValidInstance();
 
@@ -743,7 +743,7 @@ public readonly partial struct DenoSchema
         /// Set the <c>exclude</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExclude(in Corvus.DenoBenchmark.Current.DenoSchema.JsonStringArray.Source value)
+        public void SetExclude(scoped in Corvus.DenoBenchmark.Current.DenoSchema.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -824,7 +824,7 @@ public readonly partial struct DenoSchema
         /// Set the <c>fmt</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFmt(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.Source value)
+        public void SetFmt(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForFormatter.Source value)
         {
             CheckValidInstance();
 
@@ -905,7 +905,7 @@ public readonly partial struct DenoSchema
         /// Set the <c>importMap</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetImportMap(in Corvus.DenoBenchmark.Current.JsonString.Source value)
+        public void SetImportMap(scoped in Corvus.DenoBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -950,7 +950,7 @@ public readonly partial struct DenoSchema
         /// Set the <c>imports</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetImports(in Corvus.DenoBenchmark.Current.DenoSchema.AMapOfSpecifiersToTheirRemappedSpecifiers.Source value)
+        public void SetImports(scoped in Corvus.DenoBenchmark.Current.DenoSchema.AMapOfSpecifiersToTheirRemappedSpecifiers.Source value)
         {
             CheckValidInstance();
 
@@ -1031,7 +1031,7 @@ public readonly partial struct DenoSchema
         /// Set the <c>lint</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLint(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.Source value)
+        public void SetLint(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.Source value)
         {
             CheckValidInstance();
 
@@ -1112,7 +1112,7 @@ public readonly partial struct DenoSchema
         /// Set the <c>lock</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLock(in Corvus.DenoBenchmark.Current.DenoSchema.LockEntity.Source value)
+        public void SetLock(scoped in Corvus.DenoBenchmark.Current.DenoSchema.LockEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1157,7 +1157,7 @@ public readonly partial struct DenoSchema
         /// Set the <c>nodeModulesDir</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetNodeModulesDir(in Corvus.DenoBenchmark.Current.JsonBoolean.Source value)
+        public void SetNodeModulesDir(scoped in Corvus.DenoBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -1202,7 +1202,7 @@ public readonly partial struct DenoSchema
         /// Set the <c>scopes</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetScopes(in Corvus.DenoBenchmark.Current.DenoSchema.ScopesEntity.Source value)
+        public void SetScopes(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ScopesEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1283,7 +1283,7 @@ public readonly partial struct DenoSchema
         /// Set the <c>tasks</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTasks(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForDenoTask.Source value)
+        public void SetTasks(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForDenoTask.Source value)
         {
             CheckValidInstance();
 
@@ -1364,7 +1364,7 @@ public readonly partial struct DenoSchema
         /// Set the <c>test</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTest(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForDenoTest.Source value)
+        public void SetTest(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForDenoTest.Source value)
         {
             CheckValidInstance();
 
@@ -1445,7 +1445,7 @@ public readonly partial struct DenoSchema
         /// Set the <c>vendor</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVendor(in Corvus.DenoBenchmark.Current.JsonBoolean.Source value)
+        public void SetVendor(scoped in Corvus.DenoBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -1591,7 +1591,7 @@ public readonly partial struct DenoSchema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -1614,7 +1614,7 @@ public readonly partial struct DenoSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1661,7 +1661,7 @@ public readonly partial struct DenoSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 

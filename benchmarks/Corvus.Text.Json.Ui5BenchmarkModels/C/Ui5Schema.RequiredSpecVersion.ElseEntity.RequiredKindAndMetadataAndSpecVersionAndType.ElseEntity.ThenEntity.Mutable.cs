@@ -455,7 +455,7 @@ public readonly partial struct Ui5Schema
                             /// Set the <c>customConfiguration</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetCustomConfiguration(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ThenEntity.CustomConfigurationEntity.Source value)
+                            public void SetCustomConfiguration(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ThenEntity.CustomConfigurationEntity.Source value)
                             {
                                 CheckValidInstance();
 
@@ -536,7 +536,7 @@ public readonly partial struct Ui5Schema
                             /// Set the <c>kind</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetKind(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.KindEntity.Source value)
+                            public void SetKind(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.KindEntity.Source value)
                             {
                                 CheckValidInstance();
 
@@ -567,7 +567,7 @@ public readonly partial struct Ui5Schema
                             /// Set the <c>metadata</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetMetadata(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.RequiredName.Source value)
+                            public void SetMetadata(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.RequiredName.Source value)
                             {
                                 CheckValidInstance();
 
@@ -632,7 +632,7 @@ public readonly partial struct Ui5Schema
                             /// Set the <c>specVersion</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetSpecVersion(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.SpecVersionEntity.Source value)
+                            public void SetSpecVersion(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.SpecVersionEntity.Source value)
                             {
                                 CheckValidInstance();
 
@@ -663,7 +663,7 @@ public readonly partial struct Ui5Schema
                             /// Set the <c>task</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetTask(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.TaskEntity.Source value)
+                            public void SetTask(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.TaskEntity.Source value)
                             {
                                 CheckValidInstance();
 
@@ -728,7 +728,7 @@ public readonly partial struct Ui5Schema
                             /// Set the <c>type</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetType(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.TypeEntity.Source value)
+                            public void SetType(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.TypeEntity.Source value)
                             {
                                 CheckValidInstance();
 
@@ -860,7 +860,7 @@ public readonly partial struct Ui5Schema
                             ///   </para>
                             /// </remarks>
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                            public void SetProperty(string propertyName, in JsonElement.Source value)
+                            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                             {
                                 SetProperty(propertyName.AsSpan(), value);
                             }
@@ -883,7 +883,7 @@ public readonly partial struct Ui5Schema
                             ///     If the property doesn't exist, it will be added to the object.
                             ///   </para>
                             /// </remarks>
-                            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                             {
                                 CheckValidInstance();
 
@@ -930,7 +930,7 @@ public readonly partial struct Ui5Schema
                             ///     If the property doesn't exist, it will be added to the object.
                             ///   </para>
                             /// </remarks>
-                            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                             {
                                 CheckValidInstance();
 
@@ -1208,7 +1208,7 @@ public readonly partial struct Ui5Schema
 
                             internal Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                            internal Source(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.KindEntity.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.RequiredName.Source arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.SpecVersionEntity.Source arg3, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.TaskEntity.Source arg4, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.TypeEntity.Source arg5, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ThenEntity.CustomConfigurationEntity.Source arg6)
+                            internal Source(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.KindEntity.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.RequiredName.Source arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.SpecVersionEntity.Source arg3, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.TaskEntity.Source arg4, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.TypeEntity.Source arg5, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ThenEntity.CustomConfigurationEntity.Source arg6)
                             {
                                 _createArg1 = arg1;
                                 _createArg2 = arg2;
@@ -1382,7 +1382,7 @@ public readonly partial struct Ui5Schema
 
                             internal Source(scoped in TContext context, Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                            internal Source(scoped in TContext context, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.KindEntity.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.RequiredName.Source<TContext> arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.SpecVersionEntity.Source arg3, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.TaskEntity.Source<TContext> arg4, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.TypeEntity.Source arg5, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ThenEntity.CustomConfigurationEntity.Source<TContext> arg6)
+                            internal Source(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.KindEntity.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.RequiredName.Source<TContext> arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.SpecVersionEntity.Source arg3, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.TaskEntity.Source<TContext> arg4, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.TypeEntity.Source arg5, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ThenEntity.CustomConfigurationEntity.Source<TContext> arg6)
                             {
                                 _context = context;
                                 _createArg1 = arg1;
@@ -1716,7 +1716,7 @@ public readonly partial struct Ui5Schema
                             /// <param name="arg5">The value of the property.</param>
                             /// <param name="arg6">The value of the property.</param>
                             /// <param name="o">The complex value builder into which to write the object.</param>
-                            internal static void BuildCreateValue(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.KindEntity.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.RequiredName.Source arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.SpecVersionEntity.Source arg3, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.TaskEntity.Source arg4, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.TypeEntity.Source arg5, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ThenEntity.CustomConfigurationEntity.Source arg6, ref ComplexValueBuilder o)
+                            internal static void BuildCreateValue(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.KindEntity.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.RequiredName.Source arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.SpecVersionEntity.Source arg3, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.TaskEntity.Source arg4, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.TypeEntity.Source arg5, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ThenEntity.CustomConfigurationEntity.Source arg6, ref ComplexValueBuilder o)
                             {
                                 o.StartObject();
                                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1735,7 +1735,7 @@ public readonly partial struct Ui5Schema
                             /// <param name="arg5">The value of the property.</param>
                             /// <param name="arg6">The value of the property.</param>
                             /// <param name="o">The complex value builder into which to write the object.</param>
-                            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.KindEntity.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.RequiredName.Source<TContext> arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.SpecVersionEntity.Source arg3, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.TaskEntity.Source<TContext> arg4, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.TypeEntity.Source arg5, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ThenEntity.CustomConfigurationEntity.Source<TContext> arg6, ref ComplexValueBuilder o)
+                            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.KindEntity.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.RequiredName.Source<TContext> arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.SpecVersionEntity.Source arg3, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.TaskEntity.Source<TContext> arg4, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.TypeEntity.Source arg5, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ThenEntity.CustomConfigurationEntity.Source<TContext> arg6, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                                 where TContext : allows ref struct
 #endif
@@ -1785,7 +1785,7 @@ public readonly partial struct Ui5Schema
                         /// <param name="type">The value of the <c>"type"</c> property.</param>
                         /// <param name="customConfiguration">The value of the <c>"customConfiguration"</c> property.</param>
                         /// <returns>The source from which to build the value.</returns>
-                        public static Source Build(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.KindEntity.Source kind, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.RequiredName.Source metadata, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.SpecVersionEntity.Source specVersion, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.TaskEntity.Source task, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.TypeEntity.Source type, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ThenEntity.CustomConfigurationEntity.Source customConfiguration = default)
+                        public static Source Build(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.KindEntity.Source kind, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.RequiredName.Source metadata, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.SpecVersionEntity.Source specVersion, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.TaskEntity.Source task, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.TypeEntity.Source type, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ThenEntity.CustomConfigurationEntity.Source customConfiguration = default)
                         {
                             return new Source(kind, metadata, specVersion, task, type, customConfiguration);
                         }
@@ -1802,7 +1802,7 @@ public readonly partial struct Ui5Schema
                         /// <param name="type">The value of the <c>"type"</c> property.</param>
                         /// <param name="customConfiguration">The value of the <c>"customConfiguration"</c> property.</param>
                         /// <returns>The source from which to build the value.</returns>
-                        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.KindEntity.Source kind, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.RequiredName.Source<TContext> metadata, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.SpecVersionEntity.Source specVersion, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.TaskEntity.Source<TContext> task, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.TypeEntity.Source type, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ThenEntity.CustomConfigurationEntity.Source<TContext> customConfiguration = default)
+                        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.KindEntity.Source kind, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.RequiredName.Source<TContext> metadata, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.SpecVersionEntity.Source specVersion, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.TaskEntity.Source<TContext> task, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ElseEntity2.TypeEntity.Source type, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ThenEntity.ElseEntity.ThenEntity.CustomConfigurationEntity.Source<TContext> customConfiguration = default)
                             #if NET9_0_OR_GREATER
                             where TContext : allows ref struct
                             #endif

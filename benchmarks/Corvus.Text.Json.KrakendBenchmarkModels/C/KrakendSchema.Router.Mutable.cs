@@ -601,7 +601,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>capacity</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCapacityValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Capacity.Source value)
+            public void SetCapacityValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Capacity.Source value)
             {
                 CheckValidInstance();
 
@@ -646,7 +646,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>cleanup_period</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCleanupPeriod(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+            public void SetCleanupPeriod(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
             {
                 CheckValidInstance();
 
@@ -691,7 +691,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>cleanup_threads</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCleanupThreadsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.CleanupThreads.Source value)
+            public void SetCleanupThreadsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.CleanupThreads.Source value)
             {
                 CheckValidInstance();
 
@@ -736,7 +736,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>client_capacity</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetClientCapacityValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.ClientCapacity.Source value)
+            public void SetClientCapacityValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.ClientCapacity.Source value)
             {
                 CheckValidInstance();
 
@@ -781,7 +781,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>client_max_rate</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetClientMaxRate(in Corvus.KrakendBenchmark.Current.JsonNumber.Source value)
+            public void SetClientMaxRate(scoped in Corvus.KrakendBenchmark.Current.JsonNumber.Source value)
             {
                 CheckValidInstance();
 
@@ -826,7 +826,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>every</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEvery(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+            public void SetEvery(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
             {
                 CheckValidInstance();
 
@@ -871,7 +871,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetKey(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetKey(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -916,7 +916,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>max_rate</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxRate(in Corvus.KrakendBenchmark.Current.JsonNumber.Source value)
+            public void SetMaxRate(scoped in Corvus.KrakendBenchmark.Current.JsonNumber.Source value)
             {
                 CheckValidInstance();
 
@@ -961,7 +961,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>num_shards</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNumShardsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.NumShards.Source value)
+            public void SetNumShardsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.NumShards.Source value)
             {
                 CheckValidInstance();
 
@@ -1006,7 +1006,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>strategy</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStrategyValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Strategy.Source value)
+            public void SetStrategyValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Strategy.Source value)
             {
                 CheckValidInstance();
 
@@ -1188,7 +1188,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1211,7 +1211,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1258,7 +1258,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1531,7 +1531,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Capacity.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.CleanupThreads.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.ClientCapacity.Source arg4, in Corvus.KrakendBenchmark.Current.JsonNumber.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg6, in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, in Corvus.KrakendBenchmark.Current.JsonNumber.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.NumShards.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Strategy.Source arg10)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Capacity.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.CleanupThreads.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.ClientCapacity.Source arg4, scoped in Corvus.KrakendBenchmark.Current.JsonNumber.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg6, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonNumber.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.NumShards.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Strategy.Source arg10)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1965,7 +1965,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Capacity.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.CleanupThreads.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.ClientCapacity.Source arg4, in Corvus.KrakendBenchmark.Current.JsonNumber.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg6, in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, in Corvus.KrakendBenchmark.Current.JsonNumber.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.NumShards.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Strategy.Source arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Capacity.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.CleanupThreads.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.ClientCapacity.Source arg4, scoped in Corvus.KrakendBenchmark.Current.JsonNumber.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg6, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonNumber.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.NumShards.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Strategy.Source arg10, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
@@ -2016,7 +2016,7 @@ public readonly partial struct KrakendSchema
         /// <param name="numShards">The value of the <c>"num_shards"</c> property.</param>
         /// <param name="strategy">The value of the <c>"strategy"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Capacity.Source capacity = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source cleanupPeriod = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.CleanupThreads.Source cleanupThreads = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.ClientCapacity.Source clientCapacity = default, in Corvus.KrakendBenchmark.Current.JsonNumber.Source clientMaxRate = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source every = default, in Corvus.KrakendBenchmark.Current.JsonString.Source key = default, in Corvus.KrakendBenchmark.Current.JsonNumber.Source maxRate = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.NumShards.Source numShards = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Strategy.Source strategy = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Capacity.Source capacity = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source cleanupPeriod = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.CleanupThreads.Source cleanupThreads = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.ClientCapacity.Source clientCapacity = default, scoped in Corvus.KrakendBenchmark.Current.JsonNumber.Source clientMaxRate = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source every = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source key = default, scoped in Corvus.KrakendBenchmark.Current.JsonNumber.Source maxRate = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.NumShards.Source numShards = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Router.Strategy.Source strategy = default)
         {
             return new Source(capacity, cleanupPeriod, cleanupThreads, clientCapacity, clientMaxRate, every, key, maxRate, numShards, strategy);
         }

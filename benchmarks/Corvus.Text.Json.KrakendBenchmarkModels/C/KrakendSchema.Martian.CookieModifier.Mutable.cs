@@ -529,7 +529,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>domain</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDomain(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetDomain(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -574,7 +574,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>expires</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetExpires(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetExpires(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -619,7 +619,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>httpOnly</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetHttpOnly(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.HttpOnlyEntity.Source value)
+                public void SetHttpOnly(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.HttpOnlyEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -664,7 +664,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>maxAge</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMaxAge(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.MaxAgeEntity.Source value)
+                public void SetMaxAge(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.MaxAgeEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -709,7 +709,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>name</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetName(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetName(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -740,7 +740,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>path</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPath(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetPath(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -785,7 +785,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>scope</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScopeValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Scope.Source value)
+                public void SetScopeValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Scope.Source value)
                 {
                     CheckValidInstance();
 
@@ -850,7 +850,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>secure</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSecure(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.SecureEntity.Source value)
+                public void SetSecure(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.SecureEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -895,7 +895,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>value</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetValue(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetValue(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -1027,7 +1027,7 @@ public readonly partial struct KrakendSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -1050,7 +1050,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1097,7 +1097,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1275,7 +1275,7 @@ public readonly partial struct KrakendSchema
 
                 internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Scope.Source arg2, in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.HttpOnlyEntity.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.MaxAgeEntity.Source arg7, in Corvus.KrakendBenchmark.Current.JsonString.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.SecureEntity.Source arg9)
+                internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Scope.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.HttpOnlyEntity.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.MaxAgeEntity.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.SecureEntity.Source arg9)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1455,7 +1455,7 @@ public readonly partial struct KrakendSchema
 
                 internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Scope.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.HttpOnlyEntity.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.MaxAgeEntity.Source arg7, in Corvus.KrakendBenchmark.Current.JsonString.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.SecureEntity.Source arg9)
+                internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Scope.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.HttpOnlyEntity.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.MaxAgeEntity.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.SecureEntity.Source arg9)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1813,7 +1813,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="arg8">The value of the property.</param>
                 /// <param name="arg9">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Scope.Source arg2, in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.HttpOnlyEntity.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.MaxAgeEntity.Source arg7, in Corvus.KrakendBenchmark.Current.JsonString.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.SecureEntity.Source arg9, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Scope.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.HttpOnlyEntity.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.MaxAgeEntity.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.SecureEntity.Source arg9, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
@@ -1835,7 +1835,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="arg8">The value of the property.</param>
                 /// <param name="arg9">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Scope.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.HttpOnlyEntity.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.MaxAgeEntity.Source arg7, in Corvus.KrakendBenchmark.Current.JsonString.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.SecureEntity.Source arg9, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Scope.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.HttpOnlyEntity.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.MaxAgeEntity.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.SecureEntity.Source arg9, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1888,7 +1888,7 @@ public readonly partial struct KrakendSchema
             /// <param name="path">The value of the <c>"path"</c> property.</param>
             /// <param name="secure">The value of the <c>"secure"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.KrakendBenchmark.Current.JsonString.Source name, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Scope.Source scope, in Corvus.KrakendBenchmark.Current.JsonString.Source value, in Corvus.KrakendBenchmark.Current.JsonString.Source domain = default, in Corvus.KrakendBenchmark.Current.JsonString.Source expires = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.HttpOnlyEntity.Source httpOnly = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.MaxAgeEntity.Source maxAge = default, in Corvus.KrakendBenchmark.Current.JsonString.Source path = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.SecureEntity.Source secure = default)
+            public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source name, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Scope.Source scope, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source domain = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source expires = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.HttpOnlyEntity.Source httpOnly = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.MaxAgeEntity.Source maxAge = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source path = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.SecureEntity.Source secure = default)
             {
                 return new Source(name, scope, value, domain, expires, httpOnly, maxAge, path, secure);
             }
@@ -1908,7 +1908,7 @@ public readonly partial struct KrakendSchema
             /// <param name="path">The value of the <c>"path"</c> property.</param>
             /// <param name="secure">The value of the <c>"secure"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source name, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Scope.Source<TContext> scope, in Corvus.KrakendBenchmark.Current.JsonString.Source value, in Corvus.KrakendBenchmark.Current.JsonString.Source domain = default, in Corvus.KrakendBenchmark.Current.JsonString.Source expires = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.HttpOnlyEntity.Source httpOnly = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.MaxAgeEntity.Source maxAge = default, in Corvus.KrakendBenchmark.Current.JsonString.Source path = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.SecureEntity.Source secure = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source name, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Scope.Source<TContext> scope, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source domain = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source expires = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.HttpOnlyEntity.Source httpOnly = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.MaxAgeEntity.Source maxAge = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source path = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.SecureEntity.Source secure = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

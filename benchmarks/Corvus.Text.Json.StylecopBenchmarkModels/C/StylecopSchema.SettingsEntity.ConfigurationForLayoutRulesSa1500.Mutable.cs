@@ -292,7 +292,7 @@ public readonly partial struct StylecopSchema
                 /// Set the <c>allowConsecutiveUsings</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowConsecutiveUsings(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowConsecutiveUsingsEntity.Source value)
+                public void SetAllowConsecutiveUsings(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowConsecutiveUsingsEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -337,7 +337,7 @@ public readonly partial struct StylecopSchema
                 /// Set the <c>allowDoWhileOnClosingBrace</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowDoWhileOnClosingBrace(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowDoWhileOnClosingBraceEntity.Source value)
+                public void SetAllowDoWhileOnClosingBrace(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowDoWhileOnClosingBraceEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -382,7 +382,7 @@ public readonly partial struct StylecopSchema
                 /// Set the <c>newlineAtEndOfFile</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNewlineAtEndOfFile(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.NewlineAtEndOfFileEntity.Source value)
+                public void SetNewlineAtEndOfFile(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.NewlineAtEndOfFileEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -594,7 +594,7 @@ public readonly partial struct StylecopSchema
 
                 internal Source(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowConsecutiveUsingsEntity.Source arg1, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowDoWhileOnClosingBraceEntity.Source arg2, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.NewlineAtEndOfFileEntity.Source arg3)
+                internal Source(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowConsecutiveUsingsEntity.Source arg1, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowDoWhileOnClosingBraceEntity.Source arg2, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.NewlineAtEndOfFileEntity.Source arg3)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -922,7 +922,7 @@ public readonly partial struct StylecopSchema
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowConsecutiveUsingsEntity.Source arg1, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowDoWhileOnClosingBraceEntity.Source arg2, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.NewlineAtEndOfFileEntity.Source arg3, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowConsecutiveUsingsEntity.Source arg1, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowDoWhileOnClosingBraceEntity.Source arg2, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.NewlineAtEndOfFileEntity.Source arg3, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3);
@@ -966,7 +966,7 @@ public readonly partial struct StylecopSchema
             /// <param name="allowDoWhileOnClosingBrace">The value of the <c>"allowDoWhileOnClosingBrace"</c> property.</param>
             /// <param name="newlineAtEndOfFile">The value of the <c>"newlineAtEndOfFile"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowConsecutiveUsingsEntity.Source allowConsecutiveUsings = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowDoWhileOnClosingBraceEntity.Source allowDoWhileOnClosingBrace = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.NewlineAtEndOfFileEntity.Source newlineAtEndOfFile = default)
+            public static Source Build(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowConsecutiveUsingsEntity.Source allowConsecutiveUsings = default, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.AllowDoWhileOnClosingBraceEntity.Source allowDoWhileOnClosingBrace = default, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForLayoutRulesSa1500.NewlineAtEndOfFileEntity.Source newlineAtEndOfFile = default)
             {
                 return new Source(allowConsecutiveUsings, allowDoWhileOnClosingBrace, newlineAtEndOfFile);
             }

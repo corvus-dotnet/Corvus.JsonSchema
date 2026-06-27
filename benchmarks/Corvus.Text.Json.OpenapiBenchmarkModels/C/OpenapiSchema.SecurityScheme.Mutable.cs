@@ -485,7 +485,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>bearerFormat</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBearerFormat(in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
+            public void SetBearerFormat(scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -530,7 +530,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
+            public void SetDescription(scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -575,7 +575,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>flows</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFlows(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source value)
+            public void SetFlows(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source value)
             {
                 CheckValidInstance();
 
@@ -656,7 +656,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>in</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIn(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source value)
+            public void SetIn(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -701,7 +701,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetName(in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
+            public void SetName(scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -746,7 +746,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>openIdConnectUrl</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOpenIdConnectUrl(in Corvus.OpenapiBenchmark.Current.JsonUri.Source value)
+            public void SetOpenIdConnectUrl(scoped in Corvus.OpenapiBenchmark.Current.JsonUri.Source value)
             {
                 CheckValidInstance();
 
@@ -791,7 +791,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>scheme</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetScheme(in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
+            public void SetScheme(scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -836,7 +836,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source value)
+            public void SetType(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1076,7 +1076,7 @@ public readonly partial struct OpenapiSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1099,7 +1099,7 @@ public readonly partial struct OpenapiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1146,7 +1146,7 @@ public readonly partial struct OpenapiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1539,7 +1539,7 @@ public readonly partial struct OpenapiSchema
 
             internal Source(Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source arg1, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg2, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source arg4, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source arg5, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg6, in Corvus.OpenapiBenchmark.Current.JsonUri.Source arg7, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg8)
+            internal Source(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg2, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg3, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source arg4, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source arg5, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg6, scoped in Corvus.OpenapiBenchmark.Current.JsonUri.Source arg7, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg8)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1717,7 +1717,7 @@ public readonly partial struct OpenapiSchema
 
             internal Source(scoped in TContext context, Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source arg1, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg2, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source<TContext> arg4, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source arg5, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg6, in Corvus.OpenapiBenchmark.Current.JsonUri.Source arg7, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg8)
+            internal Source(scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg2, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg3, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source<TContext> arg4, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source arg5, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg6, scoped in Corvus.OpenapiBenchmark.Current.JsonUri.Source arg7, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg8)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2067,7 +2067,7 @@ public readonly partial struct OpenapiSchema
             /// <param name="arg7">The value of the property.</param>
             /// <param name="arg8">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source arg1, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg2, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source arg4, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source arg5, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg6, in Corvus.OpenapiBenchmark.Current.JsonUri.Source arg7, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg8, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg2, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg3, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source arg4, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source arg5, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg6, scoped in Corvus.OpenapiBenchmark.Current.JsonUri.Source arg7, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg8, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
@@ -2088,7 +2088,7 @@ public readonly partial struct OpenapiSchema
             /// <param name="arg7">The value of the property.</param>
             /// <param name="arg8">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source arg1, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg2, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source<TContext> arg4, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source arg5, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg6, in Corvus.OpenapiBenchmark.Current.JsonUri.Source arg7, in Corvus.OpenapiBenchmark.Current.JsonString.Source arg8, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg2, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg3, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source<TContext> arg4, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source arg5, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg6, scoped in Corvus.OpenapiBenchmark.Current.JsonUri.Source arg7, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source arg8, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2140,7 +2140,7 @@ public readonly partial struct OpenapiSchema
         /// <param name="openIdConnectUrl">The value of the <c>"openIdConnectUrl"</c> property.</param>
         /// <param name="scheme">The value of the <c>"scheme"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source type, in Corvus.OpenapiBenchmark.Current.JsonString.Source bearerFormat = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source flows = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source inValue = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default, in Corvus.OpenapiBenchmark.Current.JsonUri.Source openIdConnectUrl = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source scheme = default)
+        public static Source Build(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source type, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source bearerFormat = default, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source flows = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source inValue = default, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default, scoped in Corvus.OpenapiBenchmark.Current.JsonUri.Source openIdConnectUrl = default, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source scheme = default)
         {
             return new Source(type, bearerFormat, description, flows, inValue, name, openIdConnectUrl, scheme);
         }
@@ -2159,7 +2159,7 @@ public readonly partial struct OpenapiSchema
         /// <param name="openIdConnectUrl">The value of the <c>"openIdConnectUrl"</c> property.</param>
         /// <param name="scheme">The value of the <c>"scheme"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source type, in Corvus.OpenapiBenchmark.Current.JsonString.Source bearerFormat = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source<TContext> flows = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source inValue = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default, in Corvus.OpenapiBenchmark.Current.JsonUri.Source openIdConnectUrl = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source scheme = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source type, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source bearerFormat = default, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source<TContext> flows = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source inValue = default, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default, scoped in Corvus.OpenapiBenchmark.Current.JsonUri.Source openIdConnectUrl = default, scoped in Corvus.OpenapiBenchmark.Current.JsonString.Source scheme = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

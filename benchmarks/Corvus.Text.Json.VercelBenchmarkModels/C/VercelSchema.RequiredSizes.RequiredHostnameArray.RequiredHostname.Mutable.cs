@@ -279,7 +279,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>hostname</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetHostname(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.HostnameEntity.Source value)
+                    public void SetHostname(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.HostnameEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -310,7 +310,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>pathname</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetPathname(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.PathnameEntity.Source value)
+                    public void SetPathname(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.PathnameEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -355,7 +355,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>port</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetPort(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.PortEntity.Source value)
+                    public void SetPort(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.PortEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -400,7 +400,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>protocol</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetProtocol(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.ProtocolEntity.Source value)
+                    public void SetProtocol(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.ProtocolEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -613,7 +613,7 @@ public readonly partial struct VercelSchema
 
                     internal Source(Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.HostnameEntity.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.PathnameEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.PortEntity.Source arg3, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.ProtocolEntity.Source arg4)
+                    internal Source(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.HostnameEntity.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.PathnameEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.PortEntity.Source arg3, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.ProtocolEntity.Source arg4)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -946,7 +946,7 @@ public readonly partial struct VercelSchema
                     /// <param name="arg3">The value of the property.</param>
                     /// <param name="arg4">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.HostnameEntity.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.PathnameEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.PortEntity.Source arg3, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.ProtocolEntity.Source arg4, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.HostnameEntity.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.PathnameEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.PortEntity.Source arg3, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.ProtocolEntity.Source arg4, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3, arg4);
@@ -991,7 +991,7 @@ public readonly partial struct VercelSchema
                 /// <param name="port">The value of the <c>"port"</c> property.</param>
                 /// <param name="protocol">The value of the <c>"protocol"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.HostnameEntity.Source hostname, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.PathnameEntity.Source pathname = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.PortEntity.Source port = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.ProtocolEntity.Source protocol = default)
+                public static Source Build(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.HostnameEntity.Source hostname, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.PathnameEntity.Source pathname = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.PortEntity.Source port = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.RequiredHostnameArray.RequiredHostname.ProtocolEntity.Source protocol = default)
                 {
                     return new Source(hostname, pathname, port, protocol);
                 }

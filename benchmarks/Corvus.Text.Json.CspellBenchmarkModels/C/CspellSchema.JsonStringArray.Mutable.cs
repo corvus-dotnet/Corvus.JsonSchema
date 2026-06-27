@@ -384,7 +384,7 @@ public readonly partial struct CspellSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Corvus.CspellBenchmark.Current.JsonString.Source value)
+            public void InsertItem(int itemIndex, scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -410,7 +410,7 @@ public readonly partial struct CspellSchema
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+            public void AddItem(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }

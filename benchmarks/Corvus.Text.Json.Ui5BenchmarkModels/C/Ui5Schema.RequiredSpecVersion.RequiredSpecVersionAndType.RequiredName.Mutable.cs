@@ -300,7 +300,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>allowSapInternal</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetAllowSapInternal(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.AllowSapInternalEntity.Source value)
+                    public void SetAllowSapInternal(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.AllowSapInternalEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -345,7 +345,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>copyright</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetCopyright(in Corvus.Ui5Benchmark.Current.JsonString.Source value)
+                    public void SetCopyright(scoped in Corvus.Ui5Benchmark.Current.JsonString.Source value)
                     {
                         CheckValidInstance();
 
@@ -390,7 +390,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>deprecated</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetDeprecated(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.DeprecatedEntity.Source value)
+                    public void SetDeprecated(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.DeprecatedEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -435,7 +435,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>name</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetName(in Corvus.Ui5Benchmark.Current.JsonString.Source value)
+                    public void SetName(scoped in Corvus.Ui5Benchmark.Current.JsonString.Source value)
                     {
                         CheckValidInstance();
 
@@ -466,7 +466,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>sapInternal</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetSapInternal(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.SapInternalEntity.Source value)
+                    public void SetSapInternal(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.SapInternalEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -680,7 +680,7 @@ public readonly partial struct Ui5Schema
 
                     internal Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.Ui5Benchmark.Current.JsonString.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.AllowSapInternalEntity.Source arg2, in Corvus.Ui5Benchmark.Current.JsonString.Source arg3, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.DeprecatedEntity.Source arg4, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.SapInternalEntity.Source arg5)
+                    internal Source(scoped in Corvus.Ui5Benchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.AllowSapInternalEntity.Source arg2, scoped in Corvus.Ui5Benchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.DeprecatedEntity.Source arg4, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.SapInternalEntity.Source arg5)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -1018,7 +1018,7 @@ public readonly partial struct Ui5Schema
                     /// <param name="arg4">The value of the property.</param>
                     /// <param name="arg5">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.Ui5Benchmark.Current.JsonString.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.AllowSapInternalEntity.Source arg2, in Corvus.Ui5Benchmark.Current.JsonString.Source arg3, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.DeprecatedEntity.Source arg4, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.SapInternalEntity.Source arg5, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.Ui5Benchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.AllowSapInternalEntity.Source arg2, scoped in Corvus.Ui5Benchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.DeprecatedEntity.Source arg4, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.SapInternalEntity.Source arg5, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1064,7 +1064,7 @@ public readonly partial struct Ui5Schema
                 /// <param name="deprecated">The value of the <c>"deprecated"</c> property.</param>
                 /// <param name="sapInternal">The value of the <c>"sapInternal"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.Ui5Benchmark.Current.JsonString.Source name, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.AllowSapInternalEntity.Source allowSapInternal = default, in Corvus.Ui5Benchmark.Current.JsonString.Source copyright = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.DeprecatedEntity.Source deprecated = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.SapInternalEntity.Source sapInternal = default)
+                public static Source Build(scoped in Corvus.Ui5Benchmark.Current.JsonString.Source name, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.AllowSapInternalEntity.Source allowSapInternal = default, scoped in Corvus.Ui5Benchmark.Current.JsonString.Source copyright = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.DeprecatedEntity.Source deprecated = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredName.SapInternalEntity.Source sapInternal = default)
                 {
                     return new Source(name, allowSapInternal, copyright, deprecated, sapInternal);
                 }

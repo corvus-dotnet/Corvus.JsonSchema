@@ -310,7 +310,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>number</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNumber(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetNumber(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -355,7 +355,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>state</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetState(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.TheStateColorOfTheSideIndicator.Source value)
+            public void SetState(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.TheStateColorOfTheSideIndicator.Source value)
             {
                 CheckValidInstance();
 
@@ -400,7 +400,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>title</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTitle(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -445,7 +445,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>unit</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUnit(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetUnit(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -490,7 +490,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>visible</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVisible(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.VisibilityOfTheSideIndicator.Source value)
+            public void SetVisible(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.VisibilityOfTheSideIndicator.Source value)
             {
                 CheckValidInstance();
 
@@ -704,7 +704,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.TheStateColorOfTheSideIndicator.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.VisibilityOfTheSideIndicator.Source arg5)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.TheStateColorOfTheSideIndicator.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.VisibilityOfTheSideIndicator.Source arg5)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1042,7 +1042,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg4">The value of the property.</param>
             /// <param name="arg5">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.TheStateColorOfTheSideIndicator.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.VisibilityOfTheSideIndicator.Source arg5, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.TheStateColorOfTheSideIndicator.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.VisibilityOfTheSideIndicator.Source arg5, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1088,7 +1088,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="unit">The value of the <c>"unit"</c> property.</param>
         /// <param name="visible">The value of the <c>"visible"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source number = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.TheStateColorOfTheSideIndicator.Source state = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source unit = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.VisibilityOfTheSideIndicator.Source visible = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source number = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.TheStateColorOfTheSideIndicator.Source state = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source unit = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumericSideIndicator.VisibilityOfTheSideIndicator.Source visible = default)
         {
             return new Source(number, state, title, unit, visible);
         }

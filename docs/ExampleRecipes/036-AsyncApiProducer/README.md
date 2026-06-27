@@ -35,16 +35,13 @@ This produces:
 
 ## How the Generated Code Helps
 
-### Payload Construction (Source Pattern)
+### Payload Construction (Build Factory)
 
-The generated `TurnOnOffPayload.Source` uses a ref-struct builder that avoids allocating intermediate objects:
+The generated `TurnOnOffPayload.Build()` factory constructs the payload directly from native values, avoiding intermediate objects:
 
 ```csharp
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-42");
 ```
 

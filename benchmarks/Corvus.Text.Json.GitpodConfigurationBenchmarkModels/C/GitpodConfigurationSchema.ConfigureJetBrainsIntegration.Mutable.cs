@@ -394,7 +394,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// Set the <c>clion</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetClion(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source value)
+            public void SetClion(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source value)
             {
                 CheckValidInstance();
 
@@ -475,7 +475,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// Set the <c>goland</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGoland(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source value)
+            public void SetGoland(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source value)
             {
                 CheckValidInstance();
 
@@ -556,7 +556,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// Set the <c>intellij</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIntellij(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source value)
+            public void SetIntellij(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source value)
             {
                 CheckValidInstance();
 
@@ -637,7 +637,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// Set the <c>phpstorm</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPhpstorm(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source value)
+            public void SetPhpstorm(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source value)
             {
                 CheckValidInstance();
 
@@ -718,7 +718,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// Set the <c>plugins</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPlugins(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.JsonStringArray.Source value)
+            public void SetPlugins(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -799,7 +799,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// Set the <c>pycharm</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPycharm(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source value)
+            public void SetPycharm(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source value)
             {
                 CheckValidInstance();
 
@@ -880,7 +880,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// Set the <c>rider</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRider(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source value)
+            public void SetRider(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source value)
             {
                 CheckValidInstance();
 
@@ -961,7 +961,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// Set the <c>rubymine</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRubymine(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source value)
+            public void SetRubymine(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source value)
             {
                 CheckValidInstance();
 
@@ -1042,7 +1042,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// Set the <c>webstorm</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetWebstorm(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source value)
+            public void SetWebstorm(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source value)
             {
                 CheckValidInstance();
 

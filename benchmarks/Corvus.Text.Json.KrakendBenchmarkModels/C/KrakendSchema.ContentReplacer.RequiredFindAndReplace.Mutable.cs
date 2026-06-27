@@ -343,7 +343,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>find</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetFind(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetFind(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -374,7 +374,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>regexp</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRegexp(in Corvus.KrakendBenchmark.Current.KrakendSchema.ContentReplacer.RequiredFindAndReplace.IsARegexp.Source value)
+                public void SetRegexp(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ContentReplacer.RequiredFindAndReplace.IsARegexp.Source value)
                 {
                     CheckValidInstance();
 
@@ -419,7 +419,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>replace</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetReplace(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetReplace(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -551,7 +551,7 @@ public readonly partial struct KrakendSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -574,7 +574,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -621,7 +621,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -793,7 +793,7 @@ public readonly partial struct KrakendSchema
 
                 internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.ContentReplacer.RequiredFindAndReplace.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.ContentReplacer.RequiredFindAndReplace.IsARegexp.Source arg3)
+                internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ContentReplacer.RequiredFindAndReplace.IsARegexp.Source arg3)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1190,7 +1190,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.ContentReplacer.RequiredFindAndReplace.IsARegexp.Source arg3, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ContentReplacer.RequiredFindAndReplace.IsARegexp.Source arg3, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3);
@@ -1234,7 +1234,7 @@ public readonly partial struct KrakendSchema
             /// <param name="replace">The value of the <c>"replace"</c> property.</param>
             /// <param name="regexp">The value of the <c>"regexp"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.KrakendBenchmark.Current.JsonString.Source find, in Corvus.KrakendBenchmark.Current.JsonString.Source replace, in Corvus.KrakendBenchmark.Current.KrakendSchema.ContentReplacer.RequiredFindAndReplace.IsARegexp.Source regexp = default)
+            public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source find, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source replace, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ContentReplacer.RequiredFindAndReplace.IsARegexp.Source regexp = default)
             {
                 return new Source(find, replace, regexp);
             }

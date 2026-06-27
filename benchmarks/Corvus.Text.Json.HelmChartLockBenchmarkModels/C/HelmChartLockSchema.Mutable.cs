@@ -269,7 +269,7 @@ public readonly partial struct HelmChartLockSchema
         /// Set the <c>dependencies</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDependencies(in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.Source value)
+        public void SetDependencies(scoped in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.Source value)
         {
             CheckValidInstance();
 
@@ -334,7 +334,7 @@ public readonly partial struct HelmChartLockSchema
         /// Set the <c>digest</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDigest(in Corvus.HelmChartLockBenchmark.Current.JsonString.Source value)
+        public void SetDigest(scoped in Corvus.HelmChartLockBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -365,7 +365,7 @@ public readonly partial struct HelmChartLockSchema
         /// Set the <c>generated</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetGenerated(in Corvus.HelmChartLockBenchmark.Current.JsonDateTime.Source value)
+        public void SetGenerated(scoped in Corvus.HelmChartLockBenchmark.Current.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -563,7 +563,7 @@ public readonly partial struct HelmChartLockSchema
 
         internal Source(Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.Source arg1, in Corvus.HelmChartLockBenchmark.Current.JsonString.Source arg2, in Corvus.HelmChartLockBenchmark.Current.JsonDateTime.Source arg3)
+        internal Source(scoped in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.Source arg1, scoped in Corvus.HelmChartLockBenchmark.Current.JsonString.Source arg2, scoped in Corvus.HelmChartLockBenchmark.Current.JsonDateTime.Source arg3)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -731,7 +731,7 @@ public readonly partial struct HelmChartLockSchema
 
         internal Source(scoped in TContext context, Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.Source<TContext> arg1, in Corvus.HelmChartLockBenchmark.Current.JsonString.Source arg2, in Corvus.HelmChartLockBenchmark.Current.JsonDateTime.Source arg3)
+        internal Source(scoped in TContext context, scoped in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.Source<TContext> arg1, scoped in Corvus.HelmChartLockBenchmark.Current.JsonString.Source arg2, scoped in Corvus.HelmChartLockBenchmark.Current.JsonDateTime.Source arg3)
         {
             _context = context;
             _createArg1 = arg1;
@@ -972,7 +972,7 @@ public readonly partial struct HelmChartLockSchema
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.Source arg1, in Corvus.HelmChartLockBenchmark.Current.JsonString.Source arg2, in Corvus.HelmChartLockBenchmark.Current.JsonDateTime.Source arg3, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.Source arg1, scoped in Corvus.HelmChartLockBenchmark.Current.JsonString.Source arg2, scoped in Corvus.HelmChartLockBenchmark.Current.JsonDateTime.Source arg3, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3);
@@ -988,7 +988,7 @@ public readonly partial struct HelmChartLockSchema
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.Source<TContext> arg1, in Corvus.HelmChartLockBenchmark.Current.JsonString.Source arg2, in Corvus.HelmChartLockBenchmark.Current.JsonDateTime.Source arg3, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.Source<TContext> arg1, scoped in Corvus.HelmChartLockBenchmark.Current.JsonString.Source arg2, scoped in Corvus.HelmChartLockBenchmark.Current.JsonDateTime.Source arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1035,7 +1035,7 @@ public readonly partial struct HelmChartLockSchema
     /// <param name="digest">The value of the <c>"digest"</c> property.</param>
     /// <param name="generated">The value of the <c>"generated"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.Source dependencies, in Corvus.HelmChartLockBenchmark.Current.JsonString.Source digest, in Corvus.HelmChartLockBenchmark.Current.JsonDateTime.Source generated)
+    public static Source Build(scoped in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.Source dependencies, scoped in Corvus.HelmChartLockBenchmark.Current.JsonString.Source digest, scoped in Corvus.HelmChartLockBenchmark.Current.JsonDateTime.Source generated)
     {
         return new Source(dependencies, digest, generated);
     }
@@ -1049,7 +1049,7 @@ public readonly partial struct HelmChartLockSchema
     /// <param name="digest">The value of the <c>"digest"</c> property.</param>
     /// <param name="generated">The value of the <c>"generated"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.Source<TContext> dependencies, in Corvus.HelmChartLockBenchmark.Current.JsonString.Source digest, in Corvus.HelmChartLockBenchmark.Current.JsonDateTime.Source generated)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.Source<TContext> dependencies, scoped in Corvus.HelmChartLockBenchmark.Current.JsonString.Source digest, scoped in Corvus.HelmChartLockBenchmark.Current.JsonDateTime.Source generated)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

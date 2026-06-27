@@ -289,7 +289,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>enabled</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnabled(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.SetToFalseToDisableCachingForThisCard.Source value)
+            public void SetEnabled(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.SetToFalseToDisableCachingForThisCard.Source value)
             {
                 CheckValidInstance();
 
@@ -334,7 +334,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>maxAge</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxAge(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.TheMaximumAgeForWhichTheCacheIsConsideredFresh.Source value)
+            public void SetMaxAge(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.TheMaximumAgeForWhichTheCacheIsConsideredFresh.Source value)
             {
                 CheckValidInstance();
 
@@ -379,7 +379,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>noStore</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNoStore(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.DeprecatedSetToTrueToDisableCachingForThisCard.Source value)
+            public void SetNoStore(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.DeprecatedSetToTrueToDisableCachingForThisCard.Source value)
             {
                 CheckValidInstance();
 
@@ -424,7 +424,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>staleWhileRevalidate</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStaleWhileRevalidate(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.ShouldWeShowStaleCacheWhileRevalidating.Source value)
+            public void SetStaleWhileRevalidate(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.ShouldWeShowStaleCacheWhileRevalidating.Source value)
             {
                 CheckValidInstance();
 
@@ -637,7 +637,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.SetToFalseToDisableCachingForThisCard.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.TheMaximumAgeForWhichTheCacheIsConsideredFresh.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.DeprecatedSetToTrueToDisableCachingForThisCard.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.ShouldWeShowStaleCacheWhileRevalidating.Source arg4)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.SetToFalseToDisableCachingForThisCard.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.TheMaximumAgeForWhichTheCacheIsConsideredFresh.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.DeprecatedSetToTrueToDisableCachingForThisCard.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.ShouldWeShowStaleCacheWhileRevalidating.Source arg4)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -970,7 +970,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.SetToFalseToDisableCachingForThisCard.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.TheMaximumAgeForWhichTheCacheIsConsideredFresh.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.DeprecatedSetToTrueToDisableCachingForThisCard.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.ShouldWeShowStaleCacheWhileRevalidating.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.SetToFalseToDisableCachingForThisCard.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.TheMaximumAgeForWhichTheCacheIsConsideredFresh.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.DeprecatedSetToTrueToDisableCachingForThisCard.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.ShouldWeShowStaleCacheWhileRevalidating.Source arg4, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4);
@@ -1015,7 +1015,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="noStore">The value of the <c>"noStore"</c> property.</param>
         /// <param name="staleWhileRevalidate">The value of the <c>"staleWhileRevalidate"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.SetToFalseToDisableCachingForThisCard.Source enabled = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.TheMaximumAgeForWhichTheCacheIsConsideredFresh.Source maxAge = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.DeprecatedSetToTrueToDisableCachingForThisCard.Source noStore = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.ShouldWeShowStaleCacheWhileRevalidating.Source staleWhileRevalidate = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.SetToFalseToDisableCachingForThisCard.Source enabled = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.TheMaximumAgeForWhichTheCacheIsConsideredFresh.Source maxAge = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.DeprecatedSetToTrueToDisableCachingForThisCard.Source noStore = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Cache.ShouldWeShowStaleCacheWhileRevalidating.Source staleWhileRevalidate = default)
         {
             return new Source(enabled, maxAge, noStore, staleWhileRevalidate);
         }

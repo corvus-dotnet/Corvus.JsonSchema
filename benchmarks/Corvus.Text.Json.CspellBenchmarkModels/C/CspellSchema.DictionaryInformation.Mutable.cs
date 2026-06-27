@@ -394,7 +394,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>accents</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAccents(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.Source value)
+            public void SetAccents(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.Source value)
             {
                 CheckValidInstance();
 
@@ -475,7 +475,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>adjustments</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAdjustments(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.PatternAdjustmentArray.Source value)
+            public void SetAdjustments(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.PatternAdjustmentArray.Source value)
             {
                 CheckValidInstance();
 
@@ -556,7 +556,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>alphabet</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAlphabet(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Source value)
+            public void SetAlphabet(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Source value)
             {
                 CheckValidInstance();
 
@@ -637,7 +637,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>costs</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCosts(in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Source value)
+            public void SetCosts(scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Source value)
             {
                 CheckValidInstance();
 
@@ -718,7 +718,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>hunspellInformation</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHunspellInformationValue(in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.Source value)
+            public void SetHunspellInformationValue(scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.Source value)
             {
                 CheckValidInstance();
 
@@ -799,7 +799,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>ignore</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIgnore(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+            public void SetIgnore(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -844,7 +844,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>locale</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLocale(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+            public void SetLocale(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -889,7 +889,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>suggestionEditCosts</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSuggestionEditCosts(in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostsDefs.Source value)
+            public void SetSuggestionEditCosts(scoped in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostsDefs.Source value)
             {
                 CheckValidInstance();
 
@@ -1142,7 +1142,7 @@ public readonly partial struct CspellSchema
 
             internal Source(Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.PatternAdjustmentArray.Source arg2, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Source arg3, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Source arg4, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.Source arg5, in Corvus.CspellBenchmark.Current.JsonString.Source arg6, in Corvus.CspellBenchmark.Current.JsonString.Source arg7, in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostsDefs.Source arg8)
+            internal Source(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.Source arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.PatternAdjustmentArray.Source arg2, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Source arg3, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Source arg4, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.Source arg5, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg6, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg7, scoped in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostsDefs.Source arg8)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1320,7 +1320,7 @@ public readonly partial struct CspellSchema
 
             internal Source(scoped in TContext context, Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.Source<TContext> arg1, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.PatternAdjustmentArray.Source<TContext> arg2, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Source<TContext> arg3, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Source<TContext> arg4, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.Source<TContext> arg5, in Corvus.CspellBenchmark.Current.JsonString.Source arg6, in Corvus.CspellBenchmark.Current.JsonString.Source arg7, in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostsDefs.Source<TContext> arg8)
+            internal Source(scoped in TContext context, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.Source<TContext> arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.PatternAdjustmentArray.Source<TContext> arg2, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Source<TContext> arg3, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Source<TContext> arg4, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.Source<TContext> arg5, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg6, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg7, scoped in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostsDefs.Source<TContext> arg8)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1601,7 +1601,7 @@ public readonly partial struct CspellSchema
             /// <param name="arg7">The value of the property.</param>
             /// <param name="arg8">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.PatternAdjustmentArray.Source arg2, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Source arg3, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Source arg4, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.Source arg5, in Corvus.CspellBenchmark.Current.JsonString.Source arg6, in Corvus.CspellBenchmark.Current.JsonString.Source arg7, in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostsDefs.Source arg8, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.Source arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.PatternAdjustmentArray.Source arg2, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Source arg3, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Source arg4, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.Source arg5, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg6, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg7, scoped in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostsDefs.Source arg8, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
@@ -1622,7 +1622,7 @@ public readonly partial struct CspellSchema
             /// <param name="arg7">The value of the property.</param>
             /// <param name="arg8">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.Source<TContext> arg1, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.PatternAdjustmentArray.Source<TContext> arg2, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Source<TContext> arg3, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Source<TContext> arg4, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.Source<TContext> arg5, in Corvus.CspellBenchmark.Current.JsonString.Source arg6, in Corvus.CspellBenchmark.Current.JsonString.Source arg7, in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostsDefs.Source<TContext> arg8, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.Source<TContext> arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.PatternAdjustmentArray.Source<TContext> arg2, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Source<TContext> arg3, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Source<TContext> arg4, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.Source<TContext> arg5, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg6, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg7, scoped in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostsDefs.Source<TContext> arg8, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1674,7 +1674,7 @@ public readonly partial struct CspellSchema
         /// <param name="locale">The value of the <c>"locale"</c> property.</param>
         /// <param name="suggestionEditCosts">The value of the <c>"suggestionEditCosts"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.Source accents = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.PatternAdjustmentArray.Source adjustments = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Source alphabet = default, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Source costs = default, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.Source hunspellInformation = default, in Corvus.CspellBenchmark.Current.JsonString.Source ignore = default, in Corvus.CspellBenchmark.Current.JsonString.Source locale = default, in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostsDefs.Source suggestionEditCosts = default)
+        public static Source Build(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.Source accents = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.PatternAdjustmentArray.Source adjustments = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Source alphabet = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Source costs = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.Source hunspellInformation = default, scoped in Corvus.CspellBenchmark.Current.JsonString.Source ignore = default, scoped in Corvus.CspellBenchmark.Current.JsonString.Source locale = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostsDefs.Source suggestionEditCosts = default)
         {
             return new Source(accents, adjustments, alphabet, costs, hunspellInformation, ignore, locale, suggestionEditCosts);
         }
@@ -1693,7 +1693,7 @@ public readonly partial struct CspellSchema
         /// <param name="locale">The value of the <c>"locale"</c> property.</param>
         /// <param name="suggestionEditCosts">The value of the <c>"suggestionEditCosts"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.Source<TContext> accents = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.PatternAdjustmentArray.Source<TContext> adjustments = default, in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Source<TContext> alphabet = default, in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Source<TContext> costs = default, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.Source<TContext> hunspellInformation = default, in Corvus.CspellBenchmark.Current.JsonString.Source ignore = default, in Corvus.CspellBenchmark.Current.JsonString.Source locale = default, in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostsDefs.Source<TContext> suggestionEditCosts = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAccentCharactersDefaultU0300U0341.Source<TContext> accents = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.PatternAdjustmentArray.Source<TContext> adjustments = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryInformation.TheAlphabetToUse.Source<TContext> alphabet = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.EditCosts.Source<TContext> costs = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.Source<TContext> hunspellInformation = default, scoped in Corvus.CspellBenchmark.Current.JsonString.Source ignore = default, scoped in Corvus.CspellBenchmark.Current.JsonString.Source locale = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionCostsDefs.Source<TContext> suggestionEditCosts = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

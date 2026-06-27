@@ -555,7 +555,7 @@ public readonly partial struct ImplementationsOfAction
             /// Set the <c>fallback</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFallback(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetFallback(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -636,7 +636,7 @@ public readonly partial struct ImplementationsOfAction
             /// Set the <c>iconUrl</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIconUrl(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetIconUrl(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -717,7 +717,7 @@ public readonly partial struct ImplementationsOfAction
             /// Set the <c>id</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetId(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetId(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -798,7 +798,7 @@ public readonly partial struct ImplementationsOfAction
             /// Set the <c>isEnabled</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIsEnabled(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetIsEnabled(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -879,7 +879,7 @@ public readonly partial struct ImplementationsOfAction
             /// Set the <c>mode</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMode(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetMode(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -960,7 +960,7 @@ public readonly partial struct ImplementationsOfAction
             /// Set the <c>requires</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRequires(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetRequires(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1041,7 +1041,7 @@ public readonly partial struct ImplementationsOfAction
             /// Set the <c>style</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStyle(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetStyle(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1122,7 +1122,7 @@ public readonly partial struct ImplementationsOfAction
             /// Set the <c>targetElements</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTargetElements(in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.TargetElementArray.Source value)
+            public void SetTargetElements(scoped in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.TargetElementArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1187,7 +1187,7 @@ public readonly partial struct ImplementationsOfAction
             /// Set the <c>title</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTitle(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetTitle(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1268,7 +1268,7 @@ public readonly partial struct ImplementationsOfAction
             /// Set the <c>tooltip</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTooltip(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetTooltip(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1349,7 +1349,7 @@ public readonly partial struct ImplementationsOfAction
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.MustBeActionToggleVisibility.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.MustBeActionToggleVisibility.Source value)
             {
                 CheckValidInstance();
 
@@ -1481,7 +1481,7 @@ public readonly partial struct ImplementationsOfAction
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1504,7 +1504,7 @@ public readonly partial struct ImplementationsOfAction
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1551,7 +1551,7 @@ public readonly partial struct ImplementationsOfAction
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1748,7 +1748,7 @@ public readonly partial struct ImplementationsOfAction
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.TargetElementArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.MustBeActionToggleVisibility.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Text.Json.JsonElement.Source arg7, in Corvus.Text.Json.JsonElement.Source arg8, in Corvus.Text.Json.JsonElement.Source arg9, in Corvus.Text.Json.JsonElement.Source arg10, in Corvus.Text.Json.JsonElement.Source arg11)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.TargetElementArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.MustBeActionToggleVisibility.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, scoped in Corvus.Text.Json.JsonElement.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Text.Json.JsonElement.Source arg7, scoped in Corvus.Text.Json.JsonElement.Source arg8, scoped in Corvus.Text.Json.JsonElement.Source arg9, scoped in Corvus.Text.Json.JsonElement.Source arg10, scoped in Corvus.Text.Json.JsonElement.Source arg11)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1932,7 +1932,7 @@ public readonly partial struct ImplementationsOfAction
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfAction.ImplementationsOfActionRequiredType3.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.TargetElementArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.MustBeActionToggleVisibility.Source arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Text.Json.JsonElement.Source<TContext> arg7, in Corvus.Text.Json.JsonElement.Source<TContext> arg8, in Corvus.Text.Json.JsonElement.Source<TContext> arg9, in Corvus.Text.Json.JsonElement.Source<TContext> arg10, in Corvus.Text.Json.JsonElement.Source<TContext> arg11)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.TargetElementArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.MustBeActionToggleVisibility.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg7, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg8, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg9, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg10, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg11)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2306,7 +2306,7 @@ public readonly partial struct ImplementationsOfAction
             /// <param name="arg10">The value of the property.</param>
             /// <param name="arg11">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.TargetElementArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.MustBeActionToggleVisibility.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Text.Json.JsonElement.Source arg7, in Corvus.Text.Json.JsonElement.Source arg8, in Corvus.Text.Json.JsonElement.Source arg9, in Corvus.Text.Json.JsonElement.Source arg10, in Corvus.Text.Json.JsonElement.Source arg11, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.TargetElementArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.MustBeActionToggleVisibility.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, scoped in Corvus.Text.Json.JsonElement.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Text.Json.JsonElement.Source arg7, scoped in Corvus.Text.Json.JsonElement.Source arg8, scoped in Corvus.Text.Json.JsonElement.Source arg9, scoped in Corvus.Text.Json.JsonElement.Source arg10, scoped in Corvus.Text.Json.JsonElement.Source arg11, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
@@ -2330,7 +2330,7 @@ public readonly partial struct ImplementationsOfAction
             /// <param name="arg10">The value of the property.</param>
             /// <param name="arg11">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.TargetElementArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.MustBeActionToggleVisibility.Source arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Text.Json.JsonElement.Source<TContext> arg7, in Corvus.Text.Json.JsonElement.Source<TContext> arg8, in Corvus.Text.Json.JsonElement.Source<TContext> arg9, in Corvus.Text.Json.JsonElement.Source<TContext> arg10, in Corvus.Text.Json.JsonElement.Source<TContext> arg11, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.TargetElementArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.MustBeActionToggleVisibility.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg7, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg8, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg9, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg10, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg11, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2385,7 +2385,7 @@ public readonly partial struct ImplementationsOfAction
         /// <param name="title">The value of the <c>"title"</c> property.</param>
         /// <param name="tooltip">The value of the <c>"tooltip"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.TargetElementArray.Source targetElements, in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.MustBeActionToggleVisibility.Source type, in Corvus.Text.Json.JsonElement.Source fallback = default, in Corvus.Text.Json.JsonElement.Source iconUrl = default, in Corvus.Text.Json.JsonElement.Source id = default, in Corvus.Text.Json.JsonElement.Source isEnabled = default, in Corvus.Text.Json.JsonElement.Source mode = default, in Corvus.Text.Json.JsonElement.Source requires = default, in Corvus.Text.Json.JsonElement.Source style = default, in Corvus.Text.Json.JsonElement.Source title = default, in Corvus.Text.Json.JsonElement.Source tooltip = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.TargetElementArray.Source targetElements, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.MustBeActionToggleVisibility.Source type, scoped in Corvus.Text.Json.JsonElement.Source fallback = default, scoped in Corvus.Text.Json.JsonElement.Source iconUrl = default, scoped in Corvus.Text.Json.JsonElement.Source id = default, scoped in Corvus.Text.Json.JsonElement.Source isEnabled = default, scoped in Corvus.Text.Json.JsonElement.Source mode = default, scoped in Corvus.Text.Json.JsonElement.Source requires = default, scoped in Corvus.Text.Json.JsonElement.Source style = default, scoped in Corvus.Text.Json.JsonElement.Source title = default, scoped in Corvus.Text.Json.JsonElement.Source tooltip = default)
         {
             return new Source(targetElements, type, fallback, iconUrl, id, isEnabled, mode, requires, style, title, tooltip);
         }
@@ -2407,7 +2407,7 @@ public readonly partial struct ImplementationsOfAction
         /// <param name="title">The value of the <c>"title"</c> property.</param>
         /// <param name="tooltip">The value of the <c>"tooltip"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.TargetElementArray.Source<TContext> targetElements, in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.MustBeActionToggleVisibility.Source type, in Corvus.Text.Json.JsonElement.Source<TContext> fallback = default, in Corvus.Text.Json.JsonElement.Source<TContext> iconUrl = default, in Corvus.Text.Json.JsonElement.Source<TContext> id = default, in Corvus.Text.Json.JsonElement.Source<TContext> isEnabled = default, in Corvus.Text.Json.JsonElement.Source<TContext> mode = default, in Corvus.Text.Json.JsonElement.Source<TContext> requires = default, in Corvus.Text.Json.JsonElement.Source<TContext> style = default, in Corvus.Text.Json.JsonElement.Source<TContext> title = default, in Corvus.Text.Json.JsonElement.Source<TContext> tooltip = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.TargetElementArray.Source<TContext> targetElements, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionToggleVisibility.MustBeActionToggleVisibility.Source type, scoped in Corvus.Text.Json.JsonElement.Source<TContext> fallback = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> iconUrl = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> id = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> isEnabled = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> mode = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> requires = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> style = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> title = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> tooltip = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

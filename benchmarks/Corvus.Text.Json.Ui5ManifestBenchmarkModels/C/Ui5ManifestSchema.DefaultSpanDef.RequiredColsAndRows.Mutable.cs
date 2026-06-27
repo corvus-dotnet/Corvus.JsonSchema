@@ -321,7 +321,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>cols</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCols(in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source value)
+                public void SetCols(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source value)
                 {
                     CheckValidInstance();
 
@@ -352,7 +352,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>minimumSubTitleRow</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMinimumSubTitleRow(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumSubTitleRowEntity.Source value)
+                public void SetMinimumSubTitleRow(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumSubTitleRowEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -397,7 +397,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>minimumTitleRow</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMinimumTitleRow(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumTitleRowEntity.Source value)
+                public void SetMinimumTitleRow(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumTitleRowEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -442,7 +442,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>rows</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRows(in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source value)
+                public void SetRows(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source value)
                 {
                     CheckValidInstance();
 
@@ -473,7 +473,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>showOnlyHeader</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetShowOnlyHeader(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.ShowOnlyHeaderEntity.Source value)
+                public void SetShowOnlyHeader(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.ShowOnlyHeaderEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -687,7 +687,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumSubTitleRowEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumTitleRowEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.ShowOnlyHeaderEntity.Source arg5)
+                internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumSubTitleRowEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumTitleRowEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.ShowOnlyHeaderEntity.Source arg5)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1025,7 +1025,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumSubTitleRowEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumTitleRowEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.ShowOnlyHeaderEntity.Source arg5, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumSubTitleRowEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumTitleRowEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.ShowOnlyHeaderEntity.Source arg5, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1071,7 +1071,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="minimumTitleRow">The value of the <c>"minimumTitleRow"</c> property.</param>
             /// <param name="showOnlyHeader">The value of the <c>"showOnlyHeader"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source cols, in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source rows, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumSubTitleRowEntity.Source minimumSubTitleRow = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumTitleRowEntity.Source minimumTitleRow = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.ShowOnlyHeaderEntity.Source showOnlyHeader = default)
+            public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source cols, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source rows, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumSubTitleRowEntity.Source minimumSubTitleRow = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.MinimumTitleRowEntity.Source minimumTitleRow = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.RequiredColsAndRows.ShowOnlyHeaderEntity.Source showOnlyHeader = default)
             {
                 return new Source(cols, rows, minimumSubTitleRow, minimumTitleRow, showOnlyHeader);
             }

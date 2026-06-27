@@ -376,7 +376,7 @@ public readonly partial struct DependabotSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.RequiredDirectoryAndPackageManagerAndUpdateSchedule.Source value)
+            public void InsertItem(int itemIndex, scoped in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.RequiredDirectoryAndPackageManagerAndUpdateSchedule.Source value)
             {
                 CheckValidInstance();
 
@@ -402,7 +402,7 @@ public readonly partial struct DependabotSchema
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.RequiredDirectoryAndPackageManagerAndUpdateSchedule.Source value)
+            public void AddItem(scoped in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.RequiredDirectoryAndPackageManagerAndUpdateSchedule.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }

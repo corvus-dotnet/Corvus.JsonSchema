@@ -505,7 +505,7 @@ public readonly partial struct NestCliSchema
                         /// Set the <c>copyFiles</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetCopyFiles(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+                        public void SetCopyFiles(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
                         {
                             CheckValidInstance();
 
@@ -550,7 +550,7 @@ public readonly partial struct NestCliSchema
                         /// Set the <c>extensions</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetExtensions(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.JsonStringArray.Source value)
+                        public void SetExtensions(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.JsonStringArray.Source value)
                         {
                             CheckValidInstance();
 
@@ -631,7 +631,7 @@ public readonly partial struct NestCliSchema
                         /// Set the <c>filenames</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetFilenames(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.ArrayOfFilArray.Source value)
+                        public void SetFilenames(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.ArrayOfFilArray.Source value)
                         {
                             CheckValidInstance();
 
@@ -712,7 +712,7 @@ public readonly partial struct NestCliSchema
                         /// Set the <c>includeDotfiles</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetIncludeDotfiles(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+                        public void SetIncludeDotfiles(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
                         {
                             CheckValidInstance();
 
@@ -757,7 +757,7 @@ public readonly partial struct NestCliSchema
                         /// Set the <c>outDir</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetOutDir(in Corvus.NestCliBenchmark.Current.JsonString.Source value)
+                        public void SetOutDir(scoped in Corvus.NestCliBenchmark.Current.JsonString.Source value)
                         {
                             CheckValidInstance();
 
@@ -802,7 +802,7 @@ public readonly partial struct NestCliSchema
                         /// Set the <c>quiet</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetQuiet(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+                        public void SetQuiet(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
                         {
                             CheckValidInstance();
 
@@ -847,7 +847,7 @@ public readonly partial struct NestCliSchema
                         /// Set the <c>sync</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetSync(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+                        public void SetSync(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
                         {
                             CheckValidInstance();
 
@@ -892,7 +892,7 @@ public readonly partial struct NestCliSchema
                         /// Set the <c>watch</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetWatch(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+                        public void SetWatch(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
                         {
                             CheckValidInstance();
 
@@ -1038,7 +1038,7 @@ public readonly partial struct NestCliSchema
                         ///   </para>
                         /// </remarks>
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                        public void SetProperty(string propertyName, in JsonElement.Source value)
+                        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                         {
                             SetProperty(propertyName.AsSpan(), value);
                         }
@@ -1061,7 +1061,7 @@ public readonly partial struct NestCliSchema
                         ///     If the property doesn't exist, it will be added to the object.
                         ///   </para>
                         /// </remarks>
-                        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                         {
                             CheckValidInstance();
 
@@ -1108,7 +1108,7 @@ public readonly partial struct NestCliSchema
                         ///     If the property doesn't exist, it will be added to the object.
                         ///   </para>
                         /// </remarks>
-                        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                         {
                             CheckValidInstance();
 
@@ -1285,7 +1285,7 @@ public readonly partial struct NestCliSchema
 
                         internal Source(Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                        internal Source(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.JsonStringArray.Source arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.ArrayOfFilArray.Source arg3, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg4, in Corvus.NestCliBenchmark.Current.JsonString.Source arg5, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg6, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg7, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg8)
+                        internal Source(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.JsonStringArray.Source arg2, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.ArrayOfFilArray.Source arg3, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg5, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg7, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg8)
                         {
                             _createArg1 = arg1;
                             _createArg2 = arg2;
@@ -1463,7 +1463,7 @@ public readonly partial struct NestCliSchema
 
                         internal Source(scoped in TContext context, Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                        internal Source(scoped in TContext context, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.JsonStringArray.Source<TContext> arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.ArrayOfFilArray.Source<TContext> arg3, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg4, in Corvus.NestCliBenchmark.Current.JsonString.Source arg5, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg6, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg7, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg8)
+                        internal Source(scoped in TContext context, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.JsonStringArray.Source<TContext> arg2, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.ArrayOfFilArray.Source<TContext> arg3, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg5, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg7, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg8)
                         {
                             _context = context;
                             _createArg1 = arg1;
@@ -1813,7 +1813,7 @@ public readonly partial struct NestCliSchema
                         /// <param name="arg7">The value of the property.</param>
                         /// <param name="arg8">The value of the property.</param>
                         /// <param name="o">The complex value builder into which to write the object.</param>
-                        internal static void BuildCreateValue(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.JsonStringArray.Source arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.ArrayOfFilArray.Source arg3, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg4, in Corvus.NestCliBenchmark.Current.JsonString.Source arg5, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg6, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg7, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg8, ref ComplexValueBuilder o)
+                        internal static void BuildCreateValue(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.JsonStringArray.Source arg2, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.ArrayOfFilArray.Source arg3, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg5, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg7, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg8, ref ComplexValueBuilder o)
                         {
                             o.StartObject();
                             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
@@ -1834,7 +1834,7 @@ public readonly partial struct NestCliSchema
                         /// <param name="arg7">The value of the property.</param>
                         /// <param name="arg8">The value of the property.</param>
                         /// <param name="o">The complex value builder into which to write the object.</param>
-                        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.JsonStringArray.Source<TContext> arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.ArrayOfFilArray.Source<TContext> arg3, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg4, in Corvus.NestCliBenchmark.Current.JsonString.Source arg5, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg6, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg7, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg8, ref ComplexValueBuilder o)
+                        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.JsonStringArray.Source<TContext> arg2, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.ArrayOfFilArray.Source<TContext> arg3, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg5, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg7, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source arg8, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                             where TContext : allows ref struct
 #endif
@@ -1886,7 +1886,7 @@ public readonly partial struct NestCliSchema
                     /// <param name="sync">The value of the <c>"sync"</c> property.</param>
                     /// <param name="watch">The value of the <c>"watch"</c> property.</param>
                     /// <returns>The source from which to build the value.</returns>
-                    public static Source Build(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source copyFiles = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.JsonStringArray.Source extensions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.ArrayOfFilArray.Source filenames = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source includeDotfiles = default, in Corvus.NestCliBenchmark.Current.JsonString.Source outDir = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source quiet = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source sync = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source watch = default)
+                    public static Source Build(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source copyFiles = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.JsonStringArray.Source extensions = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.ArrayOfFilArray.Source filenames = default, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source includeDotfiles = default, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source outDir = default, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source quiet = default, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source sync = default, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source watch = default)
                     {
                         return new Source(copyFiles, extensions, filenames, includeDotfiles, outDir, quiet, sync, watch);
                     }
@@ -1905,7 +1905,7 @@ public readonly partial struct NestCliSchema
                     /// <param name="sync">The value of the <c>"sync"</c> property.</param>
                     /// <param name="watch">The value of the <c>"watch"</c> property.</param>
                     /// <returns>The source from which to build the value.</returns>
-                    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source copyFiles = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.JsonStringArray.Source<TContext> extensions = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.ArrayOfFilArray.Source<TContext> filenames = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source includeDotfiles = default, in Corvus.NestCliBenchmark.Current.JsonString.Source outDir = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source quiet = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source sync = default, in Corvus.NestCliBenchmark.Current.JsonBoolean.Source watch = default)
+                    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source copyFiles = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.JsonStringArray.Source<TContext> extensions = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.ArrayOfFilArray.Source<TContext> filenames = default, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source includeDotfiles = default, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source outDir = default, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source quiet = default, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source sync = default, scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source watch = default)
                         #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
                         #endif

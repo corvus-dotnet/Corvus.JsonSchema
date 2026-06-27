@@ -386,7 +386,7 @@ public readonly partial struct Table
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.Source value)
+            public void InsertItem(int itemIndex, scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.Source value)
             {
                 CheckValidInstance();
 
@@ -412,7 +412,7 @@ public readonly partial struct Table
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.Source value)
+            public void AddItem(scoped in Corvus.Ui5ManifestBenchmark.Current.TableColumnDefinition.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }

@@ -391,7 +391,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>interval</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetInterval(in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
+            public void SetInterval(scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -422,7 +422,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>log_status_change</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLogStatusChangeValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.CircuitBreaker.LogStatusChange.Source value)
+            public void SetLogStatusChangeValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.CircuitBreaker.LogStatusChange.Source value)
             {
                 CheckValidInstance();
 
@@ -467,7 +467,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>max_errors</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxErrors(in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
+            public void SetMaxErrors(scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -498,7 +498,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetName(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetName(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -543,7 +543,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>timeout</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTimeout(in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
+            public void SetTimeout(scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -675,7 +675,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -698,7 +698,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -745,7 +745,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -919,7 +919,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.CircuitBreaker.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg1, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg2, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.CircuitBreaker.LogStatusChange.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.CircuitBreaker.LogStatusChange.Source arg4, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg5)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1326,7 +1326,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg4">The value of the property.</param>
             /// <param name="arg5">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg1, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg2, in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.CircuitBreaker.LogStatusChange.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.CircuitBreaker.LogStatusChange.Source arg4, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1372,7 +1372,7 @@ public readonly partial struct KrakendSchema
         /// <param name="logStatusChange">The value of the <c>"log_status_change"</c> property.</param>
         /// <param name="name">The value of the <c>"name"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.JsonInteger.Source interval, in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxErrors, in Corvus.KrakendBenchmark.Current.JsonInteger.Source timeout, in Corvus.KrakendBenchmark.Current.KrakendSchema.CircuitBreaker.LogStatusChange.Source logStatusChange = default, in Corvus.KrakendBenchmark.Current.JsonString.Source name = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source interval, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxErrors, scoped in Corvus.KrakendBenchmark.Current.JsonInteger.Source timeout, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.CircuitBreaker.LogStatusChange.Source logStatusChange = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source name = default)
         {
             return new Source(interval, maxErrors, timeout, logStatusChange, name);
         }

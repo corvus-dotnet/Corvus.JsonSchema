@@ -438,7 +438,7 @@ public readonly partial struct KrakendSchema
                         /// Set the <c>disable_metrics</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetDisableMetricsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.DisableMetrics.Source value)
+                        public void SetDisableMetricsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.DisableMetrics.Source value)
                         {
                             CheckValidInstance();
 
@@ -483,7 +483,7 @@ public readonly partial struct KrakendSchema
                         /// Set the <c>go_metrics</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetGoMetrics(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
+                        public void SetGoMetrics(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
                         {
                             CheckValidInstance();
 
@@ -528,7 +528,7 @@ public readonly partial struct KrakendSchema
                         /// Set the <c>listen_ip</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetListenIpValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.ListenIp.Source value)
+                        public void SetListenIpValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.ListenIp.Source value)
                         {
                             CheckValidInstance();
 
@@ -573,7 +573,7 @@ public readonly partial struct KrakendSchema
                         /// Set the <c>name</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetName(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                        public void SetName(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                         {
                             CheckValidInstance();
 
@@ -604,7 +604,7 @@ public readonly partial struct KrakendSchema
                         /// Set the <c>port</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetPortValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.Port.Source value)
+                        public void SetPortValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.Port.Source value)
                         {
                             CheckValidInstance();
 
@@ -649,7 +649,7 @@ public readonly partial struct KrakendSchema
                         /// Set the <c>process_metrics</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetProcessMetrics(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
+                        public void SetProcessMetrics(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
                         {
                             CheckValidInstance();
 
@@ -795,7 +795,7 @@ public readonly partial struct KrakendSchema
                         ///   </para>
                         /// </remarks>
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                        public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                        public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                         {
                             SetProperty(propertyName.AsSpan(), value);
                         }
@@ -818,7 +818,7 @@ public readonly partial struct KrakendSchema
                         ///     If the property doesn't exist, it will be added to the object.
                         ///   </para>
                         /// </remarks>
-                        public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                         {
                             CheckValidInstance();
 
@@ -865,7 +865,7 @@ public readonly partial struct KrakendSchema
                         ///     If the property doesn't exist, it will be added to the object.
                         ///   </para>
                         /// </remarks>
-                        public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                         {
                             CheckValidInstance();
 
@@ -1040,7 +1040,7 @@ public readonly partial struct KrakendSchema
 
                         internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                        internal Source(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.DisableMetrics.Source arg2, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.ListenIp.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.Port.Source arg5, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg6)
+                        internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.DisableMetrics.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.ListenIp.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.Port.Source arg5, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg6)
                         {
                             _createArg1 = arg1;
                             _createArg2 = arg2;
@@ -1452,7 +1452,7 @@ public readonly partial struct KrakendSchema
                         /// <param name="arg5">The value of the property.</param>
                         /// <param name="arg6">The value of the property.</param>
                         /// <param name="o">The complex value builder into which to write the object.</param>
-                        internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.DisableMetrics.Source arg2, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.ListenIp.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.Port.Source arg5, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg6, ref ComplexValueBuilder o)
+                        internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.DisableMetrics.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.ListenIp.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.Port.Source arg5, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg6, ref ComplexValueBuilder o)
                         {
                             o.StartObject();
                             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1499,7 +1499,7 @@ public readonly partial struct KrakendSchema
                     /// <param name="port">The value of the <c>"port"</c> property.</param>
                     /// <param name="processMetrics">The value of the <c>"process_metrics"</c> property.</param>
                     /// <returns>The source from which to build the value.</returns>
-                    public static Source Build(in Corvus.KrakendBenchmark.Current.JsonString.Source name, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.DisableMetrics.Source disableMetrics = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source goMetrics = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.ListenIp.Source listenIp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.Port.Source port = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source processMetrics = default)
+                    public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source name, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.DisableMetrics.Source disableMetrics = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source goMetrics = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.ListenIp.Source listenIp = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Exporters.RequiredNameArray.RequiredName.Port.Source port = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source processMetrics = default)
                     {
                         return new Source(name, disableMetrics, goMetrics, listenIp, port, processMetrics);
                     }

@@ -443,7 +443,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// Set the <c>context</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetContext(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
+            public void SetContext(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -488,7 +488,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// Set the <c>file</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFile(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
+            public void SetFile(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -620,7 +620,7 @@ public readonly partial struct GitpodConfigurationSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -643,7 +643,7 @@ public readonly partial struct GitpodConfigurationSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -690,7 +690,7 @@ public readonly partial struct GitpodConfigurationSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -885,7 +885,7 @@ public readonly partial struct GitpodConfigurationSchema
 
             internal Source(Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2)
+            internal Source(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1347,7 +1347,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// <param name="arg1">The value of the property.</param>
             /// <param name="arg2">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2);
@@ -1390,7 +1390,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// <param name="file">The value of the <c>"file"</c> property.</param>
         /// <param name="context">The value of the <c>"context"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source file, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source context = default)
+        public static Source Build(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source file, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source context = default)
         {
             return new Source(file, context);
         }

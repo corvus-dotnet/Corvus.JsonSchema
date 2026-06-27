@@ -306,7 +306,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>compilerOptions</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCompilerOptionsValue(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source value)
+            public void SetCompilerOptionsValue(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source value)
             {
                 CheckValidInstance();
 
@@ -387,7 +387,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>entryFile</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEntryFile(in Corvus.NestCliBenchmark.Current.JsonString.Source value)
+            public void SetEntryFile(scoped in Corvus.NestCliBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -432,7 +432,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>generateOptions</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGenerateOptionsValue(in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source value)
+            public void SetGenerateOptionsValue(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source value)
             {
                 CheckValidInstance();
 
@@ -513,7 +513,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>root</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRoot(in Corvus.NestCliBenchmark.Current.JsonString.Source value)
+            public void SetRoot(scoped in Corvus.NestCliBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -558,7 +558,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>sourceRoot</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSourceRoot(in Corvus.NestCliBenchmark.Current.JsonString.Source value)
+            public void SetSourceRoot(scoped in Corvus.NestCliBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -603,7 +603,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.NestCliBenchmark.Current.JsonString.Source value)
+            public void SetType(scoped in Corvus.NestCliBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -818,7 +818,7 @@ public readonly partial struct NestCliSchema
 
             internal Source(Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectConfiguration.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source arg1, in Corvus.NestCliBenchmark.Current.JsonString.Source arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source arg3, in Corvus.NestCliBenchmark.Current.JsonString.Source arg4, in Corvus.NestCliBenchmark.Current.JsonString.Source arg5, in Corvus.NestCliBenchmark.Current.JsonString.Source arg6)
+            internal Source(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source arg1, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg2, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source arg3, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg4, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg5, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg6)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -992,7 +992,7 @@ public readonly partial struct NestCliSchema
 
             internal Source(scoped in TContext context, Corvus.NestCliBenchmark.Current.NestCliSchema.ProjectConfiguration.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> arg1, in Corvus.NestCliBenchmark.Current.JsonString.Source arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> arg3, in Corvus.NestCliBenchmark.Current.JsonString.Source arg4, in Corvus.NestCliBenchmark.Current.JsonString.Source arg5, in Corvus.NestCliBenchmark.Current.JsonString.Source arg6)
+            internal Source(scoped in TContext context, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> arg1, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg2, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> arg3, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg4, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg5, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg6)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1257,7 +1257,7 @@ public readonly partial struct NestCliSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source arg1, in Corvus.NestCliBenchmark.Current.JsonString.Source arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source arg3, in Corvus.NestCliBenchmark.Current.JsonString.Source arg4, in Corvus.NestCliBenchmark.Current.JsonString.Source arg5, in Corvus.NestCliBenchmark.Current.JsonString.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source arg1, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg2, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source arg3, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg4, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg5, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg6, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1276,7 +1276,7 @@ public readonly partial struct NestCliSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> arg1, in Corvus.NestCliBenchmark.Current.JsonString.Source arg2, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> arg3, in Corvus.NestCliBenchmark.Current.JsonString.Source arg4, in Corvus.NestCliBenchmark.Current.JsonString.Source arg5, in Corvus.NestCliBenchmark.Current.JsonString.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> arg1, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg2, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> arg3, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg4, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg5, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source arg6, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1326,7 +1326,7 @@ public readonly partial struct NestCliSchema
         /// <param name="sourceRoot">The value of the <c>"sourceRoot"</c> property.</param>
         /// <param name="type">The value of the <c>"type"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source compilerOptions = default, in Corvus.NestCliBenchmark.Current.JsonString.Source entryFile = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source generateOptions = default, in Corvus.NestCliBenchmark.Current.JsonString.Source root = default, in Corvus.NestCliBenchmark.Current.JsonString.Source sourceRoot = default, in Corvus.NestCliBenchmark.Current.JsonString.Source type = default)
+        public static Source Build(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source compilerOptions = default, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source entryFile = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source generateOptions = default, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source root = default, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source sourceRoot = default, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source type = default)
         {
             return new Source(compilerOptions, entryFile, generateOptions, root, sourceRoot, type);
         }
@@ -1343,7 +1343,7 @@ public readonly partial struct NestCliSchema
         /// <param name="sourceRoot">The value of the <c>"sourceRoot"</c> property.</param>
         /// <param name="type">The value of the <c>"type"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> compilerOptions = default, in Corvus.NestCliBenchmark.Current.JsonString.Source entryFile = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> generateOptions = default, in Corvus.NestCliBenchmark.Current.JsonString.Source root = default, in Corvus.NestCliBenchmark.Current.JsonString.Source sourceRoot = default, in Corvus.NestCliBenchmark.Current.JsonString.Source type = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.Source<TContext> compilerOptions = default, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source entryFile = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.GenerateOptions.Source<TContext> generateOptions = default, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source root = default, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source sourceRoot = default, scoped in Corvus.NestCliBenchmark.Current.JsonString.Source type = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

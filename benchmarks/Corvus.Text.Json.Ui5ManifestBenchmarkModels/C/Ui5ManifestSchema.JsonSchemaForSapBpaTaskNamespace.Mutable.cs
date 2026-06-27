@@ -338,7 +338,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVersion(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source value)
+            public void SetVersion(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -369,7 +369,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>category</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCategory(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source value)
+            public void SetCategory(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source value)
             {
                 CheckValidInstance();
 
@@ -400,7 +400,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>inputs</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetInputs(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source value)
+            public void SetInputs(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source value)
             {
                 CheckValidInstance();
 
@@ -481,7 +481,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>outcomes</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOutcomes(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source value)
+            public void SetOutcomes(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source value)
             {
                 CheckValidInstance();
 
@@ -546,7 +546,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>outputs</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOutputs(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source value)
+            public void SetOutputs(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source value)
             {
                 CheckValidInstance();
 
@@ -832,7 +832,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source arg5)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source arg5)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1005,7 +1005,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> arg5)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> arg5)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1262,7 +1262,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg4">The value of the property.</param>
             /// <param name="arg5">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source arg5, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source arg5, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1280,7 +1280,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg4">The value of the property.</param>
             /// <param name="arg5">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> arg5, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1329,7 +1329,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="inputs">The value of the <c>"inputs"</c> property.</param>
         /// <param name="outputs">The value of the <c>"outputs"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source version, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source category, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source outcomes, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source inputs = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source outputs = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source version, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source category, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source outcomes, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source inputs = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source outputs = default)
         {
             return new Source(version, category, outcomes, inputs, outputs);
         }
@@ -1345,7 +1345,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="inputs">The value of the <c>"inputs"</c> property.</param>
         /// <param name="outputs">The value of the <c>"outputs"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source version, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source category, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source<TContext> outcomes, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> inputs = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> outputs = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source version, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source category, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source<TContext> outcomes, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> inputs = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> outputs = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

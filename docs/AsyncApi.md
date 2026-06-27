@@ -964,16 +964,10 @@ The generated producer accepts a typed `CommonHeaders.Source` parameter alongsid
 using Corvus.Text.Json.AsyncApi;
 
 await producer.PublishUserSignedUpAsync(
-    payload: new UserSignedUpPayload.Source((ref UserSignedUpPayload.Builder b) =>
-    {
-        b.Create(email: "alice@example.com"u8, userId: "user-123"u8);
-    }),
-    headers: new CommonHeaders.Source((ref CommonHeaders.Builder b) =>
-    {
-        b.Create(
-            correlationId: Guid.NewGuid().ToString("D"),
-            timestamp: DateTimeOffset.UtcNow.ToString("O"));
-    }));
+    payload: UserSignedUpPayload.Build(email: "alice@example.com"u8, userId: "user-123"u8),
+    headers: CommonHeaders.Build(
+        correlationId: Guid.NewGuid().ToString("D"),
+        timestamp: DateTimeOffset.UtcNow.ToString("O")));
 ```
 
 The transport serializes headers to a JSON object using a thread-static pooled `Utf8JsonWriter`, keeping allocation constant (152 bytes) regardless of header count. For transports that don't support native headers (MQTT, NATS), headers are base64-encoded into a protocol-level property.
@@ -1097,10 +1091,7 @@ AsyncAPI operations can model request/reply patterns. The generator produces met
 ```csharp
 // Generated request/reply method
 (QueryResponse reply, JsonElement replyHeaders) = await queryProducer.RequestQueryAsync(
-    request: new QueryPayload.Source((ref QueryPayload.Builder b) =>
-    {
-        b.Create(filter: "status=active"u8);
-    }),
+    request: QueryPayload.Build(filter: "status=active"u8),
     cancellationToken: ct);
 
 // reply is already deserialized and validated

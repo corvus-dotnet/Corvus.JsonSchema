@@ -284,7 +284,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>color</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetColor(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.TheColorOfTheBar.Source value)
+            public void SetColor(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.TheColorOfTheBar.Source value)
             {
                 CheckValidInstance();
 
@@ -329,7 +329,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>displayValue</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisplayValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetDisplayValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -374,7 +374,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>legendTitle</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLegendTitle(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetLegendTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -419,7 +419,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>value</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.TheActualValueShownAsAColoredHorizontalBar.Source value)
+            public void SetValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.TheActualValueShownAsAColoredHorizontalBar.Source value)
             {
                 CheckValidInstance();
 
@@ -632,7 +632,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.TheColorOfTheBar.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.TheActualValueShownAsAColoredHorizontalBar.Source arg4)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.TheColorOfTheBar.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.TheActualValueShownAsAColoredHorizontalBar.Source arg4)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -965,7 +965,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.TheColorOfTheBar.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.TheActualValueShownAsAColoredHorizontalBar.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.TheColorOfTheBar.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.TheActualValueShownAsAColoredHorizontalBar.Source arg4, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4);
@@ -1010,7 +1010,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="legendTitle">The value of the <c>"legendTitle"</c> property.</param>
         /// <param name="value">The value of the <c>"value"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.TheColorOfTheBar.Source color = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source displayValue = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source legendTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.TheActualValueShownAsAColoredHorizontalBar.Source value = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.TheColorOfTheBar.Source color = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source displayValue = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source legendTitle = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBarBar.TheActualValueShownAsAColoredHorizontalBar.Source value = default)
         {
             return new Source(color, displayValue, legendTitle, value);
         }

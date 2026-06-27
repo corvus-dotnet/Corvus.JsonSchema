@@ -477,7 +477,7 @@ public readonly partial struct OmnisharpSchema
         /// Set the <c>cake</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCake(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCakeCakeFiles.Source value)
+        public void SetCake(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCakeCakeFiles.Source value)
         {
             CheckValidInstance();
 
@@ -558,7 +558,7 @@ public readonly partial struct OmnisharpSchema
         /// Set the <c>FileOptions</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFileOptions(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.FileOptionsEntity.Source value)
+        public void SetFileOptions(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.FileOptionsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -639,7 +639,7 @@ public readonly partial struct OmnisharpSchema
         /// Set the <c>FormattingOptions</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFormattingOptions(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.Source value)
+        public void SetFormattingOptions(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToControlCFormatting.Source value)
         {
             CheckValidInstance();
 
@@ -720,7 +720,7 @@ public readonly partial struct OmnisharpSchema
         /// Set the <c>ImplementTypeOptions</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetImplementTypeOptions(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.ImplementTypeOptionsEntity.Source value)
+        public void SetImplementTypeOptions(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.ImplementTypeOptionsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -801,7 +801,7 @@ public readonly partial struct OmnisharpSchema
         /// Set the <c>msbuild</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMsbuild(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.Source value)
+        public void SetMsbuild(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.Source value)
         {
             CheckValidInstance();
 
@@ -882,7 +882,7 @@ public readonly partial struct OmnisharpSchema
         /// Set the <c>Plugins</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPlugins(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.PluginsEntity.Source value)
+        public void SetPlugins(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.PluginsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -963,7 +963,7 @@ public readonly partial struct OmnisharpSchema
         /// Set the <c>RenameOptions</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRenameOptions(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.Source value)
+        public void SetRenameOptions(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1044,7 +1044,7 @@ public readonly partial struct OmnisharpSchema
         /// Set the <c>RoslynExtensionsOptions</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRoslynExtensionsOptions(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.Source value)
+        public void SetRoslynExtensionsOptions(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1125,7 +1125,7 @@ public readonly partial struct OmnisharpSchema
         /// Set the <c>script</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetScript(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.Source value)
+        public void SetScript(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.Source value)
         {
             CheckValidInstance();
 
@@ -1307,7 +1307,7 @@ public readonly partial struct OmnisharpSchema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -1330,7 +1330,7 @@ public readonly partial struct OmnisharpSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1377,7 +1377,7 @@ public readonly partial struct OmnisharpSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 

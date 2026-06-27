@@ -577,7 +577,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>Description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source value)
+            public void SetDescription(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -622,7 +622,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>Enabled</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnabled(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.WhetherItShouldBeEnabledByDefault.Source value)
+            public void SetEnabled(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.WhetherItShouldBeEnabledByDefault.Source value)
             {
                 CheckValidInstance();
 
@@ -653,7 +653,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>HasExplicitPlatforms</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHasExplicitPlatforms(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.HasExplicitPlatformsEntity.Source value)
+            public void SetHasExplicitPlatforms(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.HasExplicitPlatformsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -698,7 +698,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>MarketplaceURL</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMarketplaceUrl(in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source value)
+            public void SetMarketplaceUrl(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -743,7 +743,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>Name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetName(in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source value)
+            public void SetName(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -774,7 +774,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>Optional</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOptional(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.OptionalEntity.Source value)
+            public void SetOptional(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.OptionalEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -819,7 +819,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>PlatformAllowList</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPlatformAllowList(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.JsonStringArray.Source value)
+            public void SetPlatformAllowList(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -900,7 +900,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>PlatformDenyList</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPlatformDenyList(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisaArray.Source value)
+            public void SetPlatformDenyList(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisaArray.Source value)
             {
                 CheckValidInstance();
 
@@ -981,7 +981,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>TargetAllowList</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTargetAllowList(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildTargetTypeArray.Source value)
+            public void SetTargetAllowList(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildTargetTypeArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1062,7 +1062,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>TargetConfigurationAllowList</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTargetConfigurationAllowList(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildConfigurationArray.Source value)
+            public void SetTargetConfigurationAllowList(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildConfigurationArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1143,7 +1143,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>TargetConfigurationDenyList</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTargetConfigurationDenyList(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisallowedTaArray.Source value)
+            public void SetTargetConfigurationDenyList(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisallowedTaArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1224,7 +1224,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// Set the <c>TargetDenyList</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTargetDenyList(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisalloweArray.Source value)
+            public void SetTargetDenyList(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisalloweArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1406,7 +1406,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1429,7 +1429,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1476,7 +1476,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1657,7 +1657,7 @@ public readonly partial struct UnrealEngineUprojectSchema
 
             internal Source(Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.WhetherItShouldBeEnabledByDefault.Source arg1, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg2, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg3, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.HasExplicitPlatformsEntity.Source arg4, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg5, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.OptionalEntity.Source arg6, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.JsonStringArray.Source arg7, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisaArray.Source arg8, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildTargetTypeArray.Source arg9, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildConfigurationArray.Source arg10, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisallowedTaArray.Source arg11, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisalloweArray.Source arg12)
+            internal Source(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.WhetherItShouldBeEnabledByDefault.Source arg1, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg2, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg3, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.HasExplicitPlatformsEntity.Source arg4, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg5, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.OptionalEntity.Source arg6, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.JsonStringArray.Source arg7, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisaArray.Source arg8, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildTargetTypeArray.Source arg9, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildConfigurationArray.Source arg10, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisallowedTaArray.Source arg11, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisalloweArray.Source arg12)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1843,7 +1843,7 @@ public readonly partial struct UnrealEngineUprojectSchema
 
             internal Source(scoped in TContext context, Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.WhetherItShouldBeEnabledByDefault.Source arg1, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg2, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg3, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.HasExplicitPlatformsEntity.Source arg4, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg5, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.OptionalEntity.Source arg6, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.JsonStringArray.Source<TContext> arg7, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisaArray.Source<TContext> arg8, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildTargetTypeArray.Source<TContext> arg9, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildConfigurationArray.Source<TContext> arg10, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisallowedTaArray.Source<TContext> arg11, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisalloweArray.Source<TContext> arg12)
+            internal Source(scoped in TContext context, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.WhetherItShouldBeEnabledByDefault.Source arg1, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg2, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg3, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.HasExplicitPlatformsEntity.Source arg4, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg5, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.OptionalEntity.Source arg6, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.JsonStringArray.Source<TContext> arg7, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisaArray.Source<TContext> arg8, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildTargetTypeArray.Source<TContext> arg9, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildConfigurationArray.Source<TContext> arg10, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisallowedTaArray.Source<TContext> arg11, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisalloweArray.Source<TContext> arg12)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2225,7 +2225,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// <param name="arg11">The value of the property.</param>
             /// <param name="arg12">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.WhetherItShouldBeEnabledByDefault.Source arg1, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg2, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg3, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.HasExplicitPlatformsEntity.Source arg4, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg5, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.OptionalEntity.Source arg6, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.JsonStringArray.Source arg7, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisaArray.Source arg8, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildTargetTypeArray.Source arg9, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildConfigurationArray.Source arg10, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisallowedTaArray.Source arg11, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisalloweArray.Source arg12, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.WhetherItShouldBeEnabledByDefault.Source arg1, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg2, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg3, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.HasExplicitPlatformsEntity.Source arg4, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg5, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.OptionalEntity.Source arg6, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.JsonStringArray.Source arg7, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisaArray.Source arg8, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildTargetTypeArray.Source arg9, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildConfigurationArray.Source arg10, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisallowedTaArray.Source arg11, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisalloweArray.Source arg12, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
@@ -2250,7 +2250,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             /// <param name="arg11">The value of the property.</param>
             /// <param name="arg12">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.WhetherItShouldBeEnabledByDefault.Source arg1, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg2, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg3, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.HasExplicitPlatformsEntity.Source arg4, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg5, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.OptionalEntity.Source arg6, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.JsonStringArray.Source<TContext> arg7, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisaArray.Source<TContext> arg8, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildTargetTypeArray.Source<TContext> arg9, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildConfigurationArray.Source<TContext> arg10, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisallowedTaArray.Source<TContext> arg11, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisalloweArray.Source<TContext> arg12, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.WhetherItShouldBeEnabledByDefault.Source arg1, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg2, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg3, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.HasExplicitPlatformsEntity.Source arg4, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg5, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.OptionalEntity.Source arg6, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.JsonStringArray.Source<TContext> arg7, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisaArray.Source<TContext> arg8, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildTargetTypeArray.Source<TContext> arg9, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildConfigurationArray.Source<TContext> arg10, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisallowedTaArray.Source<TContext> arg11, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisalloweArray.Source<TContext> arg12, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2306,7 +2306,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// <param name="targetConfigurationDenyList">The value of the <c>"TargetConfigurationDenyList"</c> property.</param>
         /// <param name="targetDenyList">The value of the <c>"TargetDenyList"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.WhetherItShouldBeEnabledByDefault.Source enabled, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source name, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source description = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.HasExplicitPlatformsEntity.Source hasExplicitPlatforms = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source marketplaceUrl = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.OptionalEntity.Source optional = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.JsonStringArray.Source platformAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisaArray.Source platformDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildTargetTypeArray.Source targetAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildConfigurationArray.Source targetConfigurationAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisallowedTaArray.Source targetConfigurationDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisalloweArray.Source targetDenyList = default)
+        public static Source Build(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.WhetherItShouldBeEnabledByDefault.Source enabled, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source name, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source description = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.HasExplicitPlatformsEntity.Source hasExplicitPlatforms = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source marketplaceUrl = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.OptionalEntity.Source optional = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.JsonStringArray.Source platformAllowList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisaArray.Source platformDenyList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildTargetTypeArray.Source targetAllowList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildConfigurationArray.Source targetConfigurationAllowList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisallowedTaArray.Source targetConfigurationDenyList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisalloweArray.Source targetDenyList = default)
         {
             return new Source(enabled, name, description, hasExplicitPlatforms, marketplaceUrl, optional, platformAllowList, platformDenyList, targetAllowList, targetConfigurationAllowList, targetConfigurationDenyList, targetDenyList);
         }
@@ -2329,7 +2329,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// <param name="targetConfigurationDenyList">The value of the <c>"TargetConfigurationDenyList"</c> property.</param>
         /// <param name="targetDenyList">The value of the <c>"TargetDenyList"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.WhetherItShouldBeEnabledByDefault.Source enabled, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source name, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source description = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.HasExplicitPlatformsEntity.Source hasExplicitPlatforms = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source marketplaceUrl = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.OptionalEntity.Source optional = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.JsonStringArray.Source<TContext> platformAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisaArray.Source<TContext> platformDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildTargetTypeArray.Source<TContext> targetAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildConfigurationArray.Source<TContext> targetConfigurationAllowList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisallowedTaArray.Source<TContext> targetConfigurationDenyList = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisalloweArray.Source<TContext> targetDenyList = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.WhetherItShouldBeEnabledByDefault.Source enabled, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source name, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source description = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.HasExplicitPlatformsEntity.Source hasExplicitPlatforms = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source marketplaceUrl = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.OptionalEntity.Source optional = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.JsonStringArray.Source<TContext> platformAllowList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisaArray.Source<TContext> platformDenyList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildTargetTypeArray.Source<TContext> targetAllowList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.BuildConfigurationArray.Source<TContext> targetConfigurationAllowList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisallowedTaArray.Source<TContext> targetConfigurationDenyList = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisalloweArray.Source<TContext> targetDenyList = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

@@ -566,7 +566,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>auto_ack</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAutoAckValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.AutoAck.Source value)
+            public void SetAutoAckValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.AutoAck.Source value)
             {
                 CheckValidInstance();
 
@@ -611,7 +611,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>backoff_strategy</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBackoffStrategyValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.BackoffStrategy.Source value)
+            public void SetBackoffStrategyValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.BackoffStrategy.Source value)
             {
                 CheckValidInstance();
 
@@ -656,7 +656,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>delete</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDeleteValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Delete.Source value)
+            public void SetDeleteValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Delete.Source value)
             {
                 CheckValidInstance();
 
@@ -701,7 +701,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>durable</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDurableValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Durable.Source value)
+            public void SetDurableValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Durable.Source value)
             {
                 CheckValidInstance();
 
@@ -746,7 +746,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>exchange</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExchange(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetExchange(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -777,7 +777,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>exclusive</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExclusiveValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Exclusive.Source value)
+            public void SetExclusiveValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Exclusive.Source value)
             {
                 CheckValidInstance();
 
@@ -822,7 +822,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>max_retries</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxRetriesValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.MaxRetries.Source value)
+            public void SetMaxRetriesValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.MaxRetries.Source value)
             {
                 CheckValidInstance();
 
@@ -867,7 +867,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetName(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetName(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -898,7 +898,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>no_local</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNoLocal(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
+            public void SetNoLocal(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -943,7 +943,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>no_wait</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNoWait(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
+            public void SetNoWait(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -988,7 +988,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>prefetch_count</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPrefetchCountValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.PrefetchCount.Source value)
+            public void SetPrefetchCountValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.PrefetchCount.Source value)
             {
                 CheckValidInstance();
 
@@ -1033,7 +1033,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>routing_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRoutingKey(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
+            public void SetRoutingKey(scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1199,7 +1199,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1222,7 +1222,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1269,7 +1269,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1450,7 +1450,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.AutoAck.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.BackoffStrategy.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Delete.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Durable.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Exclusive.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.MaxRetries.Source arg9, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.PrefetchCount.Source arg12)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.AutoAck.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.BackoffStrategy.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Delete.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Durable.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Exclusive.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.MaxRetries.Source arg9, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.PrefetchCount.Source arg12)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1636,7 +1636,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.AutoAck.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.BackoffStrategy.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Delete.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Durable.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Exclusive.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.MaxRetries.Source arg9, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.PrefetchCount.Source arg12)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.AutoAck.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.BackoffStrategy.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Delete.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Durable.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Exclusive.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.MaxRetries.Source arg9, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.PrefetchCount.Source arg12)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2018,7 +2018,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg11">The value of the property.</param>
             /// <param name="arg12">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.AutoAck.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.BackoffStrategy.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Delete.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Durable.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Exclusive.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.MaxRetries.Source arg9, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.PrefetchCount.Source arg12, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.AutoAck.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.BackoffStrategy.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Delete.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Durable.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Exclusive.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.MaxRetries.Source arg9, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.PrefetchCount.Source arg12, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
@@ -2043,7 +2043,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg11">The value of the property.</param>
             /// <param name="arg12">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.AutoAck.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.BackoffStrategy.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Delete.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Durable.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Exclusive.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.MaxRetries.Source arg9, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.PrefetchCount.Source arg12, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.AutoAck.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.BackoffStrategy.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Delete.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Durable.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Exclusive.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.MaxRetries.Source arg9, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.PrefetchCount.Source arg12, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2099,7 +2099,7 @@ public readonly partial struct KrakendSchema
         /// <param name="noWait">The value of the <c>"no_wait"</c> property.</param>
         /// <param name="prefetchCount">The value of the <c>"prefetch_count"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.JsonString.Source exchange, in Corvus.KrakendBenchmark.Current.JsonString.Source name, in Corvus.KrakendBenchmark.Current.JsonArray.Source routingKey, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.AutoAck.Source autoAck = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.BackoffStrategy.Source backoffStrategy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Delete.Source delete = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Durable.Source durable = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Exclusive.Source exclusive = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.MaxRetries.Source maxRetries = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noLocal = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noWait = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.PrefetchCount.Source prefetchCount = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source exchange, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source name, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source routingKey, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.AutoAck.Source autoAck = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.BackoffStrategy.Source backoffStrategy = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Delete.Source delete = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Durable.Source durable = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Exclusive.Source exclusive = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.MaxRetries.Source maxRetries = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noLocal = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noWait = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.PrefetchCount.Source prefetchCount = default)
         {
             return new Source(exchange, name, routingKey, autoAck, backoffStrategy, delete, durable, exclusive, maxRetries, noLocal, noWait, prefetchCount);
         }
@@ -2122,7 +2122,7 @@ public readonly partial struct KrakendSchema
         /// <param name="noWait">The value of the <c>"no_wait"</c> property.</param>
         /// <param name="prefetchCount">The value of the <c>"prefetch_count"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source exchange, in Corvus.KrakendBenchmark.Current.JsonString.Source name, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> routingKey, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.AutoAck.Source autoAck = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.BackoffStrategy.Source backoffStrategy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Delete.Source delete = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Durable.Source durable = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Exclusive.Source exclusive = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.MaxRetries.Source maxRetries = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noLocal = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noWait = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.PrefetchCount.Source prefetchCount = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source exchange, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source name, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> routingKey, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.AutoAck.Source autoAck = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.BackoffStrategy.Source backoffStrategy = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Delete.Source delete = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Durable.Source durable = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.Exclusive.Source exclusive = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.MaxRetries.Source maxRetries = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noLocal = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noWait = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Consumer.PrefetchCount.Source prefetchCount = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

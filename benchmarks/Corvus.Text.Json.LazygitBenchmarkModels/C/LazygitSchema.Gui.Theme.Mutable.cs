@@ -479,7 +479,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>activeBorderColor</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetActiveBorderColor(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.ColorArray.Source value)
+                public void SetActiveBorderColor(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.ColorArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -560,7 +560,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>cherryPickedCommitBgColor</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCherryPickedCommitBgColor(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source value)
+                public void SetCherryPickedCommitBgColor(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -641,7 +641,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>cherryPickedCommitFgColor</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCherryPickedCommitFgColor(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source value)
+                public void SetCherryPickedCommitFgColor(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -722,7 +722,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>defaultFgColor</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDefaultFgColor(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.DefauArray.Source value)
+                public void SetDefaultFgColor(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.DefauArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -803,7 +803,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>inactiveBorderColor</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetInactiveBorderColor(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.InactArray.Source value)
+                public void SetInactiveBorderColor(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.InactArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -884,7 +884,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>optionsTextColor</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOptionsTextColor(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.OptioArray.Source value)
+                public void SetOptionsTextColor(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.OptioArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -965,7 +965,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>searchingActiveBorderColor</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSearchingActiveBorderColor(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SearcArray.Source value)
+                public void SetSearchingActiveBorderColor(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SearcArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -1046,7 +1046,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>selectedLineBgColor</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSelectedLineBgColor(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source value)
+                public void SetSelectedLineBgColor(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -1127,7 +1127,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>selectedRangeBgColor</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSelectedRangeBgColor(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source value)
+                public void SetSelectedRangeBgColor(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -1208,7 +1208,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>unstagedChangesColor</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetUnstagedChangesColor(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.UnstaArray.Source value)
+                public void SetUnstagedChangesColor(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.UnstaArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -1463,7 +1463,7 @@ public readonly partial struct LazygitSchema
 
                 internal Source(Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.ColorArray.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.DefauArray.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.InactArray.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.OptioArray.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SearcArray.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.UnstaArray.Source arg10)
+                internal Source(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.ColorArray.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.DefauArray.Source arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.InactArray.Source arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.OptioArray.Source arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SearcArray.Source arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.UnstaArray.Source arg10)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1645,7 +1645,7 @@ public readonly partial struct LazygitSchema
 
                 internal Source(scoped in TContext context, Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.ColorArray.Source<TContext> arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source<TContext> arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source<TContext> arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.DefauArray.Source<TContext> arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.InactArray.Source<TContext> arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.OptioArray.Source<TContext> arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SearcArray.Source<TContext> arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source<TContext> arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source<TContext> arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.UnstaArray.Source<TContext> arg10)
+                internal Source(scoped in TContext context, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.ColorArray.Source<TContext> arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source<TContext> arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source<TContext> arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.DefauArray.Source<TContext> arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.InactArray.Source<TContext> arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.OptioArray.Source<TContext> arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SearcArray.Source<TContext> arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source<TContext> arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source<TContext> arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.UnstaArray.Source<TContext> arg10)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1942,7 +1942,7 @@ public readonly partial struct LazygitSchema
                 /// <param name="arg9">The value of the property.</param>
                 /// <param name="arg10">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.ColorArray.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.DefauArray.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.InactArray.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.OptioArray.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SearcArray.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.UnstaArray.Source arg10, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.ColorArray.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.DefauArray.Source arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.InactArray.Source arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.OptioArray.Source arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SearcArray.Source arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.UnstaArray.Source arg10, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
@@ -1965,7 +1965,7 @@ public readonly partial struct LazygitSchema
                 /// <param name="arg9">The value of the property.</param>
                 /// <param name="arg10">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.ColorArray.Source<TContext> arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source<TContext> arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source<TContext> arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.DefauArray.Source<TContext> arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.InactArray.Source<TContext> arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.OptioArray.Source<TContext> arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SearcArray.Source<TContext> arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source<TContext> arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source<TContext> arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.UnstaArray.Source<TContext> arg10, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.ColorArray.Source<TContext> arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source<TContext> arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source<TContext> arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.DefauArray.Source<TContext> arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.InactArray.Source<TContext> arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.OptioArray.Source<TContext> arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SearcArray.Source<TContext> arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source<TContext> arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source<TContext> arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.UnstaArray.Source<TContext> arg10, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -2019,7 +2019,7 @@ public readonly partial struct LazygitSchema
             /// <param name="selectedRangeBgColor">The value of the <c>"selectedRangeBgColor"</c> property.</param>
             /// <param name="unstagedChangesColor">The value of the <c>"unstagedChangesColor"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.ColorArray.Source activeBorderColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source cherryPickedCommitBgColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source cherryPickedCommitFgColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.DefauArray.Source defaultFgColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.InactArray.Source inactiveBorderColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.OptioArray.Source optionsTextColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SearcArray.Source searchingActiveBorderColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source selectedLineBgColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source selectedRangeBgColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.UnstaArray.Source unstagedChangesColor = default)
+            public static Source Build(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.ColorArray.Source activeBorderColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source cherryPickedCommitBgColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source cherryPickedCommitFgColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.DefauArray.Source defaultFgColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.InactArray.Source inactiveBorderColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.OptioArray.Source optionsTextColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SearcArray.Source searchingActiveBorderColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source selectedLineBgColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source selectedRangeBgColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.UnstaArray.Source unstagedChangesColor = default)
             {
                 return new Source(activeBorderColor, cherryPickedCommitBgColor, cherryPickedCommitFgColor, defaultFgColor, inactiveBorderColor, optionsTextColor, searchingActiveBorderColor, selectedLineBgColor, selectedRangeBgColor, unstagedChangesColor);
             }
@@ -2040,7 +2040,7 @@ public readonly partial struct LazygitSchema
             /// <param name="selectedRangeBgColor">The value of the <c>"selectedRangeBgColor"</c> property.</param>
             /// <param name="unstagedChangesColor">The value of the <c>"unstagedChangesColor"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.ColorArray.Source<TContext> activeBorderColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source<TContext> cherryPickedCommitBgColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source<TContext> cherryPickedCommitFgColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.DefauArray.Source<TContext> defaultFgColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.InactArray.Source<TContext> inactiveBorderColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.OptioArray.Source<TContext> optionsTextColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SearcArray.Source<TContext> searchingActiveBorderColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source<TContext> selectedLineBgColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source<TContext> selectedRangeBgColor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.UnstaArray.Source<TContext> unstagedChangesColor = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.ColorArray.Source<TContext> activeBorderColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source<TContext> cherryPickedCommitBgColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.CherrArray.Source<TContext> cherryPickedCommitFgColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.DefauArray.Source<TContext> defaultFgColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.InactArray.Source<TContext> inactiveBorderColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.OptioArray.Source<TContext> optionsTextColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SearcArray.Source<TContext> searchingActiveBorderColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source<TContext> selectedLineBgColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source<TContext> selectedRangeBgColor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.UnstaArray.Source<TContext> unstagedChangesColor = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

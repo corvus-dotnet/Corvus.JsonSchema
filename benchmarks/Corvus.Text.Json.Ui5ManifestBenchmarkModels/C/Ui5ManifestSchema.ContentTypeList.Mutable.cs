@@ -310,7 +310,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>data</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDataValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source value)
+            public void SetDataValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source value)
             {
                 CheckValidInstance();
 
@@ -391,7 +391,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>group</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGroupValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.Source value)
+            public void SetGroupValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.Source value)
             {
                 CheckValidInstance();
 
@@ -472,7 +472,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>item</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetItemValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.Source value)
+            public void SetItemValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.Source value)
             {
                 CheckValidInstance();
 
@@ -553,7 +553,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>maxItems</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxItems(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeList.RepresentsNumberOfItems.Source value)
+            public void SetMaxItems(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeList.RepresentsNumberOfItems.Source value)
             {
                 CheckValidInstance();
 
@@ -598,7 +598,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>minItems</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMinItems(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeList.RepresentsTheMinimumExpectedNumberOfItems.Source value)
+            public void SetMinItems(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeList.RepresentsTheMinimumExpectedNumberOfItems.Source value)
             {
                 CheckValidInstance();
 

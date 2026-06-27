@@ -3477,7 +3477,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AccessModifierOffset</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAccessModifierOffset(in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source value)
+        public void SetAccessModifierOffset(scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -3522,7 +3522,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AlignAfterOpenBracket</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAlignAfterOpenBracket(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignAfterOpenBracketEntity.Source value)
+        public void SetAlignAfterOpenBracket(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignAfterOpenBracketEntity.Source value)
         {
             CheckValidInstance();
 
@@ -3567,7 +3567,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AlignArrayOfStructures</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAlignArrayOfStructures(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignArrayOfStructuresEntity.Source value)
+        public void SetAlignArrayOfStructures(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignArrayOfStructuresEntity.Source value)
         {
             CheckValidInstance();
 
@@ -3612,7 +3612,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AlignConsecutiveAssignments</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAlignConsecutiveAssignments(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.Source value)
+        public void SetAlignConsecutiveAssignments(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -3693,7 +3693,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AlignConsecutiveBitFields</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAlignConsecutiveBitFields(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveBitFieldsEntity.Source value)
+        public void SetAlignConsecutiveBitFields(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveBitFieldsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -3774,7 +3774,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AlignConsecutiveDeclarations</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAlignConsecutiveDeclarations(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.Source value)
+        public void SetAlignConsecutiveDeclarations(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -3855,7 +3855,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AlignConsecutiveMacros</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAlignConsecutiveMacros(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveMacrosEntity.Source value)
+        public void SetAlignConsecutiveMacros(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveMacrosEntity.Source value)
         {
             CheckValidInstance();
 
@@ -3936,7 +3936,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AlignEscapedNewlines</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAlignEscapedNewlines(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignEscapedNewlinesEntity.Source value)
+        public void SetAlignEscapedNewlines(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignEscapedNewlinesEntity.Source value)
         {
             CheckValidInstance();
 
@@ -3981,7 +3981,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AlignOperands</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAlignOperands(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignOperandsEntity.Source value)
+        public void SetAlignOperands(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignOperandsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -4026,7 +4026,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AlignTrailingComments</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAlignTrailingComments(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.Source value)
+        public void SetAlignTrailingComments(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -4107,7 +4107,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AllowAllArgumentsOnNextLine</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAllowAllArgumentsOnNextLine(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetAllowAllArgumentsOnNextLine(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -4152,7 +4152,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AllowAllConstructorInitializersOnNextLine</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAllowAllConstructorInitializersOnNextLine(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetAllowAllConstructorInitializersOnNextLine(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -4197,7 +4197,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AllowAllParametersOfDeclarationOnNextLine</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAllowAllParametersOfDeclarationOnNextLine(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetAllowAllParametersOfDeclarationOnNextLine(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -4242,7 +4242,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AllowShortBlocksOnASingleLine</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAllowShortBlocksOnASingleLine(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortBlocksOnASingleLineEntity.Source value)
+        public void SetAllowShortBlocksOnASingleLine(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortBlocksOnASingleLineEntity.Source value)
         {
             CheckValidInstance();
 
@@ -4287,7 +4287,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AllowShortCaseLabelsOnASingleLine</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAllowShortCaseLabelsOnASingleLine(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetAllowShortCaseLabelsOnASingleLine(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -4332,7 +4332,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AllowShortEnumsOnASingleLine</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAllowShortEnumsOnASingleLine(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetAllowShortEnumsOnASingleLine(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -4377,7 +4377,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AllowShortFunctionsOnASingleLine</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAllowShortFunctionsOnASingleLine(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortFunctionsOnASingleLineEntity.Source value)
+        public void SetAllowShortFunctionsOnASingleLine(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortFunctionsOnASingleLineEntity.Source value)
         {
             CheckValidInstance();
 
@@ -4422,7 +4422,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AllowShortIfStatementsOnASingleLine</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAllowShortIfStatementsOnASingleLine(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortIfStatementsOnASingleLineEntity.Source value)
+        public void SetAllowShortIfStatementsOnASingleLine(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortIfStatementsOnASingleLineEntity.Source value)
         {
             CheckValidInstance();
 
@@ -4467,7 +4467,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AllowShortLambdasOnASingleLine</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAllowShortLambdasOnASingleLine(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortLambdasOnASingleLineEntity.Source value)
+        public void SetAllowShortLambdasOnASingleLine(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortLambdasOnASingleLineEntity.Source value)
         {
             CheckValidInstance();
 
@@ -4512,7 +4512,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AllowShortLoopsOnASingleLine</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAllowShortLoopsOnASingleLine(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetAllowShortLoopsOnASingleLine(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -4557,7 +4557,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AlwaysBreakAfterDefinitionReturnType</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAlwaysBreakAfterDefinitionReturnType(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakAfterDefinitionReturnTypeEntity.Source value)
+        public void SetAlwaysBreakAfterDefinitionReturnType(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakAfterDefinitionReturnTypeEntity.Source value)
         {
             CheckValidInstance();
 
@@ -4602,7 +4602,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AlwaysBreakAfterReturnType</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAlwaysBreakAfterReturnType(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakAfterReturnTypeEntity.Source value)
+        public void SetAlwaysBreakAfterReturnType(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakAfterReturnTypeEntity.Source value)
         {
             CheckValidInstance();
 
@@ -4647,7 +4647,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AlwaysBreakBeforeMultilineStrings</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAlwaysBreakBeforeMultilineStrings(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetAlwaysBreakBeforeMultilineStrings(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -4692,7 +4692,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AlwaysBreakTemplateDeclarations</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAlwaysBreakTemplateDeclarations(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakTemplateDeclarationsEntity.Source value)
+        public void SetAlwaysBreakTemplateDeclarations(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakTemplateDeclarationsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -4737,7 +4737,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>AttributeMacros</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAttributeMacros(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JsonStringArray.Source value)
+        public void SetAttributeMacros(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -4818,7 +4818,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BasedOnStyle</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBasedOnStyle(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source value)
+        public void SetBasedOnStyle(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source value)
         {
             CheckValidInstance();
 
@@ -4863,7 +4863,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BinPackArguments</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBinPackArguments(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetBinPackArguments(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -4908,7 +4908,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BinPackParameters</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBinPackParameters(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetBinPackParameters(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -4953,7 +4953,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BitFieldColonSpacing</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBitFieldColonSpacing(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BitFieldColonSpacingEntity.Source value)
+        public void SetBitFieldColonSpacing(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BitFieldColonSpacingEntity.Source value)
         {
             CheckValidInstance();
 
@@ -4998,7 +4998,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BraceWrapping</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBraceWrapping(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.Source value)
+        public void SetBraceWrapping(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.Source value)
         {
             CheckValidInstance();
 
@@ -5079,7 +5079,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BreakAfterAttributes</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreakAfterAttributes(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BreakAfterAttributesEntity.Source value)
+        public void SetBreakAfterAttributes(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BreakAfterAttributesEntity.Source value)
         {
             CheckValidInstance();
 
@@ -5124,7 +5124,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BreakAfterJavaFieldAnnotations</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreakAfterJavaFieldAnnotations(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetBreakAfterJavaFieldAnnotations(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -5169,7 +5169,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BreakArrays</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreakArrays(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetBreakArrays(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -5214,7 +5214,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BreakBeforeBinaryOperators</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreakBeforeBinaryOperators(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat36TheWayToWrapBinaryOperators.Source value)
+        public void SetBreakBeforeBinaryOperators(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat36TheWayToWrapBinaryOperators.Source value)
         {
             CheckValidInstance();
 
@@ -5259,7 +5259,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BreakBeforeBraces</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreakBeforeBraces(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheBraceBreakingStyleToUse.Source value)
+        public void SetBreakBeforeBraces(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheBraceBreakingStyleToUse.Source value)
         {
             CheckValidInstance();
 
@@ -5304,7 +5304,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BreakBeforeConceptDeclarations</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreakBeforeConceptDeclarations(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BreakBeforeConceptDeclarationsEntity.Source value)
+        public void SetBreakBeforeConceptDeclarations(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BreakBeforeConceptDeclarationsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -5349,7 +5349,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BreakBeforeInheritanceComma</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreakBeforeInheritanceComma(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetBreakBeforeInheritanceComma(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -5394,7 +5394,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BreakBeforeInlineASMColon</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreakBeforeInlineAsmColon(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat16TheInlineAsmColonStyleToUse.Source value)
+        public void SetBreakBeforeInlineAsmColon(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat16TheInlineAsmColonStyleToUse.Source value)
         {
             CheckValidInstance();
 
@@ -5439,7 +5439,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BreakBeforeTernaryOperators</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreakBeforeTernaryOperators(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetBreakBeforeTernaryOperators(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -5484,7 +5484,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BreakConstructorInitializers</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreakConstructorInitializers(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat5TheConstructorInitializersStyleToUse.Source value)
+        public void SetBreakConstructorInitializers(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat5TheConstructorInitializersStyleToUse.Source value)
         {
             CheckValidInstance();
 
@@ -5529,7 +5529,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BreakConstructorInitializersBeforeComma</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreakConstructorInitializersBeforeComma(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetBreakConstructorInitializersBeforeComma(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -5574,7 +5574,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BreakInheritanceList</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreakInheritanceList(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat7TheInheritanceListStyleToUse.Source value)
+        public void SetBreakInheritanceList(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat7TheInheritanceListStyleToUse.Source value)
         {
             CheckValidInstance();
 
@@ -5619,7 +5619,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>BreakStringLiterals</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreakStringLiterals(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetBreakStringLiterals(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -5664,7 +5664,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>ColumnLimit</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetColumnLimit(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheColumnLimit.Source value)
+        public void SetColumnLimit(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheColumnLimit.Source value)
         {
             CheckValidInstance();
 
@@ -5709,7 +5709,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>CommentPragmas</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCommentPragmas(in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
+        public void SetCommentPragmas(scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -5754,7 +5754,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>CompactNamespaces</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCompactNamespaces(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetCompactNamespaces(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -5799,7 +5799,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>ConstructorInitializerAllOnOneLineOrOnePerLine</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetConstructorInitializerAllOnOneLineOrOnePerLine(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetConstructorInitializerAllOnOneLineOrOnePerLine(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -5844,7 +5844,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>ConstructorInitializerIndentWidth</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetConstructorInitializerIndentWidth(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ConstructorInitializerIndentWidthEntity.Source value)
+        public void SetConstructorInitializerIndentWidth(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ConstructorInitializerIndentWidthEntity.Source value)
         {
             CheckValidInstance();
 
@@ -5889,7 +5889,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>ContinuationIndentWidth</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetContinuationIndentWidth(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37IndentWidthForLineContinuations.Source value)
+        public void SetContinuationIndentWidth(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37IndentWidthForLineContinuations.Source value)
         {
             CheckValidInstance();
 
@@ -5934,7 +5934,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>Cpp11BracedListStyle</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCpp11BracedListStyle(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetCpp11BracedListStyle(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -5979,7 +5979,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>DeriveLineEnding</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDeriveLineEnding(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetDeriveLineEnding(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -6024,7 +6024,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>DerivePointerAlignment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDerivePointerAlignment(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetDerivePointerAlignment(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -6069,7 +6069,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>DisableFormat</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDisableFormat(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetDisableFormat(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -6114,7 +6114,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>EmptyLineAfterAccessModifier</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEmptyLineAfterAccessModifier(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.EmptyLineAfterAccessModifierEntity.Source value)
+        public void SetEmptyLineAfterAccessModifier(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.EmptyLineAfterAccessModifierEntity.Source value)
         {
             CheckValidInstance();
 
@@ -6159,7 +6159,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>EmptyLineBeforeAccessModifier</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEmptyLineBeforeAccessModifier(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.EmptyLineBeforeAccessModifierEntity.Source value)
+        public void SetEmptyLineBeforeAccessModifier(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.EmptyLineBeforeAccessModifierEntity.Source value)
         {
             CheckValidInstance();
 
@@ -6204,7 +6204,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>ExperimentalAutoDetectBinPacking</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExperimentalAutoDetectBinPacking(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetExperimentalAutoDetectBinPacking(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -6249,7 +6249,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>FixNamespaceComments</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFixNamespaceComments(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetFixNamespaceComments(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -6294,7 +6294,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>ForEachMacros</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetForEachMacros(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ForEachMacArray.Source value)
+        public void SetForEachMacros(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ForEachMacArray.Source value)
         {
             CheckValidInstance();
 
@@ -6375,7 +6375,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>IfMacros</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIfMacros(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IfMacrosJsArray.Source value)
+        public void SetIfMacros(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IfMacrosJsArray.Source value)
         {
             CheckValidInstance();
 
@@ -6456,7 +6456,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>IncludeBlocks</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIncludeBlocks(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IncludeBlocksEntity.Source value)
+        public void SetIncludeBlocks(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IncludeBlocksEntity.Source value)
         {
             CheckValidInstance();
 
@@ -6501,7 +6501,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>IncludeCategories</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIncludeCategories(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.Source value)
+        public void SetIncludeCategories(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.Source value)
         {
             CheckValidInstance();
 
@@ -6582,7 +6582,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>IncludeIsMainRegex</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIncludeIsMainRegex(in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
+        public void SetIncludeIsMainRegex(scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -6627,7 +6627,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>IncludeIsMainSourceRegex</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIncludeIsMainSourceRegex(in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
+        public void SetIncludeIsMainSourceRegex(scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -6672,7 +6672,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>IndentAccessModifiers</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIndentAccessModifiers(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetIndentAccessModifiers(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -6717,7 +6717,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>IndentCaseBlocks</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIndentCaseBlocks(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetIndentCaseBlocks(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -6762,7 +6762,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>IndentCaseLabels</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIndentCaseLabels(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetIndentCaseLabels(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -6807,7 +6807,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>IndentExternBlock</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIndentExternBlock(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentExternBlockEntity.Source value)
+        public void SetIndentExternBlock(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentExternBlockEntity.Source value)
         {
             CheckValidInstance();
 
@@ -6852,7 +6852,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>IndentGotoLabels</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIndentGotoLabels(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetIndentGotoLabels(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -6897,7 +6897,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>IndentPPDirectives</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIndentPpDirectives(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentPpDirectivesEntity.Source value)
+        public void SetIndentPpDirectives(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentPpDirectivesEntity.Source value)
         {
             CheckValidInstance();
 
@@ -6942,7 +6942,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>IndentRequires</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIndentRequires(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetIndentRequires(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -6987,7 +6987,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>IndentRequiresClause</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIndentRequiresClause(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetIndentRequiresClause(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -7032,7 +7032,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>IndentWidth</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIndentWidth(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentWidthEntity.Source value)
+        public void SetIndentWidth(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentWidthEntity.Source value)
         {
             CheckValidInstance();
 
@@ -7077,7 +7077,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>IndentWrappedFunctionNames</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIndentWrappedFunctionNames(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetIndentWrappedFunctionNames(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -7122,7 +7122,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>InsertBraces</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetInsertBraces(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetInsertBraces(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -7167,7 +7167,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>InsertNewlineAtEOF</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetInsertNewlineAtEof(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetInsertNewlineAtEof(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -7212,7 +7212,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>InsertTrailingCommas</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetInsertTrailingCommas(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.InsertTrailingCommasEntity.Source value)
+        public void SetInsertTrailingCommas(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.InsertTrailingCommasEntity.Source value)
         {
             CheckValidInstance();
 
@@ -7257,7 +7257,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>IntegerLiteralSeparator</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIntegerLiteralSeparator(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IntegerLiteralSeparatorEntity.Source value)
+        public void SetIntegerLiteralSeparator(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IntegerLiteralSeparatorEntity.Source value)
         {
             CheckValidInstance();
 
@@ -7338,7 +7338,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>JavaImportGroup</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetJavaImportGroup(in Corvus.ClangFormatBenchmark.Current.JsonArray.Source value)
+        public void SetJavaImportGroup(scoped in Corvus.ClangFormatBenchmark.Current.JsonArray.Source value)
         {
             CheckValidInstance();
 
@@ -7419,7 +7419,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>JavaScriptQuotes</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetJavaScriptQuotes(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaScriptQuotesEntity.Source value)
+        public void SetJavaScriptQuotes(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaScriptQuotesEntity.Source value)
         {
             CheckValidInstance();
 
@@ -7464,7 +7464,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>JavaScriptWrapImports</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetJavaScriptWrapImports(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetJavaScriptWrapImports(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -7509,7 +7509,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>KeepEmptyLinesAtTheStartOfBlocks</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetKeepEmptyLinesAtTheStartOfBlocks(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetKeepEmptyLinesAtTheStartOfBlocks(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -7554,7 +7554,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>LambdaBodyIndentation</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLambdaBodyIndentation(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.LambdaBodyIndentationEntity.Source value)
+        public void SetLambdaBodyIndentation(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.LambdaBodyIndentationEntity.Source value)
         {
             CheckValidInstance();
 
@@ -7599,7 +7599,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>Language</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLanguage(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source value)
+        public void SetLanguage(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat35LanguageThisFormatStyleIsTargetedAt.Source value)
         {
             CheckValidInstance();
 
@@ -7644,7 +7644,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>LineEnding</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLineEnding(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat16LineEndingStyleNOrRNToUse.Source value)
+        public void SetLineEnding(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat16LineEndingStyleNOrRNToUse.Source value)
         {
             CheckValidInstance();
 
@@ -7689,7 +7689,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>MacroBlockBegin</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMacroBlockBegin(in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
+        public void SetMacroBlockBegin(scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -7734,7 +7734,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>MacroBlockEnd</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMacroBlockEnd(in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
+        public void SetMacroBlockEnd(scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -7779,7 +7779,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>MaxEmptyLinesToKeep</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMaxEmptyLinesToKeep(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.MaxEmptyLinesToKeepEntity.Source value)
+        public void SetMaxEmptyLinesToKeep(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.MaxEmptyLinesToKeepEntity.Source value)
         {
             CheckValidInstance();
 
@@ -7824,7 +7824,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>NamespaceIndentation</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetNamespaceIndentation(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClnagFormat37TheIndentationUsedForNamespaces.Source value)
+        public void SetNamespaceIndentation(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClnagFormat37TheIndentationUsedForNamespaces.Source value)
         {
             CheckValidInstance();
 
@@ -7869,7 +7869,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>NamespaceMacros</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetNamespaceMacros(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.NamespaceMArray.Source value)
+        public void SetNamespaceMacros(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.NamespaceMArray.Source value)
         {
             CheckValidInstance();
 
@@ -7950,7 +7950,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>ObjCBinPackProtocolList</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetObjCBinPackProtocolList(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBinPackProtocolListEntity.Source value)
+        public void SetObjCBinPackProtocolList(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBinPackProtocolListEntity.Source value)
         {
             CheckValidInstance();
 
@@ -7995,7 +7995,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>ObjCBlockIndentWidth</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetObjCBlockIndentWidth(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBlockIndentWidthEntity.Source value)
+        public void SetObjCBlockIndentWidth(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBlockIndentWidthEntity.Source value)
         {
             CheckValidInstance();
 
@@ -8040,7 +8040,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>ObjCBreakBeforeNestedBlockParam</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetObjCBreakBeforeNestedBlockParam(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetObjCBreakBeforeNestedBlockParam(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -8085,7 +8085,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>ObjCSpaceAfterProperty</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetObjCSpaceAfterProperty(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetObjCSpaceAfterProperty(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -8130,7 +8130,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>ObjCSpaceBeforeProtocolList</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetObjCSpaceBeforeProtocolList(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetObjCSpaceBeforeProtocolList(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -8175,7 +8175,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>PackConstructorInitializers</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPackConstructorInitializers(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PackConstructorInitializersEntity.Source value)
+        public void SetPackConstructorInitializers(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PackConstructorInitializersEntity.Source value)
         {
             CheckValidInstance();
 
@@ -8220,7 +8220,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>PenaltyBreakAssignment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPenaltyBreakAssignment(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakAssignmentEntity.Source value)
+        public void SetPenaltyBreakAssignment(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakAssignmentEntity.Source value)
         {
             CheckValidInstance();
 
@@ -8265,7 +8265,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>PenaltyBreakBeforeFirstCallParameter</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPenaltyBreakBeforeFirstCallParameter(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakBeforeFirstCallParameterEntity.Source value)
+        public void SetPenaltyBreakBeforeFirstCallParameter(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakBeforeFirstCallParameterEntity.Source value)
         {
             CheckValidInstance();
 
@@ -8310,7 +8310,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>PenaltyBreakComment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPenaltyBreakComment(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakCommentEntity.Source value)
+        public void SetPenaltyBreakComment(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakCommentEntity.Source value)
         {
             CheckValidInstance();
 
@@ -8355,7 +8355,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>PenaltyBreakFirstLessLess</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPenaltyBreakFirstLessLess(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakFirstLessLessEntity.Source value)
+        public void SetPenaltyBreakFirstLessLess(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakFirstLessLessEntity.Source value)
         {
             CheckValidInstance();
 
@@ -8400,7 +8400,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>PenaltyBreakOpenParenthesis</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPenaltyBreakOpenParenthesis(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat14ThePenaltyForBreakingAfter.Source value)
+        public void SetPenaltyBreakOpenParenthesis(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat14ThePenaltyForBreakingAfter.Source value)
         {
             CheckValidInstance();
 
@@ -8445,7 +8445,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>PenaltyBreakString</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPenaltyBreakString(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakStringEntity.Source value)
+        public void SetPenaltyBreakString(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakStringEntity.Source value)
         {
             CheckValidInstance();
 
@@ -8490,7 +8490,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>PenaltyBreakTemplateDeclaration</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPenaltyBreakTemplateDeclaration(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakTemplateDeclarationEntity.Source value)
+        public void SetPenaltyBreakTemplateDeclaration(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakTemplateDeclarationEntity.Source value)
         {
             CheckValidInstance();
 
@@ -8535,7 +8535,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>PenaltyExcessCharacter</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPenaltyExcessCharacter(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyExcessCharacterEntity.Source value)
+        public void SetPenaltyExcessCharacter(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyExcessCharacterEntity.Source value)
         {
             CheckValidInstance();
 
@@ -8580,7 +8580,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>PenaltyIndentedWhitespace</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPenaltyIndentedWhitespace(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyIndentedWhitespaceEntity.Source value)
+        public void SetPenaltyIndentedWhitespace(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyIndentedWhitespaceEntity.Source value)
         {
             CheckValidInstance();
 
@@ -8625,7 +8625,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>PenaltyReturnTypeOnItsOwnLine</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPenaltyReturnTypeOnItsOwnLine(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyReturnTypeOnItsOwnLineEntity.Source value)
+        public void SetPenaltyReturnTypeOnItsOwnLine(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyReturnTypeOnItsOwnLineEntity.Source value)
         {
             CheckValidInstance();
 
@@ -8670,7 +8670,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>PointerAlignment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPointerAlignment(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37PointerAndReferenceAlignmentStyle.Source value)
+        public void SetPointerAlignment(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37PointerAndReferenceAlignmentStyle.Source value)
         {
             CheckValidInstance();
 
@@ -8715,7 +8715,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>PPIndentWidth</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPpIndentWidth(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PpIndentWidthEntity.Source value)
+        public void SetPpIndentWidth(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PpIndentWidthEntity.Source value)
         {
             CheckValidInstance();
 
@@ -8760,7 +8760,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>QualifierAlignment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetQualifierAlignment(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.QualifierAlignmentEntity.Source value)
+        public void SetQualifierAlignment(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.QualifierAlignmentEntity.Source value)
         {
             CheckValidInstance();
 
@@ -8805,7 +8805,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>QualifierOrder</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetQualifierOrder(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.QualifierOrderArrayQualifierOrderEntityArray.Source value)
+        public void SetQualifierOrder(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.QualifierOrderArrayQualifierOrderEntityArray.Source value)
         {
             CheckValidInstance();
 
@@ -8886,7 +8886,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>RawStringFormats</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRawStringFormats(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.Source value)
+        public void SetRawStringFormats(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.Source value)
         {
             CheckValidInstance();
 
@@ -8967,7 +8967,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>ReferenceAlignment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetReferenceAlignment(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ReferenceAlignmentEntity.Source value)
+        public void SetReferenceAlignment(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ReferenceAlignmentEntity.Source value)
         {
             CheckValidInstance();
 
@@ -9012,7 +9012,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>ReflowComments</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetReflowComments(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetReflowComments(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -9057,7 +9057,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>RemoveBracesLLVM</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRemoveBracesLlvm(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetRemoveBracesLlvm(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -9102,7 +9102,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>RemoveSemicolon</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRemoveSemicolon(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetRemoveSemicolon(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -9147,7 +9147,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>RequiresClausePosition</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRequiresClausePosition(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat15ThePositionOfTheRequiresClause.Source value)
+        public void SetRequiresClausePosition(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat15ThePositionOfTheRequiresClause.Source value)
         {
             CheckValidInstance();
 
@@ -9192,7 +9192,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>RequiresExpressionIndentation</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRequiresExpressionIndentation(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiresExpressionIndentationEntity.Source value)
+        public void SetRequiresExpressionIndentation(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiresExpressionIndentationEntity.Source value)
         {
             CheckValidInstance();
 
@@ -9237,7 +9237,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SeparateDefinitionBlocks</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSeparateDefinitionBlocks(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SeparateDefinitionBlocksEntity.Source value)
+        public void SetSeparateDefinitionBlocks(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SeparateDefinitionBlocksEntity.Source value)
         {
             CheckValidInstance();
 
@@ -9282,7 +9282,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>ShortNamespaceLines</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetShortNamespaceLines(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ShortNamespaceLinesEntity.Source value)
+        public void SetShortNamespaceLines(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ShortNamespaceLinesEntity.Source value)
         {
             CheckValidInstance();
 
@@ -9327,7 +9327,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SortIncludes</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSortIncludes(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortIncludesEntity.Source value)
+        public void SetSortIncludes(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortIncludesEntity.Source value)
         {
             CheckValidInstance();
 
@@ -9372,7 +9372,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SortJavaStaticImport</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSortJavaStaticImport(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortJavaStaticImportEntity.Source value)
+        public void SetSortJavaStaticImport(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortJavaStaticImportEntity.Source value)
         {
             CheckValidInstance();
 
@@ -9417,7 +9417,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SortUsingDeclarations</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSortUsingDeclarations(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortUsingDeclarationsEntity.Source value)
+        public void SetSortUsingDeclarations(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortUsingDeclarationsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -9462,7 +9462,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpaceAfterCStyleCast</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpaceAfterCStyleCast(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpaceAfterCStyleCast(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -9507,7 +9507,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpaceAfterLogicalNot</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpaceAfterLogicalNot(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpaceAfterLogicalNot(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -9552,7 +9552,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpaceAfterTemplateKeyword</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpaceAfterTemplateKeyword(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpaceAfterTemplateKeyword(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -9597,7 +9597,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpaceAroundPointerQualifiers</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpaceAroundPointerQualifiers(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceAroundPointerQualifiersEntity.Source value)
+        public void SetSpaceAroundPointerQualifiers(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceAroundPointerQualifiersEntity.Source value)
         {
             CheckValidInstance();
 
@@ -9642,7 +9642,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpaceBeforeAssignmentOperators</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpaceBeforeAssignmentOperators(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpaceBeforeAssignmentOperators(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -9687,7 +9687,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpaceBeforeCaseColon</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpaceBeforeCaseColon(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpaceBeforeCaseColon(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -9732,7 +9732,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpaceBeforeCpp11BracedList</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpaceBeforeCpp11BracedList(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpaceBeforeCpp11BracedList(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -9777,7 +9777,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpaceBeforeCtorInitializerColon</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpaceBeforeCtorInitializerColon(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpaceBeforeCtorInitializerColon(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -9822,7 +9822,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpaceBeforeInheritanceColon</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpaceBeforeInheritanceColon(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpaceBeforeInheritanceColon(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -9867,7 +9867,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpaceBeforeParens</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpaceBeforeParens(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceBeforeParensEntity.Source value)
+        public void SetSpaceBeforeParens(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceBeforeParensEntity.Source value)
         {
             CheckValidInstance();
 
@@ -9912,7 +9912,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpaceBeforeParensOptions</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpaceBeforeParensOptions(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceBeforeParensOptionsEntity.Source value)
+        public void SetSpaceBeforeParensOptions(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceBeforeParensOptionsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -9993,7 +9993,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpaceBeforeRangeBasedForLoopColon</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpaceBeforeRangeBasedForLoopColon(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpaceBeforeRangeBasedForLoopColon(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -10038,7 +10038,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpaceBeforeSquareBrackets</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpaceBeforeSquareBrackets(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpaceBeforeSquareBrackets(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -10083,7 +10083,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpaceInEmptyBlock</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpaceInEmptyBlock(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpaceInEmptyBlock(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -10128,7 +10128,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpaceInEmptyParentheses</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpaceInEmptyParentheses(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpaceInEmptyParentheses(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -10173,7 +10173,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpacesBeforeTrailingComments</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpacesBeforeTrailingComments(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesBeforeTrailingCommentsEntity.Source value)
+        public void SetSpacesBeforeTrailingComments(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesBeforeTrailingCommentsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -10218,7 +10218,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpacesInAngles</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpacesInAngles(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInAnglesEntity.Source value)
+        public void SetSpacesInAngles(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInAnglesEntity.Source value)
         {
             CheckValidInstance();
 
@@ -10263,7 +10263,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpacesInConditionalStatement</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpacesInConditionalStatement(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpacesInConditionalStatement(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -10308,7 +10308,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpacesInContainerLiterals</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpacesInContainerLiterals(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpacesInContainerLiterals(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -10353,7 +10353,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpacesInCStyleCastParentheses</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpacesInCStyleCastParentheses(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpacesInCStyleCastParentheses(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -10398,7 +10398,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpacesInLineCommentPrefix</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpacesInLineCommentPrefix(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.Source value)
+        public void SetSpacesInLineCommentPrefix(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.Source value)
         {
             CheckValidInstance();
 
@@ -10479,7 +10479,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpacesInParentheses</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpacesInParentheses(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpacesInParentheses(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -10524,7 +10524,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>SpacesInSquareBrackets</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpacesInSquareBrackets(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetSpacesInSquareBrackets(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -10569,7 +10569,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>Standard</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStandard(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StandardEntity.Source value)
+        public void SetStandard(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StandardEntity.Source value)
         {
             CheckValidInstance();
 
@@ -10614,7 +10614,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>StatementAttributeLikeMacros</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStatementAttributeLikeMacros(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StatementAArray.Source value)
+        public void SetStatementAttributeLikeMacros(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StatementAArray.Source value)
         {
             CheckValidInstance();
 
@@ -10695,7 +10695,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>StatementMacros</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStatementMacros(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StatementMArray.Source value)
+        public void SetStatementMacros(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StatementMArray.Source value)
         {
             CheckValidInstance();
 
@@ -10776,7 +10776,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>TabWidth</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTabWidth(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheNumberOfColumnsUsedForTabStops.Source value)
+        public void SetTabWidth(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheNumberOfColumnsUsedForTabStops.Source value)
         {
             CheckValidInstance();
 
@@ -10821,7 +10821,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>TypenameMacros</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTypenameMacros(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.TypenameMaArray.Source value)
+        public void SetTypenameMacros(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.TypenameMaArray.Source value)
         {
             CheckValidInstance();
 
@@ -10902,7 +10902,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>UseCRLF</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUseCrlf(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+        public void SetUseCrlf(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -10947,7 +10947,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>UseTab</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUseTab(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.UseTabEntity.Source value)
+        public void SetUseTab(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.UseTabEntity.Source value)
         {
             CheckValidInstance();
 
@@ -10992,7 +10992,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>WhitespaceSensitiveMacros</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetWhitespaceSensitiveMacros(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.WhitespaceArray.Source value)
+        public void SetWhitespaceSensitiveMacros(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.WhitespaceArray.Source value)
         {
             CheckValidInstance();
 
@@ -11174,7 +11174,7 @@ public readonly partial struct ClangFormatSchema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -11197,7 +11197,7 @@ public readonly partial struct ClangFormatSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -11244,7 +11244,7 @@ public readonly partial struct ClangFormatSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 

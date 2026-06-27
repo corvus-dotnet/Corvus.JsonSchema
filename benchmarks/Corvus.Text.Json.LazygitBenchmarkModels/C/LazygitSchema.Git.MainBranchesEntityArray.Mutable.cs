@@ -426,7 +426,7 @@ public readonly partial struct LazygitSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void InsertItem(int itemIndex, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.MainBranchesEntity.Source value)
+                public void InsertItem(int itemIndex, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.MainBranchesEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -452,7 +452,7 @@ public readonly partial struct LazygitSchema
                 ///   The parent <see cref="JsonDocument"/> has been disposed.
                 /// </exception>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void AddItem(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.MainBranchesEntity.Source value)
+                public void AddItem(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.MainBranchesEntity.Source value)
                 {
                     InsertItem(GetArrayLength(), in value);
                 }

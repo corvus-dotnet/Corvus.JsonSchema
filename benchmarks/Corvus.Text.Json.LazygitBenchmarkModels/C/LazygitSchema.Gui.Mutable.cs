@@ -919,7 +919,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>animateExplosion</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAnimateExplosionValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.AnimateExplosion.Source value)
+            public void SetAnimateExplosionValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.AnimateExplosion.Source value)
             {
                 CheckValidInstance();
 
@@ -964,7 +964,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>authorColors</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAuthorColorsValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.AuthorColors.Source value)
+            public void SetAuthorColorsValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.AuthorColors.Source value)
             {
                 CheckValidInstance();
 
@@ -1045,7 +1045,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>border</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBorderValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Border.Source value)
+            public void SetBorderValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Border.Source value)
             {
                 CheckValidInstance();
 
@@ -1090,7 +1090,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>branchColors</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBranchColorsValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.BranchColors.Source value)
+            public void SetBranchColorsValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.BranchColors.Source value)
             {
                 CheckValidInstance();
 
@@ -1171,7 +1171,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>commandLogSize</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCommandLogSizeValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.CommandLogSize.Source value)
+            public void SetCommandLogSizeValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.CommandLogSize.Source value)
             {
                 CheckValidInstance();
 
@@ -1216,7 +1216,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>commitLength</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCommitLengthValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.CommitLength.Source value)
+            public void SetCommitLengthValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.CommitLength.Source value)
             {
                 CheckValidInstance();
 
@@ -1297,7 +1297,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>expandFocusedSidePanel</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExpandFocusedSidePanelValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ExpandFocusedSidePanel.Source value)
+            public void SetExpandFocusedSidePanelValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ExpandFocusedSidePanel.Source value)
             {
                 CheckValidInstance();
 
@@ -1342,7 +1342,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>language</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLanguageValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Language.Source value)
+            public void SetLanguageValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Language.Source value)
             {
                 CheckValidInstance();
 
@@ -1387,7 +1387,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>mainPanelSplitMode</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMainPanelSplitModeValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.MainPanelSplitMode.Source value)
+            public void SetMainPanelSplitModeValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.MainPanelSplitMode.Source value)
             {
                 CheckValidInstance();
 
@@ -1432,7 +1432,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>mouseEvents</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMouseEventsValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.MouseEvents.Source value)
+            public void SetMouseEventsValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.MouseEvents.Source value)
             {
                 CheckValidInstance();
 
@@ -1477,7 +1477,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>nerdFontsVersion</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNerdFontsVersionValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.NerdFontsVersion.Source value)
+            public void SetNerdFontsVersionValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.NerdFontsVersion.Source value)
             {
                 CheckValidInstance();
 
@@ -1522,7 +1522,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>scrollHeight</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetScrollHeightValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ScrollHeight.Source value)
+            public void SetScrollHeightValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ScrollHeight.Source value)
             {
                 CheckValidInstance();
 
@@ -1567,7 +1567,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>scrollPastBottom</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetScrollPastBottomValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ScrollPastBottom.Source value)
+            public void SetScrollPastBottomValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ScrollPastBottom.Source value)
             {
                 CheckValidInstance();
 
@@ -1612,7 +1612,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>shortTimeFormat</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShortTimeFormatValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShortTimeFormat.Source value)
+            public void SetShortTimeFormatValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShortTimeFormat.Source value)
             {
                 CheckValidInstance();
 
@@ -1657,7 +1657,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>showBottomLine</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShowBottomLineValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowBottomLine.Source value)
+            public void SetShowBottomLineValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowBottomLine.Source value)
             {
                 CheckValidInstance();
 
@@ -1702,7 +1702,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>showBranchCommitHash</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShowBranchCommitHashValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowBranchCommitHash.Source value)
+            public void SetShowBranchCommitHashValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowBranchCommitHash.Source value)
             {
                 CheckValidInstance();
 
@@ -1747,7 +1747,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>showCommandLog</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShowCommandLogValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowCommandLog.Source value)
+            public void SetShowCommandLogValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowCommandLog.Source value)
             {
                 CheckValidInstance();
 
@@ -1792,7 +1792,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>showFileTree</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShowFileTreeValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowFileTree.Source value)
+            public void SetShowFileTreeValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowFileTree.Source value)
             {
                 CheckValidInstance();
 
@@ -1837,7 +1837,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>showListFooter</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShowListFooterValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowListFooter.Source value)
+            public void SetShowListFooterValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowListFooter.Source value)
             {
                 CheckValidInstance();
 
@@ -1882,7 +1882,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>showRandomTip</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShowRandomTipValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowRandomTip.Source value)
+            public void SetShowRandomTipValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.ShowRandomTip.Source value)
             {
                 CheckValidInstance();
 
@@ -1927,7 +1927,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>sidePanelWidth</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSidePanelWidthValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SidePanelWidth.Source value)
+            public void SetSidePanelWidthValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SidePanelWidth.Source value)
             {
                 CheckValidInstance();
 
@@ -1972,7 +1972,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>skipDiscardChangeWarning</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSkipDiscardChangeWarningValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipDiscardChangeWarning.Source value)
+            public void SetSkipDiscardChangeWarningValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipDiscardChangeWarning.Source value)
             {
                 CheckValidInstance();
 
@@ -2017,7 +2017,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>skipRewordInEditorWarning</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSkipRewordInEditorWarningValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipRewordInEditorWarning.Source value)
+            public void SetSkipRewordInEditorWarningValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipRewordInEditorWarning.Source value)
             {
                 CheckValidInstance();
 
@@ -2062,7 +2062,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>skipStashWarning</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSkipStashWarningValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipStashWarning.Source value)
+            public void SetSkipStashWarningValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SkipStashWarning.Source value)
             {
                 CheckValidInstance();
 
@@ -2107,7 +2107,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>splitDiff</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSplitDiffValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SplitDiff.Source value)
+            public void SetSplitDiffValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.SplitDiff.Source value)
             {
                 CheckValidInstance();
 
@@ -2152,7 +2152,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>theme</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetThemeValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.Source value)
+            public void SetThemeValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.Source value)
             {
                 CheckValidInstance();
 
@@ -2233,7 +2233,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>timeFormat</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTimeFormatValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.TimeFormat.Source value)
+            public void SetTimeFormatValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.TimeFormat.Source value)
             {
                 CheckValidInstance();
 
@@ -2278,7 +2278,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>windowSize</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetWindowSizeValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.WindowSize.Source value)
+            public void SetWindowSizeValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.WindowSize.Source value)
             {
                 CheckValidInstance();
 

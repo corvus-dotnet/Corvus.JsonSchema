@@ -506,7 +506,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>author</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAuthor(in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source value)
+            public void SetAuthor(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -551,7 +551,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>cloud_platforms</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCloudPlatforms(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetCloudPlatforms(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -632,7 +632,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>company</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCompany(in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source value)
+            public void SetCompany(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -677,7 +677,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source value)
+            public void SetDescription(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -722,7 +722,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>galaxy_tags</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGalaxyTags(in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source value)
+            public void SetGalaxyTags(scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -803,7 +803,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>github_branch</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGithubBranch(in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source value)
+            public void SetGithubBranch(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -848,7 +848,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>issue_tracker_url</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIssueTrackerUrl(in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source value)
+            public void SetIssueTrackerUrl(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -893,7 +893,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>license</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLicense(in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source value)
+            public void SetLicense(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -938,7 +938,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>min_ansible_container_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMinAnsibleContainerVersion(in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source value)
+            public void SetMinAnsibleContainerVersion(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -983,7 +983,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>min_ansible_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMinAnsibleVersion(in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source value)
+            public void SetMinAnsibleVersion(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1028,7 +1028,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>namespace</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNamespace(in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source value)
+            public void SetNamespace(scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source value)
             {
                 CheckValidInstance();
 
@@ -1073,7 +1073,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>platforms</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPlatformsValue(in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source value)
+            public void SetPlatformsValue(scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source value)
             {
                 CheckValidInstance();
 
@@ -1154,7 +1154,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>role_name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRoleNameValue(in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source value)
+            public void SetRoleNameValue(scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source value)
             {
                 CheckValidInstance();
 
@@ -1199,7 +1199,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>standalone</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStandalone(in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source value)
+            public void SetStandalone(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1244,7 +1244,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>video_links</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVideoLinks(in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source value)
+            public void SetVideoLinks(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1649,7 +1649,7 @@ public readonly partial struct AnsibleMetaSchema
 
             internal Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg1, in Corvus.Text.Json.JsonElement.Source arg2, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg3, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg4, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source arg5, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg6, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg7, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg8, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg9, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg10, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source arg11, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source arg12, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source arg13, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source arg14, in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source arg15)
+            internal Source(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Text.Json.JsonElement.Source arg2, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg3, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg4, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source arg5, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg6, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg7, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg8, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg9, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg10, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source arg11, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source arg12, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source arg13, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source arg14, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source arg15)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1841,7 +1841,7 @@ public readonly partial struct AnsibleMetaSchema
 
             internal Source(scoped in TContext context, Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg1, in Corvus.Text.Json.JsonElement.Source<TContext> arg2, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg3, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg4, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source<TContext> arg5, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg6, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg7, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg8, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg9, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg10, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source arg11, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source<TContext> arg12, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source arg13, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source arg14, in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source<TContext> arg15)
+            internal Source(scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg2, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg3, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg4, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source<TContext> arg5, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg6, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg7, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg8, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg9, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg10, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source arg11, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source<TContext> arg12, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source arg13, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source arg14, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source<TContext> arg15)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2178,7 +2178,7 @@ public readonly partial struct AnsibleMetaSchema
             /// <param name="arg14">The value of the property.</param>
             /// <param name="arg15">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg1, in Corvus.Text.Json.JsonElement.Source arg2, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg3, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg4, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source arg5, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg6, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg7, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg8, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg9, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg10, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source arg11, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source arg12, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source arg13, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source arg14, in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source arg15, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Text.Json.JsonElement.Source arg2, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg3, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg4, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source arg5, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg6, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg7, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg8, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg9, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg10, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source arg11, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source arg12, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source arg13, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source arg14, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source arg15, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
@@ -2206,7 +2206,7 @@ public readonly partial struct AnsibleMetaSchema
             /// <param name="arg14">The value of the property.</param>
             /// <param name="arg15">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg1, in Corvus.Text.Json.JsonElement.Source<TContext> arg2, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg3, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg4, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source<TContext> arg5, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg6, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg7, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg8, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg9, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg10, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source arg11, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source<TContext> arg12, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source arg13, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source arg14, in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source<TContext> arg15, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg2, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg3, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg4, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source<TContext> arg5, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg6, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg7, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg8, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg9, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source arg10, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source arg11, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source<TContext> arg12, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source arg13, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source arg14, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source<TContext> arg15, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2265,7 +2265,7 @@ public readonly partial struct AnsibleMetaSchema
         /// <param name="standalone">The value of the <c>"standalone"</c> property.</param>
         /// <param name="videoLinks">The value of the <c>"video_links"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source author = default, in Corvus.Text.Json.JsonElement.Source cloudPlatforms = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source company = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source description = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source galaxyTags = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source githubBranch = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source issueTrackerUrl = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source license = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source minAnsibleContainerVersion = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source minAnsibleVersion = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source namespaceValue = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source platforms = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source roleName = default, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source standalone = default, in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source videoLinks = default)
+        public static Source Build(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source author = default, scoped in Corvus.Text.Json.JsonElement.Source cloudPlatforms = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source company = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source description = default, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source galaxyTags = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source githubBranch = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source issueTrackerUrl = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source license = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source minAnsibleContainerVersion = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source minAnsibleVersion = default, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source namespaceValue = default, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source platforms = default, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source roleName = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source standalone = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source videoLinks = default)
         {
             return new Source(author, cloudPlatforms, company, description, galaxyTags, githubBranch, issueTrackerUrl, license, minAnsibleContainerVersion, minAnsibleVersion, namespaceValue, platforms, roleName, standalone, videoLinks);
         }
@@ -2291,7 +2291,7 @@ public readonly partial struct AnsibleMetaSchema
         /// <param name="standalone">The value of the <c>"standalone"</c> property.</param>
         /// <param name="videoLinks">The value of the <c>"video_links"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source author = default, in Corvus.Text.Json.JsonElement.Source<TContext> cloudPlatforms = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source company = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source description = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source<TContext> galaxyTags = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source githubBranch = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source issueTrackerUrl = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source license = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source minAnsibleContainerVersion = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source minAnsibleVersion = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source namespaceValue = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source<TContext> platforms = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source roleName = default, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source standalone = default, in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source<TContext> videoLinks = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source author = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> cloudPlatforms = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source company = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source description = default, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source<TContext> galaxyTags = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source githubBranch = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source issueTrackerUrl = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source license = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source minAnsibleContainerVersion = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source minAnsibleVersion = default, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source namespaceValue = default, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source<TContext> platforms = default, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source roleName = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source standalone = default, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source<TContext> videoLinks = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

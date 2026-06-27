@@ -396,7 +396,7 @@ public readonly partial struct CmakePresetsSchema
                     ///   </para>
                     /// </remarks>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void InsertItem(int itemIndex, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source value)
+                    public void InsertItem(int itemIndex, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source value)
                     {
                         CheckValidInstance();
 
@@ -422,7 +422,7 @@ public readonly partial struct CmakePresetsSchema
                     ///   The parent <see cref="JsonDocument"/> has been disposed.
                     /// </exception>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void AddItem(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source value)
+                    public void AddItem(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.Source value)
                     {
                         InsertItem(GetArrayLength(), in value);
                     }

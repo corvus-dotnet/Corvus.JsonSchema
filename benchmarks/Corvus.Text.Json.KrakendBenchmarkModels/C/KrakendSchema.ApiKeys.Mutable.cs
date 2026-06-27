@@ -410,7 +410,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>hash</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHashValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Hash.Source value)
+            public void SetHashValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Hash.Source value)
             {
                 CheckValidInstance();
 
@@ -455,7 +455,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>identifier</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIdentifierValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Identifier.Source value)
+            public void SetIdentifierValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Identifier.Source value)
             {
                 CheckValidInstance();
 
@@ -500,7 +500,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>keys</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetKeys(in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.KeysEntityArray.Source value)
+            public void SetKeys(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.KeysEntityArray.Source value)
             {
                 CheckValidInstance();
 
@@ -565,7 +565,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>propagate_role</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPropagateRole(in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.PropagateRoleAsHeader.Source value)
+            public void SetPropagateRole(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.PropagateRoleAsHeader.Source value)
             {
                 CheckValidInstance();
 
@@ -610,7 +610,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>salt</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSaltValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Salt.Source value)
+            public void SetSaltValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Salt.Source value)
             {
                 CheckValidInstance();
 
@@ -655,7 +655,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>strategy</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStrategyValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Strategy.Source value)
+            public void SetStrategyValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Strategy.Source value)
             {
                 CheckValidInstance();
 
@@ -801,7 +801,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -824,7 +824,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -871,7 +871,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1046,7 +1046,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.KeysEntityArray.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Hash.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Identifier.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.PropagateRoleAsHeader.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Salt.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Strategy.Source arg6)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.KeysEntityArray.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Hash.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Identifier.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.PropagateRoleAsHeader.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Salt.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Strategy.Source arg6)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1220,7 +1220,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.KeysEntityArray.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Hash.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Identifier.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.PropagateRoleAsHeader.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Salt.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Strategy.Source arg6)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.KeysEntityArray.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Hash.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Identifier.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.PropagateRoleAsHeader.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Salt.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Strategy.Source arg6)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1554,7 +1554,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.KeysEntityArray.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Hash.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Identifier.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.PropagateRoleAsHeader.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Salt.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Strategy.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.KeysEntityArray.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Hash.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Identifier.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.PropagateRoleAsHeader.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Salt.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Strategy.Source arg6, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1573,7 +1573,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.KeysEntityArray.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Hash.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Identifier.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.PropagateRoleAsHeader.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Salt.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Strategy.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.KeysEntityArray.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Hash.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Identifier.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.PropagateRoleAsHeader.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Salt.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Strategy.Source arg6, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1623,7 +1623,7 @@ public readonly partial struct KrakendSchema
         /// <param name="salt">The value of the <c>"salt"</c> property.</param>
         /// <param name="strategy">The value of the <c>"strategy"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.KeysEntityArray.Source keys, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Hash.Source hash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Identifier.Source identifier = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.PropagateRoleAsHeader.Source propagateRole = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Salt.Source salt = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Strategy.Source strategy = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.KeysEntityArray.Source keys, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Hash.Source hash = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Identifier.Source identifier = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.PropagateRoleAsHeader.Source propagateRole = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Salt.Source salt = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Strategy.Source strategy = default)
         {
             return new Source(keys, hash, identifier, propagateRole, salt, strategy);
         }
@@ -1640,7 +1640,7 @@ public readonly partial struct KrakendSchema
         /// <param name="salt">The value of the <c>"salt"</c> property.</param>
         /// <param name="strategy">The value of the <c>"strategy"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.KeysEntityArray.Source<TContext> keys, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Hash.Source hash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Identifier.Source identifier = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.PropagateRoleAsHeader.Source propagateRole = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Salt.Source salt = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Strategy.Source strategy = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.KeysEntityArray.Source<TContext> keys, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Hash.Source hash = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Identifier.Source identifier = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.PropagateRoleAsHeader.Source propagateRole = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Salt.Source salt = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ApiKeys.Strategy.Source strategy = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

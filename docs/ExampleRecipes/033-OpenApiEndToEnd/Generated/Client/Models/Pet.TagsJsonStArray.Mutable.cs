@@ -376,7 +376,7 @@ public readonly partial struct Pet
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Petstore.EndToEnd.Client.Models.JsonString.Source value)
+            public void InsertItem(int itemIndex, scoped in Petstore.EndToEnd.Client.Models.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -402,7 +402,7 @@ public readonly partial struct Pet
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Petstore.EndToEnd.Client.Models.JsonString.Source value)
+            public void AddItem(scoped in Petstore.EndToEnd.Client.Models.JsonString.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }

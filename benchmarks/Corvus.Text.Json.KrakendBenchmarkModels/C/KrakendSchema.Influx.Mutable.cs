@@ -416,7 +416,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>address</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAddress(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetAddress(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -447,7 +447,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>buffer_size</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBufferSize(in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.PointsInBuffer.Source value)
+            public void SetBufferSize(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.PointsInBuffer.Source value)
             {
                 CheckValidInstance();
 
@@ -492,7 +492,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>db</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDb(in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.DbName.Source value)
+            public void SetDb(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.DbName.Source value)
             {
                 CheckValidInstance();
 
@@ -537,7 +537,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>password</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPassword(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetPassword(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -582,7 +582,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>ttl</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTtl(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+            public void SetTtl(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
             {
                 CheckValidInstance();
 
@@ -613,7 +613,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>username</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUsername(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetUsername(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -759,7 +759,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -782,7 +782,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -829,7 +829,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1004,7 +1004,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.PointsInBuffer.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.DbName.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, in Corvus.KrakendBenchmark.Current.JsonString.Source arg6)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.PointsInBuffer.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.DbName.Source arg4, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg6)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1416,7 +1416,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.PointsInBuffer.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.DbName.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, in Corvus.KrakendBenchmark.Current.JsonString.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.PointsInBuffer.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.DbName.Source arg4, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg6, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1463,7 +1463,7 @@ public readonly partial struct KrakendSchema
         /// <param name="password">The value of the <c>"password"</c> property.</param>
         /// <param name="username">The value of the <c>"username"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.JsonString.Source address, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source ttl, in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.PointsInBuffer.Source bufferSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.DbName.Source db = default, in Corvus.KrakendBenchmark.Current.JsonString.Source password = default, in Corvus.KrakendBenchmark.Current.JsonString.Source username = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source address, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source ttl, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.PointsInBuffer.Source bufferSize = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Influx.DbName.Source db = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source password = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source username = default)
         {
             return new Source(address, ttl, bufferSize, db, password, username);
         }

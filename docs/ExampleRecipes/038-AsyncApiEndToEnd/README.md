@@ -93,10 +93,7 @@ internal sealed class LightMeasurementHandler : IReceiveLightMeasurementHandler
 TurnOnProducer producer = new(transport, ValidationMode.Basic);
 
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-42");
 ```
 

@@ -445,7 +445,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>Binary</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBinary(in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source value)
+            public void SetBinary(scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -490,7 +490,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>BinaryMinDigits</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBinaryMinDigits(in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source value)
+            public void SetBinaryMinDigits(scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -535,7 +535,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>Decimal</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDecimalValue(in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source value)
+            public void SetDecimalValue(scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -580,7 +580,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>DecimalMinDigits</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDecimalMinDigits(in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source value)
+            public void SetDecimalMinDigits(scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -625,7 +625,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>Hex</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHex(in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source value)
+            public void SetHex(scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -670,7 +670,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>HexMinDigits</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHexMinDigits(in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source value)
+            public void SetHexMinDigits(scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -816,7 +816,7 @@ public readonly partial struct ClangFormatSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -839,7 +839,7 @@ public readonly partial struct ClangFormatSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -886,7 +886,7 @@ public readonly partial struct ClangFormatSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1061,7 +1061,7 @@ public readonly partial struct ClangFormatSchema
 
             internal Source(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IntegerLiteralSeparatorEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg1, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg2, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg3, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg4, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg5, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg6)
+            internal Source(scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg1, scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg2, scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg3, scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg4, scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg5, scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg6)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1473,7 +1473,7 @@ public readonly partial struct ClangFormatSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg1, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg2, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg3, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg4, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg5, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg1, scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg2, scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg3, scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg4, scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg5, scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source arg6, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1520,7 +1520,7 @@ public readonly partial struct ClangFormatSchema
         /// <param name="hex">The value of the <c>"Hex"</c> property.</param>
         /// <param name="hexMinDigits">The value of the <c>"HexMinDigits"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source binary = default, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source binaryMinDigits = default, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source decimalValue = default, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source decimalMinDigits = default, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source hex = default, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source hexMinDigits = default)
+        public static Source Build(scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source binary = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source binaryMinDigits = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source decimalValue = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source decimalMinDigits = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source hex = default, scoped in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source hexMinDigits = default)
         {
             return new Source(binary, binaryMinDigits, decimalValue, decimalMinDigits, hex, hexMinDigits);
         }

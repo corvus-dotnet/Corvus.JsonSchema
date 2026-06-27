@@ -563,7 +563,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>client_tls</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetClientTlsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source value)
+            public void SetClientTlsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source value)
             {
                 CheckValidInstance();
 
@@ -644,7 +644,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>disable_query_params</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisableQueryParams(in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source value)
+            public void SetDisableQueryParams(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source value)
             {
                 CheckValidInstance();
 
@@ -689,7 +689,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>header_mapping</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeaderMapping(in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source value)
+            public void SetHeaderMapping(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source value)
             {
                 CheckValidInstance();
 
@@ -770,7 +770,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>input_mapping</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetInputMapping(in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source value)
+            public void SetInputMapping(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source value)
             {
                 CheckValidInstance();
 
@@ -851,7 +851,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>output_duration_as_string</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOutputDurationAsString(in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source value)
+            public void SetOutputDurationAsString(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source value)
             {
                 CheckValidInstance();
 
@@ -896,7 +896,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>output_enum_as_string</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOutputEnumAsString(in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source value)
+            public void SetOutputEnumAsString(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source value)
             {
                 CheckValidInstance();
 
@@ -941,7 +941,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>output_remove_unset_values</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOutputRemoveUnsetValues(in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source value)
+            public void SetOutputRemoveUnsetValues(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source value)
             {
                 CheckValidInstance();
 
@@ -986,7 +986,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>output_timestamp_as_string</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOutputTimestampAsString(in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source value)
+            public void SetOutputTimestampAsString(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source value)
             {
                 CheckValidInstance();
 
@@ -1031,7 +1031,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>request_naming_convention</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRequestNamingConventionValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source value)
+            public void SetRequestNamingConventionValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source value)
             {
                 CheckValidInstance();
 
@@ -1076,7 +1076,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>response_naming_convention</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetResponseNamingConventionValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source value)
+            public void SetResponseNamingConventionValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source value)
             {
                 CheckValidInstance();
 
@@ -1121,7 +1121,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>use_alternate_host_on_error</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUseAlternateHostOnError(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
+            public void SetUseAlternateHostOnError(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1166,7 +1166,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>use_request_body</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUseRequestBody(in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source value)
+            public void SetUseRequestBody(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source value)
             {
                 CheckValidInstance();
 
@@ -1312,7 +1312,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1335,7 +1335,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1382,7 +1382,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1563,7 +1563,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source arg10, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source arg12)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source arg12)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1749,7 +1749,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source<TContext> arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source arg10, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source arg12)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source<TContext> arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source<TContext> arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source arg12)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2131,7 +2131,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg11">The value of the property.</param>
             /// <param name="arg12">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source arg10, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source arg12, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source arg12, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
@@ -2156,7 +2156,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg11">The value of the property.</param>
             /// <param name="arg12">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source<TContext> arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source arg10, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source arg12, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source<TContext> arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source<TContext> arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source arg12, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2212,7 +2212,7 @@ public readonly partial struct KrakendSchema
         /// <param name="useAlternateHostOnError">The value of the <c>"use_alternate_host_on_error"</c> property.</param>
         /// <param name="useRequestBody">The value of the <c>"use_request_body"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source clientTls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source disableQueryParams = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source headerMapping = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source inputMapping = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source outputDurationAsString = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source outputEnumAsString = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source outputRemoveUnsetValues = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source outputTimestampAsString = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source requestNamingConvention = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source responseNamingConvention = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source useAlternateHostOnError = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source useRequestBody = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source clientTls = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source disableQueryParams = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source headerMapping = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source inputMapping = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source outputDurationAsString = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source outputEnumAsString = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source outputRemoveUnsetValues = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source outputTimestampAsString = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source requestNamingConvention = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source responseNamingConvention = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source useAlternateHostOnError = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source useRequestBody = default)
         {
             return new Source(clientTls, disableQueryParams, headerMapping, inputMapping, outputDurationAsString, outputEnumAsString, outputRemoveUnsetValues, outputTimestampAsString, requestNamingConvention, responseNamingConvention, useAlternateHostOnError, useRequestBody);
         }
@@ -2235,7 +2235,7 @@ public readonly partial struct KrakendSchema
         /// <param name="useAlternateHostOnError">The value of the <c>"use_alternate_host_on_error"</c> property.</param>
         /// <param name="useRequestBody">The value of the <c>"use_request_body"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> clientTls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source disableQueryParams = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source<TContext> headerMapping = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source<TContext> inputMapping = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source outputDurationAsString = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source outputEnumAsString = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source outputRemoveUnsetValues = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source outputTimestampAsString = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source requestNamingConvention = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source responseNamingConvention = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source useAlternateHostOnError = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source useRequestBody = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> clientTls = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.DisableQueryParameters.Source disableQueryParams = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfHeaders.Source<TContext> headerMapping = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.MappingOfParameters.Source<TContext> inputMapping = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputDurationTypesAsString.Source outputDurationAsString = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputEnumTypesAsString.Source outputEnumAsString = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputRemovesUnsetValues.Source outputRemoveUnsetValues = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.OutputTimestampsTypesAsString.Source outputTimestampAsString = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.RequestNamingConvention.Source requestNamingConvention = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.ResponseNamingConvention.Source responseNamingConvention = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source useAlternateHostOnError = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Grpc.UseBody.Source useRequestBody = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

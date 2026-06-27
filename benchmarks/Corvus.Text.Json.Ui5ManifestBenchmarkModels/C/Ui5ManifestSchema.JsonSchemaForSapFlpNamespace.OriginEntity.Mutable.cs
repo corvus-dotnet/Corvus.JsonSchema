@@ -257,7 +257,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>targetMappingId</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTargetMappingId(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                public void SetTargetMappingId(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -302,7 +302,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>tileId</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTileId(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                public void SetTileId(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -513,7 +513,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.OriginEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2)
+                internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -834,7 +834,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2);
@@ -877,7 +877,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="targetMappingId">The value of the <c>"targetMappingId"</c> property.</param>
             /// <param name="tileId">The value of the <c>"tileId"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source targetMappingId = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source tileId = default)
+            public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source targetMappingId = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source tileId = default)
             {
                 return new Source(targetMappingId, tileId);
             }

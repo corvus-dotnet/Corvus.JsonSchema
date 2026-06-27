@@ -30,7 +30,7 @@ public readonly partial struct LightMeasuredPayload
         private static readonly JsonSchemaPathProvider LumensSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/lumens"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider SentAtSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/sentAt"u8, buffer, out written);
 
-        private static void MatchLumens(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchLumens(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
@@ -45,7 +45,7 @@ public readonly partial struct LightMeasuredPayload
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
-        private static void MatchSentAt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSentAt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
@@ -133,7 +133,7 @@ public readonly partial struct LightMeasuredPayload
 
                     if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Streetlights.Client.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {

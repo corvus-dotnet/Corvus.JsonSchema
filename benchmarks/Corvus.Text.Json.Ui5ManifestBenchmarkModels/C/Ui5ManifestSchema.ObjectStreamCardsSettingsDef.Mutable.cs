@@ -356,7 +356,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>customActions</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCustomActions(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.CustomActionsSettingArray.Source value)
+            public void SetCustomActions(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.CustomActionsSettingArray.Source value)
             {
                 CheckValidInstance();
 
@@ -437,7 +437,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>showFirstActionInFooter</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShowFirstActionInFooter(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.ShowFirstActionInFooterEntity.Source value)
+            public void SetShowFirstActionInFooter(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.ShowFirstActionInFooterEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -583,7 +583,7 @@ public readonly partial struct Ui5ManifestSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -606,7 +606,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -653,7 +653,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -824,7 +824,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.CustomActionsSettingArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.ShowFirstActionInFooterEntity.Source arg2)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.CustomActionsSettingArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.ShowFirstActionInFooterEntity.Source arg2)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -990,7 +990,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.CustomActionsSettingArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.ShowFirstActionInFooterEntity.Source arg2)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.CustomActionsSettingArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.ShowFirstActionInFooterEntity.Source arg2)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1290,7 +1290,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg1">The value of the property.</param>
             /// <param name="arg2">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.CustomActionsSettingArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.ShowFirstActionInFooterEntity.Source arg2, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.CustomActionsSettingArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.ShowFirstActionInFooterEntity.Source arg2, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2);
@@ -1305,7 +1305,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg1">The value of the property.</param>
             /// <param name="arg2">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.CustomActionsSettingArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.ShowFirstActionInFooterEntity.Source arg2, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.CustomActionsSettingArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.ShowFirstActionInFooterEntity.Source arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1351,7 +1351,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="customActions">The value of the <c>"customActions"</c> property.</param>
         /// <param name="showFirstActionInFooter">The value of the <c>"showFirstActionInFooter"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.CustomActionsSettingArray.Source customActions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.ShowFirstActionInFooterEntity.Source showFirstActionInFooter = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.CustomActionsSettingArray.Source customActions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.ShowFirstActionInFooterEntity.Source showFirstActionInFooter = default)
         {
             return new Source(customActions, showFirstActionInFooter);
         }
@@ -1364,7 +1364,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="customActions">The value of the <c>"customActions"</c> property.</param>
         /// <param name="showFirstActionInFooter">The value of the <c>"showFirstActionInFooter"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.CustomActionsSettingArray.Source<TContext> customActions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.ShowFirstActionInFooterEntity.Source showFirstActionInFooter = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.CustomActionsSettingArray.Source<TContext> customActions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.ShowFirstActionInFooterEntity.Source showFirstActionInFooter = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

@@ -337,7 +337,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>destination</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDestination(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.DestinationEntity.Source value)
+                public void SetDestination(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.DestinationEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -368,7 +368,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>has</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetHas(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.HasEntityArray.Source value)
+                public void SetHas(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.HasEntityArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -449,7 +449,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>missing</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMissing(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.MissingEntityArray.Source value)
+                public void SetMissing(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.MissingEntityArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -530,7 +530,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>permanent</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPermanent(in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
+                public void SetPermanent(scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -575,7 +575,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>source</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSourceValue(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.SourceEntity.Source value)
+                public void SetSourceValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.SourceEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -606,7 +606,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>statusCode</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetStatusCode(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.StatusCodeEntity.Source value)
+                public void SetStatusCode(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.StatusCodeEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -821,7 +821,7 @@ public readonly partial struct VercelSchema
 
                 internal Source(Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.DestinationEntity.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.SourceEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.HasEntityArray.Source arg3, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.MissingEntityArray.Source arg4, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg5, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.StatusCodeEntity.Source arg6)
+                internal Source(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.DestinationEntity.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.SourceEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.HasEntityArray.Source arg3, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.MissingEntityArray.Source arg4, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.StatusCodeEntity.Source arg6)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -995,7 +995,7 @@ public readonly partial struct VercelSchema
 
                 internal Source(scoped in TContext context, Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.DestinationEntity.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.SourceEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.HasEntityArray.Source<TContext> arg3, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.MissingEntityArray.Source<TContext> arg4, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg5, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.StatusCodeEntity.Source arg6)
+                internal Source(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.DestinationEntity.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.SourceEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.HasEntityArray.Source<TContext> arg3, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.MissingEntityArray.Source<TContext> arg4, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.StatusCodeEntity.Source arg6)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1260,7 +1260,7 @@ public readonly partial struct VercelSchema
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="arg6">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.DestinationEntity.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.SourceEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.HasEntityArray.Source arg3, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.MissingEntityArray.Source arg4, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg5, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.StatusCodeEntity.Source arg6, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.DestinationEntity.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.SourceEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.HasEntityArray.Source arg3, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.MissingEntityArray.Source arg4, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.StatusCodeEntity.Source arg6, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1279,7 +1279,7 @@ public readonly partial struct VercelSchema
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="arg6">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.DestinationEntity.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.SourceEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.HasEntityArray.Source<TContext> arg3, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.MissingEntityArray.Source<TContext> arg4, in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg5, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.StatusCodeEntity.Source arg6, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.DestinationEntity.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.SourceEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.HasEntityArray.Source<TContext> arg3, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.MissingEntityArray.Source<TContext> arg4, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.StatusCodeEntity.Source arg6, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1329,7 +1329,7 @@ public readonly partial struct VercelSchema
             /// <param name="permanent">The value of the <c>"permanent"</c> property.</param>
             /// <param name="statusCode">The value of the <c>"statusCode"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.DestinationEntity.Source destination, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.SourceEntity.Source source, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.HasEntityArray.Source has = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.MissingEntityArray.Source missing = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source permanent = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.StatusCodeEntity.Source statusCode = default)
+            public static Source Build(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.DestinationEntity.Source destination, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.SourceEntity.Source source, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.HasEntityArray.Source has = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.MissingEntityArray.Source missing = default, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source permanent = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.StatusCodeEntity.Source statusCode = default)
             {
                 return new Source(destination, source, has, missing, permanent, statusCode);
             }
@@ -1346,7 +1346,7 @@ public readonly partial struct VercelSchema
             /// <param name="permanent">The value of the <c>"permanent"</c> property.</param>
             /// <param name="statusCode">The value of the <c>"statusCode"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.DestinationEntity.Source destination, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.SourceEntity.Source source, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.HasEntityArray.Source<TContext> has = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.MissingEntityArray.Source<TContext> missing = default, in Corvus.VercelBenchmark.Current.JsonBoolean.Source permanent = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.StatusCodeEntity.Source statusCode = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.DestinationEntity.Source destination, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.SourceEntity.Source source, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.HasEntityArray.Source<TContext> has = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.MissingEntityArray.Source<TContext> missing = default, scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source permanent = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.RequiredDestinationAndSourceEntity.StatusCodeEntity.Source statusCode = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

@@ -398,7 +398,7 @@ public readonly partial struct ClangFormatSchema
                 /// Set the <c>CaseSensitive</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCaseSensitive(in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
+                public void SetCaseSensitive(scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -443,7 +443,7 @@ public readonly partial struct ClangFormatSchema
                 /// Set the <c>Priority</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPriority(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.PriorityEntity.Source value)
+                public void SetPriority(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.PriorityEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -474,7 +474,7 @@ public readonly partial struct ClangFormatSchema
                 /// Set the <c>Regex</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRegex(in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
+                public void SetRegex(scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -505,7 +505,7 @@ public readonly partial struct ClangFormatSchema
                 /// Set the <c>SortPriority</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSortPriority(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.SortPriorityEntity.Source value)
+                public void SetSortPriority(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.SortPriorityEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -651,7 +651,7 @@ public readonly partial struct ClangFormatSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -674,7 +674,7 @@ public readonly partial struct ClangFormatSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -721,7 +721,7 @@ public readonly partial struct ClangFormatSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -894,7 +894,7 @@ public readonly partial struct ClangFormatSchema
 
                 internal Source(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.PriorityEntity.Source arg1, in Corvus.ClangFormatBenchmark.Current.JsonString.Source arg2, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg3, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.SortPriorityEntity.Source arg4)
+                internal Source(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.PriorityEntity.Source arg1, scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source arg2, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.SortPriorityEntity.Source arg4)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1296,7 +1296,7 @@ public readonly partial struct ClangFormatSchema
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.PriorityEntity.Source arg1, in Corvus.ClangFormatBenchmark.Current.JsonString.Source arg2, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg3, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.SortPriorityEntity.Source arg4, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.PriorityEntity.Source arg1, scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source arg2, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.SortPriorityEntity.Source arg4, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4);
@@ -1341,7 +1341,7 @@ public readonly partial struct ClangFormatSchema
             /// <param name="caseSensitive">The value of the <c>"CaseSensitive"</c> property.</param>
             /// <param name="sortPriority">The value of the <c>"SortPriority"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.PriorityEntity.Source priority, in Corvus.ClangFormatBenchmark.Current.JsonString.Source regex, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source caseSensitive = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.SortPriorityEntity.Source sortPriority = default)
+            public static Source Build(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.PriorityEntity.Source priority, scoped in Corvus.ClangFormatBenchmark.Current.JsonString.Source regex, scoped in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source caseSensitive = default, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.SortPriorityEntity.Source sortPriority = default)
             {
                 return new Source(priority, regex, caseSensitive, sortPriority);
             }

@@ -524,7 +524,7 @@ public readonly partial struct ExtendableInput
         /// Set the <c>errorMessage</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetErrorMessage(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetErrorMessage(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -569,7 +569,7 @@ public readonly partial struct ExtendableInput
         /// Set the <c>fallback</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFallback(in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.FallbackEntity.Source value)
+        public void SetFallback(scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.FallbackEntity.Source value)
         {
             CheckValidInstance();
 
@@ -650,7 +650,7 @@ public readonly partial struct ExtendableInput
         /// Set the <c>height</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHeight(in Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.Source value)
+        public void SetHeight(scoped in Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.Source value)
         {
             CheckValidInstance();
 
@@ -695,7 +695,7 @@ public readonly partial struct ExtendableInput
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetId(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -726,7 +726,7 @@ public readonly partial struct ExtendableInput
         /// Set the <c>isRequired</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIsRequired(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+        public void SetIsRequired(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -771,7 +771,7 @@ public readonly partial struct ExtendableInput
         /// Set the <c>isVisible</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIsVisible(in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source value)
+        public void SetIsVisible(scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source value)
         {
             CheckValidInstance();
 
@@ -816,7 +816,7 @@ public readonly partial struct ExtendableInput
         /// Set the <c>label</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLabel(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetLabel(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -861,7 +861,7 @@ public readonly partial struct ExtendableInput
         /// Set the <c>requires</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRequires(in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.RequiresEntity.Source value)
+        public void SetRequires(scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.RequiresEntity.Source value)
         {
             CheckValidInstance();
 
@@ -942,7 +942,7 @@ public readonly partial struct ExtendableInput
         /// Set the <c>separator</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSeparator(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+        public void SetSeparator(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -987,7 +987,7 @@ public readonly partial struct ExtendableInput
         /// Set the <c>spacing</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpacing(in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source value)
+        public void SetSpacing(scoped in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source value)
         {
             CheckValidInstance();
 
@@ -1133,7 +1133,7 @@ public readonly partial struct ExtendableInput
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -1156,7 +1156,7 @@ public readonly partial struct ExtendableInput
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1203,7 +1203,7 @@ public readonly partial struct ExtendableInput
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1382,7 +1382,7 @@ public readonly partial struct ExtendableInput
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.FallbackEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.RequiresEntity.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg10)
+        internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.FallbackEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.RequiresEntity.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg10)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1564,7 +1564,7 @@ public readonly partial struct ExtendableInput
 
         internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.FallbackEntity.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.RequiresEntity.Source<TContext> arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg10)
+        internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.FallbackEntity.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.RequiresEntity.Source<TContext> arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg10)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1930,7 +1930,7 @@ public readonly partial struct ExtendableInput
         /// <param name="arg9">The value of the property.</param>
         /// <param name="arg10">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.FallbackEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.RequiresEntity.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg10, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.FallbackEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.RequiresEntity.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg10, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
@@ -1953,7 +1953,7 @@ public readonly partial struct ExtendableInput
         /// <param name="arg9">The value of the property.</param>
         /// <param name="arg10">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.FallbackEntity.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.RequiresEntity.Source<TContext> arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg10, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.FallbackEntity.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.RequiresEntity.Source<TContext> arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg10, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -2007,7 +2007,7 @@ public readonly partial struct ExtendableInput
     /// <param name="separator">The value of the <c>"separator"</c> property.</param>
     /// <param name="spacing">The value of the <c>"spacing"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source errorMessage = default, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.FallbackEntity.Source fallback = default, in Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.Source height = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source isRequired = default, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source isVisible = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source label = default, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.RequiresEntity.Source requires = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source separator = default, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source spacing = default)
+    public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source errorMessage = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.FallbackEntity.Source fallback = default, scoped in Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.Source height = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source isRequired = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source isVisible = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source label = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.RequiresEntity.Source requires = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source separator = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source spacing = default)
     {
         return new Source(id, errorMessage, fallback, height, isRequired, isVisible, label, requires, separator, spacing);
     }
@@ -2028,7 +2028,7 @@ public readonly partial struct ExtendableInput
     /// <param name="separator">The value of the <c>"separator"</c> property.</param>
     /// <param name="spacing">The value of the <c>"spacing"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source errorMessage = default, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.FallbackEntity.Source<TContext> fallback = default, in Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.Source height = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source isRequired = default, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source isVisible = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source label = default, in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.RequiresEntity.Source<TContext> requires = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source separator = default, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source spacing = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source errorMessage = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.FallbackEntity.Source<TContext> fallback = default, scoped in Corvus.Ui5ManifestBenchmark.Current.BlockElementHeight.Source height = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source isRequired = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source isVisible = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source label = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableInput.RequiresEntity.Source<TContext> requires = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source separator = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source spacing = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

@@ -374,7 +374,7 @@ public readonly partial struct Ui5Schema
                                 /// Set the <c>builder</c> property.
                                 /// </summary>
                                 /// <param name="value">The value of the property to add.</param>
-                                public void SetBuilderValue(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.BuilderSpecVersion30Entity.Source value)
+                                public void SetBuilderValue(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.BuilderSpecVersion30Entity.Source value)
                                 {
                                     CheckValidInstance();
 
@@ -455,7 +455,7 @@ public readonly partial struct Ui5Schema
                                 /// Set the <c>customConfiguration</c> property.
                                 /// </summary>
                                 /// <param name="value">The value of the property to add.</param>
-                                public void SetCustomConfiguration(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ThenEntity.CustomConfigurationEntity.Source value)
+                                public void SetCustomConfiguration(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ThenEntity.CustomConfigurationEntity.Source value)
                                 {
                                     CheckValidInstance();
 
@@ -536,7 +536,7 @@ public readonly partial struct Ui5Schema
                                 /// Set the <c>framework</c> property.
                                 /// </summary>
                                 /// <param name="value">The value of the property to add.</param>
-                                public void SetFramework(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.Source value)
+                                public void SetFramework(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName1.Source value)
                                 {
                                     CheckValidInstance();
 
@@ -617,7 +617,7 @@ public readonly partial struct Ui5Schema
                                 /// Set the <c>kind</c> property.
                                 /// </summary>
                                 /// <param name="value">The value of the property to add.</param>
-                                public void SetKind(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ThenEntity.KindEntity.Source value)
+                                public void SetKind(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ThenEntity.KindEntity.Source value)
                                 {
                                     CheckValidInstance();
 
@@ -662,7 +662,7 @@ public readonly partial struct Ui5Schema
                                 /// Set the <c>metadata</c> property.
                                 /// </summary>
                                 /// <param name="value">The value of the property to add.</param>
-                                public void SetMetadata(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName.Source value)
+                                public void SetMetadata(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName.Source value)
                                 {
                                     CheckValidInstance();
 
@@ -743,7 +743,7 @@ public readonly partial struct Ui5Schema
                                 /// Set the <c>resources</c> property.
                                 /// </summary>
                                 /// <param name="value">The value of the property to add.</param>
-                                public void SetResources(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.Source value)
+                                public void SetResources(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.Source value)
                                 {
                                     CheckValidInstance();
 
@@ -824,7 +824,7 @@ public readonly partial struct Ui5Schema
                                 /// Set the <c>server</c> property.
                                 /// </summary>
                                 /// <param name="value">The value of the property to add.</param>
-                                public void SetServer(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.Source value)
+                                public void SetServer(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ServerEntity.Source value)
                                 {
                                     CheckValidInstance();
 
@@ -905,7 +905,7 @@ public readonly partial struct Ui5Schema
                                 /// Set the <c>specVersion</c> property.
                                 /// </summary>
                                 /// <param name="value">The value of the property to add.</param>
-                                public void SetSpecVersion(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ThenEntity.SpecVersionEntity.Source value)
+                                public void SetSpecVersion(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ThenEntity.SpecVersionEntity.Source value)
                                 {
                                     CheckValidInstance();
 
@@ -950,7 +950,7 @@ public readonly partial struct Ui5Schema
                                 /// Set the <c>type</c> property.
                                 /// </summary>
                                 /// <param name="value">The value of the property to add.</param>
-                                public void SetType(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ThenEntity.TypeEntity.Source value)
+                                public void SetType(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.ElseEntity2.RequiredMetadataAndSpecVersionAndType.ThenEntity.TypeEntity.Source value)
                                 {
                                     CheckValidInstance();
 

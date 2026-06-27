@@ -310,7 +310,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>data</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDataValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source value)
+            public void SetDataValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source value)
             {
                 CheckValidInstance();
 
@@ -391,7 +391,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>group</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGroupValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.Source value)
+            public void SetGroupValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.Source value)
             {
                 CheckValidInstance();
 
@@ -472,7 +472,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>maxItems</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxItems(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsNumberOfItems.Source value)
+            public void SetMaxItems(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsNumberOfItems.Source value)
             {
                 CheckValidInstance();
 
@@ -517,7 +517,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>minItems</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMinItems(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsTheMinimumExpectedNumberOfItems.Source value)
+            public void SetMinItems(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsTheMinimumExpectedNumberOfItems.Source value)
             {
                 CheckValidInstance();
 
@@ -562,7 +562,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>row</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRow(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.TheTemplateForAllRows.Source value)
+            public void SetRow(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.TheTemplateForAllRows.Source value)
             {
                 CheckValidInstance();
 
@@ -812,7 +812,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsNumberOfItems.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsTheMinimumExpectedNumberOfItems.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.TheTemplateForAllRows.Source arg5)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsNumberOfItems.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsTheMinimumExpectedNumberOfItems.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.TheTemplateForAllRows.Source arg5)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -984,7 +984,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsNumberOfItems.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsTheMinimumExpectedNumberOfItems.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.TheTemplateForAllRows.Source<TContext> arg5)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsNumberOfItems.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsTheMinimumExpectedNumberOfItems.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.TheTemplateForAllRows.Source<TContext> arg5)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1241,7 +1241,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg4">The value of the property.</param>
             /// <param name="arg5">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsNumberOfItems.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsTheMinimumExpectedNumberOfItems.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.TheTemplateForAllRows.Source arg5, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsNumberOfItems.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsTheMinimumExpectedNumberOfItems.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.TheTemplateForAllRows.Source arg5, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1259,7 +1259,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg4">The value of the property.</param>
             /// <param name="arg5">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsNumberOfItems.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsTheMinimumExpectedNumberOfItems.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.TheTemplateForAllRows.Source<TContext> arg5, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsNumberOfItems.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsTheMinimumExpectedNumberOfItems.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.TheTemplateForAllRows.Source<TContext> arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1308,7 +1308,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="minItems">The value of the <c>"minItems"</c> property.</param>
         /// <param name="row">The value of the <c>"row"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.Source group = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsNumberOfItems.Source maxItems = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsTheMinimumExpectedNumberOfItems.Source minItems = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.TheTemplateForAllRows.Source row = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.Source group = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsNumberOfItems.Source maxItems = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsTheMinimumExpectedNumberOfItems.Source minItems = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.TheTemplateForAllRows.Source row = default)
         {
             return new Source(data, group, maxItems, minItems, row);
         }
@@ -1324,7 +1324,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="minItems">The value of the <c>"minItems"</c> property.</param>
         /// <param name="row">The value of the <c>"row"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.Source<TContext> group = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsNumberOfItems.Source maxItems = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsTheMinimumExpectedNumberOfItems.Source minItems = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.TheTemplateForAllRows.Source<TContext> row = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Group.Source<TContext> group = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsNumberOfItems.Source maxItems = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.RepresentsTheMinimumExpectedNumberOfItems.Source minItems = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTable.TheTemplateForAllRows.Source<TContext> row = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

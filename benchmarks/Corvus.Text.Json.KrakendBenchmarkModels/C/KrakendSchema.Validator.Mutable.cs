@@ -949,7 +949,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>alg</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAlg(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Algorithm.Source value)
+            public void SetAlg(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Algorithm.Source value)
             {
                 CheckValidInstance();
 
@@ -994,7 +994,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>audience</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAudience(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source value)
+            public void SetAudience(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1075,7 +1075,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>auth_header_name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAuthHeaderName(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.AuthorizationHeader.Source value)
+            public void SetAuthHeaderName(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.AuthorizationHeader.Source value)
             {
                 CheckValidInstance();
 
@@ -1120,7 +1120,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>cache</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCacheValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Cache.Source value)
+            public void SetCacheValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Cache.Source value)
             {
                 CheckValidInstance();
 
@@ -1165,7 +1165,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>cache_duration</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCacheDurationValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.CacheDuration.Source value)
+            public void SetCacheDurationValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.CacheDuration.Source value)
             {
                 CheckValidInstance();
 
@@ -1210,7 +1210,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>cipher_suites</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCipherSuites(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ObjectInArrayArray.Source value)
+            public void SetCipherSuites(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ObjectInArrayArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1291,7 +1291,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>cookie_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCookieKey(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetCookieKey(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1336,7 +1336,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>cypher_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCypherKey(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetCypherKey(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1381,7 +1381,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>disable_jwk_security</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisableJwkSecurityValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DisableJwkSecurity.Source value)
+            public void SetDisableJwkSecurityValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DisableJwkSecurity.Source value)
             {
                 CheckValidInstance();
 
@@ -1426,7 +1426,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>failed_jwk_key_cooldown</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFailedJwkKeyCooldown(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+            public void SetFailedJwkKeyCooldown(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
             {
                 CheckValidInstance();
 
@@ -1471,7 +1471,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>issuer</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIssuer(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetIssuer(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1516,7 +1516,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>jwk_fingerprints</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetJwkFingerprints(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source value)
+            public void SetJwkFingerprints(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1597,7 +1597,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>jwk_local_ca</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetJwkLocalCa(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetJwkLocalCa(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1642,7 +1642,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>jwk_local_path</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetJwkLocalPath(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetJwkLocalPath(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1687,7 +1687,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>jwk_url</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetJwkUrl(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetJwkUrl(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1732,7 +1732,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>key_identify_strategy</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetKeyIdentifyStrategyValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.KeyIdentifyStrategy.Source value)
+            public void SetKeyIdentifyStrategyValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.KeyIdentifyStrategy.Source value)
             {
                 CheckValidInstance();
 
@@ -1777,7 +1777,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>leeway</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLeeway(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+            public void SetLeeway(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
             {
                 CheckValidInstance();
 
@@ -1822,7 +1822,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>operation_debug</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOperationDebug(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DebugEntity.Source value)
+            public void SetOperationDebug(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DebugEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1867,7 +1867,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>propagate_claims</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPropagateClaims(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.PropagateClaimsArrayArray.Source value)
+            public void SetPropagateClaims(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.PropagateClaimsArrayArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1948,7 +1948,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>roles</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRoles(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ValidatorJArray.Source value)
+            public void SetRoles(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ValidatorJArray.Source value)
             {
                 CheckValidInstance();
 
@@ -2029,7 +2029,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>roles_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRolesKey(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetRolesKey(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -2074,7 +2074,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>roles_key_is_nested</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRolesKeyIsNested(in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
+            public void SetRolesKeyIsNested(scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2119,7 +2119,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>scopes</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetScopes(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SJsonStrinArray.Source value)
+            public void SetScopes(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SJsonStrinArray.Source value)
             {
                 CheckValidInstance();
 
@@ -2200,7 +2200,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>scopes_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetScopesKey(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetScopesKey(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -2245,7 +2245,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>scopes_matcher</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetScopesMatcherValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ScopesMatcher.Source value)
+            public void SetScopesMatcherValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ScopesMatcher.Source value)
             {
                 CheckValidInstance();
 
@@ -2290,7 +2290,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>secret_url</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSecretUrl(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SecretSUrl.Source value)
+            public void SetSecretUrl(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SecretSUrl.Source value)
             {
                 CheckValidInstance();
 
@@ -2472,7 +2472,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -2495,7 +2495,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -2542,7 +2542,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -2831,7 +2831,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Algorithm.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.AuthorizationHeader.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Cache.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.CacheDuration.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ObjectInArrayArray.Source arg6, in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, in Corvus.KrakendBenchmark.Current.JsonString.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DisableJwkSecurity.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source arg12, in Corvus.KrakendBenchmark.Current.JsonString.Source arg13, in Corvus.KrakendBenchmark.Current.JsonString.Source arg14, in Corvus.KrakendBenchmark.Current.JsonString.Source arg15, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.KeyIdentifyStrategy.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg17, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DebugEntity.Source arg18, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.PropagateClaimsArrayArray.Source arg19, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ValidatorJArray.Source arg20, in Corvus.KrakendBenchmark.Current.JsonString.Source arg21, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg22, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SJsonStrinArray.Source arg23, in Corvus.KrakendBenchmark.Current.JsonString.Source arg24, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ScopesMatcher.Source arg25, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SecretSUrl.Source arg26)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Algorithm.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.AuthorizationHeader.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Cache.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.CacheDuration.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ObjectInArrayArray.Source arg6, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DisableJwkSecurity.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source arg12, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg13, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg14, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg15, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.KeyIdentifyStrategy.Source arg16, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg17, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DebugEntity.Source arg18, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.PropagateClaimsArrayArray.Source arg19, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ValidatorJArray.Source arg20, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg21, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg22, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SJsonStrinArray.Source arg23, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg24, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ScopesMatcher.Source arg25, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SecretSUrl.Source arg26)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -3047,7 +3047,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Algorithm.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.AuthorizationHeader.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Cache.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.CacheDuration.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ObjectInArrayArray.Source<TContext> arg6, in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, in Corvus.KrakendBenchmark.Current.JsonString.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DisableJwkSecurity.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source<TContext> arg12, in Corvus.KrakendBenchmark.Current.JsonString.Source arg13, in Corvus.KrakendBenchmark.Current.JsonString.Source arg14, in Corvus.KrakendBenchmark.Current.JsonString.Source arg15, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.KeyIdentifyStrategy.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg17, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DebugEntity.Source arg18, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.PropagateClaimsArrayArray.Source<TContext> arg19, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ValidatorJArray.Source<TContext> arg20, in Corvus.KrakendBenchmark.Current.JsonString.Source arg21, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg22, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SJsonStrinArray.Source<TContext> arg23, in Corvus.KrakendBenchmark.Current.JsonString.Source arg24, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ScopesMatcher.Source arg25, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SecretSUrl.Source arg26)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Algorithm.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.AuthorizationHeader.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Cache.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.CacheDuration.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ObjectInArrayArray.Source<TContext> arg6, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DisableJwkSecurity.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source<TContext> arg12, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg13, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg14, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg15, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.KeyIdentifyStrategy.Source arg16, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg17, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DebugEntity.Source arg18, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.PropagateClaimsArrayArray.Source<TContext> arg19, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ValidatorJArray.Source<TContext> arg20, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg21, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg22, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SJsonStrinArray.Source<TContext> arg23, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg24, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ScopesMatcher.Source arg25, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SecretSUrl.Source arg26)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -3541,7 +3541,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg25">The value of the property.</param>
             /// <param name="arg26">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Algorithm.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.AuthorizationHeader.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Cache.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.CacheDuration.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ObjectInArrayArray.Source arg6, in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, in Corvus.KrakendBenchmark.Current.JsonString.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DisableJwkSecurity.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source arg12, in Corvus.KrakendBenchmark.Current.JsonString.Source arg13, in Corvus.KrakendBenchmark.Current.JsonString.Source arg14, in Corvus.KrakendBenchmark.Current.JsonString.Source arg15, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.KeyIdentifyStrategy.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg17, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DebugEntity.Source arg18, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.PropagateClaimsArrayArray.Source arg19, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ValidatorJArray.Source arg20, in Corvus.KrakendBenchmark.Current.JsonString.Source arg21, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg22, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SJsonStrinArray.Source arg23, in Corvus.KrakendBenchmark.Current.JsonString.Source arg24, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ScopesMatcher.Source arg25, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SecretSUrl.Source arg26, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Algorithm.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.AuthorizationHeader.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Cache.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.CacheDuration.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ObjectInArrayArray.Source arg6, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DisableJwkSecurity.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source arg12, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg13, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg14, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg15, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.KeyIdentifyStrategy.Source arg16, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg17, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DebugEntity.Source arg18, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.PropagateClaimsArrayArray.Source arg19, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ValidatorJArray.Source arg20, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg21, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg22, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SJsonStrinArray.Source arg23, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg24, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ScopesMatcher.Source arg25, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SecretSUrl.Source arg26, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26);
@@ -3580,7 +3580,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg25">The value of the property.</param>
             /// <param name="arg26">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Algorithm.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.AuthorizationHeader.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Cache.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.CacheDuration.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ObjectInArrayArray.Source<TContext> arg6, in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, in Corvus.KrakendBenchmark.Current.JsonString.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DisableJwkSecurity.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source<TContext> arg12, in Corvus.KrakendBenchmark.Current.JsonString.Source arg13, in Corvus.KrakendBenchmark.Current.JsonString.Source arg14, in Corvus.KrakendBenchmark.Current.JsonString.Source arg15, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.KeyIdentifyStrategy.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg17, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DebugEntity.Source arg18, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.PropagateClaimsArrayArray.Source<TContext> arg19, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ValidatorJArray.Source<TContext> arg20, in Corvus.KrakendBenchmark.Current.JsonString.Source arg21, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg22, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SJsonStrinArray.Source<TContext> arg23, in Corvus.KrakendBenchmark.Current.JsonString.Source arg24, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ScopesMatcher.Source arg25, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SecretSUrl.Source arg26, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Algorithm.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.AuthorizationHeader.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Cache.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.CacheDuration.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ObjectInArrayArray.Source<TContext> arg6, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg7, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DisableJwkSecurity.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source<TContext> arg12, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg13, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg14, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg15, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.KeyIdentifyStrategy.Source arg16, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg17, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DebugEntity.Source arg18, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.PropagateClaimsArrayArray.Source<TContext> arg19, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ValidatorJArray.Source<TContext> arg20, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg21, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source arg22, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SJsonStrinArray.Source<TContext> arg23, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg24, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ScopesMatcher.Source arg25, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SecretSUrl.Source arg26, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -3650,7 +3650,7 @@ public readonly partial struct KrakendSchema
         /// <param name="scopesMatcher">The value of the <c>"scopes_matcher"</c> property.</param>
         /// <param name="secretUrl">The value of the <c>"secret_url"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Algorithm.Source alg = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source audience = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.AuthorizationHeader.Source authHeaderName = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Cache.Source cache = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.CacheDuration.Source cacheDuration = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ObjectInArrayArray.Source cipherSuites = default, in Corvus.KrakendBenchmark.Current.JsonString.Source cookieKey = default, in Corvus.KrakendBenchmark.Current.JsonString.Source cypherKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DisableJwkSecurity.Source disableJwkSecurity = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source failedJwkKeyCooldown = default, in Corvus.KrakendBenchmark.Current.JsonString.Source issuer = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source jwkFingerprints = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalCa = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalPath = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkUrl = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.KeyIdentifyStrategy.Source keyIdentifyStrategy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source leeway = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DebugEntity.Source operationDebug = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.PropagateClaimsArrayArray.Source propagateClaims = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ValidatorJArray.Source roles = default, in Corvus.KrakendBenchmark.Current.JsonString.Source rolesKey = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source rolesKeyIsNested = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SJsonStrinArray.Source scopes = default, in Corvus.KrakendBenchmark.Current.JsonString.Source scopesKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ScopesMatcher.Source scopesMatcher = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SecretSUrl.Source secretUrl = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Algorithm.Source alg = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source audience = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.AuthorizationHeader.Source authHeaderName = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Cache.Source cache = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.CacheDuration.Source cacheDuration = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ObjectInArrayArray.Source cipherSuites = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source cookieKey = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source cypherKey = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DisableJwkSecurity.Source disableJwkSecurity = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source failedJwkKeyCooldown = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source issuer = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source jwkFingerprints = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalCa = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalPath = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source jwkUrl = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.KeyIdentifyStrategy.Source keyIdentifyStrategy = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source leeway = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DebugEntity.Source operationDebug = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.PropagateClaimsArrayArray.Source propagateClaims = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ValidatorJArray.Source roles = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source rolesKey = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source rolesKeyIsNested = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SJsonStrinArray.Source scopes = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source scopesKey = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ScopesMatcher.Source scopesMatcher = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SecretSUrl.Source secretUrl = default)
         {
             return new Source(alg, audience, authHeaderName, cache, cacheDuration, cipherSuites, cookieKey, cypherKey, disableJwkSecurity, failedJwkKeyCooldown, issuer, jwkFingerprints, jwkLocalCa, jwkLocalPath, jwkUrl, keyIdentifyStrategy, leeway, operationDebug, propagateClaims, roles, rolesKey, rolesKeyIsNested, scopes, scopesKey, scopesMatcher, secretUrl);
         }
@@ -3687,7 +3687,7 @@ public readonly partial struct KrakendSchema
         /// <param name="scopesMatcher">The value of the <c>"scopes_matcher"</c> property.</param>
         /// <param name="secretUrl">The value of the <c>"secret_url"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Algorithm.Source alg = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source<TContext> audience = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.AuthorizationHeader.Source authHeaderName = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Cache.Source cache = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.CacheDuration.Source cacheDuration = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ObjectInArrayArray.Source<TContext> cipherSuites = default, in Corvus.KrakendBenchmark.Current.JsonString.Source cookieKey = default, in Corvus.KrakendBenchmark.Current.JsonString.Source cypherKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DisableJwkSecurity.Source disableJwkSecurity = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source failedJwkKeyCooldown = default, in Corvus.KrakendBenchmark.Current.JsonString.Source issuer = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source<TContext> jwkFingerprints = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalCa = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalPath = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkUrl = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.KeyIdentifyStrategy.Source keyIdentifyStrategy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source leeway = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DebugEntity.Source operationDebug = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.PropagateClaimsArrayArray.Source<TContext> propagateClaims = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ValidatorJArray.Source<TContext> roles = default, in Corvus.KrakendBenchmark.Current.JsonString.Source rolesKey = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source rolesKeyIsNested = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SJsonStrinArray.Source<TContext> scopes = default, in Corvus.KrakendBenchmark.Current.JsonString.Source scopesKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ScopesMatcher.Source scopesMatcher = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SecretSUrl.Source secretUrl = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Algorithm.Source alg = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source<TContext> audience = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.AuthorizationHeader.Source authHeaderName = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.Cache.Source cache = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.CacheDuration.Source cacheDuration = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ObjectInArrayArray.Source<TContext> cipherSuites = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source cookieKey = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source cypherKey = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DisableJwkSecurity.Source disableJwkSecurity = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source failedJwkKeyCooldown = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source issuer = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.JsonStringArray.Source<TContext> jwkFingerprints = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalCa = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalPath = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source jwkUrl = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.KeyIdentifyStrategy.Source keyIdentifyStrategy = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source leeway = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.DebugEntity.Source operationDebug = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.PropagateClaimsArrayArray.Source<TContext> propagateClaims = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ValidatorJArray.Source<TContext> roles = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source rolesKey = default, scoped in Corvus.KrakendBenchmark.Current.JsonBoolean.Source rolesKeyIsNested = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SJsonStrinArray.Source<TContext> scopes = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source scopesKey = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.ScopesMatcher.Source scopesMatcher = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Validator.SecretSUrl.Source secretUrl = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

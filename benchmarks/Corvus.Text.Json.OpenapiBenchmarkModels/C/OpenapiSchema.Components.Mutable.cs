@@ -432,7 +432,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>callbacks</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCallbacks(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source value)
+            public void SetCallbacks(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -513,7 +513,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>examples</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExamples(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source value)
+            public void SetExamples(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -594,7 +594,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeaders(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source value)
+            public void SetHeaders(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -675,7 +675,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>links</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLinks(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source value)
+            public void SetLinks(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -756,7 +756,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>parameters</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetParameters(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source value)
+            public void SetParameters(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -837,7 +837,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>pathItems</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPathItems(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source value)
+            public void SetPathItems(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -918,7 +918,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>requestBodies</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRequestBodies(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source value)
+            public void SetRequestBodies(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -999,7 +999,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>responses</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetResponses(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source value)
+            public void SetResponses(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1080,7 +1080,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>schemas</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSchemas(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source value)
+            public void SetSchemas(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1161,7 +1161,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>securitySchemes</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSecuritySchemes(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source value)
+            public void SetSecuritySchemes(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1361,7 +1361,7 @@ public readonly partial struct OpenapiSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasResponsesParametersExamplesRequestBodiesHeadersSecuritySchemesLinksCallbacksPathItemsEntity.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasResponsesParametersExamplesRequestBodiesHeadersSecuritySchemesLinksCallbacksPathItemsEntity.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1384,7 +1384,7 @@ public readonly partial struct OpenapiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasResponsesParametersExamplesRequestBodiesHeadersSecuritySchemesLinksCallbacksPathItemsEntity.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasResponsesParametersExamplesRequestBodiesHeadersSecuritySchemesLinksCallbacksPathItemsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1431,7 +1431,7 @@ public readonly partial struct OpenapiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasResponsesParametersExamplesRequestBodiesHeadersSecuritySchemesLinksCallbacksPathItemsEntity.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasResponsesParametersExamplesRequestBodiesHeadersSecuritySchemesLinksCallbacksPathItemsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1627,7 +1627,7 @@ public readonly partial struct OpenapiSchema
 
             internal Source(Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source arg2, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source arg4, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source arg5, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source arg6, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source arg7, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source arg8, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source arg9, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source arg10)
+            internal Source(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source arg2, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source arg3, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source arg4, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source arg5, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source arg6, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source arg7, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source arg8, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source arg9, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source arg10)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1809,7 +1809,7 @@ public readonly partial struct OpenapiSchema
 
             internal Source(scoped in TContext context, Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source<TContext> arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source<TContext> arg2, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source<TContext> arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source<TContext> arg4, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source<TContext> arg5, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source<TContext> arg6, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source<TContext> arg7, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source<TContext> arg8, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source<TContext> arg9, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source<TContext> arg10)
+            internal Source(scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source<TContext> arg1, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source<TContext> arg2, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source<TContext> arg3, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source<TContext> arg4, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source<TContext> arg5, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source<TContext> arg6, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source<TContext> arg7, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source<TContext> arg8, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source<TContext> arg9, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source<TContext> arg10)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2175,7 +2175,7 @@ public readonly partial struct OpenapiSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source arg2, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source arg4, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source arg5, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source arg6, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source arg7, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source arg8, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source arg9, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source arg2, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source arg3, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source arg4, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source arg5, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source arg6, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source arg7, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source arg8, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source arg9, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source arg10, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
@@ -2198,7 +2198,7 @@ public readonly partial struct OpenapiSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source<TContext> arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source<TContext> arg2, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source<TContext> arg3, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source<TContext> arg4, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source<TContext> arg5, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source<TContext> arg6, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source<TContext> arg7, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source<TContext> arg8, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source<TContext> arg9, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source<TContext> arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source<TContext> arg1, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source<TContext> arg2, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source<TContext> arg3, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source<TContext> arg4, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source<TContext> arg5, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source<TContext> arg6, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source<TContext> arg7, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source<TContext> arg8, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source<TContext> arg9, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source<TContext> arg10, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2252,7 +2252,7 @@ public readonly partial struct OpenapiSchema
         /// <param name="schemas">The value of the <c>"schemas"</c> property.</param>
         /// <param name="securitySchemes">The value of the <c>"securitySchemes"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source callbacks = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source examples = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source headers = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source links = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source parameters = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source pathItems = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source requestBodies = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source responses = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source schemas = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source securitySchemes = default)
+        public static Source Build(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source callbacks = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source examples = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source headers = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source links = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source parameters = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source pathItems = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source requestBodies = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source responses = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source schemas = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source securitySchemes = default)
         {
             return new Source(callbacks, examples, headers, links, parameters, pathItems, requestBodies, responses, schemas, securitySchemes);
         }
@@ -2273,7 +2273,7 @@ public readonly partial struct OpenapiSchema
         /// <param name="schemas">The value of the <c>"schemas"</c> property.</param>
         /// <param name="securitySchemes">The value of the <c>"securitySchemes"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source<TContext> callbacks = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source<TContext> examples = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source<TContext> headers = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source<TContext> links = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source<TContext> parameters = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source<TContext> pathItems = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source<TContext> requestBodies = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source<TContext> responses = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source<TContext> schemas = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source<TContext> securitySchemes = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.CallbacksEntity.Source<TContext> callbacks = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ExamplesEntity.Source<TContext> examples = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.HeadersEntity.Source<TContext> headers = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.LinksEntity.Source<TContext> links = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ParametersEntity.Source<TContext> parameters = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.PathItemsEntity.Source<TContext> pathItems = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.RequestBodiesEntity.Source<TContext> requestBodies = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.ResponsesEntity.Source<TContext> responses = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SchemasEntity.Source<TContext> schemas = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Components.SecuritySchemesEntity.Source<TContext> securitySchemes = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

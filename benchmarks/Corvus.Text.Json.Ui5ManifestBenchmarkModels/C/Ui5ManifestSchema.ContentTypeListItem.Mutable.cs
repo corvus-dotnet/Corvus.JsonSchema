@@ -439,7 +439,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>actions</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetActions(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionArray.Source value)
+            public void SetActions(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionArray.Source value)
             {
                 CheckValidInstance();
 
@@ -520,7 +520,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>actionsStrip</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetActionsStrip(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionsStripItemArray.Source value)
+            public void SetActionsStrip(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionsStripItemArray.Source value)
             {
                 CheckValidInstance();
 
@@ -601,7 +601,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>attributes</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAttributes(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ContentTypeListItemValueStateItemArray.Source value)
+            public void SetAttributes(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ContentTypeListItemValueStateItemArray.Source value)
             {
                 CheckValidInstance();
 
@@ -682,7 +682,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>attributesLayoutType</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAttributesLayoutType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.DefinesTheLayoutTypeOfTheAttributes.Source value)
+            public void SetAttributesLayoutType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.DefinesTheLayoutTypeOfTheAttributes.Source value)
             {
                 CheckValidInstance();
 
@@ -727,7 +727,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>chart</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetChart(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Microchart.Source value)
+            public void SetChart(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Microchart.Source value)
             {
                 CheckValidInstance();
 
@@ -808,7 +808,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheDescriptionOfTheItem.Source value)
+            public void SetDescription(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheDescriptionOfTheItem.Source value)
             {
                 CheckValidInstance();
 
@@ -889,7 +889,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>highlight</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHighlight(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheHighlightStateOfTheItem.Source value)
+            public void SetHighlight(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheHighlightStateOfTheItem.Source value)
             {
                 CheckValidInstance();
 
@@ -934,7 +934,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>highlightText</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHighlightText(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetHighlightText(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -979,7 +979,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>icon</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIconValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source value)
+            public void SetIconValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source value)
             {
                 CheckValidInstance();
 
@@ -1060,7 +1060,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>info</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetInfo(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem.Source value)
+            public void SetInfo(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem.Source value)
             {
                 CheckValidInstance();
 
@@ -1141,7 +1141,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>title</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTitle(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheTitleOfTheItem.Source value)
+            public void SetTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheTitleOfTheItem.Source value)
             {
                 CheckValidInstance();
 
@@ -1397,7 +1397,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionsStripItemArray.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ContentTypeListItemValueStateItemArray.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.DefinesTheLayoutTypeOfTheAttributes.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Microchart.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheDescriptionOfTheItem.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheHighlightStateOfTheItem.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheTitleOfTheItem.Source arg11)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionsStripItemArray.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ContentTypeListItemValueStateItemArray.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.DefinesTheLayoutTypeOfTheAttributes.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Microchart.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheDescriptionOfTheItem.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheHighlightStateOfTheItem.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheTitleOfTheItem.Source arg11)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1581,7 +1581,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionsStripItemArray.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ContentTypeListItemValueStateItemArray.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.DefinesTheLayoutTypeOfTheAttributes.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Microchart.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheDescriptionOfTheItem.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheHighlightStateOfTheItem.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheTitleOfTheItem.Source<TContext> arg11)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionsStripItemArray.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ContentTypeListItemValueStateItemArray.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.DefinesTheLayoutTypeOfTheAttributes.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Microchart.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheDescriptionOfTheItem.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheHighlightStateOfTheItem.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source<TContext> arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem.Source<TContext> arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheTitleOfTheItem.Source<TContext> arg11)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1886,7 +1886,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg10">The value of the property.</param>
             /// <param name="arg11">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionsStripItemArray.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ContentTypeListItemValueStateItemArray.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.DefinesTheLayoutTypeOfTheAttributes.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Microchart.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheDescriptionOfTheItem.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheHighlightStateOfTheItem.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheTitleOfTheItem.Source arg11, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionsStripItemArray.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ContentTypeListItemValueStateItemArray.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.DefinesTheLayoutTypeOfTheAttributes.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Microchart.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheDescriptionOfTheItem.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheHighlightStateOfTheItem.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheTitleOfTheItem.Source arg11, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
@@ -1910,7 +1910,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg10">The value of the property.</param>
             /// <param name="arg11">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionsStripItemArray.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ContentTypeListItemValueStateItemArray.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.DefinesTheLayoutTypeOfTheAttributes.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Microchart.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheDescriptionOfTheItem.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheHighlightStateOfTheItem.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheTitleOfTheItem.Source<TContext> arg11, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionsStripItemArray.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ContentTypeListItemValueStateItemArray.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.DefinesTheLayoutTypeOfTheAttributes.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Microchart.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheDescriptionOfTheItem.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheHighlightStateOfTheItem.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source<TContext> arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem.Source<TContext> arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheTitleOfTheItem.Source<TContext> arg11, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1965,7 +1965,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="info">The value of the <c>"info"</c> property.</param>
         /// <param name="title">The value of the <c>"title"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionArray.Source actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionsStripItemArray.Source actionsStrip = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ContentTypeListItemValueStateItemArray.Source attributes = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.DefinesTheLayoutTypeOfTheAttributes.Source attributesLayoutType = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Microchart.Source chart = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheDescriptionOfTheItem.Source description = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheHighlightStateOfTheItem.Source highlight = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source highlightText = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem.Source info = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheTitleOfTheItem.Source title = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionArray.Source actions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionsStripItemArray.Source actionsStrip = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ContentTypeListItemValueStateItemArray.Source attributes = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.DefinesTheLayoutTypeOfTheAttributes.Source attributesLayoutType = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Microchart.Source chart = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheDescriptionOfTheItem.Source description = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheHighlightStateOfTheItem.Source highlight = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source highlightText = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source icon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem.Source info = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheTitleOfTheItem.Source title = default)
         {
             return new Source(actions, actionsStrip, attributes, attributesLayoutType, chart, description, highlight, highlightText, icon, info, title);
         }
@@ -1987,7 +1987,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="info">The value of the <c>"info"</c> property.</param>
         /// <param name="title">The value of the <c>"title"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionArray.Source<TContext> actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionsStripItemArray.Source<TContext> actionsStrip = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ContentTypeListItemValueStateItemArray.Source<TContext> attributes = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.DefinesTheLayoutTypeOfTheAttributes.Source attributesLayoutType = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Microchart.Source<TContext> chart = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheDescriptionOfTheItem.Source<TContext> description = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheHighlightStateOfTheItem.Source highlight = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source highlightText = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source<TContext> icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem.Source<TContext> info = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheTitleOfTheItem.Source<TContext> title = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionArray.Source<TContext> actions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ActionsStripItemArray.Source<TContext> actionsStrip = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.ContentTypeListItemValueStateItemArray.Source<TContext> attributes = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.DefinesTheLayoutTypeOfTheAttributes.Source attributesLayoutType = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Microchart.Source<TContext> chart = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheDescriptionOfTheItem.Source<TContext> description = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheHighlightStateOfTheItem.Source highlight = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source highlightText = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Source<TContext> icon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItemValueStateItem.Source<TContext> info = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeListItem.TheTitleOfTheItem.Source<TContext> title = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

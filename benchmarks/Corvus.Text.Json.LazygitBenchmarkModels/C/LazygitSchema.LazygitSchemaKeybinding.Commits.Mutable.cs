@@ -754,7 +754,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>amendToCommit</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAmendToCommit(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetAmendToCommit(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -799,7 +799,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>checkoutCommit</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCheckoutCommit(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetCheckoutCommit(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -844,7 +844,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>cherryPickCopy</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCherryPickCopy(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetCherryPickCopy(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -889,7 +889,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>cherryPickCopyRange</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCherryPickCopyRange(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetCherryPickCopyRange(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -934,7 +934,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>copyCommitMessageToClipboard</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCopyCommitMessageToClipboard(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetCopyCommitMessageToClipboard(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -979,7 +979,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>createFixupCommit</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCreateFixupCommit(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetCreateFixupCommit(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1024,7 +1024,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>markCommitAsFixup</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMarkCommitAsFixup(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetMarkCommitAsFixup(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1069,7 +1069,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>moveDownCommit</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMoveDownCommit(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetMoveDownCommit(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1114,7 +1114,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>moveUpCommit</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMoveUpCommit(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetMoveUpCommit(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1159,7 +1159,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>openLogMenu</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOpenLogMenu(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetOpenLogMenu(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1204,7 +1204,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>pasteCommits</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPasteCommits(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetPasteCommits(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1249,7 +1249,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>pickCommit</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPickCommit(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetPickCommit(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1294,7 +1294,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>renameCommit</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRenameCommit(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetRenameCommit(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1339,7 +1339,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>renameCommitWithEditor</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRenameCommitWithEditor(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetRenameCommitWithEditor(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1384,7 +1384,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>resetCherryPick</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetResetCherryPick(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetResetCherryPick(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1429,7 +1429,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>revertCommit</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRevertCommit(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetRevertCommit(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1474,7 +1474,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>squashAboveCommits</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSquashAboveCommits(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetSquashAboveCommits(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1519,7 +1519,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>squashDown</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSquashDown(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetSquashDown(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1564,7 +1564,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>tagCommit</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTagCommit(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetTagCommit(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1609,7 +1609,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>viewBisectOptions</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetViewBisectOptions(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetViewBisectOptions(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1654,7 +1654,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>viewResetOptions</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetViewResetOptions(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetViewResetOptions(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1884,7 +1884,7 @@ public readonly partial struct LazygitSchema
 
                 internal Source(Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Commits.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg10, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg11, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg12, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg13, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg14, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg15, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg16, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg17, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg18, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg19, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg20, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg21)
+                internal Source(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg10, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg11, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg12, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg13, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg14, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg15, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg16, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg17, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg18, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg19, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg20, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg21)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -2302,7 +2302,7 @@ public readonly partial struct LazygitSchema
                 /// <param name="arg20">The value of the property.</param>
                 /// <param name="arg21">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg10, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg11, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg12, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg13, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg14, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg15, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg16, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg17, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg18, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg19, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg20, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg21, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg10, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg11, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg12, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg13, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg14, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg15, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg16, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg17, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg18, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg19, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg20, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg21, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21);
@@ -2364,7 +2364,7 @@ public readonly partial struct LazygitSchema
             /// <param name="viewBisectOptions">The value of the <c>"viewBisectOptions"</c> property.</param>
             /// <param name="viewResetOptions">The value of the <c>"viewResetOptions"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source amendToCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source checkoutCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source cherryPickCopy = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source cherryPickCopyRange = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source copyCommitMessageToClipboard = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source createFixupCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source markCommitAsFixup = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source moveDownCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source moveUpCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source openLogMenu = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source pasteCommits = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source pickCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source renameCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source renameCommitWithEditor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source resetCherryPick = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source revertCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source squashAboveCommits = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source squashDown = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source tagCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source viewBisectOptions = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source viewResetOptions = default)
+            public static Source Build(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source amendToCommit = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source checkoutCommit = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source cherryPickCopy = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source cherryPickCopyRange = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source copyCommitMessageToClipboard = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source createFixupCommit = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source markCommitAsFixup = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source moveDownCommit = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source moveUpCommit = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source openLogMenu = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source pasteCommits = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source pickCommit = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source renameCommit = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source renameCommitWithEditor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source resetCherryPick = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source revertCommit = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source squashAboveCommits = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source squashDown = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source tagCommit = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source viewBisectOptions = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source viewResetOptions = default)
             {
                 return new Source(amendToCommit, checkoutCommit, cherryPickCopy, cherryPickCopyRange, copyCommitMessageToClipboard, createFixupCommit, markCommitAsFixup, moveDownCommit, moveUpCommit, openLogMenu, pasteCommits, pickCommit, renameCommit, renameCommitWithEditor, resetCherryPick, revertCommit, squashAboveCommits, squashDown, tagCommit, viewBisectOptions, viewResetOptions);
             }

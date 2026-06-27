@@ -414,7 +414,7 @@ public readonly partial struct NestCliSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void InsertItem(int itemIndex, in Corvus.NestCliBenchmark.Current.NestCliSchema.PluginItems.Source value)
+                public void InsertItem(int itemIndex, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.PluginItems.Source value)
                 {
                     CheckValidInstance();
 
@@ -440,7 +440,7 @@ public readonly partial struct NestCliSchema
                 ///   The parent <see cref="JsonDocument"/> has been disposed.
                 /// </exception>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void AddItem(in Corvus.NestCliBenchmark.Current.NestCliSchema.PluginItems.Source value)
+                public void AddItem(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.PluginItems.Source value)
                 {
                     InsertItem(GetArrayLength(), in value);
                 }

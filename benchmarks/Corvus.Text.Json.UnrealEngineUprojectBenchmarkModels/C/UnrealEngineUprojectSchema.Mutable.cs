@@ -457,7 +457,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Set the <c>Category</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCategory(in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source value)
+        public void SetCategory(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -502,7 +502,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Set the <c>Description</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDescription(in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source value)
+        public void SetDescription(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -547,7 +547,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Set the <c>DisableEnginePluginsByDefault</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDisableEnginePluginsByDefault(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source value)
+        public void SetDisableEnginePluginsByDefault(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source value)
         {
             CheckValidInstance();
 
@@ -592,7 +592,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Set the <c>EngineAssociation</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEngineAssociation(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source value)
+        public void SetEngineAssociation(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source value)
         {
             CheckValidInstance();
 
@@ -623,7 +623,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Set the <c>EpicSampleNameHash</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEpicSampleNameHash(in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source value)
+        public void SetEpicSampleNameHash(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source value)
         {
             CheckValidInstance();
 
@@ -668,7 +668,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Set the <c>FileVersion</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFileVersion(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source value)
+        public void SetFileVersion(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source value)
         {
             CheckValidInstance();
 
@@ -699,7 +699,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Set the <c>IsEnterpriseProject</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIsEnterpriseProject(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source value)
+        public void SetIsEnterpriseProject(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source value)
         {
             CheckValidInstance();
 
@@ -744,7 +744,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Set the <c>Modules</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetModules(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source value)
+        public void SetModules(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source value)
         {
             CheckValidInstance();
 
@@ -825,7 +825,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Set the <c>Plugins</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPlugins(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source value)
+        public void SetPlugins(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source value)
         {
             CheckValidInstance();
 
@@ -906,7 +906,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Set the <c>PostBuildSteps</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPostBuildSteps(in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source value)
+        public void SetPostBuildSteps(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -987,7 +987,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Set the <c>PreBuildSteps</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPreBuildSteps(in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source value)
+        public void SetPreBuildSteps(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -1068,7 +1068,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Set the <c>TargetPlatforms</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTargetPlatforms(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source value)
+        public void SetTargetPlatforms(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -1325,7 +1325,7 @@ public readonly partial struct UnrealEngineUprojectSchema
 
         internal Source(Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source arg1, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source arg2, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg3, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg4, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source arg5, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source arg6, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source arg7, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source arg8, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source arg9, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source arg10, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source arg11, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source arg12)
+        internal Source(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source arg1, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source arg2, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg3, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg4, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source arg5, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source arg6, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source arg7, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source arg8, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source arg9, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source arg10, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source arg11, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source arg12)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1511,7 +1511,7 @@ public readonly partial struct UnrealEngineUprojectSchema
 
         internal Source(scoped in TContext context, Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source arg1, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source arg2, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg3, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg4, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source arg5, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source arg6, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source arg7, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source<TContext> arg8, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source<TContext> arg9, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> arg10, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> arg11, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source<TContext> arg12)
+        internal Source(scoped in TContext context, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source arg1, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source arg2, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg3, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg4, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source arg5, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source arg6, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source arg7, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source<TContext> arg8, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source<TContext> arg9, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> arg10, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> arg11, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source<TContext> arg12)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1824,7 +1824,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// <param name="arg11">The value of the property.</param>
         /// <param name="arg12">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source arg1, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source arg2, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg3, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg4, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source arg5, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source arg6, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source arg7, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source arg8, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source arg9, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source arg10, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source arg11, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source arg12, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source arg1, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source arg2, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg3, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg4, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source arg5, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source arg6, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source arg7, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source arg8, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source arg9, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source arg10, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source arg11, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source arg12, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
@@ -1849,7 +1849,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// <param name="arg11">The value of the property.</param>
         /// <param name="arg12">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source arg1, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source arg2, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg3, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg4, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source arg5, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source arg6, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source arg7, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source<TContext> arg8, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source<TContext> arg9, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> arg10, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> arg11, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source<TContext> arg12, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source arg1, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source arg2, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg3, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source arg4, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source arg5, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source arg6, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source arg7, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source<TContext> arg8, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source<TContext> arg9, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> arg10, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> arg11, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source<TContext> arg12, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1905,7 +1905,7 @@ public readonly partial struct UnrealEngineUprojectSchema
     /// <param name="preBuildSteps">The value of the <c>"PreBuildSteps"</c> property.</param>
     /// <param name="targetPlatforms">The value of the <c>"TargetPlatforms"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source engineAssociation, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source fileVersion, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source category = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source description = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source disableEnginePluginsByDefault = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source epicSampleNameHash = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source isEnterpriseProject = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source modules = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source plugins = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source postBuildSteps = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source preBuildSteps = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source targetPlatforms = default)
+    public static Source Build(scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source engineAssociation, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source fileVersion, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source category = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source description = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source disableEnginePluginsByDefault = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source epicSampleNameHash = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source isEnterpriseProject = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source modules = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source plugins = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source postBuildSteps = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source preBuildSteps = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source targetPlatforms = default)
     {
         return new Source(engineAssociation, fileVersion, category, description, disableEnginePluginsByDefault, epicSampleNameHash, isEnterpriseProject, modules, plugins, postBuildSteps, preBuildSteps, targetPlatforms);
     }
@@ -1928,7 +1928,7 @@ public readonly partial struct UnrealEngineUprojectSchema
     /// <param name="preBuildSteps">The value of the <c>"PreBuildSteps"</c> property.</param>
     /// <param name="targetPlatforms">The value of the <c>"TargetPlatforms"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source engineAssociation, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source fileVersion, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source category = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source description = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source disableEnginePluginsByDefault = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source epicSampleNameHash = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source isEnterpriseProject = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source<TContext> modules = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source<TContext> plugins = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> postBuildSteps = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> preBuildSteps = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source<TContext> targetPlatforms = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source engineAssociation, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source fileVersion, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source category = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source description = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source disableEnginePluginsByDefault = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source epicSampleNameHash = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source isEnterpriseProject = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source<TContext> modules = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source<TContext> plugins = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> postBuildSteps = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> preBuildSteps = default, scoped in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source<TContext> targetPlatforms = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

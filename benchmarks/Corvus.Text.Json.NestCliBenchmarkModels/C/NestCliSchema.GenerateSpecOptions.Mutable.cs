@@ -1112,7 +1112,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>app</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetApp(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetApp(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1157,7 +1157,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>application</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetApplication(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetApplication(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1202,7 +1202,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>cl</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCl(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetCl(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1247,7 +1247,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>class</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetClass(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetClass(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1292,7 +1292,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>co</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCo(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetCo(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1337,7 +1337,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>config</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetConfig(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetConfig(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1382,7 +1382,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>configuration</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetConfiguration(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetConfiguration(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1427,7 +1427,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>controller</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetController(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetController(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1472,7 +1472,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>d</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetD(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetD(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1517,7 +1517,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>decorator</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDecorator(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetDecorator(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1562,7 +1562,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>f</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetF(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetF(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1607,7 +1607,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>filter</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFilter(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetFilter(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1652,7 +1652,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>ga</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGa(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetGa(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1697,7 +1697,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>gateway</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGateway(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetGateway(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1742,7 +1742,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>gu</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGu(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetGu(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1787,7 +1787,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>guard</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGuard(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetGuard(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1832,7 +1832,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>in</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIn(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetIn(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1877,7 +1877,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>interceptor</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetInterceptor(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetInterceptor(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1922,7 +1922,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>interface</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetInterface(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetInterface(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1967,7 +1967,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>lib</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLib(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetLib(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2012,7 +2012,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>library</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLibrary(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetLibrary(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2057,7 +2057,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>mi</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMi(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetMi(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2102,7 +2102,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>middleware</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMiddleware(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetMiddleware(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2147,7 +2147,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>mo</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMo(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetMo(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2192,7 +2192,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>module</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetModule(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetModule(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2237,7 +2237,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>pi</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPi(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetPi(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2282,7 +2282,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>pipe</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPipe(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetPipe(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2327,7 +2327,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>pr</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPr(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetPr(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2372,7 +2372,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>provider</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetProvider(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetProvider(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2417,7 +2417,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>r</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetR(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetR(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2462,7 +2462,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>res</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRes(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetRes(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2507,7 +2507,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>resolver</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetResolver(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetResolver(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2552,7 +2552,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>resource</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetResource(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetResource(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2597,7 +2597,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>s</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetS(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetS(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2642,7 +2642,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>service</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetService(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetService(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2687,7 +2687,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>sub-app</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSubApp(in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
+            public void SetSubApp(scoped in Corvus.NestCliBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -2833,7 +2833,7 @@ public readonly partial struct NestCliSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -2856,7 +2856,7 @@ public readonly partial struct NestCliSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -2903,7 +2903,7 @@ public readonly partial struct NestCliSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 

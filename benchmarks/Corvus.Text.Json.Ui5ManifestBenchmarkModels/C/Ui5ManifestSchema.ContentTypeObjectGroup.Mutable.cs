@@ -334,7 +334,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>alignment</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAlignment(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ExperimentalAlignmentOfTheGroup.Source value)
+            public void SetAlignment(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ExperimentalAlignmentOfTheGroup.Source value)
             {
                 CheckValidInstance();
 
@@ -379,7 +379,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>items</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetItems(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ContentTypeObjectItemArray.Source value)
+            public void SetItems(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ContentTypeObjectItemArray.Source value)
             {
                 CheckValidInstance();
 
@@ -444,7 +444,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>labelWrapping</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLabelWrapping(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.LabelWrappingEntity.Source value)
+            public void SetLabelWrapping(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.LabelWrappingEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -489,7 +489,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>title</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTitle(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
+            public void SetTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
             {
                 CheckValidInstance();
 
@@ -534,7 +534,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>titleMaxLines</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTitleMaxLines(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.TitleMaxLinesEntity.Source value)
+            public void SetTitleMaxLines(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.TitleMaxLinesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -579,7 +579,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>visible</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVisible(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source value)
+            public void SetVisible(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source value)
             {
                 CheckValidInstance();
 
@@ -794,7 +794,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ContentTypeObjectItemArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ExperimentalAlignmentOfTheGroup.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.LabelWrappingEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.TitleMaxLinesEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg6)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ContentTypeObjectItemArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ExperimentalAlignmentOfTheGroup.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.LabelWrappingEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.TitleMaxLinesEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg6)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -968,7 +968,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ContentTypeObjectItemArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ExperimentalAlignmentOfTheGroup.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.LabelWrappingEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.TitleMaxLinesEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg6)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ContentTypeObjectItemArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ExperimentalAlignmentOfTheGroup.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.LabelWrappingEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.TitleMaxLinesEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg6)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1233,7 +1233,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ContentTypeObjectItemArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ExperimentalAlignmentOfTheGroup.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.LabelWrappingEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.TitleMaxLinesEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ContentTypeObjectItemArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ExperimentalAlignmentOfTheGroup.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.LabelWrappingEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.TitleMaxLinesEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg6, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1252,7 +1252,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ContentTypeObjectItemArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ExperimentalAlignmentOfTheGroup.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.LabelWrappingEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.TitleMaxLinesEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ContentTypeObjectItemArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ExperimentalAlignmentOfTheGroup.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.LabelWrappingEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.TitleMaxLinesEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg6, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1302,7 +1302,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="titleMaxLines">The value of the <c>"titleMaxLines"</c> property.</param>
         /// <param name="visible">The value of the <c>"visible"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ContentTypeObjectItemArray.Source items, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ExperimentalAlignmentOfTheGroup.Source alignment = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.LabelWrappingEntity.Source labelWrapping = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.TitleMaxLinesEntity.Source titleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ContentTypeObjectItemArray.Source items, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ExperimentalAlignmentOfTheGroup.Source alignment = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.LabelWrappingEntity.Source labelWrapping = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.TitleMaxLinesEntity.Source titleMaxLines = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default)
         {
             return new Source(items, alignment, labelWrapping, title, titleMaxLines, visible);
         }
@@ -1319,7 +1319,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="titleMaxLines">The value of the <c>"titleMaxLines"</c> property.</param>
         /// <param name="visible">The value of the <c>"visible"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ContentTypeObjectItemArray.Source<TContext> items, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ExperimentalAlignmentOfTheGroup.Source alignment = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.LabelWrappingEntity.Source labelWrapping = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.TitleMaxLinesEntity.Source titleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ContentTypeObjectItemArray.Source<TContext> items, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.ExperimentalAlignmentOfTheGroup.Source alignment = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.LabelWrappingEntity.Source labelWrapping = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObjectGroup.TitleMaxLinesEntity.Source titleMaxLines = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

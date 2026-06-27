@@ -241,7 +241,7 @@ public readonly partial struct StylecopSchema
                 /// Set the <c>topLevelTypes</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTopLevelTypes(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.Source value)
+                public void SetTopLevelTypes(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -487,7 +487,7 @@ public readonly partial struct StylecopSchema
 
                 internal Source(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.Source arg1)
+                internal Source(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.Source arg1)
                 {
                     _createArg1 = arg1;
                     _kind = Kind.Create;
@@ -651,7 +651,7 @@ public readonly partial struct StylecopSchema
 
                 internal Source(scoped in TContext context, Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.Source<TContext> arg1)
+                internal Source(scoped in TContext context, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.Source<TContext> arg1)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -871,7 +871,7 @@ public readonly partial struct StylecopSchema
                 /// </summary>
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.Source arg1, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.Source arg1, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1);
@@ -885,7 +885,7 @@ public readonly partial struct StylecopSchema
                 /// <param name="context">The context to pass to the builder.</param>
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.Source<TContext> arg1, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.Source<TContext> arg1, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -930,7 +930,7 @@ public readonly partial struct StylecopSchema
             /// </summary>
             /// <param name="topLevelTypes">The value of the <c>"topLevelTypes"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.Source topLevelTypes = default)
+            public static Source Build(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.Source topLevelTypes = default)
             {
                 return new Source(topLevelTypes);
             }
@@ -942,7 +942,7 @@ public readonly partial struct StylecopSchema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="topLevelTypes">The value of the <c>"topLevelTypes"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.Source<TContext> topLevelTypes = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForOrderingRulesSa1400.TopLevelTypesEntityArray.Source<TContext> topLevelTypes = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

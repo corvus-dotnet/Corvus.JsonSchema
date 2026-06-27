@@ -441,7 +441,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>branches</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBranchesValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Branches.Source value)
+            public void SetBranchesValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Branches.Source value)
             {
                 CheckValidInstance();
 
@@ -522,7 +522,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>commitFiles</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCommitFilesValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.CommitFiles.Source value)
+            public void SetCommitFilesValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.CommitFiles.Source value)
             {
                 CheckValidInstance();
 
@@ -603,7 +603,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>commits</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCommitsValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Commits.Source value)
+            public void SetCommitsValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Commits.Source value)
             {
                 CheckValidInstance();
 
@@ -684,7 +684,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>files</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFilesValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Files.Source value)
+            public void SetFilesValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Files.Source value)
             {
                 CheckValidInstance();
 
@@ -765,7 +765,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>main</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMainValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Main.Source value)
+            public void SetMainValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Main.Source value)
             {
                 CheckValidInstance();
 
@@ -846,7 +846,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>stash</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStashValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Stash.Source value)
+            public void SetStashValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Stash.Source value)
             {
                 CheckValidInstance();
 
@@ -927,7 +927,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>status</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStatusValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Status.Source value)
+            public void SetStatusValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Status.Source value)
             {
                 CheckValidInstance();
 
@@ -1008,7 +1008,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>submodules</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSubmodulesValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Submodules.Source value)
+            public void SetSubmodulesValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Submodules.Source value)
             {
                 CheckValidInstance();
 
@@ -1089,7 +1089,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>universal</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUniversalValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Universal.Source value)
+            public void SetUniversalValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Universal.Source value)
             {
                 CheckValidInstance();
 

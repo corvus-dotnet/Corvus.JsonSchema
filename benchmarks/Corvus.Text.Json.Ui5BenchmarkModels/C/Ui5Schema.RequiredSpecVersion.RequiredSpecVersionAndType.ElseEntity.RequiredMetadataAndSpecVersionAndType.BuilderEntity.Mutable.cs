@@ -305,7 +305,7 @@ public readonly partial struct Ui5Schema
                             /// Set the <c>bundles</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetBundles(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesArray.Source value)
+                            public void SetBundles(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesArray.Source value)
                             {
                                 CheckValidInstance();
 
@@ -386,7 +386,7 @@ public readonly partial struct Ui5Schema
                             /// Set the <c>cachebuster</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetCachebuster(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderEntity.CachebusterEntity.Source value)
+                            public void SetCachebuster(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderEntity.CachebusterEntity.Source value)
                             {
                                 CheckValidInstance();
 
@@ -467,7 +467,7 @@ public readonly partial struct Ui5Schema
                             /// Set the <c>componentPreload</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetComponentPreload(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadEntity.Source value)
+                            public void SetComponentPreload(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadEntity.Source value)
                             {
                                 CheckValidInstance();
 
@@ -548,7 +548,7 @@ public readonly partial struct Ui5Schema
                             /// Set the <c>customTasks</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetCustomTasks(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.Source value)
+                            public void SetCustomTasks(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.Source value)
                             {
                                 CheckValidInstance();
 
@@ -629,7 +629,7 @@ public readonly partial struct Ui5Schema
                             /// Set the <c>resources</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetResources(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderResourcesEntity.Source value)
+                            public void SetResources(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderResourcesEntity.Source value)
                             {
                                 CheckValidInstance();
 
@@ -879,7 +879,7 @@ public readonly partial struct Ui5Schema
 
                             internal Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                            internal Source(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesArray.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderEntity.CachebusterEntity.Source arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadEntity.Source arg3, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.Source arg4, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderResourcesEntity.Source arg5)
+                            internal Source(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesArray.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderEntity.CachebusterEntity.Source arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadEntity.Source arg3, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.Source arg4, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderResourcesEntity.Source arg5)
                             {
                                 _createArg1 = arg1;
                                 _createArg2 = arg2;
@@ -1051,7 +1051,7 @@ public readonly partial struct Ui5Schema
 
                             internal Source(scoped in TContext context, Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                            internal Source(scoped in TContext context, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesArray.Source<TContext> arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderEntity.CachebusterEntity.Source<TContext> arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadEntity.Source<TContext> arg3, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.Source<TContext> arg4, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderResourcesEntity.Source<TContext> arg5)
+                            internal Source(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesArray.Source<TContext> arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderEntity.CachebusterEntity.Source<TContext> arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadEntity.Source<TContext> arg3, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.Source<TContext> arg4, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderResourcesEntity.Source<TContext> arg5)
                             {
                                 _context = context;
                                 _createArg1 = arg1;
@@ -1308,7 +1308,7 @@ public readonly partial struct Ui5Schema
                             /// <param name="arg4">The value of the property.</param>
                             /// <param name="arg5">The value of the property.</param>
                             /// <param name="o">The complex value builder into which to write the object.</param>
-                            internal static void BuildCreateValue(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesArray.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderEntity.CachebusterEntity.Source arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadEntity.Source arg3, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.Source arg4, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderResourcesEntity.Source arg5, ref ComplexValueBuilder o)
+                            internal static void BuildCreateValue(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesArray.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderEntity.CachebusterEntity.Source arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadEntity.Source arg3, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.Source arg4, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderResourcesEntity.Source arg5, ref ComplexValueBuilder o)
                             {
                                 o.StartObject();
                                 Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1326,7 +1326,7 @@ public readonly partial struct Ui5Schema
                             /// <param name="arg4">The value of the property.</param>
                             /// <param name="arg5">The value of the property.</param>
                             /// <param name="o">The complex value builder into which to write the object.</param>
-                            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesArray.Source<TContext> arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderEntity.CachebusterEntity.Source<TContext> arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadEntity.Source<TContext> arg3, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.Source<TContext> arg4, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderResourcesEntity.Source<TContext> arg5, ref ComplexValueBuilder o)
+                            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesArray.Source<TContext> arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderEntity.CachebusterEntity.Source<TContext> arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadEntity.Source<TContext> arg3, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.Source<TContext> arg4, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderResourcesEntity.Source<TContext> arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                                 where TContext : allows ref struct
 #endif
@@ -1375,7 +1375,7 @@ public readonly partial struct Ui5Schema
                         /// <param name="customTasks">The value of the <c>"customTasks"</c> property.</param>
                         /// <param name="resources">The value of the <c>"resources"</c> property.</param>
                         /// <returns>The source from which to build the value.</returns>
-                        public static Source Build(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesArray.Source bundles = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderEntity.CachebusterEntity.Source cachebuster = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadEntity.Source componentPreload = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.Source customTasks = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderResourcesEntity.Source resources = default)
+                        public static Source Build(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesArray.Source bundles = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderEntity.CachebusterEntity.Source cachebuster = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadEntity.Source componentPreload = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.Source customTasks = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderResourcesEntity.Source resources = default)
                         {
                             return new Source(bundles, cachebuster, componentPreload, customTasks, resources);
                         }
@@ -1391,7 +1391,7 @@ public readonly partial struct Ui5Schema
                         /// <param name="customTasks">The value of the <c>"customTasks"</c> property.</param>
                         /// <param name="resources">The value of the <c>"resources"</c> property.</param>
                         /// <returns>The source from which to build the value.</returns>
-                        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesArray.Source<TContext> bundles = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderEntity.CachebusterEntity.Source<TContext> cachebuster = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadEntity.Source<TContext> componentPreload = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.Source<TContext> customTasks = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderResourcesEntity.Source<TContext> resources = default)
+                        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesArray.Source<TContext> bundles = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.BuilderEntity.CachebusterEntity.Source<TContext> cachebuster = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderComponentPreloadEntity.Source<TContext> componentPreload = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.CustomTasksEntityArray.Source<TContext> customTasks = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderResourcesEntity.Source<TContext> resources = default)
                             #if NET9_0_OR_GREATER
                             where TContext : allows ref struct
                             #endif

@@ -20,14 +20,11 @@ await using InMemoryMessageTransport transport = new();
 TurnOnProducer producer = new(transport, ValidationMode.Basic);
 
 // ── Publishing a message ─────────────────────────────────────────────────────
-// The publish method accepts a strongly-typed payload via the Source pattern.
-// The Source delegate builds the payload using a ref-struct builder — this
-// avoids allocating intermediate objects.
+// The publish method accepts a strongly-typed payload. The Build() factory
+// constructs it directly from native values into pooled memory — no
+// intermediate objects and no JSON parsing.
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-42");
 
 Console.WriteLine("Published turnOnOff to lamp-42");
@@ -48,10 +45,7 @@ IMessageAuthenticationProvider auth = new UserPasswordAuthenticationProvider(
 TurnOnProducer authenticatedProducer = new(transport, ValidationMode.Basic, authProvider: auth);
 
 await authenticatedProducer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "off"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-99");
 
 Console.WriteLine("Published authenticated turnOnOff to lamp-99");

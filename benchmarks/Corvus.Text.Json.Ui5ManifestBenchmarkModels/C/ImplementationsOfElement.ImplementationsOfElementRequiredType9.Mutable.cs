@@ -678,7 +678,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>altText</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAltText(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetAltText(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -723,7 +723,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>backgroundColor</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBackgroundColor(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetBackgroundColor(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -768,7 +768,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>fallback</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFallback(in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source value)
+            public void SetFallback(scoped in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -849,7 +849,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>height</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeight(in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source value)
+            public void SetHeight(scoped in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -894,7 +894,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>horizontalAlignment</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHorizontalAlignment(in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source value)
+            public void SetHorizontalAlignment(scoped in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -939,7 +939,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>id</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetId(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetId(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -984,7 +984,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>isVisible</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIsVisible(in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source value)
+            public void SetIsVisible(scoped in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source value)
             {
                 CheckValidInstance();
 
@@ -1029,7 +1029,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>requires</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRequires(in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source value)
+            public void SetRequires(scoped in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1110,7 +1110,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>selectAction</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSelectAction(in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source value)
+            public void SetSelectAction(scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source value)
             {
                 CheckValidInstance();
 
@@ -1191,7 +1191,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>separator</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSeparator(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+            public void SetSeparator(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -1236,7 +1236,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>size</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSize(in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source value)
+            public void SetSize(scoped in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source value)
             {
                 CheckValidInstance();
 
@@ -1281,7 +1281,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>spacing</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpacing(in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source value)
+            public void SetSpacing(scoped in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source value)
             {
                 CheckValidInstance();
 
@@ -1326,7 +1326,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>style</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStyle(in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source value)
+            public void SetStyle(scoped in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source value)
             {
                 CheckValidInstance();
 
@@ -1371,7 +1371,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source value)
             {
                 CheckValidInstance();
 
@@ -1402,7 +1402,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>url</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUrl(in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source value)
+            public void SetUrl(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source value)
             {
                 CheckValidInstance();
 
@@ -1433,7 +1433,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>width</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetWidth(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetWidth(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1579,7 +1579,7 @@ public readonly partial struct ImplementationsOfElement
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1602,7 +1602,7 @@ public readonly partial struct ImplementationsOfElement
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1649,7 +1649,7 @@ public readonly partial struct ImplementationsOfElement
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1851,7 +1851,7 @@ public readonly partial struct ImplementationsOfElement
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg16)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source arg13, scoped in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source arg15, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg16)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -2045,7 +2045,7 @@ public readonly partial struct ImplementationsOfElement
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg16)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source<TContext> arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source arg13, scoped in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source arg15, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg16)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2459,7 +2459,7 @@ public readonly partial struct ImplementationsOfElement
             /// <param name="arg15">The value of the property.</param>
             /// <param name="arg16">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg16, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source arg13, scoped in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source arg15, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg16, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16);
@@ -2488,7 +2488,7 @@ public readonly partial struct ImplementationsOfElement
             /// <param name="arg15">The value of the property.</param>
             /// <param name="arg16">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg16, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source<TContext> arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source arg13, scoped in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source arg15, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg16, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2548,7 +2548,7 @@ public readonly partial struct ImplementationsOfElement
         /// <param name="style">The value of the <c>"style"</c> property.</param>
         /// <param name="width">The value of the <c>"width"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source type, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source url, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source altText = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source backgroundColor = default, in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source fallback = default, in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source height = default, in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source horizontalAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id = default, in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source isVisible = default, in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source requires = default, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source selectAction = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source separator = default, in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source size = default, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source spacing = default, in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source style = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source width = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source type, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source url, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source altText = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source backgroundColor = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source fallback = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source height = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source horizontalAlignment = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source isVisible = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source requires = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source selectAction = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source separator = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source size = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source spacing = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source style = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source width = default)
         {
             return new Source(type, url, altText, backgroundColor, fallback, height, horizontalAlignment, id, isVisible, requires, selectAction, separator, size, spacing, style, width);
         }
@@ -2575,7 +2575,7 @@ public readonly partial struct ImplementationsOfElement
         /// <param name="style">The value of the <c>"style"</c> property.</param>
         /// <param name="width">The value of the <c>"width"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source type, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source url, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source altText = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source backgroundColor = default, in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source<TContext> fallback = default, in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source height = default, in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source horizontalAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id = default, in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source isVisible = default, in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source<TContext> requires = default, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> selectAction = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source separator = default, in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source size = default, in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source spacing = default, in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source style = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source width = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.MustBeImage.Source type, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source url, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source altText = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source backgroundColor = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.FallbackEntity.Source<TContext> fallback = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.HeightEntity.Source height = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.HorizontalAlignmentEntity.Source horizontalAlignment = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.IfFalseThisItemWillBeRemovedFromTheVisualTree.Source isVisible = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Image.RequiresEntity.Source<TContext> requires = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> selectAction = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source separator = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ImageSize.Source size = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Spacing.Source spacing = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ImageStyle.Source style = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source width = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

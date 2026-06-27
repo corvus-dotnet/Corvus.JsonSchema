@@ -250,7 +250,7 @@ public readonly partial struct Person
         /// Set the <c>age</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAge(in Corvus.PersonBenchmark.Current.Age.Source value)
+        public void SetAge(scoped in Corvus.PersonBenchmark.Current.Age.Source value)
         {
             CheckValidInstance();
 
@@ -295,7 +295,7 @@ public readonly partial struct Person
         /// Set the <c>competedInYears</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCompetedInYears(in Corvus.PersonBenchmark.Current.CompetedInYears.Source value)
+        public void SetCompetedInYears(scoped in Corvus.PersonBenchmark.Current.CompetedInYears.Source value)
         {
             CheckValidInstance();
 
@@ -376,7 +376,7 @@ public readonly partial struct Person
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetName(in Corvus.PersonBenchmark.Current.PersonName.Source value)
+        public void SetName(scoped in Corvus.PersonBenchmark.Current.PersonName.Source value)
         {
             CheckValidInstance();
 
@@ -608,7 +608,7 @@ public readonly partial struct Person
 
         internal Source(Corvus.PersonBenchmark.Current.Person.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.PersonBenchmark.Current.PersonName.Source arg1, in Corvus.PersonBenchmark.Current.Age.Source arg2, in Corvus.PersonBenchmark.Current.CompetedInYears.Source arg3)
+        internal Source(scoped in Corvus.PersonBenchmark.Current.PersonName.Source arg1, scoped in Corvus.PersonBenchmark.Current.Age.Source arg2, scoped in Corvus.PersonBenchmark.Current.CompetedInYears.Source arg3)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -776,7 +776,7 @@ public readonly partial struct Person
 
         internal Source(scoped in TContext context, Corvus.PersonBenchmark.Current.Person.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.PersonBenchmark.Current.PersonName.Source<TContext> arg1, in Corvus.PersonBenchmark.Current.Age.Source arg2, in Corvus.PersonBenchmark.Current.CompetedInYears.Source<TContext> arg3)
+        internal Source(scoped in TContext context, scoped in Corvus.PersonBenchmark.Current.PersonName.Source<TContext> arg1, scoped in Corvus.PersonBenchmark.Current.Age.Source arg2, scoped in Corvus.PersonBenchmark.Current.CompetedInYears.Source<TContext> arg3)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1017,7 +1017,7 @@ public readonly partial struct Person
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.PersonBenchmark.Current.PersonName.Source arg1, in Corvus.PersonBenchmark.Current.Age.Source arg2, in Corvus.PersonBenchmark.Current.CompetedInYears.Source arg3, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.PersonBenchmark.Current.PersonName.Source arg1, scoped in Corvus.PersonBenchmark.Current.Age.Source arg2, scoped in Corvus.PersonBenchmark.Current.CompetedInYears.Source arg3, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3);
@@ -1033,7 +1033,7 @@ public readonly partial struct Person
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.PersonBenchmark.Current.PersonName.Source<TContext> arg1, in Corvus.PersonBenchmark.Current.Age.Source arg2, in Corvus.PersonBenchmark.Current.CompetedInYears.Source<TContext> arg3, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.PersonBenchmark.Current.PersonName.Source<TContext> arg1, scoped in Corvus.PersonBenchmark.Current.Age.Source arg2, scoped in Corvus.PersonBenchmark.Current.CompetedInYears.Source<TContext> arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1080,7 +1080,7 @@ public readonly partial struct Person
     /// <param name="age">The value of the <c>"age"</c> property.</param>
     /// <param name="competedInYears">The value of the <c>"competedInYears"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.PersonBenchmark.Current.PersonName.Source name, in Corvus.PersonBenchmark.Current.Age.Source age = default, in Corvus.PersonBenchmark.Current.CompetedInYears.Source competedInYears = default)
+    public static Source Build(scoped in Corvus.PersonBenchmark.Current.PersonName.Source name, scoped in Corvus.PersonBenchmark.Current.Age.Source age = default, scoped in Corvus.PersonBenchmark.Current.CompetedInYears.Source competedInYears = default)
     {
         return new Source(name, age, competedInYears);
     }
@@ -1094,7 +1094,7 @@ public readonly partial struct Person
     /// <param name="age">The value of the <c>"age"</c> property.</param>
     /// <param name="competedInYears">The value of the <c>"competedInYears"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.PersonBenchmark.Current.PersonName.Source<TContext> name, in Corvus.PersonBenchmark.Current.Age.Source age = default, in Corvus.PersonBenchmark.Current.CompetedInYears.Source<TContext> competedInYears = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.PersonBenchmark.Current.PersonName.Source<TContext> name, scoped in Corvus.PersonBenchmark.Current.Age.Source age = default, scoped in Corvus.PersonBenchmark.Current.CompetedInYears.Source<TContext> competedInYears = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

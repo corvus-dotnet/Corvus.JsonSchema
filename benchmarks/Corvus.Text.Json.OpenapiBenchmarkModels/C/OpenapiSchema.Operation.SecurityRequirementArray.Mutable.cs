@@ -386,7 +386,7 @@ public readonly partial struct OpenapiSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void InsertItem(int itemIndex, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityRequirement.Source value)
+                public void InsertItem(int itemIndex, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityRequirement.Source value)
                 {
                     CheckValidInstance();
 
@@ -412,7 +412,7 @@ public readonly partial struct OpenapiSchema
                 ///   The parent <see cref="JsonDocument"/> has been disposed.
                 /// </exception>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void AddItem(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityRequirement.Source value)
+                public void AddItem(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityRequirement.Source value)
                 {
                     InsertItem(GetArrayLength(), in value);
                 }

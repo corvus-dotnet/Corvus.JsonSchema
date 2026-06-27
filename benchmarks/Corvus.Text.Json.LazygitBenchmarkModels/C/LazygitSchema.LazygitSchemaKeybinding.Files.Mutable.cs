@@ -579,7 +579,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>amendLastCommit</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAmendLastCommit(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetAmendLastCommit(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -624,7 +624,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>commitChanges</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCommitChanges(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetCommitChanges(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -669,7 +669,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>commitChangesWithEditor</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCommitChangesWithEditor(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetCommitChangesWithEditor(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -714,7 +714,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>commitChangesWithoutHook</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCommitChangesWithoutHook(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetCommitChangesWithoutHook(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -759,7 +759,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>fetch</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetFetch(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetFetch(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -804,7 +804,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>ignoreFile</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetIgnoreFile(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetIgnoreFile(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -849,7 +849,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>openMergeTool</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOpenMergeTool(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetOpenMergeTool(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -894,7 +894,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>openStatusFilter</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOpenStatusFilter(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetOpenStatusFilter(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -939,7 +939,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>refreshFiles</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRefreshFiles(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetRefreshFiles(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -984,7 +984,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>stashAllChanges</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetStashAllChanges(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetStashAllChanges(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1029,7 +1029,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>toggleStagedAll</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetToggleStagedAll(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetToggleStagedAll(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1074,7 +1074,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>toggleTreeView</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetToggleTreeView(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetToggleTreeView(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1119,7 +1119,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>viewResetOptions</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetViewResetOptions(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetViewResetOptions(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1164,7 +1164,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>viewStashOptions</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetViewStashOptions(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetViewStashOptions(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1387,7 +1387,7 @@ public readonly partial struct LazygitSchema
 
                 internal Source(Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Files.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg10, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg11, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg12, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg13, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg14)
+                internal Source(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg10, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg11, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg12, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg13, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg14)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1770,7 +1770,7 @@ public readonly partial struct LazygitSchema
                 /// <param name="arg13">The value of the property.</param>
                 /// <param name="arg14">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg10, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg11, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg12, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg13, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg14, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg10, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg11, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg12, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg13, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg14, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14);
@@ -1825,7 +1825,7 @@ public readonly partial struct LazygitSchema
             /// <param name="viewResetOptions">The value of the <c>"viewResetOptions"</c> property.</param>
             /// <param name="viewStashOptions">The value of the <c>"viewStashOptions"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source amendLastCommit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source commitChanges = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source commitChangesWithEditor = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source commitChangesWithoutHook = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source fetch = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source ignoreFile = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source openMergeTool = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source openStatusFilter = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source refreshFiles = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source stashAllChanges = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source toggleStagedAll = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source toggleTreeView = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source viewResetOptions = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source viewStashOptions = default)
+            public static Source Build(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source amendLastCommit = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source commitChanges = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source commitChangesWithEditor = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source commitChangesWithoutHook = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source fetch = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source ignoreFile = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source openMergeTool = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source openStatusFilter = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source refreshFiles = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source stashAllChanges = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source toggleStagedAll = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source toggleTreeView = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source viewResetOptions = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source viewStashOptions = default)
             {
                 return new Source(amendLastCommit, commitChanges, commitChangesWithEditor, commitChangesWithoutHook, fetch, ignoreFile, openMergeTool, openStatusFilter, refreshFiles, stashAllChanges, toggleStagedAll, toggleTreeView, viewResetOptions, viewStashOptions);
             }

@@ -578,7 +578,7 @@ public readonly partial struct StaleSchema
             /// Set the <c>closeComment</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCloseComment(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ClosedComment.Source value)
+            public void SetCloseComment(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ClosedComment.Source value)
             {
                 CheckValidInstance();
 
@@ -623,7 +623,7 @@ public readonly partial struct StaleSchema
             /// Set the <c>daysUntilClose</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDaysUntilCloseValue(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Source value)
+            public void SetDaysUntilCloseValue(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Source value)
             {
                 CheckValidInstance();
 
@@ -668,7 +668,7 @@ public readonly partial struct StaleSchema
             /// Set the <c>daysUntilStale</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDaysUntilStaleValue(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Source value)
+            public void SetDaysUntilStaleValue(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Source value)
             {
                 CheckValidInstance();
 
@@ -713,7 +713,7 @@ public readonly partial struct StaleSchema
             /// Set the <c>exemptAssignees</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExemptAssigneesValue(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Source value)
+            public void SetExemptAssigneesValue(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Source value)
             {
                 CheckValidInstance();
 
@@ -758,7 +758,7 @@ public readonly partial struct StaleSchema
             /// Set the <c>exemptLabels</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExemptLabels(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Source value)
+            public void SetExemptLabels(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -839,7 +839,7 @@ public readonly partial struct StaleSchema
             /// Set the <c>exemptProjects</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExemptProjectsValue(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Source value)
+            public void SetExemptProjectsValue(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Source value)
             {
                 CheckValidInstance();
 
@@ -884,7 +884,7 @@ public readonly partial struct StaleSchema
             /// Set the <c>limitPerRun</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLimitPerRunValue(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Source value)
+            public void SetLimitPerRunValue(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Source value)
             {
                 CheckValidInstance();
 
@@ -929,7 +929,7 @@ public readonly partial struct StaleSchema
             /// Set the <c>markComment</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMarkCommentValue(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Source value)
+            public void SetMarkCommentValue(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Source value)
             {
                 CheckValidInstance();
 
@@ -974,7 +974,7 @@ public readonly partial struct StaleSchema
             /// Set the <c>only</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOnlyValue(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Only.Source value)
+            public void SetOnlyValue(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Only.Source value)
             {
                 CheckValidInstance();
 
@@ -1019,7 +1019,7 @@ public readonly partial struct StaleSchema
             /// Set the <c>onlyLabels</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOnlyLabels(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Source value)
+            public void SetOnlyLabels(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1100,7 +1100,7 @@ public readonly partial struct StaleSchema
             /// Set the <c>staleLabel</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStaleLabelValue(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source value)
+            public void SetStaleLabelValue(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source value)
             {
                 CheckValidInstance();
 
@@ -1145,7 +1145,7 @@ public readonly partial struct StaleSchema
             /// Set the <c>unmarkComment</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUnmarkCommentValue(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source value)
+            public void SetUnmarkCommentValue(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source value)
             {
                 CheckValidInstance();
 
@@ -1291,7 +1291,7 @@ public readonly partial struct StaleSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1314,7 +1314,7 @@ public readonly partial struct StaleSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1361,7 +1361,7 @@ public readonly partial struct StaleSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1542,7 +1542,7 @@ public readonly partial struct StaleSchema
 
             internal Source(Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ClosedComment.Source arg1, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Source arg2, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Source arg3, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Source arg4, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Source arg5, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Source arg6, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Source arg7, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Source arg8, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Only.Source arg9, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Source arg10, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source arg11, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source arg12)
+            internal Source(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ClosedComment.Source arg1, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Source arg2, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Source arg3, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Source arg4, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Source arg5, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Source arg6, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Source arg7, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Source arg8, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Only.Source arg9, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Source arg10, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source arg11, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source arg12)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1728,7 +1728,7 @@ public readonly partial struct StaleSchema
 
             internal Source(scoped in TContext context, Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ClosedComment.Source arg1, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Source arg2, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Source arg3, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Source arg4, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Source<TContext> arg5, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Source arg6, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Source arg7, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Source arg8, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Only.Source arg9, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Source<TContext> arg10, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source arg11, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source arg12)
+            internal Source(scoped in TContext context, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ClosedComment.Source arg1, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Source arg2, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Source arg3, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Source arg4, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Source<TContext> arg5, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Source arg6, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Source arg7, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Source arg8, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Only.Source arg9, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Source<TContext> arg10, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source arg11, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source arg12)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2110,7 +2110,7 @@ public readonly partial struct StaleSchema
             /// <param name="arg11">The value of the property.</param>
             /// <param name="arg12">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ClosedComment.Source arg1, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Source arg2, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Source arg3, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Source arg4, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Source arg5, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Source arg6, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Source arg7, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Source arg8, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Only.Source arg9, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Source arg10, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source arg11, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source arg12, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ClosedComment.Source arg1, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Source arg2, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Source arg3, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Source arg4, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Source arg5, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Source arg6, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Source arg7, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Source arg8, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Only.Source arg9, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Source arg10, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source arg11, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source arg12, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
@@ -2135,7 +2135,7 @@ public readonly partial struct StaleSchema
             /// <param name="arg11">The value of the property.</param>
             /// <param name="arg12">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ClosedComment.Source arg1, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Source arg2, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Source arg3, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Source arg4, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Source<TContext> arg5, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Source arg6, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Source arg7, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Source arg8, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Only.Source arg9, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Source<TContext> arg10, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source arg11, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source arg12, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ClosedComment.Source arg1, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Source arg2, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Source arg3, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Source arg4, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Source<TContext> arg5, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Source arg6, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Source arg7, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Source arg8, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Only.Source arg9, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Source<TContext> arg10, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source arg11, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source arg12, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2191,7 +2191,7 @@ public readonly partial struct StaleSchema
         /// <param name="staleLabel">The value of the <c>"staleLabel"</c> property.</param>
         /// <param name="unmarkComment">The value of the <c>"unmarkComment"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ClosedComment.Source closeComment = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Source daysUntilClose = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Source daysUntilStale = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Source exemptAssignees = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Source exemptLabels = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Source exemptProjects = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Source limitPerRun = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Source markComment = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Only.Source only = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Source onlyLabels = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source staleLabel = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source unmarkComment = default)
+        public static Source Build(scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ClosedComment.Source closeComment = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Source daysUntilClose = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Source daysUntilStale = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Source exemptAssignees = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Source exemptLabels = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Source exemptProjects = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Source limitPerRun = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Source markComment = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Only.Source only = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Source onlyLabels = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source staleLabel = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source unmarkComment = default)
         {
             return new Source(closeComment, daysUntilClose, daysUntilStale, exemptAssignees, exemptLabels, exemptProjects, limitPerRun, markComment, only, onlyLabels, staleLabel, unmarkComment);
         }
@@ -2214,7 +2214,7 @@ public readonly partial struct StaleSchema
         /// <param name="staleLabel">The value of the <c>"staleLabel"</c> property.</param>
         /// <param name="unmarkComment">The value of the <c>"unmarkComment"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ClosedComment.Source closeComment = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Source daysUntilClose = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Source daysUntilStale = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Source exemptAssignees = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Source<TContext> exemptLabels = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Source exemptProjects = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Source limitPerRun = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Source markComment = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Only.Source only = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Source<TContext> onlyLabels = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source staleLabel = default, in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source unmarkComment = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ClosedComment.Source closeComment = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilClose.Source daysUntilClose = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.DaysUntilStale.Source daysUntilStale = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptAssignees.Source exemptAssignees = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.JsonStringArray.Source<TContext> exemptLabels = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.ExemptProjects.Source exemptProjects = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.LimitPerRun.Source limitPerRun = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.MarkComment.Source markComment = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.Only.Source only = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.OnlyLJsonSArray.Source<TContext> onlyLabels = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source staleLabel = default, scoped in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source unmarkComment = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

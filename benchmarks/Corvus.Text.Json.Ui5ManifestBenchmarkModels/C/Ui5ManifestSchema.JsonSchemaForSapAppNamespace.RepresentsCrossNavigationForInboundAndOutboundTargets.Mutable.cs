@@ -390,7 +390,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>inbounds</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetInbounds(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.Source value)
+                public void SetInbounds(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.Source value)
                 {
                     CheckValidInstance();
 
@@ -455,7 +455,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>outbounds</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOutbounds(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.Source value)
+                public void SetOutbounds(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.Source value)
                 {
                     CheckValidInstance();
 
@@ -536,7 +536,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>scopes</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScopes(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.RepresentsScopesOfASite.Source value)
+                public void SetScopes(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.RepresentsScopesOfASite.Source value)
                 {
                     CheckValidInstance();
 
@@ -718,7 +718,7 @@ public readonly partial struct Ui5ManifestSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -741,7 +741,7 @@ public readonly partial struct Ui5ManifestSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -788,7 +788,7 @@ public readonly partial struct Ui5ManifestSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -960,7 +960,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.RepresentsScopesOfASite.Source arg3)
+                internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.RepresentsScopesOfASite.Source arg3)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1128,7 +1128,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.RepresentsScopesOfASite.Source<TContext> arg3)
+                internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.RepresentsScopesOfASite.Source<TContext> arg3)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1438,7 +1438,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.RepresentsScopesOfASite.Source arg3, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.RepresentsScopesOfASite.Source arg3, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3);
@@ -1454,7 +1454,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.RepresentsScopesOfASite.Source<TContext> arg3, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.RepresentsScopesOfASite.Source<TContext> arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1501,7 +1501,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="outbounds">The value of the <c>"outbounds"</c> property.</param>
             /// <param name="scopes">The value of the <c>"scopes"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.Source inbounds, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.Source outbounds = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.RepresentsScopesOfASite.Source scopes = default)
+            public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.Source inbounds, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.Source outbounds = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.RepresentsScopesOfASite.Source scopes = default)
             {
                 return new Source(inbounds, outbounds, scopes);
             }
@@ -1515,7 +1515,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="outbounds">The value of the <c>"outbounds"</c> property.</param>
             /// <param name="scopes">The value of the <c>"scopes"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.Source<TContext> inbounds, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.Source<TContext> outbounds = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.RepresentsScopesOfASite.Source<TContext> scopes = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Inbound.Source<TContext> inbounds, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Outbound.Source<TContext> outbounds = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.RepresentsCrossNavigationForInboundAndOutboundTargets.RepresentsScopesOfASite.Source<TContext> scopes = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

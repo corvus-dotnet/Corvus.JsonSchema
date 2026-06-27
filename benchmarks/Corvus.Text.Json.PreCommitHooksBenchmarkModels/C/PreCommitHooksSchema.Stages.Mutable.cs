@@ -376,7 +376,7 @@ public readonly partial struct PreCommitHooksSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stage.Source value)
+            public void InsertItem(int itemIndex, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stage.Source value)
             {
                 CheckValidInstance();
 
@@ -402,7 +402,7 @@ public readonly partial struct PreCommitHooksSchema
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stage.Source value)
+            public void AddItem(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stage.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }

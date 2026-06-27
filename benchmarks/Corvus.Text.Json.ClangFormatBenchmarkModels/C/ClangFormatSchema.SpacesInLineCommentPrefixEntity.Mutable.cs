@@ -351,7 +351,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>Maximum</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaximum(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MaximumEntity.Source value)
+            public void SetMaximum(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MaximumEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -396,7 +396,7 @@ public readonly partial struct ClangFormatSchema
             /// Set the <c>Minimum</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMinimum(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MinimumEntity.Source value)
+            public void SetMinimum(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MinimumEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -542,7 +542,7 @@ public readonly partial struct ClangFormatSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -565,7 +565,7 @@ public readonly partial struct ClangFormatSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -612,7 +612,7 @@ public readonly partial struct ClangFormatSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -783,7 +783,7 @@ public readonly partial struct ClangFormatSchema
 
             internal Source(Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MaximumEntity.Source arg1, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MinimumEntity.Source arg2)
+            internal Source(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MaximumEntity.Source arg1, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MinimumEntity.Source arg2)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1173,7 +1173,7 @@ public readonly partial struct ClangFormatSchema
             /// <param name="arg1">The value of the property.</param>
             /// <param name="arg2">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MaximumEntity.Source arg1, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MinimumEntity.Source arg2, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MaximumEntity.Source arg1, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MinimumEntity.Source arg2, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2);
@@ -1216,7 +1216,7 @@ public readonly partial struct ClangFormatSchema
         /// <param name="maximum">The value of the <c>"Maximum"</c> property.</param>
         /// <param name="minimum">The value of the <c>"Minimum"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MaximumEntity.Source maximum = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MinimumEntity.Source minimum = default)
+        public static Source Build(scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MaximumEntity.Source maximum = default, scoped in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.MinimumEntity.Source minimum = default)
         {
             return new Source(maximum, minimum);
         }

@@ -58,7 +58,7 @@ You write only the call:
 ```csharp
 await using CreatePetResponse response = await petsClient.CreatePetAsync(
     session_token: "admin-token-123"u8,
-    body: new NewPet.Source(...));
+    body: NewPet.Build(...));
 
 response.MatchResult<string>(
     matchCreated: (pet) => pet.ToString(),

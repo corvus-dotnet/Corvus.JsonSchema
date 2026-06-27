@@ -456,7 +456,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>enableFailover</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetEnableFailover(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
+                    public void SetEnableFailover(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -501,7 +501,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>interactiveDebugging</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetInteractiveDebugging(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
+                    public void SetInteractiveDebugging(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -546,7 +546,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>jobs</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetJobs(in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source value)
+                    public void SetJobs(scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source value)
                     {
                         CheckValidInstance();
 
@@ -591,7 +591,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>noTestsAction</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetNoTestsAction(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.NoTestsActionEntity.Source value)
+                    public void SetNoTestsAction(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.NoTestsActionEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -636,7 +636,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>repeat</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetRepeat(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.RequiredCountAndMode.Source value)
+                    public void SetRepeat(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.RequiredCountAndMode.Source value)
                     {
                         CheckValidInstance();
 
@@ -717,7 +717,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>resourceSpecFile</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetResourceSpecFile(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
+                    public void SetResourceSpecFile(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
                     {
                         CheckValidInstance();
 
@@ -762,7 +762,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>scheduleRandom</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetScheduleRandom(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
+                    public void SetScheduleRandom(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -807,7 +807,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>showOnly</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetShowOnly(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.ShowOnlyEntity.Source value)
+                    public void SetShowOnly(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.ShowOnlyEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -852,7 +852,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>stopOnFailure</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetStopOnFailure(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
+                    public void SetStopOnFailure(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -897,7 +897,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>testLoad</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetTestLoad(in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source value)
+                    public void SetTestLoad(scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source value)
                     {
                         CheckValidInstance();
 
@@ -942,7 +942,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>timeout</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetTimeout(in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source value)
+                    public void SetTimeout(scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source value)
                     {
                         CheckValidInstance();
 
@@ -1162,7 +1162,7 @@ public readonly partial struct CmakePresetsSchema
 
                     internal Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg1, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg2, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg3, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.NoTestsActionEntity.Source arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.RequiredCountAndMode.Source arg5, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg6, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg7, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.ShowOnlyEntity.Source arg8, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg9, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg10, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg11)
+                    internal Source(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg3, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.NoTestsActionEntity.Source arg4, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.RequiredCountAndMode.Source arg5, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg6, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg7, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.ShowOnlyEntity.Source arg8, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg10, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg11)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -1346,7 +1346,7 @@ public readonly partial struct CmakePresetsSchema
 
                     internal Source(scoped in TContext context, Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg1, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg2, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg3, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.NoTestsActionEntity.Source arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.RequiredCountAndMode.Source<TContext> arg5, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg6, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg7, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.ShowOnlyEntity.Source arg8, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg9, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg10, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg11)
+                    internal Source(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg3, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.NoTestsActionEntity.Source arg4, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.RequiredCountAndMode.Source<TContext> arg5, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg6, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg7, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.ShowOnlyEntity.Source arg8, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg10, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg11)
                     {
                         _context = context;
                         _createArg1 = arg1;
@@ -1651,7 +1651,7 @@ public readonly partial struct CmakePresetsSchema
                     /// <param name="arg10">The value of the property.</param>
                     /// <param name="arg11">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg1, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg2, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg3, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.NoTestsActionEntity.Source arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.RequiredCountAndMode.Source arg5, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg6, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg7, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.ShowOnlyEntity.Source arg8, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg9, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg10, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg11, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg3, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.NoTestsActionEntity.Source arg4, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.RequiredCountAndMode.Source arg5, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg6, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg7, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.ShowOnlyEntity.Source arg8, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg10, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg11, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
@@ -1675,7 +1675,7 @@ public readonly partial struct CmakePresetsSchema
                     /// <param name="arg10">The value of the property.</param>
                     /// <param name="arg11">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg1, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg2, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg3, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.NoTestsActionEntity.Source arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.RequiredCountAndMode.Source<TContext> arg5, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg6, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg7, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.ShowOnlyEntity.Source arg8, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg9, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg10, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg11, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg2, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg3, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.NoTestsActionEntity.Source arg4, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.RequiredCountAndMode.Source<TContext> arg5, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg6, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg7, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.ShowOnlyEntity.Source arg8, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg10, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source arg11, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -1730,7 +1730,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="testLoad">The value of the <c>"testLoad"</c> property.</param>
                 /// <param name="timeout">The value of the <c>"timeout"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source enableFailover = default, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source interactiveDebugging = default, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source jobs = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.NoTestsActionEntity.Source noTestsAction = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.RequiredCountAndMode.Source repeat = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source resourceSpecFile = default, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source scheduleRandom = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.ShowOnlyEntity.Source showOnly = default, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source stopOnFailure = default, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source testLoad = default, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source timeout = default)
+                public static Source Build(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source enableFailover = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source interactiveDebugging = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source jobs = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.NoTestsActionEntity.Source noTestsAction = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.RequiredCountAndMode.Source repeat = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source resourceSpecFile = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source scheduleRandom = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.ShowOnlyEntity.Source showOnly = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source stopOnFailure = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source testLoad = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source timeout = default)
                 {
                     return new Source(enableFailover, interactiveDebugging, jobs, noTestsAction, repeat, resourceSpecFile, scheduleRandom, showOnly, stopOnFailure, testLoad, timeout);
                 }
@@ -1752,7 +1752,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="testLoad">The value of the <c>"testLoad"</c> property.</param>
                 /// <param name="timeout">The value of the <c>"timeout"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source enableFailover = default, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source interactiveDebugging = default, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source jobs = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.NoTestsActionEntity.Source noTestsAction = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.RequiredCountAndMode.Source<TContext> repeat = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source resourceSpecFile = default, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source scheduleRandom = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.ShowOnlyEntity.Source showOnly = default, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source stopOnFailure = default, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source testLoad = default, in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source timeout = default)
+                public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source enableFailover = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source interactiveDebugging = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source jobs = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.NoTestsActionEntity.Source noTestsAction = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.RequiredCountAndMode.Source<TContext> repeat = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source resourceSpecFile = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source scheduleRandom = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.RequiredName.AnOptionalObjectSpecifyingOptionsForTestExecution.ShowOnlyEntity.Source showOnly = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source stopOnFailure = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source testLoad = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonInteger.Source timeout = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif

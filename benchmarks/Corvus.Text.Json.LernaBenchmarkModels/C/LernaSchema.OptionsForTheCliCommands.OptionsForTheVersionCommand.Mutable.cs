@@ -374,7 +374,7 @@ public readonly partial struct LernaSchema
                 /// Set the <c>allowBranch</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllowBranch(in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.Source value)
+                public void SetAllowBranch(scoped in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -455,7 +455,7 @@ public readonly partial struct LernaSchema
                 /// Set the <c>message</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMessage(in Corvus.LernaBenchmark.Current.JsonString.Source value)
+                public void SetMessage(scoped in Corvus.LernaBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -601,7 +601,7 @@ public readonly partial struct LernaSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -624,7 +624,7 @@ public readonly partial struct LernaSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -671,7 +671,7 @@ public readonly partial struct LernaSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -842,7 +842,7 @@ public readonly partial struct LernaSchema
 
                 internal Source(Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.Source arg1, in Corvus.LernaBenchmark.Current.JsonString.Source arg2)
+                internal Source(scoped in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.Source arg1, scoped in Corvus.LernaBenchmark.Current.JsonString.Source arg2)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1008,7 +1008,7 @@ public readonly partial struct LernaSchema
 
                 internal Source(scoped in TContext context, Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.Source<TContext> arg1, in Corvus.LernaBenchmark.Current.JsonString.Source arg2)
+                internal Source(scoped in TContext context, scoped in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.Source<TContext> arg1, scoped in Corvus.LernaBenchmark.Current.JsonString.Source arg2)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1308,7 +1308,7 @@ public readonly partial struct LernaSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.Source arg1, in Corvus.LernaBenchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.Source arg1, scoped in Corvus.LernaBenchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2);
@@ -1323,7 +1323,7 @@ public readonly partial struct LernaSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.Source<TContext> arg1, in Corvus.LernaBenchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.Source<TContext> arg1, scoped in Corvus.LernaBenchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1369,7 +1369,7 @@ public readonly partial struct LernaSchema
             /// <param name="allowBranch">The value of the <c>"allowBranch"</c> property.</param>
             /// <param name="message">The value of the <c>"message"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.Source allowBranch = default, in Corvus.LernaBenchmark.Current.JsonString.Source message = default)
+            public static Source Build(scoped in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.Source allowBranch = default, scoped in Corvus.LernaBenchmark.Current.JsonString.Source message = default)
             {
                 return new Source(allowBranch, message);
             }
@@ -1382,7 +1382,7 @@ public readonly partial struct LernaSchema
             /// <param name="allowBranch">The value of the <c>"allowBranch"</c> property.</param>
             /// <param name="message">The value of the <c>"message"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.Source<TContext> allowBranch = default, in Corvus.LernaBenchmark.Current.JsonString.Source message = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.OptionsForTheVersionCommand.AllowBranchArray.Source<TContext> allowBranch = default, scoped in Corvus.LernaBenchmark.Current.JsonString.Source message = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

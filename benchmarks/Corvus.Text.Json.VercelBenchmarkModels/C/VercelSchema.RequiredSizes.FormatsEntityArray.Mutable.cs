@@ -381,7 +381,7 @@ public readonly partial struct VercelSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void InsertItem(int itemIndex, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.FormatsEntity.Source value)
+                public void InsertItem(int itemIndex, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.FormatsEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -407,7 +407,7 @@ public readonly partial struct VercelSchema
                 ///   The parent <see cref="JsonDocument"/> has been disposed.
                 /// </exception>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void AddItem(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.FormatsEntity.Source value)
+                public void AddItem(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.FormatsEntityArray.FormatsEntity.Source value)
                 {
                     InsertItem(GetArrayLength(), in value);
                 }

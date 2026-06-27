@@ -339,7 +339,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>description</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDescription(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
+                public void SetDescription(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -384,7 +384,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>name</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetName(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
+                public void SetName(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -429,7 +429,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>onOpen</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOnOpen(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.OnOpenEntity.Source value)
+                public void SetOnOpen(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.OnOpenEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -474,7 +474,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>port</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPort(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.PortEntity.Source value)
+                public void SetPort(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.PortEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -505,7 +505,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>protocol</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetProtocol(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.TheProtocolOfWorkspacePort.Source value)
+                public void SetProtocol(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.TheProtocolOfWorkspacePort.Source value)
                 {
                     CheckValidInstance();
 
@@ -550,7 +550,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>visibility</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetVisibility(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.VisibilityEntity.Source value)
+                public void SetVisibility(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.VisibilityEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -765,7 +765,7 @@ public readonly partial struct GitpodConfigurationSchema
 
                 internal Source(Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.PortEntity.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg3, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.OnOpenEntity.Source arg4, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.TheProtocolOfWorkspacePort.Source arg5, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.VisibilityEntity.Source arg6)
+                internal Source(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.PortEntity.Source arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg3, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.OnOpenEntity.Source arg4, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.TheProtocolOfWorkspacePort.Source arg5, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.VisibilityEntity.Source arg6)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1108,7 +1108,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="arg6">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.PortEntity.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg3, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.OnOpenEntity.Source arg4, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.TheProtocolOfWorkspacePort.Source arg5, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.VisibilityEntity.Source arg6, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.PortEntity.Source arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg3, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.OnOpenEntity.Source arg4, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.TheProtocolOfWorkspacePort.Source arg5, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.VisibilityEntity.Source arg6, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1155,7 +1155,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// <param name="protocol">The value of the <c>"protocol"</c> property.</param>
             /// <param name="visibility">The value of the <c>"visibility"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.PortEntity.Source port, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source description = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source name = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.OnOpenEntity.Source onOpen = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.TheProtocolOfWorkspacePort.Source protocol = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.VisibilityEntity.Source visibility = default)
+            public static Source Build(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.PortEntity.Source port, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source description = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source name = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.OnOpenEntity.Source onOpen = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.TheProtocolOfWorkspacePort.Source protocol = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.RequiredPort.VisibilityEntity.Source visibility = default)
             {
                 return new Source(port, description, name, onOpen, protocol, visibility);
             }

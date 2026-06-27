@@ -301,7 +301,7 @@ public readonly partial struct PulumiSchema
             /// Set the <c>default</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDefault(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetDefault(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -382,7 +382,7 @@ public readonly partial struct PulumiSchema
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.PulumiBenchmark.Current.JsonString.Source value)
+            public void SetDescription(scoped in Corvus.PulumiBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -427,7 +427,7 @@ public readonly partial struct PulumiSchema
             /// Set the <c>items</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetItems(in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source value)
+            public void SetItems(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source value)
             {
                 CheckValidInstance();
 
@@ -508,7 +508,7 @@ public readonly partial struct PulumiSchema
             /// Set the <c>secret</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSecret(in Corvus.PulumiBenchmark.Current.JsonBoolean.Source value)
+            public void SetSecret(scoped in Corvus.PulumiBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -553,7 +553,7 @@ public readonly partial struct PulumiSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType.Source value)
+            public void SetType(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType.Source value)
             {
                 CheckValidInstance();
 
@@ -598,7 +598,7 @@ public readonly partial struct PulumiSchema
             /// Set the <c>value</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetValue(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetValue(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -849,7 +849,7 @@ public readonly partial struct PulumiSchema
 
             internal Source(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.PulumiBenchmark.Current.JsonString.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source arg3, in Corvus.PulumiBenchmark.Current.JsonBoolean.Source arg4, in Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6)
+            internal Source(scoped in Corvus.Text.Json.JsonElement.Source arg1, scoped in Corvus.PulumiBenchmark.Current.JsonString.Source arg2, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source arg3, scoped in Corvus.PulumiBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1023,7 +1023,7 @@ public readonly partial struct PulumiSchema
 
             internal Source(scoped in TContext context, Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.PulumiBenchmark.Current.JsonString.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source<TContext> arg3, in Corvus.PulumiBenchmark.Current.JsonBoolean.Source arg4, in Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType.Source arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6)
+            internal Source(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, scoped in Corvus.PulumiBenchmark.Current.JsonString.Source arg2, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source<TContext> arg3, scoped in Corvus.PulumiBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1288,7 +1288,7 @@ public readonly partial struct PulumiSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.PulumiBenchmark.Current.JsonString.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source arg3, in Corvus.PulumiBenchmark.Current.JsonBoolean.Source arg4, in Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Text.Json.JsonElement.Source arg1, scoped in Corvus.PulumiBenchmark.Current.JsonString.Source arg2, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source arg3, scoped in Corvus.PulumiBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1307,7 +1307,7 @@ public readonly partial struct PulumiSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.PulumiBenchmark.Current.JsonString.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source<TContext> arg3, in Corvus.PulumiBenchmark.Current.JsonBoolean.Source arg4, in Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType.Source arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, scoped in Corvus.PulumiBenchmark.Current.JsonString.Source arg2, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source<TContext> arg3, scoped in Corvus.PulumiBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1357,7 +1357,7 @@ public readonly partial struct PulumiSchema
         /// <param name="type">The value of the <c>"type"</c> property.</param>
         /// <param name="value">The value of the <c>"value"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Text.Json.JsonElement.Source defaultValue = default, in Corvus.PulumiBenchmark.Current.JsonString.Source description = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source items = default, in Corvus.PulumiBenchmark.Current.JsonBoolean.Source secret = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType.Source type = default, in Corvus.Text.Json.JsonElement.Source value = default)
+        public static Source Build(scoped in Corvus.Text.Json.JsonElement.Source defaultValue = default, scoped in Corvus.PulumiBenchmark.Current.JsonString.Source description = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source items = default, scoped in Corvus.PulumiBenchmark.Current.JsonBoolean.Source secret = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType.Source type = default, scoped in Corvus.Text.Json.JsonElement.Source value = default)
         {
             return new Source(defaultValue, description, items, secret, type, value);
         }
@@ -1374,7 +1374,7 @@ public readonly partial struct PulumiSchema
         /// <param name="type">The value of the <c>"type"</c> property.</param>
         /// <param name="value">The value of the <c>"value"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> defaultValue = default, in Corvus.PulumiBenchmark.Current.JsonString.Source description = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source<TContext> items = default, in Corvus.PulumiBenchmark.Current.JsonBoolean.Source secret = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType.Source type = default, in Corvus.Text.Json.JsonElement.Source<TContext> value = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> defaultValue = default, scoped in Corvus.PulumiBenchmark.Current.JsonString.Source description = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source<TContext> items = default, scoped in Corvus.PulumiBenchmark.Current.JsonBoolean.Source secret = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType.Source type = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> value = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

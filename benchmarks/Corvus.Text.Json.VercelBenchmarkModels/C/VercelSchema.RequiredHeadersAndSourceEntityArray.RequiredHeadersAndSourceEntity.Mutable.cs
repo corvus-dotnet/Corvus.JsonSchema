@@ -300,7 +300,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>has</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetHas(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.Source value)
+                public void SetHas(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -381,7 +381,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>headers</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetHeaders(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.RequiredKeyAndValueArray.Source value)
+                public void SetHeaders(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.RequiredKeyAndValueArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -446,7 +446,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>missing</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMissing(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.MissingEntityArray.Source value)
+                public void SetMissing(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.MissingEntityArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -527,7 +527,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>source</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSourceValue(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.SourceEntity.Source value)
+                public void SetSourceValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.SourceEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -726,7 +726,7 @@ public readonly partial struct VercelSchema
 
                 internal Source(Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.RequiredKeyAndValueArray.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.SourceEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.Source arg3, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.MissingEntityArray.Source arg4)
+                internal Source(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.RequiredKeyAndValueArray.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.SourceEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.Source arg3, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.MissingEntityArray.Source arg4)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -896,7 +896,7 @@ public readonly partial struct VercelSchema
 
                 internal Source(scoped in TContext context, Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.RequiredKeyAndValueArray.Source<TContext> arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.SourceEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.Source<TContext> arg3, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.MissingEntityArray.Source<TContext> arg4)
+                internal Source(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.RequiredKeyAndValueArray.Source<TContext> arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.SourceEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.Source<TContext> arg3, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.MissingEntityArray.Source<TContext> arg4)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1145,7 +1145,7 @@ public readonly partial struct VercelSchema
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.RequiredKeyAndValueArray.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.SourceEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.Source arg3, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.MissingEntityArray.Source arg4, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.RequiredKeyAndValueArray.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.SourceEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.Source arg3, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.MissingEntityArray.Source arg4, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4);
@@ -1162,7 +1162,7 @@ public readonly partial struct VercelSchema
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.RequiredKeyAndValueArray.Source<TContext> arg1, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.SourceEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.Source<TContext> arg3, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.MissingEntityArray.Source<TContext> arg4, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.RequiredKeyAndValueArray.Source<TContext> arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.SourceEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.Source<TContext> arg3, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.MissingEntityArray.Source<TContext> arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1210,7 +1210,7 @@ public readonly partial struct VercelSchema
             /// <param name="has">The value of the <c>"has"</c> property.</param>
             /// <param name="missing">The value of the <c>"missing"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.RequiredKeyAndValueArray.Source headers, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.SourceEntity.Source source, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.Source has = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.MissingEntityArray.Source missing = default)
+            public static Source Build(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.RequiredKeyAndValueArray.Source headers, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.SourceEntity.Source source, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.Source has = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.MissingEntityArray.Source missing = default)
             {
                 return new Source(headers, source, has, missing);
             }
@@ -1225,7 +1225,7 @@ public readonly partial struct VercelSchema
             /// <param name="has">The value of the <c>"has"</c> property.</param>
             /// <param name="missing">The value of the <c>"missing"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.RequiredKeyAndValueArray.Source<TContext> headers, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.SourceEntity.Source source, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.Source<TContext> has = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.MissingEntityArray.Source<TContext> missing = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.RequiredKeyAndValueArray.Source<TContext> headers, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.SourceEntity.Source source, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.Source<TContext> has = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.MissingEntityArray.Source<TContext> missing = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

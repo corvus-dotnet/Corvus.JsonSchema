@@ -764,7 +764,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>accessWidener</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAccessWidener(in Corvus.FabricModBenchmark.Current.JsonString.Source value)
+        public void SetAccessWidener(scoped in Corvus.FabricModBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -809,7 +809,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>authors</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAuthors(in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source value)
+        public void SetAuthors(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source value)
         {
             CheckValidInstance();
 
@@ -890,7 +890,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>breaks</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreaks(in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source value)
+        public void SetBreaks(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source value)
         {
             CheckValidInstance();
 
@@ -971,7 +971,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>conflicts</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetConflicts(in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source value)
+        public void SetConflicts(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1052,7 +1052,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>contact</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetContact(in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source value)
+        public void SetContact(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source value)
         {
             CheckValidInstance();
 
@@ -1133,7 +1133,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>contributors</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetContributors(in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source value)
+        public void SetContributors(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source value)
         {
             CheckValidInstance();
 
@@ -1214,7 +1214,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>custom</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCustom(in Corvus.FabricModBenchmark.Current.JsonObject.Source value)
+        public void SetCustom(scoped in Corvus.FabricModBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -1295,7 +1295,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>depends</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDepends(in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source value)
+        public void SetDepends(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1376,7 +1376,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>description</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDescription(in Corvus.FabricModBenchmark.Current.JsonString.Source value)
+        public void SetDescription(scoped in Corvus.FabricModBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1421,7 +1421,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>entrypoints</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEntrypoints(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source value)
+        public void SetEntrypoints(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source value)
         {
             CheckValidInstance();
 
@@ -1502,7 +1502,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>environment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEnvironmentValue(in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source value)
+        public void SetEnvironmentValue(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source value)
         {
             CheckValidInstance();
 
@@ -1547,7 +1547,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>icon</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIcon(in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source value)
+        public void SetIcon(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1628,7 +1628,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source value)
+        public void SetId(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source value)
         {
             CheckValidInstance();
 
@@ -1659,7 +1659,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>jars</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetJars(in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source value)
+        public void SetJars(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source value)
         {
             CheckValidInstance();
 
@@ -1740,7 +1740,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>languageAdapters</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLanguageAdapters(in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source value)
+        public void SetLanguageAdapters(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1821,7 +1821,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>license</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLicense(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source value)
+        public void SetLicense(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source value)
         {
             CheckValidInstance();
 
@@ -1902,7 +1902,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>mixins</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMixins(in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source value)
+        public void SetMixins(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source value)
         {
             CheckValidInstance();
 
@@ -1983,7 +1983,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetName(in Corvus.FabricModBenchmark.Current.JsonString.Source value)
+        public void SetName(scoped in Corvus.FabricModBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -2028,7 +2028,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>recommends</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRecommends(in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source value)
+        public void SetRecommends(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -2109,7 +2109,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>schemaVersion</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSchemaVersion(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheVersionOfTheFabricModJsonSchema.Source value)
+        public void SetSchemaVersion(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheVersionOfTheFabricModJsonSchema.Source value)
         {
             CheckValidInstance();
 
@@ -2140,7 +2140,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>suggests</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSuggests(in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source value)
+        public void SetSuggests(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -2221,7 +2221,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>version</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVersion(in Corvus.FabricModBenchmark.Current.JsonString.Source value)
+        public void SetVersion(scoped in Corvus.FabricModBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -2353,7 +2353,7 @@ public readonly partial struct FabricModSchema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -2376,7 +2376,7 @@ public readonly partial struct FabricModSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -2423,7 +2423,7 @@ public readonly partial struct FabricModSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -2613,7 +2613,7 @@ public readonly partial struct FabricModSchema
 
         internal Source(Corvus.FabricModBenchmark.Current.FabricModSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source arg1, in Corvus.FabricModBenchmark.Current.JsonString.Source arg2, in Corvus.FabricModBenchmark.Current.JsonString.Source arg3, in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source arg4, in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source arg5, in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source arg6, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source arg7, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source arg8, in Corvus.FabricModBenchmark.Current.JsonObject.Source arg9, in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source arg10, in Corvus.FabricModBenchmark.Current.JsonString.Source arg11, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source arg12, in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source arg13, in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source arg14, in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source arg15, in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source arg16, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source arg17, in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source arg18, in Corvus.FabricModBenchmark.Current.JsonString.Source arg19, in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source arg20, in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source arg21)
+        internal Source(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source arg1, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg2, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg3, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source arg4, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source arg5, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source arg6, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source arg7, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source arg8, scoped in Corvus.FabricModBenchmark.Current.JsonObject.Source arg9, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source arg10, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg11, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source arg12, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source arg13, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source arg14, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source arg15, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source arg16, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source arg17, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source arg18, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg19, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source arg20, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source arg21)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -2817,7 +2817,7 @@ public readonly partial struct FabricModSchema
 
         internal Source(scoped in TContext context, Corvus.FabricModBenchmark.Current.FabricModSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source arg1, in Corvus.FabricModBenchmark.Current.JsonString.Source arg2, in Corvus.FabricModBenchmark.Current.JsonString.Source arg3, in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source<TContext> arg4, in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source<TContext> arg5, in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source<TContext> arg6, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> arg7, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source<TContext> arg8, in Corvus.FabricModBenchmark.Current.JsonObject.Source<TContext> arg9, in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source<TContext> arg10, in Corvus.FabricModBenchmark.Current.JsonString.Source arg11, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source<TContext> arg12, in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source arg13, in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source<TContext> arg14, in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source<TContext> arg15, in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source<TContext> arg16, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source<TContext> arg17, in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source<TContext> arg18, in Corvus.FabricModBenchmark.Current.JsonString.Source arg19, in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source<TContext> arg20, in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source<TContext> arg21)
+        internal Source(scoped in TContext context, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source arg1, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg2, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg3, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source<TContext> arg4, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source<TContext> arg5, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source<TContext> arg6, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> arg7, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source<TContext> arg8, scoped in Corvus.FabricModBenchmark.Current.JsonObject.Source<TContext> arg9, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source<TContext> arg10, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg11, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source<TContext> arg12, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source arg13, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source<TContext> arg14, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source<TContext> arg15, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source<TContext> arg16, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source<TContext> arg17, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source<TContext> arg18, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg19, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source<TContext> arg20, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source<TContext> arg21)
         {
             _context = context;
             _createArg1 = arg1;
@@ -3273,7 +3273,7 @@ public readonly partial struct FabricModSchema
         /// <param name="arg20">The value of the property.</param>
         /// <param name="arg21">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source arg1, in Corvus.FabricModBenchmark.Current.JsonString.Source arg2, in Corvus.FabricModBenchmark.Current.JsonString.Source arg3, in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source arg4, in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source arg5, in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source arg6, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source arg7, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source arg8, in Corvus.FabricModBenchmark.Current.JsonObject.Source arg9, in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source arg10, in Corvus.FabricModBenchmark.Current.JsonString.Source arg11, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source arg12, in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source arg13, in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source arg14, in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source arg15, in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source arg16, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source arg17, in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source arg18, in Corvus.FabricModBenchmark.Current.JsonString.Source arg19, in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source arg20, in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source arg21, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source arg1, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg2, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg3, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source arg4, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source arg5, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source arg6, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source arg7, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source arg8, scoped in Corvus.FabricModBenchmark.Current.JsonObject.Source arg9, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source arg10, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg11, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source arg12, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source arg13, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source arg14, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source arg15, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source arg16, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source arg17, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source arg18, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg19, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source arg20, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source arg21, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21);
@@ -3307,7 +3307,7 @@ public readonly partial struct FabricModSchema
         /// <param name="arg20">The value of the property.</param>
         /// <param name="arg21">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source arg1, in Corvus.FabricModBenchmark.Current.JsonString.Source arg2, in Corvus.FabricModBenchmark.Current.JsonString.Source arg3, in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source<TContext> arg4, in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source<TContext> arg5, in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source<TContext> arg6, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> arg7, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source<TContext> arg8, in Corvus.FabricModBenchmark.Current.JsonObject.Source<TContext> arg9, in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source<TContext> arg10, in Corvus.FabricModBenchmark.Current.JsonString.Source arg11, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source<TContext> arg12, in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source arg13, in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source<TContext> arg14, in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source<TContext> arg15, in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source<TContext> arg16, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source<TContext> arg17, in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source<TContext> arg18, in Corvus.FabricModBenchmark.Current.JsonString.Source arg19, in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source<TContext> arg20, in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source<TContext> arg21, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source arg1, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg2, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg3, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source<TContext> arg4, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source<TContext> arg5, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source<TContext> arg6, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> arg7, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source<TContext> arg8, scoped in Corvus.FabricModBenchmark.Current.JsonObject.Source<TContext> arg9, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source<TContext> arg10, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg11, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source<TContext> arg12, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source arg13, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source<TContext> arg14, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source<TContext> arg15, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source<TContext> arg16, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source<TContext> arg17, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source<TContext> arg18, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg19, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source<TContext> arg20, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source<TContext> arg21, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -3372,7 +3372,7 @@ public readonly partial struct FabricModSchema
     /// <param name="recommends">The value of the <c>"recommends"</c> property.</param>
     /// <param name="suggests">The value of the <c>"suggests"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source id, in Corvus.FabricModBenchmark.Current.JsonString.Source version, in Corvus.FabricModBenchmark.Current.JsonString.Source accessWidener = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source authors = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source breaks = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source conflicts = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source contact = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source contributors = default, in Corvus.FabricModBenchmark.Current.JsonObject.Source custom = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source depends = default, in Corvus.FabricModBenchmark.Current.JsonString.Source description = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source entrypoints = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source environment = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source icon = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source jars = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source languageAdapters = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source license = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source mixins = default, in Corvus.FabricModBenchmark.Current.JsonString.Source name = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source recommends = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source suggests = default)
+    public static Source Build(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source id, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source version, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source accessWidener = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source authors = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source breaks = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source conflicts = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source contact = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source contributors = default, scoped in Corvus.FabricModBenchmark.Current.JsonObject.Source custom = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source depends = default, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source description = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source entrypoints = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source environment = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source icon = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source jars = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source languageAdapters = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source license = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source mixins = default, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source name = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source recommends = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source suggests = default)
     {
         return new Source(id, version, accessWidener, authors, breaks, conflicts, contact, contributors, custom, depends, description, entrypoints, environment, icon, jars, languageAdapters, license, mixins, name, recommends, suggests);
     }
@@ -3404,7 +3404,7 @@ public readonly partial struct FabricModSchema
     /// <param name="recommends">The value of the <c>"recommends"</c> property.</param>
     /// <param name="suggests">The value of the <c>"suggests"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source id, in Corvus.FabricModBenchmark.Current.JsonString.Source version, in Corvus.FabricModBenchmark.Current.JsonString.Source accessWidener = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source<TContext> authors = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source<TContext> breaks = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source<TContext> conflicts = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> contact = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source<TContext> contributors = default, in Corvus.FabricModBenchmark.Current.JsonObject.Source<TContext> custom = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source<TContext> depends = default, in Corvus.FabricModBenchmark.Current.JsonString.Source description = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source<TContext> entrypoints = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source environment = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source<TContext> icon = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source<TContext> jars = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source<TContext> languageAdapters = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source<TContext> license = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source<TContext> mixins = default, in Corvus.FabricModBenchmark.Current.JsonString.Source name = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source<TContext> recommends = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source<TContext> suggests = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source id, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source version, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source accessWidener = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source<TContext> authors = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source<TContext> breaks = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source<TContext> conflicts = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> contact = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source<TContext> contributors = default, scoped in Corvus.FabricModBenchmark.Current.JsonObject.Source<TContext> custom = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source<TContext> depends = default, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source description = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source<TContext> entrypoints = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source environment = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source<TContext> icon = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source<TContext> jars = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source<TContext> languageAdapters = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source<TContext> license = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source<TContext> mixins = default, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source name = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source<TContext> recommends = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source<TContext> suggests = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

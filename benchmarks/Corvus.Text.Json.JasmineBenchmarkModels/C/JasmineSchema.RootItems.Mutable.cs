@@ -378,7 +378,7 @@ public readonly partial struct JasmineSchema
             /// Set the <c>helpers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHelpers(in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source value)
+            public void SetHelpers(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -459,7 +459,7 @@ public readonly partial struct JasmineSchema
             /// Set the <c>spec_dir</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpecDir(in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source value)
+            public void SetSpecDir(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -490,7 +490,7 @@ public readonly partial struct JasmineSchema
             /// Set the <c>spec_files</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpecFiles(in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source value)
+            public void SetSpecFiles(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source value)
             {
                 CheckValidInstance();
 
@@ -656,7 +656,7 @@ public readonly partial struct JasmineSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -679,7 +679,7 @@ public readonly partial struct JasmineSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -726,7 +726,7 @@ public readonly partial struct JasmineSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -898,7 +898,7 @@ public readonly partial struct JasmineSchema
 
             internal Source(Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source arg1, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source arg2, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source arg3)
+            internal Source(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source arg1, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source arg2, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source arg3)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1066,7 +1066,7 @@ public readonly partial struct JasmineSchema
 
             internal Source(scoped in TContext context, Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source arg1, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source<TContext> arg2, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source<TContext> arg3)
+            internal Source(scoped in TContext context, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source arg1, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source<TContext> arg2, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source<TContext> arg3)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1376,7 +1376,7 @@ public readonly partial struct JasmineSchema
             /// <param name="arg2">The value of the property.</param>
             /// <param name="arg3">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source arg1, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source arg2, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source arg3, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source arg1, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source arg2, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source arg3, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3);
@@ -1392,7 +1392,7 @@ public readonly partial struct JasmineSchema
             /// <param name="arg2">The value of the property.</param>
             /// <param name="arg3">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source arg1, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source<TContext> arg2, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source<TContext> arg3, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source arg1, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source<TContext> arg2, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source<TContext> arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1439,7 +1439,7 @@ public readonly partial struct JasmineSchema
         /// <param name="specFiles">The value of the <c>"spec_files"</c> property.</param>
         /// <param name="helpers">The value of the <c>"helpers"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source specDir, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source specFiles, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source helpers = default)
+        public static Source Build(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source specDir, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source specFiles, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source helpers = default)
         {
             return new Source(specDir, specFiles, helpers);
         }
@@ -1453,7 +1453,7 @@ public readonly partial struct JasmineSchema
         /// <param name="specFiles">The value of the <c>"spec_files"</c> property.</param>
         /// <param name="helpers">The value of the <c>"helpers"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source specDir, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source<TContext> specFiles, in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source<TContext> helpers = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecDirEntity.Source specDir, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source<TContext> specFiles, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source<TContext> helpers = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

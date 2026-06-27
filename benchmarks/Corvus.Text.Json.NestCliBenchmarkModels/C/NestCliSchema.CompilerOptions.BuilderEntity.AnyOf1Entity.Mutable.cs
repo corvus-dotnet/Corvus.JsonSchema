@@ -369,7 +369,7 @@ public readonly partial struct NestCliSchema
                     /// Set the <c>options</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetOptions(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.Source value)
+                    public void SetOptions(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -450,7 +450,7 @@ public readonly partial struct NestCliSchema
                     /// Set the <c>type</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetType(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.TypeEntity.Source value)
+                    public void SetType(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.TypeEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -596,7 +596,7 @@ public readonly partial struct NestCliSchema
                     ///   </para>
                     /// </remarks>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void SetProperty(string propertyName, in JsonElement.Source value)
+                    public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                     {
                         SetProperty(propertyName.AsSpan(), value);
                     }
@@ -619,7 +619,7 @@ public readonly partial struct NestCliSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -666,7 +666,7 @@ public readonly partial struct NestCliSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -837,7 +837,7 @@ public readonly partial struct NestCliSchema
 
                     internal Source(Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.TypeEntity.Source arg2)
+                    internal Source(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.Source arg1, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.TypeEntity.Source arg2)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -1003,7 +1003,7 @@ public readonly partial struct NestCliSchema
 
                     internal Source(scoped in TContext context, Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.Source<TContext> arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.TypeEntity.Source arg2)
+                    internal Source(scoped in TContext context, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.Source<TContext> arg1, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.TypeEntity.Source arg2)
                     {
                         _context = context;
                         _createArg1 = arg1;
@@ -1303,7 +1303,7 @@ public readonly partial struct NestCliSchema
                     /// <param name="arg1">The value of the property.</param>
                     /// <param name="arg2">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.Source arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.TypeEntity.Source arg2, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.Source arg1, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.TypeEntity.Source arg2, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2);
@@ -1318,7 +1318,7 @@ public readonly partial struct NestCliSchema
                     /// <param name="arg1">The value of the property.</param>
                     /// <param name="arg2">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.Source<TContext> arg1, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.TypeEntity.Source arg2, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.Source<TContext> arg1, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.TypeEntity.Source arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -1364,7 +1364,7 @@ public readonly partial struct NestCliSchema
                 /// <param name="options">The value of the <c>"options"</c> property.</param>
                 /// <param name="type">The value of the <c>"type"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.Source options = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.TypeEntity.Source type = default)
+                public static Source Build(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.Source options = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.TypeEntity.Source type = default)
                 {
                     return new Source(options, type);
                 }
@@ -1377,7 +1377,7 @@ public readonly partial struct NestCliSchema
                 /// <param name="options">The value of the <c>"options"</c> property.</param>
                 /// <param name="type">The value of the <c>"type"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.Source<TContext> options = default, in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.TypeEntity.Source type = default)
+                public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.OptionsEntity.Source<TContext> options = default, scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.BuilderEntity.AnyOf1Entity.TypeEntity.Source type = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif

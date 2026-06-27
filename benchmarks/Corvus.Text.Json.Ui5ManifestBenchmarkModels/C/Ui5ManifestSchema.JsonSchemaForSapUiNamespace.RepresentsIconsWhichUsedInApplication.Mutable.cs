@@ -341,7 +341,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>favIcon</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetFavIcon(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                public void SetFavIcon(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -386,7 +386,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>icon</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetIcon(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                public void SetIcon(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -431,7 +431,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>phone</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPhone(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                public void SetPhone(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -476,7 +476,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>phone@2</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPhone2(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                public void SetPhone2(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -521,7 +521,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>tablet</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTablet(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                public void SetTablet(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -566,7 +566,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>tablet@2</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTablet2(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                public void SetTablet2(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -781,7 +781,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.RepresentsIconsWhichUsedInApplication.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6)
+                internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1124,7 +1124,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="arg6">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1171,7 +1171,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="tablet">The value of the <c>"tablet"</c> property.</param>
             /// <param name="tablet2">The value of the <c>"tablet@2"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source favIcon = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source icon = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source phone = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source phone2 = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source tablet = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source tablet2 = default)
+            public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source favIcon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source icon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source phone = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source phone2 = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source tablet = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source tablet2 = default)
             {
                 return new Source(favIcon, icon, phone, phone2, tablet, tablet2);
             }

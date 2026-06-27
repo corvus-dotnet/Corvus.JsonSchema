@@ -329,7 +329,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>pickBothHunks</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPickBothHunks(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetPickBothHunks(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -374,7 +374,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>toggleDragSelect</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetToggleDragSelect(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetToggleDragSelect(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -419,7 +419,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>toggleDragSelect-alt</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetToggleDragSelectAlt(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetToggleDragSelectAlt(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -464,7 +464,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>toggleSelectHunk</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetToggleSelectHunk(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetToggleSelectHunk(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -677,7 +677,7 @@ public readonly partial struct LazygitSchema
 
                 internal Source(Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Main.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4)
+                internal Source(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1010,7 +1010,7 @@ public readonly partial struct LazygitSchema
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg4, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4);
@@ -1055,7 +1055,7 @@ public readonly partial struct LazygitSchema
             /// <param name="toggleDragSelectAlt">The value of the <c>"toggleDragSelect-alt"</c> property.</param>
             /// <param name="toggleSelectHunk">The value of the <c>"toggleSelectHunk"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source pickBothHunks = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source toggleDragSelect = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source toggleDragSelectAlt = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source toggleSelectHunk = default)
+            public static Source Build(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source pickBothHunks = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source toggleDragSelect = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source toggleDragSelectAlt = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source toggleSelectHunk = default)
             {
                 return new Source(pickBothHunks, toggleDragSelect, toggleDragSelectAlt, toggleSelectHunk);
             }

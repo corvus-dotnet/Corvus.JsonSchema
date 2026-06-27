@@ -387,7 +387,7 @@ public readonly partial struct DenoSchema
                 /// Set the <c>exclude</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetExclude(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.JsonStringArray.Source value)
+                public void SetExclude(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.JsonStringArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -468,7 +468,7 @@ public readonly partial struct DenoSchema
                 /// Set the <c>include</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetInclude(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.IncludeJsoArray.Source value)
+                public void SetInclude(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.IncludeJsoArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -549,7 +549,7 @@ public readonly partial struct DenoSchema
                 /// Set the <c>tags</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTags(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.TagsJsonStArray.Source value)
+                public void SetTags(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.TagsJsonStArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -731,7 +731,7 @@ public readonly partial struct DenoSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -754,7 +754,7 @@ public readonly partial struct DenoSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -801,7 +801,7 @@ public readonly partial struct DenoSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -973,7 +973,7 @@ public readonly partial struct DenoSchema
 
                 internal Source(Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.JsonStringArray.Source arg1, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.IncludeJsoArray.Source arg2, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.TagsJsonStArray.Source arg3)
+                internal Source(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.JsonStringArray.Source arg1, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.IncludeJsoArray.Source arg2, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.TagsJsonStArray.Source arg3)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1141,7 +1141,7 @@ public readonly partial struct DenoSchema
 
                 internal Source(scoped in TContext context, Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.JsonStringArray.Source<TContext> arg1, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.IncludeJsoArray.Source<TContext> arg2, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.TagsJsonStArray.Source<TContext> arg3)
+                internal Source(scoped in TContext context, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.JsonStringArray.Source<TContext> arg1, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.IncludeJsoArray.Source<TContext> arg2, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.TagsJsonStArray.Source<TContext> arg3)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1451,7 +1451,7 @@ public readonly partial struct DenoSchema
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.JsonStringArray.Source arg1, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.IncludeJsoArray.Source arg2, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.TagsJsonStArray.Source arg3, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.JsonStringArray.Source arg1, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.IncludeJsoArray.Source arg2, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.TagsJsonStArray.Source arg3, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3);
@@ -1467,7 +1467,7 @@ public readonly partial struct DenoSchema
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.JsonStringArray.Source<TContext> arg1, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.IncludeJsoArray.Source<TContext> arg2, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.TagsJsonStArray.Source<TContext> arg3, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.JsonStringArray.Source<TContext> arg1, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.IncludeJsoArray.Source<TContext> arg2, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.TagsJsonStArray.Source<TContext> arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1514,7 +1514,7 @@ public readonly partial struct DenoSchema
             /// <param name="include">The value of the <c>"include"</c> property.</param>
             /// <param name="tags">The value of the <c>"tags"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.JsonStringArray.Source exclude = default, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.IncludeJsoArray.Source include = default, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.TagsJsonStArray.Source tags = default)
+            public static Source Build(scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.JsonStringArray.Source exclude = default, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.IncludeJsoArray.Source include = default, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.TagsJsonStArray.Source tags = default)
             {
                 return new Source(exclude, include, tags);
             }
@@ -1528,7 +1528,7 @@ public readonly partial struct DenoSchema
             /// <param name="include">The value of the <c>"include"</c> property.</param>
             /// <param name="tags">The value of the <c>"tags"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.JsonStringArray.Source<TContext> exclude = default, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.IncludeJsoArray.Source<TContext> include = default, in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.TagsJsonStArray.Source<TContext> tags = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.JsonStringArray.Source<TContext> exclude = default, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.IncludeJsoArray.Source<TContext> include = default, scoped in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForLinter.RulesEntity.TagsJsonStArray.Source<TContext> tags = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

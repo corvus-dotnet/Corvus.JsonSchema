@@ -279,7 +279,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>args</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetArgs(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Arguments.Source value)
+                public void SetArgs(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Arguments.Source value)
                 {
                     CheckValidInstance();
 
@@ -324,7 +324,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>manualCommit</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetManualCommitValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.ManualCommit.Source value)
+                public void SetManualCommitValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.ManualCommit.Source value)
                 {
                     CheckValidInstance();
 
@@ -535,7 +535,7 @@ public readonly partial struct LazygitSchema
 
                 internal Source(Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Arguments.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.ManualCommit.Source arg2)
+                internal Source(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Arguments.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.ManualCommit.Source arg2)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -856,7 +856,7 @@ public readonly partial struct LazygitSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Arguments.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.ManualCommit.Source arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Arguments.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.ManualCommit.Source arg2, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2);
@@ -899,7 +899,7 @@ public readonly partial struct LazygitSchema
             /// <param name="args">The value of the <c>"args"</c> property.</param>
             /// <param name="manualCommit">The value of the <c>"manualCommit"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Arguments.Source args = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.ManualCommit.Source manualCommit = default)
+            public static Source Build(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Arguments.Source args = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.ManualCommit.Source manualCommit = default)
             {
                 return new Source(args, manualCommit);
             }

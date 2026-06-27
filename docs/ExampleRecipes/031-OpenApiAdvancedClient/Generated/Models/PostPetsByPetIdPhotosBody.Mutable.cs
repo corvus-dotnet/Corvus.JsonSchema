@@ -356,7 +356,7 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         /// Set the <c>caption</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCaption(in Petstore.Extended.Models.JsonString.Source value)
+        public void SetCaption(scoped in Petstore.Extended.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -401,7 +401,7 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         /// Set the <c>file</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFile(in Petstore.Extended.Models.JsonBinary.Source value)
+        public void SetFile(scoped in Petstore.Extended.Models.JsonBinary.Source value)
         {
             CheckValidInstance();
 
@@ -432,7 +432,7 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         /// Set the <c>isPrimary</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIsPrimary(in Petstore.Extended.Models.JsonBoolean.Source value)
+        public void SetIsPrimary(scoped in Petstore.Extended.Models.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -578,7 +578,7 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -601,7 +601,7 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -648,7 +648,7 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -820,7 +820,7 @@ public readonly partial struct PostPetsByPetIdPhotosBody
 
         internal Source(Petstore.Extended.Models.PostPetsByPetIdPhotosBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Petstore.Extended.Models.JsonBinary.Source arg1, in Petstore.Extended.Models.JsonString.Source arg2, in Petstore.Extended.Models.JsonBoolean.Source arg3)
+        internal Source(scoped in Petstore.Extended.Models.JsonBinary.Source arg1, scoped in Petstore.Extended.Models.JsonString.Source arg2, scoped in Petstore.Extended.Models.JsonBoolean.Source arg3)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1217,7 +1217,7 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Petstore.Extended.Models.JsonBinary.Source arg1, in Petstore.Extended.Models.JsonString.Source arg2, in Petstore.Extended.Models.JsonBoolean.Source arg3, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Petstore.Extended.Models.JsonBinary.Source arg1, scoped in Petstore.Extended.Models.JsonString.Source arg2, scoped in Petstore.Extended.Models.JsonBoolean.Source arg3, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3);
@@ -1261,7 +1261,7 @@ public readonly partial struct PostPetsByPetIdPhotosBody
     /// <param name="caption">The value of the <c>"caption"</c> property.</param>
     /// <param name="isPrimary">The value of the <c>"isPrimary"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Petstore.Extended.Models.JsonBinary.Source file, in Petstore.Extended.Models.JsonString.Source caption = default, in Petstore.Extended.Models.JsonBoolean.Source isPrimary = default)
+    public static Source Build(scoped in Petstore.Extended.Models.JsonBinary.Source file, scoped in Petstore.Extended.Models.JsonString.Source caption = default, scoped in Petstore.Extended.Models.JsonBoolean.Source isPrimary = default)
     {
         return new Source(file, caption, isPrimary);
     }

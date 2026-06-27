@@ -391,7 +391,7 @@ public readonly partial struct Person
         /// Set the <c>dateOfBirth</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDateOfBirth(in Corvus.ClassicBenchmark.Current.JsonDate.Source value)
+        public void SetDateOfBirth(scoped in Corvus.ClassicBenchmark.Current.JsonDate.Source value)
         {
             CheckValidInstance();
 
@@ -436,7 +436,7 @@ public readonly partial struct Person
         /// Set the <c>email</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEmail(in Corvus.ClassicBenchmark.Current.JsonEmail.Source value)
+        public void SetEmail(scoped in Corvus.ClassicBenchmark.Current.JsonEmail.Source value)
         {
             CheckValidInstance();
 
@@ -481,7 +481,7 @@ public readonly partial struct Person
         /// Set the <c>height</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHeight(in Corvus.ClassicBenchmark.Current.HeightRangeDouble.Source value)
+        public void SetHeight(scoped in Corvus.ClassicBenchmark.Current.HeightRangeDouble.Source value)
         {
             CheckValidInstance();
 
@@ -526,7 +526,7 @@ public readonly partial struct Person
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetName(in Corvus.ClassicBenchmark.Current.PersonName.Source value)
+        public void SetName(scoped in Corvus.ClassicBenchmark.Current.PersonName.Source value)
         {
             CheckValidInstance();
 
@@ -591,7 +591,7 @@ public readonly partial struct Person
         /// Set the <c>netWorth</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetNetWorth(in Corvus.ClassicBenchmark.Current.JsonDecimal.Source value)
+        public void SetNetWorth(scoped in Corvus.ClassicBenchmark.Current.JsonDecimal.Source value)
         {
             CheckValidInstance();
 
@@ -737,7 +737,7 @@ public readonly partial struct Person
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -760,7 +760,7 @@ public readonly partial struct Person
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -807,7 +807,7 @@ public readonly partial struct Person
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -981,7 +981,7 @@ public readonly partial struct Person
 
         internal Source(Corvus.ClassicBenchmark.Current.Person.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.ClassicBenchmark.Current.PersonName.Source arg1, in Corvus.ClassicBenchmark.Current.JsonDate.Source arg2, in Corvus.ClassicBenchmark.Current.JsonEmail.Source arg3, in Corvus.ClassicBenchmark.Current.HeightRangeDouble.Source arg4, in Corvus.ClassicBenchmark.Current.JsonDecimal.Source arg5)
+        internal Source(scoped in Corvus.ClassicBenchmark.Current.PersonName.Source arg1, scoped in Corvus.ClassicBenchmark.Current.JsonDate.Source arg2, scoped in Corvus.ClassicBenchmark.Current.JsonEmail.Source arg3, scoped in Corvus.ClassicBenchmark.Current.HeightRangeDouble.Source arg4, scoped in Corvus.ClassicBenchmark.Current.JsonDecimal.Source arg5)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1153,7 +1153,7 @@ public readonly partial struct Person
 
         internal Source(scoped in TContext context, Corvus.ClassicBenchmark.Current.Person.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.ClassicBenchmark.Current.PersonName.Source<TContext> arg1, in Corvus.ClassicBenchmark.Current.JsonDate.Source arg2, in Corvus.ClassicBenchmark.Current.JsonEmail.Source arg3, in Corvus.ClassicBenchmark.Current.HeightRangeDouble.Source arg4, in Corvus.ClassicBenchmark.Current.JsonDecimal.Source arg5)
+        internal Source(scoped in TContext context, scoped in Corvus.ClassicBenchmark.Current.PersonName.Source<TContext> arg1, scoped in Corvus.ClassicBenchmark.Current.JsonDate.Source arg2, scoped in Corvus.ClassicBenchmark.Current.JsonEmail.Source arg3, scoped in Corvus.ClassicBenchmark.Current.HeightRangeDouble.Source arg4, scoped in Corvus.ClassicBenchmark.Current.JsonDecimal.Source arg5)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1479,7 +1479,7 @@ public readonly partial struct Person
         /// <param name="arg4">The value of the property.</param>
         /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.ClassicBenchmark.Current.PersonName.Source arg1, in Corvus.ClassicBenchmark.Current.JsonDate.Source arg2, in Corvus.ClassicBenchmark.Current.JsonEmail.Source arg3, in Corvus.ClassicBenchmark.Current.HeightRangeDouble.Source arg4, in Corvus.ClassicBenchmark.Current.JsonDecimal.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.ClassicBenchmark.Current.PersonName.Source arg1, scoped in Corvus.ClassicBenchmark.Current.JsonDate.Source arg2, scoped in Corvus.ClassicBenchmark.Current.JsonEmail.Source arg3, scoped in Corvus.ClassicBenchmark.Current.HeightRangeDouble.Source arg4, scoped in Corvus.ClassicBenchmark.Current.JsonDecimal.Source arg5, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1497,7 +1497,7 @@ public readonly partial struct Person
         /// <param name="arg4">The value of the property.</param>
         /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.ClassicBenchmark.Current.PersonName.Source<TContext> arg1, in Corvus.ClassicBenchmark.Current.JsonDate.Source arg2, in Corvus.ClassicBenchmark.Current.JsonEmail.Source arg3, in Corvus.ClassicBenchmark.Current.HeightRangeDouble.Source arg4, in Corvus.ClassicBenchmark.Current.JsonDecimal.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.ClassicBenchmark.Current.PersonName.Source<TContext> arg1, scoped in Corvus.ClassicBenchmark.Current.JsonDate.Source arg2, scoped in Corvus.ClassicBenchmark.Current.JsonEmail.Source arg3, scoped in Corvus.ClassicBenchmark.Current.HeightRangeDouble.Source arg4, scoped in Corvus.ClassicBenchmark.Current.JsonDecimal.Source arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1546,7 +1546,7 @@ public readonly partial struct Person
     /// <param name="height">The value of the <c>"height"</c> property.</param>
     /// <param name="netWorth">The value of the <c>"netWorth"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.ClassicBenchmark.Current.PersonName.Source name, in Corvus.ClassicBenchmark.Current.JsonDate.Source dateOfBirth = default, in Corvus.ClassicBenchmark.Current.JsonEmail.Source email = default, in Corvus.ClassicBenchmark.Current.HeightRangeDouble.Source height = default, in Corvus.ClassicBenchmark.Current.JsonDecimal.Source netWorth = default)
+    public static Source Build(scoped in Corvus.ClassicBenchmark.Current.PersonName.Source name, scoped in Corvus.ClassicBenchmark.Current.JsonDate.Source dateOfBirth = default, scoped in Corvus.ClassicBenchmark.Current.JsonEmail.Source email = default, scoped in Corvus.ClassicBenchmark.Current.HeightRangeDouble.Source height = default, scoped in Corvus.ClassicBenchmark.Current.JsonDecimal.Source netWorth = default)
     {
         return new Source(name, dateOfBirth, email, height, netWorth);
     }
@@ -1562,7 +1562,7 @@ public readonly partial struct Person
     /// <param name="height">The value of the <c>"height"</c> property.</param>
     /// <param name="netWorth">The value of the <c>"netWorth"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.ClassicBenchmark.Current.PersonName.Source<TContext> name, in Corvus.ClassicBenchmark.Current.JsonDate.Source dateOfBirth = default, in Corvus.ClassicBenchmark.Current.JsonEmail.Source email = default, in Corvus.ClassicBenchmark.Current.HeightRangeDouble.Source height = default, in Corvus.ClassicBenchmark.Current.JsonDecimal.Source netWorth = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.ClassicBenchmark.Current.PersonName.Source<TContext> name, scoped in Corvus.ClassicBenchmark.Current.JsonDate.Source dateOfBirth = default, scoped in Corvus.ClassicBenchmark.Current.JsonEmail.Source email = default, scoped in Corvus.ClassicBenchmark.Current.HeightRangeDouble.Source height = default, scoped in Corvus.ClassicBenchmark.Current.JsonDecimal.Source netWorth = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

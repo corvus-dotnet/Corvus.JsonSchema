@@ -304,7 +304,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>colorArg</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetColorArg(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.ColorArgument.Source value)
+                public void SetColorArg(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.ColorArgument.Source value)
                 {
                     CheckValidInstance();
 
@@ -349,7 +349,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>pager</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPagerValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Pager.Source value)
+                public void SetPagerValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Pager.Source value)
                 {
                     CheckValidInstance();
 
@@ -394,7 +394,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>useConfig</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetUseConfigValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.UseConfig.Source value)
+                public void SetUseConfigValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.UseConfig.Source value)
                 {
                     CheckValidInstance();
 
@@ -606,7 +606,7 @@ public readonly partial struct LazygitSchema
 
                 internal Source(Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.ColorArgument.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Pager.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.UseConfig.Source arg3)
+                internal Source(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.ColorArgument.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Pager.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.UseConfig.Source arg3)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -934,7 +934,7 @@ public readonly partial struct LazygitSchema
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.ColorArgument.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Pager.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.UseConfig.Source arg3, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.ColorArgument.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Pager.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.UseConfig.Source arg3, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3);
@@ -978,7 +978,7 @@ public readonly partial struct LazygitSchema
             /// <param name="pager">The value of the <c>"pager"</c> property.</param>
             /// <param name="useConfig">The value of the <c>"useConfig"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.ColorArgument.Source colorArg = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Pager.Source pager = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.UseConfig.Source useConfig = default)
+            public static Source Build(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.ColorArgument.Source colorArg = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Pager.Source pager = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.UseConfig.Source useConfig = default)
             {
                 return new Source(colorArg, pager, useConfig);
             }

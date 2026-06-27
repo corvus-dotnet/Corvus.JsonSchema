@@ -236,7 +236,7 @@ public readonly partial struct ImportmapSchema
         /// Set the <c>imports</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetImports(in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheImportsField.Source value)
+        public void SetImports(scoped in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheImportsField.Source value)
         {
             CheckValidInstance();
 
@@ -317,7 +317,7 @@ public readonly partial struct ImportmapSchema
         /// Set the <c>scopes</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetScopes(in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheScopesField.Source value)
+        public void SetScopes(scoped in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheScopesField.Source value)
         {
             CheckValidInstance();
 
@@ -564,7 +564,7 @@ public readonly partial struct ImportmapSchema
 
         internal Source(Corvus.ImportmapBenchmark.Current.ImportmapSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheImportsField.Source arg1, in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheScopesField.Source arg2)
+        internal Source(scoped in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheImportsField.Source arg1, scoped in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheScopesField.Source arg2)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -730,7 +730,7 @@ public readonly partial struct ImportmapSchema
 
         internal Source(scoped in TContext context, Corvus.ImportmapBenchmark.Current.ImportmapSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheImportsField.Source<TContext> arg1, in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheScopesField.Source<TContext> arg2)
+        internal Source(scoped in TContext context, scoped in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheImportsField.Source<TContext> arg1, scoped in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheScopesField.Source<TContext> arg2)
         {
             _context = context;
             _createArg1 = arg1;
@@ -961,7 +961,7 @@ public readonly partial struct ImportmapSchema
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheImportsField.Source arg1, in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheScopesField.Source arg2, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheImportsField.Source arg1, scoped in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheScopesField.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2);
@@ -976,7 +976,7 @@ public readonly partial struct ImportmapSchema
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheImportsField.Source<TContext> arg1, in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheScopesField.Source<TContext> arg2, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheImportsField.Source<TContext> arg1, scoped in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheScopesField.Source<TContext> arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1022,7 +1022,7 @@ public readonly partial struct ImportmapSchema
     /// <param name="imports">The value of the <c>"imports"</c> property.</param>
     /// <param name="scopes">The value of the <c>"scopes"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheImportsField.Source imports = default, in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheScopesField.Source scopes = default)
+    public static Source Build(scoped in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheImportsField.Source imports = default, scoped in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheScopesField.Source scopes = default)
     {
         return new Source(imports, scopes);
     }
@@ -1035,7 +1035,7 @@ public readonly partial struct ImportmapSchema
     /// <param name="imports">The value of the <c>"imports"</c> property.</param>
     /// <param name="scopes">The value of the <c>"scopes"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheImportsField.Source<TContext> imports = default, in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheScopesField.Source<TContext> scopes = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheImportsField.Source<TContext> imports = default, scoped in Corvus.ImportmapBenchmark.Current.ImportmapSchema.TheScopesField.Source<TContext> scopes = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

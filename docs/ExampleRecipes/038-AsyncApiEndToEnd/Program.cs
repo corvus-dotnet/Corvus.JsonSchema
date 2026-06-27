@@ -33,10 +33,7 @@ TurnOnProducer producer = new(transport, ValidationMode.Basic);
 // transport captures the outbound command but does not invoke the measurement
 // handler.
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-42");
 
 Console.WriteLine($"Published command; measurement handler received: {handler.ReceivedCount}");

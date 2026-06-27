@@ -304,7 +304,7 @@ public readonly partial struct TableRow
         /// Set the <c>cells</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCells(in Corvus.Ui5ManifestBenchmark.Current.TableRow.TableCellArray.Source value)
+        public void SetCells(scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.TableCellArray.Source value)
         {
             CheckValidInstance();
 
@@ -385,7 +385,7 @@ public readonly partial struct TableRow
         /// Set the <c>horizontalCellContentAlignment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHorizontalCellContentAlignment(in Corvus.Ui5ManifestBenchmark.Current.TableRow.HorizontalCellContentAlignmentEntity.Source value)
+        public void SetHorizontalCellContentAlignment(scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.HorizontalCellContentAlignmentEntity.Source value)
         {
             CheckValidInstance();
 
@@ -430,7 +430,7 @@ public readonly partial struct TableRow
         /// Set the <c>style</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStyle(in Corvus.Ui5ManifestBenchmark.Current.TableRow.DefinesTheStyleOfTheEntireRow.Source value)
+        public void SetStyle(scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.DefinesTheStyleOfTheEntireRow.Source value)
         {
             CheckValidInstance();
 
@@ -475,7 +475,7 @@ public readonly partial struct TableRow
         /// Set the <c>type</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetType(in Corvus.Ui5ManifestBenchmark.Current.TableRow.MustBeTableRow.Source value)
+        public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.MustBeTableRow.Source value)
         {
             CheckValidInstance();
 
@@ -520,7 +520,7 @@ public readonly partial struct TableRow
         /// Set the <c>verticalCellContentAlignment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVerticalCellContentAlignment(in Corvus.Ui5ManifestBenchmark.Current.TableRow.VerticalCellContentAlignmentEntity.Source value)
+        public void SetVerticalCellContentAlignment(scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.VerticalCellContentAlignmentEntity.Source value)
         {
             CheckValidInstance();
 
@@ -734,7 +734,7 @@ public readonly partial struct TableRow
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.TableRow.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Ui5ManifestBenchmark.Current.TableRow.TableCellArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.TableRow.HorizontalCellContentAlignmentEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.TableRow.DefinesTheStyleOfTheEntireRow.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.TableRow.MustBeTableRow.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.TableRow.VerticalCellContentAlignmentEntity.Source arg5)
+        internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.TableCellArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.HorizontalCellContentAlignmentEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.DefinesTheStyleOfTheEntireRow.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.MustBeTableRow.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.VerticalCellContentAlignmentEntity.Source arg5)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -906,7 +906,7 @@ public readonly partial struct TableRow
 
         internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.TableRow.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.TableRow.TableCellArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.TableRow.HorizontalCellContentAlignmentEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.TableRow.DefinesTheStyleOfTheEntireRow.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.TableRow.MustBeTableRow.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.TableRow.VerticalCellContentAlignmentEntity.Source arg5)
+        internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.TableCellArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.HorizontalCellContentAlignmentEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.DefinesTheStyleOfTheEntireRow.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.MustBeTableRow.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.VerticalCellContentAlignmentEntity.Source arg5)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1163,7 +1163,7 @@ public readonly partial struct TableRow
         /// <param name="arg4">The value of the property.</param>
         /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.TableRow.TableCellArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.TableRow.HorizontalCellContentAlignmentEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.TableRow.DefinesTheStyleOfTheEntireRow.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.TableRow.MustBeTableRow.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.TableRow.VerticalCellContentAlignmentEntity.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.TableCellArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.HorizontalCellContentAlignmentEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.DefinesTheStyleOfTheEntireRow.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.MustBeTableRow.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.VerticalCellContentAlignmentEntity.Source arg5, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1181,7 +1181,7 @@ public readonly partial struct TableRow
         /// <param name="arg4">The value of the property.</param>
         /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.TableRow.TableCellArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.TableRow.HorizontalCellContentAlignmentEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.TableRow.DefinesTheStyleOfTheEntireRow.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.TableRow.MustBeTableRow.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.TableRow.VerticalCellContentAlignmentEntity.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.TableCellArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.HorizontalCellContentAlignmentEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.DefinesTheStyleOfTheEntireRow.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.MustBeTableRow.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.VerticalCellContentAlignmentEntity.Source arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1230,7 +1230,7 @@ public readonly partial struct TableRow
     /// <param name="type">The value of the <c>"type"</c> property.</param>
     /// <param name="verticalCellContentAlignment">The value of the <c>"verticalCellContentAlignment"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.TableRow.TableCellArray.Source cells = default, in Corvus.Ui5ManifestBenchmark.Current.TableRow.HorizontalCellContentAlignmentEntity.Source horizontalCellContentAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.TableRow.DefinesTheStyleOfTheEntireRow.Source style = default, in Corvus.Ui5ManifestBenchmark.Current.TableRow.MustBeTableRow.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.TableRow.VerticalCellContentAlignmentEntity.Source verticalCellContentAlignment = default)
+    public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.TableCellArray.Source cells = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.HorizontalCellContentAlignmentEntity.Source horizontalCellContentAlignment = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.DefinesTheStyleOfTheEntireRow.Source style = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.MustBeTableRow.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.VerticalCellContentAlignmentEntity.Source verticalCellContentAlignment = default)
     {
         return new Source(cells, horizontalCellContentAlignment, style, type, verticalCellContentAlignment);
     }
@@ -1246,7 +1246,7 @@ public readonly partial struct TableRow
     /// <param name="type">The value of the <c>"type"</c> property.</param>
     /// <param name="verticalCellContentAlignment">The value of the <c>"verticalCellContentAlignment"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.TableRow.TableCellArray.Source<TContext> cells = default, in Corvus.Ui5ManifestBenchmark.Current.TableRow.HorizontalCellContentAlignmentEntity.Source horizontalCellContentAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.TableRow.DefinesTheStyleOfTheEntireRow.Source style = default, in Corvus.Ui5ManifestBenchmark.Current.TableRow.MustBeTableRow.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.TableRow.VerticalCellContentAlignmentEntity.Source verticalCellContentAlignment = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.TableCellArray.Source<TContext> cells = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.HorizontalCellContentAlignmentEntity.Source horizontalCellContentAlignment = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.DefinesTheStyleOfTheEntireRow.Source style = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.MustBeTableRow.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableRow.VerticalCellContentAlignmentEntity.Source verticalCellContentAlignment = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

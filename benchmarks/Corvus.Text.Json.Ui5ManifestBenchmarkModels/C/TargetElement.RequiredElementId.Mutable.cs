@@ -271,7 +271,7 @@ public readonly partial struct TargetElement
             /// Set the <c>elementId</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetElementId(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetElementId(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -302,7 +302,7 @@ public readonly partial struct TargetElement
             /// Set the <c>isVisible</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIsVisible(in Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.IsVisibleEntity.Source value)
+            public void SetIsVisible(scoped in Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.IsVisibleEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -347,7 +347,7 @@ public readonly partial struct TargetElement
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.MustBeTargetElement.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.MustBeTargetElement.Source value)
             {
                 CheckValidInstance();
 
@@ -559,7 +559,7 @@ public readonly partial struct TargetElement
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.IsVisibleEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.MustBeTargetElement.Source arg3)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.IsVisibleEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.MustBeTargetElement.Source arg3)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -887,7 +887,7 @@ public readonly partial struct TargetElement
             /// <param name="arg2">The value of the property.</param>
             /// <param name="arg3">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.IsVisibleEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.MustBeTargetElement.Source arg3, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.IsVisibleEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.MustBeTargetElement.Source arg3, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3);
@@ -931,7 +931,7 @@ public readonly partial struct TargetElement
         /// <param name="isVisible">The value of the <c>"isVisible"</c> property.</param>
         /// <param name="type">The value of the <c>"type"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source elementId, in Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.IsVisibleEntity.Source isVisible = default, in Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.MustBeTargetElement.Source type = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source elementId, scoped in Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.IsVisibleEntity.Source isVisible = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TargetElement.RequiredElementId.MustBeTargetElement.Source type = default)
         {
             return new Source(elementId, isVisible, type);
         }
