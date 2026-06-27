@@ -12,7 +12,7 @@ import { execFileSync, spawn } from "node:child_process";
 import { mkdirSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { LosslessNumber, parse as ljParse, stringify as ljStringify } from "lossless-json";
+import { LosslessNumber } from "lossless-json";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
@@ -30,10 +30,22 @@ worker.on("exit", (code) => { process.stderr.write(`codegen worker exited (${cod
 const workerOut = createInterface({ input: worker.stdout });
 const pending = [];
 workerOut.on("line", (line) => { const resolve = pending.shift(); if (resolve) { resolve(line); } });
+// JSON stringify over parseInstance output: null-proto objects (so "__proto__" is an ordinary own key, never
+// prototype pollution) and LosslessNumber (exact source for multipleOf/big-int). Feeds schemas to the worker
+// losslessly — JSON.parse/stringify would lose both, and lossless-json's parse pollutes the prototype.
+function jstr(v) {
+  if (v === null) { return "null"; }
+  if (v instanceof LosslessNumber) { return v.toString(); }
+  const t = typeof v;
+  if (t === "boolean") { return v ? "true" : "false"; }
+  if (t === "string") { return JSON.stringify(v); }
+  if (Array.isArray(v)) { return "[" + v.map(jstr).join(",") + "]"; }
+  return "{" + Object.keys(v).map((k) => JSON.stringify(k) + ":" + jstr(v[k])).join(",") + "}";
+}
 function codegen(schema, registry, out) {
   return new Promise((resolve) => {
     pending.push(resolve);
-    worker.stdin.write(ljStringify({ schema, registry, out }) + "\n");
+    worker.stdin.write(jstr({ schema, registry, out }) + "\n");
   });
 }
 
@@ -126,7 +138,9 @@ const rl = createInterface({ input: process.stdin, crlfDelay: Infinity });
 for await (const line of rl) {
   const s = line.trim();
   if (!s) { continue; }
-  const cmd = ljParse(s);
+  // Parse the WHOLE command with the source-preserving parser: instances/schemas keep "__proto__" et al. as
+  // ordinary own keys (lossless-json's parse would set the prototype) and numbers stay LosslessNumber.
+  const cmd = parseInstance(s);
   const c = String(cmd.cmd);
   if (c === "start") {
     out({ version: 1, implementation: { language: "typescript", name: "corvus-ts", version: "0.1.0", dialects: DIALECTS,
@@ -141,7 +155,9 @@ for await (const line of rl) {
       const dir = await compile(cmd.case.schema, cmd.case.registry);
       const evaluateRoot = (await import(pathToFileURL(join(dir, "generated.js")).href)).default;
       const results = cmd.case.tests.map((t) => {
-        try { return { valid: evaluateRoot(parseInstance(ljStringify(t.instance))) === true }; }
+        // t.instance is already in the validator's Model-C form (parseInstance parsed the whole command):
+        // null-proto objects + LosslessNumber. Pass it straight through — no lossy round-trip.
+        try { return { valid: evaluateRoot(t.instance) === true }; }
         catch (e) { return { errored: true, context: { message: msg(e) } }; }
       });
       out({ seq, results });

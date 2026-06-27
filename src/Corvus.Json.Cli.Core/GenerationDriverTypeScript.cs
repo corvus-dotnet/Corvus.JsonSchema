@@ -127,8 +127,10 @@ public static class GenerationDriverTypeScript
         typeBuilder.AddDocument(mainRef, System.Text.Json.JsonDocument.Parse(schemaJson));
         TypeDeclaration root = await typeBuilder.AddTypeDeclarationsAsync(new JsonReference(mainRef), fallback, true);
 
-        TypeScriptLanguageProvider provider = TypeScriptLanguageProvider.DefaultWithOptions(
-            new TypeScriptLanguageProvider.Options(AlwaysAssertFormat: true));
+        // Annotation-only (the default provider): Bowtie's per-dialect suite tests format/content as
+        // ANNOTATIONS ("invalid email string is only an annotation" -> valid), matching the SuiteHarness'
+        // CreateDefault main-suite run. format ASSERTION is a separate, opt-in Bowtie run.
+        TypeScriptLanguageProvider provider = TypeScriptLanguageProvider.CreateDefault();
         IReadOnlyCollection<GeneratedCodeFile> files = typeBuilder.GenerateCodeUsing(provider, new[] { root }, CancellationToken.None);
         string export = provider.RootEvaluatorExport(root);
 
