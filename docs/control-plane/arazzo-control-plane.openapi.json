@@ -1496,10 +1496,11 @@
         "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
         "tags": ["accessRequests"],
         "summary": "List access requests",
-        "description": "Lists access requests visible to the caller, oldest first. Without baseWorkflowId, returns the caller's own requests; with baseWorkflowId, returns that workflow's request queue — the caller must be an administrator of it (403 otherwise). Optionally filtered by status.",
+        "description": "Lists access requests visible to the caller, oldest first. With baseWorkflowId, returns that workflow's request queue — the caller must be an administrator of it (403 otherwise). Without baseWorkflowId, scope selects the view: 'mine' (default) the caller's own requests; 'queue' the approver inbox — every request across the workflows the caller administers. Optionally filtered by status.",
         "parameters": [
           { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["Pending", "Approved", "Denied", "Withdrawn", "Revoked"] }, "description": "Only requests in this state." },
-          { "name": "baseWorkflowId", "in": "query", "required": false, "schema": { "type": "string" }, "description": "The target workflow whose request queue to list (requires administrator of it); absent lists the caller's own requests." },
+          { "name": "baseWorkflowId", "in": "query", "required": false, "schema": { "type": "string" }, "description": "The target workflow whose request queue to list (requires administrator of it); absent lists per scope." },
+          { "name": "scope", "in": "query", "required": false, "schema": { "type": "string", "enum": ["mine", "queue"] }, "description": "When baseWorkflowId is absent, which requests to list: 'mine' (default) the caller's own; 'queue' the approver inbox across every workflow the caller administers. Ignored when baseWorkflowId is present." },
           { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
         ],

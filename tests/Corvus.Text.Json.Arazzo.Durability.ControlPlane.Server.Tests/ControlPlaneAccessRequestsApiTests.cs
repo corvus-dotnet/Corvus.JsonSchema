@@ -185,8 +185,49 @@ public sealed class ControlPlaneAccessRequestsApiTests
         }
     }
 
+    [TestMethod]
+    public async Task The_approver_inbox_lists_requests_across_every_administered_workflow()
+    {
+        await using Scoped host = await StartAsync();
+        await EstablishAsync(host.Catalog, "flow-a", "boss");
+        await EstablishAsync(host.Catalog, "flow-b", "boss");
+        await EstablishAsync(host.Catalog, "flow-c", "carol"); // boss does NOT administer this one
+
+        string aId = await SubmitAsync(host, "flow-a", "alice");
+        string bId = await SubmitAsync(host, "flow-b", "dave");
+        string cId = await SubmitAsync(host, "flow-c", "eve");
+
+        // boss's inbox (scope=queue, no baseWorkflowId): every request across the workflows boss administers (flow-a +
+        // flow-b), regardless of submitter — but never flow-c, which boss does not administer.
+        using (Stj.JsonDocument inbox = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/accessRequests?scope=queue", Auth, "boss")))
+        {
+            var ids = inbox.RootElement.GetProperty("accessRequests").EnumerateArray().Select(r => r.GetProperty("id").GetString()).ToList();
+            ids.ShouldContain(aId);
+            ids.ShouldContain(bId);
+            ids.ShouldNotContain(cId);
+        }
+
+        // carol's inbox is just flow-c's request.
+        using (Stj.JsonDocument inbox = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/accessRequests?scope=queue", Auth, "carol")))
+        {
+            inbox.RootElement.GetProperty("accessRequests").EnumerateArray().Select(r => r.GetProperty("id").GetString()).ShouldBe([cId]);
+        }
+
+        // A caller who administers nothing gets an empty inbox (not a 403).
+        using (Stj.JsonDocument inbox = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/accessRequests?scope=queue", Auth, "nobody")))
+        {
+            inbox.RootElement.GetProperty("accessRequests").EnumerateArray().Count().ShouldBe(0);
+        }
+    }
+
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+
+    private static async Task<string> SubmitAsync(Scoped host, string workflowId, string who)
+    {
+        using Stj.JsonDocument submitted = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/accessRequests", $$"""{"baseWorkflowId":"{{workflowId}}","requestedScopes":["runs:write"]}""", Auth, who));
+        return submitted.RootElement.GetProperty("id").GetString()!;
+    }
 
     private static async Task EstablishAsync(SecuredWorkflowCatalog catalog, string workflowId, string founder)
     {

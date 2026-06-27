@@ -96,14 +96,15 @@ public interface IApiAccessRequestsClient : IAsyncDisposable
     /// List access requests
     /// </summary>
     /// <remarks>
-    /// Lists access requests visible to the caller, oldest first. Without baseWorkflowId, returns the caller's own requests; with baseWorkflowId, returns that workflow's request queue — the caller must be an administrator of it (403 otherwise). Optionally filtered by status.
+    /// Lists access requests visible to the caller, oldest first. With baseWorkflowId, returns that workflow's request queue — the caller must be an administrator of it (403 otherwise). Without baseWorkflowId, scope selects the view: 'mine' (default) the caller's own requests; 'queue' the approver inbox — every request across the workflows the caller administers. Optionally filtered by status.
     /// </remarks>
     /// <param name="status">The status parameter.</param>
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="scope">The scope parameter.</param>
     /// <param name="limit">The limit parameter.</param>
     /// <param name="pageToken">The pageToken parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<ListAccessRequestsResponse> ListAccessRequestsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<ListAccessRequestsResponse> ListAccessRequestsAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsStatus.Source status = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GetAccessRequestsScope.Source scope = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit.Source limit = default, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source pageToken = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Submit an access request

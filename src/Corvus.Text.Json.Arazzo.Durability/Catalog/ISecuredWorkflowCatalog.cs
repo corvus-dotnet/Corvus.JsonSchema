@@ -113,6 +113,17 @@ public interface ISecuredWorkflowCatalog
     ValueTask<ParsedJsonDocument<WorkflowAdministrators>?> GetAdministratorsAsync(string baseWorkflowId, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Lists the base workflow ids the given caller identity administers — the approver inbox's workflow set (design
+    /// §15.4/§16.5), resolved from the reverse administration index by the caller's identity digest. Returns an empty list
+    /// when the caller administers nothing (or no administrator store is configured). The set is bounded by the caller's
+    /// administrative scope and is materialized in full, since the inbox then lists access requests across it.
+    /// </summary>
+    /// <param name="callerIdentity">The caller's resolved <c>sys:</c> identity (its digest is the reverse-index key).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The base workflow ids the caller administers (possibly empty), ordered by base workflow id.</returns>
+    ValueTask<IReadOnlyList<string>> ListAdministeredWorkflowsAsync(SecurityTagSet callerIdentity, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Adds a resolved administrator identity to a base workflow id's administrator set (design §15), authorized by a
     /// current administrator. Idempotent: if its identity is already an administrator the set is unchanged. The first change
     /// materializes the explicit administrator record from the version-1-derived default.

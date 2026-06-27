@@ -116,6 +116,19 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
             // leaf — a DB parameter / a span compare); the string above is the handler's own leaf for the admin check + error.
             query = new AccessRequestQuery(status, JsonString.From(parameters.BaseWorkflowId));
         }
+        else if (IsQueueScope(parameters.Scope))
+        {
+            // The approver inbox (§16.5): every request across the workflows the caller administers, resolved from the
+            // reverse administration index (§15.4). A caller who administers nothing gets an empty page — so the store
+            // never sees an empty administered set. The set is a server-derived leaf, reified per backend at its own seam.
+            IReadOnlyList<string> administered = await this.catalog.ListAdministeredWorkflowsAsync(this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+            if (administered.Count == 0)
+            {
+                return ListAccessRequestsResult.Ok(EmptyList(), workspace);
+            }
+
+            query = new AccessRequestQuery(status, AdministeredBaseWorkflowIds: administered);
+        }
         else
         {
             // The caller's own requests.
@@ -315,6 +328,10 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
 
     private static AccessRequestStatus? ParseStatus(Models.GetAccessRequestsStatus status)
         => status.IsNotUndefined() && Enum.TryParse((string)status, out AccessRequestStatus parsed) ? parsed : null;
+
+    // Whether the caller asked for the approver inbox (scope=queue) rather than their own requests (scope=mine/absent).
+    private static bool IsQueueScope(Models.GetAccessRequestsScope scope)
+        => scope.IsNotUndefined() && string.Equals((string)scope, "queue", StringComparison.Ordinal);
 
     private static string? NoteReason(Models.AccessRequestDecisionNote body)
         => body.IsNotUndefined() && body.Reason.IsNotUndefined() ? (string)body.Reason : null;

@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// Parameters for the ListAccessRequests operation (GET /accessRequests).
 /// </summary>
-/// <remarks>Lists access requests visible to the caller, oldest first. Without baseWorkflowId, returns the caller's own requests; with baseWorkflowId, returns that workflow's request queue — the caller must be an administrator of it (403 otherwise). Optionally filtered by status.</remarks>
+/// <remarks>Lists access requests visible to the caller, oldest first. With baseWorkflowId, returns that workflow's request queue — the caller must be an administrator of it (403 otherwise). Without baseWorkflowId, scope selects the view: 'mine' (default) the caller's own requests; 'queue' the approver inbox — every request across the workflows the caller administers. Optionally filtered by status.</remarks>
 public readonly struct ListAccessRequestsParams
 {
 
@@ -30,6 +30,11 @@ public readonly struct ListAccessRequestsParams
     /// Gets the 'baseWorkflowId' query parameter.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowId { get; init; }
+
+    /// <summary>
+    /// Gets the 'scope' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetAccessRequestsScope Scope { get; init; }
 
     /// <summary>
     /// Gets the 'limit' query parameter.

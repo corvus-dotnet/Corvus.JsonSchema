@@ -330,6 +330,59 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         return WorkflowAdministratorsSerialization.SerializeNewDoc(baseWorkflowId, [owner], this.actor, default, WorkflowEtag.None);
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<IReadOnlyList<string>> ListAdministeredWorkflowsAsync(SecurityTagSet callerIdentity, CancellationToken cancellationToken)
+    {
+        // The reverse administration index lives on the administrator store and is keyed by the identity digest. With no
+        // store configured (or the empty identity, which has no digest), the caller administers nothing.
+        if (this.administrators is not { } store || SecurityIdentityDigest.Compute(callerIdentity) is not { } digest)
+        {
+            return [];
+        }
+
+        // Drain the (keyset-paged, bounded) reverse index into the full administered set the inbox queries across. The
+        // continuation token round-trips through the JsonString seam (the store decodes it bytes-native); the wrapping
+        // document is held only until the next page's call reads its token.
+        var administered = new List<string>();
+        ParsedJsonDocument<JsonString>? tokenDocument = null;
+        JsonString token = default;
+        try
+        {
+            while (true)
+            {
+                using WorkflowAdministeredPage page = await store.ListAdministeredAsync(digest, 0, token, cancellationToken).ConfigureAwait(false);
+                administered.AddRange(page.BaseWorkflowIds);
+
+                tokenDocument?.Dispose();
+                tokenDocument = null;
+                if (page.NextPageToken.IsEmpty)
+                {
+                    break;
+                }
+
+                tokenDocument = WrapPageToken(page.NextPageToken);
+                token = tokenDocument.RootElement;
+            }
+        }
+        finally
+        {
+            tokenDocument?.Dispose();
+        }
+
+        return administered;
+    }
+
+    // Wraps a continuation token's UTF-8 (a page's NextPageToken) as the JSON string value the store's paged read decodes
+    // it from — the same seam the HTTP layer carries it over, used here to drain the reverse index across pages.
+    private static ParsedJsonDocument<JsonString> WrapPageToken(ReadOnlyMemory<byte> tokenUtf8)
+    {
+        byte[] quoted = new byte[tokenUtf8.Length + 2];
+        quoted[0] = (byte)'"';
+        tokenUtf8.Span.CopyTo(quoted.AsSpan(1));
+        quoted[^1] = (byte)'"';
+        return ParsedJsonDocument<JsonString>.Parse(quoted);
+    }
+
     // Materializes the initial administrator record for a freshly published version 1 (§15.2): the creator's stamped
     // identity (the version's tags with sys:workflow removed) becomes the sole, explicit, removable administrator. The
     // identity is built in an unrented workspace held across the PutAsync await. A concurrent establish (another node
