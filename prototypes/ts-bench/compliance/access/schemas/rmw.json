@@ -1,0 +1,19 @@
+{
+  "title": "Sample",
+  "type": "object",
+  "properties": {
+    "id":      { "type": "string" },
+    "seq":     { "type": "integer" },
+    "ratio":   { "type": "number" },
+    "active":  { "type": "boolean" },
+    "note":    { "type": "string" },
+    "address": { "type": "object", "properties": {
+                   "street": { "type": "string" },
+                   "city":   { "type": "string" },
+                   "zip":    { "type": "string" } } },
+    "tags":    { "type": "array", "items": { "type": "string" } },
+    "a":       { "type": "integer" },
+    "ab":      { "type": "integer" },
+    "x-special": { "type": "string" }
+  }
+}
