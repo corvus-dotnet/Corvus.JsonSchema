@@ -46,16 +46,57 @@ export const SHARED_CSS = `
   a { color: var(--_accent); }
   .muted { color: var(--_muted); }
   /* Replace the native dropdown chevron (which ignores the kit theme and vanishes on dark surfaces)
-     with a neutral-grey one that reads on both light and dark backgrounds. Components must use
-     'background-color' (never the 'background' shorthand) on selects so they don't reset this image. */
+     with a neutral-grey one that reads on both light and dark backgrounds, and give the control the same
+     themed frame as a button/input so an unstyled <select> isn't a default white combo box on a dark
+     surface. Components must use 'background-color' (never the 'background' shorthand) so they don't reset
+     this chevron image. */
   select {
     appearance: none;
     -webkit-appearance: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    border: 1px solid var(--_border);
+    background-color: var(--_bg);
+    border-radius: var(--_radius);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23808a99' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 10px center;
     background-size: 11px;
-    padding-right: 30px;
+    padding: 6px 30px 6px 10px;
+  }
+  select:hover:not(:disabled) { border-color: var(--_accent); }
+  select:disabled { opacity: 0.5; cursor: not-allowed; }
+  /* Native radios/checkboxes follow accent-color + the surrounding color-scheme rather than the kit tokens,
+     so theme their fill to the accent and size them with the 14px type — they were previously raw browser
+     defaults (a light control on a dark panel). */
+  input[type="radio"], input[type="checkbox"] {
+    accent-color: var(--_accent);
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    cursor: pointer;
+  }
+  input[type="radio"]:disabled, input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.5; }
+  /* The native file-picker ("Choose File") button is otherwise an unstyled browser control; give it the
+     same themed frame as a ghost button so it sits with the rest of the kit. */
+  input[type="file"] { font: inherit; color: inherit; max-width: 100%; }
+  input[type="file"]::file-selector-button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    border: 1px solid var(--_border);
+    background: var(--_surface);
+    border-radius: var(--_radius);
+    padding: 5px 12px;
+    margin-right: 10px;
+  }
+  input[type="file"]::file-selector-button:hover { border-color: var(--_accent); }
+  /* A consistent keyboard-focus ring across the themed controls (the appearance reset above drops the
+     native one on selects). */
+  button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--_accent);
+    outline-offset: 1px;
   }
   .error-banner {
     border: 1px solid var(--_danger);
