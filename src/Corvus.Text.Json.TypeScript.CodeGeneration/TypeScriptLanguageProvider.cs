@@ -49,11 +49,14 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     // an `ev.r === null` check, so collection costs nothing — no allocation, no location-string building.
     private const string ResultsRuntime =
         "export interface Failure { readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string; }\n" +
+        "export interface Annotation { readonly keyword: string; readonly value: unknown; readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string; }\n" +
         "class Results {\n" +
         "  readonly failures: Failure[] = [];\n" +
+        "  readonly annotations: Annotation[] = [];\n" +
         "  constructor(readonly verbose = false) {}\n" +
         "  get valid(): boolean { return this.failures.length === 0; }\n" +
         "  fail(keywordLocation: string, instanceLocation: string, absoluteKeywordLocation?: string): void { this.failures.push({ keywordLocation, instanceLocation, absoluteKeywordLocation }); }\n" +
+        "  annotate(keyword: string, value: unknown, keywordLocation: string, instanceLocation: string, absoluteKeywordLocation?: string): void { this.annotations.push({ keyword, value, keywordLocation, instanceLocation, absoluteKeywordLocation }); }\n" +
         "}\n" +
         "function __ptr(s: string): string { return s.indexOf(\"~\") < 0 && s.indexOf(\"/\") < 0 ? s : s.replace(/~/g, \"~0\").replace(/\\//g, \"~1\"); }\n\n";
 
@@ -1883,7 +1886,47 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             emitter.Emit(sb, td, keyword);
         }
 
+        EmitAnnotations(sb, td);
         sb.Append("  return ok;\n}\n\n");
+    }
+
+    // Verbose mode (§15 inc 5): a SUCCESSFULLY validated subschema contributes its annotation keywords
+    // (title/description/default/examples/readOnly/writeOnly/deprecated/format) at the current instance
+    // location. Gated on `r !== null && r.verbose && ok` so boolean and detailed modes pay nothing — the
+    // values are emitted as inline JSON literals, referenced only inside that branch.
+    private static readonly string[] AnnotationKeywords = ["title", "description", "default", "examples", "readOnly", "writeOnly", "deprecated", "format"];
+
+    private static void EmitAnnotations(StringBuilder sb, TypeDeclaration td)
+    {
+        JsonElement schema = td.LocatedSchema.Schema;
+        if (schema.ValueKind != JsonValueKind.Object)
+        {
+            return;
+        }
+
+        var present = new List<(string Keyword, string ValueJson)>();
+        foreach (string kw in AnnotationKeywords)
+        {
+            if (schema.TryGetProperty(kw, out JsonElement v))
+            {
+                present.Add((kw, v.GetRawText()));
+            }
+        }
+
+        if (present.Count == 0)
+        {
+            return;
+        }
+
+        string loc = td.LocatedSchema.Location.ToString();
+        sb.Append("  if (r !== null && r.verbose && ok) {");
+        foreach ((string kw, string valueJson) in present)
+        {
+            sb.Append(" r.annotate(").Append(TsEmit.Str(kw)).Append(", ").Append(valueJson)
+              .Append(", kl + ").Append(TsEmit.Str("/" + kw)).Append(", il, ").Append(TsEmit.Str(loc + "/" + kw)).Append(");");
+        }
+
+        sb.Append(" }\n");
     }
 
     private static string Pascal(string value)

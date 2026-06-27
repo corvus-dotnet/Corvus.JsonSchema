@@ -45,6 +45,29 @@ function collect(value: unknown): { ok: boolean; r: Results } {
   eq(age.absoluteKeywordLocation!.endsWith("#/$defs/PosInt/minimum"), true, "$ref absoluteKeywordLocation = resolved target");
 }
 
+// verbose mode: a VALID instance collects annotations from every successfully-validated subschema
+// (title/description/default/...), each at its instance location with the path-taken keywordLocation.
+{
+  const r = new Results(true);
+  const ok = evaluatePerson({ name: "Ada", address: { zip: "12345" }, age: 5 }, new Ev(), "", "", r);
+  eq(ok, true, "verbose valid -> ok");
+  eq(r.failures.length, 0, "verbose valid -> no failures");
+  const find = (kw: string, il: string) => r.annotations.find((a) => a.keyword === kw && a.instanceLocation === il);
+  eq(r.annotations.length, 4, "verbose -> 4 annotations collected");
+  eq(find("title", "")?.value, "Person", "root title annotation");
+  eq(find("title", "/name")?.value, "Full name", "name title annotation");
+  eq(find("default", "/name")?.value, "Anon", "name default annotation");
+  eq(find("description", "/age")?.value, "A positive integer", "PosInt description (via $ref) annotation");
+  eq(find("description", "/age")?.keywordLocation, "/properties/age/$ref/description", "annotation keywordLocation = path taken");
+}
+
+// detailed mode (not verbose): annotations are NOT collected.
+{
+  const r = new Results();
+  evaluatePerson({ name: "Ada", address: { zip: "12345" }, age: 5 }, new Ev(), "", "", r);
+  eq(r.annotations.length, 0, "detailed mode -> no annotations");
+}
+
 // boolean hot path (no collector arg): returns false, records nothing.
 {
   const ok = evaluatePerson({ name: "ab", address: { zip: "xyz" }, tags: ["a"] }, new Ev());
