@@ -35,6 +35,27 @@ export function __eq(a: unknown, b: unknown): boolean {
   return false;
 }
 
+export interface Failure { readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string; }
+export interface Annotation { readonly keyword: string; readonly value: unknown; readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string; }
+export class Results {
+  readonly failures: Failure[] = [];
+  readonly annotations: Annotation[] = [];
+  constructor(readonly verbose = false) {}
+  get valid(): boolean { return this.failures.length === 0; }
+  fail(keywordLocation: string, instanceLocation: string, absoluteKeywordLocation?: string): void { this.failures.push({ keywordLocation, instanceLocation, absoluteKeywordLocation }); }
+  annotate(keyword: string, value: unknown, keywordLocation: string, instanceLocation: string, absoluteKeywordLocation?: string): void { this.annotations.push({ keyword, value, keywordLocation, instanceLocation, absoluteKeywordLocation }); }
+}
+export function __ptr(s: string): string { return s.indexOf("~") < 0 && s.indexOf("/") < 0 ? s : s.replace(/~/g, "~0").replace(/\//g, "~1"); }
+
+export interface Output { readonly valid: boolean; readonly errors?: readonly (Failure & { readonly error: string })[]; readonly annotations?: readonly Annotation[]; }
+export function toOutput(r: Results): Output {
+  return {
+    valid: r.valid,
+    ...(r.failures.length > 0 ? { errors: r.failures.map((f) => ({ ...f, error: f.keywordLocation.slice(f.keywordLocation.lastIndexOf("/") + 1) })) } : {}),
+    ...(r.annotations.length > 0 ? { annotations: r.annotations } : {}),
+  };
+}
+
 export class Ev {
   n = false; pl = 0; pa = 0; il = 0; ia = 0;
   po: Set<number> | null = null; poa: Set<number> | null = null; io: Set<number> | null = null; ioa: Set<number> | null = null;

@@ -17,6 +17,13 @@
     <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!-- The shared TypeScript runtime is authored ONCE in the @corvus/json-runtime npm package and embedded
+         here verbatim, so RuntimeModuleSource() and the published package can never drift. The package source
+         is treated as binary by .gitattributes (mixed CRLF/LF, no trailing newline) so the emitted runtime is
+         byte-identical across platforms. -->
+    <EmbeddedResource Include="..\..\packages\corvus-json-runtime\src\index.ts" LogicalName="Corvus.Text.Json.TypeScript.CodeGeneration.corvus-runtime.ts" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
     <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />

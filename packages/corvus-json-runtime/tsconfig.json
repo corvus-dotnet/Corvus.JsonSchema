@@ -1,8 +1,15 @@
 {
   "compilerOptions": {
-    "strict": true, "target": "es2022", "module": "nodenext", "moduleResolution": "nodenext",
-    "declaration": true, "declarationMap": true, "sourceMap": true,
-    "outDir": "dist", "rootDir": "src", "skipLibCheck": true, "exactOptionalPropertyTypes": true
+    "strict": true,
+    "target": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "skipLibCheck": true
   },
   "include": ["src/**/*.ts"]
 }
