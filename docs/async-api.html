@@ -1246,16 +1246,10 @@ await producer.PublishTurnOnOffAsync(
 <pre><code class="language-csharp">using Corvus.Text.Json.AsyncApi;
 
 await producer.PublishUserSignedUpAsync(
-    payload: new UserSignedUpPayload.Source((ref UserSignedUpPayload.Builder b) =&gt;
-    {
-        b.Create(email: &quot;alice@example.com&quot;u8, userId: &quot;user-123&quot;u8);
-    }),
-    headers: new CommonHeaders.Source((ref CommonHeaders.Builder b) =&gt;
-    {
-        b.Create(
-            correlationId: Guid.NewGuid().ToString(&quot;D&quot;),
-            timestamp: DateTimeOffset.UtcNow.ToString(&quot;O&quot;));
-    }));
+    payload: UserSignedUpPayload.Build(email: &quot;alice@example.com&quot;u8, userId: &quot;user-123&quot;u8),
+    headers: CommonHeaders.Build(
+        correlationId: Guid.NewGuid().ToString(&quot;D&quot;),
+        timestamp: DateTimeOffset.UtcNow.ToString(&quot;O&quot;)));
 </code></pre>
 <p>The transport serializes headers to a JSON object using a thread-static pooled <code>Utf8JsonWriter</code>, keeping allocation constant (152 bytes) regardless of header count. For transports that don't support native headers (MQTT, NATS), headers are base64-encoded into a protocol-level property.</p>
 <h3 id="consuming-messages-with-headers">Consuming Messages with Headers</h3>
@@ -1386,10 +1380,7 @@ private static void ValidateHeaders&lt;THeaders&gt;(THeaders headers, Validation
 <p>AsyncAPI operations can model request/reply patterns. The generator produces methods that send a request and await a correlated response:</p>
 <pre><code class="language-csharp">// Generated request/reply method
 (QueryResponse reply, JsonElement replyHeaders) = await queryProducer.RequestQueryAsync(
-    request: new QueryPayload.Source((ref QueryPayload.Builder b) =&gt;
-    {
-        b.Create(filter: &quot;status=active&quot;u8);
-    }),
+    request: QueryPayload.Build(filter: &quot;status=active&quot;u8),
     cancellationToken: ct);
 
 // reply is already deserialized and validated

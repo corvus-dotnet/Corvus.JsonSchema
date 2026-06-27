@@ -389,10 +389,7 @@ app.Run();
         ListPetsResult result = ListPetsResult.Ok(
             body: new Pets.Source((ref Pets.Builder b) =&gt;
             {
-                b.AddItem(new Pet.Source((ref Pet.Builder pb) =&gt;
-                {
-                    pb.Create(id: 1, name: &quot;Luna&quot;u8, tag: &quot;cat&quot;u8);
-                }));
+                b.AddItem(Pet.Build(id: 1, name: &quot;Luna&quot;u8, tag: &quot;cat&quot;u8));
             }),
             workspace: workspace);
 
@@ -563,11 +560,7 @@ app.Run();
 <h3 id="deep-object-filters-client">Deep-Object Filters (Client)</h3>
 <pre><code class="language-csharp">await using ListPetsResponse response = await petsClient.ListPetsAsync(
     xRequestId: &quot;req-abc-123&quot;u8,
-    filter: new GetPetsFilter.Source((ref GetPetsFilter.Builder b) =&gt;
-    {
-        b.AddProperty(&quot;status&quot;u8, &quot;available&quot;u8);
-        b.AddProperty(&quot;breed&quot;u8, &quot;labrador&quot;u8);
-    }),
+    filter: GetPetsFilter.Build(status: &quot;available&quot;u8, breed: &quot;labrador&quot;u8),
     tags: new GetPetsTags.Source((ref GetPetsTags.Builder b) =&gt;
     {
         b.AddItem(&quot;dog&quot;u8);
@@ -613,18 +606,15 @@ JsonString nextPage = response.XNextHeader;
 <p>Object bodies use the generated <code>Builder</code> pattern. Required properties are mandatory parameters; optional ones have defaults:</p>
 <pre><code class="language-csharp">await using CreatePetResponse response = await client.CreatePetAsync(
     session_token: &quot;admin-token&quot;u8,
-    body: new NewPet.Source((ref NewPet.Builder b) =&gt;
-    {
-        b.Create(
-            name: &quot;Fido&quot;u8,
-            status: &quot;available&quot;u8,
-            tags: new NewPet.JsonStringArray.Source(
-                (ref NewPet.JsonStringArray.Builder ab) =&gt;
-                {
-                    ab.AddItem(&quot;friendly&quot;u8);
-                    ab.AddItem(&quot;vaccinated&quot;u8);
-                }));
-    }));
+    body: NewPet.Build(
+        name: &quot;Fido&quot;u8,
+        status: &quot;available&quot;u8,
+        tags: new NewPet.JsonStringArray.Source(
+            (ref NewPet.JsonStringArray.Builder ab) =&gt;
+            {
+                ab.AddItem(&quot;friendly&quot;u8);
+                ab.AddItem(&quot;vaccinated&quot;u8);
+            })));
 </code></pre>
 <h3 id="json-bodies-server">JSON Bodies (Server)</h3>
 <p>On the server, the body arrives pre-parsed and validated in the params struct:</p>
@@ -637,10 +627,7 @@ JsonString nextPage = response.XNextHeader;
 
     // Build a typed response
     return new(CreatePetResult.Created(
-        body: new Pet.Source((ref Pet.Builder pb) =&gt;
-        {
-            pb.Create(id: nextId++, name: name.AsSpan(), status: status.AsSpan());
-        }),
+        body: Pet.Build(id: nextId++, name: name.AsSpan(), status: status.AsSpan()),
         workspace: workspace));
 }
 </code></pre>
@@ -648,13 +635,11 @@ JsonString nextPage = response.XNextHeader;
 <p>URL-encoded forms use the same builder pattern — the generated code handles encoding:</p>
 <pre><code class="language-csharp">await using SubmitAdoptionApplicationResponse response =
     await adoptionClient.SubmitAdoptionApplicationAsync(
-        body: new PostAdoptionApplyBody.Source(
-            (ref PostAdoptionApplyBody.Builder b) =&gt;
-                b.Create(
-                    applicantName: &quot;Jane Smith&quot;u8,
-                    email: &quot;jane@example.com&quot;u8,
-                    housingType: &quot;house&quot;u8,
-                    petId: &quot;pet-42&quot;u8)));
+        body: PostAdoptionApplyBody.Build(
+            applicantName: &quot;Jane Smith&quot;u8,
+            email: &quot;jane@example.com&quot;u8,
+            housingType: &quot;house&quot;u8,
+            petId: &quot;pet-42&quot;u8));
 // Wire format: applicantName=Jane+Smith&amp;email=jane%40example.com&amp;housingType=house&amp;petId=pet-42
 </code></pre>
 <p>On the server, the generated middleware deserializes form data back into the same typed struct:</p>
@@ -666,9 +651,7 @@ JsonString nextPage = response.XNextHeader;
     string email = (string)parameters.Body.Email;
 
     return new(SubmitAdoptionApplicationResult.Accepted(
-        body: new PostAdoptionApplyAccepted.Source(
-            (ref PostAdoptionApplyAccepted.Builder rb) =&gt;
-                rb.Create(applicationId: &quot;app-42&quot;u8, status: &quot;received&quot;u8)),
+        body: PostAdoptionApplyAccepted.Build(applicationId: &quot;app-42&quot;u8, status: &quot;received&quot;u8),
         workspace: workspace));
 }
 </code></pre>
@@ -726,8 +709,7 @@ JsonString nextPage = response.XNextHeader;
 <h3 id="file-upload-multipart">File Upload (Multipart)</h3>
 <pre><code class="language-csharp">await using UploadPetPhotoResponse uploadResponse = await photosClient.UploadPetPhotoAsync(
     petId: &quot;pet-1&quot;u8,
-    metadata: new PhotoMetadata.Source((ref PhotoMetadata.Builder b) =&gt;
-        b.Create(petId: &quot;pet-1&quot;u8, description: &quot;At the park&quot;u8)),
+    metadata: PhotoMetadata.Build(petId: &quot;pet-1&quot;u8, description: &quot;At the park&quot;u8),
     file: new BinaryPartData(
         WriteContentAsync: (stream, ct) =&gt; { stream.Write(photoBytes); return default; },
         ContentType: &quot;image/png&quot;,
@@ -1446,10 +1428,7 @@ await using HttpClientTransport transport = new(httpClient);
 await using ApiWebhooksClient client = new(transport);
 
 await using PetAdoptedWebhookResponse response = await client.PetAdoptedWebhookAsync(
-    body: new PetAdoptedEvent.Source((ref PetAdoptedEvent.Builder b) =&gt;
-    {
-        b.Create(petId: &quot;pet-123&quot;u8, adopterId: &quot;user-456&quot;u8);
-    }));
+    body: PetAdoptedEvent.Build(petId: &quot;pet-123&quot;u8, adopterId: &quot;user-456&quot;u8));
 </code></pre>
 <h3 id="runtime-expressions-and-context">Runtime Expressions and Context</h3>
 <p>OpenAPI callback keys use <a href="https://spec.openapis.org/oas/latest.html#runtime-expressions">runtime expressions</a> like <code>{$request.body#/callbackUrl}</code> to specify where values come from. The code generator resolves these automatically — the generated client extracts values from the originating request/response context using typed property navigation.</p>
@@ -1494,10 +1473,7 @@ await using PetAdoptedWebhookResponse response = await client.PetAdoptedWebhookA
 // runtime expression bindings from your OpenAPI spec automatically.
 // After creating a subscription, the response carries context for callbacks.
 await using CreateSubscriptionResponse response = await client.CreateSubscriptionAsync(
-    body: new Subscription.Source((ref Subscription.Builder b) =&gt;
-    {
-        b.Create(callbackUrl: &quot;https://my-app.example.com/hooks&quot;u8, events: ...);
-    }));
+    body: Subscription.Build(callbackUrl: &quot;https://my-app.example.com/hooks&quot;u8, events: ...));
 
 // response.Links gives typed access to linked/callback operations.
 // Runtime expressions like $request.body#/callbackUrl are resolved automatically
@@ -1509,10 +1485,7 @@ await using CreateSubscriptionResponse response = await client.CreateSubscriptio
 <p>When a response declares links, the generated <code>Response</code> struct provides typed navigation methods:</p>
 <pre><code class="language-csharp">// Create a pet — the 201 response links to showPetById
 await using CreatePetResponse response = await client.CreatePetAsync(
-    body: new NewPet.Source((ref NewPet.Builder b) =&gt;
-    {
-        b.Create(name: &quot;Luna&quot;u8, tag: &quot;cat&quot;u8);
-    }));
+    body: NewPet.Build(name: &quot;Luna&quot;u8, tag: &quot;cat&quot;u8));
 
 // Follow the link — petId is automatically populated from $response.body#/id
 response.MatchResult(

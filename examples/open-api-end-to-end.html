@@ -389,7 +389,7 @@ with your business logic.</li>
 <p>You write only the call:</p>
 <pre><code class="language-csharp">await using CreatePetResponse response = await petsClient.CreatePetAsync(
     session_token: &quot;admin-token-123&quot;u8,
-    body: new NewPet.Source(...));
+    body: NewPet.Build(...));
 
 response.MatchResult&lt;string&gt;(
     matchCreated: (pet) =&gt; pet.ToString(),

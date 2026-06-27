@@ -360,13 +360,10 @@
 <li><strong>16 model types</strong> in <code>Models/</code> — <code>TurnOnOffPayload</code>, <code>LightMeasuredPayload</code>, <code>JsonDateTime</code>, etc.</li>
 </ul>
 <h2 id="how-the-generated-code-helps">How the Generated Code Helps</h2>
-<h3 id="payload-construction-source-pattern">Payload Construction (Source Pattern)</h3>
-<p>The generated <code>TurnOnOffPayload.Source</code> uses a ref-struct builder that avoids allocating intermediate objects:</p>
+<h3 id="payload-construction-build-factory">Payload Construction (Build Factory)</h3>
+<p>The generated <code>TurnOnOffPayload.Build()</code> factory constructs the payload directly from native values, avoiding intermediate objects:</p>
 <pre><code class="language-csharp">await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =&gt;
-    {
-        b.Create(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: &quot;lamp-42&quot;);
 </code></pre>
 <h3 id="channel-address-construction">Channel Address Construction</h3>

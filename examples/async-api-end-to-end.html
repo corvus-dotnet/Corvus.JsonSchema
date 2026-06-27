@@ -407,10 +407,7 @@ await consumer.StartAsync();
 <pre><code class="language-csharp">TurnOnProducer producer = new(transport, ValidationMode.Basic);
 
 await producer.PublishTurnOnOffAsync(
-    payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =&gt;
-    {
-        b.Create(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: &quot;lamp-42&quot;);
 </code></pre>
 <p>The generated producer:</p>

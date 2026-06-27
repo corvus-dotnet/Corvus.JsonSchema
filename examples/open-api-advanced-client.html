@@ -397,10 +397,7 @@
 <pre><code class="language-csharp">// You write typed builders...
 await petsClient.ListPetsAsync(
     xRequestId: &quot;req-abc-123&quot;u8,
-    filter: new GetPetsFilter.Source((ref GetPetsFilter.Builder b) =&gt;
-    {
-        b.Create(status: &quot;available&quot;u8, breed: &quot;labrador&quot;u8, minAge: 1);
-    }),
+    filter: GetPetsFilter.Build(status: &quot;available&quot;u8, breed: &quot;labrador&quot;u8, minAge: 1),
     tags: new GetPetsTags.Source((ref GetPetsTags.Builder b) =&gt;
     {
         b.AddItem(&quot;dog&quot;u8);
@@ -444,15 +441,12 @@ file: new BinaryPartData(
 </code></pre>
 <h3 id="form-bodies">Form Bodies</h3>
 <p>URL-encoded and multipart bodies use the same typed builder pattern as JSON — the generated code handles encoding:</p>
-<pre><code class="language-csharp">// The builder mirrors the schema — no manual encoding needed
-body: new PostAdoptionApplyBody.Source((ref PostAdoptionApplyBody.Builder b) =&gt;
-{
-    b.Create(
-        applicantName: &quot;Jane Smith&quot;u8,
-        email: &quot;jane@example.com&quot;u8,
-        housingType: &quot;house&quot;u8,
-        petId: &quot;pet-42&quot;u8);
-})
+<pre><code class="language-csharp">// The factory mirrors the schema — no manual encoding needed
+body: PostAdoptionApplyBody.Build(
+    applicantName: &quot;Jane Smith&quot;u8,
+    email: &quot;jane@example.com&quot;u8,
+    housingType: &quot;house&quot;u8,
+    petId: &quot;pet-42&quot;u8)
 // Generated output: applicantName=Jane+Smith&amp;email=jane%40example.com&amp;housingType=house&amp;petId=pet-42
 </code></pre>
 <h2 id="running">Running</h2>
