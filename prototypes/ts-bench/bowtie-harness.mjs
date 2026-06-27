@@ -16,15 +16,15 @@ import { LosslessNumber } from "lossless-json";
 import { transformSync } from "esbuild";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(HERE, "..", "..");
-// CORVUS_CLI = a self-contained CLI binary (the container image sets it to /opt/cli/Corvus.Json.Cli); without
-// it, fall back to the dev DLL via `dotnet`.
-const CLI_RUN = process.env.CORVUS_CLI ? [process.env.CORVUS_CLI] : ["dotnet", join(ROOT, "src", "Corvus.Json.Cli", "bin", "Debug", "net9.0", "Corvus.Json.Cli.dll")];
+// CORVUS_WORKER = the self-contained codegen-worker binary (the container image sets it to
+// /opt/worker/corvus-ts-bowtie-worker); without it, fall back to the dev build via `dotnet`. This is the
+// harness's OWN tooling (prototypes/ts-bench/bowtie-worker) — NOT the production CLI.
+const WORKER_RUN = process.env.CORVUS_WORKER ? [process.env.CORVUS_WORKER] : ["dotnet", join(HERE, "bowtie-worker", "bin", "Debug", "net10.0", "corvus-ts-bowtie-worker.dll")];
 const WORK = join(HERE, "bowtie-work");
 
 // The long-running codegen worker: one process for the whole run (no per-schema spawn). Each request is one
 // NDJSON line { schema, registry, out }; the worker writes the TS module to `out` and replies { ok | error }.
-const worker = spawn(CLI_RUN[0], [...CLI_RUN.slice(1), "codegen-worker"], { stdio: ["pipe", "pipe", "inherit"] });
+const worker = spawn(WORKER_RUN[0], WORKER_RUN.slice(1), { stdio: ["pipe", "pipe", "inherit"] });
 worker.on("exit", (code) => { process.stderr.write(`codegen worker exited (${code})\n`); process.exit(1); });
 const workerOut = createInterface({ input: worker.stdout });
 const pending = [];

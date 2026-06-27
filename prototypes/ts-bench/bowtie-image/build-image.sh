@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Builds the corvus-ts Bowtie harness OCI image. corvus-ts is a code generator, so the image bundles a
-# self-contained linux-x64 CLI + Node + tsc + the harness; per Bowtie `run` it codegens, compiles and runs.
+# self-contained linux-x64 codegen-worker (the harness's OWN tooling — bowtie-worker, NOT the production CLI)
+# + Node + esbuild + the harness; per Bowtie `run` it codegens, transpiles and runs.
 # Uses the Windows podman.exe (reachable from WSL) — podman.exe builds happily from a \\wsl.localhost path.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -8,9 +9,9 @@ BENCH="$(cd "$HERE/.." && pwd)"
 ROOT="$(cd "$BENCH/../.." && pwd)"
 CTX="${TMPDIR:-/tmp}/corvus-bowtie-image"
 
-echo "1/3 publishing self-contained linux-x64 CLI -> $CTX/cli ..."
+echo "1/3 publishing self-contained linux-x64 codegen-worker -> $CTX/worker ..."
 rm -rf "$CTX"; mkdir -p "$CTX"
-dotnet publish "$ROOT/src/Corvus.Json.Cli/Corvus.Json.Cli.csproj" -c Release -r linux-x64 --self-contained true -f net9.0 -o "$CTX/cli" >/dev/null
+dotnet publish "$BENCH/bowtie-worker/BowtieCodegenWorker.csproj" -c Release -r linux-x64 --self-contained true -f net10.0 -o "$CTX/worker" >/dev/null
 
 echo "2/3 assembling context ..."
 cp "$HERE/Containerfile" "$HERE/package.json" "$BENCH/bowtie-harness.mjs" "$BENCH/bowtie-globals.d.ts" "$CTX/"
