@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-06-25T20:17:14.1803247\u002B00:00",
+  "generatedAt": "2026-06-27T15:37:52.3535859\u002B00:00",
   "generatedFiles": [
     "ListRunsRequest.cs",
     "ListRunsResponse.cs",
@@ -514,6 +514,9 @@
     "Models/GetAccessRequestsStatus.cs",
     "Models/GetAccessRequestsStatus.Mutable.cs",
     "Models/GetAccessRequestsStatus.JsonSchema.cs",
+    "Models/GetAccessRequestsScope.cs",
+    "Models/GetAccessRequestsScope.Mutable.cs",
+    "Models/GetAccessRequestsScope.JsonSchema.cs",
     "Models/PostCatalogBody.cs",
     "Models/PostCatalogBody.Mutable.cs",
     "Models/PostCatalogBody.JsonSchema.cs",
@@ -525,9 +528,9 @@
     "Models/GetIdentityGranteesSource.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B915ced458dd38f4809685163d812767ae4f10686",
+  "generatorVersion": "1.0.0\u002B2533ce0317ae193ae74350d9492331fd4b5fb831",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "b9e01ff6490b0ba0b911c8d1d5f2252d9be994d3c869793764b12c67f5d2d633",
+  "specFileHash": "fe3fe971167de13017da0f9f140440aba94da43bffbf5d9bb640ff1ce80658c5",
   "specVersion": "3.2"
 }

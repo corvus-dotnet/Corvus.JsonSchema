@@ -4290,6 +4290,12 @@ public static class ApiEndpointRegistration
                     string BaseWorkflowIdRaw = BaseWorkflowIdQueryVal[0]!;
                     BaseWorkflowIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(BaseWorkflowIdRaw, workspace);
                 }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetAccessRequestsScope ScopeValue = default;
+                if (context.Request.Query.TryGetValue("scope", out var ScopeQueryVal) && ScopeQueryVal.Count > 0)
+                {
+                    string ScopeRaw = ScopeQueryVal[0]!;
+                    ScopeValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GetAccessRequestsScope>(ScopeRaw, workspace);
+                }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit LimitValue = default;
                 if (context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0)
                 {
@@ -4319,6 +4325,14 @@ public static class ApiEndpointRegistration
                     return;
                 }
 
+                if (!ScopeValue.IsUndefined() && !ScopeValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'scope' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
                 if (!LimitValue.IsUndefined() && !LimitValue.EvaluateSchema())
                 {
                     context.Response.StatusCode = 400;
@@ -4340,6 +4354,7 @@ public static class ApiEndpointRegistration
                 {
                     Status = StatusValue,
                     BaseWorkflowId = BaseWorkflowIdValue,
+                    Scope = ScopeValue,
                     Limit = LimitValue,
                     PageToken = PageTokenValue,
                 }
