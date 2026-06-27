@@ -1842,6 +1842,27 @@ in whether a value is judged valid.
 
 Severity = impact on a production‑quality engine. Effort = S / M / L.
 
+> **Status reconciliation (2026‑06‑27).** A code‑level audit found this matrix had drifted from the
+> implementation:
+> - **Built since this matrix was written (these "Now" cells are stale):** the whole results‑collector
+>   family — **D1** (the collector is threaded through every `evaluate{Type}`), **D2**
+>   (`instanceLocation`/`keywordLocation`/`absoluteKeywordLocation`, correct through `$ref`), **D4**
+>   (verbose annotation collection), and `toOutput` (standardized basic/detailed JSON‑Schema output) —
+>   i.e. **§15 is IMPLEMENTED, not a forward design**. Also done: **F2** (`applyTo{T}`), **G1** (the
+>   `@endjin/corvus-json-runtime` package + its release‑publish), **G3** (compliance suite in CI via the
+>   `typescript-compliance` job), **G4** (the Bowtie stdio harness). **F3**'s change‑set is a public
+>   runtime API (`recordChanges`/`JsonPatchOp`), not internal‑only. **C1–C4** (built 2026‑06‑27): JSDoc
+>   is now emitted on interfaces & properties from `title`/`description`, with
+>   `@deprecated`/`@example`/`@readonly`/`@writeonly`.
+> - **Partial:** **D1** records a single composite failure (not per‑branch sub‑failures) under
+>   `anyOf`/`oneOf`/`if`; **B4** emits `bigint` for 64/128‑bit but no int16/32 range check; **G2** is
+>   broadly wired (residue = the unhonoured `codeGenerationMode`, i.e. **D3**, plus per‑format/naming
+>   options not threaded into the provider `Options`); **G6** has a `docs/typescript/` tree but no
+>   bundler/tsconfig guide.
+> - **Genuinely outstanding** (the real backlog): **A1**
+>   (multi‑file/barrel), **A2–A6**, **B1/B2/B3/B5**, **D3**, **E1** (OpenAPI `nullable`), **F1**
+>   (canonical write), **G5** (permanent benchmark), **G7** (playground). **H1/H2** stay deferred.
+
 ### A — Type surface & output structure
 
 | # | Gap | Now | Desired | Sev | Eff |
@@ -1933,6 +1954,12 @@ Severity = impact on a production‑quality engine. Effort = S / M / L.
 ---
 
 ## 15. Results collector (gaps D1+D2) — design
+
+> **Implemented (2026‑06‑27).** This section records the *design*; it has since been built and is
+> CI‑tested (`prototypes/ts-bench/compliance/access/suites/collector.test.ts`) — `evaluate{Type}`
+> threads the collector, the three spec locations are emitted (correct through `$ref`), and verbose
+> annotation collection + `toOutput` work. The one unbuilt piece is per‑branch sub‑failures under
+> `anyOf`/`oneOf`/`if` (those selectors probe branches boolean‑only). See §14's status reconciliation.
 
 The decision (2026-06-26) is to fold **D2** (location data) into **D1** (the collector): the per-subschema
 location is only useful when an evaluator threads it into a collector, so they ship as one feature. The
