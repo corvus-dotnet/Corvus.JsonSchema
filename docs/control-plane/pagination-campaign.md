@@ -444,6 +444,21 @@ utf8mb4_0900_ai_ci` / `COLLATE DATABASE_DEFAULT`). Container conformance: **Post
   `CONTAINS(c.doc.claimType|claimValue|description, @q, true)` (3-arg CONTAINS = case-insensitive; `q` is the raw substring,
   not a LIKE pattern). Gotcha (caught by conformance): `order` is a Cosmos reserved word → the property is referenced as
   `c["order"]` (the `@order` parameter is fine). Per-root `JsonString` shadowing → seam params fully qualified. Container
-  conformance: **Cosmos 11/11, Mongo 11/11**. **Remaining backends:** Redis/Nats (keyset index + client-side `q` — no
-  server-side substring; NB a rule/binding update can change order/expression/claim fields, so the index is refreshed on
-  update and removed on delete).
+  conformance: **Cosmos 11/11, Mongo 11/11**.
+
+**KV backends (Redis, NatsJetStream) — done.** No server-side substring, so `q` is applied client-side over the parsed page
+document (the documents stay pooled/bytes-native; only the compared fields realise to strings). Rules need no new index —
+the name is the keyset and is recoverable from the existing index (Redis set member; Nats `rule.{Base64Url(name)}` key) —
+sort ordinal client-side, fetch only the page's docs. Bindings get a `(order, id)` secondary index: Redis a zero-scored
+sorted set (`ZRANGEBYLEX`, member `{orderKey}\0{id}`), Nats marker keys (`bidx.{orderKey}.{Base64Url(id)}`, enumerated +
+sorted client-side since KV listing is unordered), where `orderKey` is the int order with its sign bit flipped, fixed-width
+hex, so lex order == numeric order (even across negatives). **Unlike access-requests, a rule/binding update can change
+`order`/`expression`/claim fields**, so the index is refreshed on every add AND update (old member removed, new added when
+the order changes) and removed on delete. Container conformance: **Redis 11/11, NatsJetStream 11/11**.
+
+**`listSecurityRules` + `listSecurityBindings` Phase 2 — COMPLETE across all 10 backends.** This completes **Phase 2 entirely**:
+all four list stores (`listRunners`, `listAccessRequests`, `listSecurityRules`, `listSecurityBindings`) now have native
+per-backend keyset reads on all 10 backends — **40/40 (store × backend) implementations**, each container-verified. The store
+read is bounded O(total) → O(page) everywhere a server-side range exists; KV/table backends that lack one fetch only the
+page's documents via a secondary index or key-fields projection. **Next: Phase 3 — UI** (panels swap client-side search +
+datalist typeahead for server-paged search + Load-more), per [[arazzo-security-ui-campaign]].
