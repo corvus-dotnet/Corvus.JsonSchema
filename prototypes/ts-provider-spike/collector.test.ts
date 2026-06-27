@@ -5,7 +5,7 @@
 //     --strict --target es2022 --module esnext --moduleResolution bundler --lib es2022,dom
 //   node out-coll-js/collector.test.js
 import { evaluatePerson } from "./out-coll/generated.js";
-import { Ev, Results } from "./out-coll/corvus-runtime.js";
+import { Ev, Results, toOutput } from "./out-coll/corvus-runtime.js";
 
 let pass = 0;
 let fail = 0;
@@ -71,6 +71,26 @@ function collect(value: unknown): { ok: boolean; r: Results } {
   const r = new Results();
   evaluatePerson({ name: "Ada", address: { zip: "12345" }, age: 5 }, new Ev(), "", "", r);
   eq(r.annotations.length, 0, "detailed mode -> no annotations");
+}
+
+// standardized output (G4): toOutput renders a Results into { valid, errors?, annotations? }.
+{
+  const { r } = collect({ name: "ab", address: { zip: "xyz" } });
+  const out = toOutput(r);
+  eq(out.valid, false, "output valid=false");
+  eq(out.annotations, undefined, "detailed output -> no annotations key");
+  const nameErr = out.errors!.find((e) => e.instanceLocation === "/name")!;
+  eq(nameErr.keywordLocation, "/properties/name/minLength", "error unit carries keywordLocation");
+  eq(nameErr.error, "minLength", "error unit derives the failing keyword");
+  eq(nameErr.absoluteKeywordLocation!.endsWith("#/properties/name/minLength"), true, "error unit carries absoluteKeywordLocation");
+}
+{
+  const v = new Results(true);
+  evaluatePerson({ name: "Ada", address: { zip: "12345" }, age: 5 }, new Ev(), "", "", v);
+  const out = toOutput(v);
+  eq(out.valid, true, "verbose-valid output valid=true");
+  eq(out.errors, undefined, "valid output -> no errors key");
+  eq(out.annotations!.length, 4, "verbose output carries annotation units");
 }
 
 // boolean hot path (no collector arg): returns false, records nothing.

@@ -60,6 +60,19 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         "}\n" +
         "function __ptr(s: string): string { return s.indexOf(\"~\") < 0 && s.indexOf(\"/\") < 0 ? s : s.replace(/~/g, \"~0\").replace(/\\//g, \"~1\"); }\n\n";
 
+    // The JSON Schema standardized output (§15 inc 6 / G4). toOutput renders a Results into the flat output
+    // structure: { valid } (flag), plus a list of error units (failures with a derived `error` = the failing
+    // keyword) and, in verbose mode, annotation units. The hierarchical (tree) output is a later refinement.
+    private const string OutputRuntime =
+        "export interface Output { readonly valid: boolean; readonly errors?: readonly (Failure & { readonly error: string })[]; readonly annotations?: readonly Annotation[]; }\n" +
+        "function toOutput(r: Results): Output {\n" +
+        "  return {\n" +
+        "    valid: r.valid,\n" +
+        "    ...(r.failures.length > 0 ? { errors: r.failures.map((f) => ({ ...f, error: f.keywordLocation.slice(f.keywordLocation.lastIndexOf(\"/\") + 1) })) } : {}),\n" +
+        "    ...(r.annotations.length > 0 ? { annotations: r.annotations } : {}),\n" +
+        "  };\n" +
+        "}\n\n";
+
     private const string EvRuntime =
         "class Ev {\n" +
         "  n = false; pl = 0; pa = 0; il = 0; ia = 0;\n" +
@@ -883,7 +896,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     // the third-party imports (lossless-json for source-text numbers, Temporal + tr46 for formats) at top.
     public static string RuntimeModuleSource()
     {
-        string body = NumericRuntime + KindRuntime + DeepEqual + ResultsRuntime + EvRuntime + FormatRuntime + BrandRuntime + MutationRuntime + RmwRuntime;
+        string body = NumericRuntime + KindRuntime + DeepEqual + ResultsRuntime + OutputRuntime + EvRuntime + FormatRuntime + BrandRuntime + MutationRuntime + RmwRuntime;
         body = body.Replace("import { isLosslessNumber } from \"lossless-json\";\n", string.Empty);
         body = body.Replace("\nfunction ", "\nexport function ")
                    .Replace("\nconst ", "\nexport const ")
