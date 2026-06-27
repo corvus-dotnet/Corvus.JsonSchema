@@ -1,0 +1,12 @@
+FROM docker.io/library/node:20-slim
+WORKDIR /opt/harness
+COPY package.json ./
+RUN npm install --no-audit --no-fund --loglevel=error
+COPY bowtie-harness.mjs bowtie-globals.d.ts ./
+COPY cli/ /opt/cli/
+# the executable bit is lost copying through the WSL 9p mount
+RUN chmod +x /opt/cli/Corvus.Json.Cli
+ENV CORVUS_CLI=/opt/cli/Corvus.Json.Cli
+# self-contained .NET on Debian-slim: run invariant so no system libicu is required
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+ENTRYPOINT ["node", "bowtie-harness.mjs"]

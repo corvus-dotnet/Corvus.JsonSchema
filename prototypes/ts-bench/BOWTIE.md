@@ -36,3 +36,28 @@ The self-test must print, for each `seq`, the expected validity list (e.g. `seq 
   is bounded by the .NET CLI start + compile per schema.
 - Compliance itself is already proven by the in-repo suite-runner (7848/7849 over 5 dialects); this harness is
   about standardized Bowtie tooling integration.
+
+## Running under real Bowtie (Podman)
+
+corvus-ts is a code generator, so the harness is packaged as an OCI image bundling a self-contained linux-x64
+CLI + Node + tsc; per Bowtie `run` it codegens, compiles, and runs. Build it and run the official suite with
+the real Bowtie tooling:
+
+```
+./bowtie-image/build-image.sh                          # publish CLI + build localhost/corvus-ts (podman.exe)
+podman.exe run -i --rm localhost/corvus-ts < bowtie-selftest.ndjson | grep seq   # in-container smoke
+bowtie.exe smoke -i image:localhost/corvus-ts          # success: true across all 5 dialects
+./run-bowtie-suite.sh draft2020-12 draft2019-09 draft7 draft6 draft4             # official suite, tallied
+```
+
+Verified with the Windows `bowtie.exe` (2026.4.16) + `podman.exe` (5.8.2), reachable from WSL (`podman.exe`
+builds from a `\\wsl.localhost\...` path). `bowtie summary` has an id-keying bug for a `localhost/` image
+(keys results by `image:localhost/corvus-ts` but the header by `localhost/corvus-ts`), so
+`run-bowtie-suite.sh` tallies the raw report (`expected` vs `results`) directly.
+
+### Limitations
+
+- **No registry yet** — `bowtie smoke` reports `"registry": false`; the harness doesn't implement Bowtie's
+  remote-schema registry, so `refRemote` tests error (the CLI can't resolve the remote `$ref`). A follow-up;
+  the engine's full compliance incl. remotes is already proven by the in-repo suite-runner (7848/7849).
+- Per-schema codegen + tsc inside the container is the throughput cost of an AOT engine under Bowtie.

@@ -15,7 +15,9 @@ import { LosslessNumber, parse as ljParse, stringify as ljStringify } from "loss
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
-const CLI = join(ROOT, "src", "Corvus.Json.Cli", "bin", "Debug", "net9.0", "Corvus.Json.Cli.dll");
+// CORVUS_CLI = a self-contained CLI binary (the container image sets it to /opt/cli/Corvus.Json.Cli); without
+// it, fall back to the dev DLL via `dotnet`.
+const CLI_RUN = process.env.CORVUS_CLI ? [process.env.CORVUS_CLI] : ["dotnet", join(ROOT, "src", "Corvus.Json.Cli", "bin", "Debug", "net9.0", "Corvus.Json.Cli.dll")];
 const TSC = join(HERE, "node_modules", ".bin", "tsc");
 const GLOBALS = join(HERE, "bowtie-globals.d.ts");
 const WORK = join(HERE, "bowtie-work");
@@ -84,13 +86,19 @@ const DIALECTS = [
 const out = (o) => process.stdout.write(JSON.stringify(o) + "\n");
 const msg = (e) => String((e && e.stack) || e);
 
+let dialect = "https://json-schema.org/draft/2020-12/schema";
 let n = 0;
 function compile(schema) {
+  // Suite schemas usually omit $schema; the Bowtie `dialect` command tells us which one to assume, so inject
+  // it (the CLI infers the draft from $schema). Object schemas only; booleans/already-dialected are left as-is.
+  if (schema && typeof schema === "object" && !Array.isArray(schema) && !("$schema" in schema)) {
+    schema.$schema = dialect;
+  }
   const dir = join(WORK, String(n++));
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, "schema.json"), ljStringify(schema));
-  execFileSync("dotnet", [CLI, "jsonschema", join(dir, "schema.json"), "--engine", "TypeScript", "--outputPath", dir], { stdio: "ignore" });
+  execFileSync(CLI_RUN[0], [...CLI_RUN.slice(1), "jsonschema", join(dir, "schema.json"), "--engine", "TypeScript", "--outputPath", dir], { stdio: "ignore" });
   execFileSync(TSC, [join(dir, "generated.ts"), join(dir, "corvus-runtime.ts"), GLOBALS,
     "--target", "es2022", "--module", "esnext", "--moduleResolution", "bundler", "--lib", "es2022,dom", "--outDir", dir], { stdio: "ignore" });
   return dir;
@@ -107,6 +115,7 @@ for await (const line of rl) {
       homepage: "https://github.com/corvus-dotnet/Corvus.JsonSchema", issues: "https://github.com/corvus-dotnet/Corvus.JsonSchema/issues",
       source: "https://github.com/corvus-dotnet/Corvus.JsonSchema", os: process.platform, language_version: process.version } });
   } else if (c === "dialect") {
+    dialect = String(cmd.dialect);
     out({ ok: true });
   } else if (c === "run") {
     const seq = cmd.seq instanceof LosslessNumber ? Number(cmd.seq.toString()) : cmd.seq;
