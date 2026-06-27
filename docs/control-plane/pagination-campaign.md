@@ -434,5 +434,16 @@ Npgsql — the `42P08` trap cannot recur). `Name`/`Id` declared byte-ordinal (`C
 case-sensitive); MySql/SqlServer use `LIKE` on the case-insensitive default-collation q-columns, but because `Name` is
 binary-collated AND a q-target for rules, its name-LIKE gets a case-insensitive collation override (`Name COLLATE
 utf8mb4_0900_ai_ci` / `COLLATE DATABASE_DEFAULT`). Container conformance: **Postgres 11/11, MySql 11/11, SqlServer 11/11**.
-**Remaining backends:** Cosmos/Mongo (mirror the q-fields top-level + native range), Redis/Nats (keyset index + client-side
-`q` — no server-side `LIKE`).
+
+**Document-store backends (Cosmos, Mongo) — done.** Native range on the keyset + case-insensitive substring `q`:
+- **Mongo** — rules keyset on `_id` (== name), bindings on the mirrored `order` then `_id`; `q` matches the name/`_id`,
+  mirrored `expression` (rules) or mirrored `claimType`/`claimValue`/`description` (bindings) via a case-insensitive
+  literal-substring regex (`BsonRegularExpression(Regex.Escape(q), "i")`); `Find(filter).Sort(...).Limit(n+1)`.
+- **Cosmos** — minimal mirror: rules need none (keyset `c.id` == name; `q` via `CONTAINS(c.id|c.doc.expression, @q, true)`);
+  bindings mirror only `order` top-level so the two-field `ORDER BY` is over top-level fields, `q` via
+  `CONTAINS(c.doc.claimType|claimValue|description, @q, true)` (3-arg CONTAINS = case-insensitive; `q` is the raw substring,
+  not a LIKE pattern). Gotcha (caught by conformance): `order` is a Cosmos reserved word → the property is referenced as
+  `c["order"]` (the `@order` parameter is fine). Per-root `JsonString` shadowing → seam params fully qualified. Container
+  conformance: **Cosmos 11/11, Mongo 11/11**. **Remaining backends:** Redis/Nats (keyset index + client-side `q` — no
+  server-side substring; NB a rule/binding update can change order/expression/claim fields, so the index is refreshed on
+  update and removed on delete).
