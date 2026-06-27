@@ -83,6 +83,7 @@
 
   <script type="module">
     import { createMockControlPlane } from './mock-api.js';
+    import { DEMO_SEED } from './demo-seed.js';
     import { ArazzoControlPlaneClient } from '../src/arazzo-client.js';
     import '../src/arazzo-control-plane.js';
     import '../src/arazzo-catalog.js';
@@ -92,7 +93,7 @@
     import '../src/components/scopes-panel.js';
     import '../src/components/grants-panel.js';
 
-    const mock = createMockControlPlane();
+    const mock = createMockControlPlane(DEMO_SEED);
     const panel = document.querySelector('arazzo-control-plane');
     const catalog = document.querySelector('arazzo-catalog');
     panel.fetch = mock.fetch; // inject the mock; a real host sets panel.authProvider instead
