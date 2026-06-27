@@ -821,12 +821,10 @@ string name = (string)root.Name; // &quot;Alice&quot;
 </code></pre>
 <p>For scenarios that require logic inside the builder (e.g., <code>From()</code> conversions, conditional properties), use the delegate overload:</p>
 <pre><code class="language-csharp">// V5 — delegate overload (for advanced scenarios)
-using var builder = MigrationPerson.CreateBuilder(
-    workspace,
-    (ref b) =&gt; b.Create(
-        name: &quot;Alice&quot;,
-        age: 30,
-        email: &quot;alice@test.com&quot;));
+using var builder = MigrationPerson.CreateBuilder(workspace, (ref MigrationPerson.Builder b) =&gt; b.Create(
+    name: &quot;Alice&quot;,
+    age: 30,
+    email: &quot;alice@test.com&quot;));
 </code></pre>
 <p>If all of an object's properties are optional, you can create an empty builder with no initializer:</p>
 <pre><code class="language-csharp">// V5 — empty object (all properties optional)
@@ -896,10 +894,9 @@ using JsonWorkspace workspace = JsonWorkspace.Create();
 using var builder = MigrationNested.CreateBuilder(
     workspace,
     address: MigrationNested.RequiredCityAndStreet.Build(
-        (ref ab) =&gt; ab.Create(
-            city: &quot;London&quot;,
-            street: &quot;221B Baker Street&quot;,
-            zipCode: &quot;12345&quot;)),
+        city: &quot;London&quot;,
+        street: &quot;221B Baker Street&quot;,
+        zipCode: &quot;12345&quot;),
     name: &quot;Sherlock&quot;);
 
 MigrationNested.Mutable root = builder.RootElement;
@@ -913,12 +910,9 @@ using var builder = MigrationItemArray.CreateBuilder(
     MigrationItemArray.Build(
         (ref b) =&gt;
         {
-            b.AddItem(MigrationItemArray.RequiredId.Build(
-                (ref ib) =&gt; ib.Create(id: 1, label: &quot;First&quot;)));
-            b.AddItem(MigrationItemArray.RequiredId.Build(
-                (ref ib) =&gt; ib.Create(id: 2, label: &quot;Second&quot;)));
-            b.AddItem(MigrationItemArray.RequiredId.Build(
-                (ref ib) =&gt; ib.Create(id: 3)));
+            b.AddItem(MigrationItemArray.RequiredId.Build(id: 1, label: &quot;First&quot;));
+            b.AddItem(MigrationItemArray.RequiredId.Build(id: 2, label: &quot;Second&quot;));
+            b.AddItem(MigrationItemArray.RequiredId.Build(id: 3));
         }));
 
 MigrationItemArray.Mutable root = builder.RootElement;
@@ -1136,8 +1130,7 @@ using var builder = MigrationIntVector.CreateBuilder(workspace, source);
 <pre><code class="language-csharp">// V5 — Build + CreateTensor (delegate route)
 using var builder = MigrationIntVector.CreateBuilder(
     workspace,
-    MigrationIntVector.Build(
-        static (ref MigrationIntVector.Builder b) =&gt; b.CreateTensor([1, 2, 3])));
+    MigrationIntVector.Build([1, 2, 3]));
 </code></pre>
 <p>Use the convenience overload when you already have the data in a span. Use the delegate pattern when you need to combine tensor creation with other builder operations.</p>
 <h3 id="variable-length-numeric-arrays">Variable-length numeric arrays</h3>
@@ -1195,10 +1188,9 @@ using var builder2 = MigrationTuple.CreateBuilder(workspace, source);
 using var builder3 = MigrationTuple.CreateBuilder(
     workspace,
     MigrationTuple.Build(
-        static (ref b) =&gt; b.CreateTuple(
-            item1: &quot;hello&quot;,
-            item2: 42,
-            item3: true)));
+        item1: &quot;hello&quot;,
+        item2: 42,
+        item3: true));
 MigrationTuple result2 = builder2.RootElement;
 </code></pre>
 <p>The <code>Build</code> overload taking positional sources is the direct V5 replacement for <code>Create</code> — it takes positional <code>Source</code> parameters (with implicit conversions from the underlying .NET types) and returns a <code>Source</code> without delegate indirection. It is only available on <strong>pure tuple</strong> types (closed with <code>items: false</code> or <code>unevaluatedItems: false</code>).</p>
@@ -1471,7 +1463,7 @@ using var builder = MyTuple.CreateBuilder(workspace, source);
 
 // ⚠️ Verbose — use the delegate pattern only when required (open tuples, combining operations)
 using var builder = MyTuple.CreateBuilder(workspace,
-    MyTuple.Build(static (ref MyTuple.Builder b) =&gt; b.CreateTuple(&quot;hello&quot;, 42, true)));
+    MyTuple.Build(&quot;hello&quot;, 42, true));
 </code></pre>
 <h3 id="use-static-lambdas-where-possible">Use <code>static</code> lambdas where possible</h3>
 <p>When creating builder delegates or pattern matching lambdas that don't capture variables, mark them <code>static</code> for better performance:</p>
@@ -1479,10 +1471,9 @@ using var builder = MyTuple.CreateBuilder(workspace,
 using var doc = Person.CreateBuilder(
     workspace,
     Person.Build(
-        static (ref Person.Builder b) =&gt; b.Create(
-            familyName: &quot;Brontë&quot;,
-            givenName: &quot;Anne&quot;,
-            height: 1.57)));
+        familyName: &quot;Brontë&quot;,
+        givenName: &quot;Anne&quot;,
+        height: 1.57));
 
 // Pattern matching without captured variables — use static
 string result = color.Match(
@@ -1531,10 +1522,7 @@ using var sourceDoc = ParsedJsonDocument&lt;SourceType&gt;.Parse(json);
 SourceType source = sourceDoc.RootElement;
 
 using JsonWorkspace workspace = JsonWorkspace.Create();
-using var targetBuilder = TargetType.CreateBuilder(workspace, (ref TargetType.Builder b) =&gt;
-{
-    b.Create(nameValue, TargetType.IdentifierEntity.From(idValue));
-});
+using var targetBuilder = TargetType.CreateBuilder(workspace, nameValue, TargetType.IdentifierEntity.From(idValue));
 </code></pre>
 <p>While <code>SourceType.IdEntity</code> and <code>TargetType.IdentifierEntity</code> are different types they both represent integers with compatible constraints, so you can safely convert between them, without having to convert to an intermediate .NET value type.</p>
 <h3 id="pattern-matching-uses-named-parameters">Pattern matching uses named parameters</h3>
@@ -1707,7 +1695,7 @@ string rgb = color.Match(
 </tr>
 <tr>
 <td><code>MyType.Create(...)</code></td>
-<td><code>MyType.CreateBuilder(workspace, (ref b) =&gt; b.Create(...))</code></td>
+<td><code>MyType.CreateBuilder(workspace, ...)</code></td>
 </tr>
 <tr>
 <td><code>MyType.FromItems(item1, item2)</code></td>

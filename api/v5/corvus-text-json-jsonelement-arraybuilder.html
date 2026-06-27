@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/6acf10236ba2de5468bc21ddda8309a057967312/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ArrayBuilder.cs#L41">JsonElement.ArrayBuilder.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/90448fb666d8954c5ecd0803f1de7da80eab9fa0/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ArrayBuilder.cs#L41">JsonElement.ArrayBuilder.cs</a></p>
 <pre><code class="language-csharp">public readonly struct JsonElement.ArrayBuilder
 </code></pre>
 <h2 id="constructors">Constructors</h2>
@@ -184,11 +184,10 @@ root.Hobbies.InsertRange(1, static (ref JsonElement.ArrayBuilder b) =&gt;
 </code></pre>
 <h3 id="building-a-typed-array-element">Building a typed array element</h3>
 <pre><code class="language-csharp">root.SetItem(14, PersonClosed.Build(
-    static (ref PersonClosed.Builder b) =&gt; b.Create(
-        birthDate: new LocalDate(1820, 1, 17),
-        familyName: &quot;Brontë&quot;,
-        givenName: &quot;Anne&quot;,
-        height: 1.57)));
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    height: 1.57));
 </code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>

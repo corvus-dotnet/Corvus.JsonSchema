@@ -350,10 +350,7 @@ TurnOnProducer producer = new(transport);
 
 // Publish a validated message — schema validation runs before the message leaves your process
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
-    {
-        b.Create(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: &quot;lamp-001&quot;);
 
 // Inspect what was published
@@ -529,10 +526,7 @@ TurnOnProducer producer = new(transport, validationMode: ValidationMode.Basic);
 try
 {
     await producer.PublishTurnOnOffAsync(
-        payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
-        {
-            b.Create(command: &quot;invalid-command&quot;u8, sentAt: DateTimeOffset.UtcNow);
-        }),
+        payload: TurnOnOffPayload.Build(command: &quot;invalid-command&quot;u8, sentAt: DateTimeOffset.UtcNow),
         streetlightId: &quot;lamp-001&quot;);
 }
 catch (ArgumentException ex)
@@ -828,10 +822,7 @@ InMemoryMessageTransport transport = new();
 TurnOnProducer producer = new(transport, ValidationMode.None);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
-    {
-        b.Create(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: &quot;lamp-001&quot;);
 
 // Assert published messages
@@ -946,10 +937,7 @@ IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
-    {
-        b.Create(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: &quot;lamp-001&quot;);
 </code></pre>
 <p>For different Azure Identity flows, substitute the credential type:</p>
@@ -997,10 +985,7 @@ IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
-    {
-        b.Create(command: &quot;off&quot;u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: &quot;off&quot;u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: &quot;lamp-002&quot;);
 </code></pre>
 <p>The <code>accessTokenFactory</code> is called on <strong>every publish</strong> (producers) and <strong>once at subscribe time</strong> (consumers). For caching and refresh logic, wrap your token client with <code>Microsoft.Extensions.Caching.Memory</code> or use your SDK's built-in token cache.</p>
@@ -1018,10 +1003,7 @@ IMessageAuthenticationProvider auth = new BearerTokenAuthenticationProvider(&quo
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
-    {
-        b.Create(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: &quot;lamp-003&quot;);
 </code></pre>
 <p>With dynamic token refresh:</p>
@@ -1093,10 +1075,7 @@ IMessageAuthenticationProvider auth = new UserPasswordAuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
-    {
-        b.Create(command: &quot;off&quot;u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: &quot;off&quot;u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: &quot;lamp-005&quot;);
 </code></pre>
 <h3 id="client-certificate-mtls">Client Certificate (mTLS)</h3>
@@ -1145,10 +1124,7 @@ IMessageAuthenticationProvider auth = new CompositeAuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
-    {
-        b.Create(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: &quot;lamp-006&quot;);
 </code></pre>
 <h3 id="custom-authentication-provider">Custom Authentication Provider</h3>
@@ -1167,10 +1143,7 @@ IMessageAuthenticationProvider auth = new RotatingSecretProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
-    {
-        b.Create(command: &quot;off&quot;u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: &quot;off&quot;u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: &quot;lamp-007&quot;);
 </code></pre>
 <p>The implementation:</p>
@@ -1203,10 +1176,7 @@ internal sealed class RotatingSecretProvider : IMessageAuthenticationProvider
 <p>AsyncAPI channels can contain parameters (e.g., <code>smartylighting.streetlights.1.0.action.{streetlightId}.turn.on</code>). The generated producer exposes these as method parameters:</p>
 <pre><code class="language-csharp">// The streetlightId parameter is part of the publish method signature
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =&gt;
-    {
-        b.Create(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: &quot;on&quot;u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: &quot;lamp-42&quot;);
 // Wire: publishes to &quot;smartylighting.streetlights.1.0.action.lamp-42.turn.on&quot;
 </code></pre>

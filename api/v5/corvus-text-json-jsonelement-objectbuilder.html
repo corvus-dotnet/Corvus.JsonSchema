@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/6acf10236ba2de5468bc21ddda8309a057967312/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ObjectBuilder.cs#L43">JsonElement.ObjectBuilder.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/90448fb666d8954c5ecd0803f1de7da80eab9fa0/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.ObjectBuilder.cs#L43">JsonElement.ObjectBuilder.cs</a></p>
 <pre><code class="language-csharp">public readonly struct JsonElement.ObjectBuilder
 </code></pre>
 <h2 id="constructors">Constructors</h2>
@@ -162,9 +162,8 @@
 <h2 id="examples">Examples</h2>
 <p>Use <code>ObjectBuilder</code> inside a <code>Build()</code> delegate to compose object values with named properties.</p>
 <pre><code class="language-csharp">Person.PersonNameEntity name = Person.PersonNameEntity.Build(
-    (ref Person.PersonNameEntity.Builder b) =&gt; b.Create(
-        familyName: &quot;Oldroyd&quot;u8,
-        givenName: &quot;Michael&quot;u8));
+    familyName: &quot;Oldroyd&quot;u8,
+    givenName: &quot;Michael&quot;u8);
 </code></pre>
 <p>The <code>AddProperty</code> method adds key-value pairs to the builder. It is used internally by the <code>Create()</code> method and is available for advanced scenarios where you need to build an object dynamically:</p>
 <pre><code class="language-csharp">using var builder = workspace.BuildDocument&lt;JsonElement.Mutable&gt;(

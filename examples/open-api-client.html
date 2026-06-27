@@ -472,10 +472,7 @@ if (nextPage.IsNotUndefined())
 <h3 id="creating-a-pet-with-a-request-body">Creating a pet with a request body</h3>
 <p>Object bodies use the generated <code>Builder</code> pattern. The <code>Builder.Create()</code> method has typed parameters matching the schema's properties — required properties are mandatory parameters, optional ones have defaults:</p>
 <pre><code class="language-csharp">await using CreatePetResponse createResponse = await client.CreatePetAsync(
-    body: new NewPet.Source(static (ref NewPet.Builder b) =&gt;
-    {
-        b.Create(name: &quot;Fido&quot;u8, tag: &quot;dog&quot;u8);
-    }));
+    body: NewPet.Build(name: &quot;Fido&quot;u8, tag: &quot;dog&quot;u8));
 
 createResponse.MatchResult(
     matchCreated: createdPet =&gt;

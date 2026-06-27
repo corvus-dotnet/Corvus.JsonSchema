@@ -757,8 +757,7 @@ Console.WriteLine(result);
 
 using var builder = Person.CreateBuilder(
     workspace,
-    name: Person.PersonName.Build(
-        (ref nb) =&gt; nb.Create(familyName: &quot;Oldroyd&quot;u8, givenName: &quot;Michael&quot;u8)),
+    name: Person.PersonName.Build(familyName: &quot;Oldroyd&quot;u8, givenName: &quot;Michael&quot;u8),
     age: 30,
     email: &quot;michael@example.com&quot;u8);
 
@@ -770,19 +769,17 @@ Console.WriteLine(builder.RootElement.ToString());
 <p>Use <code>NestedType.Build()</code> to compose nested values as parameters:</p>
 <pre><code class="language-csharp">using var builder = Person.CreateBuilder(
     workspace,
-    name: Person.PersonName.Build(
-        (ref nb) =&gt; nb.Create(familyName: &quot;Oldroyd&quot;u8, givenName: &quot;Michael&quot;u8)),
+    name: Person.PersonName.Build(familyName: &quot;Oldroyd&quot;u8, givenName: &quot;Michael&quot;u8),
     age: 30,
-    address: Person.Address.Build((ref ab) =&gt; ab.Create(
+    address: Person.Address.Build(
         street: &quot;123 Main St&quot;u8,
-        city: &quot;Springfield&quot;u8)));
+        city: &quot;Springfield&quot;u8));
 </code></pre>
 <h3 id="array-properties">Array properties</h3>
 <p>Build array properties by adding elements inside the builder delegate:</p>
 <pre><code class="language-csharp">using var builder = Person.CreateBuilder(
     workspace,
-    name: Person.PersonName.Build(
-        (ref nb) =&gt; nb.Create(familyName: &quot;Oldroyd&quot;u8, givenName: &quot;Michael&quot;u8)),
+    name: Person.PersonName.Build(familyName: &quot;Oldroyd&quot;u8, givenName: &quot;Michael&quot;u8),
     hobbies: Person.JsonStringArray.Build((ref hb) =&gt;
     {
         hb.AddItem(&quot;reading&quot;u8);

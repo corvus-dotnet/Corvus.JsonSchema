@@ -381,7 +381,7 @@
 }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/6acf10236ba2de5468bc21ddda8309a057967312/docs/ExampleRecipes/009-WorkingWithTensors/Program.cs">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/90448fb666d8954c5ecd0803f1de7da80eab9fa0/docs/ExampleRecipes/009-WorkingWithTensors/Program.cs">Example code</a></p>
 <h3 id="parsing-and-accessing-tensor-elements">Parsing and accessing tensor elements</h3>
 <pre><code class="language-csharp">using Corvus.Text.Json;
 using WorkingWithTensors.Models;
@@ -439,8 +439,7 @@ using var builder = TensorRank3.CreateBuilder(workspace, source);
 <pre><code class="language-csharp">// Delegate route
 using var builder = TensorRank3.CreateBuilder(
     workspace,
-    TensorRank3.Build(
-        static (ref TensorRank3.Builder b) =&gt; b.CreateTensor(flatValues)));
+    TensorRank3.Build(flatValues));
 </code></pre>
 <p>The span must contain exactly <code>ValueBufferSize</code> elements; passing the wrong number throws <code>ArgumentException</code>.</p>
 <h3 id="variable-length-numeric-arrays">Variable-length numeric arrays</h3>
@@ -484,7 +483,7 @@ using var builder = TensorRank3.CreateBuilder(workspace, source);
 // Or use the delegate pattern with CreateTensor()
 using var builder = TensorRank3.CreateBuilder(
     workspace,
-    TensorRank3.Build(static (ref TensorRank3.Builder b) =&gt; b.CreateTensor(flatValues)));
+    TensorRank3.Build(flatValues));
 
 // Access elements (same chaining)
 double value = tensor[3][0][1];
