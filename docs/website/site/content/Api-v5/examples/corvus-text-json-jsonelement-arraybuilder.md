@@ -31,9 +31,8 @@ root.Hobbies.InsertRange(1, static (ref JsonElement.ArrayBuilder b) =>
 
 ```csharp
 root.SetItem(14, PersonClosed.Build(
-    static (ref PersonClosed.Builder b) => b.Create(
-        birthDate: new LocalDate(1820, 1, 17),
-        familyName: "Brontë",
-        givenName: "Anne",
-        height: 1.57)));
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: "Brontë",
+    givenName: "Anne",
+    height: 1.57));
 ```

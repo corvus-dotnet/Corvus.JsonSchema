@@ -132,8 +132,7 @@ If you need more control (e.g., building the tensor alongside other mutations in
 // Delegate route
 using var builder = TensorRank3.CreateBuilder(
     workspace,
-    TensorRank3.Build(
-        static (ref TensorRank3.Builder b) => b.CreateTensor(flatValues)));
+    TensorRank3.Build(flatValues));
 ```
 
 The span must contain exactly `ValueBufferSize` elements; passing the wrong number throws `ArgumentException`.
@@ -187,7 +186,7 @@ using var builder = TensorRank3.CreateBuilder(workspace, source);
 // Or use the delegate pattern with CreateTensor()
 using var builder = TensorRank3.CreateBuilder(
     workspace,
-    TensorRank3.Build(static (ref TensorRank3.Builder b) => b.CreateTensor(flatValues)));
+    TensorRank3.Build(flatValues));
 
 // Access elements (same chaining)
 double value = tensor[3][0][1];

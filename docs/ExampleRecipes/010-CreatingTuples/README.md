@@ -79,10 +79,7 @@ Console.WriteLine($"Item3: {threeTuple.Item3}");  // Output: Item3: False
 
 ```csharp
 using JsonWorkspace workspace = JsonWorkspace.Create();
-using var builtDoc = ThreeTuple.CreateBuilder(workspace, ThreeTuple.Build(static (ref ThreeTuple.Builder b) =>
-{
-    b.CreateTuple(42, "World", true);
-}));
+using var builtDoc = ThreeTuple.CreateBuilder(workspace, ThreeTuple.Build(42, "World", true));
 ThreeTuple threeTuple2 = builtDoc.RootElement;
 
 Console.WriteLine(threeTuple2);
@@ -152,10 +149,7 @@ ThreeTuple.Source source = ThreeTuple.Build(42, "World", true);
 using var doc2 = ThreeTuple.CreateBuilder(workspace, source);
 
 // Or create via Build delegate + CreateTuple (required for tuples with additional items)
-using var doc3 = ThreeTuple.CreateBuilder(workspace, ThreeTuple.Build(static (ref ThreeTuple.Builder b) =>
-{
-    b.CreateTuple(42, "World", true);
-}));
+using var doc3 = ThreeTuple.CreateBuilder(workspace, ThreeTuple.Build(42, "World", true));
 
 // Access items (same as V4)
 int item1 = threeTuple.Item1;

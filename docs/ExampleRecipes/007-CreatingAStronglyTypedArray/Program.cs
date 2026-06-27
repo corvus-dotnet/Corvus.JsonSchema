@@ -101,11 +101,10 @@ if (updatedArray.EvaluateSchema())
 Console.WriteLine();
 Console.WriteLine("Setting a new person at index 14:");
 root.SetItem(14, PersonClosed.Build(
-    static (ref PersonClosed.Builder b) => b.Create(
-        birthDate: new LocalDate(1820, 1, 17),
-        familyName: "Brontë",
-        givenName: "Anne",
-        height: 1.57)));
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: "Brontë",
+    givenName: "Anne",
+    height: 1.57));
 
 // Verify the replacement
 updatedArray = mutableDoc.RootElement;
@@ -115,11 +114,10 @@ Console.WriteLine($"  [14] = {updatedArray[14].GivenName} {updatedArray[14].Fami
 Console.WriteLine();
 Console.WriteLine("Replacing person[0] with the Brontë person:");
 root.Replace(personAtIndex0, PersonClosed.Build(
-    static (ref PersonClosed.Builder b) => b.Create(
-        birthDate: new LocalDate(1820, 1, 17),
-        familyName: "Brontë",
-        givenName: "Anne",
-        height: 1.57)));
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: "Brontë",
+    givenName: "Anne",
+    height: 1.57));
 
 // ------------------------------------------------------------------
 // Enumerate the array

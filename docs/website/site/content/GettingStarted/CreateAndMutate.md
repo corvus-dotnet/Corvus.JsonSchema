@@ -13,8 +13,7 @@ using JsonWorkspace workspace = JsonWorkspace.Create();
 
 using var builder = Person.CreateBuilder(
     workspace,
-    name: Person.PersonName.Build(
-        (ref nb) => nb.Create(familyName: "Oldroyd"u8, givenName: "Michael"u8)),
+    name: Person.PersonName.Build(familyName: "Oldroyd"u8, givenName: "Michael"u8),
     age: 30,
     email: "michael@example.com"u8);
 
@@ -31,12 +30,11 @@ Use `NestedType.Build()` to compose nested values as parameters:
 ```csharp
 using var builder = Person.CreateBuilder(
     workspace,
-    name: Person.PersonName.Build(
-        (ref nb) => nb.Create(familyName: "Oldroyd"u8, givenName: "Michael"u8)),
+    name: Person.PersonName.Build(familyName: "Oldroyd"u8, givenName: "Michael"u8),
     age: 30,
-    address: Person.Address.Build((ref ab) => ab.Create(
+    address: Person.Address.Build(
         street: "123 Main St"u8,
-        city: "Springfield"u8)));
+        city: "Springfield"u8));
 ```
 
 ### Array properties
@@ -46,8 +44,7 @@ Build array properties by adding elements inside the builder delegate:
 ```csharp
 using var builder = Person.CreateBuilder(
     workspace,
-    name: Person.PersonName.Build(
-        (ref nb) => nb.Create(familyName: "Oldroyd"u8, givenName: "Michael"u8)),
+    name: Person.PersonName.Build(familyName: "Oldroyd"u8, givenName: "Michael"u8),
     hobbies: Person.JsonStringArray.Build((ref hb) =>
     {
         hb.AddItem("reading"u8);

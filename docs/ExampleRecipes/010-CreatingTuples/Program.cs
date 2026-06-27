@@ -22,13 +22,10 @@ Console.WriteLine();
 
 // Create a tuple via mutable builder
 using JsonWorkspace workspace = JsonWorkspace.Create();
-using var builtDoc = ThreeTuple.CreateBuilder(workspace, ThreeTuple.Build(static (ref ThreeTuple.Builder b) =>
-{
-    b.CreateTuple(42, "World", true);
-}));
+using var builtDoc = ThreeTuple.CreateBuilder(workspace, ThreeTuple.Build(42, "World", true));
 ThreeTuple threeTuple2 = builtDoc.RootElement;
 
-Console.WriteLine("Built tuple (via Build + CreateTuple):");
+Console.WriteLine("Built tuple (via the Build factory):");
 Console.WriteLine(threeTuple2);
 Console.WriteLine();
 

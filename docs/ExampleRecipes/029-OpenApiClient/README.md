@@ -145,10 +145,7 @@ Object bodies use the generated `Builder` pattern. The `Builder.Create()` method
 
 ```csharp
 await using CreatePetResponse createResponse = await client.CreatePetAsync(
-    body: new NewPet.Source(static (ref NewPet.Builder b) =>
-    {
-        b.Create(name: "Fido"u8, tag: "dog"u8);
-    }));
+    body: NewPet.Build(name: "Fido"u8, tag: "dog"u8));
 
 createResponse.MatchResult(
     matchCreated: createdPet =>

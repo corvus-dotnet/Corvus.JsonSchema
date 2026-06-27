@@ -72,10 +72,7 @@ TurnOnProducer producer = new(transport);
 
 // Publish a validated message — schema validation runs before the message leaves your process
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-001");
 
 // Inspect what was published
@@ -229,10 +226,7 @@ TurnOnProducer producer = new(transport, validationMode: ValidationMode.Basic);
 try
 {
     await producer.PublishTurnOnOffAsync(
-        payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-        {
-            b.Create(command: "invalid-command"u8, sentAt: DateTimeOffset.UtcNow);
-        }),
+        payload: TurnOnOffPayload.Build(command: "invalid-command"u8, sentAt: DateTimeOffset.UtcNow),
         streetlightId: "lamp-001");
 }
 catch (ArgumentException ex)
@@ -517,10 +511,7 @@ InMemoryMessageTransport transport = new();
 TurnOnProducer producer = new(transport, ValidationMode.None);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-001");
 
 // Assert published messages
@@ -611,10 +602,7 @@ IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-001");
 ```
 
@@ -670,10 +658,7 @@ IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "off"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-002");
 ```
 
@@ -696,10 +681,7 @@ IMessageAuthenticationProvider auth = new BearerTokenAuthenticationProvider("my-
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-003");
 ```
 
@@ -782,10 +764,7 @@ IMessageAuthenticationProvider auth = new UserPasswordAuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "off"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-005");
 ```
 
@@ -842,10 +821,7 @@ IMessageAuthenticationProvider auth = new CompositeAuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-006");
 ```
 
@@ -868,10 +844,7 @@ IMessageAuthenticationProvider auth = new RotatingSecretProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "off"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-007");
 ```
 
@@ -910,10 +883,7 @@ AsyncAPI channels can contain parameters (e.g., `smartylighting.streetlights.1.0
 ```csharp
 // The streetlightId parameter is part of the publish method signature
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-42");
 // Wire: publishes to "smartylighting.streetlights.1.0.action.lamp-42.turn.on"
 ```
