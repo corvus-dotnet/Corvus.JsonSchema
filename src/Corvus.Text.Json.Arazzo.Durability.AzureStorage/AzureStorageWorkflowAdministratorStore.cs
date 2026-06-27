@@ -31,19 +31,28 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 public sealed class AzureStorageWorkflowAdministratorStore : IWorkflowAdministratorStore
 {
     private const string AdministratorsTable = "arazzoWorkflowAdministrators";
+
+    // The reverse administration index (design §15.4): a separate table whose PartitionKey is an administrator digest and
+    // whose RowKey is the encoded base id, with the plain base id in a column so a digest's administered base ids are a
+    // single-partition query (no RowKey decode). Azure Table has no server-side ORDER BY, so the (bounded) partition is
+    // ordered client-side — mirroring the access-request store's keyset approach.
+    private const string IndexTable = "arazzoWorkflowAdministratorIndex";
     private const string DocumentColumn = "Document";
     private const string EtagColumn = "Etag";
+    private const string BaseWorkflowIdColumn = "BaseWorkflowId";
 
     // A single logical entity per base workflow id: the partition is constant (one partition for the table) and the
     // row is the encoded base id, so a record is a point read by (PartitionKey, RowKey).
     private const string AdministratorsPartition = "admin";
 
     private readonly TableClient administrators;
+    private readonly TableClient index;
     private readonly TimeProvider timeProvider;
 
-    private AzureStorageWorkflowAdministratorStore(TableClient administrators, TimeProvider timeProvider)
+    private AzureStorageWorkflowAdministratorStore(TableClient administrators, TableClient index, TimeProvider timeProvider)
     {
         this.administrators = administrators;
+        this.index = index;
         this.timeProvider = timeProvider;
     }
 
@@ -65,6 +74,7 @@ public sealed class AzureStorageWorkflowAdministratorStore : IWorkflowAdministra
     {
         ArgumentNullException.ThrowIfNull(tableService);
         await tableService.GetTableClient(AdministratorsTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+        await tableService.GetTableClient(IndexTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the store for operation against an already-provisioned table.</summary>
@@ -88,7 +98,10 @@ public sealed class AzureStorageWorkflowAdministratorStore : IWorkflowAdministra
         ArgumentNullException.ThrowIfNull(tableService);
         cancellationToken.ThrowIfCancellationRequested();
         return new ValueTask<AzureStorageWorkflowAdministratorStore>(
-            new AzureStorageWorkflowAdministratorStore(tableService.GetTableClient(AdministratorsTable), timeProvider ?? TimeProvider.System));
+            new AzureStorageWorkflowAdministratorStore(
+                tableService.GetTableClient(AdministratorsTable),
+                tableService.GetTableClient(IndexTable),
+                timeProvider ?? TimeProvider.System));
     }
 
     /// <inheritdoc/>
@@ -113,6 +126,10 @@ public sealed class AzureStorageWorkflowAdministratorStore : IWorkflowAdministra
         byte[]? existing = await this.ReadDocumentAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
         WorkflowEtag etag = NewEtag();
         byte[] json;
+
+        // The base id's previous administrator digests (so stale reverse-index rows can be retracted): read from the
+        // record on disk, since Table storage has no atomic server-side script holding them. Empty for a fresh record.
+        IReadOnlyList<string> oldDigests;
         if (existing is not null)
         {
             // Parse the existing record ONCE, NON-COPYING over the driver's array (the read leaf) — used for both the etag
@@ -126,6 +143,7 @@ public sealed class AzureStorageWorkflowAdministratorStore : IWorkflowAdministra
                 throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
             }
 
+            oldDigests = WorkflowAdministeredPaging.DistinctDigests(current.RootElement);
             json = WorkflowAdministratorsSerialization.SerializeUpdated(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), etag);
         }
         else
@@ -136,6 +154,7 @@ public sealed class AzureStorageWorkflowAdministratorStore : IWorkflowAdministra
                 throw new WorkflowAdministrationConflictException(baseWorkflowId, expectedEtag);
             }
 
+            oldDigests = [];
             json = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), etag);
         }
 
@@ -145,10 +164,82 @@ public sealed class AzureStorageWorkflowAdministratorStore : IWorkflowAdministra
             [DocumentColumn] = json,
         };
         await this.administrators.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+        await this.ReindexAsync(baseWorkflowId, oldDigests, WorkflowAdministeredPaging.DistinctDigests(administrators), cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<WorkflowAdministrators>(json);
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        int pageSize = limit > 0 ? limit : WorkflowAdministeredPage.DefaultPageSize;
+        string? after = WorkflowAdministeredContinuationToken.DecodeCursorToString(pageToken);
+
+        // The digest's partition (the workflows it administers) is bounded; fetch it projecting just the plain base id,
+        // order client-side (ordinal — the contract's order), then apply the keyset cursor + page (Azure has no ORDER BY).
+        var ids = new List<string>();
+        await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(
+            e => e.PartitionKey == adminDigest, select: [BaseWorkflowIdColumn], cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (entity.GetString(BaseWorkflowIdColumn) is { } baseWorkflowId)
+            {
+                ids.Add(baseWorkflowId);
+            }
+        }
+
+        ids.Sort(StringComparer.Ordinal);
+
+        var rows = new List<string>(Math.Min(pageSize + 1, ids.Count));
+        foreach (string id in ids)
+        {
+            if (after is not null && string.CompareOrdinal(id, after) <= 0)
+            {
+                continue; // at or before the cursor — already returned on an earlier page
+            }
+
+            rows.Add(id);
+            if (rows.Count > pageSize)
+            {
+                break;
+            }
+        }
+
+        return WorkflowAdministeredPaging.ToPage(rows, pageSize);
+    }
+
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
+
+    // Reconciles a base id's reverse-index rows (§15.4): delete the rows for digests it no longer administers, then
+    // (idempotently) upsert a row for each current digest. Not atomic with the document write (Table storage spans
+    // partitions here), but a stale row only ever over-reports until the next write, and the work is bounded by the
+    // small administrator set.
+    private async ValueTask ReindexAsync(string baseWorkflowId, IReadOnlyList<string> oldDigests, IReadOnlyList<string> newDigests, CancellationToken cancellationToken)
+    {
+        string rowKey = RowKey(baseWorkflowId);
+        foreach (string digest in oldDigests)
+        {
+            if (!newDigests.Contains(digest))
+            {
+                try
+                {
+                    await this.index.DeleteEntityAsync(digest, rowKey, ETag.All, cancellationToken).ConfigureAwait(false);
+                }
+                catch (RequestFailedException ex) when (ex.Status == 404)
+                {
+                    // Already gone — the reverse index is idempotent.
+                }
+            }
+        }
+
+        foreach (string digest in newDigests)
+        {
+            var entity = new TableEntity(digest, rowKey)
+            {
+                [BaseWorkflowIdColumn] = baseWorkflowId,
+            };
+            await this.index.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+        }
+    }
 
     // The RowKey is the base workflow id, which may contain Table-forbidden characters (/\#? and control chars), so it
     // is URL-safe-base64 encoded; the encoded form is always a permitted Table key (see Enc).
