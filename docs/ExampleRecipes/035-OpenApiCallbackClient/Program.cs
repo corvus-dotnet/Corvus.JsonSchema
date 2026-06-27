@@ -27,13 +27,10 @@ ApiCallbacksClient callbacksClient = new(transport);
 // ── 1. Send a top-level webhook (systemAlert) ────────────────────────────────
 Console.WriteLine("1. Sending systemAlert webhook...");
 await using SystemAlertWebhookResponse alertResponse = await webhooksClient.SystemAlertWebhookAsync(
-    body: new Schema.Source(static (ref Schema.Builder b) =>
-    {
-        b.Create(
-            alertId: "alert-001"u8,
-            severity: "critical"u8,
-            message: "Disk usage exceeded 90%."u8);
-    }),
+    body: Schema.Build(
+        alertId: "alert-001"u8,
+        severity: "critical"u8,
+        message: "Disk usage exceeded 90%."u8),
     validationMode: ValidationMode.Basic);
 
 if (alertResponse.IsSuccess)
@@ -50,13 +47,10 @@ Console.WriteLine();
 // ── 2. Send a per-subscription callback (onEventCallback) ────────────────────
 Console.WriteLine("2. Sending onEventCallback...");
 await using OnEventCallbackResponse eventResponse = await callbacksClient.OnEventCallbackAsync(
-    body: new Schema1.Source(static (ref Schema1.Builder b) =>
-    {
-        b.Create(
-            eventId: "evt-123"u8,
-            eventType: "subscription.created"u8,
-            timestamp: "2026-01-15T10:30:00Z"u8);
-    }),
+    body: Schema1.Build(
+        eventId: "evt-123"u8,
+        eventType: "subscription.created"u8,
+        timestamp: "2026-01-15T10:30:00Z"u8),
     validationMode: ValidationMode.Basic);
 
 if (eventResponse.IsSuccess)

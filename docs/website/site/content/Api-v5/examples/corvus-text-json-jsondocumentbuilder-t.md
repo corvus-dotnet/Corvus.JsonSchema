@@ -49,8 +49,7 @@ using JsonWorkspace workspace = JsonWorkspace.Create();
 
 using var builder = Person.CreateBuilder(
     workspace,
-    name: Person.PersonNameEntity.Build(
-        (ref nb) => nb.Create(familyName: "Oldroyd"u8, givenName: "Michael"u8)),
+    name: Person.PersonNameEntity.Build(familyName: "Oldroyd"u8, givenName: "Michael"u8),
     age: 30,
     email: "michael@example.com"u8);
 
