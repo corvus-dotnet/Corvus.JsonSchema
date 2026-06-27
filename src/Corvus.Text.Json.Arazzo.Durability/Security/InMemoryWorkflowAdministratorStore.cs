@@ -2,9 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Globalization;
-using System.Text;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
@@ -105,56 +103,34 @@ public sealed class InMemoryWorkflowAdministratorStore : IWorkflowAdministratorS
 
         lock (this.gate)
         {
-            if (!this.byDigest.TryGetValue(adminDigest, out SortedSet<string>? ids))
-            {
-                return new ValueTask<WorkflowAdministeredPage>(WorkflowAdministeredPage.Create([]));
-            }
-
             // The SortedSet enumerates base ids in ordinal order — the keyset order every backend pages by. Take the
-            // pageSize+1 smallest past the cursor; the +1 lookahead detects "more remain" and seeds the next token.
-            var page = new List<string>(Math.Min(pageSize + 1, ids.Count));
-            foreach (string id in ids)
+            // pageSize+1 smallest past the cursor into a flat list; ToPage trims the lookahead and seeds the next token.
+            var rows = new List<string>(pageSize + 1);
+            if (this.byDigest.TryGetValue(adminDigest, out SortedSet<string>? ids))
             {
-                if (cursor is not null && string.CompareOrdinal(id, cursor) <= 0)
+                foreach (string id in ids)
                 {
-                    continue; // at or before the cursor — already returned on an earlier page
+                    if (cursor is not null && string.CompareOrdinal(id, cursor) <= 0)
+                    {
+                        continue; // at or before the cursor — already returned on an earlier page
+                    }
+
+                    rows.Add(id);
+                    if (rows.Count > pageSize)
+                    {
+                        break;
+                    }
                 }
-
-                page.Add(id);
-                if (page.Count > pageSize)
-                {
-                    break;
-                }
             }
 
-            bool more = page.Count > pageSize;
-            if (!more)
-            {
-                return new ValueTask<WorkflowAdministeredPage>(WorkflowAdministeredPage.Create(page));
-            }
-
-            page.RemoveAt(page.Count - 1); // drop the lookahead row; resume after the last included row
-
-            // Encode the continuation token from the last returned base id's UTF-8 (bytes-native; scratch sized by the
-            // worst-case UTF-8 length and sliced by the actual bytes written).
-            string last = page[^1];
-            byte[] scratch = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(last.Length));
-            try
-            {
-                int written = Encoding.UTF8.GetBytes(last, scratch);
-                return new ValueTask<WorkflowAdministeredPage>(WorkflowAdministeredPage.Create(page, scratch.AsSpan(0, written)));
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(scratch);
-            }
+            return new ValueTask<WorkflowAdministeredPage>(WorkflowAdministeredPaging.ToPage(rows, pageSize));
         }
     }
 
     // Refreshes the reverse administration index for a base id whose administrator set was just written (§15.4): retract
-    // its previous administrator digests, then index its current ones (deduped; the empty identity has no digest and is
-    // not indexed). Called under the gate, right after the record is stored. Two identities are set-equal iff their
-    // digests are equal, so the same digest the forward IsAdministeredBy compares is the index key the inbox queries.
+    // its previous administrator digests, then index its current ones (the shared DistinctDigests skips the empty
+    // identity). Called under the gate, right after the record is stored. Two identities are set-equal iff their digests
+    // are equal, so the same digest the forward IsAdministeredBy compares is the index key the inbox queries.
     private void ReindexAdministered(string baseWorkflowId, IReadOnlyList<WorkflowAdministrators.AdministratorIdentity> administrators)
     {
         if (this.administeredDigests.Remove(baseWorkflowId, out string[]? previous))
@@ -172,15 +148,9 @@ public sealed class InMemoryWorkflowAdministratorStore : IWorkflowAdministratorS
             }
         }
 
-        var current = new List<string>(administrators.Count);
-        foreach (WorkflowAdministrators.AdministratorIdentity administrator in administrators)
+        IReadOnlyList<string> current = WorkflowAdministeredPaging.DistinctDigests(administrators);
+        foreach (string digest in current)
         {
-            if (SecurityIdentityDigest.Compute(SecurityTagSet.CopyFrom(administrator.Tags)) is not { } digest || current.Contains(digest))
-            {
-                continue;
-            }
-
-            current.Add(digest);
             if (!this.byDigest.TryGetValue(digest, out SortedSet<string>? holders))
             {
                 holders = new SortedSet<string>(StringComparer.Ordinal);

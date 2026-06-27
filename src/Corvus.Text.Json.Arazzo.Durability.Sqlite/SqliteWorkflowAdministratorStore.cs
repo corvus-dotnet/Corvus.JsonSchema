@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Data.Sqlite;
 
@@ -100,6 +101,7 @@ public sealed class SqliteWorkflowAdministratorStore : IWorkflowAdministratorSto
             byte[]? existing = await this.ReadDocumentAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
             WorkflowEtag etag = NewEtag();
             byte[] json;
+            bool isUpdate;
             if (existing is not null)
             {
                 // A record exists: parse it ONCE, NON-COPYING over the driver's array, for both the etag check and the
@@ -111,12 +113,7 @@ public sealed class SqliteWorkflowAdministratorStore : IWorkflowAdministratorSto
                 }
 
                 json = WorkflowAdministratorsSerialization.SerializeUpdated(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), etag);
-                using SqliteCommand update = this.connection.CreateCommand();
-                update.CommandText = "UPDATE WorkflowAdministrators SET Etag = @etag, Document = @doc WHERE BaseWorkflowId = @id;";
-                update.Parameters.AddWithValue("@etag", etag.Value!);
-                update.Parameters.AddWithValue("@doc", json);
-                update.Parameters.AddWithValue("@id", baseWorkflowId);
-                await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                isUpdate = true;
             }
             else
             {
@@ -127,15 +124,88 @@ public sealed class SqliteWorkflowAdministratorStore : IWorkflowAdministratorSto
                 }
 
                 json = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), etag);
-                using SqliteCommand insert = this.connection.CreateCommand();
-                insert.CommandText = "INSERT INTO WorkflowAdministrators (BaseWorkflowId, Etag, Document) VALUES (@id, @etag, @doc);";
-                insert.Parameters.AddWithValue("@id", baseWorkflowId);
-                insert.Parameters.AddWithValue("@etag", etag.Value!);
-                insert.Parameters.AddWithValue("@doc", json);
-                await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                isUpdate = false;
             }
 
+            // The document write and the reverse-index rewrite are atomic (design §15.4): the inbox must never observe a
+            // base id indexed under a digest its current administrator set no longer holds, or vice versa.
+            await using SqliteTransaction transaction = (SqliteTransaction)await this.connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+            using (SqliteCommand write = this.connection.CreateCommand())
+            {
+                write.Transaction = transaction;
+                write.CommandText = isUpdate
+                    ? "UPDATE WorkflowAdministrators SET Etag = @etag, Document = @doc WHERE BaseWorkflowId = @id;"
+                    : "INSERT INTO WorkflowAdministrators (BaseWorkflowId, Etag, Document) VALUES (@id, @etag, @doc);";
+                write.Parameters.AddWithValue("@id", baseWorkflowId);
+                write.Parameters.AddWithValue("@etag", etag.Value!);
+                write.Parameters.AddWithValue("@doc", json);
+                await write.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            // Rewrite this base id's reverse-index rows: retract the stale digests, then index the current ones. The
+            // administrator set is small, so a delete-all-then-insert is simplest and correct.
+            using (SqliteCommand clear = this.connection.CreateCommand())
+            {
+                clear.Transaction = transaction;
+                clear.CommandText = "DELETE FROM WorkflowAdministratorIndex WHERE BaseWorkflowId = @id;";
+                clear.Parameters.AddWithValue("@id", baseWorkflowId);
+                await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            foreach (string digest in WorkflowAdministeredPaging.DistinctDigests(administrators))
+            {
+                using SqliteCommand index = this.connection.CreateCommand();
+                index.Transaction = transaction;
+                index.CommandText = "INSERT INTO WorkflowAdministratorIndex (AdminDigest, BaseWorkflowId) VALUES (@digest, @id);";
+                index.Parameters.AddWithValue("@digest", digest);
+                index.Parameters.AddWithValue("@id", baseWorkflowId);
+                await index.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return PersistedJson.ToPooledDocument<WorkflowAdministrators>(json);
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        int pageSize = limit > 0 ? limit : WorkflowAdministeredPage.DefaultPageSize;
+
+        // The keyset cursor (the base id to page strictly after) reifies once here for the @after parameter — the SQL
+        // leaf — never per row. SQLite TEXT compares with BINARY (ordinal) collation, matching the contract's order.
+        string? after = WorkflowAdministeredContinuationToken.DecodeCursorToString(pageToken);
+
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            using SqliteCommand select = this.connection.CreateCommand();
+            select.CommandText = after is null
+                ? "SELECT BaseWorkflowId FROM WorkflowAdministratorIndex WHERE AdminDigest = @digest ORDER BY BaseWorkflowId LIMIT @n;"
+                : "SELECT BaseWorkflowId FROM WorkflowAdministratorIndex WHERE AdminDigest = @digest AND BaseWorkflowId > @after ORDER BY BaseWorkflowId LIMIT @n;";
+            select.Parameters.AddWithValue("@digest", adminDigest);
+            select.Parameters.AddWithValue("@n", pageSize + 1);
+            if (after is not null)
+            {
+                select.Parameters.AddWithValue("@after", after);
+            }
+
+            var rows = new List<string>(pageSize + 1);
+            using (SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    rows.Add(reader.GetString(0));
+                }
+            }
+
+            return WorkflowAdministeredPaging.ToPage(rows, pageSize);
         }
         finally
         {
@@ -163,6 +233,11 @@ public sealed class SqliteWorkflowAdministratorStore : IWorkflowAdministratorSto
             BaseWorkflowId TEXT NOT NULL PRIMARY KEY,
             Etag TEXT NOT NULL,
             Document BLOB NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS WorkflowAdministratorIndex (
+            AdminDigest TEXT NOT NULL,
+            BaseWorkflowId TEXT NOT NULL,
+            PRIMARY KEY (AdminDigest, BaseWorkflowId)
         );
         """;
 }
