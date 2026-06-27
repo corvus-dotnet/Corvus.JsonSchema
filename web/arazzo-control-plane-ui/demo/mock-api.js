@@ -21,7 +21,7 @@ function iso(offsetMs) {
   return new Date(Date.now() + offsetMs).toISOString();
 }
 
-function seedRuns() {
+export function seedRuns() {
   const min = 60000;
   const hr = 60 * min;
   const day = 24 * hr;
@@ -592,7 +592,7 @@ function digestOf(identity) {
 }
 
 // Builds an administrator grant from its resolved identity, stamping the stable digest and the optional kind/label.
-function adminGrant(identity, kind, label) {
+export function adminGrant(identity, kind, label) {
   const normalized = identity.map((g) => ({ dimension: g.dimension, value: g.value }));
   const grant = { digest: digestOf(normalized), identity: normalized };
   if (kind) grant.kind = kind;
