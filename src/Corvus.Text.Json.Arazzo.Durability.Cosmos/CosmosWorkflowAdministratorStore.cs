@@ -4,6 +4,7 @@
 
 using System.Globalization;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using Corvus.Text.Json;
@@ -34,6 +35,7 @@ public sealed class CosmosWorkflowAdministratorStore : IWorkflowAdministratorSto
     private const string ContainerId = "workflow_administrators";
 
     private static readonly byte[] DocProperty = "doc"u8.ToArray();
+    private static readonly byte[] BaseWorkflowIdProperty = "baseWorkflowId"u8.ToArray();
 
     private readonly CosmosClient client;
     private readonly Container container;
@@ -130,6 +132,11 @@ public sealed class CosmosWorkflowAdministratorStore : IWorkflowAdministratorSto
         }
 
         string id = ItemId(baseWorkflowId);
+
+        // Mirror the administrator digests (and the base id) top-level in the envelope (design §15.4) so the reverse index
+        // is a cross-partition ARRAY_CONTAINS keyset query, not a scan of the opaque nested doc. These are the exact digests
+        // the forward IsAdministeredBy compares.
+        IReadOnlyList<string> digests = WorkflowAdministeredPaging.DistinctDigests(administrators);
         ParsedJsonDocument<WorkflowAdministrators>? updateDocument = null;
         Stream? updateStream = null;
         using (CosmosJson.RentedResponse? payload = await this.ReadResponseAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false))
@@ -149,7 +156,7 @@ public sealed class CosmosWorkflowAdministratorStore : IWorkflowAdministratorSto
                 }
 
                 byte[] updated = WorkflowAdministratorsSerialization.SerializeUpdated(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
-                updateStream = EnvelopeStream(id, updated, out ParsedJsonDocument<WorkflowAdministrators> document);
+                updateStream = EnvelopeStream(id, baseWorkflowId, digests, updated, out ParsedJsonDocument<WorkflowAdministrators> document);
                 updateDocument = document;
             }
         }
@@ -179,7 +186,7 @@ public sealed class CosmosWorkflowAdministratorStore : IWorkflowAdministratorSto
         }
 
         byte[] created = WorkflowAdministratorsSerialization.SerializeNew(baseWorkflowId, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        using (Stream createStream = EnvelopeStream(id, created, out ParsedJsonDocument<WorkflowAdministrators> createDocument))
+        using (Stream createStream = EnvelopeStream(id, baseWorkflowId, digests, created, out ParsedJsonDocument<WorkflowAdministrators> createDocument))
         {
             try
             {
@@ -225,22 +232,33 @@ public sealed class CosmosWorkflowAdministratorStore : IWorkflowAdministratorSto
         return "wadmin-" + Convert.ToHexStringLower(hash);
     }
 
-    // Serializes the {id, pk, doc} envelope into a pooled stream and builds the caller's pooled return document from the
-    // same administration-record bytes. The record document is itself JSON, so embed it verbatim as a nested value — no
-    // base64 wrap (which would be a spurious encode here + decode on read). It is valid JSON we produced, so skip
-    // validation. On any failure building the stream, the return document is disposed before the exception escapes.
-    private static Stream EnvelopeStream(string id, byte[] doc, out ParsedJsonDocument<WorkflowAdministrators> document)
+    // Serializes the {id, pk, baseWorkflowId, adminDigests, doc} envelope into a pooled stream and builds the caller's
+    // pooled return document from the same administration-record bytes. baseWorkflowId and adminDigests are mirrored
+    // top-level so the reverse index (§15.4) is a queryable ARRAY_CONTAINS + keyset (the doc is opaque nested JSON). The
+    // record document is itself JSON, so embed it verbatim as a nested value — no base64 wrap. It is valid JSON we
+    // produced, so skip validation. On any failure building the stream, the return document is disposed before the
+    // exception escapes.
+    private static Stream EnvelopeStream(string id, string baseWorkflowId, IReadOnlyList<string> adminDigests, byte[] doc, out ParsedJsonDocument<WorkflowAdministrators> document)
     {
         document = PersistedJson.ToPooledDocument<WorkflowAdministrators>(doc);
         try
         {
             return CosmosJson.WriteToStream(
-                (Id: id, Doc: doc),
-                static (Utf8JsonWriter writer, in (string Id, byte[] Doc) c) =>
+                (Id: id, BaseWorkflowId: baseWorkflowId, Digests: adminDigests, Doc: doc),
+                static (Utf8JsonWriter writer, in (string Id, string BaseWorkflowId, IReadOnlyList<string> Digests, byte[] Doc) c) =>
                 {
                     writer.WriteStartObject();
                     writer.WriteString("id"u8, c.Id);
                     writer.WriteString("pk"u8, c.Id);
+                    writer.WriteString("baseWorkflowId"u8, c.BaseWorkflowId);
+                    writer.WritePropertyName("adminDigests"u8);
+                    writer.WriteStartArray();
+                    foreach (string digest in c.Digests)
+                    {
+                        writer.WriteStringValue(digest);
+                    }
+
+                    writer.WriteEndArray();
                     writer.WritePropertyName("doc"u8);
                     writer.WriteRawValue(c.Doc, skipInputValidation: true);
                     writer.WriteEndObject();
@@ -250,6 +268,62 @@ public sealed class CosmosWorkflowAdministratorStore : IWorkflowAdministratorSto
         {
             document.Dispose();
             throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    // This project generates its own JsonString (per-root type identity), so the seam parameter is fully qualified to the
+    // core JsonString the IWorkflowAdministratorStore signature uses (mirrors CosmosRunnerRegistry.ListAsync).
+    public async ValueTask<WorkflowAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        int pageSize = limit > 0 ? limit : WorkflowAdministeredPage.DefaultPageSize;
+
+        // The keyset cursor (the base id to page strictly after) reifies once here for the @after query parameter (leaf).
+        // Cosmos orders strings ordinally — the contract's order — so ORDER BY c.baseWorkflowId matches the other backends.
+        string? after = WorkflowAdministeredContinuationToken.DecodeCursorToString(pageToken);
+
+        // Cross-partition keyset page: every workflow whose mirrored adminDigests contains the caller's digest, ordered by
+        // base id and sought strictly past the cursor. The lazy stream iterator is drained only until one row beyond the
+        // page, so the read is bounded — never every administered workflow.
+        string where = after is null
+            ? " WHERE ARRAY_CONTAINS(c.adminDigests, @digest)"
+            : " WHERE ARRAY_CONTAINS(c.adminDigests, @digest) AND c.baseWorkflowId > @after";
+        var definition = new QueryDefinition("SELECT c.baseWorkflowId FROM c" + where + " ORDER BY c.baseWorkflowId")
+            .WithParameter("@digest", adminDigest);
+        if (after is not null)
+        {
+            definition = definition.WithParameter("@after", after);
+        }
+
+        var rows = new List<string>(pageSize + 1);
+        await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(definition, cancellationToken).ConfigureAwait(false))
+        {
+            if (CosmosJson.GetString(element, BaseWorkflowIdProperty) is { } baseWorkflowId)
+            {
+                rows.Add(baseWorkflowId);
+                if (rows.Count > pageSize)
+                {
+                    break; // a row beyond the page exists → there is a next page; stop early
+                }
+            }
+        }
+
+        return WorkflowAdministeredPaging.ToPage(rows, pageSize);
+    }
+
+    private async IAsyncEnumerable<ReadOnlyMemory<byte>> QueryElementsAsync(QueryDefinition query, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        using FeedIterator iterator = this.container.GetItemQueryStreamIterator(query);
+        while (iterator.HasMoreResults)
+        {
+            using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
+            {
+                yield return element;
+            }
         }
     }
 
