@@ -13,12 +13,15 @@ async function caption(page, text, holdMs = 3200) {
       el = document.createElement('div');
       el.id = '__cap';
       el.setAttribute('popover', 'manual');
+      // Centre horizontally at the top via auto inline margins on a fit-content fixed box — NOT translateX, and never
+      // `inset:auto` after top/left (the inset shorthand would reset them, dropping the banner to the corner).
       el.style.cssText = [
-        'position:fixed', 'top:22px', 'left:50%', 'transform:translateX(-50%)', 'inset:auto', 'margin:0',
+        'position:fixed', 'top:22px', 'bottom:auto', 'left:0', 'right:0', 'margin:0 auto',
+        'width:fit-content', 'max-width:84vw',
         'background:#0d1014', 'color:#fff',
         'font:600 20px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif',
         'padding:14px 26px', 'border:1px solid rgba(255,255,255,0.16)', 'border-radius:12px',
-        'max-width:84vw', 'text-align:center', 'box-shadow:0 12px 44px rgba(0,0,0,0.6)', 'pointer-events:none',
+        'text-align:center', 'box-shadow:0 12px 44px rgba(0,0,0,0.6)', 'pointer-events:none',
       ].join(';');
       document.body.appendChild(el);
     }
