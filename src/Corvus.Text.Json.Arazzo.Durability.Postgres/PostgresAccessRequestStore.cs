@@ -158,6 +158,8 @@ public sealed class PostgresAccessRequestStore : IAccessRequestStore, IAsyncDisp
             select.Parameters.AddWithValue("sv", subjectValue);
         }
 
+        AppendAdministeredFilter(conditions, select, query.AdministeredBaseWorkflowIds);
+
         if (conditions.Count > 0)
         {
             sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
@@ -229,6 +231,8 @@ public sealed class PostgresAccessRequestStore : IAccessRequestStore, IAsyncDisp
             conditions.Add("SubjectClaimValue = @sv");
             select.Parameters.AddWithValue("sv", subjectValue);
         }
+
+        AppendAdministeredFilter(conditions, select, query.AdministeredBaseWorkflowIds);
 
         if (cursorCreatedAt is not null)
         {
@@ -328,6 +332,27 @@ public sealed class PostgresAccessRequestStore : IAccessRequestStore, IAsyncDisp
         {
             await this.dataSource.DisposeAsync().ConfigureAwait(false);
         }
+    }
+
+    // Appends the approver-inbox filter (design §16.5): BaseWorkflowId IN (the administered set) — server-derived strings
+    // reified as @adm{i} parameters (the SQL leaf). The set is never empty here (the handler short-circuits a caller who
+    // administers nothing to an empty page before the store); a null set (the non-inbox modes) adds nothing.
+    private static void AppendAdministeredFilter(List<string> conditions, NpgsqlCommand command, IReadOnlyList<string>? administered)
+    {
+        if (administered is not { Count: > 0 } set)
+        {
+            return;
+        }
+
+        var names = new string[set.Count];
+        for (int i = 0; i < set.Count; i++)
+        {
+            string name = "adm" + i.ToString(CultureInfo.InvariantCulture);
+            names[i] = "@" + name;
+            command.Parameters.AddWithValue(name, set[i]);
+        }
+
+        conditions.Add("BaseWorkflowId IN (" + string.Join(", ", names) + ")");
     }
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
