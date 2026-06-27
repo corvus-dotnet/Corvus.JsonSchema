@@ -22,21 +22,9 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
 import './grantee-picker.js';
 
-// Load the full scope vocabulary, accumulating every keyset page (find, not scale: the scope typeahead filters the
-// whole set client-side, so it must walk past the server's first page rather than silently stop at it).
-async function loadAllRules(client) {
-  const rules = [];
-  for await (const page of client.listSecurityRulesPaged()) rules.push(...page.rules);
-  return rules;
-}
-
-// Load every grant, accumulating each keyset page (the panel lists and filters the whole set client-side, so it must
-// walk past the server's first page rather than silently stop at it).
-async function loadAllBindings(client) {
-  const bindings = [];
-  for await (const page of client.listSecurityBindingsPaged()) bindings.push(...page.bindings);
-  return bindings;
-}
+// How long to wait after the last keystroke before issuing a server-side search (the grant list and the scope typeahead
+// are both paged + searched on the server, so they scale to any number of grants/scopes).
+const SEARCH_DEBOUNCE_MS = 250;
 
 const VERBS = ['read', 'write', 'purge'];
 
@@ -56,9 +44,12 @@ class ArazzoGrantsPanel extends ArazzoElement {
   constructor() {
     super();
     /** @private */ this._grants = [];
+    // The scopes currently offered in the authoring typeahead — the latest server result, not the whole vocabulary.
     /** @private */ this._scopes = [];
     /** @private */ this._loading = false;
+    /** @private */ this._loadingMore = false;
     /** @private */ this._error = null;
+    /** @private */ this._nextPageToken = null;
     /** @private */ this._reqSeq = 0;
     /** @private */ this._query = '';
     /** @private */ this._form = null;
@@ -95,19 +86,19 @@ class ArazzoGrantsPanel extends ArazzoElement {
     const seq = ++this._reqSeq;
     this._loading = true;
     this._error = null;
+    this._grants = [];
+    this._nextPageToken = null;
     this.renderBody();
     try {
-      // Grants are required; the scope names (for the scoped-action typeahead) are best-effort.
-      const [bindings, scopes] = await Promise.all([
-        loadAllBindings(client),
-        loadAllRules(client).catch(() => []),
-      ]);
+      // The first keyset page of grants, filtered server-side by q. The scope vocabulary for the authoring typeahead is
+      // fetched on demand when the editor opens / as the user types (loadScopeOptions), not loaded in full here.
+      const page = await client.listSecurityBindings({ q: this._query.trim() || undefined });
       if (seq !== this._reqSeq) return;
-      this._grants = bindings;
-      this._scopes = scopes;
+      this._grants = page.bindings;
+      this._nextPageToken = page.nextPageToken;
       this._loading = false;
       this.renderBody();
-      this.emit('loaded', { count: this._grants.length });
+      this.emit('loaded', { count: this._grants.length, hasMore: !!this._nextPageToken });
     } catch (err) {
       if (seq !== this._reqSeq) return;
       this._loading = false;
@@ -117,10 +108,45 @@ class ArazzoGrantsPanel extends ArazzoElement {
     }
   }
 
-  filtered() {
-    const q = this._query.trim().toLowerCase();
-    if (!q) return this._grants;
-    return this._grants.filter((g) => `${g.claimType} ${g.claimValue || ''} ${g.description || ''}`.toLowerCase().includes(q));
+  /** Fetch and append the next keyset page of grants (the "Load more" action), keeping the current search term. */
+  async loadMore() {
+    const client = this.client;
+    if (!client || !this._nextPageToken || this._loadingMore) return;
+    const seq = this._reqSeq;
+    this._loadingMore = true;
+    this.renderBody();
+    try {
+      const page = await client.listSecurityBindings({ q: this._query.trim() || undefined, pageToken: this._nextPageToken });
+      if (seq !== this._reqSeq) return;
+      this._grants.push(...page.bindings);
+      this._nextPageToken = page.nextPageToken;
+      this._loadingMore = false;
+      this.renderBody();
+    } catch (err) {
+      if (seq !== this._reqSeq) return;
+      this._loadingMore = false;
+      this._error = err.problem || { title: err.message };
+      this.renderBody();
+    }
+  }
+
+  /** Fetch a page of scopes matching `q` for the authoring typeahead, and refresh the datalist in place. Best-effort. */
+  async loadScopeOptions(q) {
+    const client = this.client;
+    if (!client) return;
+    try {
+      const page = await client.listSecurityRules({ q: q || undefined });
+      this._scopes = page.rules;
+      this.updateScopeOptions();
+    } catch {
+      /* the typeahead is a convenience; a failed lookup just leaves the previous options */
+    }
+  }
+
+  /** Refresh the shared scope datalist from the latest typeahead result (without re-rendering the editor / losing focus). */
+  updateScopeOptions() {
+    const dl = this.$('#scope-options');
+    if (dl) dl.innerHTML = this._scopes.map((s) => `<option value="${escapeHtml(s.name)}"></option>`).join('');
   }
 
   // ---- editor (modal dialog) --------------------------------------------------------------------
@@ -137,6 +163,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
     this._form = this.blankForm('create', null);
     this.renderEditor();
     this.$('dialog').showModal();
+    this.loadScopeOptions(''); // seed the scope typeahead with a first page of the vocabulary
   }
 
   openEdit(id) {
@@ -152,6 +179,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
     this._form = f;
     this.renderEditor();
     this.$('dialog').showModal();
+    this.loadScopeOptions(''); // seed the scope typeahead with a first page of the vocabulary
   }
 
   closeEditor() {
@@ -240,9 +268,8 @@ class ArazzoGrantsPanel extends ArazzoElement {
   }
 
   async reloadAndEmit() {
-    this._grants = await loadAllBindings(this.client);
-    this._error = null;
-    this.renderBody();
+    // Reload the first page under the current search term (a mutation may have added/removed a matching grant).
+    await this.load();
     this.emit('grants-changed', { grants: this._grants });
   }
 
@@ -260,6 +287,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
         .list { display: grid; }
         .grow-row { display: flex; align-items: baseline; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--_border); }
         .grow-row:last-child { border-bottom: none; }
+        .more-row { display: flex; justify-content: center; padding: 10px; border-top: 1px solid var(--_border); }
         .gmeta { flex: 1; min-width: 0; }
         .claim { font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
         .verbs { color: var(--_muted); font-size: 12px; margin-top: 3px; display: flex; gap: 12px; flex-wrap: wrap; }
@@ -310,7 +338,11 @@ class ArazzoGrantsPanel extends ArazzoElement {
       <datalist id="scope-options"></datalist>
     `;
     this.$('.new').addEventListener('click', () => this.openCreate());
-    this.$('.search').addEventListener('input', (e) => { this._query = e.target.value; this.renderBody(); });
+    this.$('.search').addEventListener('input', (e) => {
+      this._query = e.target.value;
+      clearTimeout(this._searchTimer);
+      this._searchTimer = setTimeout(() => this.load(), SEARCH_DEBOUNCE_MS);
+    });
     this.$('.cancel').addEventListener('click', () => this.closeEditor());
     this.$('.confirm').addEventListener('click', () => this.submitForm());
     this.$('dialog').addEventListener('close', () => { this._form = null; });
@@ -330,13 +362,12 @@ class ArazzoGrantsPanel extends ArazzoElement {
       list.innerHTML = '<div class="skl"></div><div class="skl"></div>';
       return;
     }
-    const items = this.filtered();
-    if (items.length === 0) {
-      list.innerHTML = `<div class="empty">${this._grants.length === 0 ? 'No grants defined.' : 'No grants match your search.'}</div>`;
+    if (this._grants.length === 0) {
+      list.innerHTML = `<div class="empty">${this._query.trim() ? `No grants match “${escapeHtml(this._query.trim())}”.` : 'No grants defined.'}</div>`;
       return;
     }
 
-    list.innerHTML = items.map((g) => `
+    const rows = this._grants.map((g) => `
       <div class="grow-row" part="row">
         <div class="gmeta">
           <span class="claim">${escapeHtml(g.claimType)}${g.claimValue ? '=' + escapeHtml(g.claimValue) : ''}</span>
@@ -347,8 +378,14 @@ class ArazzoGrantsPanel extends ArazzoElement {
           <button class="edit ghost" type="button" data-id="${escapeHtml(g.id)}">Edit</button>
           <button class="del ghost" type="button" data-id="${escapeHtml(g.id)}">Delete</button>` : ''}
       </div>`).join('');
+    const more = this._nextPageToken
+      ? `<div class="more-row"><button class="more ghost" type="button"${this._loadingMore ? ' disabled' : ''}>${this._loadingMore ? 'Loading…' : 'Load more'}</button></div>`
+      : '';
+    list.innerHTML = rows + more;
     this.$$('.edit').forEach((b) => b.addEventListener('click', () => this.openEdit(b.dataset.id)));
     this.$$('.del').forEach((b) => b.addEventListener('click', () => this.deleteGrant(b.dataset.id)));
+    const moreBtn = this.$('.more');
+    if (moreBtn) moreBtn.addEventListener('click', () => this.loadMore());
   }
 
   verbRowHtml(verb) {
@@ -416,7 +453,14 @@ class ArazzoGrantsPanel extends ArazzoElement {
       this.renderEditor();
     }));
 
-    // Scope typeahead: a datalist-backed input; selecting a known scope name adds a removable chip.
+    // Scope typeahead: as the user types, fetch matching scopes from the server (debounced) into the shared datalist, so
+    // the vocabulary scales without loading it all up front.
+    content.querySelectorAll('.scope-input').forEach((input) => input.addEventListener('input', () => {
+      clearTimeout(this._scopeTimer);
+      const q = input.value.trim();
+      this._scopeTimer = setTimeout(() => this.loadScopeOptions(q), SEARCH_DEBOUNCE_MS);
+    }));
+    // Selecting a known scope name (from the datalist) adds a removable chip.
     content.querySelectorAll('.scope-input').forEach((input) => input.addEventListener('change', () => {
       const name = input.value.trim();
       const verb = input.dataset.verb;
