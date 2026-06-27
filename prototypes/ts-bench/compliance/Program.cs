@@ -1,6 +1,6 @@
 // Self-contained, CI-runnable codegen-aware compliance harness for the corvus-ts TypeScript JSON Schema
-// engine. This is a faithful relocation of prototypes/ts-provider-spike/SuiteHarness.cs `Run(...)` out of the
-// feasibility spike: it walks every dialect (draft4/6/7/2019-09/2020-12) of the JSON-Schema-Test-Suite, and
+// engine. This is a faithful relocation of the (now-deleted) feasibility spike's SuiteHarness `Run(...)` out
+// of the spike: it walks every dialect (draft4/6/7/2019-09/2020-12) of the JSON-Schema-Test-Suite, and
 // for EACH test-group emits one TS module (`<name>.ts` with `export const evaluateRoot`) plus a manifest.json
 // recording { module, dialect, file, group, error, tests:[{ data, valid, desc }] } (data = the instance's raw
 // JSON source text). Errored groups record `error` + a null module. A Node runner (suite-runner.mjs)

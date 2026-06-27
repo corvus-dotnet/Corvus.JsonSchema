@@ -3,11 +3,7 @@
 // required/optional/nested object props and the enum literal-union. (Validation itself is covered by
 // validate-test.mjs + the suite; this proves the emitted *interface* gives correct typed access.)
 //
-// Run after generating person.json into out/:
-//   dotnet run --project TsProviderSpike.csproj -c Debug -- person.json out
-//   npx -y -p typescript tsc out/generated.ts out/corvus-runtime.ts provider-access.test.ts spike-globals.d.ts \
-//       --outDir prov-test --strict --target es2022 --module esnext --moduleResolution bundler
-//   node prov-test/provider-access.test.js
+// Codegen (person.json -> out/), transpile, and run are all driven by ../run-access.sh.
 import { evaluateRoot, type Person, type Status } from "./out/generated.js";
 
 let pass = 0;

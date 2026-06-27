@@ -1,10 +1,7 @@
 // PROVIDER REAL-OUTPUT test for the brand/format conversions the provider now emits (§5.3.1): a
 // well-known string format -> a branded type + a validating factory (mint only after the check); a
 // 64-bit integer format -> bigint. Run after generating formats.json into out-formats/:
-//   dotnet run --project TsProviderSpike.csproj -c Debug -- formats.json out-formats
-//   npx -y -p typescript tsc out-formats/generated.ts out-formats/corvus-runtime.ts formats-access.test.ts spike-globals.d.ts \
-//       --outDir prov-test-formats --strict --target es2022 --module esnext --moduleResolution bundler
-//   node prov-test-formats/formats-access.test.js
+//   Codegen (formats.json -> out-formats/), transpile, and run are all driven by ../run-access.sh.
 import { evaluateRoot, asId, asOwner, type Account, type Id } from "./out-formats/generated.js";
 
 let pass = 0;

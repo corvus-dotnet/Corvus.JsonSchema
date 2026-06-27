@@ -4,10 +4,9 @@ Self-contained, CI-runnable [JSON-Schema-Test-Suite](https://github.com/json-sch
 compliance runner for the **corvus-ts** TypeScript JSON Schema engine (the AOT TypeScript code generator
 in `src/Corvus.Text.Json.TypeScript.CodeGeneration`).
 
-This is the full-suite compliance runner **relocated out of the feasibility spike**
-(`prototypes/ts-provider-spike/SuiteHarness.cs` + `suite-runner.mjs`) into a standalone form so the spike can
-be deleted. It depends only on the **public** codegen libraries — nothing in the spike, nothing in the
-production CLI.
+This is the full-suite compliance runner, relocated out of the (now-deleted) feasibility spike into this
+standalone form (`Program.cs` / `ComplianceGenerator` + `suite-runner.mjs`). It depends only on the
+**public** codegen libraries — nothing in the production CLI.
 
 ## What it does
 

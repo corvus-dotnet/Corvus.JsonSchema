@@ -1,4 +1,0 @@
-<!-- Empty, on purpose: stops MSBuild walking up to the repo's strict StyleCop /
-     TreatWarningsAsErrors props so this throwaway feasibility spike builds clean. -->
-<Project>
-</Project>

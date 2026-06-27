@@ -3,11 +3,7 @@
 //   - plain `readonly T[]`, pure tuple `readonly [A,B,C]`, prefix+tail `readonly [A,...T[]]`
 //   - multi-dimensional tensor `readonly (readonly number[])[]`
 //   - pure map `Readonly<Record<string, T>>`
-// Run after generating arrays.json into out-arrays/:
-//   dotnet run --project TsProviderSpike.csproj -c Debug -- arrays.json out-arrays
-//   npx -y -p typescript tsc out-arrays/generated.ts out-arrays/corvus-runtime.ts arrays-access.test.ts spike-globals.d.ts \
-//       --outDir prov-test-arrays --strict --target es2022 --module esnext --moduleResolution bundler
-//   node prov-test-arrays/arrays-access.test.js
+// Codegen (arrays.json -> out-arrays/), transpile, and run are all driven by ../run-access.sh.
 import { evaluateRoot, type Container, type Scores } from "./out-arrays/generated.js";
 
 let pass = 0;

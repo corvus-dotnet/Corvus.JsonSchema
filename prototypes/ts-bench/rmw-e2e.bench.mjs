@@ -3,14 +3,14 @@
 // request round-trip (read -> validate -> mutate -> write). Median-of-7 ns/op (auto-calibrated), GC-pressure,
 // correctness-gated (every variant's output must structurally equal the native result before timing counts).
 //
-//   node --expose-gc rmw-e2e.bench.mjs
-//
-// (Generate+compile the module first — include spike-globals.d.ts so the format-validation deps
-//  (lossless-json / @js-temporal/polyfill / tr46, resolved at runtime) type-check cleanly:
-//    cd ../ts-provider-spike && dotnet run --project TsProviderSpike.csproj -c Debug -- bench-catalog.json out-catalog
-//    ../ts-bench/node_modules/.bin/tsc out-catalog/generated.ts out-catalog/corvus-runtime.ts spike-globals.d.ts \
-//        --outDir out-catalog-js --strict --target es2022 --module esnext --moduleResolution bundler --lib es2022,dom )
-import { produceCatalog, patchCatalog, buildCatalog, evaluateRoot } from "../ts-provider-spike/out-catalog-js/generated.js";
+// Generate the module first, then run — both are wired up by ./run-rmw-bench.sh:
+//    ./run-rmw-bench.sh
+// which builds the bowtie codegen worker (Release), generates the Catalog module for ./bench-catalog.json
+// into ./rmw-bench-gen/ (gen-rmw-bench.mjs drives the worker via NDJSON then esbuild-transpiles
+// generated.ts + corvus-runtime.ts — CreateDefault codegen, identical to the spike's old default mode),
+// and runs:
+//    node --expose-gc rmw-e2e.bench.mjs
+import { produceCatalog, patchCatalog, buildCatalog, evaluateRoot } from "./rmw-bench-gen/generated.js";
 import { produce as immerProduce } from "immer";
 import { PerformanceObserver } from "node:perf_hooks";
 

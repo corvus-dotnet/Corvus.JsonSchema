@@ -1,9 +1,6 @@
 // PROVIDER REAL-OUTPUT test for the immer-style draft (design §5.7): produce<T>(source, recipe) records
 // mutations on a typed Draft<T> and lowers the change-set to a Model C byte patch at arbitrary depth.
-//   dotnet run --project TsProviderSpike.csproj -c Debug -- profile.json out-profile
-//   <ts-bench tsc> out-profile/generated.ts out-profile/corvus-runtime.ts produce-access.test.ts spike-globals.d.ts \
-//       --outDir prov-test-produce --strict --target es2022 --module esnext --moduleResolution bundler --lib es2022,dom
-//   node prov-test-produce/produce-access.test.js
+//   Codegen (profile.json -> out-profile/), transpile, and run are all driven by ../run-access.sh.
 import { produceProfile } from "./out-profile/generated.js";
 
 const enc = new TextEncoder();

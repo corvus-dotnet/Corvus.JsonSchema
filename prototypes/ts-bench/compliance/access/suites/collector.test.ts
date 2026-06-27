@@ -1,9 +1,6 @@
 // Results-collector test (§15): detailed mode collects EVERY failure with correct, threaded instance +
 // keyword locations and no early return, while the boolean hot path is unchanged. Regenerate + run:
-//   dotnet run --project TsProviderSpike.csproj -c Debug -- person-collector.json out-coll
-//   <tsc> out-coll/generated.ts out-coll/corvus-runtime.ts collector.test.ts spike-globals.d.ts --outDir out-coll-js \
-//     --strict --target es2022 --module esnext --moduleResolution bundler --lib es2022,dom
-//   node out-coll-js/collector.test.js
+//   Codegen (person-collector.json -> out-coll/), transpile, and run are all driven by ../run-access.sh.
 import { evaluatePerson } from "./out-coll/generated.js";
 import { Ev, Results, toOutput } from "./out-coll/corvus-runtime.js";
 

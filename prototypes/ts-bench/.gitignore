@@ -1,5 +1,6 @@
 node_modules/
 bench-gen*/
+rmw-bench-gen/
 jsonschema-benchmark/
 dist/
 bowtie-work/

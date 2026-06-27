@@ -4,11 +4,7 @@
 // name-like content, string escapes, multibyte, pretty-print, prefix names, source-order, type
 // changes, special chars, multi-edit, no-op, undefined, throw-on-missing, BOM.
 //
-// Run after generating rmw.json into out-rmw/:
-//   dotnet run --project TsProviderSpike.csproj -c Debug -- rmw.json out-rmw
-//   <ts-bench tsc> out-rmw/generated.ts out-rmw/corvus-runtime.ts rmw-access.test.ts spike-globals.d.ts \
-//       --outDir prov-test-rmw --strict --target es2022 --module esnext --moduleResolution bundler --lib es2022,dom
-//   node prov-test-rmw/rmw-access.test.js
+// Codegen (rmw.json -> out-rmw/), transpile, and run are all driven by ../run-access.sh.
 import { patchSample, buildSample, type Sample } from "./out-rmw/generated.js";
 
 let pass = 0, fail = 0;

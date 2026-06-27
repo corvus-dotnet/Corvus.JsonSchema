@@ -1,8 +1,0 @@
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Shape",
-  "oneOf": [
-    { "title": "Circle", "type": "object", "properties": { "kind": { "const": "circle" }, "radius": { "type": "number" } }, "required": ["kind", "radius"] },
-    { "title": "Rectangle", "type": "object", "properties": { "kind": { "const": "rectangle" }, "width": { "type": "number" }, "height": { "type": "number" } }, "required": ["kind", "width", "height"] }
-  ]
-}

@@ -2,10 +2,7 @@
 // per-member guards (the V5 TryGetAs{Branch} analog) and matchX (the V5 Match() analog). Validate with
 // the emitted oneOf validator, then dispatch + read the narrowed branch through the emitted surface.
 // Run after generating union.json into out-union/:
-//   dotnet run --project TsProviderSpike.csproj -c Debug -- union.json out-union
-//   npx -y -p typescript tsc out-union/generated.ts out-union/corvus-runtime.ts union-access.test.ts spike-globals.d.ts \
-//       --outDir prov-test-union --strict --target es2022 --module esnext --moduleResolution bundler
-//   node prov-test-union/union-access.test.js
+//   Codegen (union.json -> out-union/), transpile, and run are all driven by ../run-access.sh.
 import { evaluateRoot, matchShape, isCircle, isRectangle, type Shape } from "./out-union/generated.js";
 
 let pass = 0;

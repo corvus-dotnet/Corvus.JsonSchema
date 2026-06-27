@@ -7,8 +7,7 @@ validating factories, and the results collector. This is **distinct from validat
 compliance** (`../`, driven off the JSON-Schema-Test-Suite): these suites exercise *how you
 consume a value through the emitted types*, not whether validation is correct.
 
-They were relocated here from the (now removable) feasibility spike
-`prototypes/ts-provider-spike/` so they run in CI.
+They were relocated here from the (now-deleted) feasibility spike so they run in CI.
 
 ## Layout
 

@@ -1,8 +1,5 @@
 // Tuple/list array-ops test for the reshaped patch `arrays` surface (strongly typed per element).
-//   dotnet run --project TsProviderSpike.csproj -c Debug -- shapes.json out-shapes
-//   <ts-bench tsc> out-shapes/generated.ts out-shapes/corvus-runtime.ts shapes-access.test.ts spike-globals.d.ts \
-//       --outDir prov-test-shapes --strict --target es2022 --module esnext --moduleResolution bundler --lib es2022,dom
-//   node prov-test-shapes/shapes-access.test.js
+//   Codegen (shapes.json -> out-shapes/), transpile, and run are all driven by ../run-access.sh.
 import { patchShapes } from "./out-shapes/generated.js";
 
 const enc = new TextEncoder();

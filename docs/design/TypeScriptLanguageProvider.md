@@ -1293,12 +1293,21 @@ workload ever needs them, both widening Model C's lead rather than changing the 
 These are recorded as a deliberate future path; the current optimised Model C (across‑the‑board wire
 win + 100×–5900×/edit incremental + ~10–20× less GC) is the point at which this comparison wraps.
 
+> **Note (spike removed):** the feasibility spike (a standalone prototype project formerly under
+> `prototypes/`) referenced throughout §13.10–13.15 has been **deleted** now that its purpose is served.
+> Its harnesses were graduated into standalone, spike-free, CI-runnable form under
+> `prototypes/ts-bench/compliance/` (the
+> full-suite JSON-Schema-Test-Suite validation harness, `run-compliance.sh`) and
+> `prototypes/ts-bench/compliance/access/` (the generated-accessor "access" suites, `run-access.sh`); the
+> Model C RMW benchmark lives at `prototypes/ts-bench/rmw-e2e.bench.mjs` (`run-rmw-bench.sh`). The sections
+> below are retained as the historical validation record; "the spike" now means that deleted prototype.
+
 ### 13.10 Provider integration spike (validated with running code)
 
 The runtime model (§13.1–13.9) was proven by benchmark; the *provider‑side* premise of §7 — that a new
 C# `ILanguageProvider` plugs into the existing language‑neutral core and emits TypeScript end‑to‑end —
-was only asserted from code‑reading. It is now **validated with running code**:
-`prototypes/ts-provider-spike/` is a minimal real `TypeScriptLanguageProviderSpike : ILanguageProvider`
+was only asserted from code‑reading. It is now **validated with running code**: the spike was a minimal
+real `TypeScriptLanguageProviderSpike : ILanguageProvider`
 that references *only* the core (`src-v4/Corvus.Json.CodeGeneration`) + the 2020‑12 dialect, bootstraps
 `JsonSchemaTypeBuilder` exactly as `GenerationDriverV5` does, and calls `GenerateCodeUsing(provider, …)`
 on a real schema. It compiles and runs, emitting an `export interface` per type. Confirmed against the
@@ -1324,8 +1333,8 @@ surprise — the seam itself is proven. This is the concrete starting point for 
 ### 13.11 Validator emission spike (validated end-to-end)
 
 The biggest pre-implementation unknown — *can a TS provider emit a working validator from the core,
-and does it compile + run correctly?* — is now **proven end-to-end** (`prototypes/ts-provider-spike/`,
-extended; `TypeScriptLanguageProviderSpike` + `validate-test.mjs`). The provider walks the core type
+and does it compile + run correctly?* — is now **proven end-to-end** (the spike, extended;
+`TypeScriptLanguageProviderSpike` + `validate-test.mjs`). The provider walks the core type
 graph `StandaloneEvaluator`-style (one `evaluate{Type}` per subschema, recursing via
 `PropertyDeclaration.ReducedPropertyType`), reads the constraint model, and emits real AOT TypeScript
 validators. For a schema exercising `type` / `required` / nested `properties` / `minLength` / `pattern`
@@ -1391,7 +1400,7 @@ spot where the recorder cost shows, and there native is already competitive anyw
 ### 13.13 Handler-framework validator + extensibility (validated)
 
 Per review (§13.11), the production validator drives emission through the **real core handler registry**,
-not a hard-coded walk-the-model — now proven (`prototypes/ts-provider-spike/`, evolved). The provider
+not a hard-coded walk-the-model — now proven (the spike, evolved). The provider
 holds a `KeywordValidationHandlerRegistry`; `RegisterValidationHandlers` populates it; each
 `evaluate{Type}` body is composed purely from the handlers the registry **dispatches** for that type's
 keywords (`TryGetHandlersFor`, ordered by `ValidationHandlerPriority`). Handlers implement the core
@@ -1444,8 +1453,9 @@ graduate the prototype to a real `Corvus.Text.Json.TypeScript.CodeGeneration` pr
 
 ### 13.15 Compliance harness (built; 97% on the supported keyword subset)
 
-The codegen-aware compliance harness (§8) is built (`prototypes/ts-provider-spike/` `--suite` mode +
-`SuiteHarness.cs` + `suite-runner.mjs`): for each JSON-Schema-Test-Suite (draft 2020-12) schema-group in
+The codegen-aware compliance harness (§8) is built (originally the spike's `--suite` mode +
+`SuiteHarness.cs` + `suite-runner.mjs`; now graduated to `prototypes/ts-bench/compliance/`): for each
+JSON-Schema-Test-Suite (draft 2020-12) schema-group in
 the targeted keyword files it runs the provider -> emits a TS module per group -> compiles all under
 `tsc --strict` -> runs every case in Node and asserts the boolean expectation, tallying per keyword.
 
@@ -1894,7 +1904,7 @@ Severity = impact on a production‑quality engine. Effort = S / M / L.
 |---|-----|-----|---------|-----|-----|
 | G1 | **`@corvus/json-runtime` as an npm package** | `corvus-runtime.ts` is re‑emitted source (the examples share one copy by hand) | a real publishable ESM package (own `package.json`, `exports`, `.d.ts`, tree‑shakeable, peer deps lossless‑json/tr46/temporal); generated modules `import` from it | High | M |
 | G2 | **CLI `Options` wiring** | only `AlwaysAssertFormat`; `outputPath`/`codeGenerationMode`/format‑mode/naming/file options ignored or hard‑coded | wire the full options surface (§7.2) from the CLI config | Med | S |
-| G3 | **Compliance harness in CI** | lives only in `prototypes/ts-provider-spike` (SuiteHarness + suite‑runner.mjs) | a graduated `tests/` project that runs the suite (all 5 dialects) in CI with the exclusion model | High | M‑L |
+| G3 | **Compliance harness in CI** | graduated out of the spike into `prototypes/ts-bench/compliance/` (`run-compliance.sh`); not yet a `tests/` project | a graduated `tests/` project that runs the suite (all 5 dialects) in CI with the exclusion model | High | M‑L |
 | G4 | **Bowtie TS harness** | none | a Node/TS harness speaking Bowtie's stdio protocol for cross‑implementation conformance (§8) | Med | M |
 | G5 | **Sustained‑load benchmark, permanent** | one‑off in `prototypes/ts-bench` | a permanent throughput‑under‑GC‑pressure benchmark (validation + RMW) | Med | M |
 | G6 | **Consumer build story** | minimal example tsconfig; runtime inline | documented tsconfig/bundler guidance, `.d.ts`/source‑map story, consumption pattern (once G1 lands) | Med | S |

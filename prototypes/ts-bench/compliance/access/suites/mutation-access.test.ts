@@ -2,10 +2,7 @@
 // records mutations on a typed Draft<T> and lowers them to a Model C byte patch (unchanged bytes copied
 // verbatim); `recordChanges` exposes the same change-set as RFC 6902 JSON Patch.
 // Run after generating mutation.json into out-mutation/:
-//   dotnet run --project TsProviderSpike.csproj -c Debug -- mutation.json out-mutation
-//   <tsc> out-mutation/generated.ts out-mutation/corvus-runtime.ts mutation-access.test.ts spike-globals.d.ts \
-//       --outDir prov-test-mutation --strict --target es2022 --module esnext --moduleResolution bundler --lib es2022,dom
-//   node prov-test-mutation/mutation-access.test.js
+//   Codegen (mutation.json -> out-mutation/), transpile, and run are all driven by ../run-access.sh.
 import { produce, recordChanges } from "./out-mutation/corvus-runtime.js";
 import { type Doc } from "./out-mutation/generated.js";
 
