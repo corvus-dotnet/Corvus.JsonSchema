@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Widget",
+  "description": "A widget carrying assorted annotations.\nSecond line of the description.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "title": "Identifier",
+      "description": "The unique id of the widget.",
+      "type": "string",
+      "readOnly": true,
+      "examples": ["abc-123", { "nested": "value" }]
+    },
+    "legacyCode": {
+      "description": "An old field. Avoid the */ terminator here.",
+      "type": "string",
+      "deprecated": true
+    },
+    "secret": {
+      "title": "Write-only secret",
+      "type": "string",
+      "writeOnly": true
+    },
+    "plain": {
+      "type": "integer"
+    }
+  },
+  "required": ["id"]
+}

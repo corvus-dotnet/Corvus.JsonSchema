@@ -44,6 +44,7 @@ const SUITE_TABLE = [
   { test: "union-access.test.ts",    schema: "union.json",           importDir: "out-union" },
   { test: "collector.test.ts",       schema: "person-collector.json", importDir: "out-coll" },
   { test: "provider-access.test.ts", schema: "person.json",          importDir: "out" },
+  { test: "jsdoc-access.test.ts",    schema: "jsdoc.json",           importDir: "out-jsdoc" },
 ];
 
 // ----- long-running codegen worker (one process for the whole run; same protocol as bowtie-harness.mjs) -----
@@ -108,6 +109,10 @@ async function main() {
     for (const name of ["corvus-runtime", "generated"]) {
       writeFileSync(join(importTarget, name + ".js"), transpile(join(genDir, name + ".ts")));
     }
+
+    // Also place the RAW generated.ts in the import dir (esbuild strips comments from the .js, so a JSDoc
+    // text-assertion suite — see jsdoc-access.test.ts — reads the .ts to see the emitted /** ... */ blocks).
+    writeFileSync(join(importTarget, "generated.ts.txt"), readFileSync(join(genDir, "generated.ts"), "utf8"));
     const testJs = join(suiteDir, s.test.replace(/\.ts$/, ".js"));
     writeFileSync(testJs, transpile(join(SUITES, s.test)));
 

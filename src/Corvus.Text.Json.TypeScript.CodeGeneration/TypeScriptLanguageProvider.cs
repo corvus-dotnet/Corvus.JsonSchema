@@ -488,9 +488,13 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 
     private static void EmitInterface(StringBuilder sb, TypeDeclaration td)
     {
+        EmitJsDoc(sb, td.LocatedSchema.Schema, string.Empty);
         sb.Append("export interface ").Append(FinalName(td)).Append(" {\n");
         foreach (PropertyDeclaration p in td.PropertyDeclarations)
         {
+            // The per-property JSDoc comes from the property's OWN subschema (before reduction) so it reflects
+            // the annotations authored at the property site, not those of a shared/$ref'd target type.
+            EmitJsDoc(sb, p.UnreducedPropertyType.LocatedSchema.Schema, "  ");
             string opt = p.RequiredOrOptional == RequiredOrOptional.Optional ? "?" : string.Empty;
             sb.Append("  readonly ").Append(Ident(p.JsonPropertyName)).Append(opt).Append(": ").Append(TsTypeRef(p.ReducedPropertyType)).Append(";\n");
         }
@@ -1128,6 +1132,79 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         }
 
         sb.Append(" }\n");
+    }
+
+    // The TS-surface analog of EmitAnnotations: a `/** ... */` JSDoc block emitted into the generated module
+    // (always on, comment-only — the shared runtime and validators are untouched) from the SAME annotation
+    // keywords EmitAnnotations reads off the schema (title/description for the body; deprecated/examples/
+    // readOnly/writeOnly as tags). `indent` is the leading whitespace of the declaration the block sits above
+    // (string.Empty for a top-level interface, "  " for a property), so the comment matches the file's style.
+    private static void EmitJsDoc(StringBuilder sb, JsonElement schema, string indent)
+    {
+        if (schema.ValueKind != JsonValueKind.Object)
+        {
+            return;
+        }
+
+        var lines = new List<string>();
+
+        if (schema.TryGetProperty("title", out JsonElement title) && title.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(title.GetString()))
+        {
+            lines.Add(title.GetString()!);
+        }
+
+        if (schema.TryGetProperty("description", out JsonElement description) && description.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(description.GetString()))
+        {
+            lines.Add(description.GetString()!);
+        }
+
+        if (schema.TryGetProperty("readOnly", out JsonElement readOnly) && readOnly.ValueKind == JsonValueKind.True)
+        {
+            lines.Add("@readonly");
+        }
+
+        if (schema.TryGetProperty("writeOnly", out JsonElement writeOnly) && writeOnly.ValueKind == JsonValueKind.True)
+        {
+            lines.Add("@writeonly");
+        }
+
+        if (schema.TryGetProperty("deprecated", out JsonElement deprecated) && deprecated.ValueKind == JsonValueKind.True)
+        {
+            lines.Add("@deprecated");
+        }
+
+        if (schema.TryGetProperty("examples", out JsonElement examples) && examples.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement example in examples.EnumerateArray())
+            {
+                // One @example per entry, the value as compact (single-line) JSON; GetRawText() preserves the
+                // authored literal, and JsonDocument re-parse strips the whitespace a multi-line literal carries.
+                using JsonDocument compact = JsonDocument.Parse(example.GetRawText());
+                lines.Add("@example " + JsonSerializer.Serialize(compact.RootElement));
+            }
+        }
+
+        if (lines.Count == 0)
+        {
+            return;
+        }
+
+        sb.Append(indent).Append("/**\n");
+        foreach (string line in lines)
+        {
+            // Neutralise any `*/` (would close the block early) and normalise CR/CRLF to LF, then split so every
+            // physical line of a multi-line title/description/example becomes its own ` * ` continuation line.
+            string sanitised = line
+                .Replace("*/", "* /", StringComparison.Ordinal)
+                .Replace("\r\n", "\n", StringComparison.Ordinal)
+                .Replace('\r', '\n');
+            foreach (string physical in sanitised.Split('\n'))
+            {
+                sb.Append(indent).Append(" * ").Append(physical).Append('\n');
+            }
+        }
+
+        sb.Append(indent).Append(" */\n");
     }
 
     private static string Pascal(string value)
