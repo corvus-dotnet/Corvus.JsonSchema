@@ -1,16 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Pragmatic migration of the TS code-generation spike into the production layout (design §7).
-       Targets net9/net10 (Cli.Core), NOT the netstandard2.0 Roslyn source generator (§7.6). Builds
-       warning-clean; full StyleCop/XML-doc polish is a tracked follow-up. -->
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <!-- Migration of the TS code-generation spike into the production layout (design §7). This is a SHIPPING
+       library, so it takes the same StyleCop/Roslynator/Endjin treatment as its src/ siblings (e.g. Cli.Core).
+       Targets net9/net10 (Cli.Core), NOT the netstandard2.0 Roslyn source generator (§7.6). -->
   <PropertyGroup>
     <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>preview</LangVersion>
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);NU1504;CS1591;SA1210;SA1514;SA1509;SA1513;SA1508;SA1000;SA1028;SA1400;SA1511;SA1507;RCS1251</NoWarn>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
   </ItemGroup>
 </Project>

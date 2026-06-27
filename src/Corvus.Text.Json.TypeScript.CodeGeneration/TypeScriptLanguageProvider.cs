@@ -1,3 +1,7 @@
+// <copyright file="TypeScriptLanguageProvider.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
@@ -7,12 +11,20 @@ using Corvus.Json.CodeGeneration;
 
 namespace Corvus.Text.Json.TypeScript.CodeGeneration;
 
-// Phase 0 provider: idiomatic type surface (real names + built-in scalar mapping + property
-// type-references + named enum unions) on top of registry-driven, extensible validators (§13.13).
-//
-// Emission per type: objects -> `interface`; enums -> `type X = a | b`; scalars/arrays -> no type
-// declaration (referenced inline as the primitive / element type). EVERY type still gets an
-// `evaluate{Name}` validator composed from the core handler registry, so recursion always resolves.
+/// <summary>
+/// A language provider that emits idiomatic TypeScript type surfaces and validators from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Phase 0 provider: idiomatic type surface (real names + built-in scalar mapping + property
+/// type-references + named enum unions) on top of registry-driven, extensible validators (§13.13).
+/// </para>
+/// <para>
+/// Emission per type: objects -> <c>interface</c>; enums -> <c>type X = a | b</c>; scalars/arrays -> no type
+/// declaration (referenced inline as the primitive / element type). EVERY type still gets an
+/// <c>evaluate{Name}</c> validator composed from the core handler registry, so recursion always resolves.
+/// </para>
+/// </remarks>
 public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 {
     private const string TsFinalKey = "Ts_FinalName";
@@ -891,9 +903,13 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     // ("@corvus/json-runtime") means import the installed package and DON'T re-emit it.
     private string runtimeModuleSpecifier = "./corvus-runtime.js";
 
-    // The shared runtime module (@corvus/json-runtime in production): emitted ONCE, imported by every
-    // generated module. Assembled from the helper blocks with each top-level declaration exported, and
-    // the third-party imports (lossless-json for source-text numbers, Temporal + tr46 for formats) at top.
+    /// <summary>
+    /// Gets the shared runtime module source (<c>@corvus/json-runtime</c> in production): emitted ONCE,
+    /// imported by every generated module. Assembled from the helper blocks with each top-level declaration
+    /// exported, and the third-party imports (lossless-json for source-text numbers, Temporal + tr46 for
+    /// formats) at the top.
+    /// </summary>
+    /// <returns>The TypeScript source of the shared runtime module.</returns>
     public static string RuntimeModuleSource()
     {
         string body = NumericRuntime + KindRuntime + DeepEqual + ResultsRuntime + OutputRuntime + EvRuntime + FormatRuntime + BrandRuntime + MutationRuntime + RmwRuntime;
@@ -911,10 +927,17 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
                "import tr46 from \"tr46\";\n\n" + body;
     }
 
-    // A stable 1-arg entry point for the generated module, aliasing the root type's validator. Call AFTER
-    // GenerateCodeFor (names are assigned, and the module's identifiers recorded). The entry name is
-    // RESERVED against every emitted identifier and renamed around any collision (validate, validate2, ...);
-    // it is also emitted as the module `default` so consumers can import it without depending on the name.
+    /// <summary>
+    /// Emits a stable 1-arg entry point for the generated module, aliasing the root type's validator.
+    /// </summary>
+    /// <param name="rootType">The root type whose validator the entry point aliases.</param>
+    /// <returns>The TypeScript source declaring the root entry point and the module default export.</returns>
+    /// <remarks>
+    /// Call AFTER <see cref="GenerateCodeFor(IEnumerable{TypeDeclaration}, CancellationToken)"/> (names are
+    /// assigned, and the module's identifiers recorded). The entry name is RESERVED against every emitted
+    /// identifier and renamed around any collision (validate, validate2, ...); it is also emitted as the
+    /// module <c>default</c> so consumers can import it without depending on the name.
+    /// </remarks>
     public string RootEvaluatorExport(TypeDeclaration rootType)
     {
         TypeDeclaration reduced = rootType.ReducedTypeDeclaration().ReducedType;
@@ -934,6 +957,10 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         return $"\nexport const {entry} = (v: unknown, results?: Results): boolean => evaluate{rootName}(v, fresh(), \"\", \"\", results ?? null);\nexport default {entry};\n";
     }
 
+    /// <summary>
+    /// Creates a provider with the default validation handlers registered (format left as an annotation).
+    /// </summary>
+    /// <returns>A configured <see cref="TypeScriptLanguageProvider"/>.</returns>
     public static TypeScriptLanguageProvider CreateDefault()
     {
         var p = new TypeScriptLanguageProvider();
@@ -948,8 +975,12 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         return p;
     }
 
-    // Like CreateDefault, but asserts `format` (the optional/format suite). The default leaves format as
-    // an annotation (the 2020-12 default), which is why top-level format.json expects everything valid.
+    /// <summary>
+    /// Creates a provider like <see cref="CreateDefault"/>, but asserting <c>format</c> (the optional/format
+    /// suite). The default leaves format as an annotation (the 2020-12 default), which is why top-level
+    /// format.json expects everything valid.
+    /// </summary>
+    /// <returns>A configured <see cref="TypeScriptLanguageProvider"/> that asserts <c>format</c>.</returns>
     public static TypeScriptLanguageProvider CreateWithFormatAssertion()
     {
         TypeScriptLanguageProvider p = CreateDefault();
@@ -957,11 +988,18 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         return p;
     }
 
-    // Options for the TypeScript provider (driver entry point; design §7.2). Pragmatic minimal set —
-    // the full Options surface (runtime module specifier, emitModel, indentWidth, ...) is a follow-up.
+    /// <summary>
+    /// Options for the TypeScript provider (driver entry point; design §7.2).
+    /// </summary>
+    /// <param name="AlwaysAssertFormat">Whether the provider asserts <c>format</c> rather than treating it as an annotation.</param>
+    /// <param name="RuntimeModuleSpecifier">Where generated modules import the shared runtime from.</param>
     public sealed record Options(bool AlwaysAssertFormat = false, string RuntimeModuleSpecifier = "./corvus-runtime.js");
 
-    // The driver-facing entry point, mirroring CSharpLanguageProvider.DefaultWithOptions.
+    /// <summary>
+    /// The driver-facing entry point, mirroring <c>CSharpLanguageProvider.DefaultWithOptions</c>.
+    /// </summary>
+    /// <param name="options">The options configuring the provider.</param>
+    /// <returns>A configured <see cref="TypeScriptLanguageProvider"/>.</returns>
     public static TypeScriptLanguageProvider DefaultWithOptions(Options options)
     {
         TypeScriptLanguageProvider provider = options.AlwaysAssertFormat ? CreateWithFormatAssertion() : CreateDefault();
@@ -969,41 +1007,53 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         return provider;
     }
 
+    /// <inheritdoc/>
     public ILanguageProvider RegisterValidationHandlers(params IKeywordValidationHandler[] handlers)
     {
         this.validationHandlers.RegisterValidationHandlers(handlers);
         return this;
     }
 
+    /// <inheritdoc/>
     public ILanguageProvider RegisterCodeFileBuilders(params ICodeFileBuilder[] builders) => this;
 
+    /// <inheritdoc/>
     public ILanguageProvider RegisterNameHeuristics(params INameHeuristic[] heuristics) => this;
 
+    /// <inheritdoc/>
     public bool TryGetValidationHandlersFor(IKeyword keyword, [NotNullWhen(true)] out IReadOnlyCollection<IKeywordValidationHandler>? validationHandlers)
         => this.validationHandlers.TryGetHandlersFor(keyword, out validationHandlers);
 
+    /// <inheritdoc/>
     public bool ShouldGenerate(TypeDeclaration type) => true;
 
+    /// <inheritdoc/>
     public void IdentifyNonGeneratedType(TypeDeclaration typeDeclaration, CancellationToken cancellationToken)
     {
     }
 
+    /// <inheritdoc/>
     public void SetParent(TypeDeclaration child, TypeDeclaration? parent)
     {
     }
 
+    /// <inheritdoc/>
     public TypeDeclaration? GetParent(TypeDeclaration child) => null;
 
+    /// <inheritdoc/>
     public IReadOnlyCollection<TypeDeclaration> GetChildren(TypeDeclaration typeDeclaration) => [];
 
+    /// <inheritdoc/>
     public void SetNamesBeforeSubschema(TypeDeclaration typeDeclaration, string fallbackName, CancellationToken cancellationToken)
     {
     }
 
+    /// <inheritdoc/>
     public void SetNamesAfterSubschema(TypeDeclaration typeDeclaration, IEnumerable<TypeDeclaration> existingTypeDeclarations, CancellationToken cancellationToken)
     {
     }
 
+    /// <inheritdoc/>
     public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeFor(IEnumerable<TypeDeclaration> typeDeclarations, CancellationToken cancellationToken)
     {
         List<TypeDeclaration> types = typeDeclarations.ToList();
@@ -1252,6 +1302,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         }
 
         string name = FinalName(td);
+
         // build = bytes from a full typed T at the native serialiser's floor: one JSON.stringify + one UTF-8
         // encode (caller key order). Deterministic/canonical byte output is a SEPARATE opt-in method (a future
         // full recursive canonical-write, mirroring the C# canonicaliser) -- see design doc roadmap, not here.
