@@ -10,6 +10,7 @@ playwright-report/
 blob-report/
 .playwright/
 .cache/
+recordings-raw/
 
 # Coverage + misc build output
 coverage/
