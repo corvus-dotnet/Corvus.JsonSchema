@@ -931,7 +931,10 @@ record** materialized at creation (§15.2) and the authoritative source thereaft
   persists as plain JSON like every other entity. Administration is over unforgeable stamped identity end to end;
   the management surface cannot widen entitlement past what the shell stamps.
 
-### 15.4 The reverse administration index (approver inbox) — *in progress*
+### 15.4 The reverse administration index (approver inbox)
+
+> **Status.** The index itself is **implemented across all ten backends** (InMemory + the nine persistent stores),
+> container-verified on the shared conformance suite. The approver-inbox endpoint that consumes it (§16.5) is the next step.
 
 The forward record answers *"who administers base id X?"*. The **approver inbox** (§16.5) needs the reverse: *"which
 workflows does this caller administer?"* — so an approver sees every pending access request they can act on, without
