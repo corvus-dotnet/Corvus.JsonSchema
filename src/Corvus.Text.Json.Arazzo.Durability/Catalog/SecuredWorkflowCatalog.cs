@@ -117,6 +117,18 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
 
         ParsedJsonDocument<CatalogVersion> version = await this.catalog.AddAsync(
             baseWorkflowId, packageUtf8, new CatalogMetadata(owner, this.actor, tags, effectiveTags), cancellationToken).ConfigureAwait(false);
+
+        // Establish administration explicitly at creation (§15.2): version 1 materializes the per-base-id administrator
+        // record with the creator's stamped identity as the first administrator, so administration is ALWAYS the explicit
+        // store record — never an implicit version-1 derivation. The creator is therefore a normal, removable administrator
+        // (a co-administrator can later remove them, e.g. when they leave the organisation), and the reverse administration
+        // index that powers the approver inbox has an entry for every workflow from birth. Only when an administrator store
+        // is configured; otherwise administration is the single, immutable version-1 identity (§15).
+        if (this.administrators is { } adminStore && version.RootElement.Ref.VersionNumber == 1)
+        {
+            await EstablishAdministrationAsync(adminStore, baseWorkflowId, version.RootElement.SecurityTagsValue, this.actor, cancellationToken).ConfigureAwait(false);
+        }
+
         activity?.SetTag(ArazzoTelemetry.VersionNumberTag, version.RootElement.Ref.VersionNumber);
         activity?.SetTag(ArazzoTelemetry.WorkflowIdTag, version.RootElement.Ref.WorkflowId);
         activity?.SetTag(ArazzoTelemetry.OutcomeTag, "added");
@@ -298,15 +310,14 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         if (this.administrators is { } store)
         {
-            ParsedJsonDocument<WorkflowAdministrators>? record = await store.GetAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
-            if (record is not null)
-            {
-                return record;
-            }
+            // Administration is governed by the explicit store record, materialized at creation (§15.2) — return it, or
+            // null when the base id is unknown (or a legacy workflow predating explicit establishment). There is NO
+            // implicit version-1 fallback here: when a store is configured, administration is ONLY the explicit grants.
+            return await store.GetAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
         }
 
-        // No explicit record: administration defaults to version 1's administrator identity. Materialize that as a
-        // synthetic (display-only) record so callers project administration uniformly. An unknown base id yields null.
+        // No administrator store configured: administration is the single, immutable version-1 identity (§15). Surface it
+        // as a synthetic, display-only record so callers project administration uniformly. An unknown base id yields null.
         using ParsedJsonDocument<CatalogVersion>? firstVersion = await this.catalog.GetAsync(baseWorkflowId, 1, cancellationToken).ConfigureAwait(false);
         if (firstVersion is null)
         {
@@ -317,6 +328,25 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         using JsonWorkspace workspace = JsonWorkspace.Create();
         AdministratorIdentity owner = WorkflowAdministrators.BuildIdentity(workspace, ownerIdentity, default, hasKind: false, default, hasLabel: false);
         return WorkflowAdministratorsSerialization.SerializeNewDoc(baseWorkflowId, [owner], this.actor, default, WorkflowEtag.None);
+    }
+
+    // Materializes the initial administrator record for a freshly published version 1 (§15.2): the creator's stamped
+    // identity (the version's tags with sys:workflow removed) becomes the sole, explicit, removable administrator. The
+    // identity is built in an unrented workspace held across the PutAsync await. A concurrent establish (another node
+    // publishing the same base id's version 1) loses the etag-None race harmlessly — administration is already established.
+    private static async ValueTask EstablishAdministrationAsync(IWorkflowAdministratorStore store, string baseWorkflowId, SecurityTagSet versionTags, string actor, CancellationToken cancellationToken)
+    {
+        SecurityTagSet ownerIdentity = WorkflowIdentity.AdministratorIdentity(versionTags);
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        AdministratorIdentity owner = WorkflowAdministrators.BuildIdentity(workspace, ownerIdentity, default, hasKind: false, default, hasLabel: false);
+        try
+        {
+            (await store.PutAsync(baseWorkflowId, [owner], WorkflowEtag.None, actor, cancellationToken).ConfigureAwait(false)).Dispose();
+        }
+        catch (WorkflowAdministrationConflictException)
+        {
+            // Already established (idempotent re-publish / concurrent version 1) — administration exists, nothing to do.
+        }
     }
 
     /// <inheritdoc/>

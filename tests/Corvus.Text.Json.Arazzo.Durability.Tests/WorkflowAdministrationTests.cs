@@ -96,16 +96,44 @@ public sealed class WorkflowAdministrationTests
     }
 
     [TestMethod]
-    public async Task GetAdministrators_falls_back_to_the_version_1_identity()
+    public async Task The_creator_is_an_explicit_administrator_from_creation()
     {
         SecuredWorkflowCatalog catalog = NewCatalog(out _);
         await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
 
-        // No explicit record has been materialized — administration defaults to version 1's stamped identity.
+        // Publishing version 1 materializes an EXPLICIT administrator record (§15.2) — administration is the explicit
+        // store record, never an implicit version-1 derivation. The creator (acme) is the sole administrator, and the
+        // record carries a real (non-None) etag because it physically exists.
         using ParsedJsonDocument<WorkflowAdministrators>? admins = await catalog.GetAdministratorsAsync("flow", default);
         admins.ShouldNotBeNull();
         admins!.RootElement.AdministratorCount.ShouldBe(1);
         admins.RootElement.IsAdministeredBy(Acme).ShouldBeTrue();
+        admins.RootElement.EtagValue.IsNone.ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task The_creator_can_be_removed_once_a_co_administrator_exists()
+    {
+        SecuredWorkflowCatalog catalog = NewCatalog(out _);
+
+        // acme creates the workflow (becoming the explicit creator-administrator) and adds globex as a co-administrator.
+        await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
+        (await AddAdministratorAsync(catalog, "flow", Globex, caller: Acme)).Dispose();
+
+        // The creator is a normal, removable administrator: globex removes acme (e.g. acme has left the organisation).
+        using (ParsedJsonDocument<WorkflowAdministrators> admins = await catalog.RemoveAdministratorAsync("flow", SecurityIdentityDigest.Compute(Acme)!, callerIdentity: Globex, default))
+        {
+            admins.RootElement.AdministratorCount.ShouldBe(1);
+            admins.RootElement.IsAdministeredBy(Globex).ShouldBeTrue();
+            admins.RootElement.IsAdministeredBy(Acme).ShouldBeFalse();
+        }
+
+        // The creator can no longer administer or publish; administration is purely the explicit grants that remain.
+        using ParsedJsonDocument<WorkflowAdministrators>? after = await catalog.GetAdministratorsAsync("flow", default);
+        after.ShouldNotBeNull();
+        after!.RootElement.IsAdministeredBy(Acme).ShouldBeFalse();
+        await Should.ThrowAsync<WorkflowAdministrationException>(async () =>
+            await catalog.AddAsync(Package("flow"), Owner, default, Acme, default));
     }
 
     [TestMethod]

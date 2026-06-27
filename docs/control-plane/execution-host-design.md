@@ -887,10 +887,17 @@ and freely editable. The authority is the **administrator**, and it is a *securi
 
 ### 15.2 Establishment and the immutable workflow identity
 
-- **Version 1 establishes administration.** A base id's first version is stamped (`WorkflowIdentity`) with the
-  submitter's identity, and with the **immutable workflow identity** `sys:workflow=<baseWorkflowId>` that its runs
-  inherit — the identity a credential grant names. The administrator identity is the stamped set with `sys:workflow`
-  removed (`WorkflowIdentity.AdministratorIdentity`).
+- **Version 1 establishes administration — by materializing an explicit record.** A base id's first version is stamped
+  (`WorkflowIdentity`) with the submitter's identity, and with the **immutable workflow identity**
+  `sys:workflow=<baseWorkflowId>` that its runs inherit — the identity a credential grant names. The administrator
+  identity is the stamped set with `sys:workflow` removed (`WorkflowIdentity.AdministratorIdentity`). When an
+  administrator store is configured, publishing version 1 **eagerly writes** the per-base-id administrator record with
+  that identity as the sole, **explicit** administrator (`SecuredWorkflowCatalog.AddAsync` →
+  `IWorkflowAdministratorStore.PutAsync`). Administration is therefore **only ever the explicit store record** — never an
+  implicit version-1 derivation — so the creator is a *normal, removable* administrator (a co-administrator can later
+  remove them, e.g. when they leave the organisation), and the reverse administration index (§15.4) has an entry for
+  every workflow from birth. (With **no** administrator store configured, administration is the single, immutable
+  version-1 identity — surfaced as a synthetic display-only record — and the management operations are unavailable.)
 - **Publishing a further version requires being an administrator.** `SecuredWorkflowCatalog.AddAsync` refuses
   (`WorkflowAdministrationException` → 409) a submitter whose stamped identity is not a member of the base id's
   administrator set — so `sys:workflow` cannot be squatted. Membership is order-independent set-equality on the
@@ -901,13 +908,14 @@ and freely editable. The authority is the **administrator**, and it is a *securi
 
 Administration is **mutable** — teams hand workflows off and share them — but a version's `sys:` tags are immutable
 (§14.3), so administration is *not* re-stamped onto versions. It is held in an **explicit, per-base-id administrator
-record** that defaults to version 1's identity until first changed:
+record** materialized at creation (§15.2) and the authoritative source thereafter:
 
 - **Record.** A `WorkflowAdministrators` document per base id — the set of administrator identities, with audit and
-  an etag — materialized lazily (absent until the first change; reads then fall back to the version-1 identity). Held
-  in an `IWorkflowAdministratorStore` (per-backend, like the run/catalog/credential stores — **shipped across all nine
-  backends**, container-verified on a shared conformance suite). Never empty: the last administrator cannot be removed
-  (no orphaning).
+  an etag — **materialized eagerly when version 1 is published** (seeded with the creator's stamped identity) and the
+  sole authority for administration thereafter. Held in an `IWorkflowAdministratorStore` (per-backend, like the
+  run/catalog/credential stores — **shipped across all nine backends**, container-verified on a shared conformance
+  suite). Never empty: the last administrator cannot be removed (no orphaning). The creator is a normal entry, so a
+  co-administrator can remove them.
 - **Operations** (on `ISecuredWorkflowCatalog`, authorized by **current-administrator membership**, not row reach):
   `GetAdministrators`, `AddAdministrator` (idempotent), `RemoveAdministrator` (refuses the last), and
   `TransferAdministration` (replace the set — hand-off; the caller need not remain). Each names administrators with
@@ -922,6 +930,26 @@ record** that defaults to version 1's identity until first changed:
 - **Trust boundary.** The record holds only `sys:` identity tags — authorization metadata, never secrets — so it
   persists as plain JSON like every other entity. Administration is over unforgeable stamped identity end to end;
   the management surface cannot widen entitlement past what the shell stamps.
+
+### 15.4 The reverse administration index (approver inbox) — *in progress*
+
+The forward record answers *"who administers base id X?"*. The **approver inbox** (§16.5) needs the reverse: *"which
+workflows does this caller administer?"* — so an approver sees every pending access request they can act on, without
+having to name a workflow first. Because administration membership is **exact set-equality** ⟺ **digest-equality**
+(`WorkflowAdministrators.IsAdministeredBy` → `WorkflowIdentity.SameAdministrator` → `SecurityTagSet.SetEquals`;
+`SecurityIdentityDigest` is canonical, so "set-equal iff digests equal"), the reverse is an **indexed digest lookup**,
+never a scan:
+
+- **Index.** Each `IWorkflowAdministratorStore` maintains a reverse map `adminDigest → {baseWorkflowId}` (the in-memory
+  analogue of a backend's indexed digest column — the `InMemoryObservedIdentityStore.byDigest` collision-probe pattern,
+  §16.5.4), refreshed on every `PutAsync` (diff the base id's old vs new administrator digests; add/remove its id per
+  digest). Because administration is now materialized **at creation** (§15.2), the index has an entry for every workflow
+  from birth — no implicit-version-1 blind spot.
+- **Query.** `ListAdministeredAsync(adminDigest, limit, pageToken)` returns the caller's administered base ids, keyset-
+  paged (bytes-native continuation token, like every other §803 list). The inbox resolves the caller's digest
+  (`SecurityIdentityDigest.Compute(CallerIdentity())`) and lists access requests across that set (§16.5).
+- **Authority.** The index reflects the same digests the forward `IsAdministeredBy` compares, so the inbox can only ever
+  surface workflows the caller genuinely administers — no over-grant, no missed match.
 
 **Decision (§15):** a base workflow id is governed by an **administrator** — a deployment-stamped `sys:` security
 identity (the same identity used for version stamping and credential grants), distinct from the descriptive
