@@ -279,7 +279,7 @@ internal sealed class TsObjectPropertiesHandler : IKeywordValidationHandler, ITs
             }
         }
 
-        var patterns = new List<(string Pattern, string Name, string SubEv)>();
+        var patterns = new List<(string Pattern, string Name, string SubEv, string PathMod)>();
         IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>>? pp = td.PatternProperties();
         if (pp is not null)
         {
@@ -288,7 +288,7 @@ internal sealed class TsObjectPropertiesHandler : IKeywordValidationHandler, ITs
                 foreach (PatternPropertyDeclaration d in kv.Value)
                 {
                     string? n = TsEmit.EvalName(d.ReducedPatternPropertyType);
-                    if (n is not null) { patterns.Add((d.Pattern, n, TsEmit.SubEv(d.ReducedPatternPropertyType))); }
+                    if (n is not null) { patterns.Add((d.Pattern, n, TsEmit.SubEv(d.ReducedPatternPropertyType), d.KeywordPathModifier)); }
                 }
             }
         }
@@ -328,9 +328,9 @@ internal sealed class TsObjectPropertiesHandler : IKeywordValidationHandler, ITs
             first = false;
         }
 
-        foreach ((string pattern, string name, string subEv) in patterns)
+        foreach ((string pattern, string name, string subEv, string pathMod) in patterns)
         {
-            sb.Append("      if (__re(").Append(TsEmit.Str(pattern)).Append(").test(k)) { if (!").Append(name).Append("(o[k], ").Append(subEv).Append(TsEmit.ChildKey("#/patternProperties/" + pattern))
+            sb.Append("      if (__re(").Append(TsEmit.Str(pattern)).Append(").test(k)) { if (!").Append(name).Append("(o[k], ").Append(subEv).Append(TsEmit.ChildKey(pathMod))
               .Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.markProp(i);").Append(needMatched ? " m = true;" : string.Empty).Append(" }\n");
         }
 
@@ -338,11 +338,11 @@ internal sealed class TsObjectPropertiesHandler : IKeywordValidationHandler, ITs
         {
             if (needMatched)
             {
-                sb.Append("      if (!m) { if (!").Append(addName!).Append("(o[k], ").Append(addSubEv).Append(TsEmit.ChildKey("#/additionalProperties")).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.markProp(i); }\n");
+                sb.Append("      if (!m) { if (!").Append(addName!).Append("(o[k], ").Append(addSubEv).Append(TsEmit.ChildKey(fb!.KeywordPathModifier)).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.markProp(i); }\n");
             }
             else
             {
-                sb.Append("      if (!").Append(addName!).Append("(o[k], ").Append(addSubEv).Append(TsEmit.ChildKey("#/additionalProperties")).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.markProp(i);\n");
+                sb.Append("      if (!").Append(addName!).Append("(o[k], ").Append(addSubEv).Append(TsEmit.ChildKey(fb!.KeywordPathModifier)).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.markProp(i);\n");
             }
         }
 
@@ -386,12 +386,24 @@ internal sealed class TsAllOfHandler : IKeywordValidationHandler, ITsKeywordEmit
     {
         // Each allOf member gets its OWN tracker, merged into the parent after it matches. (Not a shared
         // tracker: a member's own unevaluated* must see only its subtree, not a cousin member's.) The member
-        // records its own failures (the path modifier #/allOf/<i> records the path taken into the member).
-        int i = 0;
-        foreach (string e in CompositionEvals.Members(td.AllOfCompositionTypes()))
+        // records its own failures; kv.Key.GetPathModifier(member, i) is the path TAKEN into it (#/allOf/<i>,
+        // plus the member's ReducedPathModifier — i.e. /$ref when the member is a reference).
+        var allOfComposition = td.AllOfCompositionTypes();
+        if (allOfComposition is null) { return; }
+        foreach (var kv in allOfComposition)
         {
-            sb.Append("  { const t = fresh(); if (!").Append(e).Append("(value, t").Append(TsEmit.ChildValue("#/" + keyword.Keyword + "/" + i)).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.mergeProps(t); ev.mergeItems(t); }\n");
-            i++;
+            int i = 0;
+            foreach (TypeDeclaration m in kv.Value)
+            {
+                var rtd = m.ReducedTypeDeclaration();
+                string? e = TsEmit.EvalName(rtd.ReducedType);
+                if (e is not null)
+                {
+                    sb.Append("  { const t = fresh(); if (!").Append(e).Append("(value, t").Append(TsEmit.ChildValue(kv.Key.GetPathModifier(rtd, i))).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.mergeProps(t); ev.mergeItems(t); }\n");
+                }
+
+                i++;
+            }
         }
     }
 }
@@ -480,7 +492,7 @@ internal sealed class TsPrefixItemsHandler : IKeywordValidationHandler, ITsKeywo
             string? e = TsEmit.EvalName(tuple.ItemsTypes[i].ReducedType);
             if (e is null) { continue; }
             string subEv = TsEmit.SubEv(tuple.ItemsTypes[i].ReducedType);
-            sb.Append("    if (value.length > ").Append(i).Append(") { if (!").Append(e).Append("(value[").Append(i).Append("], ").Append(subEv).Append(TsEmit.ChildIdx(i.ToString(), "#/" + keyword.Keyword + "/" + i)).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.markItem(").Append(i).Append("); }\n");
+            sb.Append("    if (value.length > ").Append(i).Append(") { if (!").Append(e).Append("(value[").Append(i).Append("], ").Append(subEv).Append(TsEmit.ChildIdx(i.ToString(), tuple.Keyword.GetPathModifier(tuple.ItemsTypes[i], i))).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.markItem(").Append(i).Append("); }\n");
         }
 
         sb.Append("  }\n");
@@ -503,7 +515,7 @@ internal sealed class TsItemsHandler : IKeywordValidationHandler, ITsKeywordEmit
         if (e is null) { return; }
         int start = td.ExplicitTupleType()?.ItemsTypes.Length ?? 0;
         string subEv = TsEmit.SubEv(items!.ReducedType);
-        sb.Append("  if (Array.isArray(value)) { for (let i = ").Append(start).Append("; i < value.length; i++) { if (!").Append(e).Append("(value[i], ").Append(subEv).Append(TsEmit.ChildIdx("i", "#/" + keyword.Keyword)).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.markItem(i); } }\n");
+        sb.Append("  if (Array.isArray(value)) { for (let i = ").Append(start).Append("; i < value.length; i++) { if (!").Append(e).Append("(value[i], ").Append(subEv).Append(TsEmit.ChildIdx("i", items!.Keyword.GetPathModifier(items!))).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.markItem(i); } }\n");
     }
 }
 
@@ -518,7 +530,7 @@ internal sealed class TsPropertyNamesHandler : IKeywordValidationHandler, ITsKey
         SingleSubschemaKeywordTypeDeclaration? pn = td.PropertyNamesSubschemaType();
         string? e = pn is null ? null : TsEmit.EvalName(pn.ReducedType);
         if (e is null) { return; }
-        sb.Append("  if (__isObj(value)) { for (const k in value) { if (!").Append(e).Append("(k, NOEV").Append(TsEmit.ChildKey("#/" + keyword.Keyword)).Append(")) { ").Append(TsEmit.Propagate).Append(" } } }\n");
+        sb.Append("  if (__isObj(value)) { for (const k in value) { if (!").Append(e).Append("(k, NOEV").Append(TsEmit.ChildKey(pn!.KeywordPathModifier)).Append(")) { ").Append(TsEmit.Propagate).Append(" } } }\n");
     }
 }
 
@@ -572,9 +584,9 @@ internal sealed class TsIfThenElseHandler : IKeywordValidationHandler, ITsKeywor
         sb.Append("  { const t = fresh();\n");
         sb.Append("    if (").Append(ifE).Append("(value, t)) {\n");
         sb.Append("      ev.mergeProps(t); ev.mergeItems(t);\n");
-        if (thenE is not null) { sb.Append("      { const t2 = fresh(); if (!").Append(thenE).Append("(value, t2").Append(TsEmit.ChildValue("#/then")).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.mergeProps(t2); ev.mergeItems(t2); }\n"); }
+        if (thenE is not null) { sb.Append("      { const t2 = fresh(); if (!").Append(thenE).Append("(value, t2").Append(TsEmit.ChildValue(thenT!.KeywordPathModifier)).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.mergeProps(t2); ev.mergeItems(t2); }\n"); }
         sb.Append("    } else {\n");
-        if (elseE is not null) { sb.Append("      { const t3 = fresh(); if (!").Append(elseE).Append("(value, t3").Append(TsEmit.ChildValue("#/else")).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.mergeProps(t3); ev.mergeItems(t3); }\n"); }
+        if (elseE is not null) { sb.Append("      { const t3 = fresh(); if (!").Append(elseE).Append("(value, t3").Append(TsEmit.ChildValue(elseT!.KeywordPathModifier)).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.mergeProps(t3); ev.mergeItems(t3); }\n"); }
         sb.Append("    }\n  }\n");
     }
 }
@@ -598,7 +610,7 @@ internal sealed class TsDependentSchemasHandler : IKeywordValidationHandler, ITs
                 string? e = TsEmit.EvalName(d.ReducedDepdendentSchemaType);
                 if (e is null) { continue; }
                 sb.Append("  if (__isObj(value) && Object.prototype.hasOwnProperty.call(value, ")
-                  .Append(TsEmit.Str(d.JsonPropertyName)).Append(")) { const t = fresh(); if (!").Append(e).Append("(value, t").Append(TsEmit.ChildValue("#/dependentSchemas/" + d.JsonPropertyName)).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.mergeProps(t); ev.mergeItems(t); }\n");
+                  .Append(TsEmit.Str(d.JsonPropertyName)).Append(")) { const t = fresh(); if (!").Append(e).Append("(value, t").Append(TsEmit.ChildValue(d.KeywordPathModifier)).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.mergeProps(t); ev.mergeItems(t); }\n");
             }
         }
     }
@@ -679,7 +691,7 @@ internal sealed class TsUnevaluatedPropertiesHandler : IKeywordValidationHandler
         sb.Append("    const o = value as Record<string, unknown>;\n");
         sb.Append("    let i = -1;\n");
         sb.Append("    for (const k in o) {\n      i++;\n");
-        sb.Append("      if (!ev.hasProp(i) && !").Append(name).Append("(o[k], ").Append(subEv).Append(TsEmit.ChildKey("#/unevaluatedProperties")).Append(")) { ").Append(TsEmit.Propagate).Append(" }\n");
+        sb.Append("      if (!ev.hasProp(i) && !").Append(name).Append("(o[k], ").Append(subEv).Append(TsEmit.ChildKey(fb!.KeywordPathModifier)).Append(")) { ").Append(TsEmit.Propagate).Append(" }\n");
         sb.Append("      ev.markProp(i);\n");
         sb.Append("    }\n  }\n");
     }
@@ -698,7 +710,7 @@ internal sealed class TsUnevaluatedItemsHandler : IKeywordValidationHandler, ITs
         string? name = items is null ? null : TsEmit.EvalName(items.ReducedType);
         if (name is null) { return; }
         string subEv = TsEmit.SubEv(items!.ReducedType);
-        sb.Append("  if (Array.isArray(value)) { for (let i = 0; i < value.length; i++) { if (!ev.hasItem(i) && !").Append(name).Append("(value[i], ").Append(subEv).Append(TsEmit.ChildIdx("i", "#/unevaluatedItems")).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.markItem(i); } }\n");
+        sb.Append("  if (Array.isArray(value)) { for (let i = 0; i < value.length; i++) { if (!ev.hasItem(i) && !").Append(name).Append("(value[i], ").Append(subEv).Append(TsEmit.ChildIdx("i", items!.Keyword.GetPathModifier(items!))).Append(")) { ").Append(TsEmit.Propagate).Append(" } ev.markItem(i); } }\n");
     }
 }
 

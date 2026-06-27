@@ -28,21 +28,26 @@ function collect(value: unknown): { ok: boolean; r: Results } {
   eq(r.failures.length, 0, "valid -> no failures");
 }
 
-// invalid at four nested locations: name minLength, address.zip pattern, tags[0] minLength, and age via a
-// $ref to $defs/PosInt (minimum). Detailed mode must collect ALL FOUR (no early return), with correct
-// instance locations and PER-KEYWORD keyword locations.
+// invalid at five nested locations: name minLength, address.zip pattern, tags[0] minLength, age via a
+// $ref to $defs/PosInt (minimum), and score via allOf->$ref to the same. Detailed mode must collect ALL
+// FIVE (no early return), with correct instance locations and PER-KEYWORD path-taken keyword locations.
 {
-  const { ok, r } = collect({ name: "ab", address: { zip: "xyz" }, tags: ["a"], age: 0 });
+  const { ok, r } = collect({ name: "ab", address: { zip: "xyz" }, tags: ["a"], age: 0, score: 0 });
   eq(ok, false, "invalid -> ok=false");
-  eq(r.failures.map((f) => f.instanceLocation).sort(), ["/address/zip", "/age", "/name", "/tags/0"], "instanceLocations (collected all, threaded)");
+  eq(r.failures.map((f) => f.instanceLocation).sort(), ["/address/zip", "/age", "/name", "/score", "/tags/0"], "instanceLocations (collected all, threaded)");
   eq(r.failures.map((f) => f.keywordLocation).sort(),
-    ["/properties/address/properties/zip/pattern", "/properties/age/$ref/minimum", "/properties/name/minLength", "/properties/tags/items/minLength"],
+    ["/properties/address/properties/zip/pattern", "/properties/age/$ref/minimum", "/properties/name/minLength", "/properties/score/allOf/0/$ref/minimum", "/properties/tags/items/minLength"],
     "per-keyword keywordLocations (path taken, incl. $ref)");
 
-  // The $ref case proves keywordLocation (path TAKEN) diverges from absoluteKeywordLocation (RESOLVED):
+  // A property $ref proves keywordLocation (path TAKEN) diverges from absoluteKeywordLocation (RESOLVED):
   const age = r.failures.find((f) => f.instanceLocation === "/age")!;
   eq(age.keywordLocation, "/properties/age/$ref/minimum", "$ref keywordLocation = path taken (through $ref)");
   eq(age.absoluteKeywordLocation!.endsWith("#/$defs/PosInt/minimum"), true, "$ref absoluteKeywordLocation = resolved target");
+
+  // A $ref INSIDE allOf carries the /$ref token too (the closed gap): /properties/score/allOf/0/$ref/minimum.
+  const score = r.failures.find((f) => f.instanceLocation === "/score")!;
+  eq(score.keywordLocation, "/properties/score/allOf/0/$ref/minimum", "$ref-in-allOf keywordLocation keeps the /$ref token");
+  eq(score.absoluteKeywordLocation!.endsWith("#/$defs/PosInt/minimum"), true, "$ref-in-allOf absoluteKeywordLocation = resolved target");
 }
 
 // verbose mode: a VALID instance collects annotations from every successfully-validated subschema
