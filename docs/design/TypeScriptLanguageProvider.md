@@ -2019,3 +2019,32 @@ Keyword/absolute locations are inline string **literals** (from `td.LocatedSchem
 - **Pointer escaping.** `__ptr` RFC 6901-escapes segments: `~`→`~0`, `/`→`~1`.
 - **`$dynamicRef`.** `keywordLocation` follows the dynamic path; `absoluteKeywordLocation` is the resolved
   `$id` URI — they diverge through dynamic refs (the core distinguishes them in the location).
+
+### inc 4: full path-taken keywordLocation (the three locations, $ref-correct)
+
+Mirrors the C# `ValidationContext` 3-tuple `(ValidationLocation, SchemaLocation, DocumentLocation)`:
+
+- **instanceLocation** = `il` (already threaded).
+- **absoluteKeywordLocation** = the per-type CONSTANT `td.LocatedSchema.Location` (the resolved location); jump
+  to it at each `evaluate{Type}` (C# `PushSchemaLocation`). Append `/<keyword>` at the fail point.
+- **keywordLocation (path taken)** = a SEPARATELY-THREADED `kl` param, built by appending the child's
+  **path modifier** at each descent — which INCLUDES the `$ref` step (baked into the child
+  `ReducedTypeDeclaration.ReducedPathModifier`). This is how kl diverges from absoluteKeywordLocation through
+  `$ref`. Append `/<keyword>` at the fail point.
+
+Signature becomes `evaluate{Type}(value, ev, il = "", kl = "", r = null)`. FailShape(td, keyword):
+`r.fail(kl + "/<keyword>", il, "<td.Location>/<keyword>")`. Child descent appends the path modifier to kl
+(gated on r): `kl + "<stripHash(pathModifier)>"`.
+
+Path modifier per applicator (all return `#/…`; strip the leading `#`; `$ref` already baked in):
+- properties: `property.KeywordPathModifier` (e.g. `#/properties/name`, `#/properties/name/$ref`)
+- patternProperties: `((IObjectPatternPropertyValidationKeyword)kw).GetPathModifier(pattern, reducedType)`
+- additionalProperties / unevaluatedProperties: `#/additionalProperties` / `#/unevaluatedProperties` + child ReducedPathModifier
+- items: `#/items` + RPM; prefixItems: `#/prefixItems/<i>` + RPM; unevaluatedItems: `#/unevaluatedItems` + RPM
+- allOf/anyOf/oneOf member i: `((I{X}SubschemaValidationKeyword)kw).GetPathModifier(member, i)` → `#/allOf/0` (+`/$ref`)
+- if/then/else/propertyNames/not/contains: `GetPathModifier` → `#/then` (+`/$ref`)
+- dependentSchemas: `GetPathModifier(reducedType, propName)` → `#/dependentSchemas/<prop>`
+
+Keyword name for the `/<keyword>` segment: `keyword.Keyword` (IKeyword) where it varies (bounds/membership);
+hardcoded where fixed (type/required/anyOf/not/format/...). Boolean hot path: kl defaults "" and is never
+concatenated when r === null → zero string building, byte-identical to today.

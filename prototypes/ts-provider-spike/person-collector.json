@@ -9,6 +9,10 @@
       "required": ["zip"],
       "properties": { "zip": { "type": "string", "pattern": "^[0-9]{5}$" } }
     },
-    "tags": { "type": "array", "items": { "type": "string", "minLength": 2 } }
+    "tags": { "type": "array", "items": { "type": "string", "minLength": 2 } },
+    "age": { "$ref": "#/$defs/PosInt" }
+  },
+  "$defs": {
+    "PosInt": { "type": "integer", "minimum": 1 }
   }
 }

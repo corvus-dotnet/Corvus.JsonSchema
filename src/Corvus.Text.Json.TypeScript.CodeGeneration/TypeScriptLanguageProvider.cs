@@ -915,7 +915,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         }
 
         this.moduleTopLevelNames.Add(entry);
-        return $"\nexport const {entry} = (v: unknown, results?: Results): boolean => evaluate{rootName}(v, fresh(), \"\", results ?? null);\nexport default {entry};\n";
+        return $"\nexport const {entry} = (v: unknown, results?: Results): boolean => evaluate{rootName}(v, fresh(), \"\", \"\", results ?? null);\nexport default {entry};\n";
     }
 
     public static TypeScriptLanguageProvider CreateDefault()
@@ -1852,12 +1852,12 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         // `il` is the instance-location JSON Pointer (built only when collecting; see §15). `ok` accumulates
         // the verdict: on the boolean hot path a failing check `return false`s immediately (ev.r === null);
         // when collecting it records via ev.r and sets ok = false, falling through to gather every failure.
-        sb.Append("export function evaluate").Append(FinalName(td)).Append("(value: unknown, ev: Ev, il: string = \"\", r: Results | null = null): boolean {\n");
+        sb.Append("export function evaluate").Append(FinalName(td)).Append("(value: unknown, ev: Ev, il: string = \"\", kl: string = \"\", r: Results | null = null): boolean {\n");
 
         // boolean schemas: `false` matches nothing, `true` matches everything.
         if (td.LocatedSchema.Schema.ValueKind == JsonValueKind.False)
         {
-            sb.Append("  if (r !== null) { ").Append(TsEmit.FailRecord(td)).Append(" } return false;\n}\n\n");
+            sb.Append("  if (r !== null) { ").Append(TsEmit.FailRecord(td, null)).Append(" } return false;\n}\n\n");
             return;
         }
 
