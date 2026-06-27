@@ -23,7 +23,7 @@
         },
         "tsRuntimeModule": {
             "type": "string",
-            "description": "(TypeScript engine) The module specifier generated modules import the shared runtime from. Default './corvus-runtime.js' re-emits the runtime alongside each module (self-contained); a package specifier (e.g. '@corvus/json-runtime') imports the installed runtime package and skips re-emitting it."
+            "description": "(TypeScript engine) The module specifier generated modules import the shared runtime from. Default './corvus-runtime.js' re-emits the runtime alongside each module (self-contained); a package specifier (e.g. '@endjin/corvus-json-runtime') imports the installed runtime package and skips re-emitting it."
         },
         "outputMapFile": {
             "type": "string",

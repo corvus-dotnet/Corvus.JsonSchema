@@ -4,7 +4,7 @@
 // the check (the JS analog of V5's single-value struct + conversion operators). Rich formats
 // also get a parse helper (e.g. date-time -> Date). 64-bit+ numeric formats -> bigint (§4.1).
 
-import { Brand, FormatError } from "./runtime"; // in real output: from "@corvus/json-runtime"
+import { Brand, FormatError } from "./runtime"; // in real output: from "@endjin/corvus-json-runtime"
 
 export type Uuid = Brand<string, "Uuid">;
 export type DateTimeString = Brand<string, "DateTime">;

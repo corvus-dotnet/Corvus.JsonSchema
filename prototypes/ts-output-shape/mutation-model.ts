@@ -1,10 +1,10 @@
 // The mutation API (design §5.7): idiomatic immer-style `produce`, type-checked under --strict.
 // `Draft<T>`/`JsonDocument<T>`/`produce` are runtime-library helpers (NOT per-type generated noise),
-// so they come from @corvus/json-runtime; this file shows a per-type document USING them. The recipe
+// so they come from @endjin/corvus-json-runtime; this file shows a per-type document USING them. The recipe
 // assigns to the draft; the recorded change-set lowers to a Model C byte patch (proven runnable in
 // `prototypes/rmw-scanner/produce.mjs`) and doubles as RFC 6902 JSON Patch / LSP TextEdits.
 
-import { type JsonDocument, produce } from "./runtime"; // real output: "@corvus/json-runtime"
+import { type JsonDocument, produce } from "./runtime"; // real output: "@endjin/corvus-json-runtime"
 
 export interface Address {
   readonly street: string;

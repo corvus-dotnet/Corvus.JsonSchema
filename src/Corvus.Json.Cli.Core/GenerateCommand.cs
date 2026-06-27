@@ -78,7 +78,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         public string[]? FormatMode { get; init; }
 
         [CommandOption("--tsRuntimeModule <VALUE>")]
-        [Description("(TypeScript engine) The module specifier generated modules import the shared runtime from. Default './corvus-runtime.js' re-emits the runtime alongside each module (self-contained). Pass a package specifier (e.g. '@corvus/json-runtime') to import the installed runtime package instead, and skip re-emitting it.")]
+        [Description("(TypeScript engine) The module specifier generated modules import the shared runtime from. Default './corvus-runtime.js' re-emits the runtime alongside each module (self-contained). Pass a package specifier (e.g. '@endjin/corvus-json-runtime') to import the installed runtime package instead, and skip re-emitting it.")]
         public string? TsRuntimeModule { get; init; }
 
         [Description("The path to the schema file to process.")]

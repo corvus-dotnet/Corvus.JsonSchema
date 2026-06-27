@@ -1,4 +1,4 @@
-// Stand-in for the @corvus/json-runtime support library that generated code imports.
+// Stand-in for the @endjin/corvus-json-runtime support library that generated code imports.
 // Only the type-level + tiny helpers needed to type-check the output-shape demos.
 
 export function assertNever(x: never): never {

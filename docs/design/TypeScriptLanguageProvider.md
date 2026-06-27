@@ -573,7 +573,7 @@ assert/disable/warning mode is resolved at **codegen time**, §3), the emitted c
 clears via Bowtie.
 
 * **Runtime format validators, zero-dependency, RFC-accurate.** Port the C# format semantics into
-  `@corvus/json-runtime`: `date`/`date-time`/`time`/`duration` (RFC 3339), `email`/`idn-email`
+  `@endjin/corvus-json-runtime`: `date`/`date-time`/`time`/`duration` (RFC 3339), `email`/`idn-email`
   (RFC 5321/5322 + IDN), `hostname`/`idn-hostname` (RFC 1123 + IDNA/UTS-46), `ipv4`/`ipv6` (incl. zone),
   `uri`/`uri-reference`/`iri`/`iri-reference` (RFC 3986/3987), `uri-template` (RFC 6570),
   `json-pointer`/`relative-json-pointer` (RFC 6901), `uuid` (RFC 4122), `regex` (ECMA-262).
@@ -662,7 +662,7 @@ and irrelevant to the realistic incremental-edit pattern (§13.8), both of which
 
 ---
 
-## 6. The runtime support library (`@corvus/json-runtime`, working name)
+## 6. The runtime support library (`@endjin/corvus-json-runtime`, working name)
 
 A small, **zero‑dependency, ESM‑first, stateless** package that generated code imports. Tree‑shake
 to near‑zero for type‑only consumers.
@@ -736,7 +736,7 @@ Keep: `defaultNamespace` (→ module/package root), `namedTypes`, `namespaces`,
 options: `useImplicitOperatorString`, `addExplicitUsings`, `buildParametersThreshold`,
 `optionalAsNullable`/`excludeNonNullDefaulted` (re‑interpret as the §5.1 optional mapping).
 **Reinterpret** `defaultAccessibility` as TS export visibility (`export` vs module‑private). Add TS
-knobs: `runtimeModuleSpecifier` (import path for `@corvus/json-runtime`), `emitModel`
+knobs: `runtimeModuleSpecifier` (import path for `@endjin/corvus-json-runtime`), `emitModel`
 (`B` default | `C` RMW patch | `A` lazy‑read | combinations), `indentWidth` (default 2), `moduleStyle`.
 
 ### 7.3 Naming: `TypeScriptMemberName : MemberName` + collision resolver
@@ -868,7 +868,7 @@ Match V5's two independent gates, both driven by the official `JSON-Schema-Test-
 | **5 — Compliance** | Codegen‑aware TS suite harness + Bowtie TS harness; drive to full pass (matching V5's exclusion set, with reasons). |
 | **6 — RMW path (Model C)** | RMW is the confirmed target (VS Code killer app). Per the **§13 source‑grounded plan**: dual‑offset (byte+UTF‑16) scanner ported from jsonc-parser; packed‑`Int32Array` index table + monomorphic per‑member accessors; fixed‑shape change‑set overlay; streaming copy‑through writer; `applyEdits` byte port; LSP `TextEdit` projection; change-set-scoped re-validation (no runtime model-switching fallback — §13.8). Start with the §13.6 prototype. |
 | **7 — Perf gate + (optional) Model A** | The §13.6 sustained‑load RMW benchmark — **prototyped & run (§13.7, §13.8)**: Model C wins large/non‑ASCII wire RMW (≤5.6×), incremental editing 100×–5900×/edit zero‑alloc, 4–13× less GC; loses **mid‑range ASCII (~4–64 KB)** full‑round‑trip (native's C++ parser, at ~10× the allocation) → native leads only that small band (~1.2-1.6x), not worth a runtime model-switching fallback, so Model C is used across the board. Remaining: multi‑tenant concurrent GC contention + a live LSP round‑trip; then runtime‑library hardening; Model A lazy‑read *only if* large‑payload partial read is independently a target. |
-| **Cross‑cutting** | Package `@corvus/json-runtime` (ESM, tree‑shakeable); docs + a playground. |
+| **Cross‑cutting** | Package `@endjin/corvus-json-runtime` (ESM, tree‑shakeable); docs + a playground. |
 
 ---
 
@@ -1677,7 +1677,7 @@ The `$dynamicRef` cross-resource case was also NOT a runtime-threading gap as fi
 a static shared-core scope-resolution bug, fixed in §13.24.)
 
 This validates the full design end-to-end: one C# provider over the existing core, capability-interface
-matched, emitting idiomatic `tsc --strict`-clean TypeScript that imports a shared `@corvus/json-runtime`,
+matched, emitting idiomatic `tsc --strict`-clean TypeScript that imports a shared `@endjin/corvus-json-runtime`,
 validating Model-C source-text instances (exact numerics) -- is essentially fully JSON-Schema-compliant
 (every keyword + every format) across draft 4/6/7/2019-09/2020-12.
 
@@ -1902,7 +1902,7 @@ Severity = impact on a production‑quality engine. Effort = S / M / L.
 
 | # | Gap | Now | Desired | Sev | Eff |
 |---|-----|-----|---------|-----|-----|
-| G1 | **`@corvus/json-runtime` as an npm package** | `corvus-runtime.ts` is re‑emitted source (the examples share one copy by hand) | a real publishable ESM package (own `package.json`, `exports`, `.d.ts`, tree‑shakeable, peer deps lossless‑json/tr46/temporal); generated modules `import` from it | High | M |
+| G1 | **`@endjin/corvus-json-runtime` as an npm package** | `corvus-runtime.ts` is re‑emitted source (the examples share one copy by hand) | a real publishable ESM package (own `package.json`, `exports`, `.d.ts`, tree‑shakeable, peer deps lossless‑json/tr46/temporal); generated modules `import` from it | High | M |
 | G2 | **CLI `Options` wiring** | only `AlwaysAssertFormat`; `outputPath`/`codeGenerationMode`/format‑mode/naming/file options ignored or hard‑coded | wire the full options surface (§7.2) from the CLI config | Med | S |
 | G3 | **Compliance harness in CI** | graduated out of the spike into `prototypes/ts-bench/compliance/` (`run-compliance.sh`); not yet a `tests/` project | a graduated `tests/` project that runs the suite (all 5 dialects) in CI with the exclusion model | High | M‑L |
 | G4 | **Bowtie TS harness** | none | a Node/TS harness speaking Bowtie's stdio protocol for cross‑implementation conformance (§8) | Med | M |
@@ -1919,7 +1919,7 @@ Severity = impact on a production‑quality engine. Effort = S / M / L.
 
 ### Suggested order to work through
 
-1. **Foundational / unblocking** — G1 (`@corvus/json-runtime` package), G2 (CLI options),
+1. **Foundational / unblocking** — G1 (`@endjin/corvus-json-runtime` package), G2 (CLI options),
    D2 (location‑path constants). G1 unblocks consumption + the playground; D2 unblocks D1/D4/G4.
 2. **High DX / high value** — C1 (`description` → JSDoc), D1 (results collector), A1 (multi‑file +
    barrel), G3 (compliance harness in CI).
@@ -1951,7 +1951,7 @@ A collector argument selects the mode, keyed on `ev.r`:
   after a failure so all failures are gathered.
 - **Verbose** (`new Results(true)`): collect failures **and** successes/annotations. Also no early return.
 
-### Runtime (`@corvus/json-runtime`)
+### Runtime (`@endjin/corvus-json-runtime`)
 
 ```ts
 export interface Failure { keywordLocation: string; instanceLocation: string; absoluteKeywordLocation?: string; }

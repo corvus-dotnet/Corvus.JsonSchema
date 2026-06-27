@@ -3,7 +3,7 @@
 // `enum` is an array of ARBITRARY JSON values and `const` is ANY JSON value — NOT just strings.
 // Emit a union of literal types of whatever JSON types the values are (never a TS `enum`).
 
-import { assertNever } from "./runtime"; // in real output: from "@corvus/json-runtime"
+import { assertNever } from "./runtime"; // in real output: from "@endjin/corvus-json-runtime"
 
 // --- enums of each JSON type ---
 export type Status = "active" | "archived" | "deleted"; // string enum

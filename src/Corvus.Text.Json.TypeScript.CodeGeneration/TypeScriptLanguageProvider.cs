@@ -37,16 +37,16 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 
     // Where generated modules import the shared runtime from. A relative specifier ("./corvus-runtime.js")
     // means re-emit the runtime alongside the module (self-contained); a bare specifier
-    // ("@corvus/json-runtime") means import the installed package and DON'T re-emit it.
+    // ("@endjin/corvus-json-runtime") means import the installed package and DON'T re-emit it.
     private string runtimeModuleSpecifier = "./corvus-runtime.js";
 
     /// <summary>
-    /// Gets the shared runtime module source (<c>@corvus/json-runtime</c> in production): emitted ONCE,
+    /// Gets the shared runtime module source (<c>@endjin/corvus-json-runtime</c> in production): emitted ONCE,
     /// imported by every generated module.
     /// </summary>
     /// <returns>The TypeScript source of the shared runtime module.</returns>
     /// <remarks>
-    /// The runtime is authored ONCE as the <c>@corvus/json-runtime</c> npm package
+    /// The runtime is authored ONCE as the <c>@endjin/corvus-json-runtime</c> npm package
     /// (<c>packages/corvus-json-runtime/src/index.ts</c>) and embedded here verbatim, so the inline runtime
     /// this method returns and the published package can never drift. The embedded source is returned exactly
     /// as authored (the third-party imports and the per-declaration <c>export</c> markers are already present);
@@ -225,7 +225,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         }
 
         // Pass 2: emit the type surface + validators. The runtime helpers live in ONE shared module
-        // (@corvus/json-runtime, §5.5) that every generated module imports — never inlined per module.
+        // (@endjin/corvus-json-runtime, §5.5) that every generated module imports — never inlined per module.
         var sb = new StringBuilder();
         sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n");
         sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, type Results } from \"").Append(this.runtimeModuleSpecifier).Append("\";\n\n");
@@ -278,7 +278,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 
         // The generated types/validators module. The shared runtime is re-emitted alongside it ONLY when
         // the import specifier is relative (self-contained mode); a bare specifier means the consumer
-        // installs @corvus/json-runtime and we don't duplicate it. (The test harness consumes files.First()
+        // installs @endjin/corvus-json-runtime and we don't duplicate it. (The test harness consumes files.First()
         // and emits its own single shared runtime for the whole suite.)
         var files = new List<GeneratedCodeFile> { new("generated.ts", content) };
         if (this.runtimeModuleSpecifier.StartsWith("./", StringComparison.Ordinal) ||

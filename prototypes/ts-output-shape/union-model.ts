@@ -8,7 +8,7 @@
 //   C# discriminator fast-path                                                   ->  switch on the literal discriminant
 //   (TS adds: the type system narrows for free — better ergonomics than C#)
 
-import { assertNever } from "./runtime"; // in real output: from "@corvus/json-runtime"
+import { assertNever } from "./runtime"; // in real output: from "@endjin/corvus-json-runtime"
 
 // =====================================================================
 // CASE 1 — DISCRIMINATED union: oneOf:[Circle, Rectangle], shared const `kind`

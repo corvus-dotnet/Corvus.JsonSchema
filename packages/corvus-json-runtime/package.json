@@ -1,7 +1,13 @@
 {
-  "name": "@corvus/json-runtime",
+  "name": "@endjin/corvus-json-runtime",
   "version": "0.1.0",
   "description": "Shared runtime for Corvus.Text.Json-generated TypeScript validators and mutators.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/corvus-dotnet/Corvus.JsonSchema.git",
+    "directory": "packages/corvus-json-runtime"
+  },
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -11,6 +17,9 @@
     }
   },
   "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
     "test": "node --test"

@@ -5,7 +5,7 @@
 // The C# V5 `Undefined` value-kind sentinel is intentionally DROPPED — TS idiom is the
 // `?:` optional modifier (+ `in`/`hasOwnProperty`), not a distinct Undefined value.
 
-import { Failure } from "./runtime"; // in real output: from "@corvus/json-runtime"
+import { Failure } from "./runtime"; // in real output: from "@endjin/corvus-json-runtime"
 
 export interface Address {
   readonly street: string;

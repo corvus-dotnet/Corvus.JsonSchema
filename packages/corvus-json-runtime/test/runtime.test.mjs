@@ -1,4 +1,4 @@
-// Smoke tests for the BUILT @corvus/json-runtime package (run with `node --test`).
+// Smoke tests for the BUILT @endjin/corvus-json-runtime package (run with `node --test`).
 // These lock a handful of load-bearing runtime primitives so a regenerate that silently breaks one
 // of them is caught here, not three layers downstream in a generated validator. Importing the built
 // dist (not src) is deliberate: it exercises the published artifact, including its runtime imports of

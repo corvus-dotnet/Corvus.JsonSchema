@@ -86,7 +86,7 @@ public static class GenerationDriverTypeScript
 
         // Where generated modules import the shared runtime from: the --tsRuntimeModule option, else the
         // CORVUS_TS_RUNTIME_MODULE env var, else the self-contained default. A bare specifier (e.g.
-        // "@corvus/json-runtime") imports the installed package and skips re-emitting the runtime.
+        // "@endjin/corvus-json-runtime") imports the installed package and skips re-emitting the runtime.
         string runtimeModule =
             generatorConfig.TsRuntimeModule?.GetString() is { Length: > 0 } configured
                 ? configured

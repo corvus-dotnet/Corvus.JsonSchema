@@ -4,7 +4,7 @@
 // The TYPE stays the base object shape: TS cannot express "if the instance matches I, it must also
 // match T". The conditional is enforced by the generated VALIDATOR, not the type system.
 
-import { assertNever } from "./runtime"; // in real output: from "@corvus/json-runtime"
+import { assertNever } from "./runtime"; // in real output: from "@endjin/corvus-json-runtime"
 
 export interface Payment {
   readonly method: "card" | "bank";
