@@ -263,6 +263,10 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             {
                 EmitBrandAlias(sb, td);
             }
+            else if (IsBrandedIntegerFormat(td))
+            {
+                EmitIntegerBrandAlias(sb, td);
+            }
 
             EmitValidator(sb, td);
         }
@@ -633,6 +637,28 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
           .Append(" { if (!__fmt(").Append(fmt).Append(", value)) { throw new FormatError(").Append(fmt).Append("); } return value as ").Append(name).Append("; }\n\n");
     }
 
+    // A sub-64-bit integer format (design §5.3.1/§4.1): a branded alias `Brand<number, "format">` + a
+    // validating factory that mints the brand only after the integer-and-range check (the JS analog of the
+    // string-format factory). Always emitted (not assertion-gated) — the brand is the static type surface;
+    // the validator's range check is the assertion-gated counterpart.
+    private static void EmitIntegerBrandAlias(StringBuilder sb, TypeDeclaration td)
+    {
+        string? format = td.Format();
+        if (format is null || !KnownIntegerFormats.TryGetValue(format, out (long Min, long Max) range))
+        {
+            return;
+        }
+
+        string name = FinalName(td);
+        string fmt = TsEmit.Str(format);
+        string min = range.Min.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        string max = range.Max.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        sb.Append("export type ").Append(name).Append(" = Brand<number, ").Append(fmt).Append(">;\n");
+        sb.Append("export function as").Append(name).Append("(value: number): ").Append(name)
+          .Append(" { if (!Number.isInteger(value) || value < ").Append(min).Append(" || value > ").Append(max)
+          .Append(") { throw new FormatError(").Append(fmt).Append("); } return value as ").Append(name).Append("; }\n\n");
+    }
+
     // A pure map / dictionary object (additionalProperties value type, no declared properties): the
     // idiomatic TS surface is `Readonly<Record<string, T>>` (design §5.3).
     private static void EmitMapAlias(StringBuilder sb, TypeDeclaration td, FallbackObjectPropertyType fb)
@@ -805,8 +831,14 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             return FinalName(td);
         }
 
-        // A well-known string format -> a branded alias; a 64-bit+ integer format -> bigint (§5.3.1/§4.1).
+        // A well-known string format -> a branded alias; a sub-64-bit integer format -> a branded number
+        // alias; a 64-bit+ integer format -> bigint (§5.3.1/§4.1).
         if (IsBrandedStringFormat(td))
+        {
+            return FinalName(td);
+        }
+
+        if (IsBrandedIntegerFormat(td))
         {
             return FinalName(td);
         }
@@ -990,6 +1022,22 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 
     private static bool IsBrandedStringFormat(TypeDeclaration td)
         => SchemaTypes(td).Contains("string") && td.Format() is string f && KnownStringFormats.Contains(f);
+
+    // Sub-64-bit integer formats (OpenAPI int16/int32/uint16/uint32) -> a branded `Brand<number, "fmt">` +
+    // a validating factory, mirroring the string-format brand (§5.3.1). The inclusive [Min, Max] range is
+    // asserted in the factory (always) and in the validator (only under format assertion). 64-bit+ formats
+    // exceed JS safe-integer range and stay `bigint` (IsBigIntFormat), so they are NOT in this table.
+    private static readonly IReadOnlyDictionary<string, (long Min, long Max)> KnownIntegerFormats =
+        new Dictionary<string, (long, long)>(StringComparer.Ordinal)
+        {
+            ["int16"] = (-32768, 32767),
+            ["uint16"] = (0, 65535),
+            ["int32"] = (-2147483648, 2147483647),
+            ["uint32"] = (0, 4294967295),
+        };
+
+    private static bool IsBrandedIntegerFormat(TypeDeclaration td)
+        => td.Format() is string f && KnownIntegerFormats.ContainsKey(f);
 
     // 64-bit+ integer formats exceed JS safe-integer range -> bigint (§4.1).
     private static bool IsBigIntFormat(TypeDeclaration td)

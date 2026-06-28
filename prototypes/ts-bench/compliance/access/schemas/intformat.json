@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Reading",
+  "type": "object",
+  "properties": {
+    "small": { "type": "integer", "format": "int16" },
+    "port": { "type": "integer", "format": "uint16" },
+    "count": { "type": "integer", "format": "int32" },
+    "size": { "type": "integer", "format": "uint32" },
+    "big": { "type": "integer", "format": "int64" }
+  },
+  "required": ["count"]
+}
