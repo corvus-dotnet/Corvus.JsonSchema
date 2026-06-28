@@ -1,5 +1,5 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
 
 export type Shape = Circle | Rectangle;
 export function isCircle(value: unknown): value is Circle { return evaluateCircle(value, fresh()); }
@@ -10,16 +10,21 @@ export function matchShape<R>(value: Shape, cases: { circle: (v: Circle) => R; r
   throw new Error("no Shape branch matched");
 }
 
-export function evaluateShape(value: unknown, ev: Ev): boolean {
-  { let c = 0; const acc = fresh();
-    { const t = fresh(); if (evaluateCircle(value, t)) { c++; acc.mergeProps(t); acc.mergeItems(t); } }
-    { const t = fresh(); if (evaluateRectangle(value, t)) { c++; acc.mergeProps(t); acc.mergeItems(t); } }
-    if (c !== 1) { return false; }
+export function evaluateShape(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  { let c = 0; const acc = fresh(); const subs: Results[] | null = r === null ? null : [];
+    { const t = fresh(); const rb = r === null ? null : new Results(r.verbose); if (evaluateCircle(value, t, il, (rb === null ? kl : kl + "/oneOf/0"), rb)) { c++; acc.mergeProps(t); acc.mergeItems(t); } else if (rb !== null && subs !== null) { subs.push(rb); } }
+    { const t = fresh(); const rb = r === null ? null : new Results(r.verbose); if (evaluateRectangle(value, t, il, (rb === null ? kl : kl + "/oneOf/1"), rb)) { c++; acc.mergeProps(t); acc.mergeItems(t); } else if (rb !== null && subs !== null) { subs.push(rb); } }
+    if (c !== 1) { if (r === null) return false; if (subs !== null && c === 0) { for (const s of subs) { r.merge(s); } } r.fail(kl + "/oneOf", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf"); ok = false; }
     ev.mergeProps(acc); ev.mergeItems(acc);
   }
-  return true;
+  if (r !== null && r.verbose && ok) { r.annotate("title", "Shape", kl + "/title", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/title"); }
+  return ok;
 }
 
+/**
+ * Circle
+ */
 export interface Circle {
   readonly kind: "circle";
   readonly radius: number;
@@ -37,38 +42,49 @@ export function buildCircle(props: Circle): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
+export function buildCanonicalCircle(props: Circle): Uint8Array {
+  return canonicalize(props);
+}
+
 export function produceCircle(source: Uint8Array, recipe: (draft: Draft<Circle>) => void): Uint8Array {
   return produce<Circle>(source, recipe);
 }
 
-export function evaluateCircle(value: unknown, ev: Ev): boolean {
-  if (!(__isObj(value))) { return false; }
+export function evaluateCircle(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/0/type"); ok = false; }
   if (__isObj(value)) {
-    if (!Object.prototype.hasOwnProperty.call(value, "kind")) { return false; }
-    if (!Object.prototype.hasOwnProperty.call(value, "radius")) { return false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "kind")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/0/required"); ok = false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "radius")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/0/required"); ok = false; }
   }
   if (__isObj(value)) {
     const o = value as Record<string, unknown>;
     let i = -1;
     for (const k in o) {
       i++;
-      if (k === "kind") { if (!evaluateKind(o[k], NOEV)) { return false; } ev.markProp(i); }
-      else if (k === "radius") { if (!evaluateRadius(o[k], NOEV)) { return false; } ev.markProp(i); }
+      if (k === "kind") { if (!evaluateKind(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/kind"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
+      else if (k === "radius") { if (!evaluateRadius(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/radius"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
     }
   }
-  return true;
+  if (r !== null && r.verbose && ok) { r.annotate("title", "Circle", kl + "/title", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/0/title"); }
+  return ok;
 }
 
-export function evaluateKind(value: unknown, ev: Ev): boolean {
-  { const allowed: readonly unknown[] = ["circle"]; if (!allowed.some((a) => __eq(value, a))) { return false; } }
-  return true;
+export function evaluateKind(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  { const allowed: readonly unknown[] = ["circle"]; if (!allowed.some((a) => __eq(value, a))) { if (r === null) return false; r.fail(kl + "/const", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/0/properties/kind/const"); ok = false; } }
+  return ok;
 }
 
-export function evaluateRadius(value: unknown, ev: Ev): boolean {
-  if (!(__isNum(value))) { return false; }
-  return true;
+export function evaluateRadius(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/0/properties/radius/type"); ok = false; }
+  return ok;
 }
 
+/**
+ * Rectangle
+ */
 export interface Rectangle {
   readonly height: number;
   readonly kind: "rectangle";
@@ -88,45 +104,54 @@ export function buildRectangle(props: Rectangle): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
+export function buildCanonicalRectangle(props: Rectangle): Uint8Array {
+  return canonicalize(props);
+}
+
 export function produceRectangle(source: Uint8Array, recipe: (draft: Draft<Rectangle>) => void): Uint8Array {
   return produce<Rectangle>(source, recipe);
 }
 
-export function evaluateRectangle(value: unknown, ev: Ev): boolean {
-  if (!(__isObj(value))) { return false; }
+export function evaluateRectangle(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/1/type"); ok = false; }
   if (__isObj(value)) {
-    if (!Object.prototype.hasOwnProperty.call(value, "kind")) { return false; }
-    if (!Object.prototype.hasOwnProperty.call(value, "width")) { return false; }
-    if (!Object.prototype.hasOwnProperty.call(value, "height")) { return false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "kind")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/1/required"); ok = false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "width")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/1/required"); ok = false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "height")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/1/required"); ok = false; }
   }
   if (__isObj(value)) {
     const o = value as Record<string, unknown>;
     let i = -1;
     for (const k in o) {
       i++;
-      if (k === "height") { if (!evaluateHeight(o[k], NOEV)) { return false; } ev.markProp(i); }
-      else if (k === "kind") { if (!evaluateKind2(o[k], NOEV)) { return false; } ev.markProp(i); }
-      else if (k === "width") { if (!evaluateWidth(o[k], NOEV)) { return false; } ev.markProp(i); }
+      if (k === "height") { if (!evaluateHeight(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/height"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
+      else if (k === "kind") { if (!evaluateKind2(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/kind"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
+      else if (k === "width") { if (!evaluateWidth(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/width"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
     }
   }
-  return true;
+  if (r !== null && r.verbose && ok) { r.annotate("title", "Rectangle", kl + "/title", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/1/title"); }
+  return ok;
 }
 
-export function evaluateHeight(value: unknown, ev: Ev): boolean {
-  if (!(__isNum(value))) { return false; }
-  return true;
+export function evaluateHeight(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/1/properties/height/type"); ok = false; }
+  return ok;
 }
 
-export function evaluateKind2(value: unknown, ev: Ev): boolean {
-  { const allowed: readonly unknown[] = ["rectangle"]; if (!allowed.some((a) => __eq(value, a))) { return false; } }
-  return true;
+export function evaluateKind2(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  { const allowed: readonly unknown[] = ["rectangle"]; if (!allowed.some((a) => __eq(value, a))) { if (r === null) return false; r.fail(kl + "/const", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/1/properties/kind/const"); ok = false; } }
+  return ok;
 }
 
-export function evaluateWidth(value: unknown, ev: Ev): boolean {
-  if (!(__isNum(value))) { return false; }
-  return true;
+export function evaluateWidth(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/1/properties/width/type"); ok = false; }
+  return ok;
 }
 
 
-export const evaluateRoot = (v: unknown): boolean => evaluateShape(v, fresh());
+export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateShape(v, fresh(), "", "", results ?? null);
 export default evaluateRoot;

@@ -39,6 +39,14 @@ export const evaluateRoot = (v: unknown): boolean => evaluatePerson(v, fresh());
 
 You rarely call `evaluate{Type}` directly — reach for `evaluateRoot` (or the `default`) unless you are composing evaluation yourself.
 
+## Detailed results
+
+`evaluateRoot(value, results?)` takes an optional `Results` collector. Omit it (the default) for the zero-allocation boolean fast path; pass one to gather **why** a value failed — per-keyword failures carrying `instanceLocation` / `keywordLocation` / `absoluteKeywordLocation` (and annotations in verbose mode) — which you can standardise to JSON-Schema basic/detailed output with `toOutput`.
+
+## Validators-only output
+
+A generated module carries both the type surface and the validators by default. When you only need validation — a server checking request/response bodies, for instance — generate with `--codeGenerationMode SchemaEvaluationOnly`: the module then emits just the `evaluate{Type}` functions and `evaluateRoot`, with no interfaces, brands, or mutators.
+
 ## Narrowing unions
 
 A `oneOf`/`anyOf` generates a union with per-branch type guards and an exhaustive `match*`:

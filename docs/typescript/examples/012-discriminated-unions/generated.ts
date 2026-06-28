@@ -1,5 +1,5 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
 
 export type Event = Click | KeyPress | Scroll;
 export function isClick(value: unknown): value is Click { return evaluateClick(value, fresh()); }
@@ -12,17 +12,22 @@ export function matchEvent<R>(value: Event, cases: { click: (v: Click) => R; key
   throw new Error("no Event branch matched");
 }
 
-export function evaluateEvent(value: unknown, ev: Ev): boolean {
-  { let c = 0; const acc = fresh();
-    { const t = fresh(); if (evaluateClick(value, t)) { c++; acc.mergeProps(t); acc.mergeItems(t); } }
-    { const t = fresh(); if (evaluateKeyPress(value, t)) { c++; acc.mergeProps(t); acc.mergeItems(t); } }
-    { const t = fresh(); if (evaluateScroll(value, t)) { c++; acc.mergeProps(t); acc.mergeItems(t); } }
-    if (c !== 1) { return false; }
+export function evaluateEvent(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  { let c = 0; const acc = fresh(); const subs: Results[] | null = r === null ? null : [];
+    { const t = fresh(); const rb = r === null ? null : new Results(r.verbose); if (evaluateClick(value, t, il, (rb === null ? kl : kl + "/oneOf/0"), rb)) { c++; acc.mergeProps(t); acc.mergeItems(t); } else if (rb !== null && subs !== null) { subs.push(rb); } }
+    { const t = fresh(); const rb = r === null ? null : new Results(r.verbose); if (evaluateKeyPress(value, t, il, (rb === null ? kl : kl + "/oneOf/1"), rb)) { c++; acc.mergeProps(t); acc.mergeItems(t); } else if (rb !== null && subs !== null) { subs.push(rb); } }
+    { const t = fresh(); const rb = r === null ? null : new Results(r.verbose); if (evaluateScroll(value, t, il, (rb === null ? kl : kl + "/oneOf/2"), rb)) { c++; acc.mergeProps(t); acc.mergeItems(t); } else if (rb !== null && subs !== null) { subs.push(rb); } }
+    if (c !== 1) { if (r === null) return false; if (subs !== null && c === 0) { for (const s of subs) { r.merge(s); } } r.fail(kl + "/oneOf", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf"); ok = false; }
     ev.mergeProps(acc); ev.mergeItems(acc);
   }
-  return true;
+  if (r !== null && r.verbose && ok) { r.annotate("title", "Event", kl + "/title", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/title"); }
+  return ok;
 }
 
+/**
+ * Click
+ */
 export interface Click {
   readonly type: "click";
   readonly x: number;
@@ -42,45 +47,57 @@ export function buildClick(props: Click): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
+export function buildCanonicalClick(props: Click): Uint8Array {
+  return canonicalize(props);
+}
+
 export function produceClick(source: Uint8Array, recipe: (draft: Draft<Click>) => void): Uint8Array {
   return produce<Click>(source, recipe);
 }
 
-export function evaluateClick(value: unknown, ev: Ev): boolean {
-  if (!(__isObj(value))) { return false; }
+export function evaluateClick(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/0/type"); ok = false; }
   if (__isObj(value)) {
-    if (!Object.prototype.hasOwnProperty.call(value, "type")) { return false; }
-    if (!Object.prototype.hasOwnProperty.call(value, "x")) { return false; }
-    if (!Object.prototype.hasOwnProperty.call(value, "y")) { return false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "type")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/0/required"); ok = false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "x")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/0/required"); ok = false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "y")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/0/required"); ok = false; }
   }
   if (__isObj(value)) {
     const o = value as Record<string, unknown>;
     let i = -1;
     for (const k in o) {
       i++;
-      if (k === "type") { if (!evaluateType(o[k], NOEV)) { return false; } ev.markProp(i); }
-      else if (k === "x") { if (!evaluateX(o[k], NOEV)) { return false; } ev.markProp(i); }
-      else if (k === "y") { if (!evaluateY(o[k], NOEV)) { return false; } ev.markProp(i); }
+      if (k === "type") { if (!evaluateType(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/type"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
+      else if (k === "x") { if (!evaluateX(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/x"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
+      else if (k === "y") { if (!evaluateY(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/y"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
     }
   }
-  return true;
+  if (r !== null && r.verbose && ok) { r.annotate("title", "Click", kl + "/title", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/0/title"); }
+  return ok;
 }
 
-export function evaluateType(value: unknown, ev: Ev): boolean {
-  { const allowed: readonly unknown[] = ["click"]; if (!allowed.some((a) => __eq(value, a))) { return false; } }
-  return true;
+export function evaluateType(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  { const allowed: readonly unknown[] = ["click"]; if (!allowed.some((a) => __eq(value, a))) { if (r === null) return false; r.fail(kl + "/const", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/0/properties/type/const"); ok = false; } }
+  return ok;
 }
 
-export function evaluateX(value: unknown, ev: Ev): boolean {
-  if (!(__isNum(value))) { return false; }
-  return true;
+export function evaluateX(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/0/properties/x/type"); ok = false; }
+  return ok;
 }
 
-export function evaluateY(value: unknown, ev: Ev): boolean {
-  if (!(__isNum(value))) { return false; }
-  return true;
+export function evaluateY(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/0/properties/y/type"); ok = false; }
+  return ok;
 }
 
+/**
+ * KeyPress
+ */
 export interface KeyPress {
   readonly key: string;
   readonly type: "keypress";
@@ -98,38 +115,49 @@ export function buildKeyPress(props: KeyPress): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
+export function buildCanonicalKeyPress(props: KeyPress): Uint8Array {
+  return canonicalize(props);
+}
+
 export function produceKeyPress(source: Uint8Array, recipe: (draft: Draft<KeyPress>) => void): Uint8Array {
   return produce<KeyPress>(source, recipe);
 }
 
-export function evaluateKeyPress(value: unknown, ev: Ev): boolean {
-  if (!(__isObj(value))) { return false; }
+export function evaluateKeyPress(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/1/type"); ok = false; }
   if (__isObj(value)) {
-    if (!Object.prototype.hasOwnProperty.call(value, "type")) { return false; }
-    if (!Object.prototype.hasOwnProperty.call(value, "key")) { return false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "type")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/1/required"); ok = false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "key")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/1/required"); ok = false; }
   }
   if (__isObj(value)) {
     const o = value as Record<string, unknown>;
     let i = -1;
     for (const k in o) {
       i++;
-      if (k === "key") { if (!evaluateKey(o[k], NOEV)) { return false; } ev.markProp(i); }
-      else if (k === "type") { if (!evaluateType2(o[k], NOEV)) { return false; } ev.markProp(i); }
+      if (k === "key") { if (!evaluateKey(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/key"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
+      else if (k === "type") { if (!evaluateType2(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/type"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
     }
   }
-  return true;
+  if (r !== null && r.verbose && ok) { r.annotate("title", "KeyPress", kl + "/title", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/1/title"); }
+  return ok;
 }
 
-export function evaluateKey(value: unknown, ev: Ev): boolean {
-  if (!(typeof value === "string")) { return false; }
-  return true;
+export function evaluateKey(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/1/properties/key/type"); ok = false; }
+  return ok;
 }
 
-export function evaluateType2(value: unknown, ev: Ev): boolean {
-  { const allowed: readonly unknown[] = ["keypress"]; if (!allowed.some((a) => __eq(value, a))) { return false; } }
-  return true;
+export function evaluateType2(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  { const allowed: readonly unknown[] = ["keypress"]; if (!allowed.some((a) => __eq(value, a))) { if (r === null) return false; r.fail(kl + "/const", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/1/properties/type/const"); ok = false; } }
+  return ok;
 }
 
+/**
+ * Scroll
+ */
 export interface Scroll {
   readonly delta: number;
   readonly type: "scroll";
@@ -147,38 +175,46 @@ export function buildScroll(props: Scroll): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
+export function buildCanonicalScroll(props: Scroll): Uint8Array {
+  return canonicalize(props);
+}
+
 export function produceScroll(source: Uint8Array, recipe: (draft: Draft<Scroll>) => void): Uint8Array {
   return produce<Scroll>(source, recipe);
 }
 
-export function evaluateScroll(value: unknown, ev: Ev): boolean {
-  if (!(__isObj(value))) { return false; }
+export function evaluateScroll(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/2/type"); ok = false; }
   if (__isObj(value)) {
-    if (!Object.prototype.hasOwnProperty.call(value, "type")) { return false; }
-    if (!Object.prototype.hasOwnProperty.call(value, "delta")) { return false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "type")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/2/required"); ok = false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "delta")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/2/required"); ok = false; }
   }
   if (__isObj(value)) {
     const o = value as Record<string, unknown>;
     let i = -1;
     for (const k in o) {
       i++;
-      if (k === "delta") { if (!evaluateDelta(o[k], NOEV)) { return false; } ev.markProp(i); }
-      else if (k === "type") { if (!evaluateType3(o[k], NOEV)) { return false; } ev.markProp(i); }
+      if (k === "delta") { if (!evaluateDelta(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/delta"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
+      else if (k === "type") { if (!evaluateType3(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/type"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
     }
   }
-  return true;
+  if (r !== null && r.verbose && ok) { r.annotate("title", "Scroll", kl + "/title", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/2/title"); }
+  return ok;
 }
 
-export function evaluateDelta(value: unknown, ev: Ev): boolean {
-  if (!(__isNum(value))) { return false; }
-  return true;
+export function evaluateDelta(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/2/properties/delta/type"); ok = false; }
+  return ok;
 }
 
-export function evaluateType3(value: unknown, ev: Ev): boolean {
-  { const allowed: readonly unknown[] = ["scroll"]; if (!allowed.some((a) => __eq(value, a))) { return false; } }
-  return true;
+export function evaluateType3(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  { const allowed: readonly unknown[] = ["scroll"]; if (!allowed.some((a) => __eq(value, a))) { if (r === null) return false; r.fail(kl + "/const", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/012-discriminated-unions/event.json#/oneOf/2/properties/type/const"); ok = false; } }
+  return ok;
 }
 
 
-export const evaluateRoot = (v: unknown): boolean => evaluateEvent(v, fresh());
+export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateEvent(v, fresh(), "", "", results ?? null);
 export default evaluateRoot;

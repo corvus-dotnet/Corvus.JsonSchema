@@ -35,6 +35,81 @@ export function __eq(a: unknown, b: unknown): boolean {
   return false;
 }
 
+// Canonical JSON (gap F1, §5.7) — RFC 8785 (JSON Canonicalization Scheme), mirroring the C# JsonCanonicalizer:
+// object keys sorted by UTF-16 code unit, ECMAScript number forms, minimal string escaping. The backing for
+// the generated opt-in `buildCanonical{Type}` (content-addressing / hashing / signatures / cache keys / golden
+// files) — deliberately separate from the fast `build`, which stays at the native floor (caller key order).
+// Keys are emitted by hand rather than via `JSON.stringify` of a key-sorted object: a plain object forces
+// integer-like keys ("2","10") into numeric order, which would break the UTF-16 ordering JCS requires.
+export function canonicalJson(value: unknown): string {
+  if (value === null) { return "null"; }
+  if (isLosslessNumber(value)) { return JSON.stringify(Number(value)); }
+  const t = typeof value;
+  if (t === "number" || t === "boolean" || t === "string") { return JSON.stringify(value); }
+  if (t === "bigint") { return (value as bigint).toString(); }
+  if (Array.isArray(value)) { return "[" + value.map(canonicalJson).join(",") + "]"; }
+  if (t === "object") {
+    const obj = value as Record<string, unknown>;
+    const parts: string[] = [];
+    for (const key of Object.keys(obj).sort()) {
+      const v = obj[key];
+      // JSON.stringify omits undefined/function/symbol-valued members of an object; match that.
+      if (v === undefined || typeof v === "function" || typeof v === "symbol") { continue; }
+      parts.push(JSON.stringify(key) + ":" + canonicalJson(v));
+    }
+    return "{" + parts.join(",") + "}";
+  }
+  return "null"; // undefined/function/symbol in scalar position -> JSON.stringify yields undefined; "null" is the array-hole form
+}
+
+export function canonicalize(value: unknown): Uint8Array {
+  return new TextEncoder().encode(canonicalJson(value));
+}
+
+// Exact arbitrary-precision number access (gap B3, §5.3) — the zero-dependency big-number seam. The validator
+// is already exact (lossless-json), but a value READ as a JS `number` loses precision beyond ~15-17 significant
+// digits. `exactNumber` returns the EXACT decimal digits as a string when the value carries them — i.e. when the
+// document was parsed with `parseLossless` (re-exported below), so numbers arrive as `LosslessNumber` — and the
+// plain ECMAScript form otherwise. Feed the returned string into a big-number library (decimal.js / bignumber.js);
+// the generated `{name}AsExact` accessors on `decimal`-format fields delegate here.
+export function exactNumber(value: unknown): string {
+  return isLosslessNumber(value) ? value.toString() : String(value);
+}
+
+// lossless-json's `parse` (re-exported), so a consumer can obtain exact-digit values without taking a direct
+// dependency: `exactNumber((parseLossless(text) as { price: unknown }).price)`.
+export { parse as parseLossless } from "lossless-json";
+
+// Typed-array views (gap A6, §5.3) — an OPTIONAL view over a dense numeric JSON array for numeric hot paths
+// (Model A/C). A JSON array parses to a plain `number[]`; the generated property type stays `readonly number[]`
+// (so nothing is forced on consumers who don't want it), and these build the matching typed-array on demand:
+// `const speeds = toFloat64Array(doc.samples)`. Out-of-range values follow the standard typed-array coercion.
+export function toFloat64Array(values: readonly number[]): Float64Array { return Float64Array.from(values); }
+export function toFloat32Array(values: readonly number[]): Float32Array { return Float32Array.from(values); }
+export function toInt32Array(values: readonly number[]): Int32Array { return Int32Array.from(values); }
+
+export interface Failure { readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string | undefined; }
+export interface Annotation { readonly keyword: string; readonly value: unknown; readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string | undefined; }
+export class Results {
+  readonly failures: Failure[] = [];
+  readonly annotations: Annotation[] = [];
+  constructor(readonly verbose = false) {}
+  get valid(): boolean { return this.failures.length === 0; }
+  fail(keywordLocation: string, instanceLocation: string, absoluteKeywordLocation?: string): void { this.failures.push({ keywordLocation, instanceLocation, absoluteKeywordLocation }); }
+  annotate(keyword: string, value: unknown, keywordLocation: string, instanceLocation: string, absoluteKeywordLocation?: string): void { this.annotations.push({ keyword, value, keywordLocation, instanceLocation, absoluteKeywordLocation }); }
+  merge(other: Results): void { for (const f of other.failures) { this.failures.push(f); } for (const a of other.annotations) { this.annotations.push(a); } }
+}
+export function __ptr(s: string): string { return s.indexOf("~") < 0 && s.indexOf("/") < 0 ? s : s.replace(/~/g, "~0").replace(/\//g, "~1"); }
+
+export interface Output { readonly valid: boolean; readonly errors?: readonly (Failure & { readonly error: string })[]; readonly annotations?: readonly Annotation[]; }
+export function toOutput(r: Results): Output {
+  return {
+    valid: r.valid,
+    ...(r.failures.length > 0 ? { errors: r.failures.map((f) => ({ ...f, error: f.keywordLocation.slice(f.keywordLocation.lastIndexOf("/") + 1) })) } : {}),
+    ...(r.annotations.length > 0 ? { annotations: r.annotations } : {}),
+  };
+}
+
 export class Ev {
   n = false; pl = 0; pa = 0; il = 0; ia = 0;
   po: Set<number> | null = null; poa: Set<number> | null = null; io: Set<number> | null = null; ioa: Set<number> | null = null;
@@ -82,6 +157,18 @@ export function __fmtDateTime(s: string): boolean {
 // accessor TYPE for a duration, but it is too lenient (ISO 8601) to VALIDATE this format.
 export const __durRe = /^P(?:\d+W|(?:\d+Y(?:\d+M(?:\d+D)?)?|\d+M(?:\d+D)?|\d+D)?(?:T(?:\d+H(?:\d+M(?:\d+S)?)?|\d+M(?:\d+S)?|\d+S))?)$/;
 export function __fmtDuration(s: string): boolean { return s !== "P" && __durRe.test(s); }
+// Temporal value accessors (design §5.3.1, gap B2): parse a (validated) branded temporal STRING into the
+// matching Temporal value type. The generated `{Name}AsTemporal` accessor delegates here. `date-time` maps
+// to the absolute Instant (offset-preserving ZonedDateTime is a noted follow-on). The @js-temporal/polyfill
+// import above is the native-or-polyfill "pluggable adapter": consumers get the Temporal types from this
+// package's re-export below, so swapping the adapter is a package concern, not a generated-code concern.
+export function toPlainDate(s: string): Temporal.PlainDate { return Temporal.PlainDate.from(s); }
+export function toInstant(s: string): Temporal.Instant { return Temporal.Instant.from(s); }
+// Temporal.PlainTime.from rejects a 'Z' designator (but accepts a numeric offset); a valid RFC 3339 `time`
+// may end in Z, so normalise a trailing Z to +00:00 (PlainTime is zoneless and ignores the offset anyway).
+export function toPlainTime(s: string): Temporal.PlainTime { return Temporal.PlainTime.from(s.replace(/[Zz]$/, "+00:00")); }
+export function toDuration(s: string): Temporal.Duration { return Temporal.Duration.from(s); }
+export { Temporal };
 export const __ipv4Re = /^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
 export function __fmtIpv6(s: string): boolean {
   if (s.indexOf(":") < 0) { return false; }

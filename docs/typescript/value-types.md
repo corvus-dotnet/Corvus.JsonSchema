@@ -31,6 +31,8 @@ The runtime ships RFC-accurate checks for:
 
 The internationalised forms (`idn-*`, `iri-*`) use proper IDNA processing; `uuid`, `ipv6` and the URI family follow their RFCs rather than a loose regex.
 
+Numeric `format`s brand a **number** rather than a string — see [Numeric format brands](#numeric-format-brands) below.
+
 ## Numbers
 
 A `number` or `integer` reads as a TypeScript `number` by default. Two things make numeric handling exact rather than "good enough":
@@ -59,9 +61,42 @@ const v = JSON.parse(text) as Values;
 v.id;            // bigint — build and compare with bigint literals (123n)
 ```
 
+### Numeric format brands
+
+A sub-64-bit numeric `format` brands a **`number`** (the value fits a JS double) and emits a validating `as{Name}` factory, the numeric analog of the string-format brands above. The factory enforces the format's range (and integer-ness, where applicable); `evaluateRoot` enforces the same range when `format` is asserted.
+
+| format | TypeScript | factory check |
+|--------|------------|---------------|
+| `byte` · `sbyte` · `int16` · `uint16` · `int32` · `uint32` | `Brand<number, "fmt">` | integer, in range (e.g. `byte` 0–255, `int32` ±2³¹) |
+| `half` | `Brand<number, "half">` | in range ±65504 (fractions allowed) |
+| `single` · `double` | `Brand<number, "fmt">` | unbounded (a type tag; any number) |
+| `decimal` | `Brand<number, "decimal">` | in the .NET decimal range |
+
+```typescript
+const port = asPort(8080);   // Port = Brand<number, "uint16">; throws on -1 or 70000
+const level = asLevel(255);  // Level = Brand<number, "byte">;  throws on 256 or 1.5
+```
+
+### Typed-array views
+
+For a dense numeric array (`readonly number[]`) on a numeric hot path, the runtime offers opt-in typed-array views — the array type stays `readonly number[]`, so nothing is forced on you:
+
+```typescript
+import { toFloat64Array, toFloat32Array, toInt32Array } from "@endjin/corvus-json-runtime";
+const speeds = toFloat64Array(reading.samples); // a Float64Array over the values
+```
+
 ### Arbitrary precision
 
-The declared type for an ordinary `number` is `number`, but the evaluator also accepts `lossless-json` numbers. If a document carries decimals or integers beyond double precision and you need evaluation to be exact on the original digits, parse it with `lossless-json` (which preserves the source text) rather than `JSON.parse` (which rounds to a double first) — the evaluator reads the exact text either way. (A first-class arbitrary-precision *value* type, via a pluggable big-number adapter, is a planned enhancement; today the type is `number` and the precision guarantee is on *evaluation*.)
+The declared type for an ordinary `number` is `number`, but the evaluator also accepts `lossless-json` numbers, so it is exact on the original digits even past double precision. To read those exact digits as a **value** (for a big-number library, a content hash, or a cache key), parse with the runtime's re-exported `parseLossless` and call `exactNumber` — the zero-dependency big-number seam (feed the string into decimal.js / bignumber.js):
+
+```typescript
+import { parseLossless, exactNumber } from "@endjin/corvus-json-runtime";
+const doc = parseLossless(text) as { amount: unknown };
+exactNumber(doc.amount); // "123456789012345678901234567890.5" — JSON.parse would have rounded it
+```
+
+A `decimal`-format field additionally gets a generated `{name}AsExact(value): string` accessor that delegates to `exactNumber`. (Parse with `parseLossless` to preserve the digits; a plain `JSON.parse` has already rounded.)
 
 ## Dates, times and durations
 
@@ -73,15 +108,16 @@ A formatted date/time field is a **branded string** — `Brand<string, "date-tim
 const when = asWhen("2026-06-26T10:00:00Z"); // When = Brand<string, "date-time">
 ```
 
-To work with it as a real instant or calendar value, convert the branded string at the read site:
+Each of the four temporal formats gets a generated `{name}AsTemporal` accessor that parses the branded string into its matching [`Temporal`](https://tc39.es/proposal-temporal/docs/) value, so you don't convert by hand:
 
 ```typescript
-new Date(account.created);                       // a JS Date
-Temporal.Instant.from(account.created);          // a Temporal instant (if you use Temporal)
-Temporal.PlainDate.from(account.day);            // a calendar date
+dayAsTemporal(account.day);          // Temporal.PlainDate   (format: date)
+occurredAtAsTemporal(event.at);      // Temporal.Instant     (format: date-time — the absolute instant)
+atTimeAsTemporal(slot.start);        // Temporal.PlainTime   (format: time)
+spanAsTemporal(plan.duration);       // Temporal.Duration    (format: duration)
 ```
 
-> **Planned:** generated accessors that return `Temporal` values directly (`PlainDate` / `ZonedDateTime` / `Duration`) via a pluggable adapter, so you don't convert by hand. Today the value is the branded, format-checked string and you convert it yourself.
+`Temporal` is re-exported from the runtime, so you get the types from the package. (You can still convert the branded string by hand — `new Date(account.created)` or `Temporal.Instant.from(account.created)` — if you prefer.)
 
 ## See also
 

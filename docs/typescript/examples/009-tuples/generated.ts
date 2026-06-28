@@ -1,6 +1,9 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
 
+/**
+ * Point3D
+ */
 export interface Point3D {
   readonly coord: readonly [number, number, number];
 }
@@ -26,57 +29,67 @@ export function buildPoint3D(props: Point3D): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
+export function buildCanonicalPoint3D(props: Point3D): Uint8Array {
+  return canonicalize(props);
+}
+
 export function producePoint3D(source: Uint8Array, recipe: (draft: Draft<Point3D>) => void): Uint8Array {
   return produce<Point3D>(source, recipe);
 }
 
-export function evaluatePoint3D(value: unknown, ev: Ev): boolean {
-  if (!(__isObj(value))) { return false; }
+export function evaluatePoint3D(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/009-tuples/point3d.json#/type"); ok = false; }
   if (__isObj(value)) {
-    if (!Object.prototype.hasOwnProperty.call(value, "coord")) { return false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "coord")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/009-tuples/point3d.json#/required"); ok = false; }
   }
   if (__isObj(value)) {
     const o = value as Record<string, unknown>;
     let i = -1;
     for (const k in o) {
       i++;
-      if (k === "coord") { if (!evaluateCoord(o[k], NOEV)) { return false; } ev.markProp(i); }
+      if (k === "coord") { if (!evaluateCoord(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/coord"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
     }
   }
-  return true;
+  if (r !== null && r.verbose && ok) { r.annotate("title", "Point3D", kl + "/title", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/009-tuples/point3d.json#/title"); }
+  return ok;
 }
 
-export function evaluateCoord(value: unknown, ev: Ev): boolean {
-  if (!(Array.isArray(value))) { return false; }
-  if (Array.isArray(value) && value.length < 3) { return false; }
+export function evaluateCoord(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/009-tuples/point3d.json#/properties/coord/type"); ok = false; }
+  if (Array.isArray(value) && value.length < 3) { if (r === null) return false; r.fail(kl + "/minItems", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/009-tuples/point3d.json#/properties/coord/minItems"); ok = false; }
   if (Array.isArray(value)) {
-    if (value.length > 0) { if (!evaluatePrefixItems(value[0], NOEV)) { return false; } ev.markItem(0); }
-    if (value.length > 1) { if (!evaluatePrefixItems2(value[1], NOEV)) { return false; } ev.markItem(1); }
-    if (value.length > 2) { if (!evaluatePrefixItems3(value[2], NOEV)) { return false; } ev.markItem(2); }
+    if (value.length > 0) { if (!evaluatePrefixItems(value[0], NOEV, (r === null ? il : il + "/" + 0), (r === null ? kl : kl + "/prefixItems/0"), r)) { if (r === null) return false; ok = false; } ev.markItem(0); }
+    if (value.length > 1) { if (!evaluatePrefixItems2(value[1], NOEV, (r === null ? il : il + "/" + 1), (r === null ? kl : kl + "/prefixItems/1"), r)) { if (r === null) return false; ok = false; } ev.markItem(1); }
+    if (value.length > 2) { if (!evaluatePrefixItems3(value[2], NOEV, (r === null ? il : il + "/" + 2), (r === null ? kl : kl + "/prefixItems/2"), r)) { if (r === null) return false; ok = false; } ev.markItem(2); }
   }
-  if (Array.isArray(value)) { for (let i = 3; i < value.length; i++) { if (!evaluateJsonNotAny(value[i], NOEV)) { return false; } ev.markItem(i); } }
-  return true;
+  if (Array.isArray(value)) { for (let i = 3; i < value.length; i++) { if (!evaluateJsonNotAny(value[i], NOEV, (r === null ? il : il + "/" + i), (r === null ? kl : kl + "/items"), r)) { if (r === null) return false; ok = false; } ev.markItem(i); } }
+  return ok;
 }
 
-export function evaluatePrefixItems(value: unknown, ev: Ev): boolean {
-  if (!(__isNum(value))) { return false; }
-  return true;
+export function evaluatePrefixItems(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/009-tuples/point3d.json#/properties/coord/prefixItems/0/type"); ok = false; }
+  return ok;
 }
 
-export function evaluatePrefixItems2(value: unknown, ev: Ev): boolean {
-  if (!(__isNum(value))) { return false; }
-  return true;
+export function evaluatePrefixItems2(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/009-tuples/point3d.json#/properties/coord/prefixItems/1/type"); ok = false; }
+  return ok;
 }
 
-export function evaluatePrefixItems3(value: unknown, ev: Ev): boolean {
-  if (!(__isNum(value))) { return false; }
-  return true;
+export function evaluatePrefixItems3(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/009-tuples/point3d.json#/properties/coord/prefixItems/2/type"); ok = false; }
+  return ok;
 }
 
-export function evaluateJsonNotAny(value: unknown, ev: Ev): boolean {
-  return false;
+export function evaluateJsonNotAny(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  if (r !== null) { r.fail(kl, il, "corvus:/JsonNotAny#"); } return false;
 }
 
 
-export const evaluateRoot = (v: unknown): boolean => evaluatePoint3D(v, fresh());
+export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluatePoint3D(v, fresh(), "", "", results ?? null);
 export default evaluateRoot;

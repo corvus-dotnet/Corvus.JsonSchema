@@ -1,6 +1,9 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
 
+/**
+ * SmallBatch
+ */
 export interface SmallBatch {
   readonly size: unknown;
 }
@@ -16,6 +19,10 @@ export function buildSmallBatch(props: SmallBatch): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
+export function buildCanonicalSmallBatch(props: SmallBatch): Uint8Array {
+  return canonicalize(props);
+}
+
 export function applyToSmallBatch(source: Uint8Array, member: Batch): Uint8Array {
   return patchSmallBatch(source, member as Partial<SmallBatch>);
 }
@@ -24,20 +31,25 @@ export function produceSmallBatch(source: Uint8Array, recipe: (draft: Draft<Smal
   return produce<SmallBatch>(source, recipe);
 }
 
-export function evaluateSmallBatch(value: unknown, ev: Ev): boolean {
-  if (!(__isObj(value))) { return false; }
-  { const t = fresh(); if (!evaluateBatch(value, t)) { return false; } ev.mergeProps(t); ev.mergeItems(t); }
+export function evaluateSmallBatch(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/006-constraining/small-batch.json#/type"); ok = false; }
+  { const t = fresh(); if (!evaluateBatch(value, t, il, (r === null ? kl : kl + "/allOf/0/$ref"), r)) { if (r === null) return false; ok = false; } ev.mergeProps(t); ev.mergeItems(t); }
   if (__isObj(value)) {
     const o = value as Record<string, unknown>;
     let i = -1;
     for (const k in o) {
       i++;
-      if (k === "size") { if (!evaluateSize2(o[k], NOEV)) { return false; } ev.markProp(i); }
+      if (k === "size") { if (!evaluateSize2(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/size"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
     }
   }
-  return true;
+  if (r !== null && r.verbose && ok) { r.annotate("title", "SmallBatch", kl + "/title", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/006-constraining/small-batch.json#/title"); }
+  return ok;
 }
 
+/**
+ * Batch
+ */
 export interface Batch {
   readonly size: number;
 }
@@ -53,37 +65,45 @@ export function buildBatch(props: Batch): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
+export function buildCanonicalBatch(props: Batch): Uint8Array {
+  return canonicalize(props);
+}
+
 export function produceBatch(source: Uint8Array, recipe: (draft: Draft<Batch>) => void): Uint8Array {
   return produce<Batch>(source, recipe);
 }
 
-export function evaluateBatch(value: unknown, ev: Ev): boolean {
-  if (!(__isObj(value))) { return false; }
+export function evaluateBatch(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/006-constraining/small-batch.json#/$defs/batch/type"); ok = false; }
   if (__isObj(value)) {
-    if (!Object.prototype.hasOwnProperty.call(value, "size")) { return false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "size")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/006-constraining/small-batch.json#/$defs/batch/required"); ok = false; }
   }
   if (__isObj(value)) {
     const o = value as Record<string, unknown>;
     let i = -1;
     for (const k in o) {
       i++;
-      if (k === "size") { if (!evaluateSize(o[k], NOEV)) { return false; } ev.markProp(i); }
+      if (k === "size") { if (!evaluateSize(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/size"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
     }
   }
-  return true;
+  if (r !== null && r.verbose && ok) { r.annotate("title", "Batch", kl + "/title", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/006-constraining/small-batch.json#/$defs/batch/title"); }
+  return ok;
 }
 
-export function evaluateSize(value: unknown, ev: Ev): boolean {
-  if (!((__isNum(value) && __isInt(String(value))))) { return false; }
-  if (__isNum(value) && __cmp(String(value), "1") < 0) { return false; }
-  return true;
+export function evaluateSize(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!((__isNum(value) && __isInt(String(value))))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/006-constraining/small-batch.json#/$defs/batch/properties/size/type"); ok = false; }
+  if (__isNum(value) && __cmp(String(value), "1") < 0) { if (r === null) return false; r.fail(kl + "/minimum", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/006-constraining/small-batch.json#/$defs/batch/properties/size/minimum"); ok = false; }
+  return ok;
 }
 
-export function evaluateSize2(value: unknown, ev: Ev): boolean {
-  if (__isNum(value) && __cmp(String(value), "100") > 0) { return false; }
-  return true;
+export function evaluateSize2(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (__isNum(value) && __cmp(String(value), "100") > 0) { if (r === null) return false; r.fail(kl + "/maximum", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/006-constraining/small-batch.json#/properties/size/maximum"); ok = false; }
+  return ok;
 }
 
 
-export const evaluateRoot = (v: unknown): boolean => evaluateSmallBatch(v, fresh());
+export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateSmallBatch(v, fresh(), "", "", results ?? null);
 export default evaluateRoot;

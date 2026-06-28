@@ -15,6 +15,15 @@ This writes two files into `./out`:
 - **`generated.ts`** — your types, evaluators and mutators (one module per schema).
 - **`corvus-runtime.ts`** — the shared runtime the generated code imports. It is the same for every module, so when you generate many schemas you can keep a single copy and point each module's import at it (this is what the examples do — one `corvus-runtime.ts` at the root, imported as `../corvus-runtime.js`).
 
+### Options
+
+| Option | Effect |
+|--------|--------|
+| `--tsRuntimeModule @endjin/corvus-json-runtime` | import the runtime from the installed npm package instead of re-emitting `corvus-runtime.ts` alongside the module(s) |
+| `--tsModulePerType` | emit one module per type plus a barrel `index.ts` (tree-shaking, IDE navigation) instead of a single `generated.ts` |
+| `--codeGenerationMode SchemaEvaluationOnly` | emit only the validators (`evaluate{Type}` + `evaluateRoot`), no type surface |
+| `--assertFormat false` | leave `format` as an annotation — recorded, never enforced by `evaluateRoot` |
+
 ## Runtime dependencies
 
 The runtime relies on three small, well-known packages for the parts the language can't do exactly on its own:

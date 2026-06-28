@@ -1,6 +1,9 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
 
+/**
+ * Order
+ */
 export interface Order {
   readonly billTo?: Address;
   readonly id: string;
@@ -25,29 +28,38 @@ export function buildOrder(props: Order): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
+export function buildCanonicalOrder(props: Order): Uint8Array {
+  return canonicalize(props);
+}
+
 export function produceOrder(source: Uint8Array, recipe: (draft: Draft<Order>) => void): Uint8Array {
   return produce<Order>(source, recipe);
 }
 
-export function evaluateOrder(value: unknown, ev: Ev): boolean {
-  if (!(__isObj(value))) { return false; }
+export function evaluateOrder(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/type"); ok = false; }
   if (__isObj(value)) {
-    if (!Object.prototype.hasOwnProperty.call(value, "id")) { return false; }
-    if (!Object.prototype.hasOwnProperty.call(value, "shipTo")) { return false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "id")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/required"); ok = false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "shipTo")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/required"); ok = false; }
   }
   if (__isObj(value)) {
     const o = value as Record<string, unknown>;
     let i = -1;
     for (const k in o) {
       i++;
-      if (k === "billTo") { if (!evaluateAddress(o[k], NOEV)) { return false; } ev.markProp(i); }
-      else if (k === "id") { if (!evaluateId(o[k], NOEV)) { return false; } ev.markProp(i); }
-      else if (k === "shipTo") { if (!evaluateAddress(o[k], NOEV)) { return false; } ev.markProp(i); }
+      if (k === "billTo") { if (!evaluateAddress(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/billTo/$ref"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
+      else if (k === "id") { if (!evaluateId(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/id"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
+      else if (k === "shipTo") { if (!evaluateAddress(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/shipTo/$ref"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
     }
   }
-  return true;
+  if (r !== null && r.verbose && ok) { r.annotate("title", "Order", kl + "/title", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/title"); }
+  return ok;
 }
 
+/**
+ * Address
+ */
 export interface Address {
   readonly city: string;
   readonly line1: string;
@@ -67,50 +79,60 @@ export function buildAddress(props: Address): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
+export function buildCanonicalAddress(props: Address): Uint8Array {
+  return canonicalize(props);
+}
+
 export function produceAddress(source: Uint8Array, recipe: (draft: Draft<Address>) => void): Uint8Array {
   return produce<Address>(source, recipe);
 }
 
-export function evaluateAddress(value: unknown, ev: Ev): boolean {
-  if (!(__isObj(value))) { return false; }
+export function evaluateAddress(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/$defs/address/type"); ok = false; }
   if (__isObj(value)) {
-    if (!Object.prototype.hasOwnProperty.call(value, "line1")) { return false; }
-    if (!Object.prototype.hasOwnProperty.call(value, "city")) { return false; }
-    if (!Object.prototype.hasOwnProperty.call(value, "postcode")) { return false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "line1")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/$defs/address/required"); ok = false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "city")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/$defs/address/required"); ok = false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "postcode")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/$defs/address/required"); ok = false; }
   }
   if (__isObj(value)) {
     const o = value as Record<string, unknown>;
     let i = -1;
     for (const k in o) {
       i++;
-      if (k === "city") { if (!evaluateCity(o[k], NOEV)) { return false; } ev.markProp(i); }
-      else if (k === "line1") { if (!evaluateLine1(o[k], NOEV)) { return false; } ev.markProp(i); }
-      else if (k === "postcode") { if (!evaluatePostcode(o[k], NOEV)) { return false; } ev.markProp(i); }
+      if (k === "city") { if (!evaluateCity(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/city"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
+      else if (k === "line1") { if (!evaluateLine1(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/line1"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
+      else if (k === "postcode") { if (!evaluatePostcode(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/postcode"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
     }
   }
-  return true;
+  if (r !== null && r.verbose && ok) { r.annotate("title", "Address", kl + "/title", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/$defs/address/title"); }
+  return ok;
 }
 
-export function evaluateCity(value: unknown, ev: Ev): boolean {
-  if (!(typeof value === "string")) { return false; }
-  return true;
+export function evaluateCity(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/$defs/address/properties/city/type"); ok = false; }
+  return ok;
 }
 
-export function evaluateLine1(value: unknown, ev: Ev): boolean {
-  if (!(typeof value === "string")) { return false; }
-  return true;
+export function evaluateLine1(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/$defs/address/properties/line1/type"); ok = false; }
+  return ok;
 }
 
-export function evaluatePostcode(value: unknown, ev: Ev): boolean {
-  if (!(typeof value === "string")) { return false; }
-  return true;
+export function evaluatePostcode(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/$defs/address/properties/postcode/type"); ok = false; }
+  return ok;
 }
 
-export function evaluateId(value: unknown, ev: Ev): boolean {
-  if (!(typeof value === "string")) { return false; }
-  return true;
+export function evaluateId(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/properties/id/type"); ok = false; }
+  return ok;
 }
 
 
-export const evaluateRoot = (v: unknown): boolean => evaluateOrder(v, fresh());
+export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateOrder(v, fresh(), "", "", results ?? null);
 export default evaluateRoot;

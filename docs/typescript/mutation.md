@@ -10,7 +10,19 @@ Parsed values are `readonly`, so you never change data in place. Instead the gen
 const bytes = buildPerson({ familyName: "Brontë", givenName: "Anne", birthDate: asBirthDate("1820-01-17") });
 ```
 
-It is a single encode of the value you pass — at the floor of what serialisation can cost.
+It is a single encode of the value you pass — at the floor of what serialisation can cost. `build` preserves the key order of the object you pass.
+
+## `buildCanonical` — deterministic output
+
+When you need byte-for-byte determinism — content-addressing, hashing/digests, signatures, cache keys, golden-file tests — use `buildCanonical{Type}(props)`. It emits **RFC 8785 (JCS)** canonical JSON: object keys recursively sorted by UTF-16 code unit, ECMAScript number forms, minimal string escaping (the same canonicalisation as the C# `JsonCanonicalizer`).
+
+```typescript
+const a = buildCanonicalDoc({ zeta: "z", alpha: 1, nested: { y: "Y", x: "X" } });
+const b = buildCanonicalDoc({ nested: { x: "X", y: "Y" }, alpha: 1, zeta: "z" });
+// a and b are byte-identical: {"alpha":1,"nested":{"x":"X","y":"Y"},"zeta":"z"}
+```
+
+It is a **separate** method from `build` so the fast path stays at the native floor — pay the sort only when you want determinism. (The runtime also exports the underlying `canonicalize(value)` / `canonicalJson(value)` for canonicalising a plain value directly.)
 
 ## `patch` — change only what you name
 

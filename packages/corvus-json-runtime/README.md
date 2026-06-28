@@ -8,6 +8,21 @@ comparison, JSON deep-equality, the `Results`/`Output` collector, RFC-accurate `
 validators, format brands, and the byte-level structural-sharing `produce`/RMW engine —
 from this one package instead of inlining them per module.
 
+## What's in it
+
+Generated modules import the primitives they need; most are internal. The exports a **consumer** reaches for directly:
+
+| Export | Purpose |
+| --- | --- |
+| `Results`, `toOutput` | the optional results collector for `evaluateRoot(value, results?)` — per-keyword failures + annotations, standardised to JSON-Schema basic/detailed output |
+| `produce`, `recordChanges` | immer-style byte-level mutation and the RFC 6902 change-set |
+| `canonicalize`, `canonicalJson` | RFC 8785 (JCS) canonical JSON — the engine of the generated `buildCanonical{Type}` |
+| `exactNumber`, `parseLossless` | exact arbitrary-precision number access (the big-number seam for the generated `{name}AsExact`) |
+| `toFloat64Array`, `toFloat32Array`, `toInt32Array` | opt-in typed-array views over a numeric array |
+| `Temporal` | re-exported `@js-temporal/polyfill`, returned by the generated `{name}AsTemporal` accessors |
+
+Generated per type: `evaluate{Type}`/`evaluateRoot`, `build`/`buildCanonical`/`patch`/`produce`/`applyTo`/`withDefaults`, union `is{Branch}`/`match{Type}`, and format `as{Name}` factories. See [docs/typescript](../../docs/typescript/) for the full guide.
+
 ## Single source of truth
 
 `src/index.ts` is the authored runtime. It is also **embedded verbatim** by the C#

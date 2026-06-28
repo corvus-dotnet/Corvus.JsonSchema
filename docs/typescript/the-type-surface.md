@@ -7,7 +7,7 @@ How each JSON Schema construct maps to generated TypeScript. Each row links to a
 | `type: object` + `properties` | `readonly interface` | [001](./examples/001-data-object/) |
 | required / optional property | `name: T` / `name?: T` | [001](./examples/001-data-object/) |
 | `type: string` / `number` / `integer` / `boolean` / `null` | `string` / `number` / `number` / `boolean` / `null` | [001](./examples/001-data-object/) |
-| `format` | branded type `Brand<string, "fmt">` + `as{Name}` factory | [019](./examples/019-formats/) |
+| `format` (string or numeric) | branded type `Brand<string, "fmt">` / `Brand<number, "fmt">` + `as{Name}` factory | [019](./examples/019-formats/) |
 | validation keywords (`minLength`, `minimum`, `pattern`, `multipleOf`, …) | (no type change; enforced by `evaluateRoot`) | [002](./examples/002-validation/) |
 | `$ref` / `$defs` | one shared named type | [003](./examples/003-references/) |
 | `additionalProperties` / `unevaluatedProperties: false` | open (extra keys allowed) / closed (rejected) | [004](./examples/004-open-and-closed/) |
@@ -22,8 +22,8 @@ How each JSON Schema construct maps to generated TypeScript. Each row links to a
 | string `enum` | string-literal union `type X = "a" \| "b"` | [013](./examples/013-string-enums/) |
 | numeric `enum` | numeric-literal union `type X = 200 \| 404` | [014](./examples/014-numeric-enums/) |
 | `additionalProperties: { … }` (map) | index signature `{ readonly [key: string]: T }` | [015](./examples/015-maps/) |
-| `if` / `then` / `else` | base shape; conditional enforced by `evaluateRoot` | [017](./examples/017-conditional/) |
-| `default` | property made optional (value not applied — apply at read site) | [018](./examples/018-defaults/) |
+| `if` / `then` / `else` | base shape only — the conditional subschemas are validator-only (not reified as types), enforced by `evaluateRoot` | [017](./examples/017-conditional/) |
+| `default` | property made optional; `withDefaults{Type}(value)` fills declared defaults on read | [018](./examples/018-defaults/) |
 | `const` | the literal type of the value | [012](./examples/012-discriminated-unions/) |
 
 ## Shapes vs constraints
@@ -32,17 +32,20 @@ A recurring split runs through the table: a construct that **changes the shape**
 
 ## Names
 
-Type names come from the schema: a usable `title`, else the property or `$defs` key the type sits under, else the document name; pascal-cased, de-duplicated, and kept clear of TypeScript reserved words and globals. Identical subschemas are de-duplicated to a single type, so referencing one shape many times yields one `interface`.
+Type names come from the schema: a usable `title`, else the property or `$defs` key the type sits under, else the document name; pascal-cased, de-duplicated, and kept clear of TypeScript reserved words and globals. Identical subschemas are de-duplicated to a single type, so referencing one shape many times yields one `interface`. Validator-only subschemas (an `if`/`then`/`else` branch) are not named at all. Property names that aren't valid identifiers are quoted (`readonly "x-rate"?: number`).
+
+By default every type goes into one `generated.ts` module. Pass `--tsModulePerType` to instead emit one module per type plus a barrel `index.ts` that re-exports them (tree-shaking + IDE navigation); pass `--codeGenerationMode SchemaEvaluationOnly` to emit only the validators (no type surface).
 
 ## What each type comes with
 
 A generated object type carries more than its `interface`:
 
 - `evaluate{Type}(value, ev)` — the per-type evaluator;
-- `build{Type}(props)` — construct bytes;
-- `patch{Type}` / `produce{Type}` — mutate bytes;
+- `build{Type}(props)` — construct bytes; `buildCanonical{Type}` — deterministic (RFC 8785) bytes;
+- `patch{Type}` / `produce{Type}` — mutate bytes; `applyTo{Type}` for an `allOf` mixin;
+- `withDefaults{Type}(value)` — fill declared `default`s, when the subtree has any;
 - for a union, `is{Branch}` guards and `match{Type}`;
-- for a `format`, an `as{Name}` factory.
+- for a `format`, an `as{Name}` factory (and `{name}AsTemporal` for date/time/duration, `{name}AsExact` for `decimal`).
 
 Plus, once per module, `evaluateRoot` (the document entry point and `default` export).
 

@@ -1,6 +1,9 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
 
+/**
+ * Widget
+ */
 export interface Widget {
   readonly createdAt?: CreatedAt;
   readonly id?: string;
@@ -25,6 +28,10 @@ export function buildWidget(props: Widget): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
+export function buildCanonicalWidget(props: Widget): Uint8Array {
+  return canonicalize(props);
+}
+
 export function applyToWidget(source: Uint8Array, member: Named | Timestamped): Uint8Array {
   return patchWidget(source, member as Partial<Widget>);
 }
@@ -33,21 +40,26 @@ export function produceWidget(source: Uint8Array, recipe: (draft: Draft<Widget>)
   return produce<Widget>(source, recipe);
 }
 
-export function evaluateWidget(value: unknown, ev: Ev): boolean {
-  if (!(__isObj(value))) { return false; }
-  { const t = fresh(); if (!evaluateNamed(value, t)) { return false; } ev.mergeProps(t); ev.mergeItems(t); }
-  { const t = fresh(); if (!evaluateTimestamped(value, t)) { return false; } ev.mergeProps(t); ev.mergeItems(t); }
+export function evaluateWidget(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/type"); ok = false; }
+  { const t = fresh(); if (!evaluateNamed(value, t, il, (r === null ? kl : kl + "/allOf/0/$ref"), r)) { if (r === null) return false; ok = false; } ev.mergeProps(t); ev.mergeItems(t); }
+  { const t = fresh(); if (!evaluateTimestamped(value, t, il, (r === null ? kl : kl + "/allOf/1/$ref"), r)) { if (r === null) return false; ok = false; } ev.mergeProps(t); ev.mergeItems(t); }
   if (__isObj(value)) {
     const o = value as Record<string, unknown>;
     let i = -1;
     for (const k in o) {
       i++;
-      if (k === "id") { if (!evaluateId(o[k], NOEV)) { return false; } ev.markProp(i); }
+      if (k === "id") { if (!evaluateId(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/id"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
     }
   }
-  return true;
+  if (r !== null && r.verbose && ok) { r.annotate("title", "Widget", kl + "/title", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/title"); }
+  return ok;
 }
 
+/**
+ * Named
+ */
 export interface Named {
   readonly name: string;
 }
@@ -63,31 +75,41 @@ export function buildNamed(props: Named): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
+export function buildCanonicalNamed(props: Named): Uint8Array {
+  return canonicalize(props);
+}
+
 export function produceNamed(source: Uint8Array, recipe: (draft: Draft<Named>) => void): Uint8Array {
   return produce<Named>(source, recipe);
 }
 
-export function evaluateNamed(value: unknown, ev: Ev): boolean {
-  if (!(__isObj(value))) { return false; }
+export function evaluateNamed(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/$defs/named/type"); ok = false; }
   if (__isObj(value)) {
-    if (!Object.prototype.hasOwnProperty.call(value, "name")) { return false; }
+    if (!Object.prototype.hasOwnProperty.call(value, "name")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/$defs/named/required"); ok = false; }
   }
   if (__isObj(value)) {
     const o = value as Record<string, unknown>;
     let i = -1;
     for (const k in o) {
       i++;
-      if (k === "name") { if (!evaluateName(o[k], NOEV)) { return false; } ev.markProp(i); }
+      if (k === "name") { if (!evaluateName(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/name"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
     }
   }
-  return true;
+  if (r !== null && r.verbose && ok) { r.annotate("title", "Named", kl + "/title", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/$defs/named/title"); }
+  return ok;
 }
 
-export function evaluateName(value: unknown, ev: Ev): boolean {
-  if (!(typeof value === "string")) { return false; }
-  return true;
+export function evaluateName(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/$defs/named/properties/name/type"); ok = false; }
+  return ok;
 }
 
+/**
+ * Timestamped
+ */
 export interface Timestamped {
   readonly createdAt?: CreatedAt;
 }
@@ -108,37 +130,47 @@ export function buildTimestamped(props: Timestamped): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
+export function buildCanonicalTimestamped(props: Timestamped): Uint8Array {
+  return canonicalize(props);
+}
+
 export function produceTimestamped(source: Uint8Array, recipe: (draft: Draft<Timestamped>) => void): Uint8Array {
   return produce<Timestamped>(source, recipe);
 }
 
-export function evaluateTimestamped(value: unknown, ev: Ev): boolean {
-  if (!(__isObj(value))) { return false; }
+export function evaluateTimestamped(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/$defs/timestamped/type"); ok = false; }
   if (__isObj(value)) {
     const o = value as Record<string, unknown>;
     let i = -1;
     for (const k in o) {
       i++;
-      if (k === "createdAt") { if (!evaluateCreatedAt(o[k], NOEV)) { return false; } ev.markProp(i); }
+      if (k === "createdAt") { if (!evaluateCreatedAt(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/createdAt"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
     }
   }
-  return true;
+  if (r !== null && r.verbose && ok) { r.annotate("title", "Timestamped", kl + "/title", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/$defs/timestamped/title"); }
+  return ok;
 }
 
 export type CreatedAt = Brand<string, "date-time">;
 export function asCreatedAt(value: string): CreatedAt { if (!__fmt("date-time", value)) { throw new FormatError("date-time"); } return value as CreatedAt; }
+export function createdAtAsTemporal(value: CreatedAt): Temporal.Instant { return toInstant(value); }
 
-export function evaluateCreatedAt(value: unknown, ev: Ev): boolean {
-  if (!(typeof value === "string")) { return false; }
-  if (typeof value === "string" && !__fmt("date-time", value)) { return false; }
-  return true;
+export function evaluateCreatedAt(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/$defs/timestamped/properties/createdAt/type"); ok = false; }
+  if (typeof value === "string" && !__fmt("date-time", value)) { if (r === null) return false; r.fail(kl + "/format", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/$defs/timestamped/properties/createdAt/format"); ok = false; }
+  if (r !== null && r.verbose && ok) { r.annotate("format", "date-time", kl + "/format", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/$defs/timestamped/properties/createdAt/format"); }
+  return ok;
 }
 
-export function evaluateId(value: unknown, ev: Ev): boolean {
-  if (!(typeof value === "string")) { return false; }
-  return true;
+export function evaluateId(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/properties/id/type"); ok = false; }
+  return ok;
 }
 
 
-export const evaluateRoot = (v: unknown): boolean => evaluateWidget(v, fresh());
+export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateWidget(v, fresh(), "", "", results ?? null);
 export default evaluateRoot;
