@@ -141,15 +141,16 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
       <style>
         ${SHARED_CSS}
         ${GRANTEE_CHIP_CSS}
-        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
-        .head { padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: baseline; gap: 8px; }
+        /* overflow stays visible so the add-row's grantee-picker results dropdown isn't clipped by the card. */
+        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); }
+        .head { padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); border-radius: var(--_radius) var(--_radius) 0 0; display: flex; align-items: baseline; gap: 8px; }
         .head .title { font-weight: 700; }
         .head .base { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
         .list { display: grid; }
         .arow { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--_border); }
         .arow:last-child { border-bottom: none; }
         .grow { flex: 1; }
-        .add { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--_border); background: var(--_surface); }
+        .add { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--_border); background: var(--_surface); border-radius: 0 0 var(--_radius) var(--_radius); }
         .add .grant-in { flex: 1; }
         .err { margin: 10px 12px; }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }

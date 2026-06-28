@@ -2,10 +2,15 @@
 //
 //   <arazzo-credentials-table base-url="/arazzo/v1" status="expiring" selectable></arazzo-credentials-table>
 //
-// Attributes : base-url, status (valid|expiring|expired), source, selectable, scopes (gates the New button)
+// Attributes : base-url, status (valid|expiring|expired), source, selectable, scopes (gates the Duplicate action)
 // Properties : .client, .filters = { status, source }
-// Events     : credential-selected {binding}, credential-new {}, loaded {count, expiring, expired}, error {problem}
+// Events     : credential-selected {binding}, credential-duplicate {binding}, loaded {count, expiring, expired}, error {problem}
 // Parts      : table, row, cell, status, toolbar
+//
+// This is a MANAGEMENT surface, not a creation one: rows are rotated/inspected (credential-selected), duplicated to
+// another environment (credential-duplicate — clone source + auth, re-point the secret), and revoked. Creating a
+// credential is rooted where the source and its auth are known — the catalog's per-workflow Sources panel (§7.5) —
+// not free-typed here.
 //
 // A binding manages a REFERENCE and non-secret metadata only — never secret material — so the table renders a
 // `secretRef` and a derived `credentialStatus`, never a secret. The operator's question is "what's about to
@@ -156,6 +161,8 @@ class ArazzoCredentialsTable extends ArazzoElement {
         tbody tr.selectable:hover { background: var(--_surface); }
         tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
         .src-name { font-weight: 600; }
+        .actions-cell { white-space: nowrap; text-align: right; }
+        .dup { font-size: 12px; padding: 3px 8px; }
         .ref { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--_muted); }
         .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; white-space: nowrap; }
         .grants { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -179,11 +186,10 @@ class ArazzoCredentialsTable extends ArazzoElement {
           </label>
           <input class="src" type="text" placeholder="source…" aria-label="Filter by source">
           <span class="grow"></span>
-          <button class="new primary" type="button" hidden>New credential</button>
         </div>
         <table>
           <thead>
-            <tr><th>Source</th><th>Environment</th><th>Auth</th><th>Status</th><th>Expires</th><th>Grants</th></tr>
+            <tr><th>Source</th><th>Environment</th><th>Auth</th><th>Status</th><th>Expires</th><th>Grants</th><th></th></tr>
           </thead>
           <tbody part="rows"></tbody>
         </table>
@@ -196,7 +202,6 @@ class ArazzoCredentialsTable extends ArazzoElement {
     const src = this.$('.src');
     src.value = this.getAttribute('source') || '';
     src.addEventListener('input', () => this.filters = { ...this.filters, source: src.value.trim() || undefined });
-    this.$('.new').addEventListener('click', () => this.emit('credential-new', {}));
   }
 
   visibleBindings() {
@@ -211,12 +216,13 @@ class ArazzoCredentialsTable extends ArazzoElement {
     const tbody = this.$('tbody');
     if (!tbody) return;
     const selectable = this.hasAttribute('selectable');
-    const scopes = (this.getAttribute('scopes') || '').split(/\s+/).filter(Boolean);
-    const newBtn = this.$('.new');
-    if (newBtn) newBtn.hidden = !(scopes.length === 0 || scopes.includes('credentials:write'));
+    const canWrite = (() => {
+      const scopes = (this.getAttribute('scopes') || '').split(/\s+/).filter(Boolean);
+      return scopes.length === 0 || scopes.includes('credentials:write');
+    })();
 
     if (this._error) {
-      tbody.innerHTML = `<tr><td colspan="6">
+      tbody.innerHTML = `<tr><td colspan="7">
         <div class="error-banner">
           <span><strong>${escapeHtml(this._error.title || 'Request failed')}</strong>${this._error.detail ? ' — ' + escapeHtml(this._error.detail) : ''}</span>
           <button class="retry" type="button">Retry</button>
@@ -227,22 +233,30 @@ class ArazzoCredentialsTable extends ArazzoElement {
     }
 
     if (this._loading && this._bindings.length === 0) {
-      tbody.innerHTML = Array.from({ length: 3 }, () => `<tr>${'<td><div class="skl"></div></td>'.repeat(6)}</tr>`).join('');
+      tbody.innerHTML = Array.from({ length: 3 }, () => `<tr>${'<td><div class="skl"></div></td>'.repeat(7)}</tr>`).join('');
       this.renderFoot(0, 0);
       return;
     }
 
     const rows = this.visibleBindings();
     if (rows.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6"><div class="empty">No credential bindings match the current filters.</div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty">No credential bindings match the current filters.</div></td></tr>`;
       this.renderFoot(0, 0);
       return;
     }
 
-    tbody.innerHTML = rows.map((b) => this.renderRow(b, selectable)).join('');
+    tbody.innerHTML = rows.map((b) => this.renderRow(b, selectable, canWrite)).join('');
     if (selectable) {
       this.$$('tbody tr.selectable').forEach((tr) => tr.addEventListener('click', () => this.select(tr.dataset.key)));
     }
+    // Duplicate-to-environment: clone this binding's source + auth into a new environment (the one legitimate
+    // "create" on the Sources tab — rooted in an existing source, not free-typed). Stops the row's select click.
+    this.$$('tbody .dup').forEach((btn) => btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const key = btn.closest('tr')?.dataset.key;
+      const binding = this._bindings.find((b) => `${b.sourceName}@${b.environment}` === key);
+      if (binding) this.emit('credential-duplicate', { binding });
+    }));
 
     const expiring = rows.filter((b) => b.credentialStatus === 'expiringSoon').length;
     const expired = rows.filter((b) => b.credentialStatus === 'expired').length;
@@ -250,7 +264,7 @@ class ArazzoCredentialsTable extends ArazzoElement {
     this.emit('loaded', { count: rows.length, expiring, expired });
   }
 
-  renderRow(b, selectable) {
+  renderRow(b, selectable, canWrite = true) {
     const key = `${b.sourceName}@${b.environment}`;
     const status = STATUS[b.credentialStatus] || { label: b.credentialStatus, color: 'var(--_muted)' };
     const ref = b.secretRefs?.[0]?.ref;
@@ -269,6 +283,7 @@ class ArazzoCredentialsTable extends ArazzoElement {
         <td part="cell"><span class="badge" part="status" style="background:${status.color}">${escapeHtml(status.label)}</span></td>
         <td part="cell">${expires}</td>
         <td part="cell">${grants}</td>
+        <td part="cell" class="actions-cell">${canWrite ? '<button class="dup ghost" type="button" title="Duplicate to another environment">Duplicate</button>' : ''}</td>
       </tr>`;
   }
 
