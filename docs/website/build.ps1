@@ -1243,6 +1243,37 @@ $openapiSize = (Get-ChildItem $openapiOutputDir -Recurse -File | Measure-Object 
 Write-Host "  OpenAPI Playground: $([math]::Round($openapiSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "OpenAPI Playground build" $sw
 
+# -- Step 9j: Build TypeScript Playground (Blazor WASM) -------------------------
+Write-Host "`n[9j/10] Building TypeScript Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$tsPlaygroundProject = Join-Path $repoRoot "docs\playground-typescript\src\Corvus.Text.Json.TypeScript.Playground\Corvus.Text.Json.TypeScript.Playground.csproj"
+$tsPlaygroundPublishDir = Join-Path $here ".playground-typescript-publish"
+$tsPlaygroundOutputDir = Join-Path $outputDir "playground-typescript"
+
+& dotnet publish $tsPlaygroundProject -c Release -o $tsPlaygroundPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "TypeScript Playground publish failed" }
+
+$tsPlaygroundWwwroot = Join-Path $tsPlaygroundPublishDir "wwwroot"
+if (!(Test-Path $tsPlaygroundWwwroot)) {
+    throw "TypeScript Playground wwwroot not found at $tsPlaygroundWwwroot"
+}
+Copy-Item -Path $tsPlaygroundWwwroot -Destination $tsPlaygroundOutputDir -Recurse -Force
+
+$tsPlaygroundIndex = Join-Path $tsPlaygroundOutputDir "index.html"
+if (Test-Path $tsPlaygroundIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($tsPlaygroundIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground-typescript/`" />"
+    [System.IO.File]::WriteAllText($tsPlaygroundIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground-typescript/" -ForegroundColor Gray
+}
+
+Remove-Item $tsPlaygroundPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$tsPlaygroundSize = (Get-ChildItem $tsPlaygroundOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  TypeScript Playground: $([math]::Round($tsPlaygroundSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "TypeScript Playground build" $sw
+
 # Disable Jekyll processing so that _-prefixed directories (_framework, _content)
 # are served correctly at any nesting depth (e.g. pr-preview/pr-NNN/playground/_framework/).
 # The previous _config.yml include approach only worked for root-level directories.
