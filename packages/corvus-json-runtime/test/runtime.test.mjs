@@ -62,6 +62,23 @@ test("Results collects failures and annotations", () => {
   assert.equal(r.failures[0].absoluteKeywordLocation, "https://example/schema#/type");
 });
 
+test("Results.merge folds another collector's failures and annotations in (D1 disjunction sub-failures)", () => {
+  const parent = new Results();
+  parent.fail("/anyOf", "", "schema#/anyOf");
+
+  const branch = new Results();
+  branch.fail("/anyOf/0/minLength", "", "schema#/anyOf/0/minLength");
+  branch.annotate("title", "Branch", "/anyOf/0/title", "");
+
+  parent.merge(branch);
+  assert.equal(parent.failures.length, 2, "merge appends the branch's failures");
+  assert.equal(parent.failures[1].keywordLocation, "/anyOf/0/minLength");
+  assert.equal(parent.annotations.length, 1, "merge appends the branch's annotations");
+  assert.equal(parent.annotations[0].keyword, "title");
+  // The source collector is untouched.
+  assert.equal(branch.failures.length, 1, "merge does not mutate the source");
+});
+
 const enc = (s) => new TextEncoder().encode(s);
 const dec = (b) => new TextDecoder().decode(b);
 

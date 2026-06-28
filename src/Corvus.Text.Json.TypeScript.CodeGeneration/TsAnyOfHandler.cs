@@ -21,12 +21,20 @@ internal sealed class TsAnyOfHandler : IKeywordValidationHandler, ITsKeywordEmit
         // Evaluate every branch and OR-merge each matched branch's evaluations into the tracker (a no-op
         // on NOEV). Always merge -- the owner may not track, but an ancestor reached via in-place
         // applicators might, and the shared tracker carries the evaluations up to it.
-        sb.Append("  { let m = false;\n");
+        //
+        // Detailed mode (r !== null): each branch gets its OWN sub-collector (rb) so that, when the
+        // disjunction fails (no branch matched), every branch's sub-failures are surfaced (merged) in
+        // addition to the composite /anyOf failure. The boolean hot path (r === null) keeps rb === null,
+        // builds no sub-collectors and no kl concatenation, and short-circuits on the first match.
+        sb.Append("  { let m = false; const subs = r === null ? null : [];\n");
+        int i = 0;
         foreach (string e in members)
         {
-            sb.Append("    { const t = fresh(); if (").Append(e).Append("(value, t)) { ev.mergeProps(t); ev.mergeItems(t); m = true; } }\n");
+            string klExpr = "(rb === null ? kl : kl + \"/anyOf/" + i + "\")";
+            sb.Append("    { const t = fresh(); const rb = subs === null ? null : new Results(r.verbose); if (").Append(e).Append("(value, t, il, ").Append(klExpr).Append(", rb)) { ev.mergeProps(t); ev.mergeItems(t); m = true; } else if (rb !== null) { subs.push(rb); } }\n");
+            i++;
         }
 
-        sb.Append("    if (!m) { ").Append(TsEmit.FailShape(td, keyword.Keyword)).Append(" }\n  }\n");
+        sb.Append("    if (!m) { if (r === null) return false; if (subs !== null) { for (const s of subs) { r.merge(s); } } ").Append(TsEmit.FailRecord(td, keyword.Keyword)).Append(" ok = false; }\n  }\n");
     }
 }

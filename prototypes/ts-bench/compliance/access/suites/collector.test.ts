@@ -96,4 +96,51 @@ function collect(value: unknown): { ok: boolean; r: Results } {
   eq(ok, false, "boolean path -> false");
 }
 
+// D1 — disjunction branch sub-failures. A failed anyOf/oneOf in detailed mode must surface EACH branch's
+// own sub-failures (under .../anyOf/<i>/... or .../oneOf/<i>/...) IN ADDITION to the composite, not just the
+// composite. (if/then/else is excluded by design — the `if` is a boolean selector.)
+const subFails = (r: Results, prefix: string) =>
+  r.failures.filter((f) => f.keywordLocation.startsWith(prefix)).map((f) => f.keywordLocation).sort();
+
+// anyOf, all branches fail: "ab" is neither a >=5-char string nor a >=100 integer -> per-branch sub-failures
+// (string/minLength + integer/type) PLUS the composite /anyOf.
+{
+  const r = new Results();
+  const ok = evaluatePerson({ name: "Ada", address: { zip: "12345" }, disj: "ab" }, new Ev(), "", "", r);
+  eq(ok, false, "anyOf all-fail -> ok=false");
+  eq(subFails(r, "/properties/disj/anyOf"),
+    ["/properties/disj/anyOf", "/properties/disj/anyOf/0/minLength", "/properties/disj/anyOf/1/type"],
+    "anyOf all-fail -> per-branch sub-failures + composite");
+}
+
+// oneOf, ZERO branches match: 5 is an integer but a multiple of neither 2 nor 3 -> both branches' multipleOf
+// sub-failures PLUS the composite /oneOf.
+{
+  const r = new Results();
+  const ok = evaluatePerson({ name: "Ada", address: { zip: "12345" }, pick: 5 }, new Ev(), "", "", r);
+  eq(ok, false, "oneOf 0-match -> ok=false");
+  eq(subFails(r, "/properties/pick/oneOf"),
+    ["/properties/pick/oneOf", "/properties/pick/oneOf/0/multipleOf", "/properties/pick/oneOf/1/multipleOf"],
+    "oneOf 0-match -> per-branch sub-failures + composite");
+}
+
+// oneOf, MORE THAN ONE branch matches: 6 is a multiple of both 2 and 3 -> over-match. The failed-branch
+// sub-failures are misleading noise here (the value matched too MANY branches), so the composite /oneOf is
+// emitted ALONE (no /oneOf/<i>/... sub-failures).
+{
+  const r = new Results();
+  const ok = evaluatePerson({ name: "Ada", address: { zip: "12345" }, pick: 6 }, new Ev(), "", "", r);
+  eq(ok, false, "oneOf over-match -> ok=false");
+  eq(subFails(r, "/properties/pick/oneOf"), ["/properties/pick/oneOf"], "oneOf over-match -> composite ONLY");
+}
+
+// boolean fast path (no collector): the verdict is unchanged by the collector detail — a failed anyOf/oneOf
+// still returns false, an over-matched oneOf still returns false, a satisfied disjunction returns true.
+{
+  eq(evaluatePerson({ name: "Ada", address: { zip: "12345" }, disj: "ab" }, new Ev()), false, "boolean anyOf all-fail -> false");
+  eq(evaluatePerson({ name: "Ada", address: { zip: "12345" }, pick: 5 }, new Ev()), false, "boolean oneOf 0-match -> false");
+  eq(evaluatePerson({ name: "Ada", address: { zip: "12345" }, pick: 6 }, new Ev()), false, "boolean oneOf over-match -> false");
+  eq(evaluatePerson({ name: "Ada", address: { zip: "12345" }, disj: "abcdef", pick: 4 }, new Ev()), true, "boolean disjunctions satisfied -> true");
+}
+
 console.log(`COLLECTOR ${pass} passed, ${fail} failed`);

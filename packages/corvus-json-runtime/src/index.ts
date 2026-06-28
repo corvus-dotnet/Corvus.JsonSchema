@@ -44,6 +44,7 @@ export class Results {
   get valid(): boolean { return this.failures.length === 0; }
   fail(keywordLocation: string, instanceLocation: string, absoluteKeywordLocation?: string): void { this.failures.push({ keywordLocation, instanceLocation, absoluteKeywordLocation }); }
   annotate(keyword: string, value: unknown, keywordLocation: string, instanceLocation: string, absoluteKeywordLocation?: string): void { this.annotations.push({ keyword, value, keywordLocation, instanceLocation, absoluteKeywordLocation }); }
+  merge(other: Results): void { for (const f of other.failures) { this.failures.push(f); } for (const a of other.annotations) { this.annotations.push(a); } }
 }
 export function __ptr(s: string): string { return s.indexOf("~") < 0 && s.indexOf("/") < 0 ? s : s.replace(/~/g, "~0").replace(/\//g, "~1"); }
 

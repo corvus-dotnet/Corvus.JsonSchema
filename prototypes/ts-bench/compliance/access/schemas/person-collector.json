@@ -11,7 +11,9 @@
     },
     "tags": { "type": "array", "items": { "type": "string", "minLength": 2 } },
     "age": { "$ref": "#/$defs/PosInt" },
-    "score": { "allOf": [{ "$ref": "#/$defs/PosInt" }] }
+    "score": { "allOf": [{ "$ref": "#/$defs/PosInt" }] },
+    "disj": { "anyOf": [{ "type": "string", "minLength": 5 }, { "type": "integer", "minimum": 100 }] },
+    "pick": { "oneOf": [{ "type": "integer", "multipleOf": 2 }, { "type": "integer", "multipleOf": 3 }] }
   },
   "$defs": {
     "PosInt": { "type": "integer", "minimum": 1, "description": "A positive integer" }
