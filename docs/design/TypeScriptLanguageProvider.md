@@ -1905,16 +1905,26 @@ Severity = impact on a production‑quality engine. Effort = S / M / L.
 > point for decimal.js/bignumber.js; no bundled dep). Covered by a runtime test + the `numformat-access` suite.
 > Remaining backlog: **A2–A6**, **G7** (playground); **H1/H2** stay deferred.
 
+> **Update (2026‑06‑28f).** The **A2–A6** surface‑polish sweep is resolved. **A2** (real, done): a conditional
+> `if`/`then`/`else` subschema is now validator‑only — its `evaluate{Type}` is emitted but no interface (gated so
+> a `$ref` shared with a real value type still keeps its surface), so `If`/`Then`/`Else` no longer appear in the
+> consumer API. **A6** (done): runtime `toFloat64Array`/`toFloat32Array`/`toInt32Array` opt‑in typed‑array views.
+> **A3** + **A4** were found **already handled** (their "Now" cells were stale): non‑identifier property names are
+> already quoted/bracket‑accessed, and a constraint‑only `oneOf` already resolves to a structural union. **A5**
+> (qualified names) is **deferred** — the numeric suffixes are correct and OS‑deterministic (#825); a renaming
+> heuristic is subjective, Low‑value, and risks that determinism, and A2 already removes the worst offenders.
+> Remaining backlog: **G7** (playground); **A5** deferred; **H1/H2** stay deferred.
+
 ### A — Type surface & output structure
 
 | # | Gap | Now | Desired | Sev | Eff |
 |---|-----|-----|---------|-----|-----|
 | A1 | **Multi‑file output / barrel `index.ts`** | ✅ **done (2026‑06‑28, opt‑in)** — `--tsModulePerType` emits one module per type + a barrel `index.ts` with computed cross‑module imports (recursive/circular schemas verified); single‑file `generated.ts` stays the default | (default flip + cross‑*file* `$ref` are follow‑ups) | High | L |
-| A2 | **`if`/`then`/`else` subschemas reified as named types** | emits `If` / `Then` / `Method2` interfaces for the conditional subschemas | keep conditional subschemas anonymous (validator‑only); don't pollute the type surface | Med | M |
-| A3 | **Reserved‑word / global‑shadow property names** | property names emitted verbatim (type names are guarded; members aren't) | sanitise member names that collide with TS keywords | Low | S |
-| A4 | **Combined `oneOf` + `allOf` + `type:[…]`** | degrades to a sound `unknown` when the `oneOf` branches are constraint‑only | resolve to the structural `type` union (e.g. `string \| readonly number[]`) | Low | M |
-| A5 | **Collision/fallback name polish** | numeric suffixes (`Entity2`, `evaluateKind2`) | qualified/hierarchical names where they read better | Low | M |
-| A6 | **Numeric typed‑array views** | `readonly number[]` for dense numeric arrays | optional `Float64Array`/typed‑array view for numeric hot paths (Model A/C) | Low | M |
+| A2 | **`if`/`then`/`else` subschemas reified as named types** | ✅ **done (2026‑06‑28)** — a conditional subschema (not value‑referenced) is validator‑only: its `evaluate{Type}` is emitted but no interface/aliases, so `If`/`Then`/`Else` no longer pollute the surface | — | Med | M |
+| A3 | **Reserved‑word / global‑shadow property names** | ✅ **already handled (verified 2026‑06‑28)** — non‑identifier property names are already quoted (`readonly "weird-name"?: …`) and accessed via brackets (`changes["weird-name"]`); reserved words like `class` are valid as property names in TS. (the "Now" cell was stale) | — | Low | S |
+| A4 | **Combined `oneOf` + `allOf` + `type:[…]`** | ✅ **already handled (verified 2026‑06‑28)** — a `oneOf` of constraint‑only branches already resolves to the structural union (`type V = string \| number`); the only residue is a multi‑type array branch (`type:[string,array]` → `… \| readonly unknown[]`), the documented core‑limited non‑gap below that matches C# fidelity | — | Low | M |
+| A5 | **Collision/fallback name polish** | **deferred** — numeric suffixes (`evaluateKind2`) are correct + deterministic across OSes (#825); a qualified/hierarchical‑name heuristic is subjective, Low‑value, and risks regressing that determinism. A2 already removes the worst offenders (the reified `If`/`Then`/`Else`) | qualified/hierarchical names | Low | M |
+| A6 | **Numeric typed‑array views** | ✅ **done (2026‑06‑28)** — runtime `toFloat64Array`/`toFloat32Array`/`toInt32Array` give an opt‑in typed‑array view over a numeric array; the generated type stays `readonly number[]` so nothing is forced on consumers | — | Low | M |
 
 > Not a gap: a multi‑type array branch stays `readonly unknown[]` (the core exposes no
 > `ArrayItemsType` for a non‑pure‑array schema) — this matches the C# engine's fidelity.

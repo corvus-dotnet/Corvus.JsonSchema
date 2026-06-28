@@ -80,6 +80,14 @@ export function exactNumber(value: unknown): string {
 // dependency: `exactNumber((parseLossless(text) as { price: unknown }).price)`.
 export { parse as parseLossless } from "lossless-json";
 
+// Typed-array views (gap A6, §5.3) — an OPTIONAL view over a dense numeric JSON array for numeric hot paths
+// (Model A/C). A JSON array parses to a plain `number[]`; the generated property type stays `readonly number[]`
+// (so nothing is forced on consumers who don't want it), and these build the matching typed-array on demand:
+// `const speeds = toFloat64Array(doc.samples)`. Out-of-range values follow the standard typed-array coercion.
+export function toFloat64Array(values: readonly number[]): Float64Array { return Float64Array.from(values); }
+export function toFloat32Array(values: readonly number[]): Float32Array { return Float32Array.from(values); }
+export function toInt32Array(values: readonly number[]): Int32Array { return Int32Array.from(values); }
+
 export interface Failure { readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string; }
 export interface Annotation { readonly keyword: string; readonly value: unknown; readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string; }
 export class Results {

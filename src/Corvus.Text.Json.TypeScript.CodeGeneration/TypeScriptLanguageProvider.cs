@@ -49,6 +49,11 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     // generated.ts. Default false keeps the single-file output every harness / example consumes today.
     private bool modulePerType;
 
+    // Gap A2: types that are ONLY an if/then/else conditional subschema (validator-only) — their type surface
+    // (interface/aliases + helpers) is suppressed so the consumer API isn't polluted with If/Then/Else types;
+    // their evaluate{Type} is still emitted (the conditional validator calls it). Recomputed per generation.
+    private HashSet<TypeDeclaration> conditionalOnly = [];
+
     /// <summary>
     /// Gets the shared runtime module source (<c>@endjin/corvus-json-runtime</c> in production): emitted ONCE,
     /// imported by every generated module.
@@ -251,6 +256,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     {
         List<TypeDeclaration> types = typeDeclarations.ToList();
         AssignFinalNames(types);
+        this.conditionalOnly = ComputeConditionalOnly(types);
 
         if (this.modulePerType)
         {
@@ -326,6 +332,60 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         }
     }
 
+    // Gap A2: the set of types that are ONLY an if/then/else conditional subschema, whose type surface should
+    // be suppressed (kept validator-only). A conditional subschema's reduced type is excluded if it is ALSO
+    // referenced as a value (a property/array-item/tuple-item/composition member) — a $ref shared with a real
+    // value type still needs its interface, so it stays in the surface.
+    private static HashSet<TypeDeclaration> ComputeConditionalOnly(List<TypeDeclaration> types)
+    {
+        var conditional = new HashSet<TypeDeclaration>();
+        var referencedAsValue = new HashSet<TypeDeclaration>();
+        foreach (TypeDeclaration td in types)
+        {
+            AddConditional(conditional, td.IfSubschemaType());
+            AddConditional(conditional, td.ThenSubschemaType());
+            AddConditional(conditional, td.ElseSubschemaType());
+
+            foreach (PropertyDeclaration p in td.PropertyDeclarations)
+            {
+                referencedAsValue.Add(p.ReducedPropertyType);
+            }
+
+            if ((td.ExplicitNonTupleItemsType() ?? td.ArrayItemsType()) is { } items)
+            {
+                referencedAsValue.Add(items.ReducedType);
+            }
+
+            if (td.ExplicitTupleType() is { } tuple)
+            {
+                foreach (ReducedTypeDeclaration it in tuple.ItemsTypes)
+                {
+                    referencedAsValue.Add(it.ReducedType);
+                }
+            }
+
+            var members = new List<TypeDeclaration>();
+            CollectMembers(td.OneOfCompositionTypes(), members);
+            CollectMembers(td.AnyOfCompositionTypes(), members);
+            CollectMembers(td.AllOfCompositionTypes(), members);
+            foreach (TypeDeclaration m in members)
+            {
+                referencedAsValue.Add(m);
+            }
+        }
+
+        conditional.ExceptWith(referencedAsValue);
+        return conditional;
+
+        static void AddConditional(HashSet<TypeDeclaration> set, SingleSubschemaKeywordTypeDeclaration? t)
+        {
+            if (t is not null)
+            {
+                set.Add(t.ReducedType);
+            }
+        }
+    }
+
     // The shared-runtime import line every generated module emits (§5.5); identical across emission modes.
     private string RuntimeImportLine()
         => "import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from \""
@@ -344,7 +404,9 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     // the containing module (one set for the whole single-file module; a fresh set per module-per-type file).
     private void EmitType(StringBuilder sb, TypeDeclaration td, HashSet<string> moduleGuards)
     {
-        if (this.emitTypeSurface)
+        // A2: a conditional (if/then/else) subschema is validator-only — emit no type surface for it, just its
+        // evaluate{Type} below (the conditional validator calls it; nothing references it as a value type).
+        if (this.emitTypeSurface && !this.conditionalOnly.Contains(td))
         {
             if (IsObject(td))
             {

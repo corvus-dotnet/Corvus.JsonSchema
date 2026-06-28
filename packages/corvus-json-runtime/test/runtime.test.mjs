@@ -24,6 +24,9 @@ import {
   canonicalJson,
   exactNumber,
   parseLossless as rtParseLossless,
+  toFloat64Array,
+  toFloat32Array,
+  toInt32Array,
 } from "../dist/index.js";
 
 test("__isNum recognises plain numbers and lossless-json source-text numbers", () => {
@@ -179,4 +182,15 @@ test("exactNumber returns exact digits for a lossless-parsed number, ECMAScript 
 
   // A big integer beyond Number.MAX_SAFE_INTEGER stays exact through parseLossless.
   assert.equal(exactNumber(rtParseLossless('{"n":9007199254740993}').n), "9007199254740993");
+});
+
+test("typed-array view helpers build the matching view over a numeric array (gap A6)", () => {
+  const nums = [1, 2.5, -3];
+  const f64 = toFloat64Array(nums);
+  assert.ok(f64 instanceof Float64Array);
+  assert.equal(f64.length, 3);
+  assert.deepEqual([...f64], [1, 2.5, -3]);
+  // Float32 narrows precision (the point of a float32 view); Int32 truncates toward zero.
+  assert.ok(toFloat32Array([0.1])[0] !== 0.1);
+  assert.deepEqual([...toInt32Array([1.9, -2.9])], [1, -2]);
 });
