@@ -26,12 +26,15 @@ internal sealed class TsOneOfHandler : IKeywordValidationHandler, ITsKeywordEmit
         // merge them in addition to the composite /oneOf failure. When c > 1 (over-match) the failed branches'
         // sub-failures are misleading noise (the schema matched too MANY branches, not too few), so we emit the
         // composite ONLY. The boolean hot path (r === null) keeps subs === null and builds no sub-collectors.
-        sb.Append("  { let c = 0; const acc = fresh(); const subs = r === null ? null : [];\n");
+        // subs is typed (not an inferred never[]) and rb is gated on `r`, so the per-branch null-checks
+        // correlate for a strict consumer (strictNullChecks / exactOptionalPropertyTypes): subs !== null iff
+        // r !== null iff rb !== null.
+        sb.Append("  { let c = 0; const acc = fresh(); const subs: Results[] | null = r === null ? null : [];\n");
         int i = 0;
         foreach (string e in evals)
         {
             string klExpr = "(rb === null ? kl : kl + \"/oneOf/" + i + "\")";
-            sb.Append("    { const t = fresh(); const rb = subs === null ? null : new Results(r.verbose); if (").Append(e).Append("(value, t, il, ").Append(klExpr).Append(", rb)) { c++; acc.mergeProps(t); acc.mergeItems(t); } else if (rb !== null) { subs.push(rb); } }\n");
+            sb.Append("    { const t = fresh(); const rb = r === null ? null : new Results(r.verbose); if (").Append(e).Append("(value, t, il, ").Append(klExpr).Append(", rb)) { c++; acc.mergeProps(t); acc.mergeItems(t); } else if (rb !== null && subs !== null) { subs.push(rb); } }\n");
             i++;
         }
 

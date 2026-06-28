@@ -88,8 +88,8 @@ export function toFloat64Array(values: readonly number[]): Float64Array { return
 export function toFloat32Array(values: readonly number[]): Float32Array { return Float32Array.from(values); }
 export function toInt32Array(values: readonly number[]): Int32Array { return Int32Array.from(values); }
 
-export interface Failure { readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string; }
-export interface Annotation { readonly keyword: string; readonly value: unknown; readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string; }
+export interface Failure { readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string | undefined; }
+export interface Annotation { readonly keyword: string; readonly value: unknown; readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string | undefined; }
 export class Results {
   readonly failures: Failure[] = [];
   readonly annotations: Annotation[] = [];

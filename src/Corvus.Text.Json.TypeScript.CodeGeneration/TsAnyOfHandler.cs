@@ -26,12 +26,14 @@ internal sealed class TsAnyOfHandler : IKeywordValidationHandler, ITsKeywordEmit
         // disjunction fails (no branch matched), every branch's sub-failures are surfaced (merged) in
         // addition to the composite /anyOf failure. The boolean hot path (r === null) keeps rb === null,
         // builds no sub-collectors and no kl concatenation, and short-circuits on the first match.
-        sb.Append("  { let m = false; const subs = r === null ? null : [];\n");
+        // subs is typed (not an inferred never[]) and rb is gated on `r`, so the per-branch null-checks
+        // correlate for a strict consumer (strictNullChecks / exactOptionalPropertyTypes).
+        sb.Append("  { let m = false; const subs: Results[] | null = r === null ? null : [];\n");
         int i = 0;
         foreach (string e in members)
         {
             string klExpr = "(rb === null ? kl : kl + \"/anyOf/" + i + "\")";
-            sb.Append("    { const t = fresh(); const rb = subs === null ? null : new Results(r.verbose); if (").Append(e).Append("(value, t, il, ").Append(klExpr).Append(", rb)) { ev.mergeProps(t); ev.mergeItems(t); m = true; } else if (rb !== null) { subs.push(rb); } }\n");
+            sb.Append("    { const t = fresh(); const rb = r === null ? null : new Results(r.verbose); if (").Append(e).Append("(value, t, il, ").Append(klExpr).Append(", rb)) { ev.mergeProps(t); ev.mergeItems(t); m = true; } else if (rb !== null && subs !== null) { subs.push(rb); } }\n");
             i++;
         }
 
