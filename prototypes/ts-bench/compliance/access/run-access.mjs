@@ -48,6 +48,14 @@ const SUITE_TABLE = [
   { test: "provider-access.test.ts", schema: "person.json",          importDir: "out" },
   { test: "jsdoc-access.test.ts",    schema: "jsdoc.json",           importDir: "out-jsdoc" },
   { test: "defaults-access.test.ts", schema: "defaults.json",        importDir: "out-defaults" },
+  // OpenAPI nullable (gap E1): the SAME nullable feature under both dialects. 3.0 spells it `nullable:true`
+  // (only reachable via the forced openapi30 fallback vocabulary, since the doc carries no $schema); 3.1
+  // spells it `type:["string","null"]` (standard 2020-12, reached via the openapi31 fallback). Both must
+  // emit `T | null` and a null-accepting validator, and reject null on a non-nullable property.
+  { test: "openapi-access.test.ts",  modules: [
+      { schema: "openapi30-nullable.json", importDir: "out-openapi30", dialect: "openapi30" },
+      { schema: "openapi31-nullable.json", importDir: "out-openapi31", dialect: "openapi31" },
+    ] },
 ];
 
 // ----- long-running codegen worker (one process for the whole run; same protocol as bowtie-harness.mjs) -----
@@ -56,11 +64,14 @@ worker.on("exit", (code) => { if (code !== 0) { process.stderr.write(`codegen wo
 const workerOut = createInterface({ input: worker.stdout });
 const pending = [];
 workerOut.on("line", (line) => { const r = pending.shift(); if (r) { r(line); } });
-function codegen(schema, out) {
+function codegen(schema, out, dialect) {
   return new Promise((resolve) => {
     pending.push(resolve);
     // schema is passed as a parsed value so $schema (absent in some feature schemas) defaults per the worker.
-    worker.stdin.write(JSON.stringify({ schema, out }) + "\n");
+    // `dialect` (optional) forces the fallback vocabulary — needed for OpenAPI 3.0/3.1 schemas, which carry
+    // no $schema and so cannot be reached by the worker's $schema-based draft detection.
+    const req = dialect ? { schema, out, dialect } : { schema, out };
+    worker.stdin.write(JSON.stringify(req) + "\n");
   });
 }
 
@@ -95,27 +106,40 @@ async function main() {
 
   for (const s of SUITE_TABLE) {
     const suiteDir = join(WORK, s.test.replace(/\.test\.ts$/, ""));
-    const genDir = join(suiteDir, "gen");          // worker writes raw generated.ts + corvus-runtime.ts here
-    const importTarget = join(suiteDir, s.importDir); // transpiled .js the test imports from ./<importDir>/
-    mkdirSync(importTarget, { recursive: true });
 
-    // 1) codegen via the worker.
-    const schema = JSON.parse(readFileSync(join(SCHEMAS, s.schema), "utf8"));
-    const resp = JSON.parse(await codegen(schema, genDir));
-    if (resp.error) {
-      summary.push({ name: s.test, ok: false, detail: `codegen error: ${resp.error}` });
+    // A suite generates ONE module from { schema, importDir } by default, or SEVERAL when it carries a
+    // `modules` array (each { schema, importDir, dialect? } produces its own importDir — e.g. the OpenAPI
+    // suite imports a 3.0 and a 3.1 module side by side). Each module gets its own gen dir.
+    const modules = s.modules ?? [{ schema: s.schema, importDir: s.importDir, dialect: s.dialect }];
+    let codegenError = null;
+    for (let mi = 0; mi < modules.length; mi++) {
+      const m = modules[mi];
+      const genDir = join(suiteDir, "gen" + mi);     // worker writes raw generated.ts + corvus-runtime.ts here
+      const importTarget = join(suiteDir, m.importDir); // transpiled .js the test imports from ./<importDir>/
+      mkdirSync(importTarget, { recursive: true });
+
+      // 1) codegen via the worker.
+      const schema = JSON.parse(readFileSync(join(SCHEMAS, m.schema), "utf8"));
+      const resp = JSON.parse(await codegen(schema, genDir, m.dialect));
+      if (resp.error) { codegenError = resp.error; break; }
+
+      // 2) transpile generated module(s) + runtime into the import dir.
+      for (const name of ["corvus-runtime", "generated"]) {
+        writeFileSync(join(importTarget, name + ".js"), transpile(join(genDir, name + ".ts")));
+      }
+
+      // Also place the RAW generated.ts in the import dir (esbuild strips comments from the .js, so a JSDoc
+      // text-assertion suite — see jsdoc-access.test.ts — reads the .ts to see the emitted /** ... */ blocks).
+      writeFileSync(join(importTarget, "generated.ts.txt"), readFileSync(join(genDir, "generated.ts"), "utf8"));
+    }
+
+    if (codegenError) {
+      summary.push({ name: s.test, ok: false, detail: `codegen error: ${codegenError}` });
       anyFail = true;
       continue;
     }
 
-    // 2) transpile generated module(s) + runtime into the import dir, and the test alongside.
-    for (const name of ["corvus-runtime", "generated"]) {
-      writeFileSync(join(importTarget, name + ".js"), transpile(join(genDir, name + ".ts")));
-    }
-
-    // Also place the RAW generated.ts in the import dir (esbuild strips comments from the .js, so a JSDoc
-    // text-assertion suite — see jsdoc-access.test.ts — reads the .ts to see the emitted /** ... */ blocks).
-    writeFileSync(join(importTarget, "generated.ts.txt"), readFileSync(join(genDir, "generated.ts"), "utf8"));
+    // 2b) transpile the test alongside (its relative imports resolve to the import dirs written above).
     const testJs = join(suiteDir, s.test.replace(/\.ts$/, ".js"));
     writeFileSync(testJs, transpile(join(SUITES, s.test)));
 

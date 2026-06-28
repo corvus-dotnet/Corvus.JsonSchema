@@ -1,0 +1,9 @@
+{
+  "title": "Oa30Account",
+  "type": "object",
+  "properties": {
+    "label": { "type": "string", "nullable": true },
+    "code": { "type": "string" }
+  },
+  "required": ["code"]
+}

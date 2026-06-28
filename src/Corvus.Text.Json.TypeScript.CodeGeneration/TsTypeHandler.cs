@@ -15,7 +15,18 @@ internal sealed class TsTypeHandler : IKeywordValidationHandler, ITsKeywordEmitt
 
     public void Emit(StringBuilder sb, TypeDeclaration td, IKeyword keyword)
     {
-        CoreTypes ct = ((ICoreTypeValidationKeyword)keyword).AllowedCoreTypes(td);
+        // A type declaration can carry SEVERAL core-type keywords (e.g. OpenAPI 3.0's `type` plus
+        // `nullable`, which adds CoreTypes.Null). The dispatcher invokes this handler once per such
+        // keyword, so we must emit the UNION of their allowed core types exactly once — otherwise each
+        // keyword emits its own contradictory shape guard (`type:"string"` and `nullable:true` would
+        // produce `if (!(typeof value === "string"))` AND `if (!(value === null))`, which rejects every
+        // value). Emit on the FIRST core-type keyword only and use the declaration-level aggregate.
+        if (!ReferenceEquals(keyword, FirstCoreTypeKeyword(td)))
+        {
+            return;
+        }
+
+        CoreTypes ct = td.AllowedCoreTypes();
         if (ct == CoreTypes.None || ct == CoreTypes.Any)
         {
             return;
@@ -34,5 +45,20 @@ internal sealed class TsTypeHandler : IKeywordValidationHandler, ITsKeywordEmitt
         {
             sb.Append("  if (!(").Append(string.Join(" || ", kinds)).Append(")) { ").Append(TsEmit.FailShape(td, keyword.Keyword)).Append(" }\n");
         }
+    }
+
+    // The first core-type validation keyword on the declaration in keyword order; the single emit point
+    // for the unioned shape guard (so secondary core-type keywords such as `nullable` are no-ops here).
+    private static IKeyword? FirstCoreTypeKeyword(TypeDeclaration td)
+    {
+        foreach (IKeyword keyword in td.Keywords())
+        {
+            if (keyword is ICoreTypeValidationKeyword)
+            {
+                return keyword;
+            }
+        }
+
+        return null;
     }
 }

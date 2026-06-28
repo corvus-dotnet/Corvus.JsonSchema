@@ -900,6 +900,21 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             }
         }
 
+        // A `null` core type implied by a keyword other than `type` (OpenAPI 3.0 `nullable:true`) is not in
+        // the literal `type` list read above, so add the `null` branch from the declaration-level aggregate.
+        // This makes a nullable scalar emit `T | null` (and a nullable object `Interface | null`), matching
+        // the 3.1-style `type:["string","null"]` surface and the null-accepting validator. A wholly
+        // unconstrained schema reports `Any` (which includes Null) but must stay `unknown`, so only the
+        // constrained-but-includes-Null case adds the branch.
+        if (td.BuildComplete)
+        {
+            CoreTypes allowed = td.AllowedCoreTypes();
+            if (allowed != CoreTypes.Any && allowed.HasFlag(CoreTypes.Null) && !parts.Contains("null"))
+            {
+                parts.Add("null");
+            }
+        }
+
         return parts;
     }
 

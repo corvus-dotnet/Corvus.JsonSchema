@@ -1,8 +1,13 @@
 // In-process TypeScript codegen worker for the Bowtie harness. Reads NDJSON requests
-//   { "schema": <schema>, "registry"?: { uri: <schema> }, "out": <dir> }
+//   { "schema": <schema>, "registry"?: { uri: <schema> }, "out": <dir>, "dialect"?: <name> }
 // on stdin and, for each, generates the module — registering Bowtie's per-case registry of remote schemas in
 // the document resolver via AddDocument (no HTTP/file remote resolution, no server) — then writes
 //   { "ok": true } | { "error": <message> }.
+//
+// `dialect` is OPTIONAL. When absent, the fallback vocabulary is detected from the schema's `$schema`
+// (the JSON Schema draft path). When present it forces the fallback vocabulary — "openapi30" / "openapi31"
+// select the OpenAPI vocabularies (whose documents carry no `$schema`, so $schema-detection cannot reach
+// them), mirroring GenerationDriverV5.GetFallbackVocabulary + RegisterVocabularies.
 // Long-running, so there is NO per-schema process spawn (which is what kept the harness in lockstep with
 // bowtie). Depends only on the public codegen libraries — nothing in the production CLI, nothing in the
 // feasibility spike — so this is the harness's own tooling, bundled into the Bowtie OCI image.
@@ -29,6 +34,9 @@ while ((line = await Console.In.ReadLineAsync()) is not null)
         JsonElement r = req.RootElement;
         string schema = r.GetProperty("schema").GetRawText();
         string outDir = r.GetProperty("out").GetString()!;
+        string? dialect = r.TryGetProperty("dialect", out JsonElement d) && d.ValueKind == JsonValueKind.String
+            ? d.GetString()
+            : null;
         var registry = new Dictionary<string, JsonDocument>();
         if (r.TryGetProperty("registry", out JsonElement reg) && reg.ValueKind == JsonValueKind.Object)
         {
@@ -38,7 +46,7 @@ while ((line = await Console.In.ReadLineAsync()) is not null)
             }
         }
 
-        await GenerateModule(schema, registry, outDir, metaschemas);
+        await GenerateModule(schema, registry, outDir, metaschemas, dialect);
         await Console.Out.WriteLineAsync("{\"ok\":true}");
     }
     catch (Exception ex)
@@ -51,21 +59,41 @@ while ((line = await Console.In.ReadLineAsync()) is not null)
 
 return 0;
 
-static async Task GenerateModule(string schemaJson, Dictionary<string, JsonDocument> registry, string outDir, (string Uri, JsonDocument Doc)[] metaschemas)
+static async Task GenerateModule(string schemaJson, Dictionary<string, JsonDocument> registry, string outDir, (string Uri, JsonDocument Doc)[] metaschemas, string? dialect)
 {
-    // Dialect -> fallback vocabulary, detected from the schema's $schema (the harness injects it).
-    using JsonDocument sd = JsonDocument.Parse(schemaJson);
-    string dialect = sd.RootElement.TryGetProperty("$schema", out JsonElement ds) && ds.ValueKind == JsonValueKind.String
-        ? (ds.GetString() ?? string.Empty).TrimEnd('#')
-        : "https://json-schema.org/draft/2020-12/schema";
-    IVocabulary fallback = dialect switch
+    // The fallback vocabulary. An explicit `dialect` request wins (OpenAPI 3.0/3.1 documents carry no
+    // `$schema`, so they can only be selected this way); otherwise it is detected from the schema's
+    // `$schema` (the JSON Schema draft path the harness injects).
+    IVocabulary fallback;
+    if (dialect is not null)
     {
-        "http://json-schema.org/draft-04/schema" => Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.DefaultVocabulary,
-        "http://json-schema.org/draft-06/schema" => Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.DefaultVocabulary,
-        "http://json-schema.org/draft-07/schema" => Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.DefaultVocabulary,
-        "https://json-schema.org/draft/2019-09/schema" => Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.DefaultVocabulary,
-        _ => Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary,
-    };
+        fallback = dialect switch
+        {
+            "openapi30" => Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.DefaultVocabulary,
+            "openapi31" => Corvus.Json.CodeGeneration.OpenApi31.VocabularyAnalyser.DefaultVocabulary,
+            "draft4" => Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.DefaultVocabulary,
+            "draft6" => Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.DefaultVocabulary,
+            "draft7" => Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.DefaultVocabulary,
+            "draft2019-09" => Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.DefaultVocabulary,
+            "draft2020-12" => Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary,
+            _ => throw new ArgumentException($"Unknown dialect '{dialect}'."),
+        };
+    }
+    else
+    {
+        using JsonDocument sd = JsonDocument.Parse(schemaJson);
+        string detected = sd.RootElement.TryGetProperty("$schema", out JsonElement ds) && ds.ValueKind == JsonValueKind.String
+            ? (ds.GetString() ?? string.Empty).TrimEnd('#')
+            : "https://json-schema.org/draft/2020-12/schema";
+        fallback = detected switch
+        {
+            "http://json-schema.org/draft-04/schema" => Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.DefaultVocabulary,
+            "http://json-schema.org/draft-06/schema" => Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.DefaultVocabulary,
+            "http://json-schema.org/draft-07/schema" => Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.DefaultVocabulary,
+            "https://json-schema.org/draft/2019-09/schema" => Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.DefaultVocabulary,
+            _ => Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary,
+        };
+    }
 
     CompoundDocumentResolver resolver = new(new FileSystemDocumentResolver());
 
@@ -86,6 +114,8 @@ static async Task GenerateModule(string schemaJson, Dictionary<string, JsonDocum
     Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
     Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
     Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+    Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+    Corvus.Json.CodeGeneration.OpenApi31.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
 
     JsonSchemaTypeBuilder builder = new(resolver, vocabularyRegistry);
 
