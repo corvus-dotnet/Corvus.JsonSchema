@@ -130,6 +130,7 @@
         this.readyEditors++;
         if (this.readyEditors == 3)
         {
+            await this.JS.InvokeVoidAsync("playgroundInterop.setupTsIntelliSense");
             await this.GenerateAsync();
             _ = this.JS.InvokeVoidAsync("playgroundInterop.warmUp");
         }
@@ -193,6 +194,7 @@
                 this.generatedText = result.GeneratedTypeScript;
                 this.typeMap = result.TypeMap;
                 await this.generatedEditor.SetValue(this.generatedText);
+                _ = this.JS.InvokeVoidAsync("playgroundInterop.updateGeneratedLib", this.generatedText);
                 this.hasError = false;
                 this.statusMessage = $"✓ Generated {this.generatedText.Length:N0} characters of TypeScript. Press Run to execute it.";
             }

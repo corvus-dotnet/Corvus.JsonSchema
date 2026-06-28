@@ -7,6 +7,18 @@
 window.playgroundInterop = (function () {
     let esbuildPromise = null;     // resolves to the initialized esbuild-wasm module
     let runtimeSourcePromise = null; // resolves to the pre-bundled corvus-runtime.js source text
+    let tsLibDisposable = null;    // the current generated.ts extra-lib registration (for IntelliSense)
+
+    function findEditor(id) {
+        try {
+            var editors = (window.monaco && monaco.editor.getEditors) ? monaco.editor.getEditors() : [];
+            for (var i = 0; i < editors.length; i++) {
+                var node = editors[i].getDomNode();
+                if (node && node.closest && node.closest('#' + id)) { return editors[i]; }
+            }
+        } catch (e) { /* ignore */ }
+        return null;
+    }
 
     async function ensureEsbuild() {
         if (!esbuildPromise) {
@@ -70,6 +82,45 @@ window.playgroundInterop = (function () {
                 }
             } catch (e) { /* ignore */ }
             return null;
+        },
+
+        // Configure Monaco's TypeScript worker for the "Your TypeScript" editor and move its model to
+        // file:///user.ts, so that `import ... from "./generated.js"` resolves to the generated extra-lib
+        // (added by updateGeneratedLib) and completions/hovers work against the generated types.
+        setupTsIntelliSense: function () {
+            try {
+                var ts = monaco.languages.typescript;
+                ts.typescriptDefaults.setCompilerOptions({
+                    target: ts.ScriptTarget.ESNext,
+                    module: ts.ModuleKind.ESNext,
+                    moduleResolution: (ts.ModuleResolutionKind && ts.ModuleResolutionKind.NodeJs) || 2,
+                    allowJs: true,
+                    allowNonTsExtensions: true,
+                    noEmit: true,
+                    skipLibCheck: true,
+                    strict: false,
+                });
+                ts.typescriptDefaults.setEagerModelSync(true);
+
+                var ed = findEditor('user-editor');
+                if (ed) {
+                    var uri = monaco.Uri.parse('file:///user.ts');
+                    var model = monaco.editor.getModel(uri);
+                    var current = ed.getModel();
+                    if (!model) {
+                        model = monaco.editor.createModel(current ? current.getValue() : '', 'typescript', uri);
+                    }
+                    if (ed.getModel() !== model) { ed.setModel(model); }
+                }
+            } catch (e) { /* monaco/ts not ready */ }
+        },
+
+        // Register (or replace) the generated module as a TypeScript extra-lib for IntelliSense.
+        updateGeneratedLib: function (generatedTs) {
+            try {
+                if (tsLibDisposable) { tsLibDisposable.dispose(); }
+                tsLibDisposable = monaco.languages.typescript.typescriptDefaults.addExtraLib(generatedTs, 'file:///generated.ts');
+            } catch (e) { /* ignore */ }
         },
 
         // Warm up esbuild + the runtime source so the first Run is fast.
