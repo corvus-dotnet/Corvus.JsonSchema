@@ -95,6 +95,8 @@ and the user-code editor language):
   `$ref`; the codegen registers each by `schema://playground/<name>` so relative refs resolve.
 - Schema → generated TypeScript (+ a **Type Map** tab) → write a snippet with **IntelliSense** on the generated
   types → **Run** it in the browser.
-- Four built-in **samples**, **New** project, auto/light/dark **theming**, **Share** (URL state) and
-  **Save/Open** the whole project (all schema files + your TypeScript) as a ZIP.
+- The documented example recipes (`docs/typescript/examples`, embedded) as **samples** — all 19, each a
+  schema + a runnable demo exercising build / evaluate / patch / produce / match / format factories etc.;
+  **New** project, auto/light/dark **theming**, **Share** (URL state) and **Save/Open** the whole project
+  (all schema files + your TypeScript) as a ZIP.
 - Published into the documentation website build (`docs/website/build.ps1`, Step 9j) at `/playground-typescript/`.

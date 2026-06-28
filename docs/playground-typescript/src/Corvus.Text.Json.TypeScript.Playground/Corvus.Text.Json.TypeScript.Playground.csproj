@@ -41,8 +41,14 @@
                       Link="metaschema\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
-  <!-- Embed sample schema files as resources. -->
+  <!-- Embed the documented TypeScript example recipes (schema + demo.ts) as the playground samples.
+       %(RecursiveDir) (populated only by **) keeps each recipe's resource name distinct. -->
   <ItemGroup>
-    <EmbeddedResource Include="Samples\*.json" LogicalName="Sample.%(Filename)" />
+    <EmbeddedResource Include="..\..\..\typescript\examples\**\*.json"
+                      Exclude="..\..\..\typescript\examples\node_modules\**;..\..\..\typescript\examples\dist\**;..\..\..\typescript\examples\package.json;..\..\..\typescript\examples\package-lock.json;..\..\..\typescript\examples\tsconfig.json"
+                      Link="Recipes\%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\..\typescript\examples\**\demo.ts"
+                      Exclude="..\..\..\typescript\examples\node_modules\**;..\..\..\typescript\examples\dist\**"
+                      Link="Recipes\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

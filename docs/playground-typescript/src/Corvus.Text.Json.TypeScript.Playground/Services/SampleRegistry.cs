@@ -1,151 +1,119 @@
+using System.Reflection;
 using Corvus.Text.Json.TypeScript.Playground.Models;
 
 namespace Corvus.Text.Json.TypeScript.Playground.Services;
 
 /// <summary>
-/// The built-in playground examples. Each pairs a JSON Schema with a TypeScript snippet that uses the
-/// generated module; the snippets stick to <c>evaluateRoot</c> (always emitted) so they run for any root type.
+/// The playground samples — the documented TypeScript example recipes (docs/typescript/examples), embedded as
+/// resources. Each recipe pairs a JSON Schema with a runnable demo.ts that exercises the generated API
+/// (build / evaluate / patch / produce / match / format factories …), so the samples track the docs exactly.
 /// </summary>
 public class SampleRegistry
 {
-    private static readonly PlaygroundSample[] AllSamples =
-    [
-        new PlaygroundSample(
-            "person",
-            "Person — object + format",
-            """
-            {
-              "$schema": "https://json-schema.org/draft/2020-12/schema",
-              "title": "Person",
-              "type": "object",
-              "required": [ "familyName" ],
-              "properties": {
-                "familyName": { "type": "string" },
-                "givenName": { "type": "string" },
-                "birthDate": { "type": "string", "format": "date" },
-                "height": { "type": "number" }
-              }
-            }
-            """,
-            """
-            import { buildPerson, evaluateRoot, asBirthDate } from "./generated.js";
-
-            const dec = new TextDecoder();
-
-            // Build a Person from plain values → canonical UTF-8 JSON bytes (the wire shape).
-            const bytes = buildPerson({
-              familyName: "Brontë",
-              givenName: "Anne",
-              birthDate: asBirthDate("1820-01-17"), // format: date — a validating branded factory
-              height: 1.52,
-            });
-            console.log("built:", dec.decode(bytes));
-
-            // Validate untrusted input with the generated evaluator — a boolean, no exceptions.
-            console.log("valid:        ", evaluateRoot(JSON.parse(dec.decode(bytes))));
-            console.log("missing reqd: ", evaluateRoot({ givenName: "Anne" }));
-            """),
-
-        new PlaygroundSample(
-            "shape",
-            "Shape — oneOf union",
-            """
-            {
-              "$schema": "https://json-schema.org/draft/2020-12/schema",
-              "title": "Shape",
-              "oneOf": [
-                {
-                  "type": "object",
-                  "required": [ "kind", "radius" ],
-                  "properties": { "kind": { "const": "circle" }, "radius": { "type": "number" } }
-                },
-                {
-                  "type": "object",
-                  "required": [ "kind", "side" ],
-                  "properties": { "kind": { "const": "square" }, "side": { "type": "number" } }
-                }
-              ]
-            }
-            """,
-            """
-            import { evaluateRoot } from "./generated.js";
-
-            // oneOf → a discriminated union; exactly one branch must match.
-            console.log("circle:       ", evaluateRoot({ kind: "circle", radius: 5 }));
-            console.log("square:       ", evaluateRoot({ kind: "square", side: 3 }));
-            console.log("bad kind:     ", evaluateRoot({ kind: "triangle", radius: 1 }));
-            console.log("missing side: ", evaluateRoot({ kind: "square" }));
-            """),
-
-        new PlaygroundSample(
-            "todo",
-            "TodoList — array of objects",
-            """
-            {
-              "$schema": "https://json-schema.org/draft/2020-12/schema",
-              "title": "TodoList",
-              "type": "array",
-              "items": {
-                "type": "object",
-                "required": [ "task", "done" ],
-                "properties": {
-                  "task": { "type": "string" },
-                  "done": { "type": "boolean" },
-                  "priority": { "type": "integer", "minimum": 1, "maximum": 5 }
-                }
-              }
-            }
-            """,
-            """
-            import { evaluateRoot } from "./generated.js";
-
-            console.log("valid:           ", evaluateRoot([{ task: "write docs", done: false, priority: 2 }]));
-            console.log("priority too high:", evaluateRoot([{ task: "x", done: true, priority: 9 }]));
-            console.log("missing done:    ", evaluateRoot([{ task: "x" }]));
-            """),
-
-        new PlaygroundSample(
-            "measurement",
-            "Measurement — string + numeric formats",
-            """
-            {
-              "$schema": "https://json-schema.org/draft/2020-12/schema",
-              "title": "Measurement",
-              "type": "object",
-              "required": [ "id", "takenAt", "celsius" ],
-              "properties": {
-                "id": { "type": "string", "format": "uuid" },
-                "takenAt": { "type": "string", "format": "date-time" },
-                "celsius": { "type": "number" },
-                "count": { "type": "integer", "format": "int32" }
-              }
-            }
-            """,
-            """
-            import { evaluateRoot } from "./generated.js";
-
-            // format is asserted in this playground, so malformed uuid / date-time are rejected.
-            const id = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6";
-            console.log("valid:        ", evaluateRoot({ id, takenAt: "2026-01-01T12:00:00Z", celsius: 21.5, count: 3 }));
-            console.log("bad uuid:     ", evaluateRoot({ id: "nope", takenAt: "2026-01-01T12:00:00Z", celsius: 21.5 }));
-            console.log("bad date-time:", evaluateRoot({ id, takenAt: "yesterday", celsius: 21.5 }));
-            """),
-    ];
+    private readonly List<PlaygroundSample> samples;
 
     /// <summary>
-    /// Gets all built-in samples.
+    /// Initializes a new instance of the <see cref="SampleRegistry"/> class.
     /// </summary>
-    public IReadOnlyList<PlaygroundSample> Samples => AllSamples;
+    public SampleRegistry() => this.samples = LoadRecipes();
 
     /// <summary>
-    /// Gets the default sample (shown on first load).
+    /// Gets all samples, ordered by recipe number.
     /// </summary>
-    public PlaygroundSample Default => AllSamples[0];
+    public IReadOnlyList<PlaygroundSample> Samples => this.samples;
+
+    /// <summary>
+    /// Gets the default sample (the first recipe).
+    /// </summary>
+    public PlaygroundSample Default => this.samples[0];
 
     /// <summary>
     /// Finds a sample by id, or null if not found.
     /// </summary>
     /// <param name="id">The sample id.</param>
     /// <returns>The sample, or null.</returns>
-    public PlaygroundSample? FindById(string id) => Array.Find(AllSamples, s => s.Id == id);
+    public PlaygroundSample? FindById(string id) => this.samples.FirstOrDefault(s => s.Id == id);
+
+    private static List<PlaygroundSample> LoadRecipes()
+    {
+        Assembly assembly = typeof(SampleRegistry).Assembly;
+        const string marker = ".Recipes.";
+
+        // Group each recipe's embedded resources (its schema .json + its demo.ts) by the recipe id.
+        var grouped = new Dictionary<string, (string? Schema, string? Demo)>(StringComparer.Ordinal);
+        foreach (string resource in assembly.GetManifestResourceNames())
+        {
+            int idx = resource.IndexOf(marker, StringComparison.Ordinal);
+            if (idx < 0)
+            {
+                continue;
+            }
+
+            string tail = resource[(idx + marker.Length)..]; // "<recipe>.<filestem>.<ext>"
+            string[] parts = tail.Split('.');
+            if (parts.Length < 3)
+            {
+                continue;
+            }
+
+            string ext = parts[^1];
+            string fileStem = parts[^2];
+            string recipe = string.Join('.', parts[..^2]);
+
+            grouped.TryGetValue(recipe, out (string? Schema, string? Demo) entry);
+            string content = ReadResource(assembly, resource);
+            if (ext.Equals("ts", StringComparison.OrdinalIgnoreCase) && fileStem.Equals("demo", StringComparison.OrdinalIgnoreCase))
+            {
+                entry.Demo = content;
+            }
+            else if (ext.Equals("json", StringComparison.OrdinalIgnoreCase))
+            {
+                entry.Schema = content;
+            }
+
+            grouped[recipe] = entry;
+        }
+
+        var ordered = new List<(int Order, PlaygroundSample Sample)>();
+        foreach ((string recipe, (string? Schema, string? Demo) v) in grouped)
+        {
+            if (v.Schema is null || v.Demo is null)
+            {
+                continue;
+            }
+
+            (int order, string display) = DisplayFor(recipe);
+            ordered.Add((order, new PlaygroundSample(recipe, display, v.Schema, v.Demo)));
+        }
+
+        return ordered.OrderBy(r => r.Order).ThenBy(r => r.Sample.Id, StringComparer.Ordinal).Select(r => r.Sample).ToList();
+    }
+
+    private static string ReadResource(Assembly assembly, string name)
+    {
+        using Stream stream = assembly.GetManifestResourceStream(name)!;
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
+
+    // "001-data-object" → (1, "1 · Data object"). Robust to '-'/'_' separators and resource-name munging.
+    private static (int Order, string Display) DisplayFor(string recipe)
+    {
+        int start = 0;
+        while (start < recipe.Length && !char.IsDigit(recipe[start]))
+        {
+            start++;
+        }
+
+        int end = start;
+        while (end < recipe.Length && char.IsDigit(recipe[end]))
+        {
+            end++;
+        }
+
+        int order = int.TryParse(recipe[start..end], out int n) ? n : 999;
+        string rest = recipe[end..].TrimStart('-', '_', ' ').Replace('-', ' ').Replace('_', ' ').Trim();
+        string title = rest.Length > 0 ? char.ToUpperInvariant(rest[0]) + rest[1..] : recipe;
+        return (order, order < 999 ? $"{order} · {title}" : title);
+    }
 }
