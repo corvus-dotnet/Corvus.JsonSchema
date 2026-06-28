@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Environment",
+  "description": "The persisted form of a deployment environment (design §7.7): a first-class, governed, reach-scoped resource a workflow version is made available in and whose source credentials form a per-environment set. An environment is governed exactly like a workflow — it carries an administrator set (stored separately) and an audit trail, and creating one grants the creator administration. Backends store this document verbatim.",
+  "type": "object",
+  "required": ["name", "createdBy", "createdAt", "etag"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The environment's stable name and identity (e.g. production, staging, DEV-MWA-1). Operator-chosen and immutable; credentials and runs key on it."
+    },
+    "displayName": {
+      "type": "string",
+      "description": "An optional human-friendly display name; defaults to the name when absent. Mutable."
+    },
+    "description": {
+      "type": "string",
+      "description": "An optional human description. Mutable."
+    },
+    "managementTags": {
+      "type": "array",
+      "description": "The security tags (KVP labels) scoping who may MANAGE and SEE this environment (§14.2) — e.g. tenant=acme. Immutable: set at create (the deployment stamps the creator's internal tenant tag), carried forward unchanged on update. Management reads/writes are reach-filtered by these via the caller's AccessContext. Absent on an unscoped environment.",
+      "items": { "$ref": "#/$defs/SecurityTagInfo" }
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "The actor that created the environment."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the environment was created."
+    },
+    "lastUpdatedBy": {
+      "type": "string",
+      "description": "The actor that last updated the environment, if any."
+    },
+    "lastUpdatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the environment was last updated, if ever."
+    },
+    "etag": {
+      "type": "string",
+      "description": "The optimistic-concurrency token."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "SecurityTagInfo": {
+      "title": "SecurityTagInfo",
+      "type": "object",
+      "description": "A security label (KVP) scoping the environment for row authorization (§14.2).",
+      "required": ["key", "value"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "The label key (e.g. tenant)."
+        },
+        "value": {
+          "type": "string",
+          "description": "The label value (e.g. acme)."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

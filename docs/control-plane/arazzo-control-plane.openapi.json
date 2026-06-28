@@ -50,6 +50,14 @@
     "description": "Manage who may publish and administer a base workflow id (design §15): the set of deployment-stamped administrator identities. Identities are named via the deployment-mapped grant {dimension,value} vocabulary, never raw internal tags; mutations are authorized by current-administrator membership (capability scopes administrators:read / administrators:write)."
   },
   {
+    "name": "environments",
+    "description": "Manage governed, reach-scoped deployment environments (design §7.7): create/list/read/update/delete environments and govern each one's administrators (who may manage it and approve promotions into it). Creating an environment grants the creator administration; environments are governed exactly like a workflow (capability scopes environments:read / environments:write, with current-administrator membership applying to governance mutations)."
+  },
+  {
+    "name": "sources",
+    "description": "Manage first-class, reach-scoped source registrations (design §7.6): register/list/read/update/delete the OpenAPI/AsyncAPI documents a workflow references by name in its sourceDescriptions. A source is registered once and resolved immutably by the catalog; its per-environment credentials are managed separately (the credentials surface). Reach-scoped management — there is no administrator set; reach membership is the gate (capability scopes sources:read / sources:write). The registered document is returned only on read of a single source, never in the list."
+  },
+  {
     "name": "accessRequests",
     "description": "Request and approve elevated, time-bound access to a workflow (design §16.5). Any authenticated principal may submit a request and withdraw their own; an administrator of the target workflow (§15) approves, denies, or revokes. An approval writes a single capped, time-boxed grant (run access only, scoped to the workflow); an eligible requester self-elevates without a human approver. These operations are authorized by the per-workflow administrator gate, not a global capability scope."
   },
@@ -659,7 +667,7 @@
         "parameters": [
           { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
           { "$ref": "#/components/parameters/VersionNumberPath" },
-          { "$ref": "#/components/parameters/SourceNamePath" }
+          { "$ref": "#/components/parameters/CatalogSourceNamePath" }
         ],
         "responses": {
           "200": {
@@ -1369,6 +1377,356 @@
         }
       }
     },
+    "/environments": {
+      "get": {
+        "operationId": "listEnvironments",
+        "security": [
+          { "oauth2": ["environments:read"] },
+          { "openIdConnect": ["environments:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["environments"],
+        "summary": "List deployment environments",
+        "description": "Returns a page of deployment environments the caller's reach admits (§14.2), ordered by name. Page with `limit` and the opaque `pageToken` from a previous page's `nextPageToken`.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "The maximum number of environments to return in the page.",
+            "schema": { "$ref": "#/components/schemas/PageLimit" }
+          },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The environments.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentList" } } }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createEnvironment",
+        "security": [
+          { "oauth2": ["environments:write"] },
+          { "openIdConnect": ["environments:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["environments"],
+        "summary": "Create a deployment environment",
+        "description": "Creates a governed, reach-scoped environment and grants the calling principal administration of it (design §7.7). The deployment stamps the creator's internal tenant tag onto managementTags and rejects a set the creator's own reach does not admit (no privilege escalation). Conflicts if an environment with that name already exists in the caller's reach.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentWrite" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "The created environment.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentSummary" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/environments/{name}": {
+      "get": {
+        "operationId": "getEnvironment",
+        "security": [
+          { "oauth2": ["environments:read"] },
+          { "openIdConnect": ["environments:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["environments"],
+        "summary": "Get a deployment environment",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The environment.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentSummary" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "operationId": "updateEnvironment",
+        "security": [
+          { "oauth2": ["environments:write"] },
+          { "openIdConnect": ["environments:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["environments"],
+        "summary": "Update a deployment environment",
+        "description": "Replaces the mutable metadata (display name, description) of an existing environment; the name, managementTags reach scope, and created-* audit fields are immutable. The caller must be a current administrator of the environment (403 otherwise); a stale concurrent change conflicts (409).",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentUpdate" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated environment.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentSummary" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteEnvironment",
+        "security": [
+          { "oauth2": ["environments:write"] },
+          { "openIdConnect": ["environments:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["environments"],
+        "summary": "Delete a deployment environment",
+        "description": "Deletes an environment. The caller must be a current administrator of the environment (403 otherwise); a stale concurrent change conflicts (409).",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" }
+        ],
+        "responses": {
+          "204": { "description": "The environment was deleted." },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/environments/{name}/administrators": {
+      "get": {
+        "operationId": "listEnvironmentAdministrators",
+        "security": [
+          { "oauth2": ["environments:read"] },
+          { "openIdConnect": ["environments:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["environments"],
+        "summary": "List an environment's administrators",
+        "description": "Returns the administrator identities entitled to govern the environment (design §7.7) — who may manage it and approve promotions into it. Each identity is described as the deployment-mapped grant {dimension,value} it resolves from, never raw internal tags.",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The administrator identities.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdministratorList" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "operationId": "transferEnvironmentAdministration",
+        "security": [
+          { "oauth2": ["environments:write"] },
+          { "openIdConnect": ["environments:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["environments"],
+        "summary": "Transfer environment administration (replace the administrator set)",
+        "description": "Replaces the entire administrator set for the environment with the given identities (at least one) — an administrator may transfer administration away from itself (design §7.7). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdministratorSetWrite" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The new administrator set.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdministratorList" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/environments/{name}/administrators/members": {
+      "post": {
+        "operationId": "addEnvironmentAdministrator",
+        "security": [
+          { "oauth2": ["environments:write"] },
+          { "openIdConnect": ["environments:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["environments"],
+        "summary": "Add an environment administrator",
+        "description": "Adds an identity to the environment's administrator set (idempotent). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdministratorMemberWrite" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The administrator set after the add.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdministratorList" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/environments/{name}/administrators/members/{digest}": {
+      "delete": {
+        "operationId": "removeEnvironmentAdministrator",
+        "security": [
+          { "oauth2": ["environments:write"] },
+          { "openIdConnect": ["environments:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["environments"],
+        "summary": "Remove an environment administrator",
+        "description": "Removes the administrator identified by its identity digest (from AdministratorGrant.digest in the list) from the environment's administrator set. The set may not be left empty — removing the last administrator conflicts (409). The caller must be a current administrator (403 otherwise). An unknown digest is a no-op (the resulting set is returned).",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" },
+          { "$ref": "#/components/parameters/AdministratorDigestPath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The administrator set after the removal.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdministratorList" } } }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/sources": {
+      "get": {
+        "operationId": "listSources",
+        "security": [
+          { "oauth2": ["sources:read"] },
+          { "openIdConnect": ["sources:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["sources"],
+        "summary": "List registered sources",
+        "description": "Returns a page of registered sources the caller's reach admits (§14.2), ordered by name. Each entry is a SourceSummary — the registered document is NOT included; fetch a single source to read it. Page with `limit` and the opaque `pageToken` from a previous page's `nextPageToken`.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "The maximum number of sources to return in the page.",
+            "schema": { "$ref": "#/components/schemas/PageLimit" }
+          },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The sources.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SourceList" } } }
+          }
+        }
+      },
+      "post": {
+        "operationId": "registerSource",
+        "security": [
+          { "oauth2": ["sources:write"] },
+          { "openIdConnect": ["sources:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["sources"],
+        "summary": "Register a source",
+        "description": "Registers a reach-scoped source (design §7.6): its name, type, and OpenAPI/AsyncAPI document, plus the managementTags scoping who may see and manage it. The deployment stamps the creator's internal tenant tag onto managementTags and rejects a set the creator's own reach does not admit (no privilege escalation). Conflicts if a source with that name already exists in the caller's reach.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SourceWrite" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "The registered source.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Source" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/sources/{name}": {
+      "get": {
+        "operationId": "getSource",
+        "security": [
+          { "oauth2": ["sources:read"] },
+          { "openIdConnect": ["sources:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["sources"],
+        "summary": "Get a source",
+        "description": "Returns the full source, including its registered OpenAPI/AsyncAPI document, if it is in the caller's reach.",
+        "parameters": [
+          { "$ref": "#/components/parameters/SourceNamePath" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The source.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Source" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "operationId": "updateSource",
+        "security": [
+          { "oauth2": ["sources:write"] },
+          { "openIdConnect": ["sources:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["sources"],
+        "summary": "Update a source",
+        "description": "Replaces the registered document and mutable metadata (display name, description) of an existing source; the name, type, managementTags reach scope, and created-* audit fields are immutable. The source must be in the caller's reach (404 otherwise); a stale concurrent change conflicts (409).",
+        "parameters": [
+          { "$ref": "#/components/parameters/SourceNamePath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SourceUpdate" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated source.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Source" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteSource",
+        "security": [
+          { "oauth2": ["sources:write"] },
+          { "openIdConnect": ["sources:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["sources"],
+        "summary": "Delete a source",
+        "description": "Deletes a source registration. The source must be in the caller's reach (404 otherwise); a stale concurrent change conflicts (409). Per-environment credentials bound to the source are managed separately and are not removed here.",
+        "parameters": [
+          { "$ref": "#/components/parameters/SourceNamePath" }
+        ],
+        "responses": {
+          "204": { "description": "The source was deleted." },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
     "/administrators/{baseWorkflowId}": {
       "get": {
         "operationId": "listAdministrators",
@@ -1748,7 +2106,11 @@
               "security:read": "List and read the row-security policy: rules and claim→rule bindings.",
               "security:write": "Create, update, and delete row-security rules and bindings.",
               "administrators:read": "Read a workflow's administrator set (described as deployment-mapped grants — never raw internal tags).",
-              "administrators:write": "Manage a workflow's administrator set: add, remove, and transfer administration (current-administrator membership applies)."
+              "administrators:write": "Manage a workflow's administrator set: add, remove, and transfer administration (current-administrator membership applies).",
+              "environments:read": "List and read governed deployment environments (reach-scoped).",
+              "environments:write": "Create, update, and delete deployment environments and manage their administrators (current-administrator membership applies).",
+              "sources:read": "List and read registered sources (reach-scoped; the source document is returned only on single read).",
+              "sources:write": "Register, update, and delete sources (reach-scoped)."
             }
           },
           "clientCredentials": {
@@ -1765,7 +2127,11 @@
               "security:read": "List and read the row-security policy: rules and claim→rule bindings.",
               "security:write": "Create, update, and delete row-security rules and bindings.",
               "administrators:read": "Read a workflow's administrator set (described as deployment-mapped grants — never raw internal tags).",
-              "administrators:write": "Manage a workflow's administrator set: add, remove, and transfer administration (current-administrator membership applies)."
+              "administrators:write": "Manage a workflow's administrator set: add, remove, and transfer administration (current-administrator membership applies).",
+              "environments:read": "List and read governed deployment environments (reach-scoped).",
+              "environments:write": "Create, update, and delete deployment environments and manage their administrators (current-administrator membership applies).",
+              "sources:read": "List and read registered sources (reach-scoped; the source document is returned only on single read).",
+              "sources:write": "Register, update, and delete sources (reach-scoped)."
             }
           }
         }
@@ -1895,6 +2261,20 @@
         "description": "The stable identity digest of an administrator (from AdministratorGrant.digest) — the key for removing it.",
         "schema": { "type": "string" }
       },
+      "EnvironmentNamePath": {
+        "name": "name",
+        "in": "path",
+        "required": true,
+        "description": "The environment's name (its stable identity).",
+        "schema": { "type": "string" }
+      },
+      "SourceNamePath": {
+        "name": "name",
+        "in": "path",
+        "required": true,
+        "description": "The source's registered name (matches a workflow's sourceDescriptions entry).",
+        "schema": { "type": "string" }
+      },
       "VersionNumberPath": {
         "name": "versionNumber",
         "in": "path",
@@ -1902,7 +2282,7 @@
         "description": "The 1-based version number under the base workflow id.",
         "schema": { "$ref": "#/components/schemas/VersionNumber" }
       },
-      "SourceNamePath": {
+      "CatalogSourceNamePath": {
         "name": "sourceName",
         "in": "path",
         "required": true,
@@ -3032,6 +3412,170 @@
           }
         },
         "required": ["administrators"]
+      },
+      "EnvironmentSecurityTag": {
+        "type": "object",
+        "description": "A security label (KVP) scoping an environment for row authorization (§14.2) — e.g. tenant=acme.",
+        "properties": {
+          "key": { "type": "string", "description": "The label key (e.g. tenant)." },
+          "value": { "type": "string", "description": "The label value (e.g. acme)." }
+        },
+        "required": ["key", "value"]
+      },
+      "EnvironmentWrite": {
+        "type": "object",
+        "description": "A deployment environment to create (design §7.7). Creating it grants the calling principal administration of it. The name is the stable identity; managementTags scope who may manage and see it (the deployment additionally stamps the creator's internal tenant tag and rejects a set the creator's reach does not admit).",
+        "properties": {
+          "name": { "type": "string", "description": "The environment's stable name and identity (e.g. production, staging, DEV-MWA-1); credentials and runs key on it." },
+          "displayName": { "type": "string", "description": "An optional human-friendly display name; defaults to the name when absent." },
+          "description": { "type": "string", "description": "An optional human description." },
+          "managementTags": {
+            "type": "array",
+            "description": "Security tags (§14.2) scoping who may MANAGE and SEE this environment. The reserved internal-tag prefix is not allowed here.",
+            "items": { "$ref": "#/components/schemas/EnvironmentSecurityTag" }
+          }
+        },
+        "required": ["name"]
+      },
+      "EnvironmentUpdate": {
+        "type": "object",
+        "description": "Replacement mutable metadata for an existing environment (its name, managementTags reach scope, and created-* audit are immutable and taken from the stored environment).",
+        "properties": {
+          "displayName": { "type": "string", "description": "An optional human-friendly display name; defaults to the name when absent." },
+          "description": { "type": "string", "description": "An optional human description." }
+        }
+      },
+      "EnvironmentSummary": {
+        "type": "object",
+        "description": "A persisted deployment environment (design §7.7): a first-class, governed, reach-scoped resource.",
+        "properties": {
+          "name": { "type": "string" },
+          "displayName": { "type": "string" },
+          "description": { "type": "string" },
+          "managementTags": {
+            "type": "array",
+            "description": "Security tags scoping who may MANAGE and SEE this environment (§14.2).",
+            "items": { "$ref": "#/components/schemas/EnvironmentSecurityTag" }
+          },
+          "createdBy": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "lastUpdatedBy": { "type": "string" },
+          "lastUpdatedAt": { "type": "string", "format": "date-time" },
+          "etag": { "type": "string", "description": "The optimistic-concurrency token." }
+        },
+        "required": ["name", "createdBy", "createdAt", "etag"]
+      },
+      "EnvironmentList": {
+        "type": "object",
+        "description": "A page of deployment environments, ordered by name.",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/EnvironmentSummary" }
+          },
+          "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page, or null/absent if this is the last page." }
+        },
+        "required": ["environments"]
+      },
+      "SourceSecurityTag": {
+        "type": "object",
+        "description": "A security label (KVP) scoping a source for row authorization (§14.2) — e.g. tenant=acme.",
+        "properties": {
+          "key": { "type": "string", "description": "The label key (e.g. tenant)." },
+          "value": { "type": "string", "description": "The label value (e.g. acme)." }
+        },
+        "required": ["key", "value"]
+      },
+      "SourceType": {
+        "type": "string",
+        "description": "The kind of document a source registers (design §7.6): an OpenAPI description for an HTTP API source, or an AsyncAPI description for a messaging source.",
+        "enum": ["openapi", "asyncapi"]
+      },
+      "SourceDocument": {
+        "type": "object",
+        "description": "The registered OpenAPI/AsyncAPI document for the source, stored and returned verbatim. The control plane does not interpret it beyond reach scoping; clients read components.securitySchemes from it to derive credential auth (§7.5). Returned only on single-source reads, never in the list.",
+        "additionalProperties": true
+      },
+      "SourceWrite": {
+        "type": "object",
+        "description": "A source to register (design §7.6). The name is the stable identity workflows reference in sourceDescriptions; managementTags scope who may see and manage it (the deployment additionally stamps the creator's internal tenant tag and rejects a set the creator's reach does not admit).",
+        "properties": {
+          "name": { "type": "string", "description": "The source's registered name; must match the workflow sourceDescriptions entry that references it." },
+          "type": { "$ref": "#/components/schemas/SourceType" },
+          "document": { "$ref": "#/components/schemas/SourceDocument" },
+          "displayName": { "type": "string", "description": "An optional human-friendly display name; defaults to the name when absent." },
+          "description": { "type": "string", "description": "An optional human description." },
+          "managementTags": {
+            "type": "array",
+            "description": "Security tags (§14.2) scoping who may MANAGE and SEE this source. The reserved internal-tag prefix is not allowed here.",
+            "items": { "$ref": "#/components/schemas/SourceSecurityTag" }
+          }
+        },
+        "required": ["name", "type", "document"]
+      },
+      "SourceUpdate": {
+        "type": "object",
+        "description": "Replacement metadata for an existing source (its name, type, managementTags reach scope, and created-* audit are immutable and taken from the stored source). The document is optional: omit it to keep the registered document unchanged (e.g. to rename without re-uploading), or supply a new one to rotate it.",
+        "properties": {
+          "document": { "$ref": "#/components/schemas/SourceDocument" },
+          "displayName": { "type": "string", "description": "An optional human-friendly display name; defaults to the name when absent." },
+          "description": { "type": "string", "description": "An optional human description." }
+        }
+      },
+      "SourceSummary": {
+        "type": "object",
+        "description": "A registered source without its document (design §7.6): the list projection. Fetch a single source to read its document.",
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "$ref": "#/components/schemas/SourceType" },
+          "displayName": { "type": "string" },
+          "description": { "type": "string" },
+          "managementTags": {
+            "type": "array",
+            "description": "Security tags scoping who may MANAGE and SEE this source (§14.2).",
+            "items": { "$ref": "#/components/schemas/SourceSecurityTag" }
+          },
+          "createdBy": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "lastUpdatedBy": { "type": "string" },
+          "lastUpdatedAt": { "type": "string", "format": "date-time" },
+          "etag": { "type": "string", "description": "The optimistic-concurrency token." }
+        },
+        "required": ["name", "type", "createdBy", "createdAt", "etag"]
+      },
+      "Source": {
+        "type": "object",
+        "description": "A registered source including its OpenAPI/AsyncAPI document (design §7.6): the single-source projection returned by register/get/update.",
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "$ref": "#/components/schemas/SourceType" },
+          "document": { "$ref": "#/components/schemas/SourceDocument" },
+          "displayName": { "type": "string" },
+          "description": { "type": "string" },
+          "managementTags": {
+            "type": "array",
+            "description": "Security tags scoping who may MANAGE and SEE this source (§14.2).",
+            "items": { "$ref": "#/components/schemas/SourceSecurityTag" }
+          },
+          "createdBy": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "lastUpdatedBy": { "type": "string" },
+          "lastUpdatedAt": { "type": "string", "format": "date-time" },
+          "etag": { "type": "string", "description": "The optimistic-concurrency token." }
+        },
+        "required": ["name", "type", "document", "createdBy", "createdAt", "etag"]
+      },
+      "SourceList": {
+        "type": "object",
+        "description": "A page of registered sources, ordered by name. Entries omit the document.",
+        "properties": {
+          "sources": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SourceSummary" }
+          },
+          "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page, or null/absent if this is the last page." }
+        },
+        "required": ["sources"]
       },
       "GranteeKind": {
         "type": "string",

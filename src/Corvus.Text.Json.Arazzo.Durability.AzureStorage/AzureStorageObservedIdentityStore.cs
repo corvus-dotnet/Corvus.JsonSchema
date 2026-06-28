@@ -5,6 +5,7 @@
 using System.Text;
 using Azure;
 using Azure.Data.Tables;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 
@@ -270,7 +271,10 @@ public sealed class AzureStorageObservedIdentityStore : IObservedIdentityStore
                     bool admitted;
                     using (ParsedJsonDocument<ObservedIdentity> candidate = PersistedJson.ToPooledDocument<ObservedIdentity>(json))
                     {
-                        admitted = readReach.IsSatisfiedBy(candidate.RootElement.IdentityTagsValue);
+                        SecurityTagSet identityTags = candidate.RootElement.IdentityTags.IsNotUndefined()
+                            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(candidate.RootElement.IdentityTags).Memory)
+                            : SecurityTagSet.Empty;
+                        admitted = readReach.IsSatisfiedBy(identityTags);
                     }
 
                     if (!admitted)

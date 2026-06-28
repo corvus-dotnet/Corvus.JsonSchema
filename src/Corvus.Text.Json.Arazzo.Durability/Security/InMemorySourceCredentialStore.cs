@@ -4,6 +4,7 @@
 
 using System.Globalization;
 using System.Linq;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
@@ -108,23 +109,41 @@ public sealed class InMemorySourceCredentialStore : ISourceCredentialStore
                         continue; // at or before the cursor — already returned in an earlier page
                     }
 
-                    using ParsedJsonDocument<SourceCredentialBinding> cand = PersistedJson.ToPooledDocument<SourceCredentialBinding>(row.Json);
-                    if (!context.Admits(AccessVerb.Read, cand.RootElement.ManagementTagsValue))
+                    // Parse the row ONCE: reach-check it through a non-owning tag view (no per-row CopyFrom), and if it is
+                    // both visible and within the page, hand that same pooled document to the page (no second parse). A
+                    // skipped/over-the-page row is disposed in the finally; a kept row's ownership transfers to `docs`.
+                    ParsedJsonDocument<SourceCredentialBinding> cand = PersistedJson.ToPooledDocument<SourceCredentialBinding>(row.Json);
+                    bool kept = false;
+                    try
                     {
-                        continue; // not reach-visible to this caller
-                    }
+                        SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
+                            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
+                            : SecurityTagSet.Empty;
+                        if (!context.Admits(AccessVerb.Read, tags))
+                        {
+                            continue; // not reach-visible to this caller (cand disposed in finally)
+                        }
 
-                    if (docs.Count == pageSize)
+                        if (docs.Count == pageSize)
+                        {
+                            // A further visible row exists → there is a next page; the token resumes after the last included row.
+                            hasMore = true;
+                            break; // cand disposed in finally
+                        }
+
+                        docs.Add(cand);
+                        kept = true;
+                        lastSource = row.Source;
+                        lastEnv = row.Env;
+                        lastDisc = row.Disc;
+                    }
+                    finally
                     {
-                        // A further visible row exists → there is a next page; the token resumes after the last included row.
-                        hasMore = true;
-                        break;
+                        if (!kept)
+                        {
+                            cand.Dispose();
+                        }
                     }
-
-                    docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(row.Json));
-                    lastSource = row.Source;
-                    lastEnv = row.Env;
-                    lastDisc = row.Disc;
                 }
 
                 return new ValueTask<SourceCredentialPage>(hasMore

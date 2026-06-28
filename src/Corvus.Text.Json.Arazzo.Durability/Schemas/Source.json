@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Source",
+  "description": "The persisted form of a registered source (design §7.6): a first-class, reach-scoped resource a workflow references by name in its sourceDescriptions. It carries the source's OpenAPI/AsyncAPI document verbatim, the reach-scoping management tags, and an audit trail; the per-environment credentials that authenticate calls to it are a separate resource (SourceCredentialBinding). Backends store this document verbatim.",
+  "type": "object",
+  "required": ["name", "type", "document", "createdBy", "createdAt", "etag"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The source's registered name and identity; matches the workflow sourceDescriptions entry that references it. Operator-chosen and immutable; credentials and workflows key on it."
+    },
+    "type": {
+      "type": "string",
+      "description": "The kind of document the source registers — an OpenAPI description for an HTTP API source, or an AsyncAPI description for a messaging source. Immutable.",
+      "enum": ["openapi", "asyncapi"]
+    },
+    "document": {
+      "type": "object",
+      "description": "The registered OpenAPI/AsyncAPI document, stored and returned verbatim. The control plane does not interpret it beyond reach scoping; clients read components.securitySchemes from it to derive credential auth (§7.5). Mutable: a re-registration rotates it.",
+      "additionalProperties": true
+    },
+    "displayName": {
+      "type": "string",
+      "description": "An optional human-friendly display name; defaults to the name when absent. Mutable."
+    },
+    "description": {
+      "type": "string",
+      "description": "An optional human description. Mutable."
+    },
+    "managementTags": {
+      "type": "array",
+      "description": "The security tags (KVP labels) scoping who may MANAGE and SEE this source (§14.2) — e.g. tenant=acme. Immutable: set at create (the deployment stamps the creator's internal tenant tag), carried forward unchanged on update. Management reads/writes are reach-filtered by these via the caller's AccessContext. Absent on an unscoped source.",
+      "items": { "$ref": "#/$defs/SecurityTagInfo" }
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "The actor that registered the source."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the source was registered."
+    },
+    "lastUpdatedBy": {
+      "type": "string",
+      "description": "The actor that last updated the source, if any."
+    },
+    "lastUpdatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the source was last updated, if ever."
+    },
+    "etag": {
+      "type": "string",
+      "description": "The optimistic-concurrency token."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "SecurityTagInfo": {
+      "title": "SecurityTagInfo",
+      "type": "object",
+      "description": "A security label (KVP) scoping the source for row authorization (§14.2).",
+      "required": ["key", "value"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "The label key (e.g. tenant)."
+        },
+        "value": {
+          "type": "string",
+          "description": "The label value (e.g. acme)."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -4,6 +4,7 @@
 
 using System.Globalization;
 using System.Runtime.InteropServices;
+using JsonMarshal = Corvus.Runtime.InteropServices.JsonMarshal;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
 
@@ -297,7 +298,15 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             return false;
         }
 
-        return query.Security?.IsSatisfiedBy(version.SecurityTagsValue) ?? true;
+        if (query.Security is not { } security)
+        {
+            return true;
+        }
+
+        SecurityTagSet securityTags = version.SecurityTags.IsNotUndefined()
+            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(version.SecurityTags).Memory)
+            : SecurityTagSet.Empty;
+        return security.IsSatisfiedBy(securityTags);
     }
 
     private int MaxVersion(string baseWorkflowId)

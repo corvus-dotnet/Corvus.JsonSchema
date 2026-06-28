@@ -5,7 +5,9 @@
 using System.Security.Claims;
 using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Corvus.Text.Json.Arazzo.Durability.Sources;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -74,7 +76,7 @@ public static class ControlPlaneEndpointExtensions
     /// and the named scope policies, so a deployment supplies any ASP.NET Core scheme (JWT bearer, OIDC, mTLS,
     /// a dev key) and how a principal acquires scopes.
     /// </remarks>
-    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, ISecuredWorkflowManagement management, ISecuredWorkflowCatalog catalog, IRunnerRegistry runners, ControlPlaneSecurityMode securityMode, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null, IObservedIdentityStore? observedIdentityStore = null, IPrincipalDirectory? principalDirectory = null)
+    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, ISecuredWorkflowManagement management, ISecuredWorkflowCatalog catalog, IRunnerRegistry runners, ControlPlaneSecurityMode securityMode, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null, IObservedIdentityStore? observedIdentityStore = null, IPrincipalDirectory? principalDirectory = null, IEnvironmentStore? environmentStore = null, IEnvironmentAdministratorStore? environmentAdministratorStore = null, ISourceStore? sourceStore = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -139,12 +141,29 @@ public static class ControlPlaneEndpointExtensions
 
         var identityHandler = new ArazzoControlPlaneIdentityHandler(observedStore, principalDirectory, access);
 
+        // The environments management API (§7.7): governed, reach-scoped deployment environments and their administrators.
+        // The data plane is reach-filtered (the environment store); governance is current-administrator-gated (the
+        // administration service over the environment-administrator store), and creating an environment grants the creator
+        // administration. Both default to an in-memory store so the endpoints function in development.
+        IEnvironmentStore envStore = environmentStore ?? new InMemoryEnvironmentStore();
+        IEnvironmentAdministratorStore envAdminStore = environmentAdministratorStore ?? new InMemoryEnvironmentAdministratorStore();
+        var environmentAdministration = new SecuredEnvironmentAdministration(envAdminStore);
+        var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(envStore, environmentAdministration, access, observedStore);
+
+        // The sources registry API (§7.6): first-class, reach-scoped source documents a workflow references by name. The
+        // data plane is reach-filtered (the source store); sources are not governed (no administrator set) — reach
+        // membership is the management gate. Defaults to an in-memory store so the endpoints function in development.
+        ISourceStore srcStore = sourceStore ?? new InMemorySourceStore();
+        var sourcesHandler = new ArazzoControlPlaneSourcesHandler(srcStore, access);
+
         return endpoints.MapApiEndpoints(
             new ArazzoControlPlaneHandler(management, access),
             new ArazzoControlPlaneRunnersHandler(runners),
             new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access),
             securityHandler,
             credentialsHandler,
+            environmentsHandler,
+            sourcesHandler,
             administratorsHandler,
             accessRequestsHandler,
             identityHandler,
