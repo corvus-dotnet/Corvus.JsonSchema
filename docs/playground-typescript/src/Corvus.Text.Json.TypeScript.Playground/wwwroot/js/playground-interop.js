@@ -161,6 +161,25 @@ window.playgroundInterop = (function () {
             try { await navigator.clipboard.writeText(text); return true; } catch (e) { return false; }
         },
 
+        // Trigger a browser download of base64-encoded bytes.
+        downloadFile: function (filename, base64, mime) {
+            try {
+                var bin = atob(base64);
+                var bytes = new Uint8Array(bin.length);
+                for (var i = 0; i < bin.length; i++) { bytes[i] = bin.charCodeAt(i); }
+                var blob = new Blob([bytes], { type: mime || 'application/octet-stream' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+                return true;
+            } catch (e) { return false; }
+        },
+
         // Warm up esbuild + the runtime source so the first Run is fast.
         warmUp: async function () {
             try { await Promise.all([ensureEsbuild(), ensureRuntimeSource()]); return true; } catch (e) { return false; }

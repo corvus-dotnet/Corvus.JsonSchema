@@ -18,6 +18,11 @@
             }
         </select>
         <button id="share-btn" class="pg-btn" @onclick="ShareAsync" title="Copy a shareable link to the clipboard">@shareLabel</button>
+        <button id="save-btn" class="pg-btn" @onclick="SaveAsync" title="Save the project as a .zip">Save</button>
+        <label class="pg-btn pg-file-label" title="Open a saved .zip project">
+            Open
+            <InputFile OnChange="OnProjectFileSelected" accept=".zip" class="pg-file-input" />
+        </label>
         <div class="spacer"></div>
         <button id="theme-btn" class="pg-icon-btn" @onclick="CycleThemeAsync" title="@($"Theme: {themePref} (click to change)")">@ThemeIcon</button>
         <button id="generate-btn" class="pg-btn" @onclick="GenerateAsync" disabled="@(isGenerating || isRunning)">
@@ -204,6 +209,85 @@
         await Task.Delay(1500);
         this.shareLabel = "Share";
         this.StateHasChanged();
+    }
+
+    private async Task SaveAsync()
+    {
+        if (this.schemaEditor is null || this.userEditor is null)
+        {
+            return;
+        }
+
+        string schema = await this.schemaEditor.GetValue();
+        string userCode = await this.userEditor.GetValue();
+
+        using var ms = new MemoryStream();
+        using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            using (var w = new StreamWriter(zip.CreateEntry("schema.json").Open()))
+            {
+                await w.WriteAsync(schema);
+            }
+
+            using (var w = new StreamWriter(zip.CreateEntry("user.ts").Open()))
+            {
+                await w.WriteAsync(userCode);
+            }
+        }
+
+        string base64 = Convert.ToBase64String(ms.ToArray());
+        await this.JS.InvokeAsync<bool>("playgroundInterop.downloadFile", "playground.zip", base64, "application/zip");
+    }
+
+    private async Task OnProjectFileSelected(InputFileChangeEventArgs e)
+    {
+        if (this.schemaEditor is null || this.userEditor is null)
+        {
+            return;
+        }
+
+        try
+        {
+            using var ms = new MemoryStream();
+            await e.File.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
+            ms.Position = 0;
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+
+            string? schema = await ReadEntryAsync(zip, "schema.json");
+            string? userCode = await ReadEntryAsync(zip, "user.ts");
+            if (schema is not null)
+            {
+                await this.schemaEditor.SetValue(schema);
+            }
+
+            if (userCode is not null)
+            {
+                await this.userEditor.SetValue(userCode);
+            }
+
+            this.activeSampleId = string.Empty;
+            this.consoleLines.Clear();
+            this.runError = string.Empty;
+            await this.GenerateAsync();
+        }
+        catch (Exception ex)
+        {
+            this.hasError = true;
+            this.statusMessage = "Open failed: " + ex.Message;
+            this.StateHasChanged();
+        }
+    }
+
+    private static async Task<string?> ReadEntryAsync(ZipArchive zip, string name)
+    {
+        ZipArchiveEntry? entry = zip.GetEntry(name);
+        if (entry is null)
+        {
+            return null;
+        }
+
+        using var r = new StreamReader(entry.Open());
+        return await r.ReadToEndAsync();
     }
 
     private async Task GenerateAsync()

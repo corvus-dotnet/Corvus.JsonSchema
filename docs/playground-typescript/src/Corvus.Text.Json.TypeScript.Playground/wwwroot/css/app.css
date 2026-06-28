@@ -83,6 +83,9 @@ html, body {
 
 .pg-btn:disabled { opacity: 0.6; cursor: default; }
 
+.pg-file-label { cursor: pointer; display: inline-flex; align-items: center; }
+.pg-file-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+
 .pg-select {
     background: var(--bg-panel);
     color: var(--fg);
