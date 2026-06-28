@@ -1,0 +1,2 @@
+# The vendored esbuild-wasm binary must never be treated as text / line-ending normalized.
+*.wasm binary
