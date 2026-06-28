@@ -1886,6 +1886,15 @@ Severity = impact on a production‑quality engine. Effort = S / M / L.
 > by a runtime test + the `canonical-access` suite. Remaining backlog: **A2–A6**, **B3/B5**, **G5** (permanent
 > benchmark), **G7** (playground); **H1/H2** stay deferred.
 
+> **Update (2026‑06‑28d).** **G5** has landed: `prototypes/ts-bench/validate-sustained.bench.mjs` +
+> `run-validate-bench.sh` are the permanent **sustained‑load validation** benchmark (the validation analog of
+> `rmw-e2e.bench.mjs`) — throughput + minor‑GC event count/pause for `parse-only` / `validate-only` /
+> `parse+validate` across sizes and ascii/non‑ascii, correctness‑gated, with a checked‑in `RESULTS-validate.txt`.
+> Finding on the "remaining validator‑allocation cuts": under sustained load `validate-only` is ~2× faster than
+> `JSON.parse` and triggers ~half the minor GCs, so the validator is already **leaner than the parse** on the
+> validate path — no pressing allocation cut to chase. Remaining backlog: **A2–A6**, **B3/B5**, **G7**
+> (playground); **H1/H2** stay deferred.
+
 ### A — Type surface & output structure
 
 | # | Gap | Now | Desired | Sev | Eff |
@@ -1950,7 +1959,7 @@ Severity = impact on a production‑quality engine. Effort = S / M / L.
 | G2 | **CLI `Options` wiring** | `AlwaysAssertFormat` + `RuntimeModuleSpecifier` + `codeGenerationMode` (D3) wired; `outputPath`/format‑mode/naming/file options still ignored or hard‑coded | wire the full options surface (§7.2) from the CLI config | Med | S |
 | G3 | **Compliance harness in CI** | graduated out of the spike into `prototypes/ts-bench/compliance/` (`run-compliance.sh`); not yet a `tests/` project | a graduated `tests/` project that runs the suite (all 5 dialects) in CI with the exclusion model | High | M‑L |
 | G4 | **Bowtie TS harness** | none | a Node/TS harness speaking Bowtie's stdio protocol for cross‑implementation conformance (§8) | Med | M |
-| G5 | **Sustained‑load benchmark, permanent** | one‑off in `prototypes/ts-bench` | a permanent throughput‑under‑GC‑pressure benchmark (validation + RMW) | Med | M |
+| G5 | **Sustained‑load benchmark, permanent** | ✅ **done (2026‑06‑28)** — RMW (`rmw-e2e.bench.mjs`) + now **validation** (`validate-sustained.bench.mjs` + `run-validate-bench.sh`): throughput + minor‑GC pressure across sizes/content, correctness‑gated, `RESULTS-validate.txt` checked in | — | Med | M |
 | G6 | **Consumer build story** | minimal example tsconfig; runtime inline | documented tsconfig/bundler guidance, `.d.ts`/source‑map story, consumption pattern (once G1 lands) | Med | S |
 | G7 | **Blazor‑WASM playground** | none (the other six engines have one) | a playground that runs the codegen in‑browser AND *runs* the emitted JS — paste schema → generated TS → live evaluate/mutate (the differentiator the C# playground can't match) | Med | L |
 

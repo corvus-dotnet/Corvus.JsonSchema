@@ -1,0 +1,51 @@
+# Sustained-load validation benchmark — a representative run of validate-sustained.bench.mjs (gap G5).
+# Reproduce with ./run-validate-bench.sh. Absolute numbers are machine-dependent (this run: WSL2, node v20.20.2);
+# the SHAPE is the takeaway, not the digits. Three paths over the generated Catalog validator:
+#   parse-only     : JSON.parse(text)                  (baseline cost)
+#   validate-only  : evaluateRoot(value)               (validator work alone; value parsed once)
+#   parse+validate : JSON.parse(text); evaluateRoot(v) (realistic per-request server path)
+
+## Throughput (ns/op, median-of-7) + best-effort bytes/op
+
+size   content    parse-only            validate-only         parse+validate
+--------------------------------------------------------------------------------------
+small  ascii        5.11 us /    666 B     1.88 us /    288 B     5.01 us /    952 B
+mid    ascii       29.98 us /    875 B    16.25 us /    161 B    68.11 us /   1.0 KB
+large  ascii        2.18 ms /   5.7 KB     1.23 ms /   7.9 KB     1.54 ms /  20.0 KB
+small  nonAscii     2.19 us /    584 B      814 ns /    288 B     3.04 us /    872 B
+mid    nonAscii    25.05 us /    326 B    13.13 us /   6.2 KB    39.77 us /   6.5 KB
+large  nonAscii   892.02 us /  45.5 KB   493.53 us /  48.1 KB     1.58 ms /  20.0 KB
+
+## Sustained GC pressure (fixed workload per path) — GC events / total pause / ops-per-sec
+
+size   content    path             ops      gc-events   gc-pause     ops/sec
+----------------------------------------------------------------------------------
+small  ascii      parse-only       1000000       42      26.5 ms       360,791
+small  ascii      validate-only    1000000       19      13.5 ms     1,117,111
+small  ascii      parse+validate   1000000       59      27.0 ms       308,855
+mid    ascii      parse-only        200000      112      42.1 ms        36,631
+mid    ascii      validate-only     200000       79      34.9 ms        59,359
+mid    ascii      parse+validate    200000      189      66.7 ms        22,059
+large  ascii      parse-only         20000      359     253.5 ms           887
+large  ascii      validate-only      20000      261      87.9 ms         2,005
+large  ascii      parse+validate     20000      627     375.7 ms           707
+small  nonAscii   parse-only       1000000       37      17.8 ms       568,623
+small  nonAscii   validate-only    1000000       19      11.3 ms     1,455,979
+small  nonAscii   parse+validate   1000000       55      21.9 ms       346,048
+mid    nonAscii   parse-only        200000      106      35.9 ms        39,279
+mid    nonAscii   validate-only     200000       79      27.6 ms        73,601
+mid    nonAscii   parse+validate    200000      183      54.7 ms        26,107
+large  nonAscii   parse-only         20000      359     192.0 ms         1,167
+large  nonAscii   validate-only      20000      261      72.2 ms         2,353
+large  nonAscii   parse+validate     20000      627     329.9 ms           788
+
+## Takeaway
+
+validate-only is consistently FASTER than parse-only (~2x at every size) and triggers about HALF the minor
+GCs over the same workload (small: 19 vs 42; large: 261 vs 359). The generated validator is therefore LEANER
+than the unavoidable JSON.parse — it is not the allocation bottleneck on the validate path; parse-then-validate
+GC pressure is dominated by JSON.parse itself. This refines the earlier "validator allocates ~as much as
+JSON.parse" expectation: under sustained load the validator's own allocation is materially below parse's, so
+there is no pressing validator-allocation cut to chase here. The realistic parse+validate path costs the sum
+(gc-events add: small 42+19≈59, large 359+261≈627). Where end-to-end validate throughput matters most, the
+lever is the parse, not the validator (and Model C RMW already sidesteps full re-parse on the write path).

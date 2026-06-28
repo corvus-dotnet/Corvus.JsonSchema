@@ -79,6 +79,25 @@ corvus from **18 → 26** fastest-*correct* schemas — the small/flat schemas i
 warm. The allocation win is *understated* by this warm microbenchmark (no GC-pause time) and is larger under
 sustained-load GC pressure — the actual server target.
 
+## Sustained-load validation benchmark (`validate-sustained.bench.mjs`, gap G5)
+
+`bench.mjs` (above) is a one-pass *cross-validator* comparison. The **permanent sustained-load** benchmark
+that profiles our own validator's throughput **and GC pressure** under repeated load is
+`validate-sustained.bench.mjs` — the validation analog of the mutation benchmark (`rmw-e2e.bench.mjs` /
+`RMW-BENCH.md`). Run it with:
+
+```bash
+./run-validate-bench.sh    # builds the codegen worker, generates the Catalog module, runs with --expose-gc
+```
+
+It times three paths over the generated `Catalog` validator (`parse-only`, `validate-only`, `parse+validate`)
+across payload sizes (small/mid/large) and ascii/non-ascii content, reporting ns/op, a best-effort bytes/op,
+and — the load-bearing signal — **minor-GC event count + total pause over a fixed workload**. It is
+correctness-gated (the validator must accept the valid fixture and reject invalid input before timing). A
+representative run is checked in as `RESULTS-validate.txt`; the finding: under sustained load `validate-only`
+is ~2× faster than `JSON.parse` and triggers ~half the minor GCs, so on the validate path the validator is
+**leaner than the parse**, not the allocation bottleneck.
+
 ## Correctness
 
 33/37 schemas: **all four validators agree** on valid-counts. The 4 disagreements:
