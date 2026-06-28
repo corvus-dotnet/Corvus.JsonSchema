@@ -9,6 +9,22 @@ window.playgroundInterop = (function () {
     let runtimeSourcePromise = null; // resolves to the pre-bundled corvus-runtime.js source text
     let tsLibDisposable = null;    // the current generated.ts extra-lib registration (for IntelliSense)
 
+    function toB64Url(str) {
+        var bytes = new TextEncoder().encode(str);
+        var bin = '';
+        for (var i = 0; i < bytes.length; i++) { bin += String.fromCharCode(bytes[i]); }
+        return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function fromB64Url(b64) {
+        b64 = b64.replace(/-/g, '+').replace(/_/g, '/');
+        while (b64.length % 4) { b64 += '='; }
+        var bin = atob(b64);
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) { bytes[i] = bin.charCodeAt(i); }
+        return new TextDecoder().decode(bytes);
+    }
+
     function findEditor(id) {
         try {
             var editors = (window.monaco && monaco.editor.getEditors) ? monaco.editor.getEditors() : [];
@@ -121,6 +137,28 @@ window.playgroundInterop = (function () {
                 if (tsLibDisposable) { tsLibDisposable.dispose(); }
                 tsLibDisposable = monaco.languages.typescript.typescriptDefaults.addExtraLib(generatedTs, 'file:///generated.ts');
             } catch (e) { /* ignore */ }
+        },
+
+        // Read shared { s: schema, u: userCode } state from the URL hash (#p=...), or null.
+        getUrlState: function () {
+            try {
+                var m = /[#&]p=([^&]+)/.exec(location.hash);
+                if (!m) { return null; }
+                return JSON.parse(fromB64Url(decodeURIComponent(m[1])));
+            } catch (e) { return null; }
+        },
+
+        // Encode the current schema + user code into the URL hash and return the shareable URL.
+        setUrlState: function (schema, userCode) {
+            try {
+                var payload = toB64Url(JSON.stringify({ s: schema, u: userCode }));
+                history.replaceState(null, '', '#p=' + payload);
+                return location.origin + location.pathname + location.search + '#p=' + payload;
+            } catch (e) { return location.href; }
+        },
+
+        copyToClipboard: async function (text) {
+            try { await navigator.clipboard.writeText(text); return true; } catch (e) { return false; }
         },
 
         // Warm up esbuild + the runtime source so the first Run is fast.

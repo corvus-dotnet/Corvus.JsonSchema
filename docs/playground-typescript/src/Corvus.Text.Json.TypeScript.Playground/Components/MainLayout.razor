@@ -8,11 +8,16 @@
     <div class="pg-toolbar">
         <h1>Corvus.Text.Json <span class="accent">TypeScript</span> Playground</h1>
         <select id="sample-select" class="pg-select" value="@activeSampleId" @onchange="OnSampleChanged" title="Load a sample">
+            @if (string.IsNullOrEmpty(activeSampleId))
+            {
+                <option value="">— Custom / shared —</option>
+            }
             @foreach (PlaygroundSample sample in Samples.Samples)
             {
                 <option value="@sample.Id">@sample.DisplayName</option>
             }
         </select>
+        <button id="share-btn" class="pg-btn" @onclick="ShareAsync" title="Copy a shareable link to the clipboard">@shareLabel</button>
         <div class="spacer"></div>
         <button id="theme-btn" class="pg-icon-btn" @onclick="CycleThemeAsync" title="@($"Theme: {themePref} (click to change)")">@ThemeIcon</button>
         <button id="generate-btn" class="pg-btn" @onclick="GenerateAsync" disabled="@(isGenerating || isRunning)">
@@ -89,6 +94,7 @@
     private readonly List<ConsoleLine> consoleLines = [];
     private string topRightTab = "generated";
     private IReadOnlyList<TypeMapEntry> typeMap = [];
+    private string shareLabel = "Share";
 
     private string activeSampleId = string.Empty;
     private string themePref = "auto";
@@ -131,6 +137,16 @@
         if (this.readyEditors == 3)
         {
             await this.JS.InvokeVoidAsync("playgroundInterop.setupTsIntelliSense");
+
+            // Load shared state from the URL, if any, in preference to the default sample.
+            UrlState? shared = await this.JS.InvokeAsync<UrlState?>("playgroundInterop.getUrlState");
+            if (shared?.Schema is string s && shared.UserCode is string u && this.schemaEditor is not null && this.userEditor is not null)
+            {
+                await this.schemaEditor.SetValue(s);
+                await this.userEditor.SetValue(u);
+                this.activeSampleId = string.Empty;
+            }
+
             await this.GenerateAsync();
             _ = this.JS.InvokeVoidAsync("playgroundInterop.warmUp");
         }
@@ -170,6 +186,24 @@
         this.consoleLines.Clear();
         this.runError = string.Empty;
         await this.GenerateAsync();
+    }
+
+    private async Task ShareAsync()
+    {
+        if (this.schemaEditor is null || this.userEditor is null)
+        {
+            return;
+        }
+
+        string schema = await this.schemaEditor.GetValue();
+        string userCode = await this.userEditor.GetValue();
+        string url = await this.JS.InvokeAsync<string>("playgroundInterop.setUrlState", schema, userCode);
+        bool copied = await this.JS.InvokeAsync<bool>("playgroundInterop.copyToClipboard", url);
+        this.shareLabel = copied ? "Copied!" : "Link in URL";
+        this.StateHasChanged();
+        await Task.Delay(1500);
+        this.shareLabel = "Share";
+        this.StateHasChanged();
     }
 
     private async Task GenerateAsync()
