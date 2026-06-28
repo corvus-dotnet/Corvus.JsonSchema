@@ -8,20 +8,21 @@ A `format` keyword generates a **branded** type and a validating factory:
 
 ```typescript
 export type Email = Brand<string, "email">;
-export function asEmail(value: string): Email {
+function asEmail(value: string): Email {
   if (!__fmt("email", value)) { throw new FormatError("email"); }
   return value as Email;
 }
+export const Email = { evaluate: /* … */, as: asEmail };   // companion: Email.as("…")
 ```
 
 `Brand<string, "email">` is a `string` at runtime but a *distinct* type at compile time, so a plain `string` is **not** assignable where an `Email` is expected. The only way to get one is through `asEmail`, which checks the format and throws `FormatError` on failure. The payoff: once a value has type `Email`, "this is a well-formed email" is a fact the type system guarantees — you don't re-check it downstream.
 
 ```typescript
-const e: Email = asEmail("ada@example.com"); // ok
+const e: Email = Email.as("ada@example.com"); // ok
 const bad: Email = "ada@example.com";        // compile error — raw string isn't an Email
 ```
 
-When you read a value back out of an evaluated document, a branded field already has its brand type — it flows through without re-checking. And `evaluateRoot` checks every format as part of whole-document evaluation, so a brand and an evaluation agree.
+When you read a value back out of an evaluated document, a branded field already has its brand type — it flows through without re-checking. And `Type.evaluate` checks every format as part of whole-document evaluation, so a brand and an evaluation agree.
 
 ### Supported formats
 
@@ -42,7 +43,7 @@ A `number` or `integer` reads as a TypeScript `number` by default. Two things ma
 Numeric keywords — `minimum`, `maximum`, `exclusiveMinimum/Maximum`, `multipleOf` — are evaluated against the number's **source text** using big-integer arithmetic (a decimal is decomposed into sign, integer mantissa, and base-10 exponent), not by comparing IEEE-754 doubles. So the cases where floating point lies just work:
 
 ```typescript
-evaluateRoot({ score: 0.3 });  // multipleOf 0.5 -> false  (0.3 is not a multiple of 0.5)
+Type.evaluate({ score: 0.3 });  // multipleOf 0.5 -> false  (0.3 is not a multiple of 0.5)
 // even though, in raw JS, 0.3 % 0.1 === 0.05 rather than 0
 ```
 
@@ -63,7 +64,7 @@ v.id;            // bigint — build and compare with bigint literals (123n)
 
 ### Numeric format brands
 
-A sub-64-bit numeric `format` brands a **`number`** (the value fits a JS double) and emits a validating `as{Name}` factory, the numeric analog of the string-format brands above. The factory enforces the format's range (and integer-ness, where applicable); `evaluateRoot` enforces the same range when `format` is asserted.
+A sub-64-bit numeric `format` brands a **`number`** (the value fits a JS double) and emits a validating `as{Name}` factory, the numeric analog of the string-format brands above. The factory enforces the format's range (and integer-ness, where applicable); `Type.evaluate` enforces the same range when `format` is asserted.
 
 | format | TypeScript | factory check |
 |--------|------------|---------------|
@@ -73,8 +74,8 @@ A sub-64-bit numeric `format` brands a **`number`** (the value fits a JS double)
 | `decimal` | `Brand<number, "decimal">` | in the .NET decimal range |
 
 ```typescript
-const port = asPort(8080);   // Port = Brand<number, "uint16">; throws on -1 or 70000
-const level = asLevel(255);  // Level = Brand<number, "byte">;  throws on 256 or 1.5
+const port = Port.as(8080);   // Port = Brand<number, "uint16">; throws on -1 or 70000
+const level = Level.as(255);  // Level = Brand<number, "byte">;  throws on 256 or 1.5
 ```
 
 ### Typed-array views
@@ -96,7 +97,7 @@ const doc = parseLossless(text) as { amount: unknown };
 exactNumber(doc.amount); // "123456789012345678901234567890.5" — JSON.parse would have rounded it
 ```
 
-A `decimal`-format field additionally gets a generated `{name}AsExact(value): string` accessor that delegates to `exactNumber`. (Parse with `parseLossless` to preserve the digits; a plain `JSON.parse` has already rounded.)
+A `decimal`-format field additionally gets a generated `{Type}.asExact(value): string` accessor that delegates to `exactNumber`. (Parse with `parseLossless` to preserve the digits; a plain `JSON.parse` has already rounded.)
 
 ## Dates, times and durations
 
@@ -105,16 +106,16 @@ A `decimal`-format field additionally gets a generated `{name}AsExact(value): st
 A formatted date/time field is a **branded string** — `Brand<string, "date-time">` — built and checked with its `as*` factory:
 
 ```typescript
-const when = asWhen("2026-06-26T10:00:00Z"); // When = Brand<string, "date-time">
+const when = When.as("2026-06-26T10:00:00Z"); // When = Brand<string, "date-time">
 ```
 
-Each of the four temporal formats gets a generated `{name}AsTemporal` accessor that parses the branded string into its matching [`Temporal`](https://tc39.es/proposal-temporal/docs/) value, so you don't convert by hand:
+Each of the four temporal formats gets a generated `{Type}.asTemporal` accessor that parses the branded string into its matching [`Temporal`](https://tc39.es/proposal-temporal/docs/) value, so you don't convert by hand:
 
 ```typescript
-dayAsTemporal(account.day);          // Temporal.PlainDate   (format: date)
-occurredAtAsTemporal(event.at);      // Temporal.Instant     (format: date-time — the absolute instant)
-atTimeAsTemporal(slot.start);        // Temporal.PlainTime   (format: time)
-spanAsTemporal(plan.duration);       // Temporal.Duration    (format: duration)
+Day.asTemporal(account.day);          // Temporal.PlainDate   (format: date)
+OccurredAt.asTemporal(event.at);      // Temporal.Instant     (format: date-time — the absolute instant)
+AtTime.asTemporal(slot.start);        // Temporal.PlainTime   (format: time)
+Span.asTemporal(plan.duration);       // Temporal.Duration    (format: duration)
 ```
 
 `Temporal` is re-exported from the runtime, so you get the types from the package. (You can still convert the branded string by hand — `new Date(account.created)` or `Temporal.Instant.from(account.created)` — if you prefer.)

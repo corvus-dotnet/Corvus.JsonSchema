@@ -10,7 +10,7 @@ export interface Widget {
   readonly name: string;
 }
 
-export function patchWidget(source: Uint8Array, changes: Partial<Widget>, removals?: ReadonlyArray<"createdAt" | "id">): Uint8Array {
+function patchWidget(source: Uint8Array, changes: Partial<Widget>, removals?: ReadonlyArray<"createdAt" | "id">): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["createdAt"] !== undefined) { targets.push({ name: enc.encode("createdAt"), content: enc.encode(JSON.stringify(changes["createdAt"])), vbs: -1, vbe: -1 }); }
@@ -24,23 +24,23 @@ export function patchWidget(source: Uint8Array, changes: Partial<Widget>, remova
   return rmwUpsert(source, targets);
 }
 
-export function buildWidget(props: Widget): Uint8Array {
+function buildWidget(props: Widget): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalWidget(props: Widget): Uint8Array {
+function buildCanonicalWidget(props: Widget): Uint8Array {
   return canonicalize(props);
 }
 
-export function applyToWidget(source: Uint8Array, member: Named | Timestamped): Uint8Array {
+function applyToWidget(source: Uint8Array, member: Named | Timestamped): Uint8Array {
   return patchWidget(source, member as Partial<Widget>);
 }
 
-export function produceWidget(source: Uint8Array, recipe: (draft: Draft<Widget>) => void): Uint8Array {
+function produceWidget(source: Uint8Array, recipe: (draft: Draft<Widget>) => void): Uint8Array {
   return produce<Widget>(source, recipe);
 }
 
-export function evaluateWidget(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateWidget(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/type"); ok = false; }
   { const t = fresh(); if (!evaluateNamed(value, t, il, (r === null ? kl : kl + "/allOf/0/$ref"), r)) { if (r === null) return false; ok = false; } ev.mergeProps(t); ev.mergeItems(t); }
@@ -64,26 +64,26 @@ export interface Named {
   readonly name: string;
 }
 
-export function patchNamed(source: Uint8Array, changes: Partial<Named>): Uint8Array {
+function patchNamed(source: Uint8Array, changes: Partial<Named>): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["name"] !== undefined) { targets.push({ name: enc.encode("name"), content: enc.encode(JSON.stringify(changes["name"])), vbs: -1, vbe: -1 }); }
   return rmwUpsert(source, targets);
 }
 
-export function buildNamed(props: Named): Uint8Array {
+function buildNamed(props: Named): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalNamed(props: Named): Uint8Array {
+function buildCanonicalNamed(props: Named): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceNamed(source: Uint8Array, recipe: (draft: Draft<Named>) => void): Uint8Array {
+function produceNamed(source: Uint8Array, recipe: (draft: Draft<Named>) => void): Uint8Array {
   return produce<Named>(source, recipe);
 }
 
-export function evaluateNamed(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateNamed(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/$defs/named/type"); ok = false; }
   if (__isObj(value)) {
@@ -101,7 +101,7 @@ export function evaluateNamed(value: unknown, ev: Ev, il: string = "", kl: strin
   return ok;
 }
 
-export function evaluateName(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateName(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/$defs/named/properties/name/type"); ok = false; }
   return ok;
@@ -114,7 +114,7 @@ export interface Timestamped {
   readonly createdAt?: CreatedAt;
 }
 
-export function patchTimestamped(source: Uint8Array, changes: Partial<Timestamped>, removals?: ReadonlyArray<"createdAt">): Uint8Array {
+function patchTimestamped(source: Uint8Array, changes: Partial<Timestamped>, removals?: ReadonlyArray<"createdAt">): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["createdAt"] !== undefined) { targets.push({ name: enc.encode("createdAt"), content: enc.encode(JSON.stringify(changes["createdAt"])), vbs: -1, vbe: -1 }); }
@@ -126,19 +126,19 @@ export function patchTimestamped(source: Uint8Array, changes: Partial<Timestampe
   return rmwUpsert(source, targets);
 }
 
-export function buildTimestamped(props: Timestamped): Uint8Array {
+function buildTimestamped(props: Timestamped): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalTimestamped(props: Timestamped): Uint8Array {
+function buildCanonicalTimestamped(props: Timestamped): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceTimestamped(source: Uint8Array, recipe: (draft: Draft<Timestamped>) => void): Uint8Array {
+function produceTimestamped(source: Uint8Array, recipe: (draft: Draft<Timestamped>) => void): Uint8Array {
   return produce<Timestamped>(source, recipe);
 }
 
-export function evaluateTimestamped(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateTimestamped(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/$defs/timestamped/type"); ok = false; }
   if (__isObj(value)) {
@@ -154,10 +154,10 @@ export function evaluateTimestamped(value: unknown, ev: Ev, il: string = "", kl:
 }
 
 export type CreatedAt = Brand<string, "date-time">;
-export function asCreatedAt(value: string): CreatedAt { if (!__fmt("date-time", value)) { throw new FormatError("date-time"); } return value as CreatedAt; }
-export function createdAtAsTemporal(value: CreatedAt): Temporal.Instant { return toInstant(value); }
+function asCreatedAt(value: string): CreatedAt { if (!__fmt("date-time", value)) { throw new FormatError("date-time"); } return value as CreatedAt; }
+function createdAtAsTemporal(value: CreatedAt): Temporal.Instant { return toInstant(value); }
 
-export function evaluateCreatedAt(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateCreatedAt(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/$defs/timestamped/properties/createdAt/type"); ok = false; }
   if (typeof value === "string" && !__fmt("date-time", value)) { if (r === null) return false; r.fail(kl + "/format", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/$defs/timestamped/properties/createdAt/format"); ok = false; }
@@ -165,12 +165,44 @@ export function evaluateCreatedAt(value: unknown, ev: Ev, il: string = "", kl: s
   return ok;
 }
 
-export function evaluateId(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateId(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/010-mixins/widget.json#/properties/id/type"); ok = false; }
   return ok;
 }
 
 
-export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateWidget(v, fresh(), "", "", results ?? null);
-export default evaluateRoot;
+export const Widget = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateWidget(v, fresh(), "", "", results ?? null),
+  build: buildWidget,
+  buildCanonical: buildCanonicalWidget,
+  patch: patchWidget,
+  produce: produceWidget,
+};
+export const Named = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateNamed(v, fresh(), "", "", results ?? null),
+  build: buildNamed,
+  buildCanonical: buildCanonicalNamed,
+  patch: patchNamed,
+  produce: produceNamed,
+};
+export const Name = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateName(v, fresh(), "", "", results ?? null),
+};
+export const Timestamped = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateTimestamped(v, fresh(), "", "", results ?? null),
+  build: buildTimestamped,
+  buildCanonical: buildCanonicalTimestamped,
+  patch: patchTimestamped,
+  produce: produceTimestamped,
+};
+export const CreatedAt = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateCreatedAt(v, fresh(), "", "", results ?? null),
+  as: asCreatedAt,
+  asTemporal: createdAtAsTemporal,
+};
+export const Id = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateId(v, fresh(), "", "", results ?? null),
+};
+
+export default Widget;

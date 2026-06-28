@@ -10,7 +10,7 @@ export interface Account {
   readonly website?: Website;
 }
 
-export function patchAccount(source: Uint8Array, changes: Partial<Account>, removals?: ReadonlyArray<"created" | "website">): Uint8Array {
+function patchAccount(source: Uint8Array, changes: Partial<Account>, removals?: ReadonlyArray<"created" | "website">): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["created"] !== undefined) { targets.push({ name: enc.encode("created"), content: enc.encode(JSON.stringify(changes["created"])), vbs: -1, vbe: -1 }); }
@@ -24,19 +24,19 @@ export function patchAccount(source: Uint8Array, changes: Partial<Account>, remo
   return rmwUpsert(source, targets);
 }
 
-export function buildAccount(props: Account): Uint8Array {
+function buildAccount(props: Account): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalAccount(props: Account): Uint8Array {
+function buildCanonicalAccount(props: Account): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceAccount(source: Uint8Array, recipe: (draft: Draft<Account>) => void): Uint8Array {
+function produceAccount(source: Uint8Array, recipe: (draft: Draft<Account>) => void): Uint8Array {
   return produce<Account>(source, recipe);
 }
 
-export function evaluateAccount(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateAccount(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/019-formats/account.json#/type"); ok = false; }
   if (__isObj(value)) {
@@ -57,10 +57,10 @@ export function evaluateAccount(value: unknown, ev: Ev, il: string = "", kl: str
 }
 
 export type Created = Brand<string, "date-time">;
-export function asCreated(value: string): Created { if (!__fmt("date-time", value)) { throw new FormatError("date-time"); } return value as Created; }
-export function createdAsTemporal(value: Created): Temporal.Instant { return toInstant(value); }
+function asCreated(value: string): Created { if (!__fmt("date-time", value)) { throw new FormatError("date-time"); } return value as Created; }
+function createdAsTemporal(value: Created): Temporal.Instant { return toInstant(value); }
 
-export function evaluateCreated(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateCreated(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/019-formats/account.json#/properties/created/type"); ok = false; }
   if (typeof value === "string" && !__fmt("date-time", value)) { if (r === null) return false; r.fail(kl + "/format", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/019-formats/account.json#/properties/created/format"); ok = false; }
@@ -69,9 +69,9 @@ export function evaluateCreated(value: unknown, ev: Ev, il: string = "", kl: str
 }
 
 export type Id = Brand<string, "uuid">;
-export function asId(value: string): Id { if (!__fmt("uuid", value)) { throw new FormatError("uuid"); } return value as Id; }
+function asId(value: string): Id { if (!__fmt("uuid", value)) { throw new FormatError("uuid"); } return value as Id; }
 
-export function evaluateId(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateId(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/019-formats/account.json#/properties/id/type"); ok = false; }
   if (typeof value === "string" && !__fmt("uuid", value)) { if (r === null) return false; r.fail(kl + "/format", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/019-formats/account.json#/properties/id/format"); ok = false; }
@@ -80,9 +80,9 @@ export function evaluateId(value: unknown, ev: Ev, il: string = "", kl: string =
 }
 
 export type Website = Brand<string, "uri">;
-export function asWebsite(value: string): Website { if (!__fmt("uri", value)) { throw new FormatError("uri"); } return value as Website; }
+function asWebsite(value: string): Website { if (!__fmt("uri", value)) { throw new FormatError("uri"); } return value as Website; }
 
-export function evaluateWebsite(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateWebsite(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/019-formats/account.json#/properties/website/type"); ok = false; }
   if (typeof value === "string" && !__fmt("uri", value)) { if (r === null) return false; r.fail(kl + "/format", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/019-formats/account.json#/properties/website/format"); ok = false; }
@@ -91,5 +91,25 @@ export function evaluateWebsite(value: unknown, ev: Ev, il: string = "", kl: str
 }
 
 
-export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateAccount(v, fresh(), "", "", results ?? null);
-export default evaluateRoot;
+export const Account = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateAccount(v, fresh(), "", "", results ?? null),
+  build: buildAccount,
+  buildCanonical: buildCanonicalAccount,
+  patch: patchAccount,
+  produce: produceAccount,
+};
+export const Created = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateCreated(v, fresh(), "", "", results ?? null),
+  as: asCreated,
+  asTemporal: createdAsTemporal,
+};
+export const Id = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateId(v, fresh(), "", "", results ?? null),
+  as: asId,
+};
+export const Website = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateWebsite(v, fresh(), "", "", results ?? null),
+  as: asWebsite,
+};
+
+export default Account;

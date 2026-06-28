@@ -11,7 +11,7 @@ export interface Employee {
   readonly name: string;
 }
 
-export function patchEmployee(source: Uint8Array, changes: Partial<Employee>, removals?: ReadonlyArray<"department" | "email">): Uint8Array {
+function patchEmployee(source: Uint8Array, changes: Partial<Employee>, removals?: ReadonlyArray<"department" | "email">): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["department"] !== undefined) { targets.push({ name: enc.encode("department"), content: enc.encode(JSON.stringify(changes["department"])), vbs: -1, vbe: -1 }); }
@@ -26,23 +26,23 @@ export function patchEmployee(source: Uint8Array, changes: Partial<Employee>, re
   return rmwUpsert(source, targets);
 }
 
-export function buildEmployee(props: Employee): Uint8Array {
+function buildEmployee(props: Employee): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalEmployee(props: Employee): Uint8Array {
+function buildCanonicalEmployee(props: Employee): Uint8Array {
   return canonicalize(props);
 }
 
-export function applyToEmployee(source: Uint8Array, member: Person): Uint8Array {
+function applyToEmployee(source: Uint8Array, member: Person): Uint8Array {
   return patchEmployee(source, member as Partial<Employee>);
 }
 
-export function produceEmployee(source: Uint8Array, recipe: (draft: Draft<Employee>) => void): Uint8Array {
+function produceEmployee(source: Uint8Array, recipe: (draft: Draft<Employee>) => void): Uint8Array {
   return produce<Employee>(source, recipe);
 }
 
-export function evaluateEmployee(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateEmployee(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/005-extending/employee.json#/type"); ok = false; }
   { const t = fresh(); if (!evaluatePerson(value, t, il, (r === null ? kl : kl + "/allOf/0/$ref"), r)) { if (r === null) return false; ok = false; } ev.mergeProps(t); ev.mergeItems(t); }
@@ -70,7 +70,7 @@ export interface Person {
   readonly name: string;
 }
 
-export function patchPerson(source: Uint8Array, changes: Partial<Person>, removals?: ReadonlyArray<"email">): Uint8Array {
+function patchPerson(source: Uint8Array, changes: Partial<Person>, removals?: ReadonlyArray<"email">): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["email"] !== undefined) { targets.push({ name: enc.encode("email"), content: enc.encode(JSON.stringify(changes["email"])), vbs: -1, vbe: -1 }); }
@@ -83,19 +83,19 @@ export function patchPerson(source: Uint8Array, changes: Partial<Person>, remova
   return rmwUpsert(source, targets);
 }
 
-export function buildPerson(props: Person): Uint8Array {
+function buildPerson(props: Person): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalPerson(props: Person): Uint8Array {
+function buildCanonicalPerson(props: Person): Uint8Array {
   return canonicalize(props);
 }
 
-export function producePerson(source: Uint8Array, recipe: (draft: Draft<Person>) => void): Uint8Array {
+function producePerson(source: Uint8Array, recipe: (draft: Draft<Person>) => void): Uint8Array {
   return produce<Person>(source, recipe);
 }
 
-export function evaluatePerson(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluatePerson(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/005-extending/employee.json#/$defs/person/type"); ok = false; }
   if (__isObj(value)) {
@@ -115,9 +115,9 @@ export function evaluatePerson(value: unknown, ev: Ev, il: string = "", kl: stri
 }
 
 export type Email = Brand<string, "email">;
-export function asEmail(value: string): Email { if (!__fmt("email", value)) { throw new FormatError("email"); } return value as Email; }
+function asEmail(value: string): Email { if (!__fmt("email", value)) { throw new FormatError("email"); } return value as Email; }
 
-export function evaluateEmail(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateEmail(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/005-extending/employee.json#/$defs/person/properties/email/type"); ok = false; }
   if (typeof value === "string" && !__fmt("email", value)) { if (r === null) return false; r.fail(kl + "/format", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/005-extending/employee.json#/$defs/person/properties/email/format"); ok = false; }
@@ -125,24 +125,51 @@ export function evaluateEmail(value: unknown, ev: Ev, il: string = "", kl: strin
   return ok;
 }
 
-export function evaluateName(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateName(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/005-extending/employee.json#/$defs/person/properties/name/type"); ok = false; }
   return ok;
 }
 
-export function evaluateDepartment(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateDepartment(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/005-extending/employee.json#/properties/department/type"); ok = false; }
   return ok;
 }
 
-export function evaluateEmployeeId(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateEmployeeId(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/005-extending/employee.json#/properties/employeeId/type"); ok = false; }
   return ok;
 }
 
 
-export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateEmployee(v, fresh(), "", "", results ?? null);
-export default evaluateRoot;
+export const Employee = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateEmployee(v, fresh(), "", "", results ?? null),
+  build: buildEmployee,
+  buildCanonical: buildCanonicalEmployee,
+  patch: patchEmployee,
+  produce: produceEmployee,
+};
+export const Person = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluatePerson(v, fresh(), "", "", results ?? null),
+  build: buildPerson,
+  buildCanonical: buildCanonicalPerson,
+  patch: patchPerson,
+  produce: producePerson,
+};
+export const Email = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateEmail(v, fresh(), "", "", results ?? null),
+  as: asEmail,
+};
+export const Name = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateName(v, fresh(), "", "", results ?? null),
+};
+export const Department = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateDepartment(v, fresh(), "", "", results ?? null),
+};
+export const EmployeeId = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateEmployeeId(v, fresh(), "", "", results ?? null),
+};
+
+export default Employee;

@@ -14,7 +14,7 @@ export interface Document {
   readonly version?: number;
 }
 
-export function patchDocument(source: Uint8Array, changes: Partial<Document>, removals?: ReadonlyArray<"owner" | "tags" | "version">, arrays?: DocumentArrayOps): Uint8Array {
+function patchDocument(source: Uint8Array, changes: Partial<Document>, removals?: ReadonlyArray<"owner" | "tags" | "version">, arrays?: DocumentArrayOps): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["owner"] !== undefined) { targets.push({ name: enc.encode("owner"), content: enc.encode(JSON.stringify(changes["owner"])), vbs: -1, vbe: -1 }); }
@@ -35,19 +35,19 @@ export interface DocumentArrayOps {
   readonly tags?: ListOps<string>;
 }
 
-export function buildDocument(props: Document): Uint8Array {
+function buildDocument(props: Document): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalDocument(props: Document): Uint8Array {
+function buildCanonicalDocument(props: Document): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceDocument(source: Uint8Array, recipe: (draft: Draft<Document>) => void): Uint8Array {
+function produceDocument(source: Uint8Array, recipe: (draft: Draft<Document>) => void): Uint8Array {
   return produce<Document>(source, recipe);
 }
 
-export function evaluateDocument(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateDocument(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/016-mutation/document.json#/type"); ok = false; }
   if (__isObj(value)) {
@@ -76,7 +76,7 @@ export interface Owner {
   readonly name?: string;
 }
 
-export function patchOwner(source: Uint8Array, changes: Partial<Owner>, removals?: ReadonlyArray<"email" | "name">): Uint8Array {
+function patchOwner(source: Uint8Array, changes: Partial<Owner>, removals?: ReadonlyArray<"email" | "name">): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["email"] !== undefined) { targets.push({ name: enc.encode("email"), content: enc.encode(JSON.stringify(changes["email"])), vbs: -1, vbe: -1 }); }
@@ -89,19 +89,19 @@ export function patchOwner(source: Uint8Array, changes: Partial<Owner>, removals
   return rmwUpsert(source, targets);
 }
 
-export function buildOwner(props: Owner): Uint8Array {
+function buildOwner(props: Owner): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalOwner(props: Owner): Uint8Array {
+function buildCanonicalOwner(props: Owner): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceOwner(source: Uint8Array, recipe: (draft: Draft<Owner>) => void): Uint8Array {
+function produceOwner(source: Uint8Array, recipe: (draft: Draft<Owner>) => void): Uint8Array {
   return produce<Owner>(source, recipe);
 }
 
-export function evaluateOwner(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateOwner(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/016-mutation/document.json#/properties/owner/type"); ok = false; }
   if (__isObj(value)) {
@@ -117,43 +117,75 @@ export function evaluateOwner(value: unknown, ev: Ev, il: string = "", kl: strin
   return ok;
 }
 
-export function evaluateEmail(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateEmail(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/016-mutation/document.json#/properties/owner/properties/email/type"); ok = false; }
   return ok;
 }
 
-export function evaluateName(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateName(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/016-mutation/document.json#/properties/owner/properties/name/type"); ok = false; }
   return ok;
 }
 
-export function evaluateTags(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateTags(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/016-mutation/document.json#/properties/tags/type"); ok = false; }
   if (Array.isArray(value)) { for (let i = 0; i < value.length; i++) { if (!evaluateItems(value[i], NOEV, (r === null ? il : il + "/" + i), (r === null ? kl : kl + "/items"), r)) { if (r === null) return false; ok = false; } ev.markItem(i); } }
   return ok;
 }
 
-export function evaluateItems(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateItems(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/016-mutation/document.json#/properties/tags/items/type"); ok = false; }
   return ok;
 }
 
-export function evaluateTitle(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateTitle(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/016-mutation/document.json#/properties/title/type"); ok = false; }
   return ok;
 }
 
-export function evaluateVersion(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateVersion(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!((__isNum(value) && __isInt(String(value))))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/016-mutation/document.json#/properties/version/type"); ok = false; }
   return ok;
 }
 
 
-export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateDocument(v, fresh(), "", "", results ?? null);
-export default evaluateRoot;
+export const Document = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateDocument(v, fresh(), "", "", results ?? null),
+  build: buildDocument,
+  buildCanonical: buildCanonicalDocument,
+  patch: patchDocument,
+  produce: produceDocument,
+};
+export const Owner = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateOwner(v, fresh(), "", "", results ?? null),
+  build: buildOwner,
+  buildCanonical: buildCanonicalOwner,
+  patch: patchOwner,
+  produce: produceOwner,
+};
+export const Email = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateEmail(v, fresh(), "", "", results ?? null),
+};
+export const Name = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateName(v, fresh(), "", "", results ?? null),
+};
+export const Tags = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateTags(v, fresh(), "", "", results ?? null),
+};
+export const Items = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateItems(v, fresh(), "", "", results ?? null),
+};
+export const Title = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateTitle(v, fresh(), "", "", results ?? null),
+};
+export const Version = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateVersion(v, fresh(), "", "", results ?? null),
+};
+
+export default Document;

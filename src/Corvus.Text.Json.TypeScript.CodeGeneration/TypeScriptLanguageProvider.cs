@@ -94,18 +94,10 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         TypeDeclaration reduced = rootType.ReducedTypeDeclaration().ReducedType;
         string rootName = reduced.TryGetMetadata<string>(TsFinalKey, out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "Entity";
 
-        // The root entry point is an EVALUATOR (it will gain an optional results collector, like the .NET
-        // EvaluateSchema), so it is named `evaluateRoot` — consistent with the per-type evaluate{Type} and
-        // the suite/spike harnesses, NOT `validate`. It seeds a fresh evaluation tracker so callers don't
-        // pass one for a whole-document check. (Dedup guards the rare root-type-named-"Root" collision.)
-        string entry = "evaluateRoot";
-        for (int i = 2; this.moduleTopLevelNames.Contains(entry); i++)
-        {
-            entry = "evaluateRoot" + i;
-        }
-
-        this.moduleTopLevelNames.Add(entry);
-        return $"\nexport const {entry} = (v: unknown, results?: Results): boolean => evaluate{rootName}(v, fresh(), \"\", \"\", results ?? null);\nexport default {entry};\n";
+        // The companion object for the root type (emitted by ApplyCompanions) is the module's default export,
+        // so the entry point is `Root.evaluate(x)` (or `import Root from "./generated.js"; Root.evaluate(x)`),
+        // consistent with the per-type `{Type}.evaluate` companions — there is no standalone evaluateRoot.
+        return $"\nexport default {rootName};\n";
     }
 
     /// <summary>
@@ -274,7 +266,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             this.EmitType(sb, td, moduleGuards);
         }
 
-        string content = sb.ToString();
+        string content = this.ApplyCompanions(sb.ToString(), types);
 
         // Record every emitted top-level identifier so the root entry-point name (RootEvaluatorExport) can
         // be reserved against them and renamed around any collision.
@@ -299,6 +291,72 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 
     // Matches a top-level `export <keyword> <name>` declaration: group 1 = keyword, group 2 = identifier.
     private const string TopLevelExportPattern = "(?m)^export (interface|type|class|function|const) ([A-Za-z_$][A-Za-z0-9_$]*)";
+
+    // Companion objects (discoverability + per-type evaluate parity with the .NET EvaluateSchema). After the
+    // single-file module is emitted, demote the per-type free functions to module-internal and expose each
+    // type's operations as members of an `export const {Type}` companion object (declaration-merged with its
+    // interface / type alias). The surface becomes `Person.evaluate(x)` / `Person.build({...})` /
+    // `Event.match(...)` instead of standalone functions; the root type's companion is the module default
+    // export (see RootEvaluatorExport). Every non-conditional type gets at least `{Type}.evaluate`.
+    private string ApplyCompanions(string content, List<TypeDeclaration> types)
+    {
+        // The per-type free functions become module-internal; the companion objects are the public surface.
+        content = content.Replace("\nexport function ", "\nfunction ", StringComparison.Ordinal);
+
+        var sb = new StringBuilder(content);
+        sb.Append('\n');
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (TypeDeclaration td in types)
+        {
+            if (this.conditionalOnly.Contains(td))
+            {
+                continue;
+            }
+
+            string name = FinalName(td);
+
+            // One companion per name; only for types that actually emitted a validator (all non-conditional do).
+            if (!seen.Add(name) || !content.Contains($"\nfunction evaluate{name}(", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            sb.Append(BuildCompanion(name, content));
+        }
+
+        return sb.ToString();
+    }
+
+    private static string BuildCompanion(string name, string content)
+    {
+        string camel = Camel(name);
+        var props = new List<string>
+        {
+            // evaluate seeds a fresh tracker (like .NET EvaluateSchema); always present.
+            $"  evaluate: (v: unknown, results?: Results): boolean => evaluate{name}(v, fresh(), \"\", \"\", results ?? null)",
+        };
+
+        void Add(string marker, string member, string fn)
+        {
+            if (content.Contains(marker, StringComparison.Ordinal))
+            {
+                props.Add($"  {member}: {fn}");
+            }
+        }
+
+        Add($"\nfunction build{name}(", "build", $"build{name}");
+        Add($"\nfunction buildCanonical{name}(", "buildCanonical", $"buildCanonical{name}");
+        Add($"\nfunction patch{name}(", "patch", $"patch{name}");
+        Add($"\nfunction produce{name}(", "produce", $"produce{name}");
+        Add($"\nfunction withDefaults{name}(", "withDefaults", $"withDefaults{name}");
+        Add($"\nfunction match{name}<", "match", $"match{name}");
+        Add($"\nfunction as{name}(", "as", $"as{name}");
+        Add($"\nfunction is{name}(", "is", $"is{name}");
+        Add($"\nfunction {camel}AsTemporal(", "asTemporal", $"{camel}AsTemporal");
+        Add($"\nfunction {camel}AsExact(", "asExact", $"{camel}AsExact");
+
+        return $"export const {name} = {{\n{string.Join(",\n", props)},\n}};\n";
+    }
 
     // Pass 0 + Pass 1: assign each type its final, unique TS name (stored as TsFinalKey metadata). Pass 0
     // records, for each type, the property it is the value of — a fallback name source for nested types the

@@ -15,7 +15,7 @@ export interface Settings {
   readonly theme?: string;
 }
 
-export function patchSettings(source: Uint8Array, changes: Partial<Settings>, removals?: ReadonlyArray<"fontSize" | "theme">): Uint8Array {
+function patchSettings(source: Uint8Array, changes: Partial<Settings>, removals?: ReadonlyArray<"fontSize" | "theme">): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["fontSize"] !== undefined) { targets.push({ name: enc.encode("fontSize"), content: enc.encode(JSON.stringify(changes["fontSize"])), vbs: -1, vbe: -1 }); }
@@ -28,26 +28,26 @@ export function patchSettings(source: Uint8Array, changes: Partial<Settings>, re
   return rmwUpsert(source, targets);
 }
 
-export function buildSettings(props: Settings): Uint8Array {
+function buildSettings(props: Settings): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalSettings(props: Settings): Uint8Array {
+function buildCanonicalSettings(props: Settings): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceSettings(source: Uint8Array, recipe: (draft: Draft<Settings>) => void): Uint8Array {
+function produceSettings(source: Uint8Array, recipe: (draft: Draft<Settings>) => void): Uint8Array {
   return produce<Settings>(source, recipe);
 }
 
-export function withDefaultsSettings(value: Settings): Settings {
+function withDefaultsSettings(value: Settings): Settings {
   const out: Record<string, unknown> = { ...(value as Record<string, unknown>) };
   if (!("fontSize" in value)) { out["fontSize"] = 14; }
   if (!("theme" in value)) { out["theme"] = "light"; }
   return out as Settings;
 }
 
-export function evaluateSettings(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateSettings(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/018-defaults/settings.json#/type"); ok = false; }
   if (__isObj(value)) {
@@ -63,14 +63,14 @@ export function evaluateSettings(value: unknown, ev: Ev, il: string = "", kl: st
   return ok;
 }
 
-export function evaluateFontSize(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateFontSize(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!((__isNum(value) && __isInt(String(value))))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/018-defaults/settings.json#/properties/fontSize/type"); ok = false; }
   if (r !== null && r.verbose && ok) { r.annotate("default", 14, kl + "/default", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/018-defaults/settings.json#/properties/fontSize/default"); }
   return ok;
 }
 
-export function evaluateTheme(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateTheme(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/018-defaults/settings.json#/properties/theme/type"); ok = false; }
   if (r !== null && r.verbose && ok) { r.annotate("default", "light", kl + "/default", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/018-defaults/settings.json#/properties/theme/default"); }
@@ -78,5 +78,19 @@ export function evaluateTheme(value: unknown, ev: Ev, il: string = "", kl: strin
 }
 
 
-export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateSettings(v, fresh(), "", "", results ?? null);
-export default evaluateRoot;
+export const Settings = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateSettings(v, fresh(), "", "", results ?? null),
+  build: buildSettings,
+  buildCanonical: buildCanonicalSettings,
+  patch: patchSettings,
+  produce: produceSettings,
+  withDefaults: withDefaultsSettings,
+};
+export const FontSize = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateFontSize(v, fresh(), "", "", results ?? null),
+};
+export const Theme = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateTheme(v, fresh(), "", "", results ?? null),
+};
+
+export default Settings;

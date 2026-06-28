@@ -3,7 +3,7 @@
 The Corvus.Text.Json code generator emits idiomatic, high-performance **TypeScript** from JSON Schema. From one schema you get:
 
 - a `readonly` **type surface** — interfaces, string-literal-union enums, discriminated unions with `match*`, branded format types, typed arrays/tuples, maps;
-- **AOT-compiled evaluators** — a boolean `evaluateRoot(value)` per module, fully JSON-Schema-compliant (all five dialects), with no runtime schema interpretation;
+- **AOT-compiled evaluators** — a boolean `evaluate` on every type's companion (`Type.evaluate(value)`), fully JSON-Schema-compliant (all five dialects), with no runtime schema interpretation;
 - a **byte-level mutation API** — `build*` / `buildCanonical*` (RFC 8785) / `patch*` / `produce*` over UTF-8 JSON bytes, splicing only what changed.
 
 Options: `--tsModulePerType` (one module per type + a barrel `index.ts`), `--codeGenerationMode SchemaEvaluationOnly` (validators only), `--tsRuntimeModule @endjin/corvus-json-runtime` (import the runtime as a package).
@@ -43,7 +43,7 @@ Each recipe under [`examples/`](./examples/) is a schema + the generated TypeScr
 ## Guides
 
 - [getting-started](./getting-started.md) — generating, the runtime, the shape of a module.
-- [reading-and-validating](./reading-and-validating.md) — the `readonly` surface and the `evaluateRoot` / `evaluate*` evaluators.
+- [reading-and-validating](./reading-and-validating.md) — the `readonly` surface and the `Type.evaluate` evaluators.
 - [mutation](./mutation.md) — `build` / `patch` / `produce` and the byte-level engine.
 - [the-type-surface](./the-type-surface.md) — every construct → its generated TypeScript.
 - [value-types](./value-types.md) — branded string + numeric formats, exact / arbitrary-precision numbers, typed-array views, and `Temporal` dates and times.

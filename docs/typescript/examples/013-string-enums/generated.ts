@@ -9,7 +9,7 @@ export interface Task {
   readonly status: Status;
 }
 
-export function patchTask(source: Uint8Array, changes: Partial<Task>, removals?: ReadonlyArray<"priority">): Uint8Array {
+function patchTask(source: Uint8Array, changes: Partial<Task>, removals?: ReadonlyArray<"priority">): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["priority"] !== undefined) { targets.push({ name: enc.encode("priority"), content: enc.encode(JSON.stringify(changes["priority"])), vbs: -1, vbe: -1 }); }
@@ -22,19 +22,19 @@ export function patchTask(source: Uint8Array, changes: Partial<Task>, removals?:
   return rmwUpsert(source, targets);
 }
 
-export function buildTask(props: Task): Uint8Array {
+function buildTask(props: Task): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalTask(props: Task): Uint8Array {
+function buildCanonicalTask(props: Task): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceTask(source: Uint8Array, recipe: (draft: Draft<Task>) => void): Uint8Array {
+function produceTask(source: Uint8Array, recipe: (draft: Draft<Task>) => void): Uint8Array {
   return produce<Task>(source, recipe);
 }
 
-export function evaluateTask(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateTask(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/013-string-enums/task.json#/type"); ok = false; }
   if (__isObj(value)) {
@@ -55,7 +55,7 @@ export function evaluateTask(value: unknown, ev: Ev, il: string = "", kl: string
 
 export type Priority = "low" | "medium" | "high";
 
-export function evaluatePriority(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluatePriority(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   { const allowed: readonly unknown[] = ["low", "medium", "high"]; if (!allowed.some((a) => __eq(value, a))) { if (r === null) return false; r.fail(kl + "/enum", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/013-string-enums/task.json#/properties/priority/enum"); ok = false; } }
   return ok;
@@ -63,12 +63,25 @@ export function evaluatePriority(value: unknown, ev: Ev, il: string = "", kl: st
 
 export type Status = "todo" | "in_progress" | "done";
 
-export function evaluateStatus(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateStatus(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   { const allowed: readonly unknown[] = ["todo", "in_progress", "done"]; if (!allowed.some((a) => __eq(value, a))) { if (r === null) return false; r.fail(kl + "/enum", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/013-string-enums/task.json#/properties/status/enum"); ok = false; } }
   return ok;
 }
 
 
-export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateTask(v, fresh(), "", "", results ?? null);
-export default evaluateRoot;
+export const Task = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateTask(v, fresh(), "", "", results ?? null),
+  build: buildTask,
+  buildCanonical: buildCanonicalTask,
+  patch: patchTask,
+  produce: produceTask,
+};
+export const Priority = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluatePriority(v, fresh(), "", "", results ?? null),
+};
+export const Status = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateStatus(v, fresh(), "", "", results ?? null),
+};
+
+export default Task;

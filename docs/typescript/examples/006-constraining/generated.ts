@@ -8,30 +8,30 @@ export interface SmallBatch {
   readonly size: unknown;
 }
 
-export function patchSmallBatch(source: Uint8Array, changes: Partial<SmallBatch>): Uint8Array {
+function patchSmallBatch(source: Uint8Array, changes: Partial<SmallBatch>): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["size"] !== undefined) { targets.push({ name: enc.encode("size"), content: enc.encode(JSON.stringify(changes["size"])), vbs: -1, vbe: -1 }); }
   return rmwUpsert(source, targets);
 }
 
-export function buildSmallBatch(props: SmallBatch): Uint8Array {
+function buildSmallBatch(props: SmallBatch): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalSmallBatch(props: SmallBatch): Uint8Array {
+function buildCanonicalSmallBatch(props: SmallBatch): Uint8Array {
   return canonicalize(props);
 }
 
-export function applyToSmallBatch(source: Uint8Array, member: Batch): Uint8Array {
+function applyToSmallBatch(source: Uint8Array, member: Batch): Uint8Array {
   return patchSmallBatch(source, member as Partial<SmallBatch>);
 }
 
-export function produceSmallBatch(source: Uint8Array, recipe: (draft: Draft<SmallBatch>) => void): Uint8Array {
+function produceSmallBatch(source: Uint8Array, recipe: (draft: Draft<SmallBatch>) => void): Uint8Array {
   return produce<SmallBatch>(source, recipe);
 }
 
-export function evaluateSmallBatch(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateSmallBatch(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/006-constraining/small-batch.json#/type"); ok = false; }
   { const t = fresh(); if (!evaluateBatch(value, t, il, (r === null ? kl : kl + "/allOf/0/$ref"), r)) { if (r === null) return false; ok = false; } ev.mergeProps(t); ev.mergeItems(t); }
@@ -54,26 +54,26 @@ export interface Batch {
   readonly size: number;
 }
 
-export function patchBatch(source: Uint8Array, changes: Partial<Batch>): Uint8Array {
+function patchBatch(source: Uint8Array, changes: Partial<Batch>): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["size"] !== undefined) { targets.push({ name: enc.encode("size"), content: enc.encode(JSON.stringify(changes["size"])), vbs: -1, vbe: -1 }); }
   return rmwUpsert(source, targets);
 }
 
-export function buildBatch(props: Batch): Uint8Array {
+function buildBatch(props: Batch): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalBatch(props: Batch): Uint8Array {
+function buildCanonicalBatch(props: Batch): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceBatch(source: Uint8Array, recipe: (draft: Draft<Batch>) => void): Uint8Array {
+function produceBatch(source: Uint8Array, recipe: (draft: Draft<Batch>) => void): Uint8Array {
   return produce<Batch>(source, recipe);
 }
 
-export function evaluateBatch(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateBatch(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/006-constraining/small-batch.json#/$defs/batch/type"); ok = false; }
   if (__isObj(value)) {
@@ -91,19 +91,39 @@ export function evaluateBatch(value: unknown, ev: Ev, il: string = "", kl: strin
   return ok;
 }
 
-export function evaluateSize(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateSize(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!((__isNum(value) && __isInt(String(value))))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/006-constraining/small-batch.json#/$defs/batch/properties/size/type"); ok = false; }
   if (__isNum(value) && __cmp(String(value), "1") < 0) { if (r === null) return false; r.fail(kl + "/minimum", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/006-constraining/small-batch.json#/$defs/batch/properties/size/minimum"); ok = false; }
   return ok;
 }
 
-export function evaluateSize2(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateSize2(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (__isNum(value) && __cmp(String(value), "100") > 0) { if (r === null) return false; r.fail(kl + "/maximum", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/006-constraining/small-batch.json#/properties/size/maximum"); ok = false; }
   return ok;
 }
 
 
-export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateSmallBatch(v, fresh(), "", "", results ?? null);
-export default evaluateRoot;
+export const SmallBatch = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateSmallBatch(v, fresh(), "", "", results ?? null),
+  build: buildSmallBatch,
+  buildCanonical: buildCanonicalSmallBatch,
+  patch: patchSmallBatch,
+  produce: produceSmallBatch,
+};
+export const Batch = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateBatch(v, fresh(), "", "", results ?? null),
+  build: buildBatch,
+  buildCanonical: buildCanonicalBatch,
+  patch: patchBatch,
+  produce: produceBatch,
+};
+export const Size = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateSize(v, fresh(), "", "", results ?? null),
+};
+export const Size2 = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateSize2(v, fresh(), "", "", results ?? null),
+};
+
+export default SmallBatch;

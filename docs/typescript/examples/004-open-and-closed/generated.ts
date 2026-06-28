@@ -9,7 +9,7 @@ export interface StrictPoint {
   readonly y: number;
 }
 
-export function patchStrictPoint(source: Uint8Array, changes: Partial<StrictPoint>): Uint8Array {
+function patchStrictPoint(source: Uint8Array, changes: Partial<StrictPoint>): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["x"] !== undefined) { targets.push({ name: enc.encode("x"), content: enc.encode(JSON.stringify(changes["x"])), vbs: -1, vbe: -1 }); }
@@ -17,19 +17,19 @@ export function patchStrictPoint(source: Uint8Array, changes: Partial<StrictPoin
   return rmwUpsert(source, targets);
 }
 
-export function buildStrictPoint(props: StrictPoint): Uint8Array {
+function buildStrictPoint(props: StrictPoint): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalStrictPoint(props: StrictPoint): Uint8Array {
+function buildCanonicalStrictPoint(props: StrictPoint): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceStrictPoint(source: Uint8Array, recipe: (draft: Draft<StrictPoint>) => void): Uint8Array {
+function produceStrictPoint(source: Uint8Array, recipe: (draft: Draft<StrictPoint>) => void): Uint8Array {
   return produce<StrictPoint>(source, recipe);
 }
 
-export function evaluateStrictPoint(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateStrictPoint(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/004-open-and-closed/point.json#/type"); ok = false; }
   if (__isObj(value)) {
@@ -58,22 +58,38 @@ export function evaluateStrictPoint(value: unknown, ev: Ev, il: string = "", kl:
   return ok;
 }
 
-export function evaluateX(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateX(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/004-open-and-closed/point.json#/properties/x/type"); ok = false; }
   return ok;
 }
 
-export function evaluateY(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateY(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/004-open-and-closed/point.json#/properties/y/type"); ok = false; }
   return ok;
 }
 
-export function evaluateJsonNotAny(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateJsonNotAny(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   if (r !== null) { r.fail(kl, il, "corvus:/JsonNotAny#"); } return false;
 }
 
 
-export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateStrictPoint(v, fresh(), "", "", results ?? null);
-export default evaluateRoot;
+export const StrictPoint = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateStrictPoint(v, fresh(), "", "", results ?? null),
+  build: buildStrictPoint,
+  buildCanonical: buildCanonicalStrictPoint,
+  patch: patchStrictPoint,
+  produce: produceStrictPoint,
+};
+export const X = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateX(v, fresh(), "", "", results ?? null),
+};
+export const Y = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateY(v, fresh(), "", "", results ?? null),
+};
+export const JsonNotAny = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateJsonNotAny(v, fresh(), "", "", results ?? null),
+};
+
+export default StrictPoint;

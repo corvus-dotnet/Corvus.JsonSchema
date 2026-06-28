@@ -5,18 +5,7 @@
 // decimal is range-checked AND gets the gap-B3 `{name}AsExact` accessor returning exact digits from a
 // lossless parse. Run after generating numformat.json into out-numformat/:
 //   Codegen (numformat.json -> out-numformat/), transpile, and run are all driven by ../run-access.sh.
-import {
-  evaluateRoot,
-  asLevel,
-  asDelta,
-  asRatio,
-  asWeight,
-  asMass,
-  asAmount,
-  amountAsExact,
-  type Measure,
-  type Amount,
-} from "./out-numformat/generated.js";
+import Root_outnumformatgeneratedjs, { Amount, Delta, Level, Mass, Measure, Ratio, Weight } from "./out-numformat/generated.js";
 import { parseLossless } from "./out-numformat/corvus-runtime.js";
 
 let pass = 0;
@@ -30,42 +19,42 @@ function throws(label: string, fn: () => unknown): void {
 }
 
 // byte: integer in [0, 255]
-eq("asLevel mints a byte (in-range)", asLevel(200), 200);
-eq("asLevel accepts 0", asLevel(0), 0);
-eq("asLevel accepts 255", asLevel(255), 255);
-throws("asLevel rejects 256", () => asLevel(256));
-throws("asLevel rejects -1", () => asLevel(-1));
-throws("asLevel rejects a non-integer", () => asLevel(1.5));
+eq("Level.as mints a byte (in-range)", Level.as(200), 200);
+eq("Level.as accepts 0", Level.as(0), 0);
+eq("Level.as accepts 255", Level.as(255), 255);
+throws("Level.as rejects 256", () => Level.as(256));
+throws("Level.as rejects -1", () => Level.as(-1));
+throws("Level.as rejects a non-integer", () => Level.as(1.5));
 
 // sbyte: integer in [-128, 127]
-eq("asDelta mints an sbyte", asDelta(-128), -128);
-eq("asDelta accepts 127", asDelta(127), 127);
-throws("asDelta rejects 128", () => asDelta(128));
-throws("asDelta rejects -129", () => asDelta(-129));
+eq("Delta.as mints an sbyte", Delta.as(-128), -128);
+eq("Delta.as accepts 127", Delta.as(127), 127);
+throws("Delta.as rejects 128", () => Delta.as(128));
+throws("Delta.as rejects -129", () => Delta.as(-129));
 
 // half: RANGE check [-65504, 65504], fractional allowed (NOT integer)
-eq("asRatio accepts a fractional half", asRatio(1.25), 1.25);
-eq("asRatio accepts the max boundary", asRatio(65504), 65504);
-eq("asRatio accepts the min boundary", asRatio(-65504), -65504);
-throws("asRatio rejects over-range", () => asRatio(70000));
-throws("asRatio rejects under-range", () => asRatio(-70000));
+eq("Ratio.as accepts a fractional half", Ratio.as(1.25), 1.25);
+eq("Ratio.as accepts the max boundary", Ratio.as(65504), 65504);
+eq("Ratio.as accepts the min boundary", Ratio.as(-65504), -65504);
+throws("Ratio.as rejects over-range", () => Ratio.as(70000));
+throws("Ratio.as rejects under-range", () => Ratio.as(-70000));
 
 // single / double: unbounded brands (type tags only — any number mints)
-eq("asWeight mints a single with no range check", asWeight(3.4e38), 3.4e38);
-eq("asMass mints a double with no range check", asMass(1e300), 1e300);
+eq("Weight.as mints a single with no range check", Weight.as(3.4e38), 3.4e38);
+eq("Mass.as mints a double with no range check", Mass.as(1e300), 1e300);
 
 // decimal: range-checked brand + the gap-B3 exact-digits accessor
-eq("asAmount mints a decimal", asAmount(1.5), 1.5);
-eq("amountAsExact returns the value's digits", amountAsExact(asAmount(1.5)), "1.5");
+eq("Amount.as mints a decimal", Amount.as(1.5), 1.5);
+eq("Amount.asExact returns the value's digits", Amount.asExact(Amount.as(1.5)), "1.5");
 
-// gap B3 win: a decimal parsed losslessly keeps digits a JS number would round away; amountAsExact surfaces them.
+// gap B3 win: a decimal parsed losslessly keeps digits a JS number would round away; Amount.asExact surfaces them.
 const exact = "123456789012345678901234567890.5";
 const losslessAmount = (parseLossless(`{"amount":${exact}}`) as { amount: Amount }).amount;
-eq("amountAsExact preserves exact digits from a lossless parse", amountAsExact(losslessAmount), exact);
+eq("Amount.asExact preserves exact digits from a lossless parse", Amount.asExact(losslessAmount), exact);
 
 // validate (format is annotation-only by default) then consume as the typed interface; branded fields read as numbers
 const raw: unknown = { level: 7, delta: -1, ratio: 1.25, weight: 2.5, mass: 3.5, amount: 9.99 };
-if (!evaluateRoot(raw)) { throw new Error("measure should validate (default = format annotation)"); }
+if (!Root_outnumformatgeneratedjs.evaluate(raw)) { throw new Error("measure should validate (default = format annotation)"); }
 const m = raw as Measure;
 eq("byte field reads as its base number", m.level, 7);
 

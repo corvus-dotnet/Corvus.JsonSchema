@@ -8,7 +8,7 @@ export interface Cart {
   readonly items: readonly LineItem[];
 }
 
-export function patchCart(source: Uint8Array, changes: Partial<Cart>, arrays?: CartArrayOps): Uint8Array {
+function patchCart(source: Uint8Array, changes: Partial<Cart>, arrays?: CartArrayOps): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["items"] !== undefined) { targets.push({ name: enc.encode("items"), content: enc.encode(JSON.stringify(changes["items"])), vbs: -1, vbe: -1 }); }
@@ -25,19 +25,19 @@ export interface CartArrayOps {
   readonly items?: ListOps<LineItem>;
 }
 
-export function buildCart(props: Cart): Uint8Array {
+function buildCart(props: Cart): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalCart(props: Cart): Uint8Array {
+function buildCanonicalCart(props: Cart): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceCart(source: Uint8Array, recipe: (draft: Draft<Cart>) => void): Uint8Array {
+function produceCart(source: Uint8Array, recipe: (draft: Draft<Cart>) => void): Uint8Array {
   return produce<Cart>(source, recipe);
 }
 
-export function evaluateCart(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateCart(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/007-arrays/cart.json#/type"); ok = false; }
   if (__isObj(value)) {
@@ -55,7 +55,7 @@ export function evaluateCart(value: unknown, ev: Ev, il: string = "", kl: string
   return ok;
 }
 
-export function evaluateItems(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateItems(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/007-arrays/cart.json#/properties/items/type"); ok = false; }
   if (Array.isArray(value) && value.length < 1) { if (r === null) return false; r.fail(kl + "/minItems", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/007-arrays/cart.json#/properties/items/minItems"); ok = false; }
@@ -71,7 +71,7 @@ export interface LineItem {
   readonly sku: string;
 }
 
-export function patchLineItem(source: Uint8Array, changes: Partial<LineItem>): Uint8Array {
+function patchLineItem(source: Uint8Array, changes: Partial<LineItem>): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["qty"] !== undefined) { targets.push({ name: enc.encode("qty"), content: enc.encode(JSON.stringify(changes["qty"])), vbs: -1, vbe: -1 }); }
@@ -79,19 +79,19 @@ export function patchLineItem(source: Uint8Array, changes: Partial<LineItem>): U
   return rmwUpsert(source, targets);
 }
 
-export function buildLineItem(props: LineItem): Uint8Array {
+function buildLineItem(props: LineItem): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalLineItem(props: LineItem): Uint8Array {
+function buildCanonicalLineItem(props: LineItem): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceLineItem(source: Uint8Array, recipe: (draft: Draft<LineItem>) => void): Uint8Array {
+function produceLineItem(source: Uint8Array, recipe: (draft: Draft<LineItem>) => void): Uint8Array {
   return produce<LineItem>(source, recipe);
 }
 
-export function evaluateLineItem(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateLineItem(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/007-arrays/cart.json#/properties/items/items/type"); ok = false; }
   if (__isObj(value)) {
@@ -111,19 +111,42 @@ export function evaluateLineItem(value: unknown, ev: Ev, il: string = "", kl: st
   return ok;
 }
 
-export function evaluateQty(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateQty(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!((__isNum(value) && __isInt(String(value))))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/007-arrays/cart.json#/properties/items/items/properties/qty/type"); ok = false; }
   if (__isNum(value) && __cmp(String(value), "1") < 0) { if (r === null) return false; r.fail(kl + "/minimum", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/007-arrays/cart.json#/properties/items/items/properties/qty/minimum"); ok = false; }
   return ok;
 }
 
-export function evaluateSku(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateSku(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/007-arrays/cart.json#/properties/items/items/properties/sku/type"); ok = false; }
   return ok;
 }
 
 
-export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateCart(v, fresh(), "", "", results ?? null);
-export default evaluateRoot;
+export const Cart = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateCart(v, fresh(), "", "", results ?? null),
+  build: buildCart,
+  buildCanonical: buildCanonicalCart,
+  patch: patchCart,
+  produce: produceCart,
+};
+export const Items = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateItems(v, fresh(), "", "", results ?? null),
+};
+export const LineItem = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateLineItem(v, fresh(), "", "", results ?? null),
+  build: buildLineItem,
+  buildCanonical: buildCanonicalLineItem,
+  patch: patchLineItem,
+  produce: produceLineItem,
+};
+export const Qty = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateQty(v, fresh(), "", "", results ?? null),
+};
+export const Sku = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateSku(v, fresh(), "", "", results ?? null),
+};
+
+export default Cart;

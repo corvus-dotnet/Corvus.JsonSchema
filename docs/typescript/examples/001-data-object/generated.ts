@@ -12,7 +12,7 @@ export interface Person {
   readonly otherNames?: string;
 }
 
-export function patchPerson(source: Uint8Array, changes: Partial<Person>, removals?: ReadonlyArray<"birthDate" | "height" | "otherNames">): Uint8Array {
+function patchPerson(source: Uint8Array, changes: Partial<Person>, removals?: ReadonlyArray<"birthDate" | "height" | "otherNames">): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["birthDate"] !== undefined) { targets.push({ name: enc.encode("birthDate"), content: enc.encode(JSON.stringify(changes["birthDate"])), vbs: -1, vbe: -1 }); }
@@ -28,19 +28,19 @@ export function patchPerson(source: Uint8Array, changes: Partial<Person>, remova
   return rmwUpsert(source, targets);
 }
 
-export function buildPerson(props: Person): Uint8Array {
+function buildPerson(props: Person): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalPerson(props: Person): Uint8Array {
+function buildCanonicalPerson(props: Person): Uint8Array {
   return canonicalize(props);
 }
 
-export function producePerson(source: Uint8Array, recipe: (draft: Draft<Person>) => void): Uint8Array {
+function producePerson(source: Uint8Array, recipe: (draft: Draft<Person>) => void): Uint8Array {
   return produce<Person>(source, recipe);
 }
 
-export function evaluatePerson(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluatePerson(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/001-data-object/person.json#/type"); ok = false; }
   if (__isObj(value)) {
@@ -64,10 +64,10 @@ export function evaluatePerson(value: unknown, ev: Ev, il: string = "", kl: stri
 }
 
 export type BirthDate = Brand<string, "date">;
-export function asBirthDate(value: string): BirthDate { if (!__fmt("date", value)) { throw new FormatError("date"); } return value as BirthDate; }
-export function birthDateAsTemporal(value: BirthDate): Temporal.PlainDate { return toPlainDate(value); }
+function asBirthDate(value: string): BirthDate { if (!__fmt("date", value)) { throw new FormatError("date"); } return value as BirthDate; }
+function birthDateAsTemporal(value: BirthDate): Temporal.PlainDate { return toPlainDate(value); }
 
-export function evaluateBirthDate(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateBirthDate(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/001-data-object/person.json#/properties/birthDate/type"); ok = false; }
   if (typeof value === "string" && !__fmt("date", value)) { if (r === null) return false; r.fail(kl + "/format", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/001-data-object/person.json#/properties/birthDate/format"); ok = false; }
@@ -75,30 +75,54 @@ export function evaluateBirthDate(value: unknown, ev: Ev, il: string = "", kl: s
   return ok;
 }
 
-export function evaluateFamilyName(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateFamilyName(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/001-data-object/person.json#/properties/familyName/type"); ok = false; }
   return ok;
 }
 
-export function evaluateGivenName(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateGivenName(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/001-data-object/person.json#/properties/givenName/type"); ok = false; }
   return ok;
 }
 
-export function evaluateHeight(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateHeight(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/001-data-object/person.json#/properties/height/type"); ok = false; }
   return ok;
 }
 
-export function evaluateOtherNames(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateOtherNames(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/001-data-object/person.json#/properties/otherNames/type"); ok = false; }
   return ok;
 }
 
 
-export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluatePerson(v, fresh(), "", "", results ?? null);
-export default evaluateRoot;
+export const Person = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluatePerson(v, fresh(), "", "", results ?? null),
+  build: buildPerson,
+  buildCanonical: buildCanonicalPerson,
+  patch: patchPerson,
+  produce: producePerson,
+};
+export const BirthDate = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateBirthDate(v, fresh(), "", "", results ?? null),
+  as: asBirthDate,
+  asTemporal: birthDateAsTemporal,
+};
+export const FamilyName = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateFamilyName(v, fresh(), "", "", results ?? null),
+};
+export const GivenName = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateGivenName(v, fresh(), "", "", results ?? null),
+};
+export const Height = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateHeight(v, fresh(), "", "", results ?? null),
+};
+export const OtherNames = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateOtherNames(v, fresh(), "", "", results ?? null),
+};
+
+export default Person;

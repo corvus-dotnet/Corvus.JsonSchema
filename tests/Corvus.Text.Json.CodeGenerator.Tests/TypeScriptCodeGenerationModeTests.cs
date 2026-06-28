@@ -39,9 +39,10 @@ public class TypeScriptCodeGenerationModeTests
         StringAssert.Contains(content, "export interface ", "TypeGeneration must emit the object interface.");
         StringAssert.Contains(content, "export type ", "TypeGeneration must emit the inline enum's type alias.");
 
-        // ...plus the validators + the entry point (the engine always emits these).
-        StringAssert.Contains(content, "export function evaluate");
-        StringAssert.Contains(content, "export const evaluateRoot");
+        // ...plus the (module-internal) validators, the companion objects, and the default-export entry point.
+        StringAssert.Contains(content, "function evaluate");
+        StringAssert.Contains(content, "export const ");
+        StringAssert.Contains(content, "export default ");
     }
 
     [TestMethod]
@@ -49,9 +50,9 @@ public class TypeScriptCodeGenerationModeTests
     {
         string content = await GenerateTypeScript(WidgetSchema, emitTypeSurface: false);
 
-        // SchemaEvaluationOnly keeps every validator and the entry point...
-        StringAssert.Contains(content, "export function evaluate");
-        StringAssert.Contains(content, "export const evaluateRoot");
+        // SchemaEvaluationOnly keeps every (module-internal) validator, the companions, and the entry point...
+        StringAssert.Contains(content, "function evaluate");
+        StringAssert.Contains(content, "export default ");
 
         // ...but suppresses the type surface entirely (no interface, no enum/union/brand/map alias). The import
         // line carries `type Draft` etc., but that is `import { ... }`, never an `export interface`/`export type`.

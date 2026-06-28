@@ -4,7 +4,7 @@
 //   - multi-dimensional tensor `readonly (readonly number[])[]`
 //   - pure map `Readonly<Record<string, T>>`
 // Codegen (arrays.json -> out-arrays/), transpile, and run are all driven by ../run-access.sh.
-import { evaluateRoot, type Container, type Scores } from "./out-arrays/generated.js";
+import Root_outarraysgeneratedjs, { Container, Scores } from "./out-arrays/generated.js";
 
 let pass = 0;
 let fail = 0;
@@ -20,7 +20,7 @@ const raw: unknown = {
   matrix: [[1, 2], [3, 4]],
   scores: { math: 90, cs: 100 },
 };
-if (!evaluateRoot(raw)) { throw new Error("expected the container instance to be valid"); }
+if (!Root_outarraysgeneratedjs.evaluate(raw)) { throw new Error("expected the container instance to be valid"); }
 const c = raw as Container;
 
 // plain homogeneous array

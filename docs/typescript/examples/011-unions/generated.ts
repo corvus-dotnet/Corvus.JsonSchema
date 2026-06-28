@@ -2,15 +2,15 @@
 import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
 
 export type Shape = Circle | Rectangle;
-export function isCircle(value: unknown): value is Circle { return evaluateCircle(value, fresh()); }
-export function isRectangle(value: unknown): value is Rectangle { return evaluateRectangle(value, fresh()); }
-export function matchShape<R>(value: Shape, cases: { circle: (v: Circle) => R; rectangle: (v: Rectangle) => R }): R {
+function isCircle(value: unknown): value is Circle { return evaluateCircle(value, fresh()); }
+function isRectangle(value: unknown): value is Rectangle { return evaluateRectangle(value, fresh()); }
+function matchShape<R>(value: Shape, cases: { circle: (v: Circle) => R; rectangle: (v: Rectangle) => R }): R {
   if (isCircle(value)) { return cases.circle(value); }
   if (isRectangle(value)) { return cases.rectangle(value); }
   throw new Error("no Shape branch matched");
 }
 
-export function evaluateShape(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateShape(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   { let c = 0; const acc = fresh(); const subs: Results[] | null = r === null ? null : [];
     { const t = fresh(); const rb = r === null ? null : new Results(r.verbose); if (evaluateCircle(value, t, il, (rb === null ? kl : kl + "/oneOf/0"), rb)) { c++; acc.mergeProps(t); acc.mergeItems(t); } else if (rb !== null && subs !== null) { subs.push(rb); } }
@@ -30,7 +30,7 @@ export interface Circle {
   readonly radius: number;
 }
 
-export function patchCircle(source: Uint8Array, changes: Partial<Circle>): Uint8Array {
+function patchCircle(source: Uint8Array, changes: Partial<Circle>): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["kind"] !== undefined) { targets.push({ name: enc.encode("kind"), content: enc.encode(JSON.stringify(changes["kind"])), vbs: -1, vbe: -1 }); }
@@ -38,19 +38,19 @@ export function patchCircle(source: Uint8Array, changes: Partial<Circle>): Uint8
   return rmwUpsert(source, targets);
 }
 
-export function buildCircle(props: Circle): Uint8Array {
+function buildCircle(props: Circle): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalCircle(props: Circle): Uint8Array {
+function buildCanonicalCircle(props: Circle): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceCircle(source: Uint8Array, recipe: (draft: Draft<Circle>) => void): Uint8Array {
+function produceCircle(source: Uint8Array, recipe: (draft: Draft<Circle>) => void): Uint8Array {
   return produce<Circle>(source, recipe);
 }
 
-export function evaluateCircle(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateCircle(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/0/type"); ok = false; }
   if (__isObj(value)) {
@@ -70,13 +70,13 @@ export function evaluateCircle(value: unknown, ev: Ev, il: string = "", kl: stri
   return ok;
 }
 
-export function evaluateKind(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateKind(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   { const allowed: readonly unknown[] = ["circle"]; if (!allowed.some((a) => __eq(value, a))) { if (r === null) return false; r.fail(kl + "/const", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/0/properties/kind/const"); ok = false; } }
   return ok;
 }
 
-export function evaluateRadius(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateRadius(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/0/properties/radius/type"); ok = false; }
   return ok;
@@ -91,7 +91,7 @@ export interface Rectangle {
   readonly width: number;
 }
 
-export function patchRectangle(source: Uint8Array, changes: Partial<Rectangle>): Uint8Array {
+function patchRectangle(source: Uint8Array, changes: Partial<Rectangle>): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["height"] !== undefined) { targets.push({ name: enc.encode("height"), content: enc.encode(JSON.stringify(changes["height"])), vbs: -1, vbe: -1 }); }
@@ -100,19 +100,19 @@ export function patchRectangle(source: Uint8Array, changes: Partial<Rectangle>):
   return rmwUpsert(source, targets);
 }
 
-export function buildRectangle(props: Rectangle): Uint8Array {
+function buildRectangle(props: Rectangle): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalRectangle(props: Rectangle): Uint8Array {
+function buildCanonicalRectangle(props: Rectangle): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceRectangle(source: Uint8Array, recipe: (draft: Draft<Rectangle>) => void): Uint8Array {
+function produceRectangle(source: Uint8Array, recipe: (draft: Draft<Rectangle>) => void): Uint8Array {
   return produce<Rectangle>(source, recipe);
 }
 
-export function evaluateRectangle(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateRectangle(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/1/type"); ok = false; }
   if (__isObj(value)) {
@@ -134,24 +134,59 @@ export function evaluateRectangle(value: unknown, ev: Ev, il: string = "", kl: s
   return ok;
 }
 
-export function evaluateHeight(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateHeight(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/1/properties/height/type"); ok = false; }
   return ok;
 }
 
-export function evaluateKind2(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateKind2(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   { const allowed: readonly unknown[] = ["rectangle"]; if (!allowed.some((a) => __eq(value, a))) { if (r === null) return false; r.fail(kl + "/const", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/1/properties/kind/const"); ok = false; } }
   return ok;
 }
 
-export function evaluateWidth(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateWidth(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/011-unions/shape.json#/oneOf/1/properties/width/type"); ok = false; }
   return ok;
 }
 
 
-export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateShape(v, fresh(), "", "", results ?? null);
-export default evaluateRoot;
+export const Shape = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateShape(v, fresh(), "", "", results ?? null),
+  match: matchShape,
+};
+export const Circle = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateCircle(v, fresh(), "", "", results ?? null),
+  build: buildCircle,
+  buildCanonical: buildCanonicalCircle,
+  patch: patchCircle,
+  produce: produceCircle,
+  is: isCircle,
+};
+export const Kind = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateKind(v, fresh(), "", "", results ?? null),
+};
+export const Radius = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateRadius(v, fresh(), "", "", results ?? null),
+};
+export const Rectangle = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateRectangle(v, fresh(), "", "", results ?? null),
+  build: buildRectangle,
+  buildCanonical: buildCanonicalRectangle,
+  patch: patchRectangle,
+  produce: produceRectangle,
+  is: isRectangle,
+};
+export const Height = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateHeight(v, fresh(), "", "", results ?? null),
+};
+export const Kind2 = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateKind2(v, fresh(), "", "", results ?? null),
+};
+export const Width = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateWidth(v, fresh(), "", "", results ?? null),
+};
+
+export default Shape;

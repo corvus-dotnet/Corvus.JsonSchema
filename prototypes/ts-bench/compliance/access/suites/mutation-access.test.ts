@@ -4,7 +4,7 @@
 // Run after generating mutation.json into out-mutation/:
 //   Codegen (mutation.json -> out-mutation/), transpile, and run are all driven by ../run-access.sh.
 import { produce, recordChanges } from "./out-mutation/corvus-runtime.js";
-import { type Doc } from "./out-mutation/generated.js";
+import { Doc } from "./out-mutation/generated.js";
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();

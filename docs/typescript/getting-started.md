@@ -21,8 +21,8 @@ This writes two files into `./out`:
 |--------|--------|
 | `--tsRuntimeModule @endjin/corvus-json-runtime` | import the runtime from the installed npm package instead of re-emitting `corvus-runtime.ts` alongside the module(s) |
 | `--tsModulePerType` | emit one module per type plus a barrel `index.ts` (tree-shaking, IDE navigation) instead of a single `generated.ts` |
-| `--codeGenerationMode SchemaEvaluationOnly` | emit only the validators (`evaluate{Type}` + `evaluateRoot`), no type surface |
-| `--assertFormat false` | leave `format` as an annotation — recorded, never enforced by `evaluateRoot` |
+| `--codeGenerationMode SchemaEvaluationOnly` | emit only the validators (each companion's `evaluate`), no type surface |
+| `--assertFormat false` | leave `format` as an annotation — recorded, never enforced at `evaluate` |
 
 ## Runtime dependencies
 
@@ -50,32 +50,40 @@ export interface Person {
   readonly height?: number;
 }
 
-export function evaluatePerson(value: unknown, ev: Ev): boolean { /* … */ }   // per-type evaluator
-export function buildPerson(props: Person): Uint8Array { /* … */ }            // construct
-export function patchPerson(source: Uint8Array, changes: Partial<Person>, removals?: …): Uint8Array { /* … */ }
-export function producePerson(source: Uint8Array, recipe: (draft: Draft<Person>) => void): Uint8Array { /* … */ }
-export function asBirthDate(value: string): BirthDate { /* … */ }             // branded-format factory
+function evaluatePerson(value: unknown, ev: Ev): boolean { /* … */ }          // per-type validator (internal)
+function buildPerson(props: Person): Uint8Array { /* … */ }                   // construct
+function patchPerson(source: Uint8Array, changes: Partial<Person>, removals?: …): Uint8Array { /* … */ }
+function producePerson(source: Uint8Array, recipe: (draft: Draft<Person>) => void): Uint8Array { /* … */ }
+function asBirthDate(value: string): BirthDate { /* … */ }                    // branded-format factory
 
-export const evaluateRoot = (v: unknown): boolean => evaluatePerson(v, fresh());
-export default evaluateRoot;
+// Each type's operations are grouped on an `export const {Type}` COMPANION object — the public surface —
+// declaration-merged with the interface so `Person` is both the type and the value namespace.
+export const Person = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluatePerson(v, fresh(), "", "", results ?? null),
+  build: buildPerson, buildCanonical: buildCanonicalPerson, patch: patchPerson, produce: producePerson,
+};
+export const BirthDate = { evaluate: /* … */, as: asBirthDate, asTemporal: birthDateAsTemporal };
+export default Person;   // the root type's companion is the module default export
 ```
 
 The pieces:
 
-- An **`interface`** per object type (the `readonly` shape).
-- **`evaluateRoot`** — the document entry point (and the module's `default` export): a boolean evaluator that seeds a fresh evaluation tracker. Per-type `evaluate{Type}` functions take the tracker explicitly and compose.
-- **`build` / `patch` / `produce`** — construct and mutate over canonical UTF-8 JSON bytes (`Uint8Array`).
-- **`as{Format}`** factories for branded format types.
+- An **`interface`** per object type (the `readonly` shape), declaration-merged with…
+- a **companion** `export const {Type}` per type — the public surface, grouping that type's operations:
+  - **`{Type}.evaluate(value, results?)`** — a boolean evaluator (seeds a fresh tracker, optional results collector); every type has one, mirroring .NET's `EvaluateSchema()`. The root type's companion is the module's `default` export.
+  - **`{Type}.build` / `.buildCanonical` / `.patch` / `.produce`** — construct and mutate over canonical UTF-8 JSON bytes (`Uint8Array`).
+  - **`{Type}.as`** (+ `.asTemporal` / `.asExact`) — branded-format factories.
+  - **`{Union}.match`** — exhaustive dispatch over a discriminated union.
 
 ## A minimal end-to-end
 
 ```typescript
-import { type Person, evaluateRoot, buildPerson, asBirthDate } from "./out/generated.js";
+import { Person, BirthDate } from "./out/generated.js";   // `Person` is both the type and the companion
 
-const bytes = buildPerson({ familyName: "Brontë", givenName: "Anne", birthDate: asBirthDate("1820-01-17") });
+const bytes = Person.build({ familyName: "Brontë", givenName: "Anne", birthDate: BirthDate.as("1820-01-17") });
 const value: unknown = JSON.parse(new TextDecoder().decode(bytes));
 
-if (evaluateRoot(value)) {
+if (Person.evaluate(value)) {
   const person = value as Person; // sound after evaluation
   console.log(person.familyName);
 }

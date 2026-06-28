@@ -1,7 +1,7 @@
 // PROVIDER REAL-OUTPUT test for the immer-style draft (design §5.7): produce<T>(source, recipe) records
 // mutations on a typed Draft<T> and lowers the change-set to a Model C byte patch at arbitrary depth.
 //   Codegen (profile.json -> out-profile/), transpile, and run are all driven by ../run-access.sh.
-import { produceProfile } from "./out-profile/generated.js";
+import { Profile } from "./out-profile/generated.js";
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -12,7 +12,7 @@ const base = JSON.stringify({ id: "u1", name: "Ada", email: "ada@x.com", age: 30
 
 // recipe over the typed Draft<Profile>: scalar + nested + array element, in one produce
 {
-  const out = dec.decode(produceProfile(enc.encode(base), (d) => {
+  const out = dec.decode(Profile.produce(enc.encode(base), (d) => {
     d.name = "Ada Lovelace";   // top-level scalar
     d.age = 36;                // top-level scalar
     d.address!.city = "Paris"; // NESTED scalar (address is optional in Profile -> assert present)
@@ -24,7 +24,7 @@ const base = JSON.stringify({ id: "u1", name: "Ada", email: "ada@x.com", age: 30
 }
 // add a member + delete an optional one
 {
-  const out = dec.decode(produceProfile(enc.encode(base), (d) => {
+  const out = dec.decode(Profile.produce(enc.encode(base), (d) => {
     (d as { extra?: string }).extra = "new"; // add
     delete d.email;                          // remove (email is optional)
   }));
@@ -33,7 +33,7 @@ const base = JSON.stringify({ id: "u1", name: "Ada", email: "ada@x.com", age: 30
 }
 // array STRUCTURAL mutation: push grows the array (length change -> that one array re-serialised, siblings preserved)
 {
-  const out = dec.decode(produceProfile(enc.encode(base), (d) => {
+  const out = dec.decode(Profile.produce(enc.encode(base), (d) => {
     d.roles!.push("owner");       // ["admin","author"] -> ["admin","author","owner"]
   }));
   const p = JSON.parse(out);
@@ -42,7 +42,7 @@ const base = JSON.stringify({ id: "u1", name: "Ada", email: "ada@x.com", age: 30
 }
 // array splice (remove + insert in one call) + a same-pass scalar edit
 {
-  const out = dec.decode(produceProfile(enc.encode(base), (d) => {
+  const out = dec.decode(Profile.produce(enc.encode(base), (d) => {
     d.roles!.splice(0, 1, "owner");  // remove "admin", insert "owner" -> ["owner","author"]
     d.age = 41;
   }));
@@ -51,12 +51,12 @@ const base = JSON.stringify({ id: "u1", name: "Ada", email: "ada@x.com", age: 30
 }
 // pop shrinks the array
 {
-  const out = dec.decode(produceProfile(enc.encode(base), (d) => { d.roles!.pop(); }));
+  const out = dec.decode(Profile.produce(enc.encode(base), (d) => { d.roles!.pop(); }));
   ok("draft array pop", JSON.stringify(JSON.parse(out).roles) === JSON.stringify(["admin"]));
 }
 // no-op recipe returns the source byte-identical
 {
-  ok("draft no-op byte-identical", dec.decode(produceProfile(enc.encode(base), () => { /* nothing */ })) === base);
+  ok("draft no-op byte-identical", dec.decode(Profile.produce(enc.encode(base), () => { /* nothing */ })) === base);
 }
 
 console.log(`produce-access: ${pass} passed, ${fail} failed`);

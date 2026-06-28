@@ -9,7 +9,7 @@ export interface Payment {
   readonly method: Method2;
 }
 
-export function patchPayment(source: Uint8Array, changes: Partial<Payment>, removals?: ReadonlyArray<"cardNumber">): Uint8Array {
+function patchPayment(source: Uint8Array, changes: Partial<Payment>, removals?: ReadonlyArray<"cardNumber">): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["cardNumber"] !== undefined) { targets.push({ name: enc.encode("cardNumber"), content: enc.encode(JSON.stringify(changes["cardNumber"])), vbs: -1, vbe: -1 }); }
@@ -22,19 +22,19 @@ export function patchPayment(source: Uint8Array, changes: Partial<Payment>, remo
   return rmwUpsert(source, targets);
 }
 
-export function buildPayment(props: Payment): Uint8Array {
+function buildPayment(props: Payment): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalPayment(props: Payment): Uint8Array {
+function buildCanonicalPayment(props: Payment): Uint8Array {
   return canonicalize(props);
 }
 
-export function producePayment(source: Uint8Array, recipe: (draft: Draft<Payment>) => void): Uint8Array {
+function producePayment(source: Uint8Array, recipe: (draft: Draft<Payment>) => void): Uint8Array {
   return produce<Payment>(source, recipe);
 }
 
-export function evaluatePayment(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluatePayment(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/017-conditional/payment.json#/type"); ok = false; }
   { const t = fresh();
@@ -60,7 +60,7 @@ export function evaluatePayment(value: unknown, ev: Ev, il: string = "", kl: str
   return ok;
 }
 
-export function evaluateIf(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateIf(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (__isObj(value)) {
     const o = value as Record<string, unknown>;
@@ -73,13 +73,13 @@ export function evaluateIf(value: unknown, ev: Ev, il: string = "", kl: string =
   return ok;
 }
 
-export function evaluateMethod(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateMethod(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   { const allowed: readonly unknown[] = ["card"]; if (!allowed.some((a) => __eq(value, a))) { if (r === null) return false; r.fail(kl + "/const", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/017-conditional/payment.json#/if/properties/method/const"); ok = false; } }
   return ok;
 }
 
-export function evaluateCardNumber(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateCardNumber(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/017-conditional/payment.json#/properties/cardNumber/type"); ok = false; }
   return ok;
@@ -87,13 +87,13 @@ export function evaluateCardNumber(value: unknown, ev: Ev, il: string = "", kl: 
 
 export type Method2 = "card" | "cash";
 
-export function evaluateMethod2(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateMethod2(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   { const allowed: readonly unknown[] = ["card", "cash"]; if (!allowed.some((a) => __eq(value, a))) { if (r === null) return false; r.fail(kl + "/enum", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/017-conditional/payment.json#/properties/method/enum"); ok = false; } }
   return ok;
 }
 
-export function evaluateThen(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateThen(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (__isObj(value)) {
     if (!Object.prototype.hasOwnProperty.call(value, "cardNumber")) { if (r === null) return false; r.fail(kl + "/required", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/017-conditional/payment.json#/then/required"); ok = false; }
@@ -102,5 +102,21 @@ export function evaluateThen(value: unknown, ev: Ev, il: string = "", kl: string
 }
 
 
-export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluatePayment(v, fresh(), "", "", results ?? null);
-export default evaluateRoot;
+export const Payment = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluatePayment(v, fresh(), "", "", results ?? null),
+  build: buildPayment,
+  buildCanonical: buildCanonicalPayment,
+  patch: patchPayment,
+  produce: producePayment,
+};
+export const Method = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateMethod(v, fresh(), "", "", results ?? null),
+};
+export const CardNumber = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateCardNumber(v, fresh(), "", "", results ?? null),
+};
+export const Method2 = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateMethod2(v, fresh(), "", "", results ?? null),
+};
+
+export default Payment;

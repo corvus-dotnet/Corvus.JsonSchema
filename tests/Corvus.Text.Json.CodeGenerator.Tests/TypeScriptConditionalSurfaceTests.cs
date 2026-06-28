@@ -39,9 +39,11 @@ public class TypeScriptConditionalSurfaceTests
         int interfaceCount = content.Split("export interface ").Length - 1;
         Assert.AreEqual(1, interfaceCount, "Only the parent Cond interface should be emitted; conditionals must be validator-only.\n" + content);
 
-        // The conditional logic is still validated — the parent validator and the entry point are present.
-        StringAssert.Contains(content, "export function evaluateCond");
-        StringAssert.Contains(content, "export const evaluateRoot");
+        // The conditional logic is still validated — the (module-internal) parent validator, the parent's
+        // companion object, and the default-export entry point are present.
+        StringAssert.Contains(content, "function evaluateCond");
+        StringAssert.Contains(content, "export const Cond");
+        StringAssert.Contains(content, "export default Cond");
     }
 
     // Build the schema's type declarations and emit TypeScript (single-file, default options), returning the

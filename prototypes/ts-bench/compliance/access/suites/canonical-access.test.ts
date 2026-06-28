@@ -5,7 +5,7 @@
 // For content-addressing / hashing / signatures / cache keys / golden-file determinism.
 // Run after generating canonical.json into out-canonical/:
 //   Codegen (canonical.json -> out-canonical/), transpile, and run are all driven by ../run-access.sh.
-import { buildDoc, buildCanonicalDoc, type Doc } from "./out-canonical/generated.js";
+import { Doc } from "./out-canonical/generated.js";
 
 const dec = new TextDecoder();
 let pass = 0;
@@ -18,14 +18,14 @@ function eq(label: string, got: string, want: string): void {
 const doc: Doc = { zeta: "z", alpha: 1, nested: { y: "Y", x: "X" } };
 
 // build = the native floor: caller key order preserved verbatim (one JSON.stringify).
-eq("build preserves caller key order", dec.decode(buildDoc(doc)), '{"zeta":"z","alpha":1,"nested":{"y":"Y","x":"X"}}');
+eq("build preserves caller key order", dec.decode(Doc.build(doc)), '{"zeta":"z","alpha":1,"nested":{"y":"Y","x":"X"}}');
 
 // buildCanonical = RFC 8785: object keys recursively sorted by UTF-16 code unit (top-level AND nested).
-eq("buildCanonical sorts keys recursively", dec.decode(buildCanonicalDoc(doc)), '{"alpha":1,"nested":{"x":"X","y":"Y"},"zeta":"z"}');
+eq("buildCanonical sorts keys recursively", dec.decode(Doc.buildCanonical(doc)), '{"alpha":1,"nested":{"x":"X","y":"Y"},"zeta":"z"}');
 
 // Content-addressing: a differently-ordered but value-equal Doc canonicalises to byte-identical output.
 const reordered: Doc = { nested: { x: "X", y: "Y" }, alpha: 1, zeta: "z" };
-eq("buildCanonical is order-independent", dec.decode(buildCanonicalDoc(doc)), dec.decode(buildCanonicalDoc(reordered)));
+eq("buildCanonical is order-independent", dec.decode(Doc.buildCanonical(doc)), dec.decode(Doc.buildCanonical(reordered)));
 
 console.log(`canonical-access: ${pass} passed, ${fail} failed`);
 if (fail > 0) { throw new Error(`canonical-access: ${fail} failed`); }

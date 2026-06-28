@@ -4,7 +4,7 @@
 // validate-test.mjs + the suite; this proves the emitted *interface* gives correct typed access.)
 //
 // Codegen (person.json -> out/), transpile, and run are all driven by ../run-access.sh.
-import { evaluateRoot, type Person, type Status } from "./out/generated.js";
+import Root_outgeneratedjs, { Person, Status } from "./out/generated.js";
 
 let pass = 0;
 let fail = 0;
@@ -14,7 +14,7 @@ function eq<T>(label: string, got: T, want: T): void {
 }
 
 const raw: unknown = { name: "Ada", age: 30, status: "active", price: 1.5, contact: "a@b.com", address: { postcode: "12345", street: "Main" } };
-if (!evaluateRoot(raw)) { throw new Error("expected the full instance to be valid"); }
+if (!Root_outgeneratedjs.evaluate(raw)) { throw new Error("expected the full instance to be valid"); }
 const p = raw as Person; // post-validation: consume as the generated interface
 
 // object access: required, optional, nested-required, nested-optional
@@ -29,7 +29,7 @@ eq("enum literal access (status)", st, "active");
 
 // optional-absent: the `?:` mapping means absent reads as undefined
 const min: unknown = { name: "A", address: { postcode: "00000" } };
-if (!evaluateRoot(min)) { throw new Error("expected the minimal instance to be valid"); }
+if (!Root_outgeneratedjs.evaluate(min)) { throw new Error("expected the minimal instance to be valid"); }
 const m = min as Person;
 eq("optional absent (age)", m.age, undefined);
 eq("optional absent (status)", m.status, undefined);

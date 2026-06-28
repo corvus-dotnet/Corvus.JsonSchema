@@ -10,7 +10,7 @@ export interface Order {
   readonly shipTo: Address;
 }
 
-export function patchOrder(source: Uint8Array, changes: Partial<Order>, removals?: ReadonlyArray<"billTo">): Uint8Array {
+function patchOrder(source: Uint8Array, changes: Partial<Order>, removals?: ReadonlyArray<"billTo">): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["billTo"] !== undefined) { targets.push({ name: enc.encode("billTo"), content: enc.encode(JSON.stringify(changes["billTo"])), vbs: -1, vbe: -1 }); }
@@ -24,19 +24,19 @@ export function patchOrder(source: Uint8Array, changes: Partial<Order>, removals
   return rmwUpsert(source, targets);
 }
 
-export function buildOrder(props: Order): Uint8Array {
+function buildOrder(props: Order): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalOrder(props: Order): Uint8Array {
+function buildCanonicalOrder(props: Order): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceOrder(source: Uint8Array, recipe: (draft: Draft<Order>) => void): Uint8Array {
+function produceOrder(source: Uint8Array, recipe: (draft: Draft<Order>) => void): Uint8Array {
   return produce<Order>(source, recipe);
 }
 
-export function evaluateOrder(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateOrder(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/type"); ok = false; }
   if (__isObj(value)) {
@@ -66,7 +66,7 @@ export interface Address {
   readonly postcode: string;
 }
 
-export function patchAddress(source: Uint8Array, changes: Partial<Address>): Uint8Array {
+function patchAddress(source: Uint8Array, changes: Partial<Address>): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["city"] !== undefined) { targets.push({ name: enc.encode("city"), content: enc.encode(JSON.stringify(changes["city"])), vbs: -1, vbe: -1 }); }
@@ -75,19 +75,19 @@ export function patchAddress(source: Uint8Array, changes: Partial<Address>): Uin
   return rmwUpsert(source, targets);
 }
 
-export function buildAddress(props: Address): Uint8Array {
+function buildAddress(props: Address): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalAddress(props: Address): Uint8Array {
+function buildCanonicalAddress(props: Address): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceAddress(source: Uint8Array, recipe: (draft: Draft<Address>) => void): Uint8Array {
+function produceAddress(source: Uint8Array, recipe: (draft: Draft<Address>) => void): Uint8Array {
   return produce<Address>(source, recipe);
 }
 
-export function evaluateAddress(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateAddress(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/$defs/address/type"); ok = false; }
   if (__isObj(value)) {
@@ -109,30 +109,56 @@ export function evaluateAddress(value: unknown, ev: Ev, il: string = "", kl: str
   return ok;
 }
 
-export function evaluateCity(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateCity(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/$defs/address/properties/city/type"); ok = false; }
   return ok;
 }
 
-export function evaluateLine1(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateLine1(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/$defs/address/properties/line1/type"); ok = false; }
   return ok;
 }
 
-export function evaluatePostcode(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluatePostcode(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/$defs/address/properties/postcode/type"); ok = false; }
   return ok;
 }
 
-export function evaluateId(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateId(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/003-references/order.json#/properties/id/type"); ok = false; }
   return ok;
 }
 
 
-export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateOrder(v, fresh(), "", "", results ?? null);
-export default evaluateRoot;
+export const Order = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateOrder(v, fresh(), "", "", results ?? null),
+  build: buildOrder,
+  buildCanonical: buildCanonicalOrder,
+  patch: patchOrder,
+  produce: produceOrder,
+};
+export const Address = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateAddress(v, fresh(), "", "", results ?? null),
+  build: buildAddress,
+  buildCanonical: buildCanonicalAddress,
+  patch: patchAddress,
+  produce: produceAddress,
+};
+export const City = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateCity(v, fresh(), "", "", results ?? null),
+};
+export const Line1 = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateLine1(v, fresh(), "", "", results ?? null),
+};
+export const Postcode = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluatePostcode(v, fresh(), "", "", results ?? null),
+};
+export const Id = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateId(v, fresh(), "", "", results ?? null),
+};
+
+export default Order;

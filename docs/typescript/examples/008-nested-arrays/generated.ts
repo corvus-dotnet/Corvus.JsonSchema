@@ -8,7 +8,7 @@ export interface Grid {
   readonly cells: readonly (readonly number[])[];
 }
 
-export function patchGrid(source: Uint8Array, changes: Partial<Grid>, arrays?: GridArrayOps): Uint8Array {
+function patchGrid(source: Uint8Array, changes: Partial<Grid>, arrays?: GridArrayOps): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["cells"] !== undefined) { targets.push({ name: enc.encode("cells"), content: enc.encode(JSON.stringify(changes["cells"])), vbs: -1, vbe: -1 }); }
@@ -25,19 +25,19 @@ export interface GridArrayOps {
   readonly cells?: ListOps<readonly number[]>;
 }
 
-export function buildGrid(props: Grid): Uint8Array {
+function buildGrid(props: Grid): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalGrid(props: Grid): Uint8Array {
+function buildCanonicalGrid(props: Grid): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceGrid(source: Uint8Array, recipe: (draft: Draft<Grid>) => void): Uint8Array {
+function produceGrid(source: Uint8Array, recipe: (draft: Draft<Grid>) => void): Uint8Array {
   return produce<Grid>(source, recipe);
 }
 
-export function evaluateGrid(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateGrid(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/008-nested-arrays/grid.json#/type"); ok = false; }
   if (__isObj(value)) {
@@ -55,26 +55,42 @@ export function evaluateGrid(value: unknown, ev: Ev, il: string = "", kl: string
   return ok;
 }
 
-export function evaluateCells(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateCells(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/008-nested-arrays/grid.json#/properties/cells/type"); ok = false; }
   if (Array.isArray(value)) { for (let i = 0; i < value.length; i++) { if (!evaluateItems(value[i], NOEV, (r === null ? il : il + "/" + i), (r === null ? kl : kl + "/items"), r)) { if (r === null) return false; ok = false; } ev.markItem(i); } }
   return ok;
 }
 
-export function evaluateItems(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateItems(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/008-nested-arrays/grid.json#/properties/cells/items/type"); ok = false; }
   if (Array.isArray(value)) { for (let i = 0; i < value.length; i++) { if (!evaluateItems2(value[i], NOEV, (r === null ? il : il + "/" + i), (r === null ? kl : kl + "/items"), r)) { if (r === null) return false; ok = false; } ev.markItem(i); } }
   return ok;
 }
 
-export function evaluateItems2(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateItems2(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/008-nested-arrays/grid.json#/properties/cells/items/items/type"); ok = false; }
   return ok;
 }
 
 
-export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateGrid(v, fresh(), "", "", results ?? null);
-export default evaluateRoot;
+export const Grid = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateGrid(v, fresh(), "", "", results ?? null),
+  build: buildGrid,
+  buildCanonical: buildCanonicalGrid,
+  patch: patchGrid,
+  produce: produceGrid,
+};
+export const Cells = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateCells(v, fresh(), "", "", results ?? null),
+};
+export const Items = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateItems(v, fresh(), "", "", results ?? null),
+};
+export const Items2 = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateItems2(v, fresh(), "", "", results ?? null),
+};
+
+export default Grid;

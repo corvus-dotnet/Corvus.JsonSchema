@@ -1,6 +1,6 @@
 // Tuple/list array-ops test for the reshaped patch `arrays` surface (strongly typed per element).
 //   Codegen (shapes.json -> out-shapes/), transpile, and run are all driven by ../run-access.sh.
-import { patchShapes } from "./out-shapes/generated.js";
+import { Shapes } from "./out-shapes/generated.js";
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -10,31 +10,31 @@ function ok(label: string, cond: boolean): void { if (cond) { pass++; } else { f
 // list T[] -- object-keyed set + append + removeAt (indices against original positions)
 {
   const src = JSON.stringify({ id: "x", tags: ["a", "b", "c"] });
-  const p = JSON.parse(dec.decode(patchShapes(enc.encode(src), {}, undefined, { tags: { set: { 1: "B" }, append: ["d"], removeAt: [0] } })));
+  const p = JSON.parse(dec.decode(Shapes.patch(enc.encode(src), {}, undefined, { tags: { set: { 1: "B" }, append: ["d"], removeAt: [0] } })));
   ok("list set/append/removeAt", JSON.stringify(p.tags) === JSON.stringify(["B", "c", "d"]));
 }
 // list -- insert (object-keyed: insert elements before index)
 {
   const src = JSON.stringify({ id: "x", tags: ["a", "b"] });
-  const p = JSON.parse(dec.decode(patchShapes(enc.encode(src), {}, undefined, { tags: { insert: { 1: ["X", "Y"] } } })));
+  const p = JSON.parse(dec.decode(Shapes.patch(enc.encode(src), {}, undefined, { tags: { insert: { 1: ["X", "Y"] } } })));
   ok("list insert", JSON.stringify(p.tags) === JSON.stringify(["a", "X", "Y", "b"]));
 }
 // pure tuple [number, number] -- positional set, value typed per position; no append/insert/remove
 {
   const src = JSON.stringify({ id: "x", coord: [1.5, 2.5] });
-  const p = JSON.parse(dec.decode(patchShapes(enc.encode(src), {}, undefined, { coord: { set: { 0: 9.9 } } })));
+  const p = JSON.parse(dec.decode(Shapes.patch(enc.encode(src), {}, undefined, { coord: { set: { 0: 9.9 } } })));
   ok("tuple set position 0", JSON.stringify(p.coord) === JSON.stringify([9.9, 2.5]));
 }
 // prefix tuple [string, ...number[]] -- set the typed prefix + edit the rest (rest-relative indices)
 {
   const src = JSON.stringify({ id: "x", header: ["title", 1, 2, 3] });
-  const p = JSON.parse(dec.decode(patchShapes(enc.encode(src), {}, undefined, { header: { set: { 0: "TITLE" }, rest: { append: [4], removeAt: [0] } } })));
+  const p = JSON.parse(dec.decode(Shapes.patch(enc.encode(src), {}, undefined, { header: { set: { 0: "TITLE" }, rest: { append: [4], removeAt: [0] } } })));
   ok("prefix tuple set + rest", JSON.stringify(p.header) === JSON.stringify(["TITLE", 2, 3, 4]));
 }
 // removals = optional keys only -- deleting "tags" (optional) is fine; ["id"] (required) is a COMPILE error
 {
   const src = JSON.stringify({ id: "x", tags: ["a"], coord: [1, 2] });
-  const p = JSON.parse(dec.decode(patchShapes(enc.encode(src), {}, ["tags"])));
+  const p = JSON.parse(dec.decode(Shapes.patch(enc.encode(src), {}, ["tags"])));
   ok("remove optional member", p.tags === undefined && p.id === "x" && JSON.stringify(p.coord) === JSON.stringify([1, 2]));
 }
 

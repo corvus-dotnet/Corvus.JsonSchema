@@ -11,7 +11,7 @@ export interface Registration {
   readonly username: string;
 }
 
-export function patchRegistration(source: Uint8Array, changes: Partial<Registration>, removals?: ReadonlyArray<"score">): Uint8Array {
+function patchRegistration(source: Uint8Array, changes: Partial<Registration>, removals?: ReadonlyArray<"score">): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["age"] !== undefined) { targets.push({ name: enc.encode("age"), content: enc.encode(JSON.stringify(changes["age"])), vbs: -1, vbe: -1 }); }
@@ -26,19 +26,19 @@ export function patchRegistration(source: Uint8Array, changes: Partial<Registrat
   return rmwUpsert(source, targets);
 }
 
-export function buildRegistration(props: Registration): Uint8Array {
+function buildRegistration(props: Registration): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-export function buildCanonicalRegistration(props: Registration): Uint8Array {
+function buildCanonicalRegistration(props: Registration): Uint8Array {
   return canonicalize(props);
 }
 
-export function produceRegistration(source: Uint8Array, recipe: (draft: Draft<Registration>) => void): Uint8Array {
+function produceRegistration(source: Uint8Array, recipe: (draft: Draft<Registration>) => void): Uint8Array {
   return produce<Registration>(source, recipe);
 }
 
-export function evaluateRegistration(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateRegistration(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/002-validation/registration.json#/type"); ok = false; }
   if (__isObj(value)) {
@@ -61,7 +61,7 @@ export function evaluateRegistration(value: unknown, ev: Ev, il: string = "", kl
   return ok;
 }
 
-export function evaluateAge(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateAge(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!((__isNum(value) && __isInt(String(value))))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/002-validation/registration.json#/properties/age/type"); ok = false; }
   if (__isNum(value) && __cmp(String(value), "120") > 0) { if (r === null) return false; r.fail(kl + "/maximum", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/002-validation/registration.json#/properties/age/maximum"); ok = false; }
@@ -70,9 +70,9 @@ export function evaluateAge(value: unknown, ev: Ev, il: string = "", kl: string 
 }
 
 export type Email = Brand<string, "email">;
-export function asEmail(value: string): Email { if (!__fmt("email", value)) { throw new FormatError("email"); } return value as Email; }
+function asEmail(value: string): Email { if (!__fmt("email", value)) { throw new FormatError("email"); } return value as Email; }
 
-export function evaluateEmail(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateEmail(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/002-validation/registration.json#/properties/email/type"); ok = false; }
   if (typeof value === "string" && !__fmt("email", value)) { if (r === null) return false; r.fail(kl + "/format", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/002-validation/registration.json#/properties/email/format"); ok = false; }
@@ -80,7 +80,7 @@ export function evaluateEmail(value: unknown, ev: Ev, il: string = "", kl: strin
   return ok;
 }
 
-export function evaluateScore(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateScore(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isNum(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/002-validation/registration.json#/properties/score/type"); ok = false; }
   if (__isNum(value) && !__multipleOf(String(value), "0.5")) { if (r === null) return false; r.fail(kl + "/multipleOf", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/002-validation/registration.json#/properties/score/multipleOf"); ok = false; }
@@ -88,7 +88,7 @@ export function evaluateScore(value: unknown, ev: Ev, il: string = "", kl: strin
   return ok;
 }
 
-export function evaluateUsername(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateUsername(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/002-validation/registration.json#/properties/username/type"); ok = false; }
   if (typeof value === "string" && [...value].length > 20) { if (r === null) return false; r.fail(kl + "/maxLength", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/002-validation/registration.json#/properties/username/maxLength"); ok = false; }
@@ -98,5 +98,25 @@ export function evaluateUsername(value: unknown, ev: Ev, il: string = "", kl: st
 }
 
 
-export const evaluateRoot = (v: unknown, results?: Results): boolean => evaluateRegistration(v, fresh(), "", "", results ?? null);
-export default evaluateRoot;
+export const Registration = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateRegistration(v, fresh(), "", "", results ?? null),
+  build: buildRegistration,
+  buildCanonical: buildCanonicalRegistration,
+  patch: patchRegistration,
+  produce: produceRegistration,
+};
+export const Age = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateAge(v, fresh(), "", "", results ?? null),
+};
+export const Email = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateEmail(v, fresh(), "", "", results ?? null),
+  as: asEmail,
+};
+export const Score = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateScore(v, fresh(), "", "", results ?? null),
+};
+export const Username = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateUsername(v, fresh(), "", "", results ?? null),
+};
+
+export default Registration;

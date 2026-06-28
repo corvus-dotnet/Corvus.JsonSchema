@@ -16,61 +16,56 @@ Optionality is honest: a required property is `name: T`, an optional one is `nam
 
 ## Evaluating: a boolean by default
 
-`evaluateRoot(value)` evaluates a whole document and returns a `boolean` — `true` if every constraint holds. It is the module's `default` export.
+**Every** type's companion has an `evaluate` — `Person.evaluate(value)` evaluates a value against `Person` and returns a `boolean` (`true` if every constraint holds), mirroring .NET's `EvaluateSchema()`. The **root** type's companion is the module's `default` export, so it's also the document entry point.
 
 ```typescript
-import evaluate from "./generated.js";     // the default export is evaluateRoot
-evaluate(value);                           // true | false
+import Root, { Person } from "./generated.js";  // the default export is the root type's companion
+Person.evaluate(value);                         // true | false
+Root.evaluate(value);                           // same, via the default export
 ```
 
-A rejection is just `false`. There is no thrown exception and no allocated error graph on the common "is this acceptable?" path — that keeps validation cheap on hot request paths. (Producing the *why* — per-keyword failures with instance and keyword locations — is done by passing an optional results collector to the evaluator; the boolean is the zero-overhead shape of the same call.)
+A rejection is just `false`. There is no thrown exception and no allocated error graph on the common "is this acceptable?" path — that keeps validation cheap on hot request paths. (Producing the *why* — per-keyword failures with instance and keyword locations — is done by passing an optional results collector as the second argument; the boolean is the zero-overhead shape of the same call.)
 
-### Why it's called `evaluateRoot`, not `validate`
+### Why it's `.evaluate`, not `.validate`
 
-The function is an *evaluator*: it walks the schema collecting evaluation results (which keywords applied to which locations) — that's what `unevaluatedProperties`/`unevaluatedItems` need, and what a results collector reports. "Validate" would describe only the boolean outcome; "evaluate" describes what it actually does.
+It's an *evaluator*: it walks the schema collecting evaluation results (which keywords applied to which locations) — that's what `unevaluatedProperties`/`unevaluatedItems` need, and what a results collector reports. "Validate" would describe only the boolean outcome; "evaluate" describes what it actually does.
 
-## Per-type evaluators
+## Composition (under the companion)
 
-Every type gets its own `evaluate{Type}(value, ev)`. These take an evaluation tracker (`Ev`) because they **compose**: a parent threads its tracker into its children so that in-place applicators (`allOf`, `if`, `$ref`) and `unevaluated*` see a consistent picture. `evaluateRoot` is just the convenience that seeds a fresh tracker for a whole-document check:
-
-```typescript
-export const evaluateRoot = (v: unknown): boolean => evaluatePerson(v, fresh());
-```
-
-You rarely call `evaluate{Type}` directly — reach for `evaluateRoot` (or the `default`) unless you are composing evaluation yourself.
+Internally every type has an `evaluate{Type}(value, ev, …)` that takes an evaluation tracker (`Ev`) because validators **compose**: a parent threads its tracker into its children so that in-place applicators (`allOf`, `if`, `$ref`) and `unevaluated*` see a consistent picture. `{Type}.evaluate` is the public convenience that seeds a fresh tracker for a whole-value check — you don't see the tracker.
 
 ## Detailed results
 
-`evaluateRoot(value, results?)` takes an optional `Results` collector. Omit it (the default) for the zero-allocation boolean fast path; pass one to gather **why** a value failed — per-keyword failures carrying `instanceLocation` / `keywordLocation` / `absoluteKeywordLocation` (and annotations in verbose mode) — which you can standardise to JSON-Schema basic/detailed output with `toOutput`.
+`{Type}.evaluate(value, results?)` takes an optional `Results` collector. Omit it (the default) for the zero-allocation boolean fast path; pass one to gather **why** a value failed — per-keyword failures carrying `instanceLocation` / `keywordLocation` / `absoluteKeywordLocation` (and annotations in verbose mode) — which you can standardise to JSON-Schema basic/detailed output with `toOutput`.
 
 ## Validators-only output
 
-A generated module carries both the type surface and the validators by default. When you only need validation — a server checking request/response bodies, for instance — generate with `--codeGenerationMode SchemaEvaluationOnly`: the module then emits just the `evaluate{Type}` functions and `evaluateRoot`, with no interfaces, brands, or mutators.
+A generated module carries both the type surface and the validators by default. When you only need validation — a server checking request/response bodies, for instance — generate with `--codeGenerationMode SchemaEvaluationOnly`: each companion then carries just `evaluate`, with no interfaces, brands, or mutators.
 
 ## Narrowing unions
 
 A `oneOf`/`anyOf` generates a union with per-branch type guards and an exhaustive `match*`:
 
 ```typescript
-if (isCircle(shape)) {
+if (Circle.is(shape)) {
   shape.radius;     // narrowed to Circle
 }
 
-const area = matchShape(shape, {
+const area = Shape.match(shape, {
   circle: (c) => Math.PI * c.radius * c.radius,
   rectangle: (r) => r.width * r.height,
 });
 ```
 
-`match*` is exhaustive by construction — adding a branch to the schema makes a missing handler a compile error.
+`{Union}.match` is exhaustive by construction — adding a branch to the schema makes a missing handler a compile error.
 
 ## Trusting evaluated data
 
-After `evaluateRoot(value)` returns `true`, `value as T` is sound: the value matched the schema, so the assertion isn't a lie. A common pattern at a trust boundary (an HTTP body, a queue message) is *evaluate then cast*:
+After `Order.evaluate(value)` returns `true`, `value as T` is sound: the value matched the schema, so the assertion isn't a lie. A common pattern at a trust boundary (an HTTP body, a queue message) is *evaluate then cast*:
 
 ```typescript
 const incoming: unknown = JSON.parse(body);
-if (!evaluateRoot(incoming)) return badRequest();
+if (!Order.evaluate(incoming)) return badRequest();
 const order = incoming as Order;   // sound from here on
 ```
 

@@ -27,18 +27,18 @@ for (const [dialect, dir, mod] of [
   ok(`${dialect}: code typed string (not nullable)`, /:\s*string\b/.test(codeLine) && !/\|\s*null/.test(codeLine));
 
   // 2) VALIDATOR: the nullable property accepts a string AND null, and rejects a wrong-typed value.
-  ok(`${dialect}: label accepts string`, mod.evaluateLabel("hi", null, "", "", null) === true);
-  ok(`${dialect}: label accepts null`, mod.evaluateLabel(null, null, "", "", null) === true);
-  ok(`${dialect}: label rejects number`, mod.evaluateLabel(42, null, "", "", null) === false);
+  ok(`${dialect}: label accepts string`, mod.Label.evaluate("hi") === true);
+  ok(`${dialect}: label accepts null`, mod.Label.evaluate(null) === true);
+  ok(`${dialect}: label rejects number`, mod.Label.evaluate(42) === false);
 
   // 3) VALIDATOR: the non-nullable property rejects null (and still accepts a string).
-  ok(`${dialect}: code accepts string`, mod.evaluateCode("x", null, "", "", null) === true);
-  ok(`${dialect}: code rejects null`, mod.evaluateCode(null, null, "", "", null) === false);
+  ok(`${dialect}: code accepts string`, mod.Code.evaluate("x") === true);
+  ok(`${dialect}: code rejects null`, mod.Code.evaluate(null) === false);
 
   // 4) WHOLE-OBJECT: a null nullable value validates, a null non-nullable value does not.
-  ok(`${dialect}: object with label=null validates`, mod.evaluateRoot({ code: "c", label: null }) === true);
-  ok(`${dialect}: object with label="x" validates`, mod.evaluateRoot({ code: "c", label: "x" }) === true);
-  ok(`${dialect}: object with code=null rejected`, mod.evaluateRoot({ code: null }) === false);
+  ok(`${dialect}: object with label=null validates`, mod.default.evaluate({ code: "c", label: null }) === true);
+  ok(`${dialect}: object with label="x" validates`, mod.default.evaluate({ code: "c", label: "x" }) === true);
+  ok(`${dialect}: object with code=null rejected`, mod.default.evaluate({ code: null }) === false);
 }
 
 console.log(`openapi-access: ${pass} passed, ${fail} failed`);

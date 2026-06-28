@@ -7,7 +7,7 @@ Parsed values are `readonly`, so you never change data in place. Instead the gen
 `build{Type}(props)` serialises a fresh document:
 
 ```typescript
-const bytes = buildPerson({ familyName: "Brontë", givenName: "Anne", birthDate: asBirthDate("1820-01-17") });
+const bytes = Person.build({ familyName: "Brontë", givenName: "Anne", birthDate: BirthDate.as("1820-01-17") });
 ```
 
 It is a single encode of the value you pass — at the floor of what serialisation can cost. `build` preserves the key order of the object you pass.
@@ -17,8 +17,8 @@ It is a single encode of the value you pass — at the floor of what serialisati
 When you need byte-for-byte determinism — content-addressing, hashing/digests, signatures, cache keys, golden-file tests — use `buildCanonical{Type}(props)`. It emits **RFC 8785 (JCS)** canonical JSON: object keys recursively sorted by UTF-16 code unit, ECMAScript number forms, minimal string escaping (the same canonicalisation as the C# `JsonCanonicalizer`).
 
 ```typescript
-const a = buildCanonicalDoc({ zeta: "z", alpha: 1, nested: { y: "Y", x: "X" } });
-const b = buildCanonicalDoc({ nested: { x: "X", y: "Y" }, alpha: 1, zeta: "z" });
+const a = Doc.buildCanonical({ zeta: "z", alpha: 1, nested: { y: "Y", x: "X" } });
+const b = Doc.buildCanonical({ nested: { x: "X", y: "Y" }, alpha: 1, zeta: "z" });
 // a and b are byte-identical: {"alpha":1,"nested":{"x":"X","y":"Y"},"zeta":"z"}
 ```
 
@@ -29,8 +29,8 @@ It is a **separate** method from `build` so the fast path stays at the native fl
 `patch{Type}(source, changes, removals?)` is the leanest update. Name the top-level fields to change, and optionally those to remove:
 
 ```typescript
-patchDocument(bytes, { version: 2 });            // rewrite only "version"
-patchDocument(bytes, {}, ["owner"]);             // remove the optional "owner"
+Document.patch(bytes, { version: 2 });            // rewrite only "version"
+Document.patch(bytes, {}, ["owner"]);             // remove the optional "owner"
 ```
 
 Only the named member spans are rewritten; every other byte of `source` is copied through verbatim. There is no parse of the document and no re-serialisation of the unchanged part — for a large document this is dramatically cheaper than the read-modify-write cycle of parsing to an object, mutating, and stringifying.
@@ -42,7 +42,7 @@ Only the named member spans are rewritten; every other byte of `source` is copie
 `produce{Type}(source, recipe)` gives a typed, mutable `Draft<T>` for nested and array edits:
 
 ```typescript
-const next = produceDocument(bytes, (d) => {
+const next = Document.produce(bytes, (d) => {
   d.title = "Final";
   d.owner!.name = "Ada Lovelace";   // nested
   d.tags!.push("published");        // array append

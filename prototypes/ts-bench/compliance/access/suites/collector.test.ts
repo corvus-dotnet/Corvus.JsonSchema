@@ -1,7 +1,7 @@
 // Results-collector test (§15): detailed mode collects EVERY failure with correct, threaded instance +
 // keyword locations and no early return, while the boolean hot path is unchanged. Regenerate + run:
 //   Codegen (person-collector.json -> out-coll/), transpile, and run are all driven by ../run-access.sh.
-import { evaluatePerson } from "./out-coll/generated.js";
+import { Person } from "./out-coll/generated.js";
 import { Ev, Results, toOutput } from "./out-coll/corvus-runtime.js";
 
 let pass = 0;
@@ -13,7 +13,7 @@ function eq(actual: unknown, expected: unknown, msg: string): void {
 
 function collect(value: unknown): { ok: boolean; r: Results } {
   const r = new Results();
-  const ok = evaluatePerson(value, new Ev(), "", "", r);
+  const ok = Person.evaluate(value, r);
   return { ok, r };
 }
 
@@ -51,7 +51,7 @@ function collect(value: unknown): { ok: boolean; r: Results } {
 // (title/description/default/...), each at its instance location with the path-taken keywordLocation.
 {
   const r = new Results(true);
-  const ok = evaluatePerson({ name: "Ada", address: { zip: "12345" }, age: 5 }, new Ev(), "", "", r);
+  const ok = Person.evaluate({ name: "Ada", address: { zip: "12345" }, age: 5 }, r);
   eq(ok, true, "verbose valid -> ok");
   eq(r.failures.length, 0, "verbose valid -> no failures");
   const find = (kw: string, il: string) => r.annotations.find((a) => a.keyword === kw && a.instanceLocation === il);
@@ -66,7 +66,7 @@ function collect(value: unknown): { ok: boolean; r: Results } {
 // detailed mode (not verbose): annotations are NOT collected.
 {
   const r = new Results();
-  evaluatePerson({ name: "Ada", address: { zip: "12345" }, age: 5 }, new Ev(), "", "", r);
+  Person.evaluate({ name: "Ada", address: { zip: "12345" }, age: 5 }, r);
   eq(r.annotations.length, 0, "detailed mode -> no annotations");
 }
 
@@ -83,7 +83,7 @@ function collect(value: unknown): { ok: boolean; r: Results } {
 }
 {
   const v = new Results(true);
-  evaluatePerson({ name: "Ada", address: { zip: "12345" }, age: 5 }, new Ev(), "", "", v);
+  Person.evaluate({ name: "Ada", address: { zip: "12345" }, age: 5 }, v);
   const out = toOutput(v);
   eq(out.valid, true, "verbose-valid output valid=true");
   eq(out.errors, undefined, "valid output -> no errors key");
@@ -92,7 +92,7 @@ function collect(value: unknown): { ok: boolean; r: Results } {
 
 // boolean hot path (no collector arg): returns false, records nothing.
 {
-  const ok = evaluatePerson({ name: "ab", address: { zip: "xyz" }, tags: ["a"] }, new Ev());
+  const ok = Person.evaluate({ name: "ab", address: { zip: "xyz" }, tags: ["a"] });
   eq(ok, false, "boolean path -> false");
 }
 
@@ -106,7 +106,7 @@ const subFails = (r: Results, prefix: string) =>
 // (string/minLength + integer/type) PLUS the composite /anyOf.
 {
   const r = new Results();
-  const ok = evaluatePerson({ name: "Ada", address: { zip: "12345" }, disj: "ab" }, new Ev(), "", "", r);
+  const ok = Person.evaluate({ name: "Ada", address: { zip: "12345" }, disj: "ab" }, r);
   eq(ok, false, "anyOf all-fail -> ok=false");
   eq(subFails(r, "/properties/disj/anyOf"),
     ["/properties/disj/anyOf", "/properties/disj/anyOf/0/minLength", "/properties/disj/anyOf/1/type"],
@@ -117,7 +117,7 @@ const subFails = (r: Results, prefix: string) =>
 // sub-failures PLUS the composite /oneOf.
 {
   const r = new Results();
-  const ok = evaluatePerson({ name: "Ada", address: { zip: "12345" }, pick: 5 }, new Ev(), "", "", r);
+  const ok = Person.evaluate({ name: "Ada", address: { zip: "12345" }, pick: 5 }, r);
   eq(ok, false, "oneOf 0-match -> ok=false");
   eq(subFails(r, "/properties/pick/oneOf"),
     ["/properties/pick/oneOf", "/properties/pick/oneOf/0/multipleOf", "/properties/pick/oneOf/1/multipleOf"],
@@ -129,7 +129,7 @@ const subFails = (r: Results, prefix: string) =>
 // emitted ALONE (no /oneOf/<i>/... sub-failures).
 {
   const r = new Results();
-  const ok = evaluatePerson({ name: "Ada", address: { zip: "12345" }, pick: 6 }, new Ev(), "", "", r);
+  const ok = Person.evaluate({ name: "Ada", address: { zip: "12345" }, pick: 6 }, r);
   eq(ok, false, "oneOf over-match -> ok=false");
   eq(subFails(r, "/properties/pick/oneOf"), ["/properties/pick/oneOf"], "oneOf over-match -> composite ONLY");
 }
@@ -137,10 +137,10 @@ const subFails = (r: Results, prefix: string) =>
 // boolean fast path (no collector): the verdict is unchanged by the collector detail — a failed anyOf/oneOf
 // still returns false, an over-matched oneOf still returns false, a satisfied disjunction returns true.
 {
-  eq(evaluatePerson({ name: "Ada", address: { zip: "12345" }, disj: "ab" }, new Ev()), false, "boolean anyOf all-fail -> false");
-  eq(evaluatePerson({ name: "Ada", address: { zip: "12345" }, pick: 5 }, new Ev()), false, "boolean oneOf 0-match -> false");
-  eq(evaluatePerson({ name: "Ada", address: { zip: "12345" }, pick: 6 }, new Ev()), false, "boolean oneOf over-match -> false");
-  eq(evaluatePerson({ name: "Ada", address: { zip: "12345" }, disj: "abcdef", pick: 4 }, new Ev()), true, "boolean disjunctions satisfied -> true");
+  eq(Person.evaluate({ name: "Ada", address: { zip: "12345" }, disj: "ab" }), false, "boolean anyOf all-fail -> false");
+  eq(Person.evaluate({ name: "Ada", address: { zip: "12345" }, pick: 5 }), false, "boolean oneOf 0-match -> false");
+  eq(Person.evaluate({ name: "Ada", address: { zip: "12345" }, pick: 6 }), false, "boolean oneOf over-match -> false");
+  eq(Person.evaluate({ name: "Ada", address: { zip: "12345" }, disj: "abcdef", pick: 4 }), true, "boolean disjunctions satisfied -> true");
 }
 
 // Root-level keyword failure: a document-root keyword (here `required`) must carry a '#'-fragment
