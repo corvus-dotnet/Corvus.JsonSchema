@@ -102,6 +102,34 @@ public static class CliApp
                 credentials.AddCommand<CredentialDeleteCommand>("delete").WithDescription("Delete a binding.");
             });
 
+            c.AddBranch<CommandSettings>("environments", environments =>
+            {
+                environments.SetDescription("Manage governed, reach-scoped deployment environments and their administrators (environments:read / environments:write).");
+                environments.AddCommand<EnvironmentListCommand>("list").WithDescription("List environments the caller's reach admits (--output json).");
+                environments.AddCommand<EnvironmentGetCommand>("get").WithDescription("Show one environment.");
+                environments.AddCommand<EnvironmentCreateCommand>("create").WithDescription("Create an environment (--display-name, --description, --manage key=value); grants the creator administration.");
+                environments.AddCommand<EnvironmentUpdateCommand>("update").WithDescription("Change display name / description (merge; current-administrator only).");
+                environments.AddCommand<EnvironmentDeleteCommand>("delete").WithDescription("Delete an environment (current-administrator only).");
+                environments.AddBranch<CommandSettings>("administrators", administrators =>
+                {
+                    administrators.SetDescription("Govern who administers the environment — manage it and approve promotions into it (§7.7).");
+                    administrators.AddCommand<EnvironmentAdminListCommand>("list").WithDescription("List the environment's administrators (named as deployment-mapped grants).");
+                    administrators.AddCommand<EnvironmentAdminAddCommand>("add").WithDescription("Add an administrator identity (dimension value).");
+                    administrators.AddCommand<EnvironmentAdminRemoveCommand>("remove").WithDescription("Remove an administrator by its identity digest (the set may not be left empty).");
+                    administrators.AddCommand<EnvironmentAdminTransferCommand>("transfer").WithDescription("Replace the whole administrator set (--admin dimension=value, repeatable).");
+                });
+            });
+
+            c.AddBranch<CommandSettings>("sources", sources =>
+            {
+                sources.SetDescription("Manage first-class, reach-scoped sources — the OpenAPI/AsyncAPI documents a workflow references by name (sources:read / sources:write).");
+                sources.AddCommand<SourceListCommand>("list").WithDescription("List sources the caller's reach admits (--output json); the list omits each document.");
+                sources.AddCommand<SourceGetCommand>("get").WithDescription("Show one source, including its registered document.");
+                sources.AddCommand<SourceRegisterCommand>("register").WithDescription("Register a source (--type openapi|asyncapi, --document <file>, --display-name, --description, --manage key=value).");
+                sources.AddCommand<SourceUpdateCommand>("update").WithDescription("Change display name / description (merge), or rotate the document with --document <file>.");
+                sources.AddCommand<SourceDeleteCommand>("delete").WithDescription("Delete a source registration (its credentials are managed separately).");
+            });
+
             c.AddBranch<CommandSettings>("administrators", administrators =>
             {
                 administrators.SetDescription("Manage a workflow's administrator set — the identities entitled to publish versions and govern administration (administrators:read / administrators:write).");

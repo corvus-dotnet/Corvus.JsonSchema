@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
@@ -202,7 +203,10 @@ public sealed class InMemoryObservedIdentityStore : IObservedIdentityStore
                     bool admitted;
                     using (ParsedJsonDocument<ObservedIdentity> candidate = PersistedJson.ToPooledDocument<ObservedIdentity>(entry.Value))
                     {
-                        admitted = readReach.IsSatisfiedBy(candidate.RootElement.IdentityTagsValue);
+                        SecurityTagSet identityTags = candidate.RootElement.IdentityTags.IsNotUndefined()
+                            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(candidate.RootElement.IdentityTags).Memory)
+                            : SecurityTagSet.Empty;
+                        admitted = readReach.IsSatisfiedBy(identityTags);
                     }
 
                     if (!admitted)

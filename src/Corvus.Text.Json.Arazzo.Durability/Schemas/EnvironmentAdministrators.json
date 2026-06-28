@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EnvironmentAdministrators",
+  "description": "The explicit, mutable administration record for a deployment environment (design §7.7): the set of ADMINISTRATOR IDENTITIES entitled to govern the environment — manage it and approve promotions into it. An identity is a set of unforgeable, deployment-stamped tags (e.g. sys:tenant=acme) — never author-supplied. Materialized when the environment is created (creating one grants the creator administration), and mutated by add-administrator/transfer/remove. Backends store this document verbatim, keyed by environmentName.",
+  "type": "object",
+  "required": ["environmentName", "administrators", "createdBy", "createdAt", "etag"],
+  "properties": {
+    "environmentName": {
+      "type": "string",
+      "description": "The environment name this administration record governs."
+    },
+    "administrators": {
+      "type": "array",
+      "description": "The set of administrator identities; ANY one of them may govern the environment or mutate this administration record. Never empty — the last administrator cannot be removed.",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/AdministratorIdentity" }
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "The actor that first materialized the explicit administration record (the environment's creator)."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the explicit administration record was first materialized."
+    },
+    "lastUpdatedBy": {
+      "type": "string",
+      "description": "The actor that last changed the administrator set, if any."
+    },
+    "lastUpdatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the administrator set was last changed, if ever."
+    },
+    "etag": {
+      "type": "string",
+      "description": "The optimistic-concurrency token for the administrator set."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "AdministratorIdentity": {
+      "title": "AdministratorIdentity",
+      "type": "object",
+      "description": "A single administrator identity: the set of unforgeable, deployment-stamped security tags (§14.2) that identifies one owning principal, optionally annotated with the resolved grantee's kind and display label (§16.5.4). A submitter whose stamped administrator tags equal this set (as a set) is an administrator. An empty tag set denotes the unscoped (system) administrator.",
+      "required": ["tags"],
+      "properties": {
+        "tags": {
+          "type": "array",
+          "description": "The identity's security tags (KVP labels). Order-independent; compared as a set. This is the authoritative identity; the digest and membership derive from it.",
+          "items": { "$ref": "#/$defs/SecurityTagInfo" }
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["person", "team", "role", "workflow"],
+          "description": "The resolved grantee kind this identity was named as (§16.5.4), for display. Optional — absent for identities recorded via the interim single-grant path or before resolved-grantee capture."
+        },
+        "label": {
+          "type": "string",
+          "description": "An optional human-friendly display label for the resolved grantee (e.g. a person's name). Display-only; never part of identity matching."
+        }
+      },
+      "additionalProperties": false
+    },
+    "SecurityTagInfo": {
+      "title": "SecurityTagInfo",
+      "type": "object",
+      "description": "A security label (KVP) forming part of an administrator identity (§14.2).",
+      "required": ["key", "value"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "The label key (e.g. sys:tenant)."
+        },
+        "value": {
+          "type": "string",
+          "description": "The label value (e.g. acme)."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

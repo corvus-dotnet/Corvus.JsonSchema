@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Globalization;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using StackExchange.Redis;
 
@@ -358,9 +359,15 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
 
         // Row-security reach (§14.2): Redis has no server-side filtering, so apply the reach filter in process
         // over the version's persisted security tags — the only correct option for a key/value backend.
-        if (query.Security is { } security && !security.IsSatisfiedBy(version.SecurityTagsValue))
+        if (query.Security is { } security)
         {
-            return false;
+            SecurityTagSet securityTags = version.SecurityTags.IsNotUndefined()
+                ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(version.SecurityTags).Memory)
+                : SecurityTagSet.Empty;
+            if (!security.IsSatisfiedBy(securityTags))
+            {
+                return false;
+            }
         }
 
         return true;

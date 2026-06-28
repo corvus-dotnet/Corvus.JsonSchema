@@ -7,6 +7,7 @@ using System.Buffers.Binary;
 using System.Buffers.Text;
 using System.Globalization;
 using System.Text;
+using Corvus.Runtime.InteropServices;
 using NATS.Client.Core;
 using NATS.Client.JetStream;
 using NATS.Client.KeyValueStore;
@@ -360,9 +361,15 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
 
         // Row-security reach (§14.2): the KV store has no server-side filtering, so apply the reach filter in
         // process over the version's persisted security tags — the only correct option for a key/value backend.
-        if (query.Security is { } security && !security.IsSatisfiedBy(version.SecurityTagsValue))
+        if (query.Security is { } security)
         {
-            return false;
+            SecurityTagSet securityTags = version.SecurityTags.IsNotUndefined()
+                ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(version.SecurityTags).Memory)
+                : SecurityTagSet.Empty;
+            if (!security.IsSatisfiedBy(securityTags))
+            {
+                return false;
+            }
         }
 
         return true;
