@@ -88,13 +88,13 @@ toggle theme, open the Type Map, and assert on the captured console + the render
 
 ## Features
 
-Schema → generated TypeScript (+ a Type Map tab) → write a snippet with **IntelliSense** on the generated
-types → **Run** it in the browser. Four built-in **samples**, auto/light/dark **theming**, **Share** (URL
-state), and **Save/Open** a project as a ZIP. Published into the documentation website build
-(`docs/website/build.ps1`, Step 9j) at `/playground-typescript/`.
+Full parity with the C# playground (minus the C#-vs-TypeScript specifics — Roslyn compile vs esbuild transpile,
+and the user-code editor language):
 
-## Future work
-
-- Multiple schema files (tabs) for cross-file `$ref`. This is the one remaining gap versus the C# playground;
-  it is deferred because the single-schema model is woven through the samples, save/load and URL-state, so it
-  is the most invasive change for the least showcase value.
+- **Multiple schema files** as tabs (add / rename / remove, each marked GENERATED or REFerenced) for cross-file
+  `$ref`; the codegen registers each by `schema://playground/<name>` so relative refs resolve.
+- Schema → generated TypeScript (+ a **Type Map** tab) → write a snippet with **IntelliSense** on the generated
+  types → **Run** it in the browser.
+- Four built-in **samples**, **New** project, auto/light/dark **theming**, **Share** (URL state) and
+  **Save/Open** the whole project (all schema files + your TypeScript) as a ZIP.
+- Published into the documentation website build (`docs/website/build.ps1`, Step 9j) at `/playground-typescript/`.

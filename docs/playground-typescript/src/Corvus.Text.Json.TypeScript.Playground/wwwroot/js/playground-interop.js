@@ -148,10 +148,10 @@ window.playgroundInterop = (function () {
             } catch (e) { return null; }
         },
 
-        // Encode the current schema + user code into the URL hash and return the shareable URL.
-        setUrlState: function (schema, userCode) {
+        // Encode the given state object into the URL hash and return the shareable URL.
+        setUrlState: function (state) {
             try {
-                var payload = toB64Url(JSON.stringify({ s: schema, u: userCode }));
+                var payload = toB64Url(JSON.stringify(state));
                 history.replaceState(null, '', '#p=' + payload);
                 return location.origin + location.pathname + location.search + '#p=' + payload;
             } catch (e) { return location.href; }

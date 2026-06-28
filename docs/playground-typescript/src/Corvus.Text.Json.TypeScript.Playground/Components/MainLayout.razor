@@ -17,6 +17,7 @@
                 <option value="@sample.Id">@sample.DisplayName</option>
             }
         </select>
+        <button id="new-btn" class="pg-btn" @onclick="NewProjectAsync" title="New blank project">New</button>
         <button id="share-btn" class="pg-btn" @onclick="ShareAsync" title="Copy a shareable link to the clipboard">@shareLabel</button>
         <button id="save-btn" class="pg-btn" @onclick="SaveAsync" title="Save the project as a .zip">Save</button>
         <label class="pg-btn pg-file-label" title="Open a saved .zip project">
@@ -35,7 +36,37 @@
 
     <div class="pg-body">
         <div class="pg-panel">
-            <div class="pg-panel-title">JSON Schema</div>
+            <div class="schema-tabs">
+                <button class="schema-tab-scroll" @onclick="ScrollTabsLeft" title="Scroll left">‹</button>
+                <div class="schema-tabs-scroll" id="schema-tabs-scroll">
+                    @for (int i = 0; i < schemaFiles.Count; i++)
+                    {
+                        int index = i;
+                        SchemaFile file = schemaFiles[index];
+                        <div class="schema-tab @(index == activeSchemaIndex ? "active" : "") @(file.IsRootType ? "root-type" : "")" @onclick="() => SelectSchemaTab(index)">
+                            @if (renamingTabIndex == index)
+                            {
+                                <input @ref="renameInputRef" class="schema-tab-rename" @bind="renameValue" @bind:event="oninput"
+                                       @onclick:stopPropagation="true" @onkeydown="OnRenameKeyDown" @onblur="CommitRename" />
+                            }
+                            else
+                            {
+                                <span class="schema-tab-name" title="Double-click to rename" @ondblclick:stopPropagation="true" @ondblclick="() => StartRename(index)">@file.Name</span>
+                            }
+                            <button class="schema-tab-badge @(file.IsRootType ? "is-root" : "")" @onclick:stopPropagation="true" @onclick="() => ToggleRootType(index)"
+                                    title="@(file.IsRootType ? "Generated (click to make referenced-only)" : "Referenced only (click to generate from it)")">
+                                @(file.IsRootType ? "GENERATED" : "REF")
+                            </button>
+                            @if (schemaFiles.Count > 1)
+                            {
+                                <button class="schema-tab-close" @onclick:stopPropagation="true" @onclick="() => RemoveSchemaTab(index)" title="Remove">×</button>
+                            }
+                        </div>
+                    }
+                    <button class="schema-tab-add" @onclick="AddSchemaTab" title="Add schema file">+</button>
+                </div>
+                <button class="schema-tab-scroll" @onclick="ScrollTabsRight" title="Scroll right">›</button>
+            </div>
             <div class="pg-editor-host">
                 <StandaloneCodeEditor @ref="schemaEditor" Id="schema-editor" ConstructionOptions="SchemaEditorOptions" OnDidInit="OnEditorInit" />
             </div>
@@ -81,7 +112,7 @@
 
     <div class="pg-status @(hasError ? "error" : "")" id="pg-status">@statusMessage</div>
 
-    @* Hidden mirror of the generated source — a stable target for automated verification. *@
+    @* Hidden mirrors — stable targets for automated verification. *@
     <pre id="generated-raw" style="display:none">@generatedText</pre>
     <pre id="console-raw" style="display:none">@ConsoleRaw()</pre>
 </div>
@@ -100,25 +131,38 @@
     private string topRightTab = "generated";
     private IReadOnlyList<TypeMapEntry> typeMap = [];
     private string shareLabel = "Share";
-
     private string activeSampleId = string.Empty;
     private string themePref = "auto";
     private string currentMonacoTheme = "vs-dark";
+    private int readyEditors;
 
-    private PlaygroundSample ActiveSample => this.Samples.FindById(this.activeSampleId) ?? this.Samples.Default;
+    // Multi-file schema state.
+    private readonly List<SchemaFile> schemaFiles = [];
+    private int activeSchemaIndex;
+    private int renamingTabIndex = -1;
+    private string renameValue = string.Empty;
+    private ElementReference renameInputRef;
+    private bool focusRenameInput;
+
+    private const string EmptySchemaContent = "{\n  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\"\n}";
 
     private string ThemeIcon => this.themePref switch { "light" => "☀", "dark" => "🌙", _ => "🌗" };
 
-    protected override void OnInitialized() => this.activeSampleId = this.Samples.Default.Id;
+    protected override void OnInitialized()
+    {
+        PlaygroundSample sample = this.Samples.Default;
+        this.activeSampleId = sample.Id;
+        this.schemaFiles.Add(new SchemaFile { Name = "schema.json", Content = sample.Schema, IsRootType = true });
+    }
 
     private StandaloneEditorConstructionOptions SchemaEditorOptions(StandaloneCodeEditor editor) =>
-        EditorOptions("json", this.ActiveSample.Schema, readOnly: false);
+        EditorOptions("json", this.schemaFiles.Count > 0 ? this.schemaFiles[this.activeSchemaIndex].Content : EmptySchemaContent, readOnly: false);
 
     private StandaloneEditorConstructionOptions GeneratedEditorOptions(StandaloneCodeEditor editor) =>
         EditorOptions("typescript", "// Generating…", readOnly: true);
 
     private StandaloneEditorConstructionOptions UserEditorOptions(StandaloneCodeEditor editor) =>
-        EditorOptions("typescript", this.ActiveSample.UserCode, readOnly: false);
+        EditorOptions("typescript", this.Samples.Default.UserCode, readOnly: false);
 
     private StandaloneEditorConstructionOptions EditorOptions(string language, string value, bool readOnly) => new()
     {
@@ -132,10 +176,6 @@
         ScrollBeyondLastLine = false,
     };
 
-    private int readyEditors;
-
-    // Generate once all three editors are ready, so the generated panel + Run are immediately usable, and
-    // warm up the esbuild toolchain so the first Run is fast. (Manual Generate works regardless.)
     private async Task OnEditorInit()
     {
         this.readyEditors++;
@@ -145,10 +185,17 @@
 
             // Load shared state from the URL, if any, in preference to the default sample.
             UrlState? shared = await this.JS.InvokeAsync<UrlState?>("playgroundInterop.getUrlState");
-            if (shared?.Schema is string s && shared.UserCode is string u && this.schemaEditor is not null && this.userEditor is not null)
+            if (shared?.Files is { Count: > 0 } files && this.schemaEditor is not null && this.userEditor is not null)
             {
-                await this.schemaEditor.SetValue(s);
-                await this.userEditor.SetValue(u);
+                this.schemaFiles.Clear();
+                foreach (UrlFile f in files)
+                {
+                    this.schemaFiles.Add(new SchemaFile { Name = f.Name ?? "schema.json", Content = f.Content ?? EmptySchemaContent, IsRootType = f.IsRoot });
+                }
+
+                this.activeSchemaIndex = 0;
+                await this.schemaEditor.SetValue(this.schemaFiles[0].Content);
+                await this.userEditor.SetValue(shared.UserCode ?? string.Empty);
                 this.activeSampleId = string.Empty;
             }
 
@@ -161,31 +208,169 @@
     {
         if (firstRender)
         {
-            // Sync the (persisted) theme preference to Monaco + the document.
             this.themePref = await this.JS.InvokeAsync<string>("playgroundInterop.getThemePref");
             string resolved = await this.JS.InvokeAsync<string>("playgroundInterop.setTheme", this.themePref);
             this.currentMonacoTheme = resolved == "light" ? "vs" : "vs-dark";
             this.StateHasChanged();
         }
+
+        if (this.focusRenameInput)
+        {
+            this.focusRenameInput = false;
+            try { await this.renameInputRef.FocusAsync(); } catch { /* element gone */ }
+        }
     }
 
-    private async Task CycleThemeAsync()
+    // -- schema file tabs ----------------------------------------------------
+
+    private async Task SyncSchemaFromEditor()
     {
-        this.themePref = this.themePref switch { "auto" => "light", "light" => "dark", _ => "auto" };
-        string resolved = await this.JS.InvokeAsync<string>("playgroundInterop.setTheme", this.themePref);
-        this.currentMonacoTheme = resolved == "light" ? "vs" : "vs-dark";
-        this.StateHasChanged();
+        if (this.schemaEditor is not null && this.activeSchemaIndex < this.schemaFiles.Count)
+        {
+            this.schemaFiles[this.activeSchemaIndex].Content = await this.schemaEditor.GetValue();
+        }
+    }
+
+    private async Task SelectSchemaTab(int index)
+    {
+        if (index == this.activeSchemaIndex || this.schemaEditor is null)
+        {
+            return;
+        }
+
+        await this.SyncSchemaFromEditor();
+        this.activeSchemaIndex = index;
+        await this.schemaEditor.SetValue(this.schemaFiles[this.activeSchemaIndex].Content);
+    }
+
+    private void ToggleRootType(int index) => this.schemaFiles[index].IsRootType = !this.schemaFiles[index].IsRootType;
+
+    private void StartRename(int index)
+    {
+        this.renamingTabIndex = index;
+        string name = this.schemaFiles[index].Name;
+        this.renameValue = name.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ? name[..^5] : name;
+        this.focusRenameInput = true;
+    }
+
+    private void OnRenameKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            this.CommitRename();
+        }
+        else if (e.Key == "Escape")
+        {
+            this.renamingTabIndex = -1;
+        }
+    }
+
+    private void CommitRename()
+    {
+        if (this.renamingTabIndex < 0 || this.renamingTabIndex >= this.schemaFiles.Count)
+        {
+            this.renamingTabIndex = -1;
+            return;
+        }
+
+        string stem = this.renameValue.Trim();
+        if (string.IsNullOrWhiteSpace(stem) || stem.IndexOfAny(['.', '/', '\\', ' ']) >= 0)
+        {
+            this.renamingTabIndex = -1;
+            return;
+        }
+
+        string newName = stem + ".json";
+        bool isDuplicate = this.schemaFiles.Where((f, i) => i != this.renamingTabIndex).Any(f => string.Equals(f.Name, newName, StringComparison.OrdinalIgnoreCase));
+        if (!isDuplicate)
+        {
+            this.schemaFiles[this.renamingTabIndex].Name = newName;
+        }
+
+        this.renamingTabIndex = -1;
+    }
+
+    private async Task AddSchemaTab()
+    {
+        await this.SyncSchemaFromEditor();
+        int number = this.schemaFiles.Count + 1;
+        this.schemaFiles.Add(new SchemaFile { Name = $"schema{number}.json", Content = EmptySchemaContent, IsRootType = false, IsNew = true });
+        this.activeSchemaIndex = this.schemaFiles.Count - 1;
+        if (this.schemaEditor is not null)
+        {
+            await this.schemaEditor.SetValue(this.schemaFiles[this.activeSchemaIndex].Content);
+        }
+    }
+
+    private async Task RemoveSchemaTab(int index)
+    {
+        if (this.schemaFiles.Count <= 1)
+        {
+            return;
+        }
+
+        this.schemaFiles.RemoveAt(index);
+        if (this.activeSchemaIndex >= this.schemaFiles.Count)
+        {
+            this.activeSchemaIndex = this.schemaFiles.Count - 1;
+        }
+        else if (index < this.activeSchemaIndex)
+        {
+            this.activeSchemaIndex--;
+        }
+
+        if (this.schemaEditor is not null)
+        {
+            await this.schemaEditor.SetValue(this.schemaFiles[this.activeSchemaIndex].Content);
+        }
+    }
+
+    private async Task ScrollTabsLeft() =>
+        await this.JS.InvokeVoidAsync("eval", "document.getElementById('schema-tabs-scroll')?.scrollBy({left:-150,behavior:'smooth'})");
+
+    private async Task ScrollTabsRight() =>
+        await this.JS.InvokeVoidAsync("eval", "document.getElementById('schema-tabs-scroll')?.scrollBy({left:150,behavior:'smooth'})");
+
+    // -- project / sharing ---------------------------------------------------
+
+    private async Task NewProjectAsync()
+    {
+        this.schemaFiles.Clear();
+        this.schemaFiles.Add(new SchemaFile { Name = "schema.json", Content = EmptySchemaContent, IsRootType = true });
+        this.activeSchemaIndex = 0;
+        this.activeSampleId = string.Empty;
+        if (this.schemaEditor is not null)
+        {
+            await this.schemaEditor.SetValue(this.schemaFiles[0].Content);
+        }
+
+        if (this.userEditor is not null)
+        {
+            await this.userEditor.SetValue("import { evaluateRoot } from \"./generated.js\";\n\n");
+        }
+
+        this.consoleLines.Clear();
+        this.runError = string.Empty;
+        await this.GenerateAsync();
     }
 
     private async Task OnSampleChanged(ChangeEventArgs e)
     {
-        if (this.schemaEditor is null || this.userEditor is null || e.Value is not string id)
+        if (this.schemaEditor is null || this.userEditor is null || e.Value is not string id || string.IsNullOrEmpty(id))
+        {
+            return;
+        }
+
+        PlaygroundSample? sample = this.Samples.FindById(id);
+        if (sample is null)
         {
             return;
         }
 
         this.activeSampleId = id;
-        PlaygroundSample sample = this.ActiveSample;
+        this.schemaFiles.Clear();
+        this.schemaFiles.Add(new SchemaFile { Name = "schema.json", Content = sample.Schema, IsRootType = true });
+        this.activeSchemaIndex = 0;
         await this.schemaEditor.SetValue(sample.Schema);
         await this.userEditor.SetValue(sample.UserCode);
         this.consoleLines.Clear();
@@ -200,9 +385,13 @@
             return;
         }
 
-        string schema = await this.schemaEditor.GetValue();
-        string userCode = await this.userEditor.GetValue();
-        string url = await this.JS.InvokeAsync<string>("playgroundInterop.setUrlState", schema, userCode);
+        await this.SyncSchemaFromEditor();
+        var state = new UrlState
+        {
+            Files = this.schemaFiles.Select(f => new UrlFile { Name = f.Name, Content = f.Content, IsRoot = f.IsRootType }).ToList(),
+            UserCode = await this.userEditor.GetValue(),
+        };
+        string url = await this.JS.InvokeAsync<string>("playgroundInterop.setUrlState", state);
         bool copied = await this.JS.InvokeAsync<bool>("playgroundInterop.copyToClipboard", url);
         this.shareLabel = copied ? "Copied!" : "Link in URL";
         this.StateHasChanged();
@@ -218,20 +407,27 @@
             return;
         }
 
-        string schema = await this.schemaEditor.GetValue();
+        await this.SyncSchemaFromEditor();
         string userCode = await this.userEditor.GetValue();
 
         using var ms = new MemoryStream();
         using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
         {
-            using (var w = new StreamWriter(zip.CreateEntry("schema.json").Open()))
+            foreach (SchemaFile f in this.schemaFiles)
             {
-                await w.WriteAsync(schema);
+                using var w = new StreamWriter(zip.CreateEntry(f.Name).Open());
+                await w.WriteAsync(f.Content);
             }
 
             using (var w = new StreamWriter(zip.CreateEntry("user.ts").Open()))
             {
                 await w.WriteAsync(userCode);
+            }
+
+            string roots = System.Text.Json.JsonSerializer.Serialize(this.schemaFiles.Where(f => f.IsRootType).Select(f => f.Name).ToArray());
+            using (var w = new StreamWriter(zip.CreateEntry("project.json").Open()))
+            {
+                await w.WriteAsync(roots);
             }
         }
 
@@ -253,14 +449,33 @@
             ms.Position = 0;
             using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
 
-            string? schema = await ReadEntryAsync(zip, "schema.json");
-            string? userCode = await ReadEntryAsync(zip, "user.ts");
-            if (schema is not null)
+            string[] roots = [];
+            if (await ReadEntryAsync(zip, "project.json") is string rootsJson)
             {
-                await this.schemaEditor.SetValue(schema);
+                roots = System.Text.Json.JsonSerializer.Deserialize<string[]>(rootsJson) ?? [];
             }
 
-            if (userCode is not null)
+            var loaded = new List<SchemaFile>();
+            foreach (ZipArchiveEntry entry in zip.Entries)
+            {
+                if (entry.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase) && entry.Name != "project.json")
+                {
+                    using var r = new StreamReader(entry.Open());
+                    loaded.Add(new SchemaFile { Name = entry.Name, Content = await r.ReadToEndAsync(), IsRootType = roots.Length == 0 || roots.Contains(entry.Name) });
+                }
+            }
+
+            if (loaded.Count == 0)
+            {
+                loaded.Add(new SchemaFile { Name = "schema.json", Content = EmptySchemaContent, IsRootType = true });
+            }
+
+            this.schemaFiles.Clear();
+            this.schemaFiles.AddRange(loaded);
+            this.activeSchemaIndex = 0;
+            await this.schemaEditor.SetValue(this.schemaFiles[0].Content);
+
+            if (await ReadEntryAsync(zip, "user.ts") is string userCode)
             {
                 await this.userEditor.SetValue(userCode);
             }
@@ -290,6 +505,18 @@
         return await r.ReadToEndAsync();
     }
 
+    // -- theme ---------------------------------------------------------------
+
+    private async Task CycleThemeAsync()
+    {
+        this.themePref = this.themePref switch { "auto" => "light", "light" => "dark", _ => "auto" };
+        string resolved = await this.JS.InvokeAsync<string>("playgroundInterop.setTheme", this.themePref);
+        this.currentMonacoTheme = resolved == "light" ? "vs" : "vs-dark";
+        this.StateHasChanged();
+    }
+
+    // -- generate / run ------------------------------------------------------
+
     private async Task GenerateAsync()
     {
         if (this.schemaEditor is null || this.generatedEditor is null)
@@ -304,8 +531,8 @@
 
         try
         {
-            string schema = await this.schemaEditor.GetValue();
-            GenerationResult result = await this.CodeGenService.GenerateAsync(schema);
+            await this.SyncSchemaFromEditor();
+            GenerationResult result = await this.CodeGenService.GenerateAsync(this.schemaFiles);
 
             if (result.Success)
             {
