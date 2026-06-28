@@ -1,0 +1,64 @@
+@* Read-only view of the generated type surface: each emitted type with its kind, members, composition, items,
+   enum values and const. *@
+@if (TypeMap.Count == 0)
+{
+    <div class="tm-empty">No types yet — press Generate.</div>
+}
+else
+{
+    <div class="tm-list" id="typemap-list">
+        @foreach (TypeMapEntry t in TypeMap)
+        {
+            <div class="tm-type">
+                <div class="tm-type-header">
+                    <span class="tm-name">@t.TypeName</span>
+                    <span class="tm-kind kind-@t.Kind">@t.Kind</span>
+                </div>
+
+                @if (t.ConstValue is not null)
+                {
+                    <div class="tm-row"><span class="tm-const">= @t.ConstValue</span></div>
+                }
+                @if (t.EnumValues is { Count: > 0 })
+                {
+                    <div class="tm-row tm-enum">@string.Join(" | ", t.EnumValues)</div>
+                }
+                @foreach (TypeMapProperty p in t.Properties)
+                {
+                    <div class="tm-row tm-prop">
+                        <span class="tm-prop-name">@p.Name@(p.IsRequired ? string.Empty : "?")</span>
+                        <span class="tm-colon">:</span>
+                        <span class="tm-prop-type">@p.TypeName</span>
+                        @if (p.IsRequired)
+                        {
+                            <span class="tm-req" title="required">required</span>
+                        }
+                    </div>
+                }
+                @if (t.ArrayItemType is not null)
+                {
+                    <div class="tm-row tm-prop">
+                        <span class="tm-prop-name">[ ]</span>
+                        <span class="tm-colon">:</span>
+                        <span class="tm-prop-type">@t.ArrayItemType.TypeName</span>
+                    </div>
+                }
+                @foreach (TypeMapCompositionGroup g in t.CompositionGroups)
+                {
+                    <div class="tm-row tm-comp">
+                        <span class="tm-comp-kw">@g.Keyword</span>
+                        <span class="tm-comp-types">@string.Join("  |  ", g.Types.Select(m => m.ConstValue ?? m.TypeName))</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>
+    /// Gets or sets the type map entries to display.
+    /// </summary>
+    [Parameter]
+    public IReadOnlyList<TypeMapEntry> TypeMap { get; set; } = [];
+}

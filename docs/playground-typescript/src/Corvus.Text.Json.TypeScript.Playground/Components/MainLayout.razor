@@ -31,9 +31,17 @@
             </div>
         </div>
         <div class="pg-panel">
-            <div class="pg-panel-title">Generated TypeScript</div>
-            <div class="pg-editor-host">
+            <div class="pg-panel-tabs">
+                <button class="pg-tab @(topRightTab == "generated" ? "active" : "")" @onclick='() => topRightTab = "generated"'>Generated TypeScript</button>
+                <button id="typemap-tab" class="pg-tab @(topRightTab == "typemap" ? "active" : "")" @onclick='() => topRightTab = "typemap"'>
+                    Type Map@(typeMap.Count > 0 ? $" ({typeMap.Count})" : string.Empty)
+                </button>
+            </div>
+            <div class="pg-editor-host" style="@(topRightTab == "generated" ? string.Empty : "display:none")">
                 <StandaloneCodeEditor @ref="generatedEditor" Id="generated-editor" ConstructionOptions="GeneratedEditorOptions" OnDidInit="OnEditorInit" />
+            </div>
+            <div class="tm-scroll" style="@(topRightTab == "typemap" ? string.Empty : "display:none")">
+                <TypeMapPanel TypeMap="typeMap" />
             </div>
         </div>
         <div class="pg-panel">
@@ -79,6 +87,8 @@
     private string generatedText = string.Empty;
     private string runError = string.Empty;
     private readonly List<ConsoleLine> consoleLines = [];
+    private string topRightTab = "generated";
+    private IReadOnlyList<TypeMapEntry> typeMap = [];
 
     private string activeSampleId = string.Empty;
     private string themePref = "auto";
@@ -181,6 +191,7 @@
             if (result.Success)
             {
                 this.generatedText = result.GeneratedTypeScript;
+                this.typeMap = result.TypeMap;
                 await this.generatedEditor.SetValue(this.generatedText);
                 this.hasError = false;
                 this.statusMessage = $"✓ Generated {this.generatedText.Length:N0} characters of TypeScript. Press Run to execute it.";
@@ -188,6 +199,7 @@
             else
             {
                 this.generatedText = string.Empty;
+                this.typeMap = [];
                 await this.generatedEditor.SetValue("// " + (result.ErrorMessage ?? "Generation failed."));
                 this.hasError = true;
                 this.statusMessage = result.ErrorMessage ?? "Generation failed.";
