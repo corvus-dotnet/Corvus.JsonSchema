@@ -7,6 +7,7 @@ using Azure;
 using Azure.Data.Tables;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Corvus.Runtime.InteropServices;
 
 namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 
@@ -383,7 +384,15 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
 
         // Row-security reach (§14.2): Table OData cannot match inside the serialized security tags, so apply the
         // reach filter in process over the version's persisted tags — the only correct option for this backend.
-        return query.Security is not { } security || security.IsSatisfiedBy(version.SecurityTagsValue);
+        if (query.Security is not { } security)
+        {
+            return true;
+        }
+
+        SecurityTagSet securityTags = version.SecurityTags.IsNotUndefined()
+            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(version.SecurityTags).Memory)
+            : SecurityTagSet.Empty;
+        return security.IsSatisfiedBy(securityTags);
     }
 
     private static TableEntity BuildEntity(in CatalogVersion version)

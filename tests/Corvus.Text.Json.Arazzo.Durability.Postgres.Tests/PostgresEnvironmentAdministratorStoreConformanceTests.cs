@@ -50,7 +50,7 @@ public sealed class PostgresEnvironmentAdministratorStoreConformanceTests : Envi
         await using (NpgsqlConnection connection = await dataSource.OpenConnectionAsync())
         {
             await using NpgsqlCommand reset = connection.CreateCommand();
-            reset.CommandText = "DROP TABLE IF EXISTS EnvironmentAdministrators; DROP TABLE IF EXISTS EnvironmentAdministratorIndex;";
+            reset.CommandText = "DROP TABLE IF EXISTS EnvironmentAdministrators;";
             await reset.ExecuteNonQueryAsync();
         }
 

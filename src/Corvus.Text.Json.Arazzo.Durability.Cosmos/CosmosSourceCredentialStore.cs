@@ -7,6 +7,7 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Internal;
@@ -182,34 +183,49 @@ public sealed class CosmosSourceCredentialStore : ISourceCredentialStore, IAsync
             string lastSource = string.Empty, lastEnv = string.Empty, lastTie = string.Empty;
             await foreach (ReadOnlyMemory<byte> json in this.QueryDocumentsAsync(query, partition: null, cancellationToken).ConfigureAwait(false))
             {
-                using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span);
-                string source = candidate.RootElement.SourceNameValue;
-                string environment = candidate.RootElement.EnvironmentValue;
-                string tie = ItemIdSeedFor(candidate.RootElement);
-
-                // The server seek re-includes the cursor's exact (sourceName, environment), so skip any row at or before
-                // the cursor in the full (sourceName, environment, discriminator) order — the discriminator tie-break is
-                // resolved here since it is not a stored, orderable property.
-                if (hasCursor && CompareKey(source, environment, tie, cursor.SourceName, cursor.Environment, cursor.TieBreaker) <= 0)
+                ParsedJsonDocument<SourceCredentialBinding> cand = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span);
+                bool kept = false;
+                try
                 {
-                    continue;
-                }
+                    string source = cand.RootElement.SourceNameValue;
+                    string environment = cand.RootElement.EnvironmentValue;
+                    string tie = ItemIdSeedFor(cand.RootElement);
 
-                if (!context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
+                    // The server seek re-includes the cursor's exact (sourceName, environment), so skip any row at or before
+                    // the cursor in the full (sourceName, environment, discriminator) order — the discriminator tie-break is
+                    // resolved here since it is not a stored, orderable property.
+                    if (hasCursor && CompareKey(source, environment, tie, cursor.SourceName, cursor.Environment, cursor.TieBreaker) <= 0)
+                    {
+                        continue;
+                    }
+
+                    SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
+                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
+                        : SecurityTagSet.Empty;
+                    if (!context.Admits(AccessVerb.Read, tags))
+                    {
+                        continue;
+                    }
+
+                    if (docs.Count == pageSize)
+                    {
+                        hasMore = true;
+                        break;
+                    }
+
+                    docs.Add(cand);
+                    kept = true;
+                    lastSource = source;
+                    lastEnv = environment;
+                    lastTie = tie;
+                }
+                finally
                 {
-                    continue;
+                    if (!kept)
+                    {
+                        cand.Dispose();
+                    }
                 }
-
-                if (docs.Count == pageSize)
-                {
-                    hasMore = true;
-                    break;
-                }
-
-                docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json.Span));
-                lastSource = source;
-                lastEnv = environment;
-                lastTie = tie;
             }
 
             return hasMore ? SourceCredentialPage.Create(docs, lastSource, lastEnv, lastTie) : SourceCredentialPage.Create(docs);

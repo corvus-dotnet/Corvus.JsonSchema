@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using MongoDB.Bson;
@@ -224,7 +225,10 @@ public sealed class MongoObservedIdentityStore : IObservedIdentityStore, IAsyncD
                     if (readReach is not null)
                     {
                         using ParsedJsonDocument<ObservedIdentity> candidate = PersistedJson.ToPooledDocument<ObservedIdentity>(json);
-                        if (!readReach.IsSatisfiedBy(candidate.RootElement.IdentityTagsValue))
+                        SecurityTagSet identityTags = candidate.RootElement.IdentityTags.IsNotUndefined()
+                            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(candidate.RootElement.IdentityTags).Memory)
+                            : SecurityTagSet.Empty;
+                        if (!readReach.IsSatisfiedBy(identityTags))
                         {
                             continue;
                         }

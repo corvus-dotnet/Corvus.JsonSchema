@@ -77,6 +77,29 @@ internal class RunsSettings : CommandSettings
         return (http, transport, new ApiCredentialsClient(transport));
     }
 
+    /// <summary>Builds the environments API client (and the HTTP client / transport it owns) for this invocation. The
+    /// environments surface governs reach-scoped deployment environments and their administrators (design §7.7).</summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The HTTP client, transport, and environments API client. Dispose the HTTP client and transport.</returns>
+    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiEnvironmentsClient Client)> CreateEnvironmentsClientAsync(CancellationToken cancellationToken)
+    {
+        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
+        HttpClient http = this.CreateHttpClient();
+        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
+        return (http, transport, new ApiEnvironmentsClient(transport));
+    }
+
+    /// <summary>Builds the sources API client (and the HTTP client / transport it owns) for this invocation.</summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The HTTP client, transport, and sources API client. Dispose the HTTP client and transport.</returns>
+    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiSourcesClient Client)> CreateSourcesClientAsync(CancellationToken cancellationToken)
+    {
+        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
+        HttpClient http = this.CreateHttpClient();
+        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
+        return (http, transport, new ApiSourcesClient(transport));
+    }
+
     /// <summary>Builds the workflow-administration API client (and the HTTP client / transport it owns) for this invocation.</summary>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The HTTP client, transport, and administrators API client. Dispose the HTTP client and transport.</returns>

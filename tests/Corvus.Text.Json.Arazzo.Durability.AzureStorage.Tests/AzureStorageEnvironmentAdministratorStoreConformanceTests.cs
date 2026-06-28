@@ -22,7 +22,6 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage.Tests;
 public sealed class AzureStorageEnvironmentAdministratorStoreConformanceTests : EnvironmentAdministratorStoreConformance
 {
     private const string AdministratorsTable = "arazzoEnvironmentAdministrators";
-    private const string IndexTable = "arazzoEnvironmentAdministratorIndex";
     private static AzuriteContainer container = null!;
 
     [ClassInitialize]
@@ -48,13 +47,10 @@ public sealed class AzureStorageEnvironmentAdministratorStoreConformanceTests : 
         var tableService = new TableServiceClient(container.GetConnectionString());
         await AzureStorageEnvironmentAdministratorStore.PrepareAsync(tableService);
 
-        foreach (string table in new[] { AdministratorsTable, IndexTable })
+        TableClient client = tableService.GetTableClient(AdministratorsTable);
+        await foreach (TableEntity entity in client.QueryAsync<TableEntity>())
         {
-            TableClient client = tableService.GetTableClient(table);
-            await foreach (TableEntity entity in client.QueryAsync<TableEntity>())
-            {
-                await client.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All);
-            }
+            await client.DeleteEntityAsync(entity.PartitionKey, entity.RowKey, ETag.All);
         }
 
         return await AzureStorageEnvironmentAdministratorStore.ConnectAsync(tableService, timeProvider);

@@ -5,6 +5,7 @@
 using System.Buffers.Text;
 using System.Globalization;
 using System.Text;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using NATS.Client.Core;
@@ -221,7 +222,10 @@ public sealed class NatsJetStreamObservedIdentityStore : IObservedIdentityStore,
                 bool admitted;
                 using (ParsedJsonDocument<ObservedIdentity> candidate = PersistedJson.ToPooledDocument<ObservedIdentity>(bytes))
                 {
-                    admitted = readReach.IsSatisfiedBy(candidate.RootElement.IdentityTagsValue);
+                    SecurityTagSet identityTags = candidate.RootElement.IdentityTags.IsNotUndefined()
+                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(candidate.RootElement.IdentityTags).Memory)
+                        : SecurityTagSet.Empty;
+                    admitted = readReach.IsSatisfiedBy(identityTags);
                 }
 
                 if (!admitted)

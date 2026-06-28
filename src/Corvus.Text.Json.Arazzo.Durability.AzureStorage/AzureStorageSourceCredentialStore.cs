@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Text;
 using Azure;
 using Azure.Data.Tables;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 
@@ -192,20 +193,35 @@ public sealed class AzureStorageSourceCredentialStore : ISourceCredentialStore
                     continue;
                 }
 
-                using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                if (!context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
+                ParsedJsonDocument<SourceCredentialBinding> cand = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
+                bool kept = false;
+                try
                 {
-                    continue;
-                }
+                    SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
+                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
+                        : SecurityTagSet.Empty;
+                    if (!context.Admits(AccessVerb.Read, tags))
+                    {
+                        continue;
+                    }
 
-                if (docs.Count == pageSize)
+                    if (docs.Count == pageSize)
+                    {
+                        hasMore = true;
+                        break;
+                    }
+
+                    docs.Add(cand);
+                    kept = true;
+                    last = key;
+                }
+                finally
                 {
-                    hasMore = true;
-                    break;
+                    if (!kept)
+                    {
+                        cand.Dispose();
+                    }
                 }
-
-                docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
-                last = key;
             }
 
             return hasMore

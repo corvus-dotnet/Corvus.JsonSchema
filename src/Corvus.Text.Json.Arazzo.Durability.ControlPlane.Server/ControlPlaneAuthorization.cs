@@ -53,8 +53,20 @@ public static class ControlPlaneScopes
     /// <summary>Manage a workflow's administrator set (add, remove, transfer — current-administrator membership applies).</summary>
     public const string AdministratorsWrite = "administrators:write";
 
+    /// <summary>List and read governed deployment environments (reach-scoped).</summary>
+    public const string EnvironmentsRead = "environments:read";
+
+    /// <summary>Create, update, and delete deployment environments and manage their administrators (current-administrator membership applies).</summary>
+    public const string EnvironmentsWrite = "environments:write";
+
+    /// <summary>List and read registered sources (reach-scoped; the source document is returned only on single read).</summary>
+    public const string SourcesRead = "sources:read";
+
+    /// <summary>Register, update, and delete sources (reach-scoped).</summary>
+    public const string SourcesWrite = "sources:write";
+
     /// <summary>Gets all control-plane capability scopes.</summary>
-    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite, CredentialsRead, CredentialsWrite, AdministratorsRead, AdministratorsWrite];
+    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite, CredentialsRead, CredentialsWrite, AdministratorsRead, AdministratorsWrite, EnvironmentsRead, EnvironmentsWrite, SourcesRead, SourcesWrite];
 }
 
 /// <summary>

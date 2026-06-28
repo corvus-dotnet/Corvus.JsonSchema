@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Globalization;
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Data.SqlClient;
@@ -150,22 +151,37 @@ public sealed class SqlServerSourceCredentialStore : ISourceCredentialStore, IAs
                 string environment = reader.GetString(1);
                 string tie = Convert.ToHexString(reader.GetFieldValue<byte[]>(2));
                 byte[] json = reader.GetFieldValue<byte[]>(3);
-                using ParsedJsonDocument<SourceCredentialBinding> candidate = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
-                if (!context.Admits(AccessVerb.Read, candidate.RootElement.ManagementTagsValue))
+                ParsedJsonDocument<SourceCredentialBinding> cand = PersistedJson.ToPooledDocument<SourceCredentialBinding>(json);
+                bool kept = false;
+                try
                 {
-                    continue;
-                }
+                    SecurityTagSet tags = cand.RootElement.ManagementTags.IsNotUndefined()
+                        ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(cand.RootElement.ManagementTags).Memory)
+                        : SecurityTagSet.Empty;
+                    if (!context.Admits(AccessVerb.Read, tags))
+                    {
+                        continue;
+                    }
 
-                if (docs.Count == pageSize)
+                    if (docs.Count == pageSize)
+                    {
+                        hasMore = true;
+                        break;
+                    }
+
+                    docs.Add(cand);
+                    kept = true;
+                    lastSource = source;
+                    lastEnv = environment;
+                    lastTie = tie;
+                }
+                finally
                 {
-                    hasMore = true;
-                    break;
+                    if (!kept)
+                    {
+                        cand.Dispose();
+                    }
                 }
-
-                docs.Add(PersistedJson.ToPooledDocument<SourceCredentialBinding>(json));
-                lastSource = source;
-                lastEnv = environment;
-                lastTie = tie;
             }
 
             return hasMore
