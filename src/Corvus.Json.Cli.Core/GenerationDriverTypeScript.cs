@@ -43,7 +43,7 @@ public static class GenerationDriverTypeScript
             JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
 
             Progress progress = AnsiConsole.Progress().Columns(new TaskDescriptionColumn { Alignment = Justify.Left });
-            await progress.StartAsync(context => ExecuteTask(generatorConfig, context, defaultVocabulary, typeBuilder));
+            await progress.StartAsync(context => ExecuteTask(generatorConfig, context, defaultVocabulary, typeBuilder, codeGenerationMode));
         }
         catch (Exception ex)
         {
@@ -54,7 +54,7 @@ public static class GenerationDriverTypeScript
         return 0;
     }
 
-    private static async Task ExecuteTask(GeneratorConfig generatorConfig, ProgressContext context, IVocabulary defaultVocabulary, JsonSchemaTypeBuilder typeBuilder)
+    private static async Task ExecuteTask(GeneratorConfig generatorConfig, ProgressContext context, IVocabulary defaultVocabulary, JsonSchemaTypeBuilder typeBuilder, CodeGenerationMode codeGenerationMode)
     {
         ProgressTask outerTask = context.AddTask("Generating TypeScript types", maxValue: generatorConfig.TypesToGenerate.GetArrayLength());
 
@@ -93,10 +93,14 @@ public static class GenerationDriverTypeScript
                 : Environment.GetEnvironmentVariable("CORVUS_TS_RUNTIME_MODULE") is { Length: > 0 } env
                     ? env
                     : "./corvus-runtime.js";
+
+        // The TypeScript engine always emits the evaluate{Type} validators, so TypeGeneration and Both collapse
+        // to the full type-surface-plus-validators output; only SchemaEvaluationOnly suppresses the type surface.
         TypeScriptLanguageProvider provider = TypeScriptLanguageProvider.DefaultWithOptions(
             new TypeScriptLanguageProvider.Options(
                 AlwaysAssertFormat: generatorConfig.AssertFormat ?? true,
-                RuntimeModuleSpecifier: runtimeModule));
+                RuntimeModuleSpecifier: runtimeModule,
+                EmitTypeSurface: codeGenerationMode != CodeGenerationMode.SchemaEvaluationOnly));
         IReadOnlyCollection<GeneratedCodeFile> generatedCode = typeBuilder.GenerateCodeUsing(provider, typesToGenerate, CancellationToken.None);
 
         // Append a stable `evaluateRoot` entry point (aliases the root type's validator) to the types module.

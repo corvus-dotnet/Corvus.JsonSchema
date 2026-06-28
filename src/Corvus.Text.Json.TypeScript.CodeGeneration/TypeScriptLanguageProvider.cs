@@ -40,6 +40,11 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     // ("@endjin/corvus-json-runtime") means import the installed package and DON'T re-emit it.
     private string runtimeModuleSpecifier = "./corvus-runtime.js";
 
+    // Whether to emit the idiomatic type surface (interfaces / aliases + the build/patch/accessor helpers).
+    // false == SchemaEvaluationOnly: emit a validators-only module (just the evaluate{Type} functions + the
+    // evaluateRoot entry point). The validators never reference the type surface, so they stand alone.
+    private bool emitTypeSurface = true;
+
     /// <summary>
     /// Gets the shared runtime module source (<c>@endjin/corvus-json-runtime</c> in production): emitted ONCE,
     /// imported by every generated module.
@@ -130,7 +135,14 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     /// </summary>
     /// <param name="AlwaysAssertFormat">Whether the provider asserts <c>format</c> rather than treating it as an annotation.</param>
     /// <param name="RuntimeModuleSpecifier">Where generated modules import the shared runtime from.</param>
-    public sealed record Options(bool AlwaysAssertFormat = false, string RuntimeModuleSpecifier = "./corvus-runtime.js");
+    /// <param name="EmitTypeSurface">
+    /// Whether to emit the idiomatic type surface (interfaces / aliases + build/patch/accessor helpers).
+    /// The default (<see langword="true"/>) is the CLI's <c>TypeGeneration</c>/<c>Both</c> mode; pass
+    /// <see langword="false"/> for <c>SchemaEvaluationOnly</c> — a validators-only module (just the
+    /// <c>evaluate{Type}</c> functions + the <c>evaluateRoot</c> entry point). The TypeScript engine always
+    /// emits the validators, so <c>TypeGeneration</c> and <c>Both</c> collapse to the same output here.
+    /// </param>
+    public sealed record Options(bool AlwaysAssertFormat = false, string RuntimeModuleSpecifier = "./corvus-runtime.js", bool EmitTypeSurface = true);
 
     /// <summary>
     /// The driver-facing entry point, mirroring <c>CSharpLanguageProvider.DefaultWithOptions</c>.
@@ -141,6 +153,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     {
         TypeScriptLanguageProvider provider = options.AlwaysAssertFormat ? CreateWithFormatAssertion() : CreateDefault();
         provider.runtimeModuleSpecifier = options.RuntimeModuleSpecifier;
+        provider.emitTypeSurface = options.EmitTypeSurface;
         return provider;
     }
 
@@ -232,40 +245,47 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         var moduleGuards = new HashSet<string>(StringComparer.Ordinal); // union guard names, unique per module
         foreach (TypeDeclaration td in types)
         {
-            if (IsObject(td))
+            // The idiomatic type surface (interfaces / aliases + the build/patch/accessor helpers) is emitted
+            // only in type-generation mode. In SchemaEvaluationOnly mode (emitTypeSurface == false) we emit a
+            // validators-only module: every type still gets its evaluate{Type} below, and the validators never
+            // reference the type surface, so they stand alone (evaluateRoot aliases the root type's validator).
+            if (this.emitTypeSurface)
             {
-                // A pure map (additionalProperties value type, no declared properties) -> a `Record` alias;
-                // anything with declared properties stays an interface.
-                FallbackObjectPropertyType? mapFb = td.LocalEvaluatedPropertyType();
-                if (!td.HasPropertyDeclarations && mapFb is not null && mapFb.ReducedType.LocatedSchema.Schema.ValueKind != JsonValueKind.False)
+                if (IsObject(td))
                 {
-                    EmitMapAlias(sb, td, mapFb);
+                    // A pure map (additionalProperties value type, no declared properties) -> a `Record` alias;
+                    // anything with declared properties stays an interface.
+                    FallbackObjectPropertyType? mapFb = td.LocalEvaluatedPropertyType();
+                    if (!td.HasPropertyDeclarations && mapFb is not null && mapFb.ReducedType.LocatedSchema.Schema.ValueKind != JsonValueKind.False)
+                    {
+                        EmitMapAlias(sb, td, mapFb);
+                    }
+                    else
+                    {
+                        EmitInterface(sb, td);
+                        EmitPatch(sb, td);
+                        EmitBuild(sb, td);
+                        EmitApplyTo(sb, td);
+                        EmitProduceDraft(sb, td);
+                        EmitWithDefaults(sb, td);
+                    }
                 }
-                else
+                else if (IsEnum(td))
                 {
-                    EmitInterface(sb, td);
-                    EmitPatch(sb, td);
-                    EmitBuild(sb, td);
-                    EmitApplyTo(sb, td);
-                    EmitProduceDraft(sb, td);
-                    EmitWithDefaults(sb, td);
+                    EmitEnumAlias(sb, td);
                 }
-            }
-            else if (IsEnum(td))
-            {
-                EmitEnumAlias(sb, td);
-            }
-            else if (IsUnion(td))
-            {
-                EmitUnionAlias(sb, td, moduleGuards);
-            }
-            else if (IsBrandedStringFormat(td))
-            {
-                EmitBrandAlias(sb, td);
-            }
-            else if (IsBrandedIntegerFormat(td))
-            {
-                EmitIntegerBrandAlias(sb, td);
+                else if (IsUnion(td))
+                {
+                    EmitUnionAlias(sb, td, moduleGuards);
+                }
+                else if (IsBrandedStringFormat(td))
+                {
+                    EmitBrandAlias(sb, td);
+                }
+                else if (IsBrandedIntegerFormat(td))
+                {
+                    EmitIntegerBrandAlias(sb, td);
+                }
             }
 
             EmitValidator(sb, td);

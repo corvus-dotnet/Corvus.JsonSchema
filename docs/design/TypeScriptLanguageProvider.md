@@ -1863,6 +1863,13 @@ Severity = impact on a production‑quality engine. Effort = S / M / L.
 >   (multi‑file/barrel), **A2–A6**, **B1/B2/B3/B5**, **D3**, **E1** (OpenAPI `nullable`), **F1**
 >   (canonical write), **G5** (permanent benchmark), **G7** (playground). **H1/H2** stay deferred.
 
+> **Update (2026‑06‑28).** The value/dialect batch has since landed: **B1** (`default` applied via a
+> `withDefaults` helper + JSDoc), **B4** (`int16/32`/`uint16/32` range‑checked brands), **B2** (Temporal
+> value accessors), **E1** (OpenAPI `nullable` → `T | null`), and **D3** (the `codeGenerationMode` is now
+> honoured — `SchemaEvaluationOnly` emits a validators‑only module, `TypeGeneration`/`Both` the full
+> surface). Remaining backlog: **A1** (multi‑file/barrel), **A2–A6**, **B3/B5**, **F1** (canonical write),
+> **G5** (permanent benchmark), **G7** (playground); **H1/H2** stay deferred.
+
 ### A — Type surface & output structure
 
 | # | Gap | Now | Desired | Sev | Eff |
@@ -1902,7 +1909,7 @@ Severity = impact on a production‑quality engine. Effort = S / M / L.
 |---|-----|-----|---------|-----|-----|
 | D1 | **Results collector** | `evaluateRoot` / `evaluate{Type}` are boolean‑only; `Ev` tracks only evaluated props/items for `unevaluated*` | an optional collector that records *why* a value failed (per‑keyword failures) — the `evaluateRoot(value, results?)` the user has flagged; the TS analog of C#'s `JsonSchemaContext` | High | M‑L |
 | D2 | **Spec‑output location constants** | none emitted | per‑subschema schema‑location + evaluation‑path constants (the analog of `EmitPathProviderFields`) so failures/annotations carry `instanceLocation`/`keywordLocation`/`absoluteKeywordLocation` (§5.6). Prerequisite for D1 locations, D4, and Bowtie | High | M |
-| D3 | **`SchemaEvaluationOnly` / `Both` modes** | always emits the full type+validator surface; the CLI `codeGenerationMode` is accepted but ignored | honour the mode (validators‑only standalone evaluator) | Med | S |
+| D3 | **`SchemaEvaluationOnly` / `Both` modes** | ✅ **done (2026‑06‑28)** — the CLI `codeGenerationMode` is honoured: `SchemaEvaluationOnly` emits a validators‑only module (`evaluate{Type}` + `evaluateRoot`, no type surface); `TypeGeneration`/`Both` keep the full surface (the engine always emits the validators, so those two collapse to one output) | — | Med | S |
 | D4 | **Annotation collection (verbose)** | none | collect annotations (title/default/examples…) during evaluation in verbose mode | Med | S‑M |
 
 ### E — Dialects
@@ -1924,7 +1931,7 @@ Severity = impact on a production‑quality engine. Effort = S / M / L.
 | # | Gap | Now | Desired | Sev | Eff |
 |---|-----|-----|---------|-----|-----|
 | G1 | **`@endjin/corvus-json-runtime` as an npm package** | `corvus-runtime.ts` is re‑emitted source (the examples share one copy by hand) | a real publishable ESM package (own `package.json`, `exports`, `.d.ts`, tree‑shakeable, peer deps lossless‑json/tr46/temporal); generated modules `import` from it | High | M |
-| G2 | **CLI `Options` wiring** | only `AlwaysAssertFormat`; `outputPath`/`codeGenerationMode`/format‑mode/naming/file options ignored or hard‑coded | wire the full options surface (§7.2) from the CLI config | Med | S |
+| G2 | **CLI `Options` wiring** | `AlwaysAssertFormat` + `RuntimeModuleSpecifier` + `codeGenerationMode` (D3) wired; `outputPath`/format‑mode/naming/file options still ignored or hard‑coded | wire the full options surface (§7.2) from the CLI config | Med | S |
 | G3 | **Compliance harness in CI** | graduated out of the spike into `prototypes/ts-bench/compliance/` (`run-compliance.sh`); not yet a `tests/` project | a graduated `tests/` project that runs the suite (all 5 dialects) in CI with the exclusion model | High | M‑L |
 | G4 | **Bowtie TS harness** | none | a Node/TS harness speaking Bowtie's stdio protocol for cross‑implementation conformance (§8) | Med | M |
 | G5 | **Sustained‑load benchmark, permanent** | one‑off in `prototypes/ts-bench` | a permanent throughput‑under‑GC‑pressure benchmark (validation + RMW) | Med | M |
