@@ -328,7 +328,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 
     // The shared-runtime import line every generated module emits (§5.5); identical across emission modes.
     private string RuntimeImportLine()
-        => "import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from \""
+        => "import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from \""
          + this.runtimeModuleSpecifier + "\";\n";
 
     // True when the relative runtime specifier means re-emit corvus-runtime.ts alongside the module(s); a
@@ -360,6 +360,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
                     EmitInterface(sb, td);
                     EmitPatch(sb, td);
                     EmitBuild(sb, td);
+                    EmitBuildCanonical(sb, td);
                     EmitApplyTo(sb, td);
                     EmitProduceDraft(sb, td);
                     EmitWithDefaults(sb, td);
@@ -622,6 +623,24 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         // full recursive canonical-write, mirroring the C# canonicaliser) -- see design doc roadmap, not here.
         sb.Append("export function build").Append(name).Append("(props: ").Append(name).Append("): Uint8Array {\n");
         sb.Append("  return new TextEncoder().encode(JSON.stringify(props));\n");
+        sb.Append("}\n\n");
+    }
+
+    // buildCanonical = deterministic/canonical bytes from a full typed T (gap F1, §5.7): RFC 8785 (JCS) via the
+    // shared runtime `canonicalize` — object keys recursively sorted by UTF-16 code unit, ECMAScript number
+    // forms, minimal string escaping, mirroring the C# JsonCanonicalizer. A SEPARATE opt-in method so the fast
+    // `build` stays at the native floor (caller key order). For content-addressing / hashing / signatures /
+    // cache keys / golden-file determinism.
+    private static void EmitBuildCanonical(StringBuilder sb, TypeDeclaration td)
+    {
+        if (!td.HasPropertyDeclarations)
+        {
+            return;
+        }
+
+        string name = FinalName(td);
+        sb.Append("export function buildCanonical").Append(name).Append("(props: ").Append(name).Append("): Uint8Array {\n");
+        sb.Append("  return canonicalize(props);\n");
         sb.Append("}\n\n");
     }
 

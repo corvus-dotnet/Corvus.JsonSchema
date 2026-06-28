@@ -48,6 +48,7 @@ const SUITE_TABLE = [
   { test: "provider-access.test.ts", schema: "person.json",          importDir: "out" },
   { test: "jsdoc-access.test.ts",    schema: "jsdoc.json",           importDir: "out-jsdoc" },
   { test: "defaults-access.test.ts", schema: "defaults.json",        importDir: "out-defaults" },
+  { test: "canonical-access.test.ts", schema: "canonical.json",      importDir: "out-canonical" },
   // OpenAPI nullable (gap E1): the SAME nullable feature under both dialects. 3.0 spells it `nullable:true`
   // (only reachable via the forced openapi30 fallback vocabulary, since the doc carries no $schema); 3.1
   // spells it `type:["string","null"]` (standard 2020-12, reached via the openapi31 fallback). Both must

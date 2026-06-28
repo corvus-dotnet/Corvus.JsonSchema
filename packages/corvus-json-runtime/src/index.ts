@@ -35,6 +35,37 @@ export function __eq(a: unknown, b: unknown): boolean {
   return false;
 }
 
+// Canonical JSON (gap F1, §5.7) — RFC 8785 (JSON Canonicalization Scheme), mirroring the C# JsonCanonicalizer:
+// object keys sorted by UTF-16 code unit, ECMAScript number forms, minimal string escaping. The backing for
+// the generated opt-in `buildCanonical{Type}` (content-addressing / hashing / signatures / cache keys / golden
+// files) — deliberately separate from the fast `build`, which stays at the native floor (caller key order).
+// Keys are emitted by hand rather than via `JSON.stringify` of a key-sorted object: a plain object forces
+// integer-like keys ("2","10") into numeric order, which would break the UTF-16 ordering JCS requires.
+export function canonicalJson(value: unknown): string {
+  if (value === null) { return "null"; }
+  if (isLosslessNumber(value)) { return JSON.stringify(Number(value)); }
+  const t = typeof value;
+  if (t === "number" || t === "boolean" || t === "string") { return JSON.stringify(value); }
+  if (t === "bigint") { return (value as bigint).toString(); }
+  if (Array.isArray(value)) { return "[" + value.map(canonicalJson).join(",") + "]"; }
+  if (t === "object") {
+    const obj = value as Record<string, unknown>;
+    const parts: string[] = [];
+    for (const key of Object.keys(obj).sort()) {
+      const v = obj[key];
+      // JSON.stringify omits undefined/function/symbol-valued members of an object; match that.
+      if (v === undefined || typeof v === "function" || typeof v === "symbol") { continue; }
+      parts.push(JSON.stringify(key) + ":" + canonicalJson(v));
+    }
+    return "{" + parts.join(",") + "}";
+  }
+  return "null"; // undefined/function/symbol in scalar position -> JSON.stringify yields undefined; "null" is the array-hole form
+}
+
+export function canonicalize(value: unknown): Uint8Array {
+  return new TextEncoder().encode(canonicalJson(value));
+}
+
 export interface Failure { readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string; }
 export interface Annotation { readonly keyword: string; readonly value: unknown; readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string; }
 export class Results {

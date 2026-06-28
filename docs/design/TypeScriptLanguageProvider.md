@@ -1878,6 +1878,14 @@ Severity = impact on a production‑quality engine. Effort = S / M / L.
 > harness/example is unchanged. Remaining backlog: **A2–A6**, **B3/B5**, **F1** (canonical write), **G5**
 > (permanent benchmark), **G7** (playground); **H1/H2** stay deferred.
 
+> **Update (2026‑06‑28c).** **F1** has landed: the provider emits an opt‑in `buildCanonical{Type}` alongside
+> the native‑floor `build{Type}`, backed by the shared‑runtime `canonicalize` — RFC 8785 (JCS): object keys
+> recursively sorted by UTF‑16 code unit, ECMAScript number forms, minimal string escaping, mirroring the C#
+> `JsonCanonicalizer`. (Keys are emitted by hand, not via `JSON.stringify` of a key‑sorted object, because a
+> plain object forces integer‑like keys `"2"`/`"10"` into numeric order and would break JCS ordering.) Covered
+> by a runtime test + the `canonical-access` suite. Remaining backlog: **A2–A6**, **B3/B5**, **G5** (permanent
+> benchmark), **G7** (playground); **H1/H2** stay deferred.
+
 ### A — Type surface & output structure
 
 | # | Gap | Now | Desired | Sev | Eff |
@@ -1930,7 +1938,7 @@ Severity = impact on a production‑quality engine. Effort = S / M / L.
 
 | # | Gap | Now | Desired | Sev | Eff |
 |---|-----|-----|---------|-----|-----|
-| F1 | **Canonical write** | `build` preserves caller key order | a separate, opt‑in `buildCanonical` (recursive key sort + canonical number/string forms) for hashing/content‑addressing (§5.7) | Med | M |
+| F1 | **Canonical write** | ✅ **done (2026‑06‑28)** — opt‑in `buildCanonical{Type}` (RFC 8785 / JCS via runtime `canonicalize`: recursive UTF‑16 key sort + ECMAScript number forms, mirroring the C# `JsonCanonicalizer`); `build` stays at the native floor (caller key order) | — | Med | M |
 | F2 | **`applyTo` mixin helper** | emits `applyTo{T}(source, A \| B)` for allOf mixins — clunky signature | smoother composition/apply ergonomics | Low | M |
 | F3 | **Change‑set as RFC 6902** | recorded internally, not a public API | surface the recorded change‑set as JSON Patch | Low | S |
 

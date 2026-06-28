@@ -20,6 +20,8 @@ import {
   toPlainTime,
   toDuration,
   Temporal,
+  canonicalize,
+  canonicalJson,
 } from "../dist/index.js";
 
 test("__isNum recognises plain numbers and lossless-json source-text numbers", () => {
@@ -141,4 +143,21 @@ test("scanTargets + applyEditsBytes splice a value at the byte level", () => {
     { offset: t.vbs, length: t.vbe - t.vbs, content: enc("99") },
   ]);
   assert.deepEqual(JSON.parse(dec(result)), { name: "Alice", age: 99 });
+});
+
+test("canonicalize/canonicalJson produce RFC 8785 JCS output (recursive UTF-16 key sort) — backs buildCanonical (gap F1)", () => {
+  // Object keys sorted by UTF-16 code unit, recursively into nested objects and array elements.
+  assert.equal(canonicalJson({ b: 1, a: 2 }), '{"a":2,"b":1}');
+  assert.equal(canonicalJson({ z: { y: 1, x: 2 }, a: [3, { d: 1, c: 2 }] }), '{"a":[3,{"c":2,"d":1}],"z":{"x":2,"y":1}}');
+
+  // Integer-like keys keep UTF-16 (string) order, NOT JS numeric-key order — "10" sorts before "2". This is
+  // the case a plain key-sorted object + JSON.stringify gets WRONG (it would emit "2" before "10").
+  assert.equal(canonicalJson({ "10": 0, "2": 0, a: 0 }), '{"10":0,"2":0,"a":0}');
+
+  // ECMAScript number form (1.0 -> 1); bigint serialised as integer digits.
+  assert.equal(canonicalJson({ n: 1.0, big: 9007199254740993n }), '{"big":9007199254740993,"n":1}');
+
+  // Order-independent: different input key order yields byte-identical canonical output (content-addressing).
+  assert.equal(dec(canonicalize({ b: 1, a: 2, c: { e: 1, d: 2 } })), dec(canonicalize({ c: { d: 2, e: 1 }, a: 2, b: 1 })));
+  assert.equal(dec(canonicalize({ b: 1, a: 2 })), '{"a":2,"b":1}');
 });
