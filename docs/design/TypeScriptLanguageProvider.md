@@ -1870,11 +1870,19 @@ Severity = impact on a production‑quality engine. Effort = S / M / L.
 > surface). Remaining backlog: **A1** (multi‑file/barrel), **A2–A6**, **B3/B5**, **F1** (canonical write),
 > **G5** (permanent benchmark), **G7** (playground); **H1/H2** stay deferred.
 
+> **Update (2026‑06‑28b).** **A1** has landed as an opt‑in: the `--tsModulePerType` CLI flag
+> (`Options.ModulePerType`) emits one module per generated type + a barrel `index.ts` that re‑exports them,
+> with cross‑module imports computed by scanning each module for the identifiers a sibling owns (validators
+> import each other's `evaluate{Type}`; interfaces/unions import sibling type names). Recursive schemas
+> (circular module imports) compile and validate. The single‑file `generated.ts` stays the default, so every
+> harness/example is unchanged. Remaining backlog: **A2–A6**, **B3/B5**, **F1** (canonical write), **G5**
+> (permanent benchmark), **G7** (playground); **H1/H2** stay deferred.
+
 ### A — Type surface & output structure
 
 | # | Gap | Now | Desired | Sev | Eff |
 |---|-----|-----|---------|-----|-----|
-| A1 | **Multi‑file output / barrel `index.ts`** | one `generated.ts` per schema (all types in one module) | one module per type + a barrel `index.ts` (§7.4); enables tree‑shaking + IDE navigation; needed for cross‑file `$ref` | High | L |
+| A1 | **Multi‑file output / barrel `index.ts`** | ✅ **done (2026‑06‑28, opt‑in)** — `--tsModulePerType` emits one module per type + a barrel `index.ts` with computed cross‑module imports (recursive/circular schemas verified); single‑file `generated.ts` stays the default | (default flip + cross‑*file* `$ref` are follow‑ups) | High | L |
 | A2 | **`if`/`then`/`else` subschemas reified as named types** | emits `If` / `Then` / `Method2` interfaces for the conditional subschemas | keep conditional subschemas anonymous (validator‑only); don't pollute the type surface | Med | M |
 | A3 | **Reserved‑word / global‑shadow property names** | property names emitted verbatim (type names are guarded; members aren't) | sanitise member names that collide with TS keywords | Low | S |
 | A4 | **Combined `oneOf` + `allOf` + `type:[…]`** | degrades to a sound `unknown` when the `oneOf` branches are constraint‑only | resolve to the structural `type` union (e.g. `string \| readonly number[]`) | Low | M |

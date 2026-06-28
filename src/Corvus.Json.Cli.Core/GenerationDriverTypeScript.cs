@@ -96,19 +96,25 @@ public static class GenerationDriverTypeScript
 
         // The TypeScript engine always emits the evaluate{Type} validators, so TypeGeneration and Both collapse
         // to the full type-surface-plus-validators output; only SchemaEvaluationOnly suppresses the type surface.
+        // --tsModulePerType (gap A1) emits one module per type + a barrel index.ts instead of one generated.ts.
+        bool modulePerType = generatorConfig.TsModulePerType ?? false;
         TypeScriptLanguageProvider provider = TypeScriptLanguageProvider.DefaultWithOptions(
             new TypeScriptLanguageProvider.Options(
                 AlwaysAssertFormat: generatorConfig.AssertFormat ?? true,
                 RuntimeModuleSpecifier: runtimeModule,
-                EmitTypeSurface: codeGenerationMode != CodeGenerationMode.SchemaEvaluationOnly));
+                EmitTypeSurface: codeGenerationMode != CodeGenerationMode.SchemaEvaluationOnly,
+                ModulePerType: modulePerType));
         IReadOnlyCollection<GeneratedCodeFile> generatedCode = typeBuilder.GenerateCodeUsing(provider, typesToGenerate, CancellationToken.None);
 
-        // Append a stable `evaluateRoot` entry point (aliases the root type's validator) to the types module.
+        // Append a stable `evaluateRoot` entry point (aliases the root type's validator). In single-file mode
+        // it goes on generated.ts; in module-per-type mode it goes on the barrel index.ts (with the imports the
+        // barrel's `export *` re-exports cannot bring into local scope).
         if (rootType is { } root)
         {
-            string export = provider.RootEvaluatorExport(root);
+            string targetFile = modulePerType ? "index.ts" : "generated.ts";
+            string export = modulePerType ? provider.RootEvaluatorBarrelExport(root) : provider.RootEvaluatorExport(root);
             generatedCode = generatedCode
-                .Select(f => f.FileName == "generated.ts"
+                .Select(f => f.FileName == targetFile
                     ? new GeneratedCodeFile(f.FileName, f.FileContent + export, f.TypeDeclaration)
                     : f)
                 .ToArray();

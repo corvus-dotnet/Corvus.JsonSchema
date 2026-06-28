@@ -81,6 +81,10 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [Description("(TypeScript engine) The module specifier generated modules import the shared runtime from. Default './corvus-runtime.js' re-emits the runtime alongside each module (self-contained). Pass a package specifier (e.g. '@endjin/corvus-json-runtime') to import the installed runtime package instead, and skip re-emitting it.")]
         public string? TsRuntimeModule { get; init; }
 
+        [CommandOption("--tsModulePerType")]
+        [Description("(TypeScript engine) Emit one .ts module per generated type plus a barrel index.ts that re-exports them (enables tree-shaking and IDE navigation). The default emits a single generated.ts containing every type.")]
+        public bool TsModulePerType { get; init; }
+
         [Description("The path to the schema file to process.")]
         [CommandArgument(0, "<schemaFile>")]
         [NotNull] // <> => NotNull
@@ -171,6 +175,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             outputMapFile: settings.OutputMapFile.AsNullableJsonString(),
             outputPath: settings.OutputPath.AsNullableJsonString(),
             tsRuntimeModule: settings.TsRuntimeModule.AsNullableJsonString(),
+            tsModulePerType: settings.TsModulePerType,
             useSchema: settings.UseSchema != SchemaVariant.NotSpecified ? (GeneratorConfig.UseSchema)settings.UseSchema.ToString() : default(GeneratorConfig.UseSchema?),
             useImplicitOperatorString: settings.UseImplicitOperatorString,
             useUnixLineEndings: settings.UseUnixLineEndings,

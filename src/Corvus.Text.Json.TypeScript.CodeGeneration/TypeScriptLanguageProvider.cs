@@ -45,6 +45,10 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     // evaluateRoot entry point). The validators never reference the type surface, so they stand alone.
     private bool emitTypeSurface = true;
 
+    // When true (gap A1, §7.4), emit one module per generated type + a barrel index.ts instead of a single
+    // generated.ts. Default false keeps the single-file output every harness / example consumes today.
+    private bool modulePerType;
+
     /// <summary>
     /// Gets the shared runtime module source (<c>@endjin/corvus-json-runtime</c> in production): emitted ONCE,
     /// imported by every generated module.
@@ -100,6 +104,39 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     }
 
     /// <summary>
+    /// The module-per-type (<see cref="Options.ModulePerType"/>) analog of <see cref="RootEvaluatorExport"/>:
+    /// the addition the driver appends to the barrel <c>index.ts</c>, declaring the <c>evaluateRoot</c> entry
+    /// point and the module default export.
+    /// </summary>
+    /// <param name="rootType">The root type whose validator the entry point aliases.</param>
+    /// <returns>The TypeScript source (imports + entry point + default export) to append to <c>index.ts</c>.</returns>
+    /// <remarks>
+    /// Call AFTER <see cref="GenerateCodeFor(IEnumerable{TypeDeclaration}, CancellationToken)"/>. Unlike the
+    /// single-file variant, the barrel re-exports siblings via <c>export *</c> (which does not bring names
+    /// into local scope), so the entry point explicitly imports the root validator from its own module and
+    /// <c>fresh</c>/<c>Results</c> from the runtime. The entry name is reserved against every exported
+    /// identifier and renamed around the rare root-type-named-"Root" collision.
+    /// </remarks>
+    public string RootEvaluatorBarrelExport(TypeDeclaration rootType)
+    {
+        TypeDeclaration reduced = rootType.ReducedTypeDeclaration().ReducedType;
+        string rootName = reduced.TryGetMetadata<string>(TsFinalKey, out string? rn) && !string.IsNullOrEmpty(rn) ? rn! : "Entity";
+
+        string entry = "evaluateRoot";
+        for (int i = 2; this.moduleTopLevelNames.Contains(entry); i++)
+        {
+            entry = "evaluateRoot" + i;
+        }
+
+        this.moduleTopLevelNames.Add(entry);
+        return
+            $"\nimport {{ evaluate{rootName} }} from \"./{rootName}.js\";\n" +
+            $"import {{ fresh, type Results }} from \"{this.runtimeModuleSpecifier}\";\n" +
+            $"export const {entry} = (v: unknown, results?: Results): boolean => evaluate{rootName}(v, fresh(), \"\", \"\", results ?? null);\n" +
+            $"export default {entry};\n";
+    }
+
+    /// <summary>
     /// Creates a provider with the default validation handlers registered (format left as an annotation).
     /// </summary>
     /// <returns>A configured <see cref="TypeScriptLanguageProvider"/>.</returns>
@@ -142,7 +179,12 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     /// <c>evaluate{Type}</c> functions + the <c>evaluateRoot</c> entry point). The TypeScript engine always
     /// emits the validators, so <c>TypeGeneration</c> and <c>Both</c> collapse to the same output here.
     /// </param>
-    public sealed record Options(bool AlwaysAssertFormat = false, string RuntimeModuleSpecifier = "./corvus-runtime.js", bool EmitTypeSurface = true);
+    /// <param name="ModulePerType">
+    /// When <see langword="true"/> (gap A1, §7.4), emit one <c>.ts</c> module per generated type plus a barrel
+    /// <c>index.ts</c> that re-exports them — enabling tree-shaking and IDE navigation. The default
+    /// (<see langword="false"/>) emits a single <c>generated.ts</c> with every type in one module.
+    /// </param>
+    public sealed record Options(bool AlwaysAssertFormat = false, string RuntimeModuleSpecifier = "./corvus-runtime.js", bool EmitTypeSurface = true, bool ModulePerType = false);
 
     /// <summary>
     /// The driver-facing entry point, mirroring <c>CSharpLanguageProvider.DefaultWithOptions</c>.
@@ -154,6 +196,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         TypeScriptLanguageProvider provider = options.AlwaysAssertFormat ? CreateWithFormatAssertion() : CreateDefault();
         provider.runtimeModuleSpecifier = options.RuntimeModuleSpecifier;
         provider.emitTypeSurface = options.EmitTypeSurface;
+        provider.modulePerType = options.ModulePerType;
         return provider;
     }
 
@@ -207,9 +250,55 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeFor(IEnumerable<TypeDeclaration> typeDeclarations, CancellationToken cancellationToken)
     {
         List<TypeDeclaration> types = typeDeclarations.ToList();
+        AssignFinalNames(types);
 
-        // Pass 0: record, for each type, the property it is the value of — a fallback name source for
-        // nested types that the reference/title heuristics can't name (see NameForType).
+        if (this.modulePerType)
+        {
+            return this.GenerateModulePerType(types);
+        }
+
+        // Single module: every type's surface + validator in one file, importing the shared-runtime helpers
+        // (@endjin/corvus-json-runtime, §5.5) from the one shared module — never inlined per module.
+        var sb = new StringBuilder();
+        sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n");
+        sb.Append(this.RuntimeImportLine()).Append('\n');
+        var moduleGuards = new HashSet<string>(StringComparer.Ordinal); // union guard names, unique per module
+        foreach (TypeDeclaration td in types)
+        {
+            this.EmitType(sb, td, moduleGuards);
+        }
+
+        string content = sb.ToString();
+
+        // Record every emitted top-level identifier so the root entry-point name (RootEvaluatorExport) can
+        // be reserved against them and renamed around any collision.
+        this.moduleTopLevelNames.Clear();
+        foreach (Match m in Regex.Matches(content, TopLevelExportPattern))
+        {
+            this.moduleTopLevelNames.Add(m.Groups[2].Value);
+        }
+
+        // The generated types/validators module. The shared runtime is re-emitted alongside it ONLY when
+        // the import specifier is relative (self-contained mode); a bare specifier means the consumer
+        // installs @endjin/corvus-json-runtime and we don't duplicate it. (The test harness consumes files.First()
+        // and emits its own single shared runtime for the whole suite.)
+        var files = new List<GeneratedCodeFile> { new("generated.ts", content) };
+        if (this.EmitsRuntimeAlongside)
+        {
+            files.Add(new GeneratedCodeFile("corvus-runtime.ts", RuntimeModuleSource()));
+        }
+
+        return files;
+    }
+
+    // Matches a top-level `export <keyword> <name>` declaration: group 1 = keyword, group 2 = identifier.
+    private const string TopLevelExportPattern = "(?m)^export (interface|type|class|function|const) ([A-Za-z_$][A-Za-z0-9_$]*)";
+
+    // Pass 0 + Pass 1: assign each type its final, unique TS name (stored as TsFinalKey metadata). Pass 0
+    // records, for each type, the property it is the value of — a fallback name source for nested types the
+    // reference/title heuristics can't name (see NameForType). Shared by both emission modes.
+    private static void AssignFinalNames(List<TypeDeclaration> types)
+    {
         var propertyName = new Dictionary<TypeDeclaration, string>();
         foreach (TypeDeclaration td in types)
         {
@@ -222,7 +311,6 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             }
         }
 
-        // Pass 1: assign final, unique TS names.
         var used = new HashSet<string>(StringComparer.Ordinal);
         foreach (TypeDeclaration td in types)
         {
@@ -236,78 +324,142 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 
             td.SetMetadata(TsFinalKey, name);
         }
+    }
 
-        // Pass 2: emit the type surface + validators. The runtime helpers live in ONE shared module
-        // (@endjin/corvus-json-runtime, §5.5) that every generated module imports — never inlined per module.
-        var sb = new StringBuilder();
-        sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n");
-        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from \"").Append(this.runtimeModuleSpecifier).Append("\";\n\n");
-        var moduleGuards = new HashSet<string>(StringComparer.Ordinal); // union guard names, unique per module
-        foreach (TypeDeclaration td in types)
+    // The shared-runtime import line every generated module emits (§5.5); identical across emission modes.
+    private string RuntimeImportLine()
+        => "import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from \""
+         + this.runtimeModuleSpecifier + "\";\n";
+
+    // True when the relative runtime specifier means re-emit corvus-runtime.ts alongside the module(s); a
+    // bare package specifier (e.g. "@endjin/corvus-json-runtime") means the consumer installs it instead.
+    private bool EmitsRuntimeAlongside
+        => this.runtimeModuleSpecifier.StartsWith("./", StringComparison.Ordinal)
+        || this.runtimeModuleSpecifier.StartsWith("../", StringComparison.Ordinal);
+
+    // Emit ONE type's surface (gated on emitTypeSurface) + its validator into `sb`. The type surface
+    // (interfaces / aliases + the build/patch/accessor helpers) is emitted only in type-generation mode;
+    // in SchemaEvaluationOnly mode every type still gets its evaluate{Type}, and the validators never
+    // reference the type surface, so they stand alone. `moduleGuards` scopes union-guard name uniqueness to
+    // the containing module (one set for the whole single-file module; a fresh set per module-per-type file).
+    private void EmitType(StringBuilder sb, TypeDeclaration td, HashSet<string> moduleGuards)
+    {
+        if (this.emitTypeSurface)
         {
-            // The idiomatic type surface (interfaces / aliases + the build/patch/accessor helpers) is emitted
-            // only in type-generation mode. In SchemaEvaluationOnly mode (emitTypeSurface == false) we emit a
-            // validators-only module: every type still gets its evaluate{Type} below, and the validators never
-            // reference the type surface, so they stand alone (evaluateRoot aliases the root type's validator).
-            if (this.emitTypeSurface)
+            if (IsObject(td))
             {
-                if (IsObject(td))
+                // A pure map (additionalProperties value type, no declared properties) -> a `Record` alias;
+                // anything with declared properties stays an interface.
+                FallbackObjectPropertyType? mapFb = td.LocalEvaluatedPropertyType();
+                if (!td.HasPropertyDeclarations && mapFb is not null && mapFb.ReducedType.LocatedSchema.Schema.ValueKind != JsonValueKind.False)
                 {
-                    // A pure map (additionalProperties value type, no declared properties) -> a `Record` alias;
-                    // anything with declared properties stays an interface.
-                    FallbackObjectPropertyType? mapFb = td.LocalEvaluatedPropertyType();
-                    if (!td.HasPropertyDeclarations && mapFb is not null && mapFb.ReducedType.LocatedSchema.Schema.ValueKind != JsonValueKind.False)
-                    {
-                        EmitMapAlias(sb, td, mapFb);
-                    }
-                    else
-                    {
-                        EmitInterface(sb, td);
-                        EmitPatch(sb, td);
-                        EmitBuild(sb, td);
-                        EmitApplyTo(sb, td);
-                        EmitProduceDraft(sb, td);
-                        EmitWithDefaults(sb, td);
-                    }
+                    EmitMapAlias(sb, td, mapFb);
                 }
-                else if (IsEnum(td))
+                else
                 {
-                    EmitEnumAlias(sb, td);
-                }
-                else if (IsUnion(td))
-                {
-                    EmitUnionAlias(sb, td, moduleGuards);
-                }
-                else if (IsBrandedStringFormat(td))
-                {
-                    EmitBrandAlias(sb, td);
-                }
-                else if (IsBrandedIntegerFormat(td))
-                {
-                    EmitIntegerBrandAlias(sb, td);
+                    EmitInterface(sb, td);
+                    EmitPatch(sb, td);
+                    EmitBuild(sb, td);
+                    EmitApplyTo(sb, td);
+                    EmitProduceDraft(sb, td);
+                    EmitWithDefaults(sb, td);
                 }
             }
-
-            EmitValidator(sb, td);
+            else if (IsEnum(td))
+            {
+                EmitEnumAlias(sb, td);
+            }
+            else if (IsUnion(td))
+            {
+                EmitUnionAlias(sb, td, moduleGuards);
+            }
+            else if (IsBrandedStringFormat(td))
+            {
+                EmitBrandAlias(sb, td);
+            }
+            else if (IsBrandedIntegerFormat(td))
+            {
+                EmitIntegerBrandAlias(sb, td);
+            }
         }
 
-        string content = sb.ToString();
+        EmitValidator(sb, td);
+    }
 
-        // Record every emitted top-level identifier so the root entry-point name (RootEvaluatorExport) can
-        // be reserved against them and renamed around any collision.
-        this.moduleTopLevelNames.Clear();
-        foreach (Match m in Regex.Matches(content, "(?m)^export (?:interface|type|class|function|const) ([A-Za-z_$][A-Za-z0-9_$]*)"))
+    // Module-per-type emission (gap A1, §7.4): one .ts module per generated type — its surface + validator —
+    // plus a barrel index.ts that re-exports them all. Each module imports the shared-runtime helpers AND the
+    // specific sibling-module identifiers it references (validators call each other; interfaces and unions
+    // reference sibling type names), discovered by scanning the module's own text for any identifier another
+    // module owns. Enables tree-shaking + IDE navigation; the single-file default is unchanged.
+    private IReadOnlyCollection<GeneratedCodeFile> GenerateModulePerType(List<TypeDeclaration> types)
+    {
+        // Emit each type's body into its own buffer; record the identifiers that body exports so a sibling
+        // module referencing one can import it. Names are globally unique (Pass 1), so each identifier has a
+        // single owning module; the keyword drives whether a cross-module import is `type X` or `X`.
+        var modules = new List<(string Name, string Body)>();
+        var ownerOf = new Dictionary<string, (string Module, bool IsType)>(StringComparer.Ordinal);
+        foreach (TypeDeclaration td in types)
         {
-            this.moduleTopLevelNames.Add(m.Groups[1].Value);
+            string name = FinalName(td);
+            var buf = new StringBuilder();
+            this.EmitType(buf, td, new HashSet<string>(StringComparer.Ordinal));
+            string body = buf.ToString();
+            modules.Add((name, body));
+            foreach (Match m in Regex.Matches(body, TopLevelExportPattern))
+            {
+                ownerOf[m.Groups[2].Value] = (name, m.Groups[1].Value is "interface" or "type");
+            }
         }
 
-        // The generated types/validators module. The shared runtime is re-emitted alongside it ONLY when
-        // the import specifier is relative (self-contained mode); a bare specifier means the consumer
-        // installs @endjin/corvus-json-runtime and we don't duplicate it. (The test harness consumes files.First()
-        // and emits its own single shared runtime for the whole suite.)
-        var files = new List<GeneratedCodeFile> { new("generated.ts", content) };
-        if (this.runtimeModuleSpecifier.StartsWith("./", StringComparison.Ordinal) ||
-            this.runtimeModuleSpecifier.StartsWith("../", StringComparison.Ordinal))
+        // The root entry point (RootEvaluatorBarrelExport) dedups its name against every exported identifier —
+        // a type named "Root" would itself export `evaluateRoot`, colliding with the entry name.
+        this.moduleTopLevelNames.Clear();
+        foreach (string id in ownerOf.Keys)
+        {
+            this.moduleTopLevelNames.Add(id);
+        }
+
+        var files = new List<GeneratedCodeFile>();
+        var indexBarrel = new StringBuilder();
+        indexBarrel.Append("// AUTO-GENERATED: barrel — re-exports every generated module (gap A1, §7.4).\n");
+        foreach ((string name, string body) in modules)
+        {
+            // Imports this module needs from its siblings: any other module's identifier that appears in the
+            // body (word-boundary, so `Kind` does not match inside `evaluateKind`). Grouped per sibling
+            // module; type-only identifiers get the `type` modifier (the runtime import uses verbatim syntax).
+            var perSibling = new SortedDictionary<string, (SortedSet<string> Values, SortedSet<string> Types)>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, (string Module, bool IsType)> entry in ownerOf)
+            {
+                if (entry.Value.Module == name || !Regex.IsMatch(body, "\\b" + Regex.Escape(entry.Key) + "\\b"))
+                {
+                    continue;
+                }
+
+                if (!perSibling.TryGetValue(entry.Value.Module, out (SortedSet<string> Values, SortedSet<string> Types) sets))
+                {
+                    sets = (new SortedSet<string>(StringComparer.Ordinal), new SortedSet<string>(StringComparer.Ordinal));
+                    perSibling[entry.Value.Module] = sets;
+                }
+
+                (entry.Value.IsType ? sets.Types : sets.Values).Add(entry.Key);
+            }
+
+            var moduleSb = new StringBuilder();
+            moduleSb.Append("// AUTO-GENERATED (module-per-type): ").Append(name).Append(" — idiomatic TS type + validator.\n");
+            moduleSb.Append(this.RuntimeImportLine());
+            foreach (KeyValuePair<string, (SortedSet<string> Values, SortedSet<string> Types)> sibling in perSibling)
+            {
+                IEnumerable<string> specifiers = sibling.Value.Values.Concat(sibling.Value.Types.Select(t => "type " + t));
+                moduleSb.Append("import { ").Append(string.Join(", ", specifiers)).Append(" } from \"./").Append(sibling.Key).Append(".js\";\n");
+            }
+
+            moduleSb.Append('\n').Append(body);
+            files.Add(new GeneratedCodeFile(name + ".ts", moduleSb.ToString()));
+            indexBarrel.Append("export * from \"./").Append(name).Append(".js\";\n");
+        }
+
+        files.Add(new GeneratedCodeFile("index.ts", indexBarrel.ToString()));
+        if (this.EmitsRuntimeAlongside)
         {
             files.Add(new GeneratedCodeFile("corvus-runtime.ts", RuntimeModuleSource()));
         }

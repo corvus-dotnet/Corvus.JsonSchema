@@ -25,6 +25,10 @@
             "type": "string",
             "description": "(TypeScript engine) The module specifier generated modules import the shared runtime from. Default './corvus-runtime.js' re-emits the runtime alongside each module (self-contained); a package specifier (e.g. '@endjin/corvus-json-runtime') imports the installed runtime package and skips re-emitting it."
         },
+        "tsModulePerType": {
+            "type": "boolean",
+            "description": "(TypeScript engine) If true, emit one .ts module per generated type plus a barrel index.ts that re-exports them (enables tree-shaking and IDE navigation). The default (false) emits a single generated.ts containing every type."
+        },
         "outputMapFile": {
             "type": "string",
             "description": "The name to use for a map file which includes details of the files that were written."
