@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using JsonMarshal = Corvus.Runtime.InteropServices.JsonMarshal;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
 
@@ -243,10 +244,16 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
                 foreach (BsonDocument document in cursor.Current)
                 {
                     ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(document);
-                    if (query.Security is { } security && !security.IsSatisfiedBy(candidate.RootElement.SecurityTagsValue))
+                    if (query.Security is { } security)
                     {
-                        candidate.Dispose();
-                        continue;
+                        SecurityTagSet securityTags = candidate.RootElement.SecurityTags.IsNotUndefined()
+                            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(candidate.RootElement.SecurityTags).Memory)
+                            : SecurityTagSet.Empty;
+                        if (!security.IsSatisfiedBy(securityTags))
+                        {
+                            candidate.Dispose();
+                            continue;
+                        }
                     }
 
                     if (matches.Count == limit)
