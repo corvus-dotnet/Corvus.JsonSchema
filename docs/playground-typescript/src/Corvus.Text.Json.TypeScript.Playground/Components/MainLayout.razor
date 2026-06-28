@@ -1,0 +1,124 @@
+@inherits LayoutComponentBase
+@page "/"
+@inject CodeGenerationService CodeGenService
+
+<div class="pg-root">
+    <div class="pg-toolbar">
+        <h1>Corvus.Text.Json <span class="accent">TypeScript</span> Playground</h1>
+        <div class="spacer"></div>
+        <button id="generate-btn" class="pg-btn primary" @onclick="GenerateAsync" disabled="@isGenerating">
+            @(isGenerating ? "Generating…" : "Generate")
+        </button>
+    </div>
+
+    <div class="pg-body">
+        <div class="pg-panel">
+            <div class="pg-panel-title">JSON Schema</div>
+            <div class="pg-editor-host">
+                <StandaloneCodeEditor @ref="schemaEditor" Id="schema-editor" ConstructionOptions="SchemaEditorOptions" />
+            </div>
+        </div>
+        <div class="pg-panel">
+            <div class="pg-panel-title">Generated TypeScript</div>
+            <div class="pg-editor-host">
+                <StandaloneCodeEditor @ref="generatedEditor" Id="generated-editor" ConstructionOptions="GeneratedEditorOptions" />
+            </div>
+        </div>
+    </div>
+
+    <div class="pg-status @(hasError ? "error" : "")" id="pg-status">@statusMessage</div>
+
+    @* Hidden mirror of the generated source — a stable target for automated verification. *@
+    <pre id="generated-raw" style="display:none">@generatedText</pre>
+</div>
+
+@code {
+    private StandaloneCodeEditor? schemaEditor;
+    private StandaloneCodeEditor? generatedEditor;
+    private bool isGenerating;
+    private bool hasError;
+    private string statusMessage = "Ready — edit the schema and press Generate.";
+    private string generatedText = string.Empty;
+
+    private const string DefaultSchema = """
+        {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "title": "Person",
+          "type": "object",
+          "required": [ "familyName" ],
+          "properties": {
+            "familyName": { "type": "string" },
+            "givenName": { "type": "string" },
+            "birthDate": { "type": "string", "format": "date" },
+            "height": { "type": "number" }
+          }
+        }
+        """;
+
+    private StandaloneEditorConstructionOptions SchemaEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        AutomaticLayout = true,
+        Language = "json",
+        Theme = "vs-dark",
+        Value = DefaultSchema,
+        FontSize = 13,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        ScrollBeyondLastLine = false,
+    };
+
+    private StandaloneEditorConstructionOptions GeneratedEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        AutomaticLayout = true,
+        Language = "typescript",
+        Theme = "vs-dark",
+        Value = "// Press Generate to emit TypeScript from the schema.",
+        FontSize = 13,
+        ReadOnly = true,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        ScrollBeyondLastLine = false,
+    };
+
+    private async Task GenerateAsync()
+    {
+        if (this.schemaEditor is null || this.generatedEditor is null)
+        {
+            return;
+        }
+
+        this.isGenerating = true;
+        this.hasError = false;
+        this.statusMessage = "Generating…";
+        this.StateHasChanged();
+
+        try
+        {
+            string schema = await this.schemaEditor.GetValue();
+            GenerationResult result = await this.CodeGenService.GenerateAsync(schema);
+
+            if (result.Success)
+            {
+                this.generatedText = result.GeneratedTypeScript;
+                await this.generatedEditor.SetValue(this.generatedText);
+                this.hasError = false;
+                this.statusMessage = $"✓ Generated {this.generatedText.Length:N0} characters of TypeScript.";
+            }
+            else
+            {
+                this.generatedText = string.Empty;
+                await this.generatedEditor.SetValue("// " + (result.ErrorMessage ?? "Generation failed."));
+                this.hasError = true;
+                this.statusMessage = result.ErrorMessage ?? "Generation failed.";
+            }
+        }
+        catch (Exception ex)
+        {
+            this.hasError = true;
+            this.statusMessage = "Error: " + ex.Message;
+        }
+        finally
+        {
+            this.isGenerating = false;
+            this.StateHasChanged();
+        }
+    }
+}

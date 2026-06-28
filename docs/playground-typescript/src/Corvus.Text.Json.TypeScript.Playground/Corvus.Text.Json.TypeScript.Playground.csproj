@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>14</LangVersion>
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+    <!-- Local WasmAppHost returns an empty dotnet.js response for generated gzip build assets. -->
+    <DisableBuildCompression>true</DisableBuildCompression>
+    <!-- Standalone tool: skip the Endjin analyzer/editorconfig/lock conventions. -->
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="BlazorMonaco" />
+  </ItemGroup>
+
+  <!-- The TypeScript code-generation engine (the language provider) + the language-neutral V5 core. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\Corvus.Text.Json.TypeScript.CodeGeneration\Corvus.Text.Json.TypeScript.CodeGeneration.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
+  </ItemGroup>
+
+  <!-- Vocabulary analyzers (needed to register schema dialects). -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.4\Corvus.Json.CodeGeneration.4.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.6.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration.7.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.CorvusVocabulary\Corvus.Json.CodeGeneration.CorvusVocabulary.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj" />
+  </ItemGroup>
+
+  <!-- Embed metaschema files as resources (shared with the CLI tool). -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\..\..\src\Corvus.Json.Cli.Core\metaschema\**\*.json"
+                      Link="metaschema\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- Embed sample schema files as resources. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Samples\*.json" LogicalName="Sample.%(Filename)" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,124 @@
+/* Minimal theme + layout for the TypeScript playground foundation (the full theme system lands later). */
+:root {
+    --accent-color: #3178c6; /* TypeScript blue */
+}
+
+[data-theme="dark"] {
+    --bg: #1e1e1e;
+    --bg-panel: #252526;
+    --bg-toolbar: #333333;
+    --fg: #d4d4d4;
+    --fg-dim: #9d9d9d;
+    --border: #3c3c3c;
+    --status-bg: #007acc;
+    --status-fg: #ffffff;
+    --error: #f48771;
+}
+
+[data-theme="light"] {
+    --bg: #ffffff;
+    --bg-panel: #f3f3f3;
+    --bg-toolbar: #e7e7e7;
+    --fg: #1e1e1e;
+    --fg-dim: #6a6a6a;
+    --border: #d0d0d0;
+    --status-bg: #007acc;
+    --status-fg: #ffffff;
+    --error: #c72e2e;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    height: 100%;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+}
+
+#app { height: 100vh; }
+
+.pg-root {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.pg-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    background: var(--bg-toolbar);
+    border-bottom: 1px solid var(--border);
+}
+
+.pg-toolbar h1 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.pg-toolbar h1 .accent { color: var(--accent-color); }
+
+.spacer { flex: 1; }
+
+.pg-btn {
+    border: 1px solid var(--border);
+    background: var(--bg-panel);
+    color: var(--fg);
+    padding: 6px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.pg-btn.primary {
+    background: var(--accent-color);
+    color: #fff;
+    border-color: var(--accent-color);
+    font-weight: 600;
+}
+
+.pg-btn:disabled { opacity: 0.6; cursor: default; }
+
+.pg-body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 0;
+}
+
+.pg-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    border-right: 1px solid var(--border);
+}
+
+.pg-panel:last-child { border-right: none; }
+
+.pg-panel-title {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--fg-dim);
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+}
+
+.pg-editor-host { flex: 1; min-height: 0; }
+.pg-editor-host > * { height: 100%; }
+
+.pg-status {
+    padding: 4px 14px;
+    font-size: 0.8rem;
+    background: var(--status-bg);
+    color: var(--status-fg);
+}
+
+.pg-status.error { background: var(--error); }
