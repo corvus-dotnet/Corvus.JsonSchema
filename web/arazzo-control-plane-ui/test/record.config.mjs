@@ -12,8 +12,9 @@ export default defineConfig({
     baseURL: 'http://localhost:8141',
     viewport: { width: 1280, height: 800 },
     video: { mode: 'on', size: { width: 1280, height: 800 } },
-    // Slow each interaction so the cursor + its effect read on screen ("half speed"); captions add their own holds.
-    launchOptions: { slowMo: 450 },
+    // Slow each interaction enough to read the cursor + its effect, but small enough that a caption leads the change by
+    // only a couple hundred ms (step()'s lead) — not a long pre-action wait. The post-action hold is what gives reading time.
+    launchOptions: { slowMo: 250 },
   },
   // Serve the project root so the demo (/demo) and the kit it imports (/src) both resolve. A dedicated port +
   // reuseExistingServer:false avoids latching onto a stale http.server left on another port from a prior session.

@@ -14,6 +14,14 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, copyToClipboard, define } from './base.js';
 import './administrators-panel.js';
 import './access-request-dialog.js';
+import './credential-dialog.js';
+
+// Status pill colours for a source's existing credential bindings (mirrors credentials-table).
+const CRED_STATUS = {
+  valid: { label: 'valid', color: 'var(--arazzo-status-completed, #2a8a4a)' },
+  expiringSoon: { label: 'expiring', color: 'var(--arazzo-status-suspended, #b07d18)' },
+  expired: { label: 'expired', color: 'var(--arazzo-status-faulted, #d4351c)' },
+};
 
 const STATUS_COLOR = {
   Active: 'var(--arazzo-status-completed, #2a8a4a)',
@@ -132,8 +140,9 @@ class ArazzoCatalogDetail extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
-        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
-        header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+        /* overflow visible so the embedded administrators-panel's grantee-picker dropdown isn't clipped by the card. */
+        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); }
+        header { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--_surface); border-bottom: 1px solid var(--_border); border-radius: var(--_radius) var(--_radius) 0 0; }
         header .wf { font-weight: 700; font-size: 15px; }
         header .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: var(--_muted); }
         header .vswitch { font-size: 12px; color: var(--_muted); display: inline-flex; gap: 5px; align-items: center; }
@@ -151,10 +160,18 @@ class ArazzoCatalogDetail extends ArazzoElement {
         .block { margin: 0 14px 14px; padding: 10px 12px; border: 1px solid var(--_border); border-radius: var(--_radius); }
         .block h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
         .sources { display: flex; flex-direction: column; gap: 6px; }
-        .src { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+        .src { display: grid; gap: 6px; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--_border); }
+        .src:last-child { border-bottom: none; padding-bottom: 0; }
+        .src:first-child { padding-top: 0; }
+        .src-head { display: flex; align-items: center; gap: 8px; }
         .src .name { font-weight: 600; }
-        .src .type { font-size: 11px; color: var(--_muted); }
+        .src .type { font-size: 11px; color: var(--_muted); border: 1px solid var(--_border); border-radius: 999px; padding: 0 6px; }
         .src .grow { flex: 1; }
+        .src-binds { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .src-binds .muted { font-size: 12px; }
+        .bind { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; padding: 3px 8px; border: 1px solid var(--_border); border-radius: 999px; background: var(--_bg); color: var(--_text); cursor: pointer; }
+        .bind:hover { background: var(--_surface); }
+        .bind .cred-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 0 6px; border-radius: 999px; color: #fff; }
         .downloads { display: flex; gap: 8px; flex-wrap: wrap; }
         .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--_border); }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
@@ -175,8 +192,14 @@ class ArazzoCatalogDetail extends ArazzoElement {
         <div class="body"></div>
         <div class="security" part="security" hidden></div>
       </div>
+      <arazzo-credential-dialog></arazzo-credential-dialog>
     `;
     this.$('.close').addEventListener('click', () => this.emit('close'));
+    // Credential setup is rooted here, where the source + its auth are known (§7.5). Re-list a source's bindings on save.
+    this.$('arazzo-credential-dialog').addEventListener('credential-saved', () => {
+      this._creds = null; // invalidate the cache so the new/changed binding shows
+      if (this._version) this.loadSourceBindings(this._version);
+    });
     this.$('.version-switch').addEventListener('change', (e) => {
       const n = e.target.value;
       if (n !== '' && Number(n) !== this.versionNumber) this.setAttribute('version-number', String(n));
@@ -258,6 +281,8 @@ class ArazzoCatalogDetail extends ArazzoElement {
       }
     });
     this.wireDownloads(v);
+    this.wireSources(v);
+    this.loadSourceBindings(v);
     this.renderActions(v);
     this.renderSecurity(v);
   }
@@ -308,14 +333,82 @@ class ArazzoCatalogDetail extends ArazzoElement {
   renderSources(v) {
     const sources = Array.isArray(v.sources) ? v.sources : [];
     if (sources.length === 0) return '';
+    const canWrite = this.hasScope('credentials:write') || this.hasScope('catalog:write');
     const rows = sources.map((s) => `
-      <div class="src">
-        <span class="name">${escapeHtml(s.name)}</span>
-        <span class="type">${escapeHtml(s.type || '')}</span>
-        <span class="grow"></span>
-        <button class="ghost dl-source" type="button" data-name="${escapeHtml(s.name)}" title="Download ${escapeHtml(s.name)}">Download</button>
+      <div class="src" data-name="${escapeHtml(s.name)}">
+        <div class="src-head">
+          <span class="name">${escapeHtml(s.name)}</span>
+          <span class="type">${escapeHtml(s.type || '')}</span>
+          <span class="grow"></span>
+          ${canWrite ? `<button class="ghost setup-cred" type="button" data-name="${escapeHtml(s.name)}">Set up credential…</button>` : ''}
+          <button class="ghost dl-source" type="button" data-name="${escapeHtml(s.name)}" title="Download ${escapeHtml(s.name)}">Download</button>
+        </div>
+        <div class="src-binds" data-name="${escapeHtml(s.name)}"><span class="muted">Loading credentials…</span></div>
       </div>`).join('');
-    return `<div class="block" part="sources"><h4>Source descriptions</h4><div class="sources">${rows}</div></div>`;
+    return `<div class="block" part="sources"><h4>Source descriptions &amp; credentials</h4><div class="sources">${rows}</div></div>`;
+  }
+
+  /** List the version's source credential bindings (cached, one fetch) and render them under each source. */
+  async loadSourceBindings(v) {
+    const client = this.client;
+    const sources = Array.isArray(v?.sources) ? v.sources : [];
+    if (!client || !sources.length) return;
+    if (!this._creds) {
+      // One in-flight fetch shared across the (summary + authoritative) double render, so bindings don't flicker.
+      if (!this._credsPromise) {
+        this._credsPromise = (async () => {
+          const all = [];
+          for await (const page of client.listCredentialsPaged({ limit: 200 })) all.push(...(page.credentials || []));
+          return all;
+        })();
+      }
+      try {
+        this._creds = await this._credsPromise;
+      } catch {
+        this._credsPromise = null;
+        this.$$('.src-binds').forEach((el) => { el.innerHTML = '<span class="muted">Credentials unavailable (needs credentials:read).</span>'; });
+        return;
+      }
+      this._credsPromise = null;
+    }
+    this.renderSourceBinds(v);
+  }
+
+  /** Fill each source's bindings strip from the cached credential list (synchronous — no flicker on re-render). */
+  renderSourceBinds(v) {
+    const sources = Array.isArray(v?.sources) ? v.sources : [];
+    for (const s of sources) {
+      const host = [...this.$$('.src-binds')].find((el) => el.dataset.name === s.name);
+      if (!host) continue;
+      const binds = (this._creds || []).filter((b) => b.sourceName === s.name);
+      if (!binds.length) {
+        host.innerHTML = '<span class="muted">No credential yet — set one up so runs can use this source.</span>';
+        continue;
+      }
+      host.innerHTML = '<span class="muted">Bindings:</span>' + binds.map((b) => {
+        const st = CRED_STATUS[b.credentialStatus] || { label: b.credentialStatus || '—', color: 'var(--_muted)' };
+        return `<button class="bind" type="button" data-key="${escapeHtml(`${b.sourceName}@${b.environment}`)}" title="View / rotate ${escapeHtml(b.environment)}">${escapeHtml(b.environment)} <span class="cred-badge" style="background:${st.color}">${escapeHtml(st.label)}</span></button>`;
+      }).join('');
+      host.querySelectorAll('.bind').forEach((btn) => btn.addEventListener('click', () => {
+        const b = binds.find((x) => `${x.sourceName}@${x.environment}` === btn.dataset.key);
+        if (b) { const dlg = this.$('arazzo-credential-dialog'); dlg.client = this.client; dlg.open(b); }
+      }));
+    }
+  }
+
+  /** Wire each source's "Set up credential…" to derive auth from the source document and open the dialog. */
+  wireSources(v) {
+    this.$$('.setup-cred').forEach((btn) => btn.addEventListener('click', () => this.setupCredential(v, btn.dataset.name)));
+  }
+
+  async setupCredential(v, sourceName) {
+    let sourceDoc = null;
+    try {
+      sourceDoc = await this.client.getCatalogSource(v.baseWorkflowId, v.versionNumber, sourceName);
+    } catch { /* no source doc / no access → the dialog still opens, auth just isn't pre-derived */ }
+    const dlg = this.$('arazzo-credential-dialog');
+    dlg.client = this.client;
+    dlg.open(null, { sourceName, lockSource: true, sourceDoc });
   }
 
   renderDownloads() {

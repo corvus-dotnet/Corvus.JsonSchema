@@ -21,9 +21,11 @@ import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
 
 const SEARCH_LIMIT = 8;
 const DEBOUNCE_MS = 200;
-// The well-known grantee kinds §16.5.4 names; a deployment maps each to an unforgeable sys: identity. (A future
-// increment can source the live set from GET /identity/capabilities' SupportedGranteeKinds.)
-const KINDS = ['person', 'team', 'role', 'workflow', 'tenant'];
+// The well-known grantee kinds a user authors within their tenant; a deployment maps each to an unforgeable sys:
+// identity. `tenant` is deliberately ABSENT — tenant is the ambient isolation boundary the deployment stamps
+// (§14.3/§7.4), never a grantee a user picks. (A future increment can source the live set from GET
+// /identity/capabilities' SupportedGranteeKinds.)
+const KINDS = ['person', 'team', 'role', 'workflow'];
 
 class ArazzoGranteePicker extends ArazzoElement {
   static get observedAttributes() {

@@ -120,6 +120,79 @@ const SCHEMES = {
   },
 };
 
+// Per-store guidance on granting READ access to the runner's execution identity (§13.5 — separation of duties:
+// the control plane only stores the reference and never reads the store; the workflow runner reads the secret at
+// run time as its own least-privilege identity, which the operator must grant read on this exact path). This is the
+// out-of-band step the dialog cannot perform but must make explicit, so a registered binding actually resolves.
+function accessHint(scheme, val) {
+  const lead = 'Your workflow runner reads this at run time as its own identity';
+  const tail = ' — the control plane never reads it.';
+  switch (scheme) {
+    case 'keyvault': {
+      const host = val('host');
+      return `<strong>Runner access</strong> — ${lead}. Grant that identity <code>get</code> on this secret${host ? ` in vault <code>${escapeHtml(host)}</code>` : ''} — role “Key Vault Secrets User”, or a get-secret access policy${tail}`;
+    }
+    case 'awssm':
+      return `<strong>Runner access</strong> — ${lead}. Grant that identity <code>secretsmanager:GetSecretValue</code> on this secret${tail}`;
+    case 'vault': {
+      const mount = val('mount'); const path = val('path');
+      const p = mount && path ? `${mount}/data/${path}` : 'secret/data/…';
+      return `<strong>Runner access</strong> — ${lead}. Add a read policy for the runner’s role: <code>path "${escapeHtml(p)}" { capabilities = ["read"] }</code>${tail}`;
+    }
+    case 'env': {
+      const v = val('var');
+      return `<strong>Runner access</strong> — ${lead}. Ensure <code>${escapeHtml(v || 'THE_VARIABLE')}</code> is set in the runner’s environment${tail}`;
+    }
+    case 'file': {
+      const p = val('path');
+      return `<strong>Runner access</strong> — ${lead}. Ensure the runner (and only the runner) can read <code>${escapeHtml(p || '/path/to/secret')}</code>${tail}`;
+    }
+    default: // raw
+      return `<strong>Runner access</strong> — ${lead}; grant that identity read access to the secret in your store${tail}`;
+  }
+}
+
+// Map one OpenAPI/AsyncAPI security scheme to this dialog's auth kind + the non-secret config it implies — so a
+// credential bound to a catalogued source can derive its shape from the source document instead of being guessed.
+function mapSecurityScheme(s) {
+  if (!s || typeof s !== 'object') return null;
+  const type = s.type;
+  if (type === 'apiKey' || type === 'httpApiKey') { // OpenAPI apiKey / AsyncAPI httpApiKey
+    const config = [];
+    if (s.name) config.push({ key: 'parameterName', value: s.name });
+    if (s.in) config.push({ key: 'location', value: s.in });
+    return { authKind: 'apiKey', config };
+  }
+  if (type === 'http') {
+    const scheme = String(s.scheme || '').toLowerCase();
+    if (scheme === 'bearer') return { authKind: 'bearer', config: [] };
+    if (scheme === 'basic') return { authKind: 'basic', config: [] };
+    return null;
+  }
+  if (type === 'userPassword') return { authKind: 'basic', config: [] }; // AsyncAPI
+  if (type === 'oauth2') {
+    const cc = s.flows?.clientCredentials;
+    if (!cc) return null; // only client-credentials is a server-to-server runner flow
+    const config = [];
+    if (cc.tokenUrl) config.push({ key: 'tokenUrl', value: cc.tokenUrl });
+    const scopes = cc.scopes && typeof cc.scopes === 'object' ? Object.keys(cc.scopes) : [];
+    if (scopes.length) config.push({ key: 'scope', value: scopes.join(' ') });
+    return { authKind: 'oauth2ClientCredentials', config };
+  }
+  return null;
+}
+
+/** Derive `{ authKind, config, schemeName }` from a source document's first usable `components.securitySchemes` entry. */
+function deriveAuthFromSource(doc) {
+  const schemes = doc?.components?.securitySchemes;
+  if (!schemes || typeof schemes !== 'object') return null;
+  for (const [schemeName, s] of Object.entries(schemes)) {
+    const derived = mapSecurityScheme(s);
+    if (derived) return { ...derived, schemeName };
+  }
+  return null;
+}
+
 /** Split a reference into its guided scheme + field values, or `{ scheme: 'raw', raw }` when it cannot be represented. */
 function parseRef(ref) {
   const m = /^([a-z0-9]+):\/\/(.*)$/i.exec(ref || '');
@@ -137,28 +210,38 @@ class ArazzoCredentialDialog extends ArazzoElement {
   }
 
   /**
-   * Open to create (no argument), edit/rotate (a {@link CredentialBindingSummary}), or create for a fixed source
-   * (`open(null, { sourceName, lockSource: true })`) — the source-credential setup launched from adding a workflow.
+   * Open to create (no argument), edit/rotate (a {@link CredentialBindingSummary}), create for a catalogued source with
+   * its auth derived from the source document (`open(null, { sourceName, lockSource: true, sourceDoc })` — the
+   * workflow-rooted setup), or duplicate an existing binding to a new environment (`open(binding, { duplicate: true })`
+   * — clone the source + derived auth/config, blank the environment and references to re-point at that env's secret).
    */
-  open(binding = null, { sourceName, lockSource = false } = {}) {
+  open(binding = null, { sourceName, lockSource = false, sourceDoc = null, duplicate = false } = {}) {
     if (!this._built) this.render();
-    this._editing = binding || null;
-    this._prefillSource = binding ? null : (sourceName || null);
-    this._lockSource = !binding && lockSource && !!sourceName;
-    this._originalRefs = binding ? (binding.secretRefs || []).map((r) => `${r.name}=${r.ref}`).sort().join('\n') : '';
+    const dup = duplicate && binding;
+    this._editing = dup ? null : (binding || null);           // duplicate is a CREATE, not an edit
+    this._duplicateFrom = dup ? binding : null;
+    // Auth shape can be derived from a source document (workflow-rooted), or carried from the binding being duplicated.
+    this._derivedAuth = sourceDoc ? deriveAuthFromSource(sourceDoc)
+      : dup ? { authKind: binding.authKind, config: (binding.config || []).map((c) => ({ key: c.key, value: c.value })), schemeName: null }
+      : null;
+    this._prefillSource = this._editing ? null : (sourceName || (dup ? binding.sourceName : null));
+    this._lockSource = !this._editing && !!this._prefillSource && (lockSource || dup);
+    this._lockAuth = !this._editing && !!this._derivedAuth;
+    this._originalRefs = this._editing ? (binding.secretRefs || []).map((r) => `${r.name}=${r.ref}`).sort().join('\n') : '';
     this.$('form').reset();
     this.$('.error-banner').hidden = true;
-    this.fill(binding);
+    this.fill();
     // The usage picker resolves real grantees via the client (§16.5.4); share the dialog's client and clear any prior pick.
     const picker = this.$('.usage-grantee');
     if (picker) {
       if (this.client) picker.client = this.client;
       picker.reset?.();
     }
-    this.$('.title').textContent = binding
+    this.$('.title').textContent = this._editing
       ? `Edit ${binding.sourceName}@${binding.environment}`
+      : dup ? `Duplicate ${binding.sourceName} to another environment`
       : (this._prefillSource ? `New credential for ${this._prefillSource}` : 'New credential binding');
-    this.$('.confirm').textContent = binding ? 'Save' : 'Create';
+    this.$('.confirm').textContent = this._editing ? 'Save' : 'Create';
     this.$('dialog').showModal();
   }
 
@@ -170,21 +253,37 @@ class ArazzoCredentialDialog extends ArazzoElement {
     return this.$('#authKind').value.trim();
   }
 
-  fill(b) {
-    const ro = !!b; // source/env are the immutable identity when editing
-    this.$('#sourceName').value = b?.sourceName || this._prefillSource || '';
-    this.$('#environment').value = b?.environment || '';
-    this.$('#sourceName').readOnly = ro || this._lockSource; // locked when creating for a fixed source
+  fill() {
+    const b = this._editing;          // the binding being edited (read-only identity), else null
+    const dup = this._duplicateFrom;  // the binding being duplicated (prefill, NEW environment), else null
+    const derived = this._derivedAuth; // derived from a source doc, or carried from the duplicated binding
+    const ro = !!b;                   // editing locks source + environment; create/duplicate do not
+
+    this.$('#sourceName').value = b?.sourceName || dup?.sourceName || this._prefillSource || '';
+    this.$('#environment').value = b?.environment || ''; // duplicate: the environment is the thing you change → blank
+    this.$('#sourceName').readOnly = ro || this._lockSource; // locked for a catalogued/duplicated source
     this.$('#environment').readOnly = ro;
-    this.$('#authKind').value = b?.authKind || 'apiKey';
-    this.$('#description').value = b?.description || '';
+
+    this.$('#authKind').value = derived?.authKind || b?.authKind || 'apiKey';
+    this.$('#authKind').readOnly = this._lockAuth; // derived/carried auth is fixed, not guessed
+    const note = this.$('.authkind-note');
+    note.textContent = (!ro && derived?.schemeName)
+      ? `Derived from ${this._prefillSource || 'the source'}’s “${derived.schemeName}” security scheme.`
+      : (!ro && dup) ? 'Carried over from the source you’re duplicating.' : '';
+    note.hidden = !note.textContent;
+
+    this.$('#description').value = b?.description || dup?.description || '';
     this.$('#expiresAt').value = b?.expiresAt ? String(b.expiresAt).slice(0, 10) : '';
 
+    // Secret refs: prefill when editing; a duplicate starts EMPTY so the operator re-points at the new env's secret.
     const refsByRole = new Map();
     for (const r of b?.secretRefs || []) refsByRole.set(r.name, r.ref);
     this.renderRefs(refsByRole);
 
-    this.renderConfig(new Map((b?.config || []).map((c) => [c.key, c.value])));
+    // Config: derived (workflow-rooted) or carried (duplicate) takes precedence; else the edited binding's own config.
+    this.renderConfig(derived
+      ? new Map(derived.config.map((c) => [c.key, c.value]))
+      : new Map((b?.config || []).map((c) => [c.key, c.value])));
 
     // Usage grants + management tags are set at create and immutable on update — show read-only when editing.
     this.$('fieldset.create-only').hidden = ro;
@@ -243,7 +342,8 @@ class ArazzoCredentialDialog extends ArazzoElement {
         ${removable ? `<button class="rm ghost" type="button" title="Remove" aria-label="Remove">✕</button>` : '<span></span>'}
       </div>
       <div class="reffields"></div>
-      <div class="refpreview muted"></div>`;
+      <div class="refpreview muted"></div>
+      <div class="refaccess"></div>`;
     if (removable) row.querySelector('.rm').addEventListener('click', () => row.remove());
     row.querySelector('.scheme').addEventListener('change', () => this.renderRefFields(row));
     this.$('.refs').appendChild(row);
@@ -290,11 +390,23 @@ class ArazzoCredentialDialog extends ArazzoElement {
     const preview = row.querySelector('.refpreview');
     if (!preview) return;
     const scheme = row.querySelector('.scheme').value;
-    if (scheme === 'raw') { preview.textContent = ''; return; }
-    const ref = this.refRowRef(row);
-    preview.innerHTML = ref
-      ? `→ <code>${escapeHtml(ref)}</code>`
-      : `Fill the fields above — e.g. <code>${escapeHtml(SCHEMES[scheme].example)}</code>`;
+    if (scheme === 'raw') {
+      preview.textContent = '';
+    } else {
+      const ref = this.refRowRef(row);
+      preview.innerHTML = ref
+        ? `→ <code>${escapeHtml(ref)}</code>`
+        : `Fill the fields above — e.g. <code>${escapeHtml(SCHEMES[scheme].example)}</code>`;
+    }
+    this.updateAccessHint(row, scheme);
+  }
+
+  /** Show how to grant the runner's execution identity read access to this secret in the chosen store (§13.5). */
+  updateAccessHint(row, scheme = row.querySelector('.scheme').value) {
+    const el = row.querySelector('.refaccess');
+    if (!el) return;
+    const val = (key) => (row.querySelector(`[data-key="${key}"]`)?.value || '').trim();
+    el.innerHTML = accessHint(scheme, val);
   }
 
   /** Snapshot the current reference rows as role → composed reference, so values survive an auth-kind switch. */
@@ -490,6 +602,8 @@ class ArazzoCredentialDialog extends ArazzoElement {
         .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         input[type="text"], input[type="date"], select { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
         input[readonly] { background: var(--_surface); color: var(--_muted); }
+        .authkind-note { font-size: 11px; color: var(--_muted); margin-top: 4px; }
+        .authkind-note:empty { display: none; }
         .row { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 8px; align-items: center; }
         .row .rm, .reftop .rm { padding: 4px 10px; }
         .refrow { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 10px; display: grid; gap: 8px; background: var(--_bg); }
@@ -501,6 +615,10 @@ class ArazzoCredentialDialog extends ArazzoElement {
         .reffield label { margin-bottom: 2px; }
         .refpreview { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--_muted); word-break: break-all; }
         .refpreview code { background: var(--_surface); padding: 1px 4px; border-radius: 4px; }
+        .refaccess { font-size: 11px; color: var(--_muted); line-height: 1.5; border-left: 2px solid var(--_accent); padding: 4px 0 4px 8px; }
+        .refaccess:empty { display: none; }
+        .refaccess strong { color: var(--_text); }
+        .refaccess code { background: var(--_surface); padding: 1px 4px; border-radius: 4px; word-break: break-all; }
         .refhint { padding: 8px 2px; }
         .config-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .config-fields:empty { display: none; }
@@ -527,7 +645,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
                 <div><label for="environment">Environment *</label><input id="environment" type="text" placeholder="production"></div>
               </div>
               <div class="grid2">
-                <div><label for="authKind">Auth kind *</label><input id="authKind" type="text" list="authkinds" placeholder="apiKey"><datalist id="authkinds">${AUTH_KINDS.map((k) => `<option value="${k}">`).join('')}</datalist></div>
+                <div><label for="authKind">Auth kind *</label><input id="authKind" type="text" list="authkinds" placeholder="apiKey"><datalist id="authkinds">${AUTH_KINDS.map((k) => `<option value="${k}">`).join('')}</datalist><div class="authkind-note" hidden></div></div>
                 <div><label for="expiresAt">Expires</label><input id="expiresAt" type="date"></div>
               </div>
               <div><label for="description">Description</label><input id="description" type="text" placeholder="Petstore API key."></div>
@@ -535,7 +653,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
 
             <fieldset>
               <legend>Secret references *</legend>
-              <div class="subhead">The auth kind sets which secret(s) are needed. Pick each secret's store and fill its fields — the canonical <code>secretRef</code> is composed and previewed. The control plane stores the reference only; it never reads the secret.</div>
+              <div class="subhead">The auth kind sets which secret(s) are needed. Pick each secret's store and fill its fields — the canonical <code>secretRef</code> is composed and previewed. The control plane stores the reference only; it never reads the secret. Writing the secret is a separate, write-capable identity (CI/IaC); the runner that executes the workflow only ever reads it — see each reference's access note.</div>
               <div class="refs"></div>
             </fieldset>
 

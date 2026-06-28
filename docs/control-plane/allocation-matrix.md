@@ -1389,6 +1389,30 @@ ops (OpenAPI + regen; the `Forbidden` factory).
 - **Verified.** 7 `ControlPlaneSecurityApiTests` incl. the guard (self-team write/rule-bounded-write → 403; read-only and
   other-team write → 201), via a `RowSecurityOnly` host so the policy makes the caller visible. slnx **0/0**. **Row done.**
 
+## Open items (residual allocations found after a row was marked ✅)
+
+> The protocol forbids silently deferring a known secondary allocation — log it here with the exact hit so the row's
+> Part D ✅ is not mistaken for "nothing left." Each becomes its own ground→ledger→STOP→change→benchmark micro-row.
+
+### ☐ OPEN — `WriteUpdated` carry-forward fields still reified (found 2026-06-28, during the environments build)
+
+While deriving the `Environment` model (which carries every stored field forward bytes-to-bytes), the same review found
+two **already-✅** write seams still **reify carried-forward stored fields** inside their `WriteUpdated` callback —
+parsing the stored token to a managed `string`/`DateTimeOffset` and reformatting it, instead of copying the original
+JSON token verbatim with `WriteValueIfPresent(writer, …Utf8, (JsonElement)this.X)`:
+
+- `Security/SourceCredentialBinding.cs:559` — `Id`; `:581` — `CreatedBy`; `:582` — `CreatedAt` (Part A row
+  `ISourceCredentialStore.Add/UpdateAsync`, marked ✅).
+- `Security/WorkflowAdministrators.cs:195` — `CreatedBy`; `:196` — `CreatedAt` (Part A row
+  `IWorkflowAdministratorStore.PutAsync`, marked ✅).
+
+These are the **immutable identity/audit fields carried forward on update** — pure copies, so they should never round-trip
+through a string. The seam/draft and write-realization work *was* done (hence ✅); this is a residual *inside* the write
+callback that survived. **Fix:** swap each `writer.WriteString(…, this.XxxValue)` for a bytes-native
+`WriteValueIfPresent(writer, JsonPropertyNames.XxxUtf8, (JsonElement)this.Xxx)` (the form `Environment.WriteUpdated`
+already uses). **Sweep** the remaining models' `WriteUpdated`/`WriteDecision` for the same `WriteString(…, this.\w+Value)`
+carry-forward shape before closing. Each fix re-runs that row's `*StoreBenchmarks` (Update arm) to record the delta.
+
 ## Cross-references
 
 - Skills: `corvus-typed-model-construction`, `corvus-builder-context-threading`,
