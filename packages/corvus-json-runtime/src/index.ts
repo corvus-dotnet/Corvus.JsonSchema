@@ -104,6 +104,18 @@ export function __fmtDateTime(s: string): boolean {
 // accessor TYPE for a duration, but it is too lenient (ISO 8601) to VALIDATE this format.
 export const __durRe = /^P(?:\d+W|(?:\d+Y(?:\d+M(?:\d+D)?)?|\d+M(?:\d+D)?|\d+D)?(?:T(?:\d+H(?:\d+M(?:\d+S)?)?|\d+M(?:\d+S)?|\d+S))?)$/;
 export function __fmtDuration(s: string): boolean { return s !== "P" && __durRe.test(s); }
+// Temporal value accessors (design §5.3.1, gap B2): parse a (validated) branded temporal STRING into the
+// matching Temporal value type. The generated `{Name}AsTemporal` accessor delegates here. `date-time` maps
+// to the absolute Instant (offset-preserving ZonedDateTime is a noted follow-on). The @js-temporal/polyfill
+// import above is the native-or-polyfill "pluggable adapter": consumers get the Temporal types from this
+// package's re-export below, so swapping the adapter is a package concern, not a generated-code concern.
+export function toPlainDate(s: string): Temporal.PlainDate { return Temporal.PlainDate.from(s); }
+export function toInstant(s: string): Temporal.Instant { return Temporal.Instant.from(s); }
+// Temporal.PlainTime.from rejects a 'Z' designator (but accepts a numeric offset); a valid RFC 3339 `time`
+// may end in Z, so normalise a trailing Z to +00:00 (PlainTime is zoneless and ignores the offset anyway).
+export function toPlainTime(s: string): Temporal.PlainTime { return Temporal.PlainTime.from(s.replace(/[Zz]$/, "+00:00")); }
+export function toDuration(s: string): Temporal.Duration { return Temporal.Duration.from(s); }
+export { Temporal };
 export const __ipv4Re = /^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
 export function __fmtIpv6(s: string): boolean {
   if (s.indexOf(":") < 0) { return false; }

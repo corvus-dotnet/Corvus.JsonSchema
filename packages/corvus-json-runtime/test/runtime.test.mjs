@@ -15,6 +15,11 @@ import {
   produce,
   scanTargets,
   applyEditsBytes,
+  toPlainDate,
+  toInstant,
+  toPlainTime,
+  toDuration,
+  Temporal,
 } from "../dist/index.js";
 
 test("__isNum recognises plain numbers and lossless-json source-text numbers", () => {
@@ -93,6 +98,36 @@ test("produce performs a structural-sharing RMW round-trip", () => {
   assert.deepEqual(parsed, { name: "Alice", age: 31 });
   // The unchanged "name" field must be copied through verbatim.
   assert.ok(dec(next).includes('"name":"Alice"'));
+});
+
+test("Temporal converters parse a branded temporal string into the matching Temporal type (gap B2)", () => {
+  // date -> PlainDate, date-time -> the absolute Instant, time -> PlainTime, duration -> Duration. These are
+  // the converters the generated `{name}AsTemporal` accessors delegate to; Temporal is re-exported here so a
+  // consumer gets the types from the package.
+  const d = toPlainDate("2020-01-02");
+  assert.ok(d instanceof Temporal.PlainDate);
+  assert.equal(d.year, 2020);
+  assert.equal(d.month, 1);
+  assert.equal(d.day, 2);
+
+  const inst = toInstant("2020-01-02T03:04:05Z");
+  assert.ok(inst instanceof Temporal.Instant);
+  assert.equal(inst.epochMilliseconds, 1577934245000);
+
+  // toPlainTime normalises a trailing `Z` to +00:00 (Temporal.PlainTime.from rejects a bare `Z`), so both a
+  // numeric-offset and a `Z`-suffixed time parse — a valid RFC 3339 `time` may use either.
+  const t = toPlainTime("13:14:15+02:00");
+  assert.ok(t instanceof Temporal.PlainTime);
+  assert.equal(t.hour, 13);
+  assert.equal(t.minute, 14);
+  assert.equal(t.second, 15);
+  const tz = toPlainTime("13:14:15Z");
+  assert.ok(tz instanceof Temporal.PlainTime && tz.hour === 13 && tz.second === 15);
+
+  const dur = toDuration("P1Y2M3DT4H5M6S");
+  assert.ok(dur instanceof Temporal.Duration);
+  assert.equal(dur.years, 1);
+  assert.equal(dur.hours, 4);
 });
 
 test("scanTargets + applyEditsBytes splice a value at the byte level", () => {

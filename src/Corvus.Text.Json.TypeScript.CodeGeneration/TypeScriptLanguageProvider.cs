@@ -228,7 +228,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         // (@endjin/corvus-json-runtime, §5.5) that every generated module imports — never inlined per module.
         var sb = new StringBuilder();
         sb.Append("// AUTO-GENERATED: idiomatic TS types + registry-composed validators.\n");
-        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results } from \"").Append(this.runtimeModuleSpecifier).Append("\";\n\n");
+        sb.Append("import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from \"").Append(this.runtimeModuleSpecifier).Append("\";\n\n");
         var moduleGuards = new HashSet<string>(StringComparer.Ordinal); // union guard names, unique per module
         foreach (TypeDeclaration td in types)
         {
@@ -634,7 +634,19 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         string fmt = TsEmit.Str(format);
         sb.Append("export type ").Append(name).Append(" = Brand<string, ").Append(fmt).Append(">;\n");
         sb.Append("export function as").Append(name).Append("(value: string): ").Append(name)
-          .Append(" { if (!__fmt(").Append(fmt).Append(", value)) { throw new FormatError(").Append(fmt).Append("); } return value as ").Append(name).Append("; }\n\n");
+          .Append(" { if (!__fmt(").Append(fmt).Append(", value)) { throw new FormatError(").Append(fmt).Append("); } return value as ").Append(name).Append("; }\n");
+
+        // Gap B2 (§5.3.1): the FOUR RFC 3339 temporal formats additionally get a `{Name}AsTemporal` accessor
+        // that parses the branded string into its matching Temporal value type (date -> PlainDate, date-time ->
+        // the absolute Instant, time -> PlainTime, duration -> Duration), delegating to the shared runtime
+        // converter. Always emitted (not assertion-gated) — it is a pure parse helper; validation is untouched.
+        if (KnownTemporalFormats.TryGetValue(format, out (string TemporalType, string Converter) temporal))
+        {
+            sb.Append("export function ").Append(Camel(name)).Append("AsTemporal(value: ").Append(name).Append("): Temporal.")
+              .Append(temporal.TemporalType).Append(" { return ").Append(temporal.Converter).Append("(value); }\n");
+        }
+
+        sb.Append('\n');
     }
 
     // A sub-64-bit integer format (design §5.3.1/§4.1): a branded alias `Brand<number, "format">` + a
@@ -1022,6 +1034,19 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 
     private static bool IsBrandedStringFormat(TypeDeclaration td)
         => SchemaTypes(td).Contains("string") && td.Format() is string f && KnownStringFormats.Contains(f);
+
+    // The FOUR RFC 3339 temporal formats that, in addition to the branded string + `as{Name}` factory, get a
+    // `{Name}AsTemporal` accessor parsing into a Temporal value (design §5.3.1, gap B2): the Temporal type the
+    // accessor returns and the shared-runtime converter it delegates to. `date-time` -> the absolute Instant
+    // (offset-preserving ZonedDateTime is a noted follow-on, not generated here).
+    private static readonly IReadOnlyDictionary<string, (string TemporalType, string Converter)> KnownTemporalFormats =
+        new Dictionary<string, (string, string)>(StringComparer.Ordinal)
+        {
+            ["date"] = ("PlainDate", "toPlainDate"),
+            ["date-time"] = ("Instant", "toInstant"),
+            ["time"] = ("PlainTime", "toPlainTime"),
+            ["duration"] = ("Duration", "toDuration"),
+        };
 
     // Sub-64-bit integer formats (OpenAPI int16/int32/uint16/uint32) -> a branded `Brand<number, "fmt">` +
     // a validating factory, mirroring the string-format brand (§5.3.1). The inclusive [Min, Max] range is

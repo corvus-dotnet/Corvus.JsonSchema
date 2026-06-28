@@ -38,6 +38,7 @@ const SUITE_TABLE = [
   { test: "arrays-access.test.ts",   schema: "arrays.json",          importDir: "out-arrays" },
   { test: "formats-access.test.ts",  schema: "formats.json",         importDir: "out-formats" },
   { test: "intformat-access.test.ts", schema: "intformat.json",      importDir: "out-intformat" },
+  { test: "temporal-access.test.ts", schema: "temporal.json",        importDir: "out-temporal" },
   { test: "mutation-access.test.ts", schema: "mutation.json",        importDir: "out-mutation" },
   { test: "produce-access.test.ts",  schema: "profile.json",         importDir: "out-profile" },
   { test: "rmw-access.test.ts",      schema: "rmw.json",             importDir: "out-rmw" },
