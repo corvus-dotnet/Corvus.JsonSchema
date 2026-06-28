@@ -143,4 +143,15 @@ const subFails = (r: Results, prefix: string) =>
   eq(evaluatePerson({ name: "Ada", address: { zip: "12345" }, disj: "abcdef", pick: 4 }, new Ev()), true, "boolean disjunctions satisfied -> true");
 }
 
+// Root-level keyword failure: a document-root keyword (here `required`) must carry a '#'-fragment
+// absoluteKeywordLocation (base-URI + '#' + pointer), not a path-like one missing the '#'.
+{
+  const { ok, r } = collect({ name: "Ada" }); // missing required `address`
+  eq(ok, false, "root required -> ok=false");
+  const reqErr = r.failures.find((f) => f.keywordLocation.endsWith("/required"));
+  eq(reqErr !== undefined, true, "root required failure recorded");
+  eq(reqErr!.keywordLocation, "/required", "root required keywordLocation = /required (path taken)");
+  eq(reqErr!.absoluteKeywordLocation!.endsWith("#/required"), true, "root absoluteKeywordLocation has the '#' fragment");
+}
+
 console.log(`COLLECTOR ${pass} passed, ${fail} failed`);

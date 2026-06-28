@@ -1123,12 +1123,11 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             return;
         }
 
-        string loc = td.LocatedSchema.Location.ToString();
         sb.Append("  if (r !== null && r.verbose && ok) {");
         foreach ((string kw, string valueJson) in present)
         {
             sb.Append(" r.annotate(").Append(TsEmit.Str(kw)).Append(", ").Append(valueJson)
-              .Append(", kl + ").Append(TsEmit.Str("/" + kw)).Append(", il, ").Append(TsEmit.Str(loc + "/" + kw)).Append(");");
+              .Append(", kl + ").Append(TsEmit.Str("/" + kw)).Append(", il, ").Append(TsEmit.Str(TsEmit.AbsoluteKeywordLocation(td, kw))).Append(");");
         }
 
         sb.Append(" }\n");

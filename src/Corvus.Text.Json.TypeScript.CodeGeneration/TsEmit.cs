@@ -19,10 +19,23 @@ internal static class TsEmit
     // ok = false to fall through and gather every failure.
     public static string FailRecord(TypeDeclaration td, string? keyword)
     {
-        string loc = td.LocatedSchema.Location.ToString();
         string seg = keyword is null ? string.Empty : "/" + keyword;
         string klExpr = seg.Length == 0 ? "kl" : "kl + " + Str(seg);
-        return "r.fail(" + klExpr + ", il, " + Str(loc + seg) + ");";
+        return "r.fail(" + klExpr + ", il, " + Str(AbsoluteKeywordLocation(td, keyword)) + ");";
+    }
+
+    // absoluteKeywordLocation is base-URI + '#' + JSON-pointer fragment. A document-root schema's resolved
+    // location carries no '#' fragment, so it must be supplied before the keyword segment; subschema
+    // locations (properties / $defs / $ref targets) already include '#'.
+    public static string AbsoluteKeywordLocation(TypeDeclaration td, string? keyword)
+    {
+        string loc = td.LocatedSchema.Location.ToString();
+        if (!loc.Contains('#'))
+        {
+            loc += "#";
+        }
+
+        return keyword is null ? loc : loc + "/" + keyword;
     }
 
     public static string FailShape(TypeDeclaration td, string? keyword)
