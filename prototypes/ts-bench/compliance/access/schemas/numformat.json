@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Measure",
+  "type": "object",
+  "properties": {
+    "level": { "type": "integer", "format": "byte" },
+    "delta": { "type": "integer", "format": "sbyte" },
+    "ratio": { "type": "number", "format": "half" },
+    "weight": { "type": "number", "format": "single" },
+    "mass": { "type": "number", "format": "double" },
+    "amount": { "type": "number", "format": "decimal" }
+  },
+  "required": ["level"]
+}

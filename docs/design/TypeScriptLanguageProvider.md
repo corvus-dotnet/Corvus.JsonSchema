@@ -1895,6 +1895,16 @@ Severity = impact on a production‑quality engine. Effort = S / M / L.
 > validate path — no pressing allocation cut to chase. Remaining backlog: **A2–A6**, **B3/B5**, **G7**
 > (playground); **H1/H2** stay deferred.
 
+> **Update (2026‑06‑28e).** **B5 + B3** have landed (exotic numerics). **B5**: the numeric‑format brand family
+> (B4) is extended to the full C# `WellKnownNumericFormatHandler` set — `byte`/`sbyte` (integer+range),
+> `half` (range), `single`/`double` (unbounded type tags), `decimal` (range) — each a `Brand<number,"fmt">` +
+> `as{Name}` factory, with the brand‑side and validator‑side ranges kept in sync (`KnownFloatFormats` ↔
+> `TsFormatHandler.FloatFormatRanges`). Numeric‑only: an explicitly string‑typed `format:byte` (OpenAPI base64)
+> is NOT number‑branded. **B3**: a zero‑dependency big‑number seam — runtime `exactNumber` + re‑exported
+> `parseLossless` surface exact decimal digits as a string, and `decimal` fields get `{name}AsExact` (the plug
+> point for decimal.js/bignumber.js; no bundled dep). Covered by a runtime test + the `numformat-access` suite.
+> Remaining backlog: **A2–A6**, **G7** (playground); **H1/H2** stay deferred.
+
 ### A — Type surface & output structure
 
 | # | Gap | Now | Desired | Sev | Eff |
@@ -1915,9 +1925,9 @@ Severity = impact on a production‑quality engine. Effort = S / M / L.
 |---|-----|-----|---------|-----|-----|
 | B1 | **`default` not applied** | annotation‑only: the property is made optional, the value is not surfaced | apply defaults on read/build (or a `withDefaults` helper); at minimum a JSDoc note | Med | S |
 | B2 | **Temporal value accessors** | date/time/duration are branded *strings* (Temporal is used internally for validation only) | generated accessors returning `Temporal.PlainDate` / `ZonedDateTime` / `Duration` via a pluggable adapter (§5.3.1) | Med | M |
-| B3 | **Arbitrary‑precision number value** | type is `number`; the *evaluator* is exact (lossless‑json) but the *value* isn't a big‑number | a first‑class big‑number value via a pluggable adapter (bignumber.js/decimal.js seam) | Low | M |
+| B3 | **Arbitrary‑precision number value** | ✅ **done (2026‑06‑28, zero‑dep seam)** — runtime `exactNumber` + re‑exported `parseLossless` surface the exact decimal digits as a string; `decimal`‑format fields get a `{name}AsExact` accessor — the plug point for decimal.js/bignumber.js (no bundled dependency, per the zero‑dep ethos) | — | Low | M |
 | B4 | **Smaller numeric formats** | `int64`/`uint64`/`int128`/`uint128` → `bigint` (done) | `int16`/`int32`/`uint16`/`uint32` → `number` + range brand & check; currently no range emitted | Med | M |
-| B5 | **Exotic numeric formats** | none | `half`/`single`/`double`/`decimal`/`byte` typed treatment | Low | M |
+| B5 | **Exotic numeric formats** | ✅ **done (2026‑06‑28)** — `byte`/`sbyte` (integer+range brands), `half` (range brand), `single`/`double` (unbounded type‑tag brands), `decimal` (range brand + `AsExact`), mirroring the C# `WellKnownNumericFormatHandler`; brand + validator ranges in sync; numeric‑only (a string `format:byte` is left alone) | — | Low | M |
 
 ### C — Annotations & developer experience
 

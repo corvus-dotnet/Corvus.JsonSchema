@@ -22,6 +22,8 @@ import {
   Temporal,
   canonicalize,
   canonicalJson,
+  exactNumber,
+  parseLossless as rtParseLossless,
 } from "../dist/index.js";
 
 test("__isNum recognises plain numbers and lossless-json source-text numbers", () => {
@@ -160,4 +162,21 @@ test("canonicalize/canonicalJson produce RFC 8785 JCS output (recursive UTF-16 k
   // Order-independent: different input key order yields byte-identical canonical output (content-addressing).
   assert.equal(dec(canonicalize({ b: 1, a: 2, c: { e: 1, d: 2 } })), dec(canonicalize({ c: { d: 2, e: 1 }, a: 2, b: 1 })));
   assert.equal(dec(canonicalize({ b: 1, a: 2 })), '{"a":2,"b":1}');
+});
+
+test("exactNumber returns exact digits for a lossless-parsed number, ECMAScript form otherwise (gap B3)", () => {
+  // A plain JS number -> its ECMAScript string form (lossy beyond ~17 sig digits, by design).
+  assert.equal(exactNumber(42), "42");
+  assert.equal(exactNumber(1.5), "1.5");
+
+  // parseLossless keeps the exact source digits (a LosslessNumber); exactNumber surfaces them verbatim, which
+  // JSON.parse would have rounded. This is the big-number seam — feed the string into decimal.js / bignumber.js.
+  const exactDigits = "123456789012345678901234567890.123456789";
+  const losslessValue = rtParseLossless(`{"price":${exactDigits}}`);
+  assert.equal(exactNumber(losslessValue.price), exactDigits);
+  // The lossy round-trip differs, proving the win.
+  assert.notEqual(String(JSON.parse(`{"price":${exactDigits}}`).price), exactDigits);
+
+  // A big integer beyond Number.MAX_SAFE_INTEGER stays exact through parseLossless.
+  assert.equal(exactNumber(rtParseLossless('{"n":9007199254740993}').n), "9007199254740993");
 });

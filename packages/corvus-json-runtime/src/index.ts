@@ -66,6 +66,20 @@ export function canonicalize(value: unknown): Uint8Array {
   return new TextEncoder().encode(canonicalJson(value));
 }
 
+// Exact arbitrary-precision number access (gap B3, §5.3) — the zero-dependency big-number seam. The validator
+// is already exact (lossless-json), but a value READ as a JS `number` loses precision beyond ~15-17 significant
+// digits. `exactNumber` returns the EXACT decimal digits as a string when the value carries them — i.e. when the
+// document was parsed with `parseLossless` (re-exported below), so numbers arrive as `LosslessNumber` — and the
+// plain ECMAScript form otherwise. Feed the returned string into a big-number library (decimal.js / bignumber.js);
+// the generated `{name}AsExact` accessors on `decimal`-format fields delegate here.
+export function exactNumber(value: unknown): string {
+  return isLosslessNumber(value) ? value.toString() : String(value);
+}
+
+// lossless-json's `parse` (re-exported), so a consumer can obtain exact-digit values without taking a direct
+// dependency: `exactNumber((parseLossless(text) as { price: unknown }).price)`.
+export { parse as parseLossless } from "lossless-json";
+
 export interface Failure { readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string; }
 export interface Annotation { readonly keyword: string; readonly value: unknown; readonly keywordLocation: string; readonly instanceLocation: string; readonly absoluteKeywordLocation?: string; }
 export class Results {

@@ -328,7 +328,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 
     // The shared-runtime import line every generated module emits (§5.5); identical across emission modes.
     private string RuntimeImportLine()
-        => "import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from \""
+        => "import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from \""
          + this.runtimeModuleSpecifier + "\";\n";
 
     // True when the relative runtime specifier means re-emit corvus-runtime.ts alongside the module(s); a
@@ -381,6 +381,10 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             else if (IsBrandedIntegerFormat(td))
             {
                 EmitIntegerBrandAlias(sb, td);
+            }
+            else if (IsBrandedFloatFormat(td))
+            {
+                EmitFloatBrandAlias(sb, td);
             }
         }
 
@@ -862,6 +866,46 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
           .Append(") { throw new FormatError(").Append(fmt).Append("); } return value as ").Append(name).Append("; }\n\n");
     }
 
+    // A floating-point / arbitrary-precision numeric format (gap B5, §5.3.1): a branded alias
+    // `Brand<number, "format">` + a validating factory. The factory range-checks (NOT integer); an unbounded
+    // format (single/double) mints with no check (a pure type tag). `decimal` additionally gets the gap-B3
+    // `{name}AsExact` accessor — the exact decimal digits as a string, the zero-dependency big-number seam.
+    private static void EmitFloatBrandAlias(StringBuilder sb, TypeDeclaration td)
+    {
+        string? format = td.Format();
+        if (format is null || !KnownFloatFormats.TryGetValue(format, out (double? Min, double? Max) range))
+        {
+            return;
+        }
+
+        string name = FinalName(td);
+        string fmt = TsEmit.Str(format);
+        sb.Append("export type ").Append(name).Append(" = Brand<number, ").Append(fmt).Append(">;\n");
+        sb.Append("export function as").Append(name).Append("(value: number): ").Append(name);
+        if (range is { Min: double min, Max: double max })
+        {
+            sb.Append(" { if (value < ").Append(JsNum(min)).Append(" || value > ").Append(JsNum(max))
+              .Append(") { throw new FormatError(").Append(fmt).Append("); } return value as ").Append(name).Append("; }\n");
+        }
+        else
+        {
+            sb.Append(" { return value as ").Append(name).Append("; }\n");
+        }
+
+        // Gap B3 (§5.3): a `decimal` value read as a JS number loses precision beyond ~15-17 significant digits.
+        // `{name}AsExact` returns the exact decimal digits as a string (when the document was parsed with the
+        // runtime's `parseLossless`), the plug point for a big-number adapter (decimal.js / bignumber.js).
+        if (format == "decimal")
+        {
+            sb.Append("export function ").Append(Camel(name)).Append("AsExact(value: ").Append(name).Append("): string { return exactNumber(value); }\n");
+        }
+
+        sb.Append('\n');
+    }
+
+    // Format a double bound as a round-trippable, JS-valid numeric literal (e.g. 65504, 7.922816251426434e+28).
+    private static string JsNum(double value) => value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+
     // A pure map / dictionary object (additionalProperties value type, no declared properties): the
     // idiomatic TS surface is `Readonly<Record<string, T>>` (design §5.3).
     private static void EmitMapAlias(StringBuilder sb, TypeDeclaration td, FallbackObjectPropertyType fb)
@@ -1042,6 +1086,11 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         }
 
         if (IsBrandedIntegerFormat(td))
+        {
+            return FinalName(td);
+        }
+
+        if (IsBrandedFloatFormat(td))
         {
             return FinalName(td);
         }
@@ -1261,14 +1310,38 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
     private static readonly IReadOnlyDictionary<string, (long Min, long Max)> KnownIntegerFormats =
         new Dictionary<string, (long, long)>(StringComparer.Ordinal)
         {
+            ["byte"] = (0, 255),
+            ["sbyte"] = (-128, 127),
             ["int16"] = (-32768, 32767),
             ["uint16"] = (0, 65535),
             ["int32"] = (-2147483648, 2147483647),
             ["uint32"] = (0, 4294967295),
         };
 
+    // Floating-point / arbitrary-precision numeric formats (gap B5, mirroring the C# WellKnownNumericFormatHandler):
+    // a branded `Brand<number, "fmt">` + a validating factory. The inclusive [Min, Max] range is a RANGE check
+    // (NOT integer); `half` is bounded to its representable range, `single`/`double` accept any number (the C#
+    // cast saturates, so they are brand-only type tags), `decimal` is bounded to the .NET decimal range. A null
+    // bound means "no check on that side". `decimal` additionally gets the gap-B3 `{name}AsExact` seam.
+    private static readonly IReadOnlyDictionary<string, (double? Min, double? Max)> KnownFloatFormats =
+        new Dictionary<string, (double?, double?)>(StringComparer.Ordinal)
+        {
+            ["half"] = (-65504, 65504),
+            ["single"] = (null, null),
+            ["float"] = (null, null),
+            ["double"] = (null, null),
+            ["decimal"] = (-7.922816251426434e28, 7.922816251426434e28),
+        };
+
+    // A numeric format only brands a numeric value: an OpenAPI `format: byte` (and friends) on a STRING is a
+    // different feature (base64), so an explicitly string-typed schema is never numeric-format-branded.
+    private static bool IsNumericFormatBrandable(TypeDeclaration td) => !SchemaTypes(td).Contains("string");
+
     private static bool IsBrandedIntegerFormat(TypeDeclaration td)
-        => td.Format() is string f && KnownIntegerFormats.ContainsKey(f);
+        => td.Format() is string f && KnownIntegerFormats.ContainsKey(f) && IsNumericFormatBrandable(td);
+
+    private static bool IsBrandedFloatFormat(TypeDeclaration td)
+        => td.Format() is string f && KnownFloatFormats.ContainsKey(f) && IsNumericFormatBrandable(td);
 
     // 64-bit+ integer formats exceed JS safe-integer range -> bigint (§4.1).
     private static bool IsBigIntFormat(TypeDeclaration td)
