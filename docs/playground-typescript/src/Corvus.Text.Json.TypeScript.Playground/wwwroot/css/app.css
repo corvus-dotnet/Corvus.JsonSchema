@@ -83,6 +83,29 @@ html, body {
 
 .pg-btn:disabled { opacity: 0.6; cursor: default; }
 
+.pg-select {
+    background: var(--bg-panel);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.pg-icon-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--fg);
+    font-size: 1rem;
+    line-height: 1;
+    padding: 5px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.pg-icon-btn:hover { background: var(--bg-panel); border-color: var(--border); }
+
 .pg-body {
     flex: 1;
     display: grid;

@@ -44,6 +44,23 @@ window.playgroundInterop = (function () {
             try { if (window.monaco) { monaco.editor.setTheme(theme === 'light' ? 'vs' : 'vs-dark'); } } catch (e) { /* not ready */ }
         },
 
+        // The persisted theme preference ('auto' | 'light' | 'dark').
+        getThemePref: function () {
+            try { return localStorage.getItem('playground-theme') || 'auto'; } catch (e) { return 'auto'; }
+        },
+
+        // Persist + apply a theme preference; resolves 'auto' against the OS setting. Returns the resolved
+        // theme ('light' | 'dark') so the caller can sync its Monaco theme.
+        setTheme: function (pref) {
+            var resolved = pref;
+            if (pref === 'auto') {
+                resolved = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+            }
+            try { localStorage.setItem('playground-theme', pref); } catch (e) { /* ignore */ }
+            this.applyTheme(resolved);
+            return resolved;
+        },
+
         getEditorValue: function (id) {
             try {
                 var editors = (window.monaco && monaco.editor.getEditors) ? monaco.editor.getEditors() : [];
