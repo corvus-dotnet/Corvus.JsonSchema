@@ -113,9 +113,11 @@
     reach.client = client;
     bindings.client = client;
 
-    // Credentials: the table emits; wire its new/select to the dialog, and the dialog's save back to a refresh.
-    credTable.addEventListener('credential-new', () => credDialog.open());
+    // Credentials: the Sources tab is a MANAGEMENT surface — select a row to view/rotate, or Duplicate to another
+    // environment (clone source + auth, re-point the secret). Creating a credential is rooted in the catalog's
+    // per-workflow Sources panel (where the source + its auth are known), not here. (§7.5)
     credTable.addEventListener('credential-selected', (e) => credDialog.open(e.detail.binding));
+    credTable.addEventListener('credential-duplicate', (e) => credDialog.open(e.detail.binding, { duplicate: true }));
     credDialog.addEventListener('credential-saved', () => credTable.refresh());
 
     // The §15 administrator set now lives on each workflow's detail page (the catalog's Security section), not a
@@ -163,7 +165,7 @@
     for (const type of ['version-selected', 'workflow-added', 'version-changed', 'version-deleted', 'purge-completed', 'error']) {
       catalog.addEventListener(type, (e) => console.log(`[arazzo:catalog] ${type}`, e.detail));
     }
-    for (const type of ['credential-selected', 'credential-new', 'credential-saved', 'loaded', 'error']) {
+    for (const type of ['credential-selected', 'credential-duplicate', 'credential-saved', 'loaded', 'error']) {
       credTable.addEventListener(type, (e) => console.log(`[arazzo:credentials] ${type}`, e.detail));
     }
     for (const type of ['access-request-submitted', 'access-request-decided', 'loaded', 'error']) {

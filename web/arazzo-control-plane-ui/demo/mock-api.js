@@ -449,8 +449,16 @@ function seedCatalog() {
   const hr = 60 * 60000;
   const day = 24 * hr;
   const sources = {
-    petstore: { openapi: '3.1.0', info: { title: 'Petstore', version: '1.0.0' } },
-    events: { asyncapi: '3.0.0', info: { title: 'Events', version: '1.0.0' } },
+    // Real security schemes so the credential dialog can DERIVE the auth kind + config from the source document
+    // (petstore: an OpenAPI apiKey in a header; events: an AsyncAPI oauth2 client-credentials flow).
+    petstore: {
+      openapi: '3.1.0', info: { title: 'Petstore', version: '1.0.0' },
+      components: { securitySchemes: { apiKey: { type: 'apiKey', name: 'X-Api-Key', in: 'header' } } },
+    },
+    events: {
+      asyncapi: '3.0.0', info: { title: 'Events', version: '1.0.0' },
+      components: { securitySchemes: { tokenAuth: { type: 'oauth2', flows: { clientCredentials: { tokenUrl: 'https://idp.example.com/oauth/token', scopes: { 'events:read': 'Read events' } } } } } },
+    },
   };
   const sourceRefs = [{ name: 'petstore', type: 'openapi' }, { name: 'events', type: 'asyncapi' }];
   const teamA = { name: 'Reconciliation Team', email: 'reconcile@example.com', team: 'Platform', url: 'https://runbooks.example.com/nightly-reconcile' };
