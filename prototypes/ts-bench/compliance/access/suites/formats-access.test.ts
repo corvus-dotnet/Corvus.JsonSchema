@@ -17,12 +17,12 @@ function throws(label: string, fn: () => unknown): void {
 const ID = "00000000-0000-0000-0000-000000000000";
 
 // validating factory mints the brand (which IS its base string at runtime)
-eq("Id.as mints a uuid brand", Id.as(ID), ID);
-eq("Owner.as mints an email brand", Owner.as("a@b.com"), "a@b.com");
+eq("Id.from mints a uuid brand", Id.from(ID), ID);
+eq("Owner.from mints an email brand", Owner.from("a@b.com"), "a@b.com");
 
 // factory rejects invalid input (mint only after the format check)
-throws("Id.as rejects an invalid uuid", () => Id.as("not-a-uuid"));
-throws("Owner.as rejects an invalid email", () => Owner.as("nope"));
+throws("Id.from rejects an invalid uuid", () => Id.from("not-a-uuid"));
+throws("Owner.from rejects an invalid email", () => Owner.from("nope"));
 
 // validate, then consume as the typed interface; a branded field reads as its base string
 const raw: unknown = { id: ID, createdAt: "2026-06-24T10:00:00Z", balance: 100, owner: "a@b.com" };

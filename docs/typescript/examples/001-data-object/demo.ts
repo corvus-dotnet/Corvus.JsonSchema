@@ -8,7 +8,7 @@ const dec = new TextDecoder();
 const bytes = Person.build({
   familyName: "Brontë",
   givenName: "Anne",
-  birthDate: BirthDate.as("1820-01-17"), // `format: date` is a validating branded factory
+  birthDate: BirthDate.from("1820-01-17"), // `format: date` is a validating branded factory
   height: 1.52,
 });
 console.log("1. built:        ", dec.decode(bytes));
@@ -30,7 +30,7 @@ console.log("4. patched:      ", dec.decode(patched));
 
 // 5. Produce — immer-style recipe over a typed, mutable Draft<Person>.
 const produced = Person.produce(bytes, (d) => {
-  d.birthDate = BirthDate.as("1984-06-03");
+  d.birthDate = BirthDate.from("1984-06-03");
 });
 console.log("5. produced:     ", dec.decode(produced));
 

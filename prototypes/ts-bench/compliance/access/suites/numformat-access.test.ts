@@ -19,38 +19,38 @@ function throws(label: string, fn: () => unknown): void {
 }
 
 // byte: integer in [0, 255]
-eq("Level.as mints a byte (in-range)", Level.as(200), 200);
-eq("Level.as accepts 0", Level.as(0), 0);
-eq("Level.as accepts 255", Level.as(255), 255);
-throws("Level.as rejects 256", () => Level.as(256));
-throws("Level.as rejects -1", () => Level.as(-1));
-throws("Level.as rejects a non-integer", () => Level.as(1.5));
+eq("Level.from mints a byte (in-range)", Level.from(200), 200);
+eq("Level.from accepts 0", Level.from(0), 0);
+eq("Level.from accepts 255", Level.from(255), 255);
+throws("Level.from rejects 256", () => Level.from(256));
+throws("Level.from rejects -1", () => Level.from(-1));
+throws("Level.from rejects a non-integer", () => Level.from(1.5));
 
 // sbyte: integer in [-128, 127]
-eq("Delta.as mints an sbyte", Delta.as(-128), -128);
-eq("Delta.as accepts 127", Delta.as(127), 127);
-throws("Delta.as rejects 128", () => Delta.as(128));
-throws("Delta.as rejects -129", () => Delta.as(-129));
+eq("Delta.from mints an sbyte", Delta.from(-128), -128);
+eq("Delta.from accepts 127", Delta.from(127), 127);
+throws("Delta.from rejects 128", () => Delta.from(128));
+throws("Delta.from rejects -129", () => Delta.from(-129));
 
 // half: RANGE check [-65504, 65504], fractional allowed (NOT integer)
-eq("Ratio.as accepts a fractional half", Ratio.as(1.25), 1.25);
-eq("Ratio.as accepts the max boundary", Ratio.as(65504), 65504);
-eq("Ratio.as accepts the min boundary", Ratio.as(-65504), -65504);
-throws("Ratio.as rejects over-range", () => Ratio.as(70000));
-throws("Ratio.as rejects under-range", () => Ratio.as(-70000));
+eq("Ratio.from accepts a fractional half", Ratio.from(1.25), 1.25);
+eq("Ratio.from accepts the max boundary", Ratio.from(65504), 65504);
+eq("Ratio.from accepts the min boundary", Ratio.from(-65504), -65504);
+throws("Ratio.from rejects over-range", () => Ratio.from(70000));
+throws("Ratio.from rejects under-range", () => Ratio.from(-70000));
 
 // single / double: unbounded brands (type tags only — any number mints)
-eq("Weight.as mints a single with no range check", Weight.as(3.4e38), 3.4e38);
-eq("Mass.as mints a double with no range check", Mass.as(1e300), 1e300);
+eq("Weight.from mints a single with no range check", Weight.from(3.4e38), 3.4e38);
+eq("Mass.from mints a double with no range check", Mass.from(1e300), 1e300);
 
 // decimal: range-checked brand + the gap-B3 exact-digits accessor
-eq("Amount.as mints a decimal", Amount.as(1.5), 1.5);
-eq("Amount.asExact returns the value's digits", Amount.asExact(Amount.as(1.5)), "1.5");
+eq("Amount.from mints a decimal", Amount.from(1.5), 1.5);
+eq("Amount.toExact returns the value's digits", Amount.toExact(Amount.from(1.5)), "1.5");
 
-// gap B3 win: a decimal parsed losslessly keeps digits a JS number would round away; Amount.asExact surfaces them.
+// gap B3 win: a decimal parsed losslessly keeps digits a JS number would round away; Amount.toExact surfaces them.
 const exact = "123456789012345678901234567890.5";
 const losslessAmount = (parseLossless(`{"amount":${exact}}`) as { amount: Amount }).amount;
-eq("Amount.asExact preserves exact digits from a lossless parse", Amount.asExact(losslessAmount), exact);
+eq("Amount.toExact preserves exact digits from a lossless parse", Amount.toExact(losslessAmount), exact);
 
 // validate (format is annotation-only by default) then consume as the typed interface; branded fields read as numbers
 const raw: unknown = { level: 7, delta: -1, ratio: 1.25, weight: 2.5, mass: 3.5, amount: 9.99 };

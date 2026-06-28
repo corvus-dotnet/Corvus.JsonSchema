@@ -64,8 +64,8 @@ function evaluatePerson(value: unknown, ev: Ev, il: string = "", kl: string = ""
 }
 
 export type BirthDate = Brand<string, "date">;
-function asBirthDate(value: string): BirthDate { if (!__fmt("date", value)) { throw new FormatError("date"); } return value as BirthDate; }
-function birthDateAsTemporal(value: BirthDate): Temporal.PlainDate { return toPlainDate(value); }
+function fromBirthDate(value: string): BirthDate { if (!__fmt("date", value)) { throw new FormatError("date"); } return value as BirthDate; }
+function birthDateToTemporal(value: BirthDate): Temporal.PlainDate { return toPlainDate(value); }
 
 function evaluateBirthDate(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
@@ -109,8 +109,8 @@ export const Person = {
 };
 export const BirthDate = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateBirthDate(v, fresh(), "", "", results ?? null),
-  as: asBirthDate,
-  asTemporal: birthDateAsTemporal,
+  from: fromBirthDate,
+  toTemporal: birthDateToTemporal,
 };
 export const FamilyName = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateFamilyName(v, fresh(), "", "", results ?? null),

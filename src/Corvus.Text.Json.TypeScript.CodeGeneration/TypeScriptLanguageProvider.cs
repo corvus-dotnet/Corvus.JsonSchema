@@ -350,10 +350,13 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         Add($"\nfunction produce{name}(", "produce", $"produce{name}");
         Add($"\nfunction withDefaults{name}(", "withDefaults", $"withDefaults{name}");
         Add($"\nfunction match{name}<", "match", $"match{name}");
-        Add($"\nfunction as{name}(", "as", $"as{name}");
+
+        // `from` (validate-and-convert a plain value INTO the brand) — NOT `as`, which is TS's unchecked-cast
+        // keyword; `toTemporal`/`toExact` convert the brand OUT to another representation.
+        Add($"\nfunction from{name}(", "from", $"from{name}");
         Add($"\nfunction is{name}(", "is", $"is{name}");
-        Add($"\nfunction {camel}AsTemporal(", "asTemporal", $"{camel}AsTemporal");
-        Add($"\nfunction {camel}AsExact(", "asExact", $"{camel}AsExact");
+        Add($"\nfunction {camel}ToTemporal(", "toTemporal", $"{camel}ToTemporal");
+        Add($"\nfunction {camel}ToExact(", "toExact", $"{camel}ToExact");
 
         return $"export const {name} = {{\n{string.Join(",\n", props)},\n}};\n";
     }
@@ -948,7 +951,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         string name = FinalName(td);
         string fmt = TsEmit.Str(format);
         sb.Append("export type ").Append(name).Append(" = Brand<string, ").Append(fmt).Append(">;\n");
-        sb.Append("export function as").Append(name).Append("(value: string): ").Append(name)
+        sb.Append("export function from").Append(name).Append("(value: string): ").Append(name)
           .Append(" { if (!__fmt(").Append(fmt).Append(", value)) { throw new FormatError(").Append(fmt).Append("); } return value as ").Append(name).Append("; }\n");
 
         // Gap B2 (§5.3.1): the FOUR RFC 3339 temporal formats additionally get a `{Name}AsTemporal` accessor
@@ -957,7 +960,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         // converter. Always emitted (not assertion-gated) — it is a pure parse helper; validation is untouched.
         if (KnownTemporalFormats.TryGetValue(format, out (string TemporalType, string Converter) temporal))
         {
-            sb.Append("export function ").Append(Camel(name)).Append("AsTemporal(value: ").Append(name).Append("): Temporal.")
+            sb.Append("export function ").Append(Camel(name)).Append("ToTemporal(value: ").Append(name).Append("): Temporal.")
               .Append(temporal.TemporalType).Append(" { return ").Append(temporal.Converter).Append("(value); }\n");
         }
 
@@ -981,7 +984,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         string min = range.Min.ToString(System.Globalization.CultureInfo.InvariantCulture);
         string max = range.Max.ToString(System.Globalization.CultureInfo.InvariantCulture);
         sb.Append("export type ").Append(name).Append(" = Brand<number, ").Append(fmt).Append(">;\n");
-        sb.Append("export function as").Append(name).Append("(value: number): ").Append(name)
+        sb.Append("export function from").Append(name).Append("(value: number): ").Append(name)
           .Append(" { if (!Number.isInteger(value) || value < ").Append(min).Append(" || value > ").Append(max)
           .Append(") { throw new FormatError(").Append(fmt).Append("); } return value as ").Append(name).Append("; }\n\n");
     }
@@ -1001,7 +1004,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         string name = FinalName(td);
         string fmt = TsEmit.Str(format);
         sb.Append("export type ").Append(name).Append(" = Brand<number, ").Append(fmt).Append(">;\n");
-        sb.Append("export function as").Append(name).Append("(value: number): ").Append(name);
+        sb.Append("export function from").Append(name).Append("(value: number): ").Append(name);
         if (range is { Min: double min, Max: double max })
         {
             sb.Append(" { if (value < ").Append(JsNum(min)).Append(" || value > ").Append(JsNum(max))
@@ -1017,7 +1020,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         // runtime's `parseLossless`), the plug point for a big-number adapter (decimal.js / bignumber.js).
         if (format == "decimal")
         {
-            sb.Append("export function ").Append(Camel(name)).Append("AsExact(value: ").Append(name).Append("): string { return exactNumber(value); }\n");
+            sb.Append("export function ").Append(Camel(name)).Append("ToExact(value: ").Append(name).Append("): string { return exactNumber(value); }\n");
         }
 
         sb.Append('\n');

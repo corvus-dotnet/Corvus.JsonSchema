@@ -8,17 +8,17 @@ A `format` keyword generates a **branded** type and a validating factory:
 
 ```typescript
 export type Email = Brand<string, "email">;
-function asEmail(value: string): Email {
+function fromEmail(value: string): Email {
   if (!__fmt("email", value)) { throw new FormatError("email"); }
   return value as Email;
 }
-export const Email = { evaluate: /* … */, as: asEmail };   // companion: Email.as("…")
+export const Email = { evaluate: /* … */, from: fromEmail };   // companion: Email.from("…")
 ```
 
-`Brand<string, "email">` is a `string` at runtime but a *distinct* type at compile time, so a plain `string` is **not** assignable where an `Email` is expected. The only way to get one is through `asEmail`, which checks the format and throws `FormatError` on failure. The payoff: once a value has type `Email`, "this is a well-formed email" is a fact the type system guarantees — you don't re-check it downstream.
+`Brand<string, "email">` is a `string` at runtime but a *distinct* type at compile time, so a plain `string` is **not** assignable where an `Email` is expected. The only way to get one is through `Email.from`, which checks the format and throws `FormatError` on failure. The payoff: once a value has type `Email`, "this is a well-formed email" is a fact the type system guarantees — you don't re-check it downstream.
 
 ```typescript
-const e: Email = Email.as("ada@example.com"); // ok
+const e: Email = Email.from("ada@example.com"); // ok
 const bad: Email = "ada@example.com";        // compile error — raw string isn't an Email
 ```
 
@@ -74,8 +74,8 @@ A sub-64-bit numeric `format` brands a **`number`** (the value fits a JS double)
 | `decimal` | `Brand<number, "decimal">` | in the .NET decimal range |
 
 ```typescript
-const port = Port.as(8080);   // Port = Brand<number, "uint16">; throws on -1 or 70000
-const level = Level.as(255);  // Level = Brand<number, "byte">;  throws on 256 or 1.5
+const port = Port.from(8080);   // Port = Brand<number, "uint16">; throws on -1 or 70000
+const level = Level.from(255);  // Level = Brand<number, "byte">;  throws on 256 or 1.5
 ```
 
 ### Typed-array views
@@ -97,7 +97,7 @@ const doc = parseLossless(text) as { amount: unknown };
 exactNumber(doc.amount); // "123456789012345678901234567890.5" — JSON.parse would have rounded it
 ```
 
-A `decimal`-format field additionally gets a generated `{Type}.asExact(value): string` accessor that delegates to `exactNumber`. (Parse with `parseLossless` to preserve the digits; a plain `JSON.parse` has already rounded.)
+A `decimal`-format field additionally gets a generated `{Type}.toExact(value): string` accessor that delegates to `exactNumber`. (Parse with `parseLossless` to preserve the digits; a plain `JSON.parse` has already rounded.)
 
 ## Dates, times and durations
 
@@ -106,16 +106,16 @@ A `decimal`-format field additionally gets a generated `{Type}.asExact(value): s
 A formatted date/time field is a **branded string** — `Brand<string, "date-time">` — built and checked with its `as*` factory:
 
 ```typescript
-const when = When.as("2026-06-26T10:00:00Z"); // When = Brand<string, "date-time">
+const when = When.from("2026-06-26T10:00:00Z"); // When = Brand<string, "date-time">
 ```
 
-Each of the four temporal formats gets a generated `{Type}.asTemporal` accessor that parses the branded string into its matching [`Temporal`](https://tc39.es/proposal-temporal/docs/) value, so you don't convert by hand:
+Each of the four temporal formats gets a generated `{Type}.toTemporal` accessor that parses the branded string into its matching [`Temporal`](https://tc39.es/proposal-temporal/docs/) value, so you don't convert by hand:
 
 ```typescript
-Day.asTemporal(account.day);          // Temporal.PlainDate   (format: date)
-OccurredAt.asTemporal(event.at);      // Temporal.Instant     (format: date-time — the absolute instant)
-AtTime.asTemporal(slot.start);        // Temporal.PlainTime   (format: time)
-Span.asTemporal(plan.duration);       // Temporal.Duration    (format: duration)
+Day.toTemporal(account.day);          // Temporal.PlainDate   (format: date)
+OccurredAt.toTemporal(event.at);      // Temporal.Instant     (format: date-time — the absolute instant)
+AtTime.toTemporal(slot.start);        // Temporal.PlainTime   (format: time)
+Span.toTemporal(plan.duration);       // Temporal.Duration    (format: duration)
 ```
 
 `Temporal` is re-exported from the runtime, so you get the types from the package. (You can still convert the branded string by hand — `new Date(account.created)` or `Temporal.Instant.from(account.created)` — if you prefer.)

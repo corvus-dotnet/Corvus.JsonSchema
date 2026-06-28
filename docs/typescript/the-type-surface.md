@@ -45,7 +45,7 @@ A generated object type carries more than its `interface`:
 - `patch{Type}` / `produce{Type}` — mutate bytes; `applyTo{Type}` for an `allOf` mixin;
 - `withDefaults{Type}(value)` — fill declared `default`s, when the subtree has any;
 - for a union, `is{Branch}` guards and `match{Type}`;
-- for a `format`, `{Type}.as` (and `.asTemporal` for date/time/duration, `.asExact` for `decimal`).
+- for a `format`, `{Type}.from` (and `.toTemporal` for date/time/duration, `.toExact` for `decimal`).
 
 Plus, the root type's companion is the document entry point and the module `default` export.
 

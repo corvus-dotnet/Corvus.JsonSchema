@@ -54,7 +54,7 @@ function evaluatePerson(value: unknown, ev: Ev): boolean { /* … */ }          
 function buildPerson(props: Person): Uint8Array { /* … */ }                   // construct
 function patchPerson(source: Uint8Array, changes: Partial<Person>, removals?: …): Uint8Array { /* … */ }
 function producePerson(source: Uint8Array, recipe: (draft: Draft<Person>) => void): Uint8Array { /* … */ }
-function asBirthDate(value: string): BirthDate { /* … */ }                    // branded-format factory
+function fromBirthDate(value: string): BirthDate { /* … */ }                    // branded-format factory
 
 // Each type's operations are grouped on an `export const {Type}` COMPANION object — the public surface —
 // declaration-merged with the interface so `Person` is both the type and the value namespace.
@@ -62,7 +62,7 @@ export const Person = {
   evaluate: (v: unknown, results?: Results): boolean => evaluatePerson(v, fresh(), "", "", results ?? null),
   build: buildPerson, buildCanonical: buildCanonicalPerson, patch: patchPerson, produce: producePerson,
 };
-export const BirthDate = { evaluate: /* … */, as: asBirthDate, asTemporal: birthDateAsTemporal };
+export const BirthDate = { evaluate: /* … */, from: fromBirthDate, toTemporal: birthDateToTemporal };
 export default Person;   // the root type's companion is the module default export
 ```
 
@@ -72,7 +72,7 @@ The pieces:
 - a **companion** `export const {Type}` per type — the public surface, grouping that type's operations:
   - **`{Type}.evaluate(value, results?)`** — a boolean evaluator (seeds a fresh tracker, optional results collector); every type has one, mirroring .NET's `EvaluateSchema()`. The root type's companion is the module's `default` export.
   - **`{Type}.build` / `.buildCanonical` / `.patch` / `.produce`** — construct and mutate over canonical UTF-8 JSON bytes (`Uint8Array`).
-  - **`{Type}.as`** (+ `.asTemporal` / `.asExact`) — branded-format factories.
+  - **`{Type}.from`** (+ `.toTemporal` / `.toExact`) — branded-format factories.
   - **`{Union}.match`** — exhaustive dispatch over a discriminated union.
 
 ## A minimal end-to-end
@@ -80,7 +80,7 @@ The pieces:
 ```typescript
 import { Person, BirthDate } from "./out/generated.js";   // `Person` is both the type and the companion
 
-const bytes = Person.build({ familyName: "Brontë", givenName: "Anne", birthDate: BirthDate.as("1820-01-17") });
+const bytes = Person.build({ familyName: "Brontë", givenName: "Anne", birthDate: BirthDate.from("1820-01-17") });
 const value: unknown = JSON.parse(new TextDecoder().decode(bytes));
 
 if (Person.evaluate(value)) {

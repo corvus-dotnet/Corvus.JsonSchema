@@ -154,8 +154,8 @@ function evaluateTimestamped(value: unknown, ev: Ev, il: string = "", kl: string
 }
 
 export type CreatedAt = Brand<string, "date-time">;
-function asCreatedAt(value: string): CreatedAt { if (!__fmt("date-time", value)) { throw new FormatError("date-time"); } return value as CreatedAt; }
-function createdAtAsTemporal(value: CreatedAt): Temporal.Instant { return toInstant(value); }
+function fromCreatedAt(value: string): CreatedAt { if (!__fmt("date-time", value)) { throw new FormatError("date-time"); } return value as CreatedAt; }
+function createdAtToTemporal(value: CreatedAt): Temporal.Instant { return toInstant(value); }
 
 function evaluateCreatedAt(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
@@ -198,8 +198,8 @@ export const Timestamped = {
 };
 export const CreatedAt = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateCreatedAt(v, fresh(), "", "", results ?? null),
-  as: asCreatedAt,
-  asTemporal: createdAtAsTemporal,
+  from: fromCreatedAt,
+  toTemporal: createdAtToTemporal,
 };
 export const Id = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateId(v, fresh(), "", "", results ?? null),

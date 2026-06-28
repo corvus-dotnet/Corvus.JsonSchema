@@ -57,8 +57,8 @@ function evaluateAccount(value: unknown, ev: Ev, il: string = "", kl: string = "
 }
 
 export type Created = Brand<string, "date-time">;
-function asCreated(value: string): Created { if (!__fmt("date-time", value)) { throw new FormatError("date-time"); } return value as Created; }
-function createdAsTemporal(value: Created): Temporal.Instant { return toInstant(value); }
+function fromCreated(value: string): Created { if (!__fmt("date-time", value)) { throw new FormatError("date-time"); } return value as Created; }
+function createdToTemporal(value: Created): Temporal.Instant { return toInstant(value); }
 
 function evaluateCreated(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
@@ -69,7 +69,7 @@ function evaluateCreated(value: unknown, ev: Ev, il: string = "", kl: string = "
 }
 
 export type Id = Brand<string, "uuid">;
-function asId(value: string): Id { if (!__fmt("uuid", value)) { throw new FormatError("uuid"); } return value as Id; }
+function fromId(value: string): Id { if (!__fmt("uuid", value)) { throw new FormatError("uuid"); } return value as Id; }
 
 function evaluateId(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
@@ -80,7 +80,7 @@ function evaluateId(value: unknown, ev: Ev, il: string = "", kl: string = "", r:
 }
 
 export type Website = Brand<string, "uri">;
-function asWebsite(value: string): Website { if (!__fmt("uri", value)) { throw new FormatError("uri"); } return value as Website; }
+function fromWebsite(value: string): Website { if (!__fmt("uri", value)) { throw new FormatError("uri"); } return value as Website; }
 
 function evaluateWebsite(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
@@ -100,16 +100,16 @@ export const Account = {
 };
 export const Created = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateCreated(v, fresh(), "", "", results ?? null),
-  as: asCreated,
-  asTemporal: createdAsTemporal,
+  from: fromCreated,
+  toTemporal: createdToTemporal,
 };
 export const Id = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateId(v, fresh(), "", "", results ?? null),
-  as: asId,
+  from: fromId,
 };
 export const Website = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateWebsite(v, fresh(), "", "", results ?? null),
-  as: asWebsite,
+  from: fromWebsite,
 };
 
 export default Account;

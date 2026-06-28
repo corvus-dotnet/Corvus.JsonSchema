@@ -7,7 +7,7 @@ Parsed values are `readonly`, so you never change data in place. Instead the gen
 `build{Type}(props)` serialises a fresh document:
 
 ```typescript
-const bytes = Person.build({ familyName: "Brontë", givenName: "Anne", birthDate: BirthDate.as("1820-01-17") });
+const bytes = Person.build({ familyName: "Brontë", givenName: "Anne", birthDate: BirthDate.from("1820-01-17") });
 ```
 
 It is a single encode of the value you pass — at the floor of what serialisation can cost. `build` preserves the key order of the object you pass.

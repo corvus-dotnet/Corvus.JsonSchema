@@ -70,7 +70,7 @@ function evaluateAge(value: unknown, ev: Ev, il: string = "", kl: string = "", r
 }
 
 export type Email = Brand<string, "email">;
-function asEmail(value: string): Email { if (!__fmt("email", value)) { throw new FormatError("email"); } return value as Email; }
+function fromEmail(value: string): Email { if (!__fmt("email", value)) { throw new FormatError("email"); } return value as Email; }
 
 function evaluateEmail(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
@@ -110,7 +110,7 @@ export const Age = {
 };
 export const Email = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateEmail(v, fresh(), "", "", results ?? null),
-  as: asEmail,
+  from: fromEmail,
 };
 export const Score = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateScore(v, fresh(), "", "", results ?? null),

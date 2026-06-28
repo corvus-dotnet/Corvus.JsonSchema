@@ -8,7 +8,7 @@ const dec = new TextDecoder();
 const bytes = Registration.build({
   username: "ada_lovelace",
   age: 36,
-  email: Email.as("ada@example.com"),
+  email: Email.from("ada@example.com"),
   score: 4.5,
 });
 console.log("valid:          ", Registration.evaluate(JSON.parse(dec.decode(bytes)))); // true
@@ -21,7 +21,7 @@ console.log("score step:     ", Registration.evaluate({ username: "ada", age: 36
 
 // A `format` brand validates eagerly at construction (it throws) — distinct from whole-document evaluation.
 try {
-  Email.as("not-an-email");
+  Email.from("not-an-email");
 } catch (e) {
-  console.log("Email.as threw:  ", (e as Error).message);
+  console.log("Email.from threw:  ", (e as Error).message);
 }
