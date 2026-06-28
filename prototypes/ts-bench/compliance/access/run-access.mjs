@@ -45,6 +45,7 @@ const SUITE_TABLE = [
   { test: "collector.test.ts",       schema: "person-collector.json", importDir: "out-coll" },
   { test: "provider-access.test.ts", schema: "person.json",          importDir: "out" },
   { test: "jsdoc-access.test.ts",    schema: "jsdoc.json",           importDir: "out-jsdoc" },
+  { test: "defaults-access.test.ts", schema: "defaults.json",        importDir: "out-defaults" },
 ];
 
 // ----- long-running codegen worker (one process for the whole run; same protocol as bowtie-harness.mjs) -----

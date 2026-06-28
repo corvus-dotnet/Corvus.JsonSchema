@@ -248,6 +248,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
                     EmitBuild(sb, td);
                     EmitApplyTo(sb, td);
                     EmitProduceDraft(sb, td);
+                    EmitWithDefaults(sb, td);
                 }
             }
             else if (IsEnum(td))
@@ -484,6 +485,119 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         sb.Append("export function produce").Append(name).Append("(source: Uint8Array, recipe: (draft: Draft<").Append(name).Append(">) => void): Uint8Array {\n");
         sb.Append("  return produce<").Append(name).Append(">(source, recipe);\n");
         sb.Append("}\n\n");
+    }
+
+    // Gap B1 (defaults), APPLY half: withDefaults{T}(value) returns a shallow-clone with every ABSENT
+    // (`!(key in value)`) property that declares a `default` filled with that default, and every PRESENT
+    // nested object / array-of-object whose own type has defaults recursed through that type's withDefaults.
+    // A present scalar/value is NEVER overridden. Emitted ONLY when T's subtree actually carries a default
+    // somewhere (the optimization the task permits) — a defaults-free tree gets no function. This is a pure,
+    // tree-shakeable surface helper; the validators and the shared runtime are untouched (`default` stays an
+    // annotation), so the boolean/validation path is byte-stable.
+    private static void EmitWithDefaults(StringBuilder sb, TypeDeclaration td)
+    {
+        if (!td.HasPropertyDeclarations || !SubtreeHasDefault(td, new HashSet<TypeDeclaration>()))
+        {
+            return;
+        }
+
+        string name = FinalName(td);
+        sb.Append("export function withDefaults").Append(name).Append("(value: ").Append(name).Append("): ").Append(name).Append(" {\n");
+
+        // Shallow clone so the caller's input is never mutated; absent defaults and recursed nested values
+        // are written onto the clone. Typed `Record<string, unknown>` for index assignment, cast back on return.
+        sb.Append("  const out: Record<string, unknown> = { ...(value as Record<string, unknown>) };\n");
+
+        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        {
+            string k = TsEmit.Str(p.JsonPropertyName);
+
+            // (a) Fill an ABSENT property that declares a default. Key-presence (`!(k in value)`), NOT
+            // value-undefined: a property explicitly present-but-undefined is still "present", never overridden.
+            if (TryGetPropertyDefault(p, out string? defaultJson))
+            {
+                sb.Append("  if (!(").Append(k).Append(" in value)) { out[").Append(k).Append("] = ").Append(defaultJson).Append("; }\n");
+            }
+
+            // (b) Recurse into a PRESENT nested object / array-of-object whose own type carries defaults, so a
+            // nested default fills even when the parent property itself is supplied.
+            TypeDeclaration propType = p.ReducedPropertyType;
+            if (IsObject(propType) && SubtreeHasDefault(propType, new HashSet<TypeDeclaration>()))
+            {
+                string nested = FinalName(propType);
+                sb.Append("  if (").Append(k).Append(" in value && out[").Append(k)
+                  .Append("] !== null && typeof out[").Append(k).Append("] === \"object\" && !Array.isArray(out[").Append(k).Append("])) { out[").Append(k)
+                  .Append("] = withDefaults").Append(nested).Append("(out[").Append(k).Append("] as ").Append(nested).Append("); }\n");
+            }
+            else if (ArrayElementType(propType) is TypeDeclaration elem && IsObject(elem) && SubtreeHasDefault(elem, new HashSet<TypeDeclaration>()))
+            {
+                string elemName = FinalName(elem);
+                sb.Append("  if (").Append(k).Append(" in value && Array.isArray(out[").Append(k).Append("])) { out[").Append(k)
+                  .Append("] = (out[").Append(k).Append("] as ").Append(elemName).Append("[]).map((e) => (e !== null && typeof e === \"object\" && !Array.isArray(e)) ? withDefaults")
+                  .Append(elemName).Append("(e) : e); }\n");
+            }
+        }
+
+        sb.Append("  return out as ").Append(name).Append(";\n");
+        sb.Append("}\n\n");
+    }
+
+    // The compact-JSON form of a property's authored `default` (the SAME `UnreducedPropertyType` subschema the
+    // per-property JSDoc reads, so a `$ref`+`default` site's default isn't lost to reduction), or null if the
+    // property declares no default. Reparsed-and-reserialised so a multi-line authored literal is single-line.
+    private static bool TryGetPropertyDefault(PropertyDeclaration p, out string? defaultJson)
+    {
+        defaultJson = null;
+        JsonElement schema = p.UnreducedPropertyType.LocatedSchema.Schema;
+        if (schema.ValueKind == JsonValueKind.Object && schema.TryGetProperty("default", out JsonElement d))
+        {
+            using JsonDocument compact = JsonDocument.Parse(d.GetRawText());
+            defaultJson = JsonSerializer.Serialize(compact.RootElement);
+            return true;
+        }
+
+        return false;
+    }
+
+    // The reduced element TypeDeclaration of an array/tuple property (the same items pair TsArrayTypeRef uses),
+    // or null when the type is not an array — used to decide whether to recurse into array-of-object elements.
+    private static TypeDeclaration? ArrayElementType(TypeDeclaration td)
+    {
+        ArrayItemsTypeDeclaration? items = td.ExplicitNonTupleItemsType() ?? td.ArrayItemsType();
+        return items?.ReducedType;
+    }
+
+    // True when `td` (an object) OR any nested object/array-element-object it reaches declares a `default` on a
+    // property. Cycle-safe via `visited` (a recursive schema returns false on re-entry rather than looping).
+    // This is what makes withDefaults{T} tree-shakeable: a type with no default anywhere in its subtree emits
+    // no function, and a present-value recursion is only generated toward a subtree that can actually fill one.
+    private static bool SubtreeHasDefault(TypeDeclaration td, HashSet<TypeDeclaration> visited)
+    {
+        if (!visited.Add(td) || !IsObject(td))
+        {
+            return false;
+        }
+
+        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        {
+            if (TryGetPropertyDefault(p, out _))
+            {
+                return true;
+            }
+
+            TypeDeclaration propType = p.ReducedPropertyType;
+            if (IsObject(propType) && SubtreeHasDefault(propType, visited))
+            {
+                return true;
+            }
+
+            if (ArrayElementType(propType) is TypeDeclaration elem && IsObject(elem) && SubtreeHasDefault(elem, visited))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void EmitInterface(StringBuilder sb, TypeDeclaration td)
@@ -1181,6 +1295,15 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
                 using JsonDocument compact = JsonDocument.Parse(example.GetRawText());
                 lines.Add("@example " + JsonSerializer.Serialize(compact.RootElement));
             }
+        }
+
+        if (schema.TryGetProperty("default", out JsonElement defaultValue))
+        {
+            // @default carries the schema's default value as compact (single-line) JSON — the same
+            // GetRawText()-then-reparse compaction as @example, so a multi-line authored literal collapses
+            // to one tag line. This is annotation-only documentation; the matching withDefaults{T} applies it.
+            using JsonDocument compact = JsonDocument.Parse(defaultValue.GetRawText());
+            lines.Add("@default " + JsonSerializer.Serialize(compact.RootElement));
         }
 
         if (lines.Count == 0)

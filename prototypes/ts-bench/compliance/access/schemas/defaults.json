@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Config",
+  "description": "A config exercising schema defaults (gap B1).",
+  "type": "object",
+  "properties": {
+    "retries": {
+      "title": "Retries",
+      "description": "How many times to retry.",
+      "type": "integer",
+      "default": 3
+    },
+    "label": {
+      "type": "string",
+      "default": "anonymous"
+    },
+    "name": {
+      "type": "string"
+    },
+    "nested": {
+      "title": "Nested",
+      "type": "object",
+      "properties": {
+        "timeout": {
+          "type": "integer",
+          "default": 30
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "title": "Item",
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number",
+            "default": 1.5
+          },
+          "id": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
