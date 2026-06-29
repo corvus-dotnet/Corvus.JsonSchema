@@ -408,3 +408,6 @@ tests/Corvus.Text.Json.AsyncApi.Runtime.Tests/Generated26/
 
 # @endjin/corvus-json-runtime is a real source package, not a NuGet Package Restore folder.
 !/packages/corvus-json-runtime/
+
+# @endjin/corvus-json-client-runtime is a real source package too.
+!/packages/corvus-json-client-runtime/

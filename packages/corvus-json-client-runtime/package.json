@@ -1,0 +1,30 @@
+{
+  "name": "@endjin/corvus-json-client-runtime",
+  "version": "0.1.0",
+  "description": "Byte-native HTTP transport runtime for Corvus.Text.Json-generated TypeScript OpenAPI clients.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/corvus-dotnet/Corvus.JsonSchema.git",
+    "directory": "packages/corvus-json-client-runtime"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}
