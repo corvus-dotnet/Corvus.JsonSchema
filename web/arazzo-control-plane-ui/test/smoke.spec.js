@@ -111,6 +111,41 @@ test('the Catalog detail shows the promotion matrix and makes a version availabl
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
 
+test('the persona toggle gates promotion: Operator must request, Administrator makes directly', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/index.html');
+
+  // As Operator (no availability:write), the promotion matrix offers only "Request…", never a direct "Make available";
+  // and the catalog's write action (Add workflow) is hidden.
+  await page.locator('#persona').selectOption('operator');
+  await page.getByRole('tab', { name: 'Catalog' }).click();
+  await expect(page.locator('arazzo-catalog .add-btn')).toBeHidden();
+  await page.locator('arazzo-catalog-table tbody tr[data-key="nightly-reconcile"]').click();
+  const matrix = page.locator('arazzo-availability-matrix');
+  await expect(matrix).toBeVisible();
+  await expect(matrix.locator('button[data-action="request"]').first()).toBeVisible();
+  await expect(matrix.locator('button[data-action="make"]')).toHaveCount(0);
+
+  // As Operator the promotions approver inbox is empty (they administer nothing).
+  await page.getByRole('tab', { name: 'Promotions' }).click();
+  await page.locator('arazzo-availability-requests .tab-queue').click();
+  await expect(page.locator('arazzo-availability-requests tbody tr[data-id]')).toHaveCount(0);
+
+  // Switch to Administrator → the matrix now offers a direct "Make available", and the approver inbox is populated.
+  await page.locator('#persona').selectOption('administrator');
+  await page.getByRole('tab', { name: 'Catalog' }).click();
+  await page.locator('arazzo-catalog-table tbody tr[data-key="nightly-reconcile"]').click();
+  await expect(matrix.locator('button[data-action="make"]').first()).toBeVisible();
+  await page.getByRole('tab', { name: 'Promotions' }).click();
+  await page.locator('arazzo-availability-requests .tab-queue').click();
+  await expect(page.locator('arazzo-availability-requests .act[data-action="approve"]').first()).toBeVisible();
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
 test('the Catalog Add wizard reuses a registered source and versions the workflow', async ({ page }) => {
   const errors = [];
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
