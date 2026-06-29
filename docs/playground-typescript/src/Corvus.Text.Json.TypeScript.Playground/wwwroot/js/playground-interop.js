@@ -39,11 +39,16 @@ window.playgroundInterop = (function () {
     async function ensureEsbuild() {
         if (!esbuildPromise) {
             esbuildPromise = (async () => {
-                const esbuild = await import('/lib/esbuild/browser.min.js');
+                // Resolve against the document base (the <base href>), not the site root, so esbuild loads
+                // whether the app is served at "/", at the "/playground-typescript/" subpath, or under a
+                // GitHub Pages base path. A root-absolute "/lib/..." breaks at any non-root base.
+                const esbuildJsUrl = new URL('lib/esbuild/browser.min.js', document.baseURI).href;
+                const esbuildWasmUrl = new URL('lib/esbuild/esbuild.wasm', document.baseURI).href;
+                const esbuild = await import(esbuildJsUrl);
                 // worker:false runs esbuild on the main thread. A Web Worker's postMessage callbacks are not
                 // pumped while Blazor's JS interop call is awaiting, so a worker-backed build hangs; the
                 // main-thread build resolves inline and is reliable under interop.
-                await esbuild.initialize({ wasmURL: '/lib/esbuild/esbuild.wasm', worker: false });
+                await esbuild.initialize({ wasmURL: esbuildWasmUrl, worker: false });
                 return esbuild;
             })();
         }
@@ -52,7 +57,7 @@ window.playgroundInterop = (function () {
 
     function ensureRuntimeSource() {
         if (!runtimeSourcePromise) {
-            runtimeSourcePromise = fetch('/corvus-runtime.js').then(function (r) {
+            runtimeSourcePromise = fetch(new URL('corvus-runtime.js', document.baseURI).href).then(function (r) {
                 if (!r.ok) { throw new Error('failed to load corvus-runtime.js (' + r.status + ')'); }
                 return r.text();
             });
