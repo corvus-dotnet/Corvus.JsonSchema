@@ -65,6 +65,14 @@ public class OpenApi30CodeGeneratorTests
         return doc.RootElement.Clone();
     }
 
+    // Byte-exact golden snapshot (Workstream A / Stage 0): pins the full generated output for the IR refactor.
+    [TestMethod]
+    public void PetstoreGeneratedOutput_MatchesGoldenSnapshot()
+    {
+        IReadOnlyList<GeneratedFile> files = CreateGenerator().Generate(petstoreRoot);
+        GoldenSnapshot.Verify("petstore-3.0", files);
+    }
+
     [TestMethod]
     public void CollectSchemaPointers_FindsParameterSchemas()
     {
