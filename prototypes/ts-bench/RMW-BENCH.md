@@ -53,8 +53,8 @@ GC pressure, 3000 large-doc round-trips: **scalar edit** Model C **125** events 
 
 - **Round-trip with validation** trails for ASCII/array edits (0.33–0.91×) and reaches parity/win only
   at large non-ASCII scalar edits (1.12×). Validation is parse-based (Model B), and that shared inbound
-  full-parse dominates both sides, masking the produce write-side win. **This is the next lever:
-  byte-native (change-set-scoped) re-validation** would let the round-trip skip the full parse.
+  full-parse dominates both sides, masking the produce write-side win. This crossover is an **accepted
+  limitation** — partial re-validation was evaluated and rejected as unsound (see "Ruled out" below).
 - **Tiny documents (~0.3 KB)**: native's C++ parser wins for `produce` element/scalar edits (the draft
   setup dominates) — except the lean `patch` path, which still wins (1.0–1.35×).
 - **Large ASCII array-element/`push`**: a slight native lead (0.79–0.86×) — both rewrite ~the whole
@@ -62,13 +62,25 @@ GC pressure, 3000 large-doc round-trips: **scalar edit** Model C **125** events 
 
 ## What this motivates (next)
 
-- **Byte-native (change-set-scoped) re-validation** — the one path still parse-bound; closing it
-  surfaces the produce write-side win end-to-end in the full request round-trip.
 - **Standalone full canonical writer** (separate, opt-in; recursive key-sort + canonical number/string
   forms, mirroring the C# canonicaliser) for hashing / content-addressing / golden determinism — kept
   off the fast `build` path (see design doc §5.7 roadmap).
 
+## Ruled out
+
+- **Byte-native (change-set-scoped) re-validation** of a `produce`/`patch` result — *rejected as unsound
+  and not worth the complexity (2026-06-29).* Partial re-validation cannot be made correct in general:
+  `unevaluatedProperties`/`unevaluatedItems` are annotation-dependent (decided by the union of annotations
+  produced across the whole applicator subtree at that level), and branch-selecting applicators
+  (`if`/`then`/`else`, `oneOf`/`anyOf`, `dependentSchemas`, `$dynamicRef`, `contains`/`minContains`) let a
+  changed child flip an ancestor's verdict and annotations — so a child cannot be evaluated in isolation
+  and the parent trusted. The only sound variants are a conservative static-isolation fast-path (fires
+  only when no annotation-dependent / branch-selecting keyword sits on the edit's root→leaf path, with a
+  full-validation fallback otherwise — a narrow subset) or memoised incremental re-evaluation (stateful,
+  memory-heavy, no guaranteed speedup). Neither earns its complexity; the round-trip-with-validation
+  crossover is **accepted**, not a work item.
+
 **Net:** `patch` is a dramatic, unqualified win; the immer-style `produce` recipe path wins for the
 common "edit a few scalar / nested / array-element fields of a large document" case (the editor /
 config / API-patch pattern) with less allocation, and beats immer across the board including arrays;
-`build` is at the native floor; the remaining crossover (round-trip validation) has a clear next step.
+`build` is at the native floor; the remaining crossover (round-trip validation) is an accepted limitation.
