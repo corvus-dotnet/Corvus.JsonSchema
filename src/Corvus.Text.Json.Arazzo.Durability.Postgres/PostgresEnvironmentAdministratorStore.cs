@@ -12,8 +12,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.Postgres;
 /// A PostgreSQL-backed <see cref="IEnvironmentAdministratorStore"/> (design §7.7): the explicit administration record for a
 /// deployment environment — the mutable set of administrator identities entitled to manage the environment and its
 /// administration. Each record is stored as its <see cref="EnvironmentAdministrators"/> document in a <c>bytea</c> column,
-/// keyed by EnvironmentName; its etag is held in a column for the optimistic-concurrency check. Mirrors
-/// <see cref="PostgresWorkflowAdministratorStore"/> without the reverse administration index.
+/// keyed by EnvironmentName; its etag is held in a column for the optimistic-concurrency check. A reverse administration
+/// index (design §7.8) keyed by administrator-identity digest answers "which environments does this identity administer?";
+/// it is rewritten atomically with the record on every <see cref="PutAsync"/> and retracted on <see cref="DeleteAsync"/>.
+/// Mirrors <see cref="PostgresWorkflowAdministratorStore"/>.
 /// </summary>
 /// <remarks>
 /// Each operation opens a pooled connection, so the store is naturally concurrent; the <see cref="PutAsync"/>
@@ -131,14 +133,24 @@ public sealed class PostgresEnvironmentAdministratorStore : IEnvironmentAdminist
             isUpdate = false;
         }
 
-        using NpgsqlCommand write = connection.CreateCommand();
-        write.CommandText = isUpdate
-            ? "UPDATE EnvironmentAdministrators SET Etag = @etag, Document = @doc WHERE EnvironmentName = @id;"
-            : "INSERT INTO EnvironmentAdministrators (EnvironmentName, Etag, Document) VALUES (@id, @etag, @doc);";
-        write.Parameters.AddWithValue("etag", etag.Value!);
-        write.Parameters.AddWithValue("doc", json);
-        write.Parameters.AddWithValue("id", environmentName);
-        await write.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        // The document write and the reverse-index rewrite are atomic (design §7.8): the inbox must never observe an
+        // environment indexed under a digest its current administrator set no longer holds, or vice versa.
+        await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+        await using (NpgsqlCommand write = connection.CreateCommand())
+        {
+            write.Transaction = transaction;
+            write.CommandText = isUpdate
+                ? "UPDATE EnvironmentAdministrators SET Etag = @etag, Document = @doc WHERE EnvironmentName = @id;"
+                : "INSERT INTO EnvironmentAdministrators (EnvironmentName, Etag, Document) VALUES (@id, @etag, @doc);";
+            write.Parameters.AddWithValue("etag", etag.Value!);
+            write.Parameters.AddWithValue("doc", json);
+            write.Parameters.AddWithValue("id", environmentName);
+            await write.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await RewriteIndexAsync(connection, transaction, environmentName, administrators, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<EnvironmentAdministrators>(json);
     }
 
@@ -147,10 +159,62 @@ public sealed class PostgresEnvironmentAdministratorStore : IEnvironmentAdminist
     {
         ArgumentException.ThrowIfNullOrEmpty(environmentName);
         await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        await using NpgsqlCommand delete = connection.CreateCommand();
-        delete.CommandText = "DELETE FROM EnvironmentAdministrators WHERE EnvironmentName = @id;";
-        delete.Parameters.AddWithValue("id", environmentName);
-        await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        // The record delete and the reverse-index retract are atomic (design §7.8): the index must never outlive the record
+        // it points at. Deleting a missing record is a no-op (both DELETEs simply affect zero rows), matching the contract.
+        await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+        await using (NpgsqlCommand delete = connection.CreateCommand())
+        {
+            delete.Transaction = transaction;
+            delete.CommandText = "DELETE FROM EnvironmentAdministrators WHERE EnvironmentName = @id;";
+            delete.Parameters.AddWithValue("id", environmentName);
+            await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await using (NpgsqlCommand clearIndex = connection.CreateCommand())
+        {
+            clearIndex.Transaction = transaction;
+            clearIndex.CommandText = "DELETE FROM EnvironmentAdministratorIndex WHERE EnvironmentName = @id;";
+            clearIndex.Parameters.AddWithValue("id", environmentName);
+            await clearIndex.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        int pageSize = limit > 0 ? limit : EnvironmentAdministeredPage.DefaultPageSize;
+
+        // The keyset cursor (the environment name to page strictly after) reifies once here for the @after parameter — the
+        // SQL leaf — never per row. The index columns are COLLATE "C" so the keyset compare is ordinal (the contract's order).
+        string? after = EnvironmentAdministeredContinuationToken.DecodeCursorToString(pageToken);
+
+        await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlCommand select = connection.CreateCommand();
+        select.CommandText = after is null
+            ? "SELECT EnvironmentName FROM EnvironmentAdministratorIndex WHERE AdminDigest = @digest ORDER BY EnvironmentName LIMIT @n;"
+            : "SELECT EnvironmentName FROM EnvironmentAdministratorIndex WHERE AdminDigest = @digest AND EnvironmentName > @after ORDER BY EnvironmentName LIMIT @n;";
+        select.Parameters.AddWithValue("digest", adminDigest);
+        select.Parameters.AddWithValue("n", pageSize + 1);
+        if (after is not null)
+        {
+            select.Parameters.AddWithValue("after", after);
+        }
+
+        var rows = new List<string>(pageSize + 1);
+        await using (NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+        {
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                rows.Add(reader.GetString(0));
+            }
+        }
+
+        return EnvironmentAdministeredPaging.ToPage(rows, pageSize);
     }
 
     /// <inheritdoc/>
@@ -159,6 +223,29 @@ public sealed class PostgresEnvironmentAdministratorStore : IEnvironmentAdminist
         if (this.ownsDataSource)
         {
             await this.dataSource.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    // Rewrites this environment's reverse-index rows within the write transaction (§7.8): retract the stale digests, then
+    // index the current ones. The administrator set is small, so a delete-all-then-insert is simplest and correct.
+    private static async ValueTask RewriteIndexAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string environmentName, IReadOnlyList<EnvironmentAdministrators.AdministratorIdentity> administrators, CancellationToken cancellationToken)
+    {
+        await using (NpgsqlCommand clear = connection.CreateCommand())
+        {
+            clear.Transaction = transaction;
+            clear.CommandText = "DELETE FROM EnvironmentAdministratorIndex WHERE EnvironmentName = @id;";
+            clear.Parameters.AddWithValue("id", environmentName);
+            await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        foreach (string digest in EnvironmentAdministeredPaging.DistinctDigests(administrators))
+        {
+            await using NpgsqlCommand index = connection.CreateCommand();
+            index.Transaction = transaction;
+            index.CommandText = "INSERT INTO EnvironmentAdministratorIndex (AdminDigest, EnvironmentName) VALUES (@digest, @id);";
+            index.Parameters.AddWithValue("digest", digest);
+            index.Parameters.AddWithValue("id", environmentName);
+            await index.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -186,6 +273,11 @@ public sealed class PostgresEnvironmentAdministratorStore : IEnvironmentAdminist
             EnvironmentName TEXT NOT NULL PRIMARY KEY,
             Etag TEXT NOT NULL,
             Document BYTEA NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS EnvironmentAdministratorIndex (
+            AdminDigest TEXT COLLATE "C" NOT NULL,
+            EnvironmentName TEXT COLLATE "C" NOT NULL,
+            PRIMARY KEY (AdminDigest, EnvironmentName)
         );
         """;
 }

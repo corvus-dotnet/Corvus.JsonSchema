@@ -4,6 +4,7 @@
 
 using System.Globalization;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using Corvus.Text.Json;
@@ -22,7 +23,12 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 /// verbatim as a raw nested JSON value (no base64 round-trip); the store-owned etag travels inside it. Documents are
 /// written and read through the Cosmos <em>stream</em> APIs (no SDK serializer), so persistence flows through
 /// Corvus.Text.Json. The record holds deployment-stamped identities only — never secret material. Mirrors
-/// <see cref="CosmosWorkflowAdministratorStore"/> without the reverse administration index.
+/// <see cref="CosmosWorkflowAdministratorStore"/>, including its reverse administration index (design §7.8): the
+/// administrator digests and the environment name are mirrored top-level on the same forward envelope document, so the
+/// reverse lookup (<see cref="ListAdministeredAsync"/>) is a cross-partition <c>ARRAY_CONTAINS</c> keyset query rather
+/// than a separate index container. There are therefore no separate index documents to keep in step: replacing the
+/// forward document atomically replaces its mirrored digests (the retract-then-reindex), and deleting the forward
+/// document atomically retracts them.
 /// </summary>
 /// <remarks>
 /// The <see cref="PutAsync"/> create-or-replace reads the current document and compares its embedded etag before writing,
@@ -35,6 +41,7 @@ public sealed class CosmosEnvironmentAdministratorStore : IEnvironmentAdministra
     private const string ContainerId = "environment_administrators";
 
     private static readonly byte[] DocProperty = "doc"u8.ToArray();
+    private static readonly byte[] EnvironmentNameProperty = "environmentName"u8.ToArray();
 
     private readonly CosmosClient client;
     private readonly Container container;
@@ -132,6 +139,11 @@ public sealed class CosmosEnvironmentAdministratorStore : IEnvironmentAdministra
 
         string id = ItemId(environmentName);
 
+        // Mirror the administrator digests (and the environment name) top-level in the envelope (design §7.8) so the reverse
+        // index is a cross-partition ARRAY_CONTAINS keyset query, not a scan of the opaque nested doc. These are the exact
+        // digests the forward IsAdministeredBy compares. Replacing the forward document atomically replaces these mirrored
+        // digests — the create-or-replace is itself the retract-then-reindex; there is no separate index doc to maintain.
+        IReadOnlyList<string> digests = EnvironmentAdministeredPaging.DistinctDigests(administrators);
         ParsedJsonDocument<EnvironmentAdministrators>? updateDocument = null;
         Stream? updateStream = null;
         using (CosmosJson.RentedResponse? payload = await this.ReadResponseAsync(environmentName, cancellationToken).ConfigureAwait(false))
@@ -151,7 +163,7 @@ public sealed class CosmosEnvironmentAdministratorStore : IEnvironmentAdministra
                 }
 
                 byte[] updated = EnvironmentAdministratorsSerialization.SerializeUpdated(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
-                updateStream = EnvelopeStream(id, updated, out ParsedJsonDocument<EnvironmentAdministrators> document);
+                updateStream = EnvelopeStream(id, environmentName, digests, updated, out ParsedJsonDocument<EnvironmentAdministrators> document);
                 updateDocument = document;
             }
         }
@@ -181,7 +193,7 @@ public sealed class CosmosEnvironmentAdministratorStore : IEnvironmentAdministra
         }
 
         byte[] created = EnvironmentAdministratorsSerialization.SerializeNew(environmentName, administrators, actor, this.timeProvider.GetUtcNow(), NewEtag());
-        using (Stream createStream = EnvelopeStream(id, created, out ParsedJsonDocument<EnvironmentAdministrators> createDocument))
+        using (Stream createStream = EnvelopeStream(id, environmentName, digests, created, out ParsedJsonDocument<EnvironmentAdministrators> createDocument))
         {
             try
             {
@@ -209,6 +221,11 @@ public sealed class CosmosEnvironmentAdministratorStore : IEnvironmentAdministra
     {
         ArgumentException.ThrowIfNullOrEmpty(environmentName);
         string id = ItemId(environmentName);
+
+        // Deleting the single forward document atomically retracts this environment's entries from the reverse index: the
+        // administrator digests and the environment name are mirrored top-level on this same document, so removing it
+        // removes its index keys in one operation — there are no separate index docs to delete. (Were there a separate
+        // index container, this is where the previous digests, read back just before deletion, would be retracted.)
         using ResponseMessage response = await this.container.DeleteItemStreamAsync(id, new PartitionKey(id), cancellationToken: cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
@@ -217,6 +234,48 @@ public sealed class CosmosEnvironmentAdministratorStore : IEnvironmentAdministra
         }
 
         response.EnsureSuccessStatusCode();
+    }
+
+    /// <inheritdoc/>
+    // This project generates its own JsonString (per-root type identity), so the seam parameter is fully qualified to the
+    // core JsonString the IEnvironmentAdministratorStore signature uses (mirrors CosmosWorkflowAdministratorStore.ListAdministeredAsync).
+    public async ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        int pageSize = limit > 0 ? limit : EnvironmentAdministeredPage.DefaultPageSize;
+
+        // The keyset cursor (the environment name to page strictly after) reifies once here for the @after query parameter
+        // (leaf). Cosmos orders strings ordinally — the contract's order — so ORDER BY c.environmentName matches the other
+        // backends.
+        string? after = EnvironmentAdministeredContinuationToken.DecodeCursorToString(pageToken);
+
+        // Cross-partition keyset page: every environment whose mirrored adminDigests contains the caller's digest, ordered
+        // by environment name and sought strictly past the cursor. The lazy stream iterator is drained only until one row
+        // beyond the page, so the read is bounded — never every administered environment.
+        string where = after is null
+            ? " WHERE ARRAY_CONTAINS(c.adminDigests, @digest)"
+            : " WHERE ARRAY_CONTAINS(c.adminDigests, @digest) AND c.environmentName > @after";
+        var definition = new QueryDefinition("SELECT c.environmentName FROM c" + where + " ORDER BY c.environmentName")
+            .WithParameter("@digest", adminDigest);
+        if (after is not null)
+        {
+            definition = definition.WithParameter("@after", after);
+        }
+
+        var rows = new List<string>(pageSize + 1);
+        await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(definition, cancellationToken).ConfigureAwait(false))
+        {
+            if (CosmosJson.GetString(element, EnvironmentNameProperty) is { } environmentName)
+            {
+                rows.Add(environmentName);
+                if (rows.Count > pageSize)
+                {
+                    break; // a row beyond the page exists → there is a next page; stop early
+                }
+            }
+        }
+
+        return EnvironmentAdministeredPaging.ToPage(rows, pageSize);
     }
 
     /// <inheritdoc/>
@@ -242,22 +301,33 @@ public sealed class CosmosEnvironmentAdministratorStore : IEnvironmentAdministra
         return "eadmin-" + Convert.ToHexStringLower(hash);
     }
 
-    // Serializes the {id, pk, doc} envelope into a pooled stream and builds the caller's pooled return document from the
-    // same administration-record bytes. The record document is itself JSON, so embed it verbatim as a nested value — no
-    // base64 wrap. It is valid JSON we produced, so skip validation. On any failure building the stream, the return
-    // document is disposed before the exception escapes.
-    private static Stream EnvelopeStream(string id, byte[] doc, out ParsedJsonDocument<EnvironmentAdministrators> document)
+    // Serializes the {id, pk, environmentName, adminDigests, doc} envelope into a pooled stream and builds the caller's
+    // pooled return document from the same administration-record bytes. environmentName and adminDigests are mirrored
+    // top-level so the reverse index (§7.8) is a queryable ARRAY_CONTAINS + keyset (the doc is opaque nested JSON). The
+    // record document is itself JSON, so embed it verbatim as a nested value — no base64 wrap. It is valid JSON we
+    // produced, so skip validation. On any failure building the stream, the return document is disposed before the
+    // exception escapes.
+    private static Stream EnvelopeStream(string id, string environmentName, IReadOnlyList<string> adminDigests, byte[] doc, out ParsedJsonDocument<EnvironmentAdministrators> document)
     {
         document = PersistedJson.ToPooledDocument<EnvironmentAdministrators>(doc);
         try
         {
             return CosmosJson.WriteToStream(
-                (Id: id, Doc: doc),
-                static (Utf8JsonWriter writer, in (string Id, byte[] Doc) c) =>
+                (Id: id, EnvironmentName: environmentName, Digests: adminDigests, Doc: doc),
+                static (Utf8JsonWriter writer, in (string Id, string EnvironmentName, IReadOnlyList<string> Digests, byte[] Doc) c) =>
                 {
                     writer.WriteStartObject();
                     writer.WriteString("id"u8, c.Id);
                     writer.WriteString("pk"u8, c.Id);
+                    writer.WriteString("environmentName"u8, c.EnvironmentName);
+                    writer.WritePropertyName("adminDigests"u8);
+                    writer.WriteStartArray();
+                    foreach (string digest in c.Digests)
+                    {
+                        writer.WriteStringValue(digest);
+                    }
+
+                    writer.WriteEndArray();
                     writer.WritePropertyName("doc"u8);
                     writer.WriteRawValue(c.Doc, skipInputValidation: true);
                     writer.WriteEndObject();
@@ -298,5 +368,20 @@ public sealed class CosmosEnvironmentAdministratorStore : IEnvironmentAdministra
 
         response.EnsureSuccessStatusCode();
         return await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async IAsyncEnumerable<ReadOnlyMemory<byte>> QueryElementsAsync(QueryDefinition query, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        using FeedIterator iterator = this.container.GetItemQueryStreamIterator(query);
+        while (iterator.HasMoreResults)
+        {
+            using ResponseMessage response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            using CosmosJson.RentedResponse page = await CosmosJson.ReadAllAsync(response.Content, cancellationToken).ConfigureAwait(false);
+            foreach (ReadOnlyMemory<byte> element in CosmosJson.ReadDocuments(page.Memory))
+            {
+                yield return element;
+            }
+        }
     }
 }

@@ -18,7 +18,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// <c>Document</c> property, keyed solely by the (encoded) environment name, with a constant PartitionKey so every record
 /// lives in a single partition. Its etag travels inside the document (independent of the Table entity ETag), so
 /// optimistic concurrency is a read-compare-write. The record holds deployment-stamped identities only — never secret
-/// material. Mirrors <see cref="AzureStorageWorkflowAdministratorStore"/> without the reverse administration index.
+/// material. Mirrors <see cref="AzureStorageWorkflowAdministratorStore"/>, including the reverse administration index.
 /// Works against Azure Storage and the Azurite emulator.
 /// </summary>
 /// <remarks>
@@ -32,19 +32,28 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 public sealed class AzureStorageEnvironmentAdministratorStore : IEnvironmentAdministratorStore
 {
     private const string AdministratorsTable = "arazzoEnvironmentAdministrators";
+
+    // The reverse administration index (design §7.7): a separate table whose PartitionKey is an administrator digest and
+    // whose RowKey is the encoded environment name, with the plain environment name in a column so a digest's administered
+    // environments are a single-partition query (no RowKey decode). Azure Table has no server-side ORDER BY, so the
+    // (bounded) partition is ordered client-side — mirroring the access-request store's keyset approach.
+    private const string IndexTable = "arazzoEnvironmentAdministratorIndex";
     private const string DocumentColumn = "Document";
     private const string EtagColumn = "Etag";
+    private const string EnvironmentNameColumn = "EnvironmentName";
 
     // A single logical entity per environment name: the partition is constant (one partition for the table) and the
     // row is the encoded environment name, so a record is a point read by (PartitionKey, RowKey).
     private const string AdministratorsPartition = "admin";
 
     private readonly TableClient administrators;
+    private readonly TableClient index;
     private readonly TimeProvider timeProvider;
 
-    private AzureStorageEnvironmentAdministratorStore(TableClient administrators, TimeProvider timeProvider)
+    private AzureStorageEnvironmentAdministratorStore(TableClient administrators, TableClient index, TimeProvider timeProvider)
     {
         this.administrators = administrators;
+        this.index = index;
         this.timeProvider = timeProvider;
     }
 
@@ -66,6 +75,7 @@ public sealed class AzureStorageEnvironmentAdministratorStore : IEnvironmentAdmi
     {
         ArgumentNullException.ThrowIfNull(tableService);
         await tableService.GetTableClient(AdministratorsTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+        await tableService.GetTableClient(IndexTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the store for operation against an already-provisioned table.</summary>
@@ -91,6 +101,7 @@ public sealed class AzureStorageEnvironmentAdministratorStore : IEnvironmentAdmi
         return new ValueTask<AzureStorageEnvironmentAdministratorStore>(
             new AzureStorageEnvironmentAdministratorStore(
                 tableService.GetTableClient(AdministratorsTable),
+                tableService.GetTableClient(IndexTable),
                 timeProvider ?? TimeProvider.System));
     }
 
@@ -117,6 +128,9 @@ public sealed class AzureStorageEnvironmentAdministratorStore : IEnvironmentAdmi
         WorkflowEtag etag = NewEtag();
         byte[] json;
 
+        // The environment's previous administrator digests (so stale reverse-index rows can be retracted): read from the
+        // record on disk, since Table storage has no atomic server-side script holding them. Empty for a fresh record.
+        IReadOnlyList<string> oldDigests;
         if (existing is not null)
         {
             // Parse the existing record ONCE, NON-COPYING over the driver's array (the read leaf) — used for both the etag
@@ -130,6 +144,7 @@ public sealed class AzureStorageEnvironmentAdministratorStore : IEnvironmentAdmi
                 throw new EnvironmentAdministrationConflictException(environmentName, expectedEtag);
             }
 
+            oldDigests = EnvironmentAdministeredPaging.DistinctDigests(current.RootElement);
             json = EnvironmentAdministratorsSerialization.SerializeUpdated(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), etag);
         }
         else
@@ -140,6 +155,7 @@ public sealed class AzureStorageEnvironmentAdministratorStore : IEnvironmentAdmi
                 throw new EnvironmentAdministrationConflictException(environmentName, expectedEtag);
             }
 
+            oldDigests = [];
             json = EnvironmentAdministratorsSerialization.SerializeNew(environmentName, administrators, actor, this.timeProvider.GetUtcNow(), etag);
         }
 
@@ -149,13 +165,74 @@ public sealed class AzureStorageEnvironmentAdministratorStore : IEnvironmentAdmi
             [DocumentColumn] = json,
         };
         await this.administrators.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+        await this.ReindexAsync(environmentName, oldDigests, EnvironmentAdministeredPaging.DistinctDigests(administrators), cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<EnvironmentAdministrators>(json);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        int pageSize = limit > 0 ? limit : EnvironmentAdministeredPage.DefaultPageSize;
+        string? after = EnvironmentAdministeredContinuationToken.DecodeCursorToString(pageToken);
+
+        // The digest's partition (the environments it administers) is bounded; fetch it projecting just the plain
+        // environment name, order client-side (ordinal — the contract's order), then apply the keyset cursor + page (Azure
+        // has no ORDER BY).
+        var names = new List<string>();
+        await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(
+            e => e.PartitionKey == adminDigest, select: [EnvironmentNameColumn], cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (entity.GetString(EnvironmentNameColumn) is { } environmentName)
+            {
+                names.Add(environmentName);
+            }
+        }
+
+        names.Sort(StringComparer.Ordinal);
+
+        var rows = new List<string>(Math.Min(pageSize + 1, names.Count));
+        foreach (string name in names)
+        {
+            if (after is not null && string.CompareOrdinal(name, after) <= 0)
+            {
+                continue; // at or before the cursor — already returned on an earlier page
+            }
+
+            rows.Add(name);
+            if (rows.Count > pageSize)
+            {
+                break;
+            }
+        }
+
+        return EnvironmentAdministeredPaging.ToPage(rows, pageSize);
     }
 
     /// <inheritdoc/>
     public async ValueTask DeleteAsync(string environmentName, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(environmentName);
+
+        // Read the record first to learn which administrator digests reference it (Azurite does not 404 on deleting a
+        // missing entity, so we cannot rely on the forward delete to tell us the record was absent). A missing record is a
+        // no-op for both the forward row and the reverse index.
+        byte[]? existing = await this.ReadDocumentAsync(environmentName, cancellationToken).ConfigureAwait(false);
+        if (existing is null)
+        {
+            return;
+        }
+
+        // Retract this environment's reverse-index rows (no surviving digests), mirroring PutAsync's retract-before-reindex
+        // logic with an empty new-digest set, then drop the forward record.
+        IReadOnlyList<string> oldDigests;
+        using (ParsedJsonDocument<EnvironmentAdministrators> current = ParsedJsonDocument<EnvironmentAdministrators>.Parse(existing.AsMemory()))
+        {
+            oldDigests = EnvironmentAdministeredPaging.DistinctDigests(current.RootElement);
+        }
+
+        await this.ReindexAsync(environmentName, oldDigests, [], cancellationToken).ConfigureAwait(false);
+
         try
         {
             await this.administrators.DeleteEntityAsync(AdministratorsPartition, RowKey(environmentName), ETag.All, cancellationToken).ConfigureAwait(false);
@@ -167,6 +244,38 @@ public sealed class AzureStorageEnvironmentAdministratorStore : IEnvironmentAdmi
     }
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
+
+    // Reconciles an environment's reverse-index rows (§7.7): delete the rows for digests it no longer administers, then
+    // (idempotently) upsert a row for each current digest. Not atomic with the document write (Table storage spans
+    // partitions here), but a stale row only ever over-reports until the next write, and the work is bounded by the
+    // small administrator set.
+    private async ValueTask ReindexAsync(string environmentName, IReadOnlyList<string> oldDigests, IReadOnlyList<string> newDigests, CancellationToken cancellationToken)
+    {
+        string rowKey = RowKey(environmentName);
+        foreach (string digest in oldDigests)
+        {
+            if (!newDigests.Contains(digest))
+            {
+                try
+                {
+                    await this.index.DeleteEntityAsync(digest, rowKey, ETag.All, cancellationToken).ConfigureAwait(false);
+                }
+                catch (RequestFailedException ex) when (ex.Status == 404)
+                {
+                    // Already gone — the reverse index is idempotent.
+                }
+            }
+        }
+
+        foreach (string digest in newDigests)
+        {
+            var entity = new TableEntity(digest, rowKey)
+            {
+                [EnvironmentNameColumn] = environmentName,
+            };
+            await this.index.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+        }
+    }
 
     // The RowKey is the environment name, which may contain Table-forbidden characters (/\#? and control chars), so it
     // is URL-safe-base64 encoded; the encoded form is always a permitted Table key (see Enc).
