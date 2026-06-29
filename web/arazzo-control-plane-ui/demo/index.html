@@ -63,7 +63,7 @@
     </div>
 
     <div id="view-catalog" role="tabpanel" hidden>
-      <arazzo-catalog base-url="https://mock/arazzo/v1" scopes="catalog:read catalog:write catalog:purge administrators:read administrators:write" theme="auto"></arazzo-catalog>
+      <arazzo-catalog base-url="https://mock/arazzo/v1" scopes="catalog:read catalog:write catalog:purge administrators:read administrators:write availability:read availability:write" theme="auto"></arazzo-catalog>
     </div>
 
     <div id="view-credentials" role="tabpanel" hidden>
@@ -162,8 +162,9 @@
     document.getElementById('scopes').addEventListener('change', (e) => {
       const all = e.target.value;
       panel.setAttribute('scopes', prefixed(all, 'runs:'));
-      // The catalog detail hosts the Security (administrators) section, so it carries both scope families.
-      catalog.setAttribute('scopes', `${prefixed(all, 'catalog:')} ${prefixed(all, 'administrators:')}`.trim());
+      // The catalog detail hosts the Security (administrators) section and the §7.8 promotion matrix, so it carries the
+      // catalog + administrators scope families plus availability:* (the matrix's direct make/withdraw).
+      catalog.setAttribute('scopes', `${prefixed(all, 'catalog:')} ${prefixed(all, 'administrators:')} availability:read availability:write`.trim());
       credTable.setAttribute('scopes', prefixed(all, 'credentials:'));
     });
 

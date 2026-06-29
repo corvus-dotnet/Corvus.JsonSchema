@@ -1525,6 +1525,16 @@ export function createMockControlPlane(options = {}) {
   // ---- availability matrix (§7.8) — where a version is available -------------------------------
 
   function handleVersionAvailability(fullPath, method, params) {
+    // Single-environment make/withdraw (§7.8): PUT/DELETE /catalog/{base}/versions/{n}/availability/{environment}.
+    const one = fullPath.match(/\/catalog\/([^/]+)\/versions\/([^/]+)\/availability\/([^/]+)$/);
+    if (one) {
+      const base = decodeURIComponent(one[1]);
+      const versionNumber = Number(one[2]);
+      const environment = decodeURIComponent(one[3]);
+      if (method === 'PUT') return makeVersionAvailable(base, versionNumber, environment);
+      if (method === 'DELETE') return withdrawVersionAvailability(base, versionNumber, environment);
+      return problem(405, 'Method not allowed');
+    }
     const m = fullPath.match(/\/catalog\/([^/]+)\/versions\/([^/]+)\/availability\/?$/);
     if (!m) return null;
     if (method !== 'GET') return problem(405, 'Method not allowed');
@@ -1538,6 +1548,30 @@ export function createMockControlPlane(options = {}) {
     const pageItems = entries.slice(offset, offset + limit).map((a) => structuredClone(a));
     const nextPageToken = offset + limit < entries.length ? String(offset + limit) : null;
     return json({ availability: pageItems, nextPageToken });
+  }
+
+  // Make a version available in an environment (§7.8) — idempotent, readiness-gated (the same gate as the promotion
+  // approve path). The mock treats the demo user as an administrator of every environment, so it does not enforce 403.
+  function makeVersionAvailable(base, versionNumber, environment) {
+    const version = findVersion(base, versionNumber);
+    if (!version) return problem(404, 'Workflow version not found', `Version ${versionNumber} of '${base}' does not exist.`);
+    if (!findEnvironment(environment)) return notFoundEnvironment(environment);
+    const existing = availabilityEntries.find((a) => a.baseWorkflowId === base && a.versionNumber === versionNumber && a.environment === environment);
+    if (existing) return json(structuredClone(existing)); // already available (idempotent → 200)
+    const missing = (version.sources ?? []).filter((s) => !findUsableCredential(s.name, environment, base)).map((s) => s.name);
+    if (missing.length > 0) {
+      return problem(409, 'Environment not ready', `Version ${versionNumber} of '${base}' cannot be made available in '${environment}': no usable credential for ${missing.join(', ')}.`);
+    }
+    const entry = { baseWorkflowId: base, versionNumber, environment, createdBy: demoUser, createdAt: iso(0), etag: nextEtag() };
+    availabilityEntries.push(entry);
+    return json(structuredClone(entry), 201);
+  }
+
+  function withdrawVersionAvailability(base, versionNumber, environment) {
+    const i = availabilityEntries.findIndex((a) => a.baseWorkflowId === base && a.versionNumber === versionNumber && a.environment === environment);
+    if (i < 0) return problem(404, 'Availability entry not found', `Version ${versionNumber} of '${base}' is not available in '${environment}'.`);
+    availabilityEntries.splice(i, 1);
+    return new Response(null, { status: 204 });
   }
 
   // ---- source registry (§7.6) -------------------------------------------------------------------

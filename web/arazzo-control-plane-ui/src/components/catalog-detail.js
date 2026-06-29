@@ -16,6 +16,7 @@ import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, conf
 import './administrators-panel.js';
 import './access-request-dialog.js';
 import './availability-request-dialog.js';
+import './availability-matrix.js';
 import './credential-dialog.js';
 
 /**
@@ -302,6 +303,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
     this.wireSources(v);
     this.loadSourceBindings(v);
     this.loadPromotion(v);
+    this.loadMatrix(v);
     this.renderActions(v);
     this.renderSecurity(v);
   }
@@ -431,7 +433,26 @@ class ArazzoCatalogDetail extends ArazzoElement {
   }
 
   renderAvailability() {
-    return `<div class="block availability-block" part="availability"><h4>Availability</h4><div class="avail-body"><span class="muted">Loading…</span></div></div>`;
+    return `<div class="block availability-block" part="availability"><h4>Availability</h4>
+      <div class="avail-body"><span class="muted">Loading…</span></div>
+      <arazzo-availability-matrix class="avail-matrix" style="margin-top:10px;"></arazzo-availability-matrix>
+    </div>`;
+  }
+
+  /** Drive the embedded (version × environment) promotion matrix for this version's base workflow. */
+  loadMatrix(v) {
+    const m = this.$('.avail-matrix');
+    if (!m) return;
+    const scopes = this.getAttribute('scopes') || '';
+    if (m.getAttribute('scopes') !== scopes) m.setAttribute('scopes', scopes);
+    m.setAttribute('selected-version', String(v.versionNumber));
+    // Only (re)load when the base workflow changes; switching versions within a base just re-highlights the row.
+    if (m.getAttribute('base-workflow-id') !== v.baseWorkflowId) {
+      m.setAttribute('base-workflow-id', v.baseWorkflowId);
+      m.client = this.client; // triggers the matrix load for the new base
+    } else if (!m.client) {
+      m.client = this.client;
+    }
   }
 
   /** Load where the version is available + where it is ready, then render the "Available in" line and a promote action. */

@@ -47,7 +47,9 @@ package `exports` — `@corvus-dotnet/arazzo-control-plane-ui`, `.../client`, `.
   vocabulary — named scopes/row-filter expressions and the claim→per-verb reach grant bindings, §14.2) for the
   **Permissions** surface; `<arazzo-availability-requests>` + `<arazzo-availability-request-dialog>` (request a
   workflow version be made available — "promoted" — in an environment, and, for environments you administer, the
-  approver inbox: approve / deny / withdraw, §7.8); and `<arazzo-environments>` (browse / create / administer
+  approver inbox: approve / deny / withdraw, §7.8) and `<arazzo-availability-matrix>` (the version × environment
+  promotion grid — direct make/withdraw or request-promotion per cell — embedded in the catalog version detail); and
+  `<arazzo-environments>` (browse / create / administer
   governed deployment environments and see the workflow versions available in each, §7.7 — a master-detail panel
   that reuses `<arazzo-administrators-panel>` in `environment` mode for the per-environment administrator set). Each
   works alone. The
@@ -132,6 +134,7 @@ The kit never embeds an IdP flow. Configure credentials one of three ways (prece
 | `<arazzo-grants-panel>` | `base-url`, `scopes` | `grants-changed`, `loaded`, `error` |
 | `<arazzo-availability-requests>` | `base-url`, `view` (`mine`\|`queue`), `environment`, `theme` (`.fetch`, `.authProvider`) | `availability-request-submitted`, `availability-request-decided`, `loaded`, `error` |
 | `<arazzo-availability-request-dialog>` | (`.client`, `.open({ baseWorkflowId?, versionNumber?, environment?, lockWorkflow? })`) | `availability-request-submitted`, `error` |
+| `<arazzo-availability-matrix>` | `base-url`, `base-workflow-id`, `selected-version`, `scopes` | `availability-changed`, `promotion-requested`, `loaded`, `error` |
 | `<arazzo-environments>` | `base-url`, `scopes` (`environments:read`/`environments:write`/`availability:read`) (`.fetch`, `.authProvider`) | `environment-selected`, `environment-created`, `environment-changed`, `environment-deleted`, `loaded`, `error` |
 | `<arazzo-control-plane>` | `base-url`, `scopes`, `theme`, `poll` | re-emits the above |
 
