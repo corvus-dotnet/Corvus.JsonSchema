@@ -65,8 +65,14 @@ public static class ControlPlaneScopes
     /// <summary>Register, update, and delete sources (reach-scoped).</summary>
     public const string SourcesWrite = "sources:write";
 
+    /// <summary>List where workflow versions are available across environments (reach-scoped).</summary>
+    public const string AvailabilityRead = "availability:read";
+
+    /// <summary>Make a workflow version available in an environment, or withdraw it (target-environment-administrator gated; readiness-gated).</summary>
+    public const string AvailabilityWrite = "availability:write";
+
     /// <summary>Gets all control-plane capability scopes.</summary>
-    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite, CredentialsRead, CredentialsWrite, AdministratorsRead, AdministratorsWrite, EnvironmentsRead, EnvironmentsWrite, SourcesRead, SourcesWrite];
+    public static IReadOnlyList<string> All { get; } = [CatalogRead, CatalogWrite, CatalogPurge, RunsRead, RunsWrite, RunsPurge, SecurityRead, SecurityWrite, CredentialsRead, CredentialsWrite, AdministratorsRead, AdministratorsWrite, EnvironmentsRead, EnvironmentsWrite, SourcesRead, SourcesWrite, AvailabilityRead, AvailabilityWrite];
 }
 
 /// <summary>
