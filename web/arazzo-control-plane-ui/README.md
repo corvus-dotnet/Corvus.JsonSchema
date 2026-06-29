@@ -35,7 +35,8 @@ package `exports` — `@corvus-dotnet/arazzo-control-plane-ui`, `.../client`, `.
   `<arazzo-credentials-table>` (a status-first rotation worklist), `<arazzo-credential-dialog>` (create/edit; the
   auth kind drives which secret slot(s) are shown — fixed role + plain label — and each slot has guided per-store
   `secretRef` fields that compose + preview the canonical reference; the control plane never reads the secret
-  store, so it cannot browse it; re-pointing a reference rotates), and
+  store, so it cannot browse it; re-pointing a reference rotates. `mtls` (§13.1) shows a certificate slot plus
+  optional key/passphrase and, being connection-level, is forced "Shared" with no usage restriction), and
   `<arazzo-administrators-panel>` (a resolved-identity administrator set — composed into the catalog detail as a
   per-workflow, authz-gated Security section rather than a standalone screen; administrators are named with the
   resolved-grantee `<arazzo-grantee-picker>`. **The same panel is subject-agnostic**: set `base-workflow-id` for a

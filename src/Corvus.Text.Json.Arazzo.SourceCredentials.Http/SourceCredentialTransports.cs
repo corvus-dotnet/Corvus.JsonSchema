@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Security.Cryptography.X509Certificates;
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -93,5 +94,70 @@ public static class SourceCredentialTransports
 
             return new WorkflowTransports(apiTransports, descriptor.NeedsMessageTransport ? messageTransport : null);
         };
+    }
+
+    /// <summary>Builds the host-owned <see cref="HttpClient"/> for one source, configuring an mTLS client certificate on
+    /// its handler when the source's binding is <see cref="SourceCredentialKind.Mtls"/> (design §13.1). Unlike the
+    /// header-based kinds — which the <see cref="SourceCredentialCache"/> applies per request — an mTLS certificate is
+    /// connection-level (the TLS handshake), so it is resolved once here and configured on the client's handler. The
+    /// host installs the returned clients in the dictionary it passes to <see cref="CreateBinder"/>.</summary>
+    /// <param name="store">The credential store the (source, environment) binding is read from.</param>
+    /// <param name="factory">The provider factory that resolves the certificate references to a live certificate.</param>
+    /// <param name="sourceName">The Arazzo source description name.</param>
+    /// <param name="environment">The deployment environment.</param>
+    /// <param name="baseAddress">The source's base URL to set on the client, or <see langword="null"/> to leave it unset.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The host-owned client; disposing it disposes the handler and (for mTLS) the client certificate.</returns>
+    /// <remarks>An mTLS binding is connection-scoped, never usage-scoped (it authenticates the deployment, not a run), so
+    /// the binding is resolved for shared usage (<see cref="SecurityTagSet.Empty"/>); the control plane refuses to create
+    /// a usage-scoped mTLS binding, so there is exactly one shared certificate per (source, environment).</remarks>
+    public static async ValueTask<HttpClient> CreateSourceHttpClientAsync(ISourceCredentialStore store, SourceCredentialProviderFactory factory, string sourceName, string environment, Uri? baseAddress = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(store);
+        ArgumentNullException.ThrowIfNull(factory);
+        ArgumentNullException.ThrowIfNull(sourceName);
+        ArgumentNullException.ThrowIfNull(environment);
+
+        X509Certificate2? clientCertificate = null;
+        using (ParsedJsonDocument<SourceCredentialBinding>? binding = await store.ResolveForUsageAsync(sourceName, environment, SecurityTagSet.Empty, cancellationToken).ConfigureAwait(false))
+        {
+            if (binding is not null && binding.RootElement.AuthKindValue == SourceCredentialKind.Mtls)
+            {
+                clientCertificate = await factory.ResolveClientCertificateAsync(binding.RootElement, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        HttpClient client;
+        if (clientCertificate is not null)
+        {
+            var sslHandler = new SocketsHttpHandler { SslOptions = { ClientCertificates = new X509CertificateCollection { clientCertificate } } };
+            client = new HttpClient(new ClientCertificateOwningHandler(sslHandler, clientCertificate), disposeHandler: true);
+        }
+        else
+        {
+            client = new HttpClient();
+        }
+
+        if (baseAddress is not null)
+        {
+            client.BaseAddress = baseAddress;
+        }
+
+        return client;
+    }
+
+    // Owns the lifetime of the mTLS client certificate alongside the handler: SocketsHttpHandler does not dispose the
+    // certificate it presents, so disposing the client (which disposes this delegating handler and its inner handler)
+    // also disposes the certificate, scrubbing its private key.
+    private sealed class ClientCertificateOwningHandler(SocketsHttpHandler inner, X509Certificate2 certificate) : DelegatingHandler(inner)
+    {
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            if (disposing)
+            {
+                certificate.Dispose();
+            }
+        }
     }
 }

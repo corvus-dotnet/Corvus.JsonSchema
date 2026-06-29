@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Security.Cryptography.X509Certificates;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 
@@ -60,8 +61,62 @@ public sealed class SourceCredentialProviderFactory
             SourceCredentialKind.Bearer => await this.CreateBearerAsync(binding, cancellationToken).ConfigureAwait(false),
             SourceCredentialKind.Basic => await this.CreateBasicAsync(binding, cancellationToken).ConfigureAwait(false),
             SourceCredentialKind.OAuth2ClientCredentials => await this.CreateOAuth2Async(binding, cancellationToken).ConfigureAwait(false),
+
+            // mTLS authenticates the connection at the TLS handshake (the client certificate is configured on the
+            // source's HttpClient handler, §13.1) — there is nothing to apply per request, so the built provider is a
+            // no-op. The certificate itself is resolved by ResolveClientCertificateAsync at client-construction time.
+            SourceCredentialKind.Mtls => MtlsClientCertificateAuthenticationProvider.Instance,
             _ => throw new InvalidOperationException($"Unsupported source credential kind '{binding.AuthKindValue}'."),
         };
+    }
+
+    /// <summary>Resolves an <see cref="SourceCredentialKind.Mtls"/> binding's certificate references to a live client
+    /// certificate for the TLS handshake (design §13.1). Because an mTLS certificate is connection-level — not
+    /// per-request — the host applies the returned certificate to the source's <see cref="HttpClient"/> handler at
+    /// construction time (see <see cref="SourceCredentialTransports.CreateSourceHttpClientAsync"/>), rather than the
+    /// cache caching it as a per-request provider.</summary>
+    /// <param name="binding">The mTLS source credential binding.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The resolved client certificate (with its private key). The caller owns its lifetime.</returns>
+    /// <remarks>The <c>certificate</c> secret is either a base64-encoded PKCS#12/PFX (optionally protected by a
+    /// <c>passphrase</c> secret) or, when a separate <c>privateKey</c> secret is present, a PEM certificate paired with a
+    /// PEM private key (optionally encrypted with the <c>passphrase</c>). A PEM-loaded certificate is re-exported to
+    /// PKCS#12 so its private key is usable for TLS client authentication on every platform.</remarks>
+    public async ValueTask<X509Certificate2> ResolveClientCertificateAsync(SourceCredentialBinding binding, CancellationToken cancellationToken = default)
+    {
+        using SecretMaterial certificate = await this.ResolveAsync(binding, "certificate", cancellationToken).ConfigureAwait(false);
+        SecretMaterial? passphrase = null;
+        if (binding.TryGetSecretRef("passphrase", out SecretRef passphraseRef))
+        {
+            passphrase = await this.resolver.ResolveAsync(passphraseRef, cancellationToken).ConfigureAwait(false);
+        }
+
+        try
+        {
+            if (binding.TryGetSecretRef("privateKey", out SecretRef privateKeyRef))
+            {
+                using SecretMaterial privateKey = await this.resolver.ResolveAsync(privateKeyRef, cancellationToken).ConfigureAwait(false);
+                using X509Certificate2 fromPem = passphrase is not null
+                    ? X509Certificate2.CreateFromEncryptedPem(certificate.Reveal(), privateKey.Reveal(), passphrase.Reveal())
+                    : X509Certificate2.CreateFromPem(certificate.Reveal(), privateKey.Reveal());
+
+                // Re-export to PKCS#12 so the private key is persisted and usable for TLS client auth on every platform
+                // (a PEM-loaded key is ephemeral on Windows and the handshake would fail to present it).
+                return X509CertificateLoader.LoadPkcs12(fromPem.Export(X509ContentType.Pkcs12), null);
+            }
+
+            // A base64-encoded PKCS#12/PFX bundling the certificate and its private key, optionally passphrase-protected.
+            byte[] pfx = Convert.FromBase64String(certificate.Reveal());
+            return X509CertificateLoader.LoadPkcs12(pfx, passphrase?.Reveal());
+        }
+        catch (Exception ex) when (ex is FormatException or System.Security.Cryptography.CryptographicException)
+        {
+            throw new InvalidOperationException($"Binding '{binding.SourceNameValue}' (mtls) has an unreadable client certificate: {ex.Message}", ex);
+        }
+        finally
+        {
+            passphrase?.Dispose();
+        }
     }
 
     private async ValueTask<IHttpAuthenticationProvider> CreateApiKeyAsync(SourceCredentialBinding binding, CancellationToken cancellationToken)
