@@ -52,6 +52,7 @@
       <button id="tab-runs" role="tab" aria-selected="true" aria-controls="view-runs">Runs</button>
       <button id="tab-catalog" role="tab" aria-selected="false" aria-controls="view-catalog">Catalog</button>
       <button id="tab-credentials" role="tab" aria-selected="false" aria-controls="view-credentials">Sources</button>
+      <button id="tab-environments" role="tab" aria-selected="false" aria-controls="view-environments">Environments</button>
       <button id="tab-access" role="tab" aria-selected="false" aria-controls="view-access">Access</button>
       <button id="tab-permissions" role="tab" aria-selected="false" aria-controls="view-permissions">Permissions</button>
       <button id="tab-promotions" role="tab" aria-selected="false" aria-controls="view-promotions">Promotions</button>
@@ -68,6 +69,10 @@
     <div id="view-credentials" role="tabpanel" hidden>
       <arazzo-credentials-table base-url="https://mock/arazzo/v1" scopes="credentials:read credentials:write" selectable></arazzo-credentials-table>
       <arazzo-credential-dialog></arazzo-credential-dialog>
+    </div>
+
+    <div id="view-environments" role="tabpanel" hidden>
+      <arazzo-environments base-url="https://mock/arazzo/v1" scopes="environments:read environments:write availability:read"></arazzo-environments>
     </div>
 
     <div id="view-access" role="tabpanel" hidden>
@@ -102,6 +107,7 @@
     import '../src/components/availability-requests-panel.js';
     import '../src/components/scopes-panel.js';
     import '../src/components/grants-panel.js';
+    import '../src/components/environments-panel.js';
 
     const mock = createMockControlPlane(DEMO_SEED);
     const panel = document.querySelector('arazzo-control-plane');
@@ -118,12 +124,14 @@
     const promotions = document.querySelector('arazzo-availability-requests');
     const reach = document.querySelector('arazzo-scopes-panel');
     const bindings = document.querySelector('arazzo-grants-panel');
+    const environments = document.querySelector('arazzo-environments');
     credTable.client = client;
     credDialog.client = client;
     access.client = client;
     promotions.client = client;
     reach.client = client;
     bindings.client = client;
+    environments.client = client;
 
     // Credentials: the Sources tab is a MANAGEMENT surface — select a row to view/rotate, or Duplicate to another
     // environment (clone source + auth, re-point the secret). Creating a credential is rooted in the catalog's
@@ -160,7 +168,7 @@
     });
 
     // Tabs.
-    const tabNames = ['runs', 'catalog', 'credentials', 'access', 'permissions', 'promotions'];
+    const tabNames = ['runs', 'catalog', 'credentials', 'environments', 'access', 'permissions', 'promotions'];
     const tabs = Object.fromEntries(tabNames.map((n) => [n, document.getElementById(`tab-${n}`)]));
     const views = Object.fromEntries(tabNames.map((n) => [n, document.getElementById(`view-${n}`)]));
     const selectTab = (name) => {
@@ -186,6 +194,9 @@
     }
     for (const type of ['availability-request-submitted', 'availability-request-decided', 'loaded', 'error']) {
       promotions.addEventListener(type, (e) => console.log(`[arazzo:promotions] ${type}`, e.detail));
+    }
+    for (const type of ['environment-selected', 'environment-created', 'environment-changed', 'environment-deleted', 'loaded', 'error']) {
+      environments.addEventListener(type, (e) => console.log(`[arazzo:environments] ${type}`, e.detail));
     }
   </script>
 </body>

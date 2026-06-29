@@ -30,27 +30,6 @@ describe('<arazzo-environments>', () => {
     ok(el.shadowRoot.textContent.includes('production'), 'shows the name');
   });
 
-  it('pages the environment list with Prev/Next over the keyset cursor', async () => {
-    el = panelWithMock({ scopes: FULL, 'page-size': '1' });
-    mount(el);
-    await nextEvent(el, 'loaded');
-    equal(rows(el).length, 1, 'page 1 holds one environment');
-    const next = el.shadowRoot.querySelector('.next');
-    ok(next && !next.disabled, 'Next is enabled when a page follows');
-    ok(el.shadowRoot.querySelector('.prev').disabled, 'Prev is disabled on page 1');
-
-    const page2 = nextEvent(el, 'loaded');
-    next.click();
-    await page2;
-    equal(rows(el).length, 1, 'page 2 holds the next environment');
-    ok(el.shadowRoot.querySelector('.next').disabled, 'Next disabled on the last page');
-
-    const back = nextEvent(el, 'loaded');
-    el.shadowRoot.querySelector('.prev').click();
-    await back;
-    ok(el.shadowRoot.querySelector('.prev').disabled, 'Prev disabled again back on page 1');
-  });
-
   it('selecting an environment shows its detail, administrators sub-panel, and availability', async () => {
     el = panelWithMock();
     mount(el);
@@ -85,53 +64,6 @@ describe('<arazzo-environments>', () => {
     await waitFor(() => [...rows(el)].some((r) => r.dataset.name === 'qa'));
     await waitFor(() => detail(el).querySelector('.dtitle'));
     ok(detail(el).textContent.includes('qa'), 'opens on the new environment');
-  });
-
-  it('shows management tags editable in the detail and sets them on create', async () => {
-    el = panelWithMock();
-    mount(el);
-    await nextEvent(el, 'loaded');
-    // Production is seeded with a management tag → pre-filled in the editable detail input (writable).
-    el.shadowRoot.querySelector('.erow[data-name="production"]').click();
-    await nextEvent(el, 'environment-selected');
-    await waitFor(() => detail(el).querySelector('.d-mgmt-editor')?.tags?.length);
-    const ed = detail(el).querySelector('.d-mgmt-editor');
-    equal(ed.tags[0].key, 'team', 'seeded management tag key pre-filled in the editor');
-    equal(ed.tags[0].value, 'platform', 'seeded management tag value pre-filled');
-
-    // Create a new environment with a management tag via the dialog input.
-    el.shadowRoot.querySelector('.new').click();
-    const name = el.shadowRoot.querySelector('.f-name');
-    name.value = 'qa'; name.dispatchEvent(new Event('input'));
-    const mtags = el.shadowRoot.querySelector('.f-mgmt-editor');
-    mtags.tags = [{ key: 'team', value: 'qa' }];
-    const created = nextEvent(el, 'environment-created');
-    el.shadowRoot.querySelector('.confirm').click();
-    const e = await created;
-    equal(e.detail.environment.managementTags?.[0]?.key, 'team', 'management tag key persisted');
-    equal(e.detail.environment.managementTags?.[0]?.value, 'qa', 'management tag value persisted');
-  });
-
-  it('re-tags management tags on update and the change is durable', async () => {
-    el = panelWithMock();
-    mount(el);
-    await nextEvent(el, 'loaded');
-    el.shadowRoot.querySelector('.erow[data-name="production"]').click();
-    await nextEvent(el, 'environment-selected');
-    await waitFor(() => detail(el).querySelector('.d-mgmt-editor')?.tags?.length);
-    // Re-tag: replace the seeded team=platform with team=payments via the editor, then Save.
-    detail(el).querySelector('.d-mgmt-editor').tags = [{ key: 'team', value: 'payments' }];
-    const changed = nextEvent(el, 'environment-changed');
-    detail(el).querySelector('.d-save').click();
-    const e = await changed;
-    equal(e.detail.environment.managementTags?.[0]?.value, 'payments', 're-tag persisted');
-    // Durable on refetch: switch away and back; the editor shows the new tag.
-    el.shadowRoot.querySelector('.erow[data-name="staging"]').click();
-    await nextEvent(el, 'environment-selected');
-    el.shadowRoot.querySelector('.erow[data-name="production"]').click();
-    await nextEvent(el, 'environment-selected');
-    await waitFor(() => detail(el).querySelector('.d-mgmt-editor')?.tags?.length);
-    equal(detail(el).querySelector('.d-mgmt-editor').tags[0].value, 'payments', 're-tag durable on refetch');
   });
 
   it('saves edited metadata and emits environment-changed', async () => {
@@ -180,7 +112,5 @@ describe('<arazzo-environments>', () => {
     await nextEvent(el, 'environment-selected');
     ok(!detail(el).querySelector('.d-save'), 'no Save control');
     ok(!detail(el).querySelector('.d-delete'), 'no Delete control');
-    ok(!detail(el).querySelector('.d-mgmt-editor'), 'management tags editor not shown without write scope');
-    ok(detail(el).textContent.includes('team=platform'), 'management tags shown read-only');
   });
 });

@@ -15,14 +15,12 @@
 // never be left without an administrator. Mutating controls are gated by environments:write.
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, define } from './base.js';
-import './tag-editor.js';
+import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, define } from './base.js';
 import './administrators-panel.js';
-import './pager.js';
 
 class ArazzoEnvironments extends ArazzoElement {
   static get observedAttributes() {
-    return ['base-url', 'scopes', 'page-size'];
+    return ['base-url', 'scopes'];
   }
 
   constructor() {
@@ -34,10 +32,9 @@ class ArazzoEnvironments extends ArazzoElement {
     /** @private */ this._detail = null;         // the selected environment's full summary
     /** @private */ this._availability = [];     // versions available in the selected environment
     /** @private */ this._loading = false;
+    /** @private */ this._loadingMore = false;
     /** @private */ this._detailLoading = false;
     /** @private */ this._error = null;
-    /** @private */ this._history = [];          // pageTokens of pages before the current one
-    /** @private */ this._currentToken = undefined;
     /** @private */ this._nextPageToken = null;
     /** @private */ this._listSeq = 0;
     /** @private */ this._detailSeq = 0;
@@ -46,23 +43,23 @@ class ArazzoEnvironments extends ArazzoElement {
 
   connectedCallback() {
     this.renderShell();
-    this.reload();
+    this.load();
   }
 
   attributeChangedCallback(name) {
     if (!this.isConnected) return;
     if (name === 'scopes') this.renderBody();
-    else { this._client = undefined; this.reload(); }
+    else { this._client = undefined; this.load(); }
   }
 
-  set authProvider(fn) { this._authProvider = fn; this._client = undefined; this.reload(); }
+  set authProvider(fn) { this._authProvider = fn; this._client = undefined; this.load(); }
   get authProvider() { return this._authProvider; }
 
-  set fetch(fn) { this._fetch = fn; this._client = undefined; this.reload(); }
+  set fetch(fn) { this._fetch = fn; this._client = undefined; this.load(); }
 
-  requestRender() { this.reload(); }
+  requestRender() { this.load(); }
 
-  refresh() { this.reload(); }
+  refresh() { this.load(); }
 
   buildClient() {
     if (this._client) return this._client;
@@ -70,10 +67,6 @@ class ArazzoEnvironments extends ArazzoElement {
     if (!baseUrl) return undefined;
     this._client = new ArazzoControlPlaneClient({ baseUrl, fetch: this._fetch, getAuthHeader: this._authProvider });
     return this._client;
-  }
-
-  get pageSize() {
-    return Number(this.getAttribute('page-size')) || 50;
   }
 
   get scopeList() {
@@ -91,13 +84,6 @@ class ArazzoEnvironments extends ArazzoElement {
 
   // ---- list -------------------------------------------------------------------------------------
 
-  /** Reload from page 1 (resets the keyset cursor). */
-  reload() {
-    this._history = [];
-    this._currentToken = undefined;
-    this.load();
-  }
-
   async load() {
     const client = this.buildClient();
     if (!client) {
@@ -109,13 +95,17 @@ class ArazzoEnvironments extends ArazzoElement {
     const seq = ++this._listSeq;
     this._loading = true;
     this._error = null;
+    this._envs = [];
+    this._nextPageToken = null;
     this.renderBody();
     try {
-      const page = await client.listEnvironments({ pageToken: this._currentToken, limit: this.pageSize });
+      const page = await client.listEnvironments();
       if (seq !== this._listSeq) return;
       this._envs = page.environments;
       this._nextPageToken = page.nextPageToken;
       this._loading = false;
+      // Keep the selection if it is still present; otherwise clear the detail.
+      if (this._selected && !this._envs.some((e) => e.name === this._selected)) this.clearDetail();
       this.renderBody();
       this.emit('loaded', { count: this._envs.length, hasMore: !!this._nextPageToken });
     } catch (err) {
@@ -127,17 +117,25 @@ class ArazzoEnvironments extends ArazzoElement {
     }
   }
 
-  nextPage() {
-    if (!this._nextPageToken) return;
-    this._history.push(this._currentToken);
-    this._currentToken = this._nextPageToken;
-    this.load();
-  }
-
-  prevPage() {
-    if (this._history.length === 0) return;
-    this._currentToken = this._history.pop();
-    this.load();
+  async loadMore() {
+    const client = this.buildClient();
+    if (!client || !this._nextPageToken || this._loadingMore) return;
+    const seq = this._listSeq;
+    this._loadingMore = true;
+    this.renderBody();
+    try {
+      const page = await client.listEnvironments({ pageToken: this._nextPageToken });
+      if (seq !== this._listSeq) return;
+      this._envs.push(...page.environments);
+      this._nextPageToken = page.nextPageToken;
+      this._loadingMore = false;
+      this.renderBody();
+    } catch (err) {
+      if (seq !== this._listSeq) return;
+      this._loadingMore = false;
+      this._error = err.problem || { title: err.message };
+      this.renderBody();
+    }
   }
 
   // ---- selection / detail -----------------------------------------------------------------------
@@ -183,15 +181,10 @@ class ArazzoEnvironments extends ArazzoElement {
     if (!this._detail) return;
     const displayName = this.$('.d-displayName')?.value ?? '';
     const description = this.$('.d-description')?.value ?? '';
-    // A present managementTags re-tags the reach scope (§14.2): the editor is seeded with the current non-internal
-    // labels, so re-saving is idempotent, editing re-tags, and clearing removes them. The server preserves the
-    // deployment-internal tags and rejects the reserved sys: prefix (400).
-    const mgmtEd = this.$('.d-mgmt-editor');
-    const managementTags = mgmtEd ? mgmtEd.tags : [];
     const saveBtn = this.$('.d-save');
     if (saveBtn) saveBtn.disabled = true;
     try {
-      const updated = await this.buildClient().updateEnvironment(this._detail.name, { displayName, description, managementTags });
+      const updated = await this.buildClient().updateEnvironment(this._detail.name, { displayName, description });
       this._detail = updated;
       const i = this._envs.findIndex((e) => e.name === updated.name);
       if (i >= 0) this._envs[i] = { ...this._envs[i], ...updated };
@@ -214,7 +207,7 @@ class ArazzoEnvironments extends ArazzoElement {
     try {
       await this.buildClient().deleteEnvironment(name);
       this.clearDetail();
-      await this.reload();
+      await this.load();
       this.emit('environment-deleted', { name });
     } catch (err) {
       this._error = err.problem || { title: err.message };
@@ -226,7 +219,7 @@ class ArazzoEnvironments extends ArazzoElement {
   // ---- create (modal dialog) --------------------------------------------------------------------
 
   openCreate() {
-    this._form = { name: '', displayName: '', description: '', managementTags: [], formError: null };
+    this._form = { name: '', displayName: '', description: '', formError: null };
     this.renderEditor();
     this.$('dialog').showModal();
     this.$('.f-name')?.focus();
@@ -243,15 +236,13 @@ class ArazzoEnvironments extends ArazzoElement {
     const name = (form.name || '').trim();
     if (!name) { form.formError = { title: 'An environment name is required.' }; this.renderEditor(); return; }
     try {
-      const managementTags = this.$('.f-mgmt-editor')?.tags ?? [];
       const created = await this.buildClient().createEnvironment({
         name,
         displayName: (form.displayName || '').trim() || undefined,
         description: (form.description || '').trim() || undefined,
-        managementTags: managementTags.length ? managementTags : undefined,
       });
       this.closeEditor();
-      await this.reload();
+      await this.load();
       await this.select(created.name);
       this.emit('environment-created', { environment: created });
     } catch (err) {
@@ -268,29 +259,25 @@ class ArazzoEnvironments extends ArazzoElement {
       <style>
         ${SHARED_CSS}
         :host { display: block; }
-        .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
-        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } }
+        .layout { display: grid; grid-template-columns: 1fr; gap: 14px; align-items: start; }
+        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: 1fr 1.1fr; } }
 
         .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
-        /* The list is a bordered table, matching the Runs/Catalog/Sources lists. */
-        .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
-        .toolbar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
-        .toolbar .title { font-weight: 600; color: var(--_muted); font-size: 12px; }
-        .toolbar .grow { flex: 1; }
+        .head { padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: center; gap: 8px; }
+        .head .title { font-weight: 700; }
+        .head .grow { flex: 1; }
         .err { margin: 10px 12px; }
-        .err:empty { display: none; }
-        table { width: 100%; border-collapse: collapse; }
-        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; }
-        tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
-        tbody tr:last-child td { border-bottom: none; }
-        tbody tr.selectable { cursor: pointer; }
-        tbody tr.selectable:hover { background: var(--_surface); }
-        tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
+        .list { display: grid; }
+        .erow { display: flex; align-items: baseline; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--_border); cursor: pointer; background: none; border-left: 3px solid transparent; text-align: left; width: 100%; }
+        .erow:last-child { border-bottom: none; }
+        .erow:hover { background: var(--_surface); }
+        .erow[aria-selected="true"] { border-left-color: var(--_accent); background: color-mix(in srgb, var(--_accent) 7%, transparent); }
+        .emeta { flex: 1; min-width: 0; }
         .ename { font-weight: 600; }
         .ecode { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
-        .edesc { color: var(--_muted); overflow: hidden; text-overflow: ellipsis; }
-        .etime { color: var(--_muted); font-size: 12px; white-space: nowrap; }
-        ${PAGER_CSS}
+        .edesc { color: var(--_muted); font-size: 12px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .etime { flex: none; color: var(--_muted); font-size: 12px; }
+        .more-row { display: flex; justify-content: center; padding: 10px; border-top: 1px solid var(--_border); }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
         @keyframes pulse { 50% { opacity: 0.45; } }
 
@@ -320,19 +307,15 @@ class ArazzoEnvironments extends ArazzoElement {
         .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
       </style>
       <div class="layout" part="layout">
-        <div class="wrap" part="panel">
-          <div class="toolbar" part="toolbar">
+        <div class="panel" part="panel">
+          <div class="head">
             <span class="title">Environments</span>
             <span class="grow"></span>
             <button class="refresh ghost" type="button" title="Refresh">↻</button>
             <button class="new primary" type="button" hidden>New environment</button>
           </div>
           <div class="err"></div>
-          <table>
-            <thead><tr><th>Environment</th><th>Description</th><th>Created</th></tr></thead>
-            <tbody class="list" part="rows"></tbody>
-          </table>
-          <arazzo-pager class="pager" part="pager"></arazzo-pager>
+          <div class="list" part="list"></div>
         </div>
         <div class="detail-pane"></div>
       </div>
@@ -345,10 +328,8 @@ class ArazzoEnvironments extends ArazzoElement {
         </div>
       </dialog>
     `;
-    this.$('.refresh').addEventListener('click', () => this.reload());
+    this.$('.refresh').addEventListener('click', () => this.load());
     this.$('.new').addEventListener('click', () => this.openCreate());
-    this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
-    this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
     this.$('.cancel').addEventListener('click', () => this.closeEditor());
     this.$('.confirm').addEventListener('click', () => this.submitForm());
     this.$('dialog').addEventListener('close', () => { this._form = null; });
@@ -367,28 +348,28 @@ class ArazzoEnvironments extends ArazzoElement {
       : '';
 
     if (this._loading && this._envs.length === 0) {
-      list.innerHTML = `<tr><td colspan="3"><div class="skl"></div><div class="skl"></div></td></tr>`;
+      list.innerHTML = '<div class="skl"></div><div class="skl"></div>';
     } else if (this._envs.length === 0) {
-      list.innerHTML = `<tr><td colspan="3"><div class="empty">No environments defined.</div></td></tr>`;
+      list.innerHTML = '<div class="empty">No environments defined.</div>';
     } else {
-      list.innerHTML = this._envs.map((e) => `
-        <tr class="erow selectable" part="row" data-name="${escapeHtml(e.name)}" aria-selected="${String(e.name === this._selected)}">
-          <td part="cell"><span class="ename">${escapeHtml(e.displayName || e.name)}</span> <span class="ecode">${escapeHtml(e.name)}</span></td>
-          <td part="cell" class="edesc">${e.description ? escapeHtml(e.description) : '<span class="muted">—</span>'}</td>
-          <td part="cell" class="etime" title="${escapeHtml(absoluteTime(e.createdAt))}">${escapeHtml(relativeTime(e.createdAt))}</td>
-        </tr>`).join('');
+      const rows = this._envs.map((e) => `
+        <button class="erow" type="button" part="row" data-name="${escapeHtml(e.name)}" aria-selected="${String(e.name === this._selected)}">
+          <span class="emeta">
+            <span class="ename">${escapeHtml(e.displayName || e.name)}</span> <span class="ecode">${escapeHtml(e.name)}</span>
+            ${e.description ? `<div class="edesc">${escapeHtml(e.description)}</div>` : ''}
+          </span>
+          <span class="etime" title="${escapeHtml(absoluteTime(e.createdAt))}">${escapeHtml(relativeTime(e.createdAt))}</span>
+        </button>`).join('');
+      const more = this._nextPageToken
+        ? `<div class="more-row"><button class="more ghost" type="button"${this._loadingMore ? ' disabled' : ''}>${this._loadingMore ? 'Loading…' : 'Load more'}</button></div>`
+        : '';
+      list.innerHTML = rows + more;
       this.$$('.erow').forEach((b) => b.addEventListener('click', () => this.select(b.dataset.name)));
+      const moreBtn = this.$('.more');
+      if (moreBtn) moreBtn.addEventListener('click', () => this.loadMore());
     }
 
-    this.renderFoot();
     this.renderDetail();
-  }
-
-  renderFoot() {
-    const info = this._loading
-      ? 'Loading…'
-      : `${this._envs.length} environment${this._envs.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
-    this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextPageToken, loading: this._loading, info });
   }
 
   renderDetail() {
@@ -423,18 +404,6 @@ class ArazzoEnvironments extends ArazzoElement {
           `}
         </div>
         <div class="section">
-          <h4>Management tags</h4>
-          ${writable ? `
-            <arazzo-tag-editor class="d-mgmt-editor"></arazzo-tag-editor>
-            <div class="hint">Who may manage and see this environment (§14.2). An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed. Saved with the details above.</div>
-          ` : `
-            ${Array.isArray(e.managementTags) && e.managementTags.length
-              ? `<div class="mtags">${e.managementTags.map((t) => `<code>${escapeHtml(t.key)}=${escapeHtml(t.value)}</code>`).join(' ')}</div>`
-              : '<div class="muted">None — visible to everyone within reach.</div>'}
-            <div class="hint">Who may manage and see this environment (§14.2).</div>
-          `}
-        </div>
-        <div class="section">
           <h4>Administrators</h4>
           <arazzo-administrators-panel class="env-admins" environment="${escapeHtml(e.name)}" scopes="${escapeHtml(this.getAttribute('scopes') || '')}"></arazzo-administrators-panel>
         </div>
@@ -452,9 +421,6 @@ class ArazzoEnvironments extends ArazzoElement {
 
     const admins = pane.querySelector('.env-admins');
     if (admins) admins.client = this.buildClient();
-    // Seed the management-tags editor once it is in the DOM (its .tags setter re-renders the rows).
-    const mgmtEd = pane.querySelector('.d-mgmt-editor');
-    if (mgmtEd) mgmtEd.tags = Array.isArray(e.managementTags) ? e.managementTags : [];
     const saveBtn = pane.querySelector('.d-save');
     if (saveBtn) saveBtn.addEventListener('click', () => this.saveMetadata());
     const delBtn = pane.querySelector('.d-delete');
@@ -479,16 +445,11 @@ class ArazzoEnvironments extends ArazzoElement {
       <div class="field"><span>Name</span><input class="f-name" placeholder="qa" value="${escapeHtml(f.name)}"></div>
       <div class="field"><span>Display name</span><input class="f-displayName" placeholder="(optional)" value="${escapeHtml(f.displayName)}"></div>
       <div class="field"><span>Description</span><textarea class="f-description" placeholder="(optional)">${escapeHtml(f.description)}</textarea></div>
-      <div class="field"><span>Management tags</span><arazzo-tag-editor class="f-mgmt-editor"></arazzo-tag-editor></div>
-      <div class="hint">Scope who may manage and see this environment (§14.2); an administrator may re-tag it later. The reserved <code>sys:</code> prefix is not allowed.</div>
       <div class="form-err">${f.formError ? `<div class="error-banner"><span><strong>${escapeHtml(f.formError.title || 'Request failed')}</strong>${f.formError.detail ? ' — ' + escapeHtml(f.formError.detail) : ''}</span></div>` : ''}</div>
     `;
     content.querySelector('.f-name').addEventListener('input', (ev) => { f.name = ev.target.value; });
     content.querySelector('.f-displayName').addEventListener('input', (ev) => { f.displayName = ev.target.value; });
     content.querySelector('.f-description').addEventListener('input', (ev) => { f.description = ev.target.value; });
-    const mgmtEd = content.querySelector('.f-mgmt-editor');
-    mgmtEd.tags = Array.isArray(f.managementTags) ? f.managementTags : [];
-    mgmtEd.addEventListener('tags-changed', () => { f.managementTags = mgmtEd.tags; });
   }
 }
 
