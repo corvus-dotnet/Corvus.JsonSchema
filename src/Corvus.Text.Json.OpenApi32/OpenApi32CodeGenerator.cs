@@ -37,7 +37,7 @@ public sealed class OpenApi32CodeGenerator
     private readonly string rootNamespace;
     private readonly string? clientNamePrefix;
     private readonly bool ignoreEmptyFormUrlEncodedBody;
-    private readonly IReadOnlyDictionary<string, string> schemaTypeMap;
+    private readonly ISchemaTypeResolver schemaTypeResolver;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OpenApi32CodeGenerator"/> class.
@@ -64,7 +64,7 @@ public sealed class OpenApi32CodeGenerator
         bool ignoreEmptyFormUrlEncodedBody = false)
     {
         this.rootNamespace = rootNamespace;
-        this.schemaTypeMap = schemaTypeMap;
+        this.schemaTypeResolver = new DefaultSchemaTypeResolver(schemaTypeMap);
         this.clientNamePrefix = clientNamePrefix;
         this.ignoreEmptyFormUrlEncodedBody = ignoreEmptyFormUrlEncodedBody;
     }
@@ -1732,8 +1732,11 @@ public sealed class OpenApi32CodeGenerator
             // Querystring parameters use 'content' instead of 'schema'.
             if (location == ParameterLocation.Querystring)
             {
-                string? schemaPointer = BuildQuerystringContentSchemaPointer(
+                string? schemaPointerString = BuildQuerystringContentSchemaPointer(
                     param, pathNameUtf8, method, sourceIndex, isPathLevel, customMethodName);
+                SchemaRef? schemaPointer = schemaPointerString is not null
+                    ? new SchemaRef(schemaPointerString)
+                    : null;
 
                 string name = param.Name.IsNotUndefined() ? param.Name.GetString()! : "__querystring";
 
@@ -1770,8 +1773,8 @@ public sealed class OpenApi32CodeGenerator
                 && serializationKind is ParameterSerializationKind.Object or ParameterSerializationKind.Array
                 && SchemaClassifier.HasDeepNesting(schemaElement);
 
-            string? schemaPointerRegular = hasSchema
-                ? (customMethodName is not null
+            SchemaRef? schemaPointerRegular = hasSchema
+                ? new SchemaRef(customMethodName is not null
                     ? BuildAdditionalOpParameterSchemaPointer(pathNameUtf8, customMethodName, sourceIndex)
                     : SchemaPointerBuilder.BuildParameterSchemaPointer(
                         "paths"u8, pathNameUtf8, method, sourceIndex, isPathLevel))
@@ -2052,14 +2055,14 @@ public sealed class OpenApi32CodeGenerator
                 && !CodeEmitHelpers.IsOctetStreamMediaType(mediaType)
                 && !CodeEmitHelpers.IsTextPlainMediaType(mediaType);
 
-            string? schemaPointer = null;
+            SchemaRef? schemaPointer = null;
             if (hasSchema)
             {
                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
-                schemaPointer = customMethodName is not null
+                schemaPointer = new SchemaRef(customMethodName is not null
                     ? BuildAdditionalOpContentSchemaPointer(pathNameUtf8, customMethodName, parentSegmentUtf8, mediaTypeName.Span)
                     : SchemaPointerBuilder.BuildContentSchemaPointer(
-                        "paths"u8, pathNameUtf8, method, parentSegmentUtf8, mediaTypeName.Span);
+                        "paths"u8, pathNameUtf8, method, parentSegmentUtf8, mediaTypeName.Span));
             }
 
             IReadOnlyDictionary<string, EncodingInfo>? encodings = ReadEncodings(OpenApiDocument.MediaType.From(mediaTypeProp.Value));
@@ -2091,24 +2094,24 @@ public sealed class OpenApi32CodeGenerator
                 && !CodeEmitHelpers.IsOctetStreamMediaType(mediaType)
                 && !CodeEmitHelpers.IsTextPlainMediaType(mediaType);
 
-            string? schemaPointer = null;
+            SchemaRef? schemaPointer = null;
             if (hasSchema)
             {
                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
-                schemaPointer = customMethodName is not null
+                schemaPointer = new SchemaRef(customMethodName is not null
                     ? BuildAdditionalOpResponseContentSchemaPointer(pathNameUtf8, customMethodName, statusCodeUtf8, mediaTypeName.Span)
                     : SchemaPointerBuilder.BuildResponseContentSchemaPointer(
-                        "paths"u8, pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span);
+                        "paths"u8, pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span));
             }
 
-            string? itemSchemaPointer = null;
+            SchemaRef? itemSchemaPointer = null;
             if (mediaTypeProp.Value.ItemSchema.IsNotUndefined())
             {
                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
-                itemSchemaPointer = customMethodName is not null
+                itemSchemaPointer = new SchemaRef(customMethodName is not null
                     ? BuildAdditionalOpResponseContentItemSchemaPointer("paths"u8, pathNameUtf8, customMethodName, statusCodeUtf8, mediaTypeName.Span)
                     : SchemaPointerBuilder.BuildResponseContentItemSchemaPointer(
-                        "paths"u8, pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span);
+                        "paths"u8, pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span));
             }
 
             result.Add(new ContentInfo(mediaType, schemaPointer, null, itemSchemaPointer));
@@ -2187,14 +2190,14 @@ public sealed class OpenApi32CodeGenerator
             {
                 bool hasSchema = header.SchemaValue.IsNotUndefined();
 
-                string? schemaPointer = null;
+                SchemaRef? schemaPointer = null;
                 if (hasSchema)
                 {
                     using UnescapedUtf8JsonString headerName = headerProp.Utf8NameSpan;
-                    schemaPointer = customMethodName is not null
+                    schemaPointer = new SchemaRef(customMethodName is not null
                         ? BuildAdditionalOpResponseHeaderSchemaPointer(pathNameUtf8, customMethodName, statusCodeUtf8, headerName.Span)
                         : SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
-                            "paths"u8, pathNameUtf8, method, statusCodeUtf8, headerName.Span);
+                            "paths"u8, pathNameUtf8, method, statusCodeUtf8, headerName.Span));
                 }
 
                 // Extract explode and serialization kind for response header deserialization.
@@ -2787,25 +2790,14 @@ public sealed class OpenApi32CodeGenerator
 
     private string GetParameterTypeName(ParameterInfo param)
     {
-        string resolved = this.ResolveSchemaTypeName(param.SchemaPointer);
+        string resolved = this.schemaTypeResolver.ResolveTypeName(param.SchemaPointer);
         return resolved;
     }
 
     private string GetParameterSourceTypeName(ParameterInfo param)
     {
-        string resolved = this.ResolveSchemaTypeName(param.SchemaPointer);
+        string resolved = this.schemaTypeResolver.ResolveTypeName(param.SchemaPointer);
         return $"{resolved}.Source";
-    }
-
-    private string ResolveSchemaTypeName(string? schemaPointer)
-    {
-        if (schemaPointer is not null
-            && this.schemaTypeMap.TryGetValue(schemaPointer, out string? typeName))
-        {
-            return typeName;
-        }
-
-        return "JsonElement";
     }
 
     private string ResolveRequestBodyTypeName(RequestBodyInfo requestBody)
@@ -2816,7 +2808,7 @@ public sealed class OpenApi32CodeGenerator
                 || CodeEmitHelpers.IsFormUrlEncodedMediaType(content.MediaType)
                 || CodeEmitHelpers.IsMultipartMediaType(content.MediaType))
             {
-                return this.ResolveSchemaTypeName(content.SchemaPointer);
+                return this.schemaTypeResolver.ResolveTypeName(content.SchemaPointer);
             }
         }
 
@@ -2996,7 +2988,7 @@ public sealed class OpenApi32CodeGenerator
             string schemaPointer = BuildPrefixItemSchemaPointer(
                 "paths"u8, pathNameUtf8, method, mediaTypeNameUtf8, index, customMethodName);
 
-            parts.Add(new MixedPartInfo(schemaPointer, contentType, isBinary));
+            parts.Add(new MixedPartInfo(new SchemaRef(schemaPointer), contentType, isBinary));
             index++;
         }
 
@@ -3023,7 +3015,7 @@ public sealed class OpenApi32CodeGenerator
         string schemaPointer = BuildItemsSchemaPointer(
             "paths"u8, pathNameUtf8, method, mediaTypeNameUtf8, customMethodName);
 
-        return new MixedPartInfo(schemaPointer, contentType, isBinary);
+        return new MixedPartInfo(new SchemaRef(schemaPointer), contentType, isBinary);
     }
 
     private static string BuildPrefixItemSchemaPointer(
@@ -3100,7 +3092,7 @@ public sealed class OpenApi32CodeGenerator
         {
             if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
             {
-                return this.ResolveSchemaTypeName(content.SchemaPointer);
+                return this.schemaTypeResolver.ResolveTypeName(content.SchemaPointer);
             }
         }
 
@@ -3113,7 +3105,7 @@ public sealed class OpenApi32CodeGenerator
         {
             if (content.ItemSchemaPointer is not null)
             {
-                return this.ResolveSchemaTypeName(content.ItemSchemaPointer);
+                return this.schemaTypeResolver.ResolveTypeName(content.ItemSchemaPointer);
             }
         }
 
@@ -3214,7 +3206,7 @@ public sealed class OpenApi32CodeGenerator
         string[] acceptMediaTypes = CodeEmitHelpers.GetAcceptMediaTypes(
             op.Responses
                 .SelectMany(r => r.Content)
-                .Select(c => (c.MediaType, c.SchemaPointer)));
+                .Select(c => (c.MediaType, c.SchemaPointer?.PositionalPointer)));
 
         this.EmitRequestFields(w, op.Parameters);
         this.EmitRequestConstructor(w, structName, op.Parameters);
@@ -4603,7 +4595,7 @@ public sealed class OpenApi32CodeGenerator
                 }
 
                 string? typeName = header.SchemaPointer is not null
-                    ? this.ResolveSchemaTypeName(header.SchemaPointer)
+                    ? this.schemaTypeResolver.ResolveTypeName(header.SchemaPointer)
                     : null;
 
                 w.WriteLine();
@@ -4618,12 +4610,12 @@ public sealed class OpenApi32CodeGenerator
 
                     // Resolve the element/value type for deeply nested headers.
                     string? elementTypeName = null;
-                    if (header.HasDeepNesting && header.SchemaPointer is not null)
+                    if (header.HasDeepNesting && header.SchemaPointer is { } headerSchemaRef)
                     {
                         string elementPointer = header.SerializationKind is ParameterSerializationKind.Array
-                            ? header.SchemaPointer + "/items"
-                            : header.SchemaPointer + "/additionalProperties";
-                        elementTypeName = this.ResolveSchemaTypeName(elementPointer);
+                            ? headerSchemaRef.PositionalPointer + "/items"
+                            : headerSchemaRef.PositionalPointer + "/additionalProperties";
+                        elementTypeName = this.schemaTypeResolver.ResolveElementTypeName(new SchemaRef(elementPointer));
                     }
 
                     CodeEmitHelpers.EmitResponseHeaderLazyProperty(
@@ -5659,7 +5651,7 @@ public sealed class OpenApi32CodeGenerator
                 string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
                 string paramIdentifier = CodeEmitHelpers.EscapeCSharpKeyword(
                     CodeEmitHelpers.SanitizeParameterName(param.Name));
-                string typeName = this.ResolveSchemaTypeName(param.SchemaPointer);
+                string typeName = this.schemaTypeResolver.ResolveTypeName(param.SchemaPointer);
                 w.WriteLine(
                     $"{typeName} {fieldName}Value = {typeName}.CreateBuilder(workspace, {paramIdentifier}, 30).RootElement;");
             }
@@ -5680,7 +5672,7 @@ public sealed class OpenApi32CodeGenerator
                     string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
                     string paramIdentifier = CodeEmitHelpers.EscapeCSharpKeyword(
                         CodeEmitHelpers.SanitizeParameterName(param.Name));
-                    string typeName = this.ResolveSchemaTypeName(param.SchemaPointer);
+                    string typeName = this.schemaTypeResolver.ResolveTypeName(param.SchemaPointer);
 
                     string undefinedFallback = CodeEmitHelpers.FormatDefaultValueExpression(
                         typeName, param.DefaultValueJson, param.DefaultValueKind);
@@ -6126,7 +6118,7 @@ public sealed class OpenApi32CodeGenerator
                         }
                         else
                         {
-                            string typeName = this.ResolveSchemaTypeName(part.SchemaPointer);
+                            string typeName = this.schemaTypeResolver.ResolveTypeName(part.SchemaPointer);
                             paramParts.Add($"{typeName}.Source {paramName}");
                         }
                     }
@@ -6140,7 +6132,7 @@ public sealed class OpenApi32CodeGenerator
                     }
                     else
                     {
-                        string typeName = this.ResolveSchemaTypeName(itemPart.SchemaPointer);
+                        string typeName = this.schemaTypeResolver.ResolveTypeName(itemPart.SchemaPointer);
                         paramParts.Add($"IEnumerable<{typeName}.Source> items");
                     }
                 }
@@ -6223,7 +6215,7 @@ public sealed class OpenApi32CodeGenerator
                 MixedPartInfo part = prefixParts[i];
                 if (!part.IsBinary)
                 {
-                    string typeName = this.ResolveSchemaTypeName(part.SchemaPointer);
+                    string typeName = this.schemaTypeResolver.ResolveTypeName(part.SchemaPointer);
                     w.WriteLine(
                         $"var part{i}Builder = {typeName}.CreateBuilder(workspace, part{i}, 30);");
                     w.WriteLine(
@@ -6306,7 +6298,7 @@ public sealed class OpenApi32CodeGenerator
             else
             {
                 // Homogeneous JSON batch — sync wrapper, workspace manages builder lifetimes.
-                string typeName = this.ResolveSchemaTypeName(itemPart.SchemaPointer);
+                string typeName = this.schemaTypeResolver.ResolveTypeName(itemPart.SchemaPointer);
                 w.WriteLine(
                     $"return SendWithBodyWriterAsyncCore<{requestName}, " +
                     $"{responseName}>(workspace, request, (stream, ct) =>");
@@ -6795,7 +6787,7 @@ public sealed class OpenApi32CodeGenerator
                 string propertyName = CodeEmitHelpers.HeaderNameToPropertyName(header.HeaderName);
                 string fieldName = CodeEmitHelpers.ToCamelCase(propertyName);
                 string? typeName = header.SchemaPointer is not null
-                    ? this.ResolveSchemaTypeName(header.SchemaPointer)
+                    ? this.schemaTypeResolver.ResolveTypeName(header.SchemaPointer)
                     : null;
 
                 // All response headers are stored as JsonElement (already built via workspace).
@@ -7083,7 +7075,7 @@ public sealed class OpenApi32CodeGenerator
             {
                 if (content.ItemSchemaPointer is not null)
                 {
-                    string typeName = this.ResolveSchemaTypeName(content.ItemSchemaPointer);
+                    string typeName = this.schemaTypeResolver.ResolveTypeName(content.ItemSchemaPointer);
                     if (!itemTypeNames.Contains(typeName))
                     {
                         itemTypeNames.Add(typeName);
@@ -8191,12 +8183,12 @@ public sealed class OpenApi32CodeGenerator
 
         // For array/object types, resolve the element/value type name.
         string? elementTypeName = null;
-        if (param.HasDeepNesting && param.SchemaPointer is not null)
+        if (param.HasDeepNesting && param.SchemaPointer is { } paramSchemaRef)
         {
             string elementPointer = param.SerializationKind is ParameterSerializationKind.Array
-                ? param.SchemaPointer + "/items"
-                : param.SchemaPointer + "/additionalProperties";
-            elementTypeName = this.ResolveSchemaTypeName(elementPointer);
+                ? paramSchemaRef.PositionalPointer + "/items"
+                : paramSchemaRef.PositionalPointer + "/additionalProperties";
+            elementTypeName = this.schemaTypeResolver.ResolveElementTypeName(new SchemaRef(elementPointer));
         }
 
         switch (param.Location)

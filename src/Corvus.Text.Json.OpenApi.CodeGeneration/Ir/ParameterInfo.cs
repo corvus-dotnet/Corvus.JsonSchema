@@ -37,7 +37,7 @@ public readonly record struct ParameterInfo(
     bool Explode,
     ParameterSerializationKind SerializationKind,
     ParameterSerializationKind ElementSerializationKind,
-    string? SchemaPointer,
+    SchemaRef? SchemaPointer,
     bool HasDeepNesting,
     string? DefaultValueJson,
     JsonValueKind DefaultValueKind,

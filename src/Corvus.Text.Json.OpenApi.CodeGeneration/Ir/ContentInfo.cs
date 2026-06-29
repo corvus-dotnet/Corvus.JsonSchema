@@ -15,6 +15,6 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// </param>
 public readonly record struct ContentInfo(
     string MediaType,
-    string? SchemaPointer,
+    SchemaRef? SchemaPointer,
     IReadOnlyDictionary<string, EncodingInfo>? Encodings,
-    string? ItemSchemaPointer = null);
+    SchemaRef? ItemSchemaPointer = null);

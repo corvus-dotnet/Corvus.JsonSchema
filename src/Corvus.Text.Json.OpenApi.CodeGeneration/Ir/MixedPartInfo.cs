@@ -12,6 +12,6 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// <param name="ContentType">The content type of the part.</param>
 /// <param name="IsBinary">Whether the part carries binary content.</param>
 public readonly record struct MixedPartInfo(
-    string SchemaPointer,
+    SchemaRef SchemaPointer,
     string ContentType,
     bool IsBinary);

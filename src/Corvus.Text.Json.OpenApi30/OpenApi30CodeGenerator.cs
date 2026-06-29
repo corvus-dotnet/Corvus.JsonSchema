@@ -36,7 +36,7 @@ public sealed class OpenApi30CodeGenerator
     private readonly string rootNamespace;
     private readonly string? clientNamePrefix;
     private readonly bool ignoreEmptyFormUrlEncodedBody;
-    private readonly IReadOnlyDictionary<string, string> schemaTypeMap;
+    private readonly ISchemaTypeResolver schemaTypeResolver;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OpenApi30CodeGenerator"/> class.
@@ -62,7 +62,7 @@ public sealed class OpenApi30CodeGenerator
         bool ignoreEmptyFormUrlEncodedBody = false)
     {
         this.rootNamespace = rootNamespace;
-        this.schemaTypeMap = schemaTypeMap;
+        this.schemaTypeResolver = new DefaultSchemaTypeResolver(schemaTypeMap);
         this.clientNamePrefix = clientNamePrefix;
         this.ignoreEmptyFormUrlEncodedBody = ignoreEmptyFormUrlEncodedBody;
     }
@@ -1350,9 +1350,9 @@ public sealed class OpenApi30CodeGenerator
                 && serializationKind is ParameterSerializationKind.Object or ParameterSerializationKind.Array
                 && SchemaClassifier.HasDeepNesting(schemaElement);
 
-            string? schemaPointer = hasSchema
-                ? SchemaPointerBuilder.BuildParameterSchemaPointer(
-                    "paths"u8, pathNameUtf8, method, sourceIndex, isPathLevel)
+            SchemaRef? schemaPointer = hasSchema
+                ? new SchemaRef(SchemaPointerBuilder.BuildParameterSchemaPointer(
+                    "paths"u8, pathNameUtf8, method, sourceIndex, isPathLevel))
                 : null;
 
             // Extract schema default value (if any) for optional parameters.
@@ -1553,12 +1553,12 @@ public sealed class OpenApi30CodeGenerator
             bool hasSchema = mediaTypeProp.Value.Schema.IsNotUndefined()
                 && !CodeEmitHelpers.IsRawStreamMediaType(mediaType);
 
-            string? schemaPointer = null;
+            SchemaRef? schemaPointer = null;
             if (hasSchema)
             {
                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
-                schemaPointer = SchemaPointerBuilder.BuildContentSchemaPointer(
-                    "paths"u8, pathNameUtf8, method, parentSegmentUtf8, mediaTypeName.Span);
+                schemaPointer = new SchemaRef(SchemaPointerBuilder.BuildContentSchemaPointer(
+                    "paths"u8, pathNameUtf8, method, parentSegmentUtf8, mediaTypeName.Span));
             }
 
             result.Add(new ContentInfo(mediaType, schemaPointer, ReadEncodings(mediaTypeProp.Value)));
@@ -1586,12 +1586,12 @@ public sealed class OpenApi30CodeGenerator
             bool hasSchema = mediaTypeProp.Value.Schema.IsNotUndefined()
                 && !CodeEmitHelpers.IsRawStreamMediaType(mediaType);
 
-            string? schemaPointer = null;
+            SchemaRef? schemaPointer = null;
             if (hasSchema)
             {
                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
-                schemaPointer = SchemaPointerBuilder.BuildResponseContentSchemaPointer(
-                    "paths"u8, pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span);
+                schemaPointer = new SchemaRef(SchemaPointerBuilder.BuildResponseContentSchemaPointer(
+                    "paths"u8, pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span));
             }
 
             result.Add(new ContentInfo(mediaType, schemaPointer, null));
@@ -1667,12 +1667,12 @@ public sealed class OpenApi30CodeGenerator
             {
                 bool hasSchema = header.Schema.IsNotUndefined();
 
-                string? schemaPointer = null;
+                SchemaRef? schemaPointer = null;
                 if (hasSchema)
                 {
                     using UnescapedUtf8JsonString headerName = headerProp.Utf8NameSpan;
-                    schemaPointer = SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
-                        "paths"u8, pathNameUtf8, method, statusCodeUtf8, headerName.Span);
+                    schemaPointer = new SchemaRef(SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
+                        "paths"u8, pathNameUtf8, method, statusCodeUtf8, headerName.Span));
                 }
 
                 // Extract explode and serialization kind for response header deserialization.
@@ -1993,25 +1993,14 @@ public sealed class OpenApi30CodeGenerator
 
     private string GetParameterTypeName(ParameterInfo param)
     {
-        string resolved = this.ResolveSchemaTypeName(param.SchemaPointer);
+        string resolved = this.schemaTypeResolver.ResolveTypeName(param.SchemaPointer);
         return resolved;
     }
 
     private string GetParameterSourceTypeName(ParameterInfo param)
     {
-        string resolved = this.ResolveSchemaTypeName(param.SchemaPointer);
+        string resolved = this.schemaTypeResolver.ResolveTypeName(param.SchemaPointer);
         return $"{resolved}.Source";
-    }
-
-    private string ResolveSchemaTypeName(string? schemaPointer)
-    {
-        if (schemaPointer is not null
-            && this.schemaTypeMap.TryGetValue(schemaPointer, out string? typeName))
-        {
-            return typeName;
-        }
-
-        return "JsonElement";
     }
 
     private string ResolveRequestBodyTypeName(RequestBodyInfo requestBody)
@@ -2022,7 +2011,7 @@ public sealed class OpenApi30CodeGenerator
                 || CodeEmitHelpers.IsFormUrlEncodedMediaType(content.MediaType)
                 || CodeEmitHelpers.IsMultipartMediaType(content.MediaType))
             {
-                return this.ResolveSchemaTypeName(content.SchemaPointer);
+                return this.schemaTypeResolver.ResolveTypeName(content.SchemaPointer);
             }
         }
 
@@ -2143,7 +2132,7 @@ public sealed class OpenApi30CodeGenerator
         {
             if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
             {
-                return this.ResolveSchemaTypeName(content.SchemaPointer);
+                return this.schemaTypeResolver.ResolveTypeName(content.SchemaPointer);
             }
         }
 
@@ -2196,7 +2185,7 @@ public sealed class OpenApi30CodeGenerator
         string[] acceptMediaTypes = CodeEmitHelpers.GetAcceptMediaTypes(
             op.Responses
                 .SelectMany(r => r.Content)
-                .Select(c => (c.MediaType, c.SchemaPointer)));
+                .Select(c => (c.MediaType, c.SchemaPointer?.PositionalPointer)));
 
         this.EmitRequestFields(w, op.Parameters);
         this.EmitRequestConstructor(w, structName, op.Parameters);
@@ -3476,7 +3465,7 @@ public sealed class OpenApi30CodeGenerator
                 }
 
                 string? typeName = header.SchemaPointer is not null
-                    ? this.ResolveSchemaTypeName(header.SchemaPointer)
+                    ? this.schemaTypeResolver.ResolveTypeName(header.SchemaPointer)
                     : null;
 
                 w.WriteLine();
@@ -3490,12 +3479,12 @@ public sealed class OpenApi30CodeGenerator
                     string fieldName = CodeEmitHelpers.ToCamelCase(propertyName);
 
                     string? elementTypeName = null;
-                    if (header.HasDeepNesting && header.SchemaPointer is not null)
+                    if (header.HasDeepNesting && header.SchemaPointer is { } headerSchemaRef)
                     {
                         string elementPointer = header.SerializationKind is ParameterSerializationKind.Array
-                            ? header.SchemaPointer + "/items"
-                            : header.SchemaPointer + "/additionalProperties";
-                        elementTypeName = this.ResolveSchemaTypeName(elementPointer);
+                            ? headerSchemaRef.PositionalPointer + "/items"
+                            : headerSchemaRef.PositionalPointer + "/additionalProperties";
+                        elementTypeName = this.schemaTypeResolver.ResolveElementTypeName(new SchemaRef(elementPointer));
                     }
 
                     CodeEmitHelpers.EmitResponseHeaderLazyProperty(
@@ -4132,7 +4121,7 @@ public sealed class OpenApi30CodeGenerator
                 string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
                 string paramIdentifier = CodeEmitHelpers.EscapeCSharpKeyword(
                     CodeEmitHelpers.SanitizeParameterName(param.Name));
-                string typeName = this.ResolveSchemaTypeName(param.SchemaPointer);
+                string typeName = this.schemaTypeResolver.ResolveTypeName(param.SchemaPointer);
                 w.WriteLine(
                     $"{typeName} {fieldName}Value = {typeName}.CreateBuilder(workspace, {paramIdentifier}, 30).RootElement;");
             }
@@ -4153,7 +4142,7 @@ public sealed class OpenApi30CodeGenerator
                     string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
                     string paramIdentifier = CodeEmitHelpers.EscapeCSharpKeyword(
                         CodeEmitHelpers.SanitizeParameterName(param.Name));
-                    string typeName = this.ResolveSchemaTypeName(param.SchemaPointer);
+                    string typeName = this.schemaTypeResolver.ResolveTypeName(param.SchemaPointer);
 
                     string undefinedFallback = CodeEmitHelpers.FormatDefaultValueExpression(
                         typeName, param.DefaultValueJson, param.DefaultValueKind);
@@ -5099,7 +5088,7 @@ public sealed class OpenApi30CodeGenerator
                 string propertyName = CodeEmitHelpers.HeaderNameToPropertyName(header.HeaderName);
                 string fieldName = CodeEmitHelpers.ToCamelCase(propertyName);
                 string? typeName = header.SchemaPointer is not null
-                    ? this.ResolveSchemaTypeName(header.SchemaPointer)
+                    ? this.schemaTypeResolver.ResolveTypeName(header.SchemaPointer)
                     : null;
 
                 allHeaders.Add((header, typeName ?? "JsonElement", fieldName, propertyName));
@@ -6195,12 +6184,12 @@ public sealed class OpenApi30CodeGenerator
 
         // For array/object types, resolve the element/value type name.
         string? elementTypeName = null;
-        if (param.HasDeepNesting && param.SchemaPointer is not null)
+        if (param.HasDeepNesting && param.SchemaPointer is { } paramSchemaRef)
         {
             string elementPointer = param.SerializationKind is ParameterSerializationKind.Array
-                ? param.SchemaPointer + "/items"
-                : param.SchemaPointer + "/additionalProperties";
-            elementTypeName = this.ResolveSchemaTypeName(elementPointer);
+                ? paramSchemaRef.PositionalPointer + "/items"
+                : paramSchemaRef.PositionalPointer + "/additionalProperties";
+            elementTypeName = this.schemaTypeResolver.ResolveElementTypeName(new SchemaRef(elementPointer));
         }
 
         switch (param.Location)

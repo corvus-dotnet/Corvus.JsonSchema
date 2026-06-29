@@ -15,7 +15,7 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// <param name="HasDeepNesting">Whether the header schema has deep nesting.</param>
 public readonly record struct HeaderInfo(
     string HeaderName,
-    string? SchemaPointer,
+    SchemaRef? SchemaPointer,
     bool Explode,
     ParameterSerializationKind SerializationKind,
     ParameterSerializationKind ElementSerializationKind,
