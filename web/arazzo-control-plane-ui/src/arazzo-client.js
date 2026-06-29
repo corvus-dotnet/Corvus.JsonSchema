@@ -280,6 +280,36 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `makeVersionAvailable` — make this workflow version available in an environment (§7.8 promotion, idempotent). The
+   * caller must administer the environment (`403`); readiness-gated — every source the version references must have a
+   * usable credential in the environment (`409`). Returns the {@link AvailabilityEntry} (`201` created, `200` if it
+   * was already available).
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {string} environment
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The {@link AvailabilityEntry}. Throws {@link ProblemError} `403`/`404`/`409`.
+   */
+  makeVersionAvailable(baseWorkflowId, versionNumber, environment, opts = {}) {
+    if (!environment) throw new TypeError('makeVersionAvailable requires an environment.');
+    return this._request('PUT', `${this._versionPath(baseWorkflowId, versionNumber)}/availability/${encodeURIComponent(environment)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `withdrawVersionAvailability` — withdraw this version's availability in an environment (§7.8). The caller must
+   * administer the environment (`403`).
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {string} environment
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<void>} Resolves on `204`. Throws {@link ProblemError} `403`/`404`.
+   */
+  async withdrawVersionAvailability(baseWorkflowId, versionNumber, environment, opts = {}) {
+    if (!environment) throw new TypeError('withdrawVersionAvailability requires an environment.');
+    await this._request('DELETE', `${this._versionPath(baseWorkflowId, versionNumber)}/availability/${encodeURIComponent(environment)}`, { signal: opts.signal });
+  }
+
+  /**
    * `getCatalogPackage` — the whole package archive (an opaque binary ZIP).
    * @param {string} baseWorkflowId
    * @param {number} versionNumber

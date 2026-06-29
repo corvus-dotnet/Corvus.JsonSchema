@@ -127,8 +127,8 @@ parameterised by environment — auth-only, gated in-handler).
 
 | Operation | HTTP | Scope | Kit surface |
 |-----------|------|-------|-------------|
-| `listVersionAvailability` | `GET /catalog/{base}/versions/{n}/availability` | `availability:read` | `<arazzo-catalog-detail>` ("Available in") |
-| `makeVersionAvailable` · `withdrawVersionAvailability` | `PUT`/`DELETE …/availability/{environment}` | `availability:write` | (admin direct, host-composed) |
+| `listVersionAvailability` | `GET /catalog/{base}/versions/{n}/availability` | `availability:read` | `<arazzo-catalog-detail>` ("Available in"), `<arazzo-availability-matrix>` |
+| `makeVersionAvailable` · `withdrawVersionAvailability` | `PUT`/`DELETE …/availability/{environment}` | `availability:write` | `<arazzo-availability-matrix>` (direct, env-admin) |
 | `submitAvailabilityRequest` | `POST /availabilityRequests` | auth-only | `<arazzo-availability-request-dialog>` |
 | `listAvailabilityRequests` · `getAvailabilityRequest` | `GET /availabilityRequests[?environment&scope&status]` · `GET .../{id}` | auth-only | `<arazzo-availability-requests>` |
 | `approveAvailabilityRequest` · `denyAvailabilityRequest` · `withdrawAvailabilityRequest` | `POST .../{id}/{approve,deny,withdraw}` | auth-only | `<arazzo-availability-requests>` (approver inbox) |
@@ -281,8 +281,10 @@ await client.addEnvironmentAdministrator(name, member); await client.removeEnvir
 await client.transferEnvironmentAdministration(name, { administrators });
 await client.listEnvironmentAvailability(name, { limit?, pageToken? });  // → { availability, nextPageToken }
 
-// availability / promotion (§7.8) — version availability + the per-environment approver inbox
+// availability / promotion (§7.8) — version availability + direct make/withdraw + the per-environment approver inbox
 await client.listVersionAvailability(baseWorkflowId, n);                 // → { availability, nextPageToken }
+await client.makeVersionAvailable(baseWorkflowId, n, environment);       // env-admin only; readiness-gated 409 → AvailabilityEntry (201/200)
+await client.withdrawVersionAvailability(baseWorkflowId, n, environment); // → void (204) | 403 | 404
 await client.submitAvailabilityRequest({ baseWorkflowId, versionNumber, environment, reason? });
 await client.listAvailabilityRequests({ status?, environment?, scope? }); // scope = 'mine' | 'queue' (approver inbox)
 await client.getAvailabilityRequest(requestId);
@@ -534,6 +536,15 @@ approval is **readiness-gated** (`409` when a source is uncredentialed in the ta
 version · environment · requester. Emits `availability-request-submitted`, `availability-request-decided {request,
 action}`, `loaded`, `error`.
 
+#### `<arazzo-availability-matrix base-workflow-id="…">`
+The **promotion matrix** for one base workflow — rows = its versions (newest first), columns = the deployment
+environments, each cell the availability of that `(version, environment)` pair. A cell is **available** (with a
+**Withdraw** action), **promotable** (ready — every source the version references has a usable credential in the
+environment, §7.7/§13 — offering a direct **Make available** with `availability:write`, or **Request promotion** through
+the approver inbox otherwise), or **not ready** (no action). `selected-version` highlights a row. Embedded by
+`<arazzo-catalog-detail>` (the version's base workflow) below the per-version "Available in" line. Emits
+`availability-changed {versionNumber, environment, available}`, `promotion-requested`, `loaded`, `error`.
+
 ---
 
 ## Layer 2 — reference panels
@@ -752,6 +763,8 @@ delivered full-stack (API-first → 10 durability backends + conformance → han
   usable credential in some environment (usability per §13 `IsUsableBy`, not mere presence); the upload path defers to
   the **CLI** `catalog add`, which runs the same gate.
 - The demo composes these as the **Sources / Environments / Access / Permissions / Promotions** tabs.
+- **Promotion matrix** — `<arazzo-availability-matrix>` (the `(version × environment)` rollout grid, with direct
+  make/withdraw + request-promotion) is embedded in the catalog version detail.
 
-The remaining UI follow-ups are deferred: a richer catalog-version ↔ environment availability **matrix** view, and a
-"view"-grant picker surface.
+The remaining UI follow-up is deferred: a standalone **"view"-grant picker** surface (the `catalog:read` scope is
+grantable server-side).
