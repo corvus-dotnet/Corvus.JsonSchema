@@ -4,7 +4,7 @@
 // Run after generating mutation.json into out-mutation/:
 //   Codegen (mutation.json -> out-mutation/), transpile, and run are all driven by ../run-access.sh.
 import { produce, recordChanges } from "./out-mutation/corvus-runtime.js";
-import { Doc } from "./out-mutation/generated.js";
+import { Doc, decodeAndParse } from "./out-mutation/generated.js";
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -52,6 +52,16 @@ eq("nested patch (RFC 6902)", patches[1], { op: "replace", path: "/address/city"
 // a push surfaces as a single whole-array replace op (length changed)
 const { patches: ap } = recordChanges(JSON.parse(base) as Doc, (d) => { d.tags.push("stats"); });
 eq("array push patch (RFC 6902)", ap, [{ op: "replace", path: "/tags", value: ["math", "stats"] }]);
+
+// Convenience surface: evaluate accepts bytes; parse decodes bytes or JSON.parses a string -> typed;
+// decodeAndParse is re-exported from the generated module.
+const bytes = enc.encode(base);
+eq("evaluate(bytes)", Doc.evaluate(bytes), true);
+eq("evaluate(parsed value)", Doc.evaluate(JSON.parse(base)), true);
+eq("parse(bytes).name", Doc.parse(bytes).name, "Ada");
+eq("parse(bytes).nested", Doc.parse(bytes).address.city, "Anytown");
+eq("parse(string).age", Doc.parse(base).age, 30);
+eq("decodeAndParse(bytes)", (decodeAndParse(bytes) as Doc).name, "Ada");
 
 console.log(`mutation-access: ${pass} passed, ${fail} failed`);
 if (fail > 0) { throw new Error(`mutation-access: ${fail} failed`); }
