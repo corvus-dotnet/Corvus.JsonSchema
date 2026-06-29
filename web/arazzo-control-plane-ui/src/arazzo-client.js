@@ -472,6 +472,142 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `getEnvironment` — a single deployment environment by name (§7.7).
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} An {@link EnvironmentSummary}. Throws {@link ProblemError} `404` if absent.
+   */
+  getEnvironment(name, opts = {}) {
+    if (!name) throw new TypeError('getEnvironment requires a name.');
+    return this._request('GET', this._environmentPath(name), { signal: opts.signal });
+  }
+
+  /**
+   * `createEnvironment` — create a governed, reach-scoped environment; the deployment grants the calling principal
+   * administration of it (§7.7). Conflicts (`409`) if an environment with that name already exists in the caller's reach.
+   * @param {{ name: string, displayName?: string, description?: string, managementTags?: Array<{key: string, value: string}>, signal?: AbortSignal }} body
+   * @returns {Promise<object>} The created {@link EnvironmentSummary}. Throws {@link ProblemError} `400`/`409`.
+   */
+  createEnvironment(body) {
+    if (!body || !body.name) throw new TypeError('createEnvironment requires a name.');
+    const payload = { name: body.name };
+    if (body.displayName) payload.displayName = body.displayName;
+    if (body.description) payload.description = body.description;
+    if (body.managementTags) payload.managementTags = body.managementTags;
+    return this._request('POST', '/environments', { body: payload, signal: body.signal });
+  }
+
+  /**
+   * `updateEnvironment` — replace an environment's mutable metadata (display name, description); the name, reach scope,
+   * and created-* audit fields are immutable. The caller must be a current administrator (`403` otherwise).
+   * @param {string} name
+   * @param {{ displayName?: string, description?: string }} patch
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link EnvironmentSummary}. Throws {@link ProblemError} `400`/`403`/`404`/`409`.
+   */
+  updateEnvironment(name, patch, opts = {}) {
+    if (!name) throw new TypeError('updateEnvironment requires a name.');
+    return this._request('PUT', this._environmentPath(name), { body: patch ?? {}, signal: opts.signal });
+  }
+
+  /**
+   * `deleteEnvironment` — delete an environment by name. The caller must be a current administrator (`403` otherwise).
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<void>} Resolves on `204`. Throws {@link ProblemError} `403`/`404`/`409`.
+   */
+  async deleteEnvironment(name, opts = {}) {
+    if (!name) throw new TypeError('deleteEnvironment requires a name.');
+    await this._request('DELETE', this._environmentPath(name), { signal: opts.signal });
+  }
+
+  /**
+   * `listEnvironmentAdministrators` — the administrator set of an environment (§7.7/§15). Each administrator is a
+   * resolved identity ({@link listAdministrators}): a stable `digest` (the removal key), the deployment-mapped
+   * `identity` grants it resolves from, and an optional resolved `kind`/`label` for display.
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ administrators: Array<{ digest: string, identity: Array<{ dimension: string, value: string }>, kind?: string, label?: string }> }>} An {@link AdministratorList}.
+   */
+  async listEnvironmentAdministrators(name, opts = {}) {
+    if (!name) throw new TypeError('listEnvironmentAdministrators requires a name.');
+    const result = await this._request('GET', this._environmentAdministratorsPath(name), { signal: opts.signal });
+    return { administrators: result.administrators ?? [] };
+  }
+
+  /**
+   * `addEnvironmentAdministrator` — add a resolved identity to an environment's administrator set (idempotent); the
+   * caller must be a current administrator (`403`). Provide a resolved grantee from the picker (its `kind`, `value`,
+   * and full `identity`) OR a single deployment-mapped `{ dimension, value }` grant. See {@link addAdministrator}.
+   * @param {string} name
+   * @param {{ value: string, dimension?: string, kind?: string, identity?: Array<{ dimension: string, value: string }>, label?: string, complete?: boolean }} member
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The resulting {@link AdministratorList}. Throws {@link ProblemError} `400`/`403`/`404`/`409`.
+   */
+  addEnvironmentAdministrator(name, member, opts = {}) {
+    if (!name) throw new TypeError('addEnvironmentAdministrator requires a name.');
+    if (!member || !member.value || (!member.dimension && !(Array.isArray(member.identity) && member.identity.length > 0))) {
+      throw new TypeError('addEnvironmentAdministrator requires a resolved grantee ({ kind, value, identity }) or a single { dimension, value } grant.');
+    }
+    return this._request('POST', `${this._environmentAdministratorsPath(name)}/members`, { body: member, signal: opts.signal });
+  }
+
+  /**
+   * `removeEnvironmentAdministrator` — remove the administrator whose identity `digest` matches. The set may not be left
+   * empty (`409`). The caller must be a current administrator (`403`).
+   * @param {string} name
+   * @param {string} digest
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The resulting {@link AdministratorList}.
+   */
+  removeEnvironmentAdministrator(name, digest, opts = {}) {
+    if (!name) throw new TypeError('removeEnvironmentAdministrator requires a name.');
+    return this._request('DELETE', `${this._environmentAdministratorsPath(name)}/members/${encodeURIComponent(digest)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `transferEnvironmentAdministration` — replace the entire administrator set with the given identities (at least one);
+   * an administrator may transfer administration away from itself. The caller must be a current administrator (`403`).
+   * @param {string} name
+   * @param {{ administrators: Array<{ dimension: string, value: string }> }} body
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The resulting {@link AdministratorList}. Throws {@link ProblemError} `400`/`403`/`404`/`409`.
+   */
+  transferEnvironmentAdministration(name, body, opts = {}) {
+    if (!name) throw new TypeError('transferEnvironmentAdministration requires a name.');
+    if (!body || !Array.isArray(body.administrators) || body.administrators.length === 0) {
+      throw new TypeError('transferEnvironmentAdministration requires at least one administrator.');
+    }
+    return this._request('PUT', this._environmentAdministratorsPath(name), { body, signal: opts.signal });
+  }
+
+  /**
+   * `listEnvironmentAvailability` — the workflow versions made available in this environment (§7.8), ordered by base
+   * workflow id then version.
+   * @param {string} name
+   * @param {{ limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ availability: object[], nextPageToken: (string|null) }>} An {@link AvailabilityList}.
+   */
+  async listEnvironmentAvailability(name, query = {}) {
+    if (!name) throw new TypeError('listEnvironmentAvailability requires a name.');
+    const search = new URLSearchParams();
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const result = await this._request('GET', `${this._environmentPath(name)}/availability${qs(search)}`, { signal: query.signal });
+    return { availability: result.availability ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /** @private */
+  _environmentPath(name) {
+    return `/environments/${encodeURIComponent(name)}`;
+  }
+
+  /** @private */
+  _environmentAdministratorsPath(name) {
+    return `${this._environmentPath(name)}/administrators`;
+  }
+
+  /**
    * `listSources` — one page of registered sources (§7.6; the list omits each source's document, returned only on a
    * single read). Ordered by name. Page with `limit` and the opaque `pageToken`.
    * @param {{ limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
