@@ -43,6 +43,57 @@ describe('<arazzo-credential-dialog>', () => {
   let el;
   afterEach(() => el?.remove());
 
+  it('describes a shared (unrestricted) credential as available to all workflow runs (read-only)', async () => {
+    const client = clientWithMock();
+    el = dialogWith(client);
+    mount(el);
+    // petstore@production is seeded with no usage grant → shared.
+    el.open(await client.getCredential('petstore', 'production'));
+    const readonly = await waitFor(() => { const r = $(el, '.scopes-readonly'); return r && !r.hidden ? r : null; });
+    ok(readonly.textContent.includes('available to all workflow runs'), 'explains the shared usage instead of a bare dash');
+  });
+
+  it('derives the server base URL from an OpenAPI source and stores an override per environment', async () => {
+    el = dialogWith(clientWithMock());
+    mount(el);
+    el.open(null, {
+      sourceName: 'petstore', lockSource: true,
+      sourceDoc: { openapi: '3.1.0', servers: [{ url: 'https://petstore.example.com/v1' }], components: { securitySchemes: { k: { type: 'apiKey', name: 'X-Api-Key', in: 'header' } } } },
+    });
+    equal($(el, '.server-label').textContent, 'Server base URL', 'labeled for an OpenAPI source');
+    equal($(el, '#serverBaseUrl').value, 'https://petstore.example.com/v1', 'pre-filled from the source document servers');
+    // Override it for this environment and save.
+    $(el, '#environment').value = 'staging';
+    $(el, '#serverBaseUrl').value = 'https://staging.petstore.example.com/v1';
+    setRef($(el, '.refs .refrow'), { fields: { host: 'kv', name: 'k' } });
+    const saved = nextEvent(el, 'credential-saved');
+    el.submit();
+    const e = await saved;
+    const baseUrl = e.detail.binding.config.find((c) => c.key === 'baseUrl');
+    ok(baseUrl && baseUrl.value === 'https://staging.petstore.example.com/v1', 'the per-environment override is stored in config');
+  });
+
+  it('derives the server host for an AsyncAPI source', async () => {
+    el = dialogWith(clientWithMock());
+    mount(el);
+    el.open(null, {
+      sourceName: 'events', lockSource: true,
+      sourceDoc: { asyncapi: '3.0.0', servers: { production: { host: 'events.example.com', protocol: 'kafka' } } },
+    });
+    equal($(el, '.server-label').textContent, 'Server host', 'labeled for an AsyncAPI source');
+    equal($(el, '#serverBaseUrl').value, 'events.example.com', 'pre-filled from the AsyncAPI server host');
+  });
+
+  it('carries the server override forward when duplicating to a new environment', async () => {
+    el = dialogWith(clientWithMock());
+    mount(el);
+    el.open(
+      { sourceName: 'petstore', environment: 'production', authKind: 'apiKey', secretRefs: [{ name: 'value', ref: 'keyvault://kv/k' }], config: [{ key: 'parameterName', value: 'X-Api-Key' }, { key: 'baseUrl', value: 'https://petstore.example.com/v1' }] },
+      { duplicate: true });
+    equal($(el, '#serverBaseUrl').value, 'https://petstore.example.com/v1', 'carried from the duplicated binding');
+    equal($(el, '#environment').value, '', 'environment is blank for the new environment');
+  });
+
   it('drives the reference slots from the auth kind (count + label, no free-text role, no "+ Add")', async () => {
     el = dialogWith(clientWithMock());
     mount(el);
@@ -201,6 +252,31 @@ describe('<arazzo-credential-dialog>', () => {
     const e = await saved;
     equal(e.detail.binding.secretRefs[0].ref, 'keyvault://petstore-key#4', 'reference re-pointed');
     ok(e.detail.binding.rotatedAt, 'a reference change stamped rotatedAt');
+  });
+
+  it('locks config fields derived from the source document, leaving operator-supplied fields editable', async () => {
+    el = dialogWith(clientWithMock());
+    mount(el);
+    // apiKey scheme → BOTH parameterName and location are taken straight from the doc → read-only.
+    el.open(null, {
+      sourceName: 'petstore', lockSource: true,
+      sourceDoc: { components: { securitySchemes: { apiKeyAuth: { type: 'apiKey', name: 'X-API-Key', in: 'header' } } } },
+    });
+    equal($(el, '#authKind').value, 'apiKey', 'auth kind is derived from the source document');
+    const pn = $(el, '.config-fields [data-cfg="parameterName"]');
+    equal(pn.value, 'X-API-Key', 'parameterName came from the document');
+    ok(pn.readOnly, 'a doc-derived text config is read-only');
+    ok($(el, '.config-fields [data-cfg="location"]').disabled, 'a doc-derived select config is disabled');
+    ok(el.shadowRoot.querySelector('.cfg-from'), 'shows a "from the source document" note');
+
+    // oauth2 scheme → tokenUrl + scope are derived (locked), but clientId is operator-supplied (still editable).
+    el.open(null, {
+      sourceName: 'billing', lockSource: true,
+      sourceDoc: { components: { securitySchemes: { oauth: { type: 'oauth2', flows: { clientCredentials: { tokenUrl: 'https://idp.example.com/token', scopes: { 'read:pets': '' } } } } } } },
+    });
+    equal($(el, '#authKind').value, 'oauth2ClientCredentials', 'auth kind derived as oauth2 client credentials');
+    ok($(el, '.config-fields [data-cfg="tokenUrl"]').readOnly, 'the doc-derived tokenUrl is read-only');
+    ok(!$(el, '.config-fields [data-cfg="clientId"]').readOnly, 'the operator-supplied clientId stays editable');
   });
 
   it('creates for a fixed source when opened locked (the add-workflow source-credential flow)', async () => {

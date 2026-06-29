@@ -62,17 +62,9 @@ describe('<arazzo-credentials-table>', () => {
     equal(e.detail.binding.sourceName, 'petstore', 'event carries the binding');
   });
 
-  it('hides New without credentials:write and emits credential-new when present', async () => {
-    el = tableWithMock({ scopes: 'credentials:read' });
-    mount(el);
-    await nextEvent(el, 'loaded');
-    ok(el.shadowRoot.querySelector('.new').hidden, 'New hidden without the write scope');
-    el.setAttribute('scopes', 'credentials:write');
-    await waitFor(() => !el.shadowRoot.querySelector('.new').hidden);
-    const ev = nextEvent(el, 'credential-new');
-    el.shadowRoot.querySelector('.new').click();
-    await ev;
-  });
+  // Note: this management table has no "New credential" control by design — creating a credential is rooted in the
+  // catalog's per-workflow Sources panel (where the source + its auth are known), not here (§7.5). The create flow is
+  // covered there; this table covers view / select / duplicate / rotate.
 
   it('keyset-pages with "Load more" when the store returns more than one page', async () => {
     const many = Array.from({ length: 55 }, (_, i) => {

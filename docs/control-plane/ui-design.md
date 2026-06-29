@@ -73,7 +73,7 @@ administration**, and the **§16.5 access-request** surface all ship today.
 |-----------|------|-------------|
 | `submitAccessRequest` | `POST /accessRequests` | `<arazzo-access-request-dialog>`, `<arazzo-access-requests>` |
 | `listAccessRequests` · `getAccessRequest` | `GET /accessRequests[?baseWorkflowId&status]` · `GET .../{id}` | `<arazzo-access-requests>` |
-| `approveAccessRequest` · `approveAccessRequestAsEligible` · `denyAccessRequest` | `POST .../{id}/{approve,approve-as-eligible,deny}` | `<arazzo-access-requests>` (approver queue) |
+| `approveAccessRequest` · `approveAccessRequestAsEligible` · `denyAccessRequest` | `POST .../{id}/{approve,approveAsEligible,deny}` | `<arazzo-access-requests>` (approver queue) |
 | `withdrawAccessRequest` · `revokeAccessRequest` | `POST .../{id}/{withdraw,revoke}` | `<arazzo-access-requests>` |
 
 An approval is **capped to run access** (`runs:read`/`runs:write`); the requesting subject is always the caller.

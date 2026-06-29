@@ -119,7 +119,7 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 | `DELETE …/versions/{n}` | Delete → DeleteAsync (Forbidden outcome) | W | ~~2× GetAsync~~ | — | — | ✅ handler pre-fetch dropped — `CatalogDeleteOutcome.Forbidden` carries the 403 (FIX #6, Part D) |
 | `POST(custom) /catalog` purge | PurgeCatalog → PurgeAsync | W | small result | — | — | ➖ |
 | `GET …/package` | GetCatalogPackage → GetPackageAsync | R | returns `ReadOnlyMemory<byte>` | — | confirm 0-copy | ➖ |
-| `GET …/workflow,/schemas,/executor,/executor-manifest,/sources/{n}` | Get*Document → GetDocumentAsync | R | `ParsedJsonDocument.Parse` + workspace ownership (binary ones return bytes) | — | confirm pooled-parse + ownership handoff ([[corvus-parsed-documents-and-memory]]) | ✅ genuine — pooled-parse + ownership handoff; Part D audit |
+| `GET …/workflow,/schemas,/executor,/executorManifest,/sources/{n}` | Get*Document → GetDocumentAsync | R | `ParsedJsonDocument.Parse` + workspace ownership (binary ones return bytes) | — | confirm pooled-parse + ownership handoff ([[corvus-parsed-documents-and-memory]]) | ✅ genuine — pooled-parse + ownership handoff; Part D audit |
 | `POST …/validate` | ValidateCatalogValue → GetAsync + GetPackageAsync + cached schema | W | validation errors `List<>`; schema cache | — | review error projection | ✅ genuine — error list is the validation leaf; Part D audit |
 | `POST …/runs` start | StartCatalogWorkflowRun → GetAsync + StartAsync + IsVersionHostedAsync | W | optional validation errors `List<>` | `WorkflowExecutorBenchmarks` (executor, not this handler) | review | ✅ genuine — optional error list is the validation leaf; Part D audit |
 
@@ -170,7 +170,7 @@ that exists today (a starting point to be re-baselined, **not** evidence of comp
 | `POST /accessRequests` | Submit → SubmitAsync → **CreateAsync** | W | `List<string>` scopes; `AccessRequest.Draft()` | `AccessRequestDraftBenchmarks` | add baseline arm; measure | ✅ bytes-native `Draft(JsonElement…)` overload — `requestedScopes`/`baseWorkflowId`/`reason` carried verbatim, no `List<string>` (FIX #5, Part D; 520→152 B, −71%) |
 | `GET /accessRequests/{id}` | Get → GetAsync (+visibility) | R | `ToView` wrap | `AccessRequestViewProjectionBenchmarks` (has baseline arm) | re-baseline; confirm wrap | ✅ genuine — `ToView` `From()`-wrap; Part D audit |
 | `POST …/approve` | Approve → ApproveAsync → **DecideAsync** | W | record `AccessRequestDecision` | — | carry decision draft / mutable builder | ✅ genuine — decision carried via draft seam (Part A); Part D audit |
-| `POST …/approve-as-eligible` | ApproveAsEligible → ApproveAsEligibleAsync → DecideAsync (+ binding/rule Draft) | W | record decision; `Draft()` for binding/rule | — | as approve | ✅ genuine — decision + binding/rule via draft seams (Part A); Part D audit |
+| `POST …/approveAsEligible` | ApproveAsEligible → ApproveAsEligibleAsync → DecideAsync (+ binding/rule Draft) | W | record decision; `Draft()` for binding/rule | — | as approve | ✅ genuine — decision + binding/rule via draft seams (Part A); Part D audit |
 | `POST …/deny,/withdraw,/revoke` | → ApprovalService.* → DecideAsync | W | record decision | — | as approve | ✅ genuine — decision carried via draft seam (Part A); Part D audit |
 
 ---
@@ -695,7 +695,7 @@ seam** still to convert. Verdict: **29 genuine, 6 fixes, 2 sub-floor caveats.** 
   the document GETs (`ParsedJsonDocument.Parse` + workspace ownership handoff), `validate` (error list is the
   genuine validation leaf), and `runs start` are all `From()`-wrap / pooled-parse / genuine-leaf.
 - **Access requests** (most): `List` (`ToViewSource` is a `From()`-wrap over the stored view), `GET …/{id}`
-  (`ToView` wrap), and `approve`/`approve-as-eligible`/`deny`/`withdraw`/`revoke` (decision carried via the
+  (`ToView` wrap), and `approve`/`approveAsEligible`/`deny`/`withdraw`/`revoke` (decision carried via the
   draft seam already landed in Part A) are genuine.
 
 **Fixes (⬜ FIX) — record/list/string seams still to convert (queued rows):**

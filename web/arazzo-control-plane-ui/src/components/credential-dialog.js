@@ -193,6 +193,25 @@ function deriveAuthFromSource(doc) {
   return null;
 }
 
+// The non-secret config keys that carry the per-environment endpoint override (so they render as the dedicated
+// "Server …" field, not as generic extra config rows). OpenAPI carries a base URL; AsyncAPI carries a broker host.
+const SERVER_CONFIG_KEYS = ['baseUrl', 'serverHost'];
+
+/**
+ * Derive the per-environment server override `{ key, label, value, placeholder }` from a source document's `servers`:
+ * an OpenAPI `servers[0].url` (a base URL) or an AsyncAPI `servers.<name>.host` (a broker host). Different environments
+ * commonly point a source at a different endpoint, so this seeds the override the binding can carry.
+ */
+function deriveServerFromSource(doc) {
+  if (doc?.asyncapi || (doc?.servers && !Array.isArray(doc.servers))) {
+    const servers = doc?.servers && typeof doc.servers === 'object' ? Object.values(doc.servers) : [];
+    const host = servers.find((s) => s?.host)?.host;
+    return { key: 'serverHost', label: 'Server host', placeholder: 'broker.example.com', value: host || '' };
+  }
+  const url = Array.isArray(doc?.servers) ? doc.servers.find((s) => s?.url)?.url : undefined;
+  return { key: 'baseUrl', label: 'Server base URL', placeholder: 'https://api.example.com', value: url || '' };
+}
+
 /** Split a reference into its guided scheme + field values, or `{ scheme: 'raw', raw }` when it cannot be represented. */
 function parseRef(ref) {
   const m = /^([a-z0-9]+):\/\/(.*)$/i.exec(ref || '');
@@ -224,6 +243,9 @@ class ArazzoCredentialDialog extends ArazzoElement {
     this._derivedAuth = sourceDoc ? deriveAuthFromSource(sourceDoc)
       : dup ? { authKind: binding.authKind, config: (binding.config || []).map((c) => ({ key: c.key, value: c.value })), schemeName: null }
       : null;
+    // The per-environment server endpoint, derived from the source doc's servers on create (carried from the binding's
+    // config on edit/duplicate, handled in fill()).
+    this._derivedServer = sourceDoc ? deriveServerFromSource(sourceDoc) : null;
     this._prefillSource = this._editing ? null : (sourceName || (dup ? binding.sourceName : null));
     this._lockSource = !this._editing && !!this._prefillSource && (lockSource || dup);
     this._lockAuth = !this._editing && !!this._derivedAuth;
@@ -237,6 +259,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
       if (this.client) picker.client = this.client;
       picker.reset?.();
     }
+    this.syncUsageMode(); // form.reset() restored the "Shared" default → hide the (empty) picker
     this.$('.title').textContent = this._editing
       ? `Edit ${binding.sourceName}@${binding.environment}`
       : dup ? `Duplicate ${binding.sourceName} to another environment`
@@ -251,6 +274,15 @@ class ArazzoCredentialDialog extends ArazzoElement {
 
   get authKind() {
     return this.$('#authKind').value.trim();
+  }
+
+  /** Show the usage grantee picker only when "Restrict to…" is chosen; "Shared" writes no usage grant. */
+  syncUsageMode() {
+    const restricted = this.$('input[name="usageMode"]:checked')?.value === 'restricted';
+    const picker = this.$('.usage-grantee');
+    if (!picker) return;
+    picker.hidden = !restricted;
+    if (!restricted) picker.reset?.();
   }
 
   fill() {
@@ -275,6 +307,24 @@ class ArazzoCredentialDialog extends ArazzoElement {
     this.$('#description').value = b?.description || dup?.description || '';
     this.$('#expiresAt').value = b?.expiresAt ? String(b.expiresAt).slice(0, 10) : '';
 
+    // Server endpoint override (per environment): derived from the source doc's servers on create; carried from the
+    // binding's config (under a reserved key) on edit/duplicate — commonly changed for a new environment.
+    const existingServer = (b?.config || dup?.config || []).find((c) => SERVER_CONFIG_KEYS.includes(c.key));
+    const server = this._derivedServer
+      ? { ...this._derivedServer, value: existingServer?.value ?? this._derivedServer.value }
+      : existingServer
+        ? { key: existingServer.key, label: existingServer.key === 'serverHost' ? 'Server host' : 'Server base URL', placeholder: '', value: existingServer.value }
+        : { key: 'baseUrl', label: 'Server base URL', placeholder: 'https://api.example.com', value: '' };
+    this._serverConfigKey = server.key;
+    this.$('.server-label').textContent = server.label;
+    this.$('#serverBaseUrl').value = server.value || '';
+    this.$('#serverBaseUrl').placeholder = server.placeholder || '';
+    const serverNote = this.$('.server-note');
+    serverNote.textContent = (!ro && this._derivedServer?.value)
+      ? `Derived from ${this._prefillSource || 'the source'}’s servers — override for this environment.`
+      : '';
+    serverNote.hidden = !serverNote.textContent;
+
     // Secret refs: prefill when editing; a duplicate starts EMPTY so the operator re-points at the new env's secret.
     const refsByRole = new Map();
     for (const r of b?.secretRefs || []) refsByRole.set(r.name, r.ref);
@@ -291,7 +341,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
     if (ro) {
       const usage = b.usageGrantee && Array.isArray(b.usageGrantee.identity) && b.usageGrantee.identity.length
         ? granteeChip(b.usageGrantee)
-        : '—';
+        : '<span class="muted">available to all workflow runs</span>';
       const mgmt = (b.managementTags || []).map((t) => `${t.key}=${t.value}`).join(', ') || '—';
       this.$('.scopes-readonly').innerHTML = `<div><span class="ro-label">Usage</span> ${usage}</div><div><span class="ro-label">Management tags</span> ${escapeHtml(mgmt)}</div>`;
     } else {
@@ -420,21 +470,37 @@ class ArazzoCredentialDialog extends ArazzoElement {
     return map;
   }
 
+  /**
+   * The config keys whose values are derived straight from the source document's security scheme (§7.6), or null when
+   * the config is not doc-derived. These are read-only in the form: editing them would diverge the credential from
+   * the catalogued source contract. Only doc-derived auth qualifies (a `schemeName` is present) — a duplicate carries
+   * another binding's config, which the operator may still edit. Applies only while the kind matches what was derived.
+   */
+  get derivedConfigKeys() {
+    if (!this._derivedAuth?.schemeName) return null;
+    if (this.authKind !== this._derivedAuth.authKind) return null;
+    return new Set((this._derivedAuth.config || []).map((c) => c.key));
+  }
+
   /** Render the non-secret config fields for the current auth kind, filling each from `configByKey`, plus any extras. */
   renderConfig(configByKey = new Map()) {
     const kind = this.authKind;
     const fields = CONFIG[kind] || [];
+    const derivedKeys = this.derivedConfigKeys;
     const host = this.$('.config-fields');
     host.innerHTML = fields.map((f) => {
       const val = configByKey.get(f.key) || '';
+      const locked = derivedKeys?.has(f.key); // value comes from the source document → not editable here
       const control = f.options
-        ? `<select data-cfg="${f.key}"><option value=""${val ? '' : ' selected'}>(default)</option>${f.options.map((o) => `<option value="${escapeHtml(o)}"${o === val ? ' selected' : ''}>${escapeHtml(o)}</option>`).join('')}</select>`
-        : `<input data-cfg="${f.key}" type="text" placeholder="${escapeHtml(f.placeholder || '')}" aria-label="${escapeHtml(f.label)}" value="${escapeHtml(val)}">`;
-      return `<div class="cfg-field"><label>${escapeHtml(f.label)}${f.required ? ' *' : ''}</label>${control}</div>`;
+        ? `<select data-cfg="${f.key}"${locked ? ' disabled' : ''}><option value=""${val ? '' : ' selected'}>(default)</option>${f.options.map((o) => `<option value="${escapeHtml(o)}"${o === val ? ' selected' : ''}>${escapeHtml(o)}</option>`).join('')}</select>`
+        : `<input data-cfg="${f.key}" type="text"${locked ? ' readonly' : ''} placeholder="${escapeHtml(f.placeholder || '')}" aria-label="${escapeHtml(f.label)}" value="${escapeHtml(val)}">`;
+      const note = locked ? ` <span class="cfg-from">· from the source document</span>` : '';
+      return `<div class="cfg-field"><label>${escapeHtml(f.label)}${f.required ? ' *' : ''}${note}</label>${control}</div>`;
     }).join('') || '<div class="muted">This auth kind needs no extra config.</div>';
 
-    // Preserve any config keys this kind does not define (legacy / custom) as editable key/value rows.
-    const known = new Set(fields.map((f) => f.key));
+    // Preserve any config keys this kind does not define (legacy / custom) as editable key/value rows — except the
+    // reserved server-endpoint keys, which have their own dedicated "Server …" field.
+    const known = new Set([...fields.map((f) => f.key), ...SERVER_CONFIG_KEYS]);
     this.$('.config-extra').innerHTML = '';
     for (const [key, value] of configByKey) {
       if (!known.has(key)) this.addRow('.config-extra', 'cfg', key, value);
@@ -526,6 +592,9 @@ class ArazzoCredentialDialog extends ArazzoElement {
     if (secretRefs.length === 0) throw new Error('At least one secret reference is required.');
 
     const config = this.collectConfig();
+    // The per-environment server endpoint override lives in the binding's config under its reserved key.
+    const serverValue = this.$('#serverBaseUrl')?.value.trim();
+    if (serverValue) config.push({ key: this._serverConfigKey || 'baseUrl', value: serverValue });
     const description = this.$('#description').value.trim() || undefined;
     const expiresAtDate = this.$('#expiresAt').value;
     const expiresAt = expiresAtDate ? new Date(`${expiresAtDate}T00:00:00Z`).toISOString() : undefined;
@@ -541,9 +610,11 @@ class ArazzoCredentialDialog extends ArazzoElement {
       if (nowRefs !== this._originalRefs) body.rotatedAt = new Date().toISOString();
       else if (this._editing.rotatedAt) body.rotatedAt = this._editing.rotatedAt;
     } else {
-      // Usage is a single resolved grantee from the picker — its identity (AND-matched) scopes which runs may use the
-      // binding; kind/label are carried for display. Management tags stay the {key,value} rows.
-      const grantee = this.$('.usage-grantee')?.grant;
+      // Usage scopes which runs may use the binding. "Shared" (the default) writes no usage grant → usable by any run
+      // that references the source. "Restrict to…" carries the picked grantee's identity (AND-matched); kind/label are
+      // for display. Management tags stay the {key,value} rows.
+      const restricted = this.$('input[name="usageMode"]:checked')?.value === 'restricted';
+      const grantee = restricted ? this.$('.usage-grantee')?.grant : null;
       if (grantee) {
         body.usageGrantee = { identity: grantee.identity, kind: grantee.kind, label: grantee.label };
       }
@@ -601,9 +672,12 @@ class ArazzoCredentialDialog extends ArazzoElement {
         label { font-size: 12px; color: var(--_muted); display: block; margin-bottom: 4px; }
         .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         input[type="text"], input[type="date"], select { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
-        input[readonly] { background: var(--_surface); color: var(--_muted); }
+        input[readonly], select:disabled { background: var(--_surface); color: var(--_muted); cursor: default; }
+        .cfg-from { font-weight: 400; color: var(--_muted); font-size: 11px; }
         .authkind-note { font-size: 11px; color: var(--_muted); margin-top: 4px; }
         .authkind-note:empty { display: none; }
+        .server-note { font-size: 11px; color: var(--_muted); margin-top: 4px; }
+        .server-note:empty { display: none; }
         .row { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 8px; align-items: center; }
         .row .rm, .reftop .rm { padding: 4px 10px; }
         .refrow { border: 1px solid var(--_border); border-radius: var(--_radius); padding: 10px; display: grid; gap: 8px; background: var(--_bg); }
@@ -628,6 +702,9 @@ class ArazzoCredentialDialog extends ArazzoElement {
         .config-extra:empty { display: none; }
         .add { justify-self: start; font-size: 12px; }
         .ro-label { color: var(--_muted); font-size: 12px; margin-right: 6px; }
+        .usage-mode { display: grid; gap: 4px; margin: 4px 0; }
+        .usage-mode .radio { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--_text); margin: 0; }
+        .usage-hint { font-size: 11px; color: var(--_muted); margin-top: 4px; }
         .scopes-readonly { display: grid; gap: 4px; font-size: 13px; }
         .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
       </style>
@@ -648,6 +725,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
                 <div><label for="authKind">Auth kind *</label><input id="authKind" type="text" list="authkinds" placeholder="apiKey"><datalist id="authkinds">${AUTH_KINDS.map((k) => `<option value="${k}">`).join('')}</datalist><div class="authkind-note" hidden></div></div>
                 <div><label for="expiresAt">Expires</label><input id="expiresAt" type="date"></div>
               </div>
+              <div><label for="serverBaseUrl" class="server-label">Server base URL</label><input id="serverBaseUrl" type="text" placeholder="https://api.example.com"><div class="server-note" hidden></div></div>
               <div><label for="description">Description</label><input id="description" type="text" placeholder="Petstore API key."></div>
             </fieldset>
 
@@ -666,8 +744,16 @@ class ArazzoCredentialDialog extends ArazzoElement {
             </fieldset>
 
             <fieldset class="create-only">
-              <legend>Scopes (set at create, immutable after)</legend>
-              <div><label>Usage — which grantee's runs may use the binding (resolve a real person/team/role/workflow)</label><arazzo-grantee-picker class="usage-grantee"></arazzo-grantee-picker></div>
+              <legend>Authorization (set at create, immutable after)</legend>
+              <div>
+                <label>Usage — which runs may use this credential</label>
+                <div class="usage-mode">
+                  <label class="radio"><input type="radio" name="usageMode" value="shared" checked> Shared — any run that uses this source</label>
+                  <label class="radio"><input type="radio" name="usageMode" value="restricted"> Restrict to a specific grantee</label>
+                </div>
+                <arazzo-grantee-picker class="usage-grantee" hidden></arazzo-grantee-picker>
+                <div class="usage-hint">Shared is usable by every workflow that references this source. Restrict only to lock the credential to specific runs (a workflow that isn’t named can’t use it).</div>
+              </div>
               <div><label>Management tags — who may administer the binding</label><div class="mgmt"></div><button class="add ghost addmgmt" type="button">+ Add tag</button></div>
             </fieldset>
 
@@ -689,6 +775,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
     });
     this.$('.addcfg').addEventListener('click', () => this.addRow('.config-extra', 'cfg'));
     this.$('.addmgmt').addEventListener('click', () => this.addRow('.mgmt', 'mgmt'));
+    this.$$('input[name="usageMode"]').forEach((r) => r.addEventListener('change', () => this.syncUsageMode()));
     this.$('form').addEventListener('submit', (e) => {
       if (e.submitter?.value === 'confirm') { e.preventDefault(); this.submit(); }
     });

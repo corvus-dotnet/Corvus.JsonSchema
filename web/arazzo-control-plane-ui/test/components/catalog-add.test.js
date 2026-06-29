@@ -1,4 +1,4 @@
-// Tier 3 — <arazzo-catalog-add-dialog> and its <arazzo-catalog> panel wiring against the in-memory mock.
+// Tier 3 — <arazzo-catalog-add-dialog> (the guided wizard) and its <arazzo-catalog> panel wiring against the mock.
 import { ArazzoControlPlaneClient } from '../../src/arazzo-client.js';
 import { createMockControlPlane } from '../../demo/mock-api.js';
 import '../../src/components/catalog-add-dialog.js';
@@ -29,132 +29,207 @@ function setFile(input, name, text) {
   input.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-const workflowJson = (id, title) => JSON.stringify({
-  arazzo: '1.1.0', info: { title }, sourceDescriptions: [{ name: 'petstore', type: 'openapi' }],
+const next = (el) => el.$('.next').click();
+
+const workflowJson = (id, title, sources = [{ name: 'petstore', type: 'openapi' }]) => JSON.stringify({
+  arazzo: '1.1.0', info: { title }, sourceDescriptions: sources,
   workflows: [{ workflowId: id, steps: [] }],
 });
 
-describe('<arazzo-catalog-add-dialog>', () => {
+/** Fill the Details step (build mode) with a workflow + owner, ready to advance. */
+async function fillDetails(el, id, title, sources) {
+  setFile(el.$('#workflowFile'), 'workflow.json', workflowJson(id, title, sources));
+  await waitFor(() => el.$('.wf-status')?.classList.contains('ok'));
+  el.$('#ownerName').value = 'Reconciliation Team';
+  el.$('#ownerEmail').value = 'team@example.com';
+}
+
+describe('<arazzo-catalog-add-dialog> wizard', () => {
   let el;
   afterEach(() => el?.remove());
 
-  it('derives the required sources from the workflow and builds the package on submit', async () => {
+  it('reuses an already-registered source (no re-upload) and adds the version through the steps', async () => {
     el = dialogWithMock();
     mount(el);
     el.open();
-    setFile(el.$('#workflowFile'), 'workflow.json', workflowJson('nightly-reconcile', 'Nightly Reconcile'));
-    // The dialog reads sourceDescriptions and renders a required file input named "petstore".
-    const input = await waitFor(() => el.$('.src-file[data-name="petstore"]'));
-    setFile(input, 'petstore.json', JSON.stringify({ openapi: '3.1.0' }));
-    el.$('#ownerName').value = 'Reconciliation Team';
-    el.$('#ownerEmail').value = 'team@example.com';
+    // Step 1 — Details.
+    await fillDetails(el, 'nightly-reconcile', 'Nightly Reconcile');
     el.$('#tags').value = 'prod billing';
-
+    next(el);
+    // Step 2 — Sources: petstore is a registered source → resolved, no upload input.
+    await waitFor(() => el.shadowRoot.querySelector('.src-badge'));
+    ok(el.shadowRoot.querySelector('.src-badge.registered'), 'petstore shown as a registered source');
+    ok(!el.$('.src-file[data-name="petstore"]'), 'a registered source asks for no upload');
+    next(el);
+    // Step 3 — Administrators (optional). Step 4 — Review.
+    next(el);
+    await waitFor(() => el.$('.next').textContent === 'Add workflow');
     const added = nextEvent(el, 'workflow-added');
-    el.$('.confirm').click();
+    next(el);
     const e = await added;
     equal(e.detail.version.baseWorkflowId, 'nightly-reconcile', 'base id read from the built package');
     equal(e.detail.version.versionNumber, 4, 'catalog assigned the next version');
   });
 
-  it('requires a document for every declared source', async () => {
+  it('asks for a new source document, BLOCKS until it is configured in an environment, then registers it on commit', async () => {
     el = dialogWithMock();
     mount(el);
     el.open();
-    setFile(el.$('#workflowFile'), 'workflow.json', workflowJson('nightly-reconcile', 'Nightly Reconcile'));
-    await waitFor(() => el.$('.src-file[data-name="petstore"]'));
-    el.$('#ownerName').value = 'Me';
-    el.$('#ownerEmail').value = 'me@example.com';
-    // Leave the petstore source file unset.
-    el.$('.confirm').click();
-    const banner = await waitFor(() => { const b = el.$('.error-banner'); return b && !b.hidden ? b : null; });
-    ok(/petstore/.test(banner.textContent), 'reports the missing source document');
+    await fillDetails(el, 'inventory-sync', 'Inventory Sync', [{ name: 'inventory', type: 'openapi' }]);
+    next(el);
+    // inventory is NOT registered → it asks for a document.
+    const input = await waitFor(() => el.$('.src-file[data-name="inventory"]'));
+    ok(el.shadowRoot.querySelector('.src-badge.new'), 'inventory shown as a new source');
+    // Advancing without the document is refused.
+    next(el);
+    ok(!el.$('.error-banner').hidden && /inventory/.test(el.$('.error-banner').textContent), 'requires the new source document');
+    // Supply the document — still NOT ready (no credential), so adding is still refused.
+    setFile(input, 'inventory.json', JSON.stringify({ openapi: '3.1.0' }));
+    await waitFor(() => el.shadowRoot.querySelector('.src-upload-status.ok'));
+    next(el);
+    ok(!el.$('.error-banner').hidden && /ready in any environment/.test(el.$('.error-banner').textContent), 'blocked until ready in an environment');
+    // Configure inventory's credential inline (production) → the workflow becomes ready.
+    el.$('.setup-cred-btn[data-name="inventory"]').click();
+    const cred = await waitFor(() => el.shadowRoot.querySelector('arazzo-credential-dialog'));
+    await waitFor(() => cred.shadowRoot.querySelector('dialog')?.open);
+    cred.shadowRoot.querySelector('#environment').value = 'production';
+    const row = cred.shadowRoot.querySelector('.refs .refrow');
+    row.querySelector('.scheme').value = 'raw';
+    row.querySelector('.scheme').dispatchEvent(new Event('change'));
+    row.querySelector('.rawref').value = 'keyvault://inventory-kv/key';
+    const saved = nextEvent(cred, 'credential-saved');
+    cred.shadowRoot.querySelector('.confirm').click();
+    await saved;
+    await waitFor(() => el.shadowRoot.querySelector('.readiness.ok'));
+    // Now ready → advance to the end and commit.
+    next(el); next(el);
+    await waitFor(() => el.$('.next').textContent === 'Add workflow');
+    const added = nextEvent(el, 'workflow-added');
+    next(el);
+    await added;
+    // The new source was registered in the §7.6 registry, so it is now findable.
+    const reg = await el.client.getSource('inventory');
+    equal(reg.name, 'inventory', 'the new source was registered');
+    ok(reg.document, 'with its document');
   });
 
-  it('validates required owner fields before submitting', async () => {
+  it('validates required owner fields before leaving the first step', async () => {
     el = dialogWithMock();
     mount(el);
     el.open();
     setFile(el.$('#workflowFile'), 'workflow.json', workflowJson('thing', 'Thing'));
-    el.$('.confirm').click();
-    const banner = await waitFor(() => { const b = el.$('.error-banner'); return b && !b.hidden ? b : null; });
-    ok(/owner/i.test(banner.textContent), 'reports the missing owner');
+    await waitFor(() => el.$('.wf-status')?.classList.contains('ok'));
+    next(el);
+    ok(!el.$('.error-banner').hidden && /owner/i.test(el.$('.error-banner').textContent), 'reports the missing owner');
   });
 
-  it('uploads a pre-built package in upload mode', async () => {
+  it('uploads a pre-built package in upload mode (no sources step)', async () => {
     el = dialogWithMock();
     mount(el);
     el.open();
-    el.setMode('upload');
-    // A non-package upload still posts; the mock falls back to the generic base id.
+    el.$('input[name="mode"][value="upload"]').click();
+    await waitFor(() => el.$('#packageFile'));
     const dt = new DataTransfer();
     dt.items.add(new File(['not-a-real-zip'], 'pkg.zip', { type: 'application/zip' }));
     el.$('#packageFile').files = dt.files;
+    el.$('#packageFile').dispatchEvent(new Event('change', { bubbles: true }));
     el.$('#ownerName').value = 'Me';
     el.$('#ownerEmail').value = 'me@example.com';
+    next(el); // → admins (upload mode skips the sources step)
+    ok(el.$('.admin-picker'), 'upload mode goes straight to administrators');
+    next(el); // → review
+    await waitFor(() => el.$('.next').textContent === 'Add workflow');
     const added = nextEvent(el, 'workflow-added');
-    el.$('.confirm').click();
+    next(el);
     const e = await added;
     equal(e.detail.version.status, 'Active');
   });
 
-  it('stages the workflow administrator (locked, deletable) and applies the set after the version lands', async () => {
+  it('establishes the creator as administrator and applies an added person/team/role grantee', async () => {
     el = dialogWithMock();
     mount(el);
     el.open();
-    setFile(el.$('#workflowFile'), 'workflow.json', workflowJson('nightly-reconcile', 'Nightly Reconcile'));
-    await waitFor(() => el.$('.src-file[data-name="petstore"]'));
-    setFile(el.$('.src-file[data-name="petstore"]'), 'petstore.json', JSON.stringify({ openapi: '3.1.0' }));
-
-    // The Administrators section seeds the workflow identity (read-only value, deletable) and pins the grant input.
-    const grant = await waitFor(() => el.$('arazzo-admin-grant-input'));
-    ok([...el.shadowRoot.querySelectorAll('.admins .admin-row')].some((r) => r.textContent.includes('workflow=nightly-reconcile')), 'workflow identity staged by default');
-    equal(grant.getAttribute('fixed-workflow'), 'nightly-reconcile', 'the workflow value is pinned to the new workflow');
-
-    // Add a tenant administrator and stage it.
-    const dim = grant.shadowRoot.querySelector('.dim');
-    dim.value = 'tenant';
-    dim.dispatchEvent(new Event('change'));
-    grant.shadowRoot.querySelector('.val-text').value = 'growth';
+    await fillDetails(el, 'fresh-flow', 'Fresh Flow'); // a brand-new base → creator becomes admin
+    next(el); // → sources (petstore registered, nothing to do)
+    await waitFor(() => el.shadowRoot.querySelector('.src-badge'));
+    next(el); // → admins
+    await waitFor(() => el.$('.admin-picker'));
+    ok(el.shadowRoot.textContent.includes('You (the creator)'), 'states the creator administers');
+    // Resolve a real team grantee via the picker and stage it.
+    const picker = el.$('.admin-picker');
+    const q = picker.shadowRoot.querySelector('.q');
+    q.value = 'payments';
+    q.dispatchEvent(new Event('input'));
+    await waitFor(() => picker.shadowRoot.querySelectorAll('.results li[data-index]').length === 1);
+    picker.shadowRoot.querySelector('.results li[data-index]').click();
     el.$('.add-admin').click();
-    ok([...el.shadowRoot.querySelectorAll('.admins .admin-row')].some((r) => r.textContent.includes('tenant=growth')), 'tenant administrator staged');
-
-    el.$('#ownerName').value = 'Team';
-    el.$('#ownerEmail').value = 'team@example.com';
+    ok([...el.shadowRoot.querySelectorAll('.admins .admin-row')].some((r) => r.textContent.includes('Payments')), 'team administrator staged');
+    next(el); // → review
+    await waitFor(() => el.$('.next').textContent === 'Add workflow');
     const added = nextEvent(el, 'workflow-added');
-    el.$('.confirm').click();
+    next(el);
     await added;
-
-    // The staged set was applied to the landed base id via the administrators API; each administrator is a resolved
-    // identity whose `identity` carries the {dimension,value} grant(s) it resolves from.
-    const { administrators } = await el.client.listAdministrators('nightly-reconcile');
-    const hasGrant = (dimension, value) => administrators.some((a) => (a.identity || []).some((g) => g.dimension === dimension && g.value === value));
-    ok(hasGrant('tenant', 'growth'), 'applied the tenant administrator');
-    ok(hasGrant('workflow', 'nightly-reconcile'), 'applied the workflow administrator');
+    const { administrators } = await el.client.listAdministrators('fresh-flow');
+    const has = (dim, val) => administrators.some((a) => (a.identity || []).some((g) => g.dimension === dim && g.value === val));
+    ok(administrators.some((a) => /creator/i.test(a.label || '')), 'the creator is an administrator');
+    ok(has('team', 'payments'), 'the added team administrator was applied');
   });
 
-  it('opens a guided credential dialog locked to each source ticked for credential setup', async () => {
+  it('does not offer a workflow as an administrator (only person/team/role)', async () => {
     el = dialogWithMock();
     mount(el);
     el.open();
-    setFile(el.$('#workflowFile'), 'workflow.json', workflowJson('nightly-reconcile', 'Nightly Reconcile'));
-    await waitFor(() => el.$('.src-file[data-name="petstore"]'));
-    setFile(el.$('.src-file[data-name="petstore"]'), 'petstore.json', JSON.stringify({ openapi: '3.1.0' }));
-    el.$('#ownerName').value = 'Team';
-    el.$('#ownerEmail').value = 'team@example.com';
-    el.$('.setup-cred[data-name="petstore"]').checked = true; // set up this source's credentials after adding
+    await fillDetails(el, 'fresh-flow-2', 'Fresh Flow 2');
+    next(el);
+    await waitFor(() => el.shadowRoot.querySelector('.src-badge'));
+    next(el);
+    const picker = await waitFor(() => el.$('.admin-picker'));
+    const opts = [...picker.shadowRoot.querySelectorAll('.kind option')].map((o) => o.value);
+    ok(!opts.includes('workflow'), 'the admin picker does not offer the workflow kind');
+  });
 
-    const added = nextEvent(el, 'workflow-added');
-    el.$('.confirm').click();
-    await added;
-
-    // After the version lands, a guided credential dialog opens locked to the petstore source.
+  it('shows environment readiness and sets up a credential INLINE during the wizard', async () => {
+    el = dialogWithMock();
+    mount(el);
+    el.open();
+    await fillDetails(el, 'nightly-reconcile', 'Nightly Reconcile'); // references petstore (credentialed in production)
+    next(el);
+    // The workflow is already ready in production (petstore has a credential there).
+    await waitFor(() => el.shadowRoot.querySelector('.readiness.ok'));
+    ok(el.shadowRoot.querySelector('.readiness.ok').textContent.includes('production'), 'ready in production');
+    // "Set up credential…" opens the guided dialog INLINE, locked to the source with auth derived from its registry doc.
+    el.$('.setup-cred-btn[data-name="petstore"]').click();
     const cred = await waitFor(() => el.shadowRoot.querySelector('arazzo-credential-dialog'));
     await waitFor(() => cred.shadowRoot.querySelector('dialog')?.open);
-    equal(cred.shadowRoot.querySelector('#sourceName').value, 'petstore', 'pre-filled with the source name');
+    equal(cred.shadowRoot.querySelector('#sourceName').value, 'petstore', 'locked to the source');
     ok(cred.shadowRoot.querySelector('#sourceName').readOnly, 'source is locked');
-    ok(!cred.shadowRoot.querySelector('#environment').readOnly, 'environment stays editable');
+    equal(cred.shadowRoot.querySelector('#authKind').value, 'apiKey', 'auth derived from the registered source document');
+    // Configure a staging credential via the raw-reference escape hatch and save.
+    cred.shadowRoot.querySelector('#environment').value = 'staging';
+    const row = cred.shadowRoot.querySelector('.refs .refrow');
+    row.querySelector('.scheme').value = 'raw';
+    row.querySelector('.scheme').dispatchEvent(new Event('change'));
+    row.querySelector('.rawref').value = 'keyvault://petstore-kv/api-key';
+    const saved = nextEvent(cred, 'credential-saved');
+    cred.shadowRoot.querySelector('.confirm').click();
+    await saved;
+    // The wizard reflects the new binding inline — petstore now has a credential in staging too.
+    await waitFor(() => [...el.shadowRoot.querySelectorAll('.src-creds .env-chip')].some((c) => c.textContent === 'staging'));
+    ok(true, 'inline-created credential reflected in the source row');
   });
+
+  it('does not count a credential scoped to another workflow toward readiness (§13 usability)', async () => {
+    el = dialogWithMock();
+    mount(el);
+    el.open();
+    // 'rival' references billing, whose only credential (production) is usage-scoped to nightly-reconcile.
+    await fillDetails(el, 'rival', 'Rival', [{ name: 'billing', type: 'openapi' }]);
+    next(el);
+    await waitFor(() => el.shadowRoot.querySelector('.src-badge'));
+    ok(el.shadowRoot.querySelector('.readiness.warn'), 'not ready — billing’s credential is restricted to another workflow');
+    ok(![...el.shadowRoot.querySelectorAll('.src-creds .env-chip')].length, 'no usable credential environment shown for billing');
+  });
+
 });
 
 describe('<arazzo-catalog> add wiring', () => {

@@ -38,7 +38,9 @@ describe('<arazzo-grants-panel>', () => {
     await nextEvent(el, 'loaded');
     ok(rows(el).length >= 2, 'two seeded grants');
     ok(el.shadowRoot.textContent.includes('team=payments'), 'shows a claim');
+    // Search is debounced + server-side, so await the reload before asserting on the filtered page.
     setInput(el, '.search', 'tenant');
+    await nextEvent(el, 'loaded');
     ok([...rows(el)].every((r) => r.textContent.toLowerCase().includes('tenant')), 'search filters');
   });
 
@@ -68,6 +70,8 @@ describe('<arazzo-grants-panel>', () => {
     setVerbMode(el, 'write', 'scopes');
     const scopeInput = [...el.shadowRoot.querySelectorAll('.scope-input')].find((i) => i.dataset.verb === 'write');
     ok(scopeInput, 'a scope typeahead input is shown (no flat checkbox list)');
+    // The typeahead is server-backed: load the matching scopes (as typing would) so the chosen name is a known scope.
+    await el.loadScopeOptions('reach-payments');
     scopeInput.value = 'reach-payments';
     scopeInput.dispatchEvent(new Event('change'));
     ok([...el.shadowRoot.querySelectorAll('.chip')].some((c) => c.textContent.includes('reach-payments')), 'scope added as a chip');

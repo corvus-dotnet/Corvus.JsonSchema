@@ -43,6 +43,9 @@ public sealed class HttpClientTransport : IApiTransport
     private readonly HttpClient httpClient;
     private readonly IHttpAuthenticationProvider? authenticationProvider;
     private readonly bool disposeClient;
+    private readonly Func<CancellationToken, ValueTask<Uri?>>? baseUrlOverride;
+    private Uri? resolvedBaseUrlOverride;
+    private bool baseUrlOverrideResolved;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="HttpClientTransport"/> class.
@@ -55,14 +58,22 @@ public sealed class HttpClientTransport : IApiTransport
     /// <see langword="true"/> to dispose <paramref name="httpClient"/> when this transport
     /// is disposed; <see langword="false"/> (the default) to leave it to the caller.
     /// </param>
+    /// <param name="baseUrlOverride">
+    /// An optional resolver for a per-transport base URL override. When supplied and it yields a non-null absolute URI,
+    /// each relative request is resolved against it instead of <see cref="HttpClient.BaseAddress"/> (the same combine
+    /// semantics). Resolved once on first send and reused. <see langword="null"/> (the default) leaves the client's
+    /// base address authoritative — so existing callers are unaffected.
+    /// </param>
     public HttpClientTransport(
         HttpClient httpClient,
         IHttpAuthenticationProvider? authenticationProvider = null,
-        bool disposeClient = false)
+        bool disposeClient = false,
+        Func<CancellationToken, ValueTask<Uri?>>? baseUrlOverride = null)
     {
         this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         this.authenticationProvider = authenticationProvider;
         this.disposeClient = disposeClient;
+        this.baseUrlOverride = baseUrlOverride;
     }
 
     /// <inheritdoc/>
@@ -238,6 +249,22 @@ public sealed class HttpClientTransport : IApiTransport
             await this.authenticationProvider
                 .AuthenticateAsync(httpRequest, cancellationToken)
                 .ConfigureAwait(false);
+        }
+
+        if (this.baseUrlOverride is not null)
+        {
+            // A per-environment base URL override (§8): resolve once, then resolve each relative request against it
+            // (the same combine HttpClient applies to BaseAddress) so the run reaches this environment's endpoint.
+            if (!this.baseUrlOverrideResolved)
+            {
+                this.resolvedBaseUrlOverride = await this.baseUrlOverride(cancellationToken).ConfigureAwait(false);
+                this.baseUrlOverrideResolved = true;
+            }
+
+            if (this.resolvedBaseUrlOverride is { } overrideBase && httpRequest.RequestUri is { IsAbsoluteUri: false } relative)
+            {
+                httpRequest.RequestUri = new Uri(overrideBase, relative);
+            }
         }
 
         HttpResponseMessage httpResponse = await this.httpClient

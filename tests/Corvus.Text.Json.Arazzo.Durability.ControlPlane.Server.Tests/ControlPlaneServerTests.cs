@@ -443,7 +443,7 @@ public sealed class ControlPlaneServerTests
         (await executor.Content.ReadAsByteArrayAsync()).ShouldBe(FakeExecutorProvider.AssemblyBytes);
 
         // The manifest streams back as JSON.
-        HttpResponseMessage manifest = await client.GetAsync("/catalog/flow/versions/1/executor-manifest");
+        HttpResponseMessage manifest = await client.GetAsync("/catalog/flow/versions/1/executorManifest");
         manifest.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await manifest.Content.ReadAsStringAsync()).ShouldContain("\"entryType\"");
 

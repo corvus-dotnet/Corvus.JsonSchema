@@ -68,7 +68,8 @@ public sealed partial class CliIntegrationTests
     {
         await using Host host = await StartAsync();
         using var workspace = new TempWorkspace();
-        string workflow = workspace.WriteWorkflow("cli-demo");
+        // Source-less: nothing to credential, so the workflow is deployable everywhere and the readiness gate passes.
+        string workflow = workspace.WriteWorkflow("cli-demo", withSource: false);
 
         (int addExit, string addOut, _) = await RunAsync(
             host, "catalog", "add", "--workflow", workflow, "--owner-name", "Team A", "--owner-email", "team-a@example.com", "--tag", "demo");
@@ -95,6 +96,12 @@ public sealed partial class CliIntegrationTests
         string envelope = Path.Combine(workspace.Dir, "package.json");
         await RunLocalAsync("catalog", "pack", "--workflow", workspace.WriteWorkflow("cli-demo"), "--out", envelope);
 
+        // The package carries the petstore source, so the workflow must be ready somewhere before it can be added:
+        // register an environment and a petstore credential there.
+        (await RunAsync(host, "environments", "create", "production")).Exit.ShouldBe(0);
+        (await RunAsync(host, "credentials", "create", "petstore", "production",
+            "--auth-kind", "apiKey", "--ref", "value=keyvault://petstore-key#3", "--config", "parameterName=X-Api-Key")).Exit.ShouldBe(0);
+
         (int addExit, _, _) = await RunAsync(
             host, "catalog", "add", "--package", envelope, "--owner-name", "Team A", "--owner-email", "team-a@example.com");
         addExit.ShouldBe(0);
@@ -116,11 +123,35 @@ public sealed partial class CliIntegrationTests
     }
 
     [TestMethod]
+    public async Task Catalog_add_refuses_a_workflow_not_ready_in_any_environment()
+    {
+        await using Host host = await StartAsync();
+        using var workspace = new TempWorkspace();
+        string workflow = workspace.WriteWorkflow("needs-creds"); // references the petstore source
+
+        // No environment has a credential for petstore → the workflow can't run anywhere → the add is refused.
+        (int refusedExit, _, string refusedErr) = await RunAsync(
+            host, "catalog", "add", "--workflow", workflow, "--owner-name", "A", "--owner-email", "a@example.com");
+        refusedExit.ShouldNotBe(0);
+        refusedErr.ShouldContain("not ready in any environment");
+
+        // Make it deployable — register an environment and the petstore credential — then the add succeeds.
+        (await RunAsync(host, "environments", "create", "production")).Exit.ShouldBe(0);
+        (await RunAsync(host, "credentials", "create", "petstore", "production",
+            "--auth-kind", "apiKey", "--ref", "value=keyvault://petstore-key#3", "--config", "parameterName=X-Api-Key")).Exit.ShouldBe(0);
+
+        (int okExit, string okOut, _) = await RunAsync(
+            host, "catalog", "add", "--workflow", workflow, "--owner-name", "A", "--owner-email", "a@example.com");
+        okExit.ShouldBe(0);
+        okOut.ShouldContain("needs-creds-v1");
+    }
+
+    [TestMethod]
     public async Task Catalog_update_obsolete_then_delete()
     {
         await using Host host = await StartAsync();
         using var workspace = new TempWorkspace();
-        await RunAsync(host, "catalog", "add", "--workflow", workspace.WriteWorkflow("cli-demo"), "--owner-name", "A", "--owner-email", "a@example.com");
+        await RunAsync(host, "catalog", "add", "--workflow", workspace.WriteWorkflow("cli-demo", withSource: false), "--owner-name", "A", "--owner-email", "a@example.com");
 
         (int updateExit, string updateOut, _) = await RunAsync(host, "catalog", "update", "cli-demo", "1", "--tag", "prod", "--tag", "billing");
         updateExit.ShouldBe(0);
@@ -143,7 +174,7 @@ public sealed partial class CliIntegrationTests
     {
         await using Host host = await StartAsync();
         using var workspace = new TempWorkspace();
-        await RunAsync(host, "catalog", "add", "--workflow", workspace.WriteWorkflow("cli-demo"), "--owner-name", "A", "--owner-email", "a@example.com");
+        await RunAsync(host, "catalog", "add", "--workflow", workspace.WriteWorkflow("cli-demo", withSource: false), "--owner-name", "A", "--owner-email", "a@example.com");
         await RunAsync(host, "catalog", "obsolete", "cli-demo", "1");
 
         (int purgeExit, string purgeOut, _) = await RunAsync(host, "catalog", "purge");
@@ -185,16 +216,19 @@ public sealed partial class CliIntegrationTests
 
         public string Dir { get; }
 
-        public string WriteWorkflow(string workflowId)
+        public string WriteWorkflow(string workflowId, bool withSource = true)
         {
             string path = Path.Combine(this.Dir, "workflow.arazzo.json");
+            string sourceDescriptions = withSource
+                ? "\"sourceDescriptions\": [ { \"name\": \"petstore\", \"url\": \"petstore.json\", \"type\": \"openapi\" } ],"
+                : "\"sourceDescriptions\": [],";
             File.WriteAllText(
                 path,
                 $$"""
                 {
                   "arazzo": "1.1.0",
                   "info": { "title": "CLI Demo", "description": "A demo workflow." },
-                  "sourceDescriptions": [ { "name": "petstore", "url": "petstore.json", "type": "openapi" } ],
+                  {{sourceDescriptions}}
                   "workflows": [ { "workflowId": "{{workflowId}}", "steps": [] } ]
                 }
                 """);
