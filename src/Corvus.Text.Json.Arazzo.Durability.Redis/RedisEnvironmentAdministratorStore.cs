@@ -13,8 +13,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.Redis;
 /// A Redis-backed <see cref="IEnvironmentAdministratorStore"/> (design §7.7): the explicit administration record for a
 /// deployment environment — the mutable set of administrator identities entitled to manage the environment and its
 /// administration. Each record is stored as its <see cref="EnvironmentAdministrators"/> document, keyed solely by
-/// EnvironmentName; there are no tag/reach/index sets. Mirrors <see cref="RedisWorkflowAdministratorStore"/> without the
-/// reverse administration index. The record holds deployment-stamped identities only — never secret material.
+/// EnvironmentName. Mirrors <see cref="RedisWorkflowAdministratorStore"/>, including the reverse administration index.
+/// The record holds deployment-stamped identities only — never secret material.
 /// </summary>
 /// <remarks>
 /// <para>Each environment name maps to a single Redis hash key <c>arazzo:envadmin:{environmentName}</c> with two fields:
@@ -23,8 +23,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.Redis;
 /// the field is a denormalized copy purely so the conditional write can be done server-side.</para>
 /// <para>Redis is not transactional across a read-then-write, so <see cref="PutAsync"/> performs the create-or-replace
 /// atomically through a Lua script that compares the stored etag against the caller's expected etag (and absence against
-/// <see cref="WorkflowEtag.None"/>) and writes only on a match. The store touches only the per-record key — there are no
-/// index sets to maintain. Targets a single Redis instance (or a primary).</para>
+/// <see cref="WorkflowEtag.None"/>) and writes only on a match. The same atomic call rewrites the reverse administration
+/// index so the index and the record stay consistent. Targets a single Redis instance (or a primary).</para>
 /// </remarks>
 public sealed class RedisEnvironmentAdministratorStore : IEnvironmentAdministratorStore, IAsyncDisposable
 {
@@ -40,10 +40,20 @@ public sealed class RedisEnvironmentAdministratorStore : IEnvironmentAdministrat
     // etag because real etags are 32-char hex GUIDs.
     private const string NoneSentinel = "";
 
-    // Create-or-replace the record under an etag check-and-set, atomically. KEYS[1]: the per-environment hash key.
-    // ARGV[1]: the caller's expected etag (or the None sentinel for "must not exist"). ARGV[2]/ARGV[3]: the new document
-    // bytes and new etag. Returns 1 on success, 0 on an etag mismatch (the caller maps 0 to a conflict). There is no
-    // reverse index, so no index sets are touched.
+    // The reverse administration index (design §7.8): one zero-scored sorted set per administrator digest,
+    // arazzo:envadminidx:{digest}, whose members are the environment names that digest administers — a ZRANGEBYLEX is then
+    // an ordinal keyset over environment names. The per-environment digests set arazzo:envadmindigests:{environmentName}
+    // holds an environment's current digests so a PutAsync that changes the administrator set can retract the stale ones
+    // before indexing the new ones, and a DeleteAsync can retract them all. The prefixes are distinct from the workflow
+    // store's so the two reverse indexes never collide.
+    private const string IndexPrefix = "arazzo:envadminidx:";
+    private const string DigestsPrefix = "arazzo:envadmindigests:";
+
+    // Create-or-replace the record under an etag check-and-set, AND rewrite its reverse-index entries, atomically.
+    // KEYS[1]: the per-environment hash key. KEYS[2]: the per-environment digests set. ARGV[1]: the caller's expected etag
+    // (or the None sentinel for "must not exist"). ARGV[2]/ARGV[3]: the new document bytes and new etag. ARGV[4]: the
+    // environment name (the index member). ARGV[5]: the per-digest index-set key prefix. ARGV[6..]: the current
+    // administrator digests. Returns 1 on success, 0 on an etag mismatch (the caller maps 0 to a conflict).
     private const string PutScript =
         """
         local expected = ARGV[1]
@@ -55,6 +65,34 @@ public sealed class RedisEnvironmentAdministratorStore : IEnvironmentAdministrat
             if redis.call('HGET', KEYS[1], 'etag') ~= expected then return 0 end
         end
         redis.call('HSET', KEYS[1], 'doc', ARGV[2], 'etag', ARGV[3])
+        local member = ARGV[4]
+        local indexPrefix = ARGV[5]
+        local previous = redis.call('SMEMBERS', KEYS[2])
+        for i = 1, #previous do
+            redis.call('ZREM', indexPrefix .. previous[i], member)
+        end
+        redis.call('DEL', KEYS[2])
+        for i = 6, #ARGV do
+            redis.call('ZADD', indexPrefix .. ARGV[i], 0, member)
+            redis.call('SADD', KEYS[2], ARGV[i])
+        end
+        return 1
+        """;
+
+    // Delete the record AND retract its reverse-index entries, atomically. KEYS[1]: the per-environment hash key. KEYS[2]:
+    // the per-environment digests set. ARGV[1]: the environment name (the index member). ARGV[2]: the per-digest index-set
+    // key prefix. A missing record is a no-op (the per-digests set is empty, so the retract loop does nothing). Always
+    // returns 1 — the caller does not inspect the result; delete is unconditional.
+    private const string DeleteScript =
+        """
+        local member = ARGV[1]
+        local indexPrefix = ARGV[2]
+        local previous = redis.call('SMEMBERS', KEYS[2])
+        for i = 1, #previous do
+            redis.call('ZREM', indexPrefix .. previous[i], member)
+        end
+        redis.call('DEL', KEYS[2])
+        redis.call('DEL', KEYS[1])
         return 1
         """;
 
@@ -168,14 +206,22 @@ public sealed class RedisEnvironmentAdministratorStore : IEnvironmentAdministrat
             json = EnvironmentAdministratorsSerialization.SerializeNew(environmentName, administrators, actor, this.timeProvider.GetUtcNow(), etag);
         }
 
-        RedisValue[] argv =
-        [
-            expectedEtag.IsNone ? NoneSentinel : expectedEtag.Value!,
-            json,
-            etag.Value!,
-        ];
+        // The reverse-index digests (the exact digests the forward IsAdministeredBy compares) are passed to the script so
+        // the document write and the index rewrite are one atomic Lua call.
+        IReadOnlyList<string> digests = EnvironmentAdministeredPaging.DistinctDigests(administrators);
+        RedisKey[] keys = [key, DigestsKey(environmentName)];
+        var argv = new RedisValue[5 + digests.Count];
+        argv[0] = expectedEtag.IsNone ? NoneSentinel : expectedEtag.Value!;
+        argv[1] = json;
+        argv[2] = etag.Value!;
+        argv[3] = environmentName;
+        argv[4] = IndexPrefix;
+        for (int i = 0; i < digests.Count; i++)
+        {
+            argv[5 + i] = digests[i];
+        }
 
-        RedisResult result = await this.database.ScriptEvaluateAsync(PutScript, [key], argv).ConfigureAwait(false);
+        RedisResult result = await this.database.ScriptEvaluateAsync(PutScript, keys, argv).ConfigureAwait(false);
         if ((long)result == 0)
         {
             throw new EnvironmentAdministrationConflictException(environmentName, expectedEtag);
@@ -189,7 +235,42 @@ public sealed class RedisEnvironmentAdministratorStore : IEnvironmentAdministrat
     {
         ArgumentException.ThrowIfNullOrEmpty(environmentName);
         cancellationToken.ThrowIfCancellationRequested();
-        await this.database.KeyDeleteAsync(RecordKey(environmentName)).ConfigureAwait(false);
+
+        // Delete the record AND retract its reverse-index entries in one atomic Lua call so the index never outlives the
+        // record. A missing record leaves the per-environment digests set empty, so the retract loop runs zero iterations
+        // and the deletes are no-ops — preserving the "missing record is a no-op" contract.
+        RedisKey[] keys = [RecordKey(environmentName), DigestsKey(environmentName)];
+        RedisValue[] argv = [environmentName, IndexPrefix];
+        await this.database.ScriptEvaluateAsync(DeleteScript, keys, argv).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        cancellationToken.ThrowIfCancellationRequested();
+        int pageSize = limit > 0 ? limit : EnvironmentAdministeredPage.DefaultPageSize;
+
+        // The keyset cursor (the environment name to page strictly after) reifies once here, never per row. The digest's
+        // sorted-set members are the administered environment names (score 0), so a ZRANGEBYLEX is an ordinal keyset over
+        // environment names — the contract's order; seek strictly past the cursor and take pageSize+1 for the lookahead.
+        string? after = EnvironmentAdministeredContinuationToken.DecodeCursorToString(pageToken);
+        RedisValue[] members = await this.database.SortedSetRangeByValueAsync(
+            IndexKey(adminDigest),
+            min: after is null ? default : after,
+            max: default,
+            exclude: after is null ? Exclude.None : Exclude.Start,
+            order: Order.Ascending,
+            skip: 0,
+            take: pageSize + 1).ConfigureAwait(false);
+
+        var rows = new List<string>(members.Length);
+        foreach (RedisValue member in members)
+        {
+            rows.Add((string)member!);
+        }
+
+        return EnvironmentAdministeredPaging.ToPage(rows, pageSize);
     }
 
     /// <inheritdoc/>
@@ -204,4 +285,8 @@ public sealed class RedisEnvironmentAdministratorStore : IEnvironmentAdministrat
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
     private static RedisKey RecordKey(string environmentName) => Prefix + environmentName;
+
+    private static RedisKey DigestsKey(string environmentName) => DigestsPrefix + environmentName;
+
+    private static RedisKey IndexKey(string adminDigest) => IndexPrefix + adminDigest;
 }

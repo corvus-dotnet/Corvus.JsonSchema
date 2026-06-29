@@ -424,7 +424,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
     private string? SubjectOf(ClaimsPrincipal? principal) => principal?.FindFirst(this.subjectClaimType)?.Value;
 
     private bool IsRequester(AvailabilityRequest request)
-        => request.CreatedByEquals(this.CallerActor());
+        => string.Equals(request.CreatedByValue, this.CallerActor(), StringComparison.Ordinal);
 
     private static Models.ProblemDetails.Source NotFoundProblem(string id)
         => Problem("availability-request-not-found", "Availability request not found", 404, $"No availability request '{id}' exists.");

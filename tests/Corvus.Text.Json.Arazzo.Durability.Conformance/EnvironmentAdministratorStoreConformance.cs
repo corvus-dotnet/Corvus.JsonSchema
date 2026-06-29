@@ -14,8 +14,9 @@ namespace Corvus.Text.Json.Arazzo.Durability.Conformance;
 /// under optimistic concurrency, administrator-set round-trip with order-independent membership, immutable creation audit
 /// carried across updates, per-environment isolation, and removal via <see cref="IEnvironmentAdministratorStore.DeleteAsync"/>.
 /// A backend's test project derives a concrete <see cref="TestClassAttribute"/> and implements <see cref="CreateStoreAsync"/>;
-/// the in-memory store is the reference implementation and runs the same suite. (The reverse administration index is a
-/// later feature — the promotion inbox — and is not yet part of this interface.)
+/// the in-memory store is the reference implementation and runs the same suite. It also covers the reverse administration
+/// index (<see cref="IEnvironmentAdministratorStore.ListAdministeredAsync"/>, design §7.8) that powers the promotion inbox:
+/// the environments an administrator administers, keyset-paged, retracted when the set changes or the record is deleted.
 /// </summary>
 public abstract class EnvironmentAdministratorStoreConformance
 {
@@ -184,6 +185,115 @@ public abstract class EnvironmentAdministratorStoreConformance
     {
         IEnvironmentAdministratorStore store = await this.NewStoreAsync();
         await store.DeleteAsync("production", default); // does not throw
+    }
+
+    [TestMethod]
+    public async Task The_reverse_index_lists_the_environments_an_administrator_administers()
+    {
+        IEnvironmentAdministratorStore store = await this.NewStoreAsync();
+        SecurityTagSet acme = Administrator("acme");
+        SecurityTagSet globex = Administrator("globex");
+        await store.PutAsync("production", [this.Identity(acme)], WorkflowEtag.None, "alice", default);
+        await store.PutAsync("staging", [this.Identity(acme), this.Identity(globex)], WorkflowEtag.None, "alice", default);
+        await store.PutAsync("qa", [this.Identity(globex)], WorkflowEtag.None, "bob", default);
+
+        // Each administrator sees exactly the environments their identity administers, ordered by environment name.
+        (await ListAdministeredAsync(store, Digest(acme))).ShouldBe(["production", "staging"]);
+        (await ListAdministeredAsync(store, Digest(globex))).ShouldBe(["qa", "staging"]);
+        (await ListAdministeredAsync(store, Digest(Administrator("nobody")))).ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task Changing_the_administrator_set_retracts_stale_reverse_index_entries()
+    {
+        IEnvironmentAdministratorStore store = await this.NewStoreAsync();
+        SecurityTagSet acme = Administrator("acme");
+        SecurityTagSet globex = Administrator("globex");
+
+        WorkflowEtag etag;
+        using (ParsedJsonDocument<EnvironmentAdministrators> put = await store.PutAsync("production", [this.Identity(acme)], WorkflowEtag.None, "alice", default))
+        {
+            etag = put.RootElement.EtagValue;
+        }
+
+        // Transfer administration from acme to globex: acme must no longer appear, globex now does.
+        await store.PutAsync("production", [this.Identity(globex)], etag, "alice", default);
+
+        (await ListAdministeredAsync(store, Digest(acme))).ShouldBeEmpty();
+        (await ListAdministeredAsync(store, Digest(globex))).ShouldBe(["production"]);
+    }
+
+    [TestMethod]
+    public async Task Deleting_a_record_retracts_it_from_the_reverse_index()
+    {
+        IEnvironmentAdministratorStore store = await this.NewStoreAsync();
+        SecurityTagSet acme = Administrator("acme");
+        await store.PutAsync("production", [this.Identity(acme)], WorkflowEtag.None, "alice", default);
+        await store.PutAsync("staging", [this.Identity(acme)], WorkflowEtag.None, "alice", default);
+
+        await store.DeleteAsync("production", default);
+
+        (await ListAdministeredAsync(store, Digest(acme))).ShouldBe(["staging"]);
+    }
+
+    [TestMethod]
+    public async Task The_reverse_index_keyset_pages_without_gaps_or_duplicates()
+    {
+        IEnvironmentAdministratorStore store = await this.NewStoreAsync();
+        SecurityTagSet acme = Administrator("acme");
+        string[] environments = ["prod", "staging", "qa", "dev", "alpha", "zeta", "mid"];
+        foreach (string environment in environments)
+        {
+            await store.PutAsync(environment, [this.Identity(acme)], WorkflowEtag.None, "alice", default);
+        }
+
+        var seen = new List<string>();
+        byte[]? token = null;
+        int pages = 0;
+        do
+        {
+            using ParsedJsonDocument<JsonString>? tokenDoc = token is null ? null : AsPageToken(token);
+            using EnvironmentAdministeredPage page = await store.ListAdministeredAsync(Digest(acme), 3, tokenDoc?.RootElement ?? default, default);
+            page.EnvironmentNames.Count.ShouldBeLessThanOrEqualTo(3);
+            seen.AddRange(page.EnvironmentNames);
+            token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
+            pages++;
+        }
+        while (token is not null);
+
+        pages.ShouldBe(3); // 7 entries, 3 per page
+        seen.ShouldBe(environments.OrderBy(e => e, StringComparer.Ordinal).ToArray());
+    }
+
+    // The collision-probe digest of an identity (the reverse-index key); the identities used here always have a digest.
+    private static string Digest(SecurityTagSet tags)
+        => SecurityIdentityDigest.Compute(tags) ?? throw new InvalidOperationException("The identity has no digest.");
+
+    // Drains the reverse index for a digest across all keyset pages into one ordered list.
+    private static async Task<List<string>> ListAdministeredAsync(IEnvironmentAdministratorStore store, string digest)
+    {
+        var all = new List<string>();
+        byte[]? token = null;
+        do
+        {
+            using ParsedJsonDocument<JsonString>? tokenDoc = token is null ? null : AsPageToken(token);
+            using EnvironmentAdministeredPage page = await store.ListAdministeredAsync(digest, 1000, tokenDoc?.RootElement ?? default, default);
+            all.AddRange(page.EnvironmentNames);
+            token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
+        }
+        while (token is not null);
+
+        return all;
+    }
+
+    // Wraps an opaque page token's UTF-8 as the JSON string value a request carries it as (mirroring HTTP).
+    private static ParsedJsonDocument<JsonString> AsPageToken(ReadOnlySpan<byte> tokenUtf8)
+    {
+        byte[] quoted = new byte[tokenUtf8.Length + 2];
+        quoted[0] = (byte)'"';
+        tokenUtf8.CopyTo(quoted.AsSpan(1));
+        quoted[^1] = (byte)'"';
+        return ParsedJsonDocument<JsonString>.Parse(quoted);
     }
 
     private static SecurityTagSet Administrator(string tenant) => SecurityTagSet.FromTags([new SecurityTag("sys:tenant", tenant)]);

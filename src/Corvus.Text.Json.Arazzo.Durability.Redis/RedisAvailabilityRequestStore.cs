@@ -37,18 +37,7 @@ public sealed class RedisAvailabilityRequestStore : IAvailabilityRequestStore, I
     // Singleton comparer (created once) for the client-side snapshot ordering, since the index set is unordered:
     // oldest-first by creation instant then id.
     private static readonly IComparer<ParsedJsonDocument<AvailabilityRequest>> ByCreatedThenId =
-        Comparer<ParsedJsonDocument<AvailabilityRequest>>.Create(static (a, b) =>
-        {
-            if (a.RootElement.CreatedAtValue != b.RootElement.CreatedAtValue)
-            {
-                return a.RootElement.CreatedAtValue.CompareTo(b.RootElement.CreatedAtValue);
-            }
-
-            // Tiebreak on id string-free: compare the JSON values' UTF-8 bytes (no id string is realised per compare).
-            using UnescapedUtf8JsonString aId = a.RootElement.Id.GetUtf8String();
-            using UnescapedUtf8JsonString bId = b.RootElement.Id.GetUtf8String();
-            return aId.Span.SequenceCompareTo(bId.Span);
-        });
+        Comparer<ParsedJsonDocument<AvailabilityRequest>>.Create(static (a, b) => a.RootElement.CreatedAtValue != b.RootElement.CreatedAtValue ? a.RootElement.CreatedAtValue.CompareTo(b.RootElement.CreatedAtValue) : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue));
 
     private readonly IConnectionMultiplexer connection;
     private readonly IDatabase database;
@@ -133,6 +122,7 @@ public sealed class RedisAvailabilityRequestStore : IAvailabilityRequestStore, I
     {
         cancellationToken.ThrowIfCancellationRequested();
         int pageSize = limit > 0 ? limit : AvailabilityRequestPage.DefaultPageSize;
+        string? wireStatus = query.Status is { } status ? AvailabilityRequestStatusNames.ToWire(status) : null;
 
         // Decode the keyset cursor to the index member the previous page ended at ("{createdAtIso}\0{id}"); the id reifies
         // to a string only here (the leaf). Undefined token = first page.
@@ -179,7 +169,7 @@ public sealed class RedisAvailabilityRequestStore : IAvailabilityRequestStore, I
                 }
 
                 ParsedJsonDocument<AvailabilityRequest> document = PersistedJson.ToPooledDocument<AvailabilityRequest>(lease.Span);
-                if (!Matches(document.RootElement, query))
+                if (!Matches(document.RootElement, query, wireStatus))
                 {
                     document.Dispose();
                     continue;
@@ -227,6 +217,7 @@ public sealed class RedisAvailabilityRequestStore : IAvailabilityRequestStore, I
     public async ValueTask<PooledDocumentList<AvailabilityRequest>> ListAsync(AvailabilityRequestQuery query, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        string? wireStatus = query.Status is { } status ? AvailabilityRequestStatusNames.ToWire(status) : null;
         var list = new PooledDocumentList<AvailabilityRequest>();
         foreach (RedisValue member in await this.database.SetMembersAsync(RequestIndexKey).ConfigureAwait(false))
         {
@@ -239,7 +230,7 @@ public sealed class RedisAvailabilityRequestStore : IAvailabilityRequestStore, I
             }
 
             ParsedJsonDocument<AvailabilityRequest> document = PersistedJson.ToPooledDocument<AvailabilityRequest>(lease.Span);
-            if (Matches(document.RootElement, query))
+            if (Matches(document.RootElement, query, wireStatus))
             {
                 list.Add(document);
             }
@@ -303,25 +294,24 @@ public sealed class RedisAvailabilityRequestStore : IAvailabilityRequestStore, I
     private static string KeysetMember(DateTimeOffset createdAt, string id)
         => $"{createdAt.UtcDateTime.ToString("o", CultureInfo.InvariantCulture)}{MemberSeparator}{id}";
 
-    private static bool Matches(in AvailabilityRequest request, AvailabilityRequestQuery query)
+    private static bool Matches(in AvailabilityRequest request, AvailabilityRequestQuery query, string? wireStatus)
     {
-        // Status + environment + requester are compared string-free (no field is realised to a managed string per row).
-        if (query.Status is { } status && !request.HasStatus(status))
+        if (wireStatus is not null && !string.Equals(request.StatusValue, wireStatus, StringComparison.Ordinal))
         {
             return false;
         }
 
-        if (query.Environment is { } environment && !request.EnvironmentEquals(environment))
+        if (query.Environment is { } environment && !string.Equals(request.EnvironmentValue, environment, StringComparison.Ordinal))
         {
             return false;
         }
 
-        if (query.CreatedBy is { } createdBy && !request.CreatedByEquals(createdBy))
+        if (query.CreatedBy is { } createdBy && !string.Equals(request.CreatedByValue, createdBy, StringComparison.Ordinal))
         {
             return false;
         }
 
         // The approver inbox (§7.8): the request's environment must be one the caller administers (server-derived set).
-        return query.MatchesAdministeredSet(request);
+        return query.MatchesAdministeredSet(request.EnvironmentValue);
     }
 }

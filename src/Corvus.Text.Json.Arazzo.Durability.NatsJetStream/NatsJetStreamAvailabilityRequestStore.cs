@@ -42,15 +42,7 @@ public sealed class NatsJetStreamAvailabilityRequestStore : IAvailabilityRequest
         Comparer<ParsedJsonDocument<AvailabilityRequest>>.Create(static (a, b) =>
         {
             int byCreated = a.RootElement.CreatedAtValue.CompareTo(b.RootElement.CreatedAtValue);
-            if (byCreated != 0)
-            {
-                return byCreated;
-            }
-
-            // Tiebreak on id string-free: compare the JSON values' UTF-8 bytes (no id string is realised per compare).
-            using UnescapedUtf8JsonString aId = a.RootElement.Id.GetUtf8String();
-            using UnescapedUtf8JsonString bId = b.RootElement.Id.GetUtf8String();
-            return aId.Span.SequenceCompareTo(bId.Span);
+            return byCreated != 0 ? byCreated : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue);
         });
 
     private readonly NatsConnection? ownedConnection;
@@ -142,6 +134,7 @@ public sealed class NatsJetStreamAvailabilityRequestStore : IAvailabilityRequest
     public async ValueTask<AvailabilityRequestPage> ListAsync(AvailabilityRequestQuery query, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         int pageSize = limit > 0 ? limit : AvailabilityRequestPage.DefaultPageSize;
+        string? wireStatus = query.Status is { } s ? AvailabilityRequestStatusNames.ToWire(s) : null;
 
         // Decode the keyset cursor; createdAt + id reify to strings (the leaf) only here — createdAt as the ISO-8601 "o"
         // form (reconstructed from the token's UTC ticks). Undefined token = first page.
@@ -214,7 +207,7 @@ public sealed class NatsJetStreamAvailabilityRequestStore : IAvailabilityRequest
                 }
 
                 ParsedJsonDocument<AvailabilityRequest> document = ParsedJsonDocument<AvailabilityRequest>.Parse(bytes.AsMemory());
-                if (!Matches(document.RootElement, query))
+                if (!Matches(document.RootElement, wireStatus, query))
                 {
                     document.Dispose();
                     continue;
@@ -257,6 +250,7 @@ public sealed class NatsJetStreamAvailabilityRequestStore : IAvailabilityRequest
     /// <inheritdoc/>
     public async ValueTask<PooledDocumentList<AvailabilityRequest>> ListAsync(AvailabilityRequestQuery query, CancellationToken cancellationToken)
     {
+        string? status = query.Status is { } s ? AvailabilityRequestStatusNames.ToWire(s) : null;
         var list = new PooledDocumentList<AvailabilityRequest>();
         await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
@@ -272,7 +266,7 @@ public sealed class NatsJetStreamAvailabilityRequestStore : IAvailabilityRequest
             }
 
             ParsedJsonDocument<AvailabilityRequest> document = ParsedJsonDocument<AvailabilityRequest>.Parse(bytes.AsMemory());
-            if (Matches(document.RootElement, query))
+            if (Matches(document.RootElement, status, query))
             {
                 list.Add(document);
             }
@@ -326,27 +320,26 @@ public sealed class NatsJetStreamAvailabilityRequestStore : IAvailabilityRequest
     private static string IndexKey(DateTimeOffset createdAt, string id)
         => string.Concat(IndexPrefix, Enc(createdAt.UtcDateTime.ToString("o", CultureInfo.InvariantCulture)), ".", Enc(id));
 
-    // The list filter: each absent criterion matches anything, mirroring the SQLite WHERE clause. Status + environment +
-    // requester are compared string-free (no field is realised to a managed string per row).
-    private static bool Matches(in AvailabilityRequest request, AvailabilityRequestQuery query)
+    // The list filter: each absent criterion matches anything, mirroring the SQLite WHERE clause.
+    private static bool Matches(AvailabilityRequest request, string? status, AvailabilityRequestQuery query)
     {
-        if (query.Status is { } status && !request.HasStatus(status))
+        if (status is not null && !string.Equals(request.StatusValue, status, StringComparison.Ordinal))
         {
             return false;
         }
 
-        if (query.Environment is { } environment && !request.EnvironmentEquals(environment))
+        if (query.Environment is { } environment && !string.Equals(request.EnvironmentValue, environment, StringComparison.Ordinal))
         {
             return false;
         }
 
-        if (query.CreatedBy is { } createdBy && !request.CreatedByEquals(createdBy))
+        if (query.CreatedBy is { } createdBy && !string.Equals(request.CreatedByValue, createdBy, StringComparison.Ordinal))
         {
             return false;
         }
 
         // The approver inbox (§7.8): the request's target environment must be one the caller administers (server-derived set).
-        return query.MatchesAdministeredSet(request);
+        return query.MatchesAdministeredSet(request.EnvironmentValue);
     }
 
     private async ValueTask<NatsKVEntry<byte[]>?> TryGetAsync(string key, CancellationToken cancellationToken)

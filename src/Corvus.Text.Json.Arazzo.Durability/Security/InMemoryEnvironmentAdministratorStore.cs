@@ -18,6 +18,13 @@ public sealed class InMemoryEnvironmentAdministratorStore : IEnvironmentAdminist
 {
     private readonly Lock gate = new();
     private readonly Dictionary<string, byte[]> records = new(StringComparer.Ordinal);
+
+    // The reverse administration index (design §7.8): administrator-identity digest → the environment names it administers,
+    // ordered by name for keyset paging — the in-memory analogue of a backend's indexed digest column (mirrors
+    // InMemoryWorkflowAdministratorStore). administeredDigests holds each environment's current administrator digests so a
+    // PutAsync that changes the administrator set can retract the stale digests before indexing the new ones.
+    private readonly Dictionary<string, SortedSet<string>> byDigest = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string[]> administeredDigests = new(StringComparer.Ordinal);
     private readonly TimeProvider timeProvider;
     private long etagSequence;
 
@@ -79,6 +86,7 @@ public sealed class InMemoryEnvironmentAdministratorStore : IEnvironmentAdminist
             }
 
             this.records[environmentName] = json;
+            this.ReindexAdministered(environmentName, administrators);
             return new ValueTask<ParsedJsonDocument<EnvironmentAdministrators>>(PersistedJson.ToPooledDocument<EnvironmentAdministrators>(json));
         }
     }
@@ -90,9 +98,87 @@ public sealed class InMemoryEnvironmentAdministratorStore : IEnvironmentAdminist
         lock (this.gate)
         {
             this.records.Remove(environmentName);
+            this.RetractAdministered(environmentName);
         }
 
         return default;
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        int pageSize = limit > 0 ? limit : EnvironmentAdministeredPage.DefaultPageSize;
+
+        // Decode the keyset cursor (the name to page strictly after) from the request's token; the in-memory storage leaf is
+        // a string key, so the cursor reifies once here (never per row) — like InMemoryWorkflowAdministratorStore.
+        string? cursor = EnvironmentAdministeredContinuationToken.DecodeCursorToString(pageToken);
+
+        lock (this.gate)
+        {
+            // The SortedSet enumerates names in ordinal order — the keyset order every backend pages by. Take the
+            // pageSize+1 smallest past the cursor into a flat list; ToPage trims the lookahead and seeds the next token.
+            var rows = new List<string>(pageSize + 1);
+            if (this.byDigest.TryGetValue(adminDigest, out SortedSet<string>? names))
+            {
+                foreach (string name in names)
+                {
+                    if (cursor is not null && string.CompareOrdinal(name, cursor) <= 0)
+                    {
+                        continue; // at or before the cursor — already returned on an earlier page
+                    }
+
+                    rows.Add(name);
+                    if (rows.Count > pageSize)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return new ValueTask<EnvironmentAdministeredPage>(EnvironmentAdministeredPaging.ToPage(rows, pageSize));
+        }
+    }
+
+    // Refreshes the reverse administration index for an environment whose administrator set was just written (§7.8): retract
+    // its previous administrator digests, then index its current ones (the shared DistinctDigests skips the empty identity).
+    // Called under the gate, right after the record is stored. Two identities are set-equal iff their digests are equal, so
+    // the same digest the forward IsAdministeredBy compares is the index key the inbox queries.
+    private void ReindexAdministered(string environmentName, IReadOnlyList<EnvironmentAdministrators.AdministratorIdentity> administrators)
+    {
+        this.RetractAdministered(environmentName);
+        IReadOnlyList<string> current = EnvironmentAdministeredPaging.DistinctDigests(administrators);
+        foreach (string digest in current)
+        {
+            if (!this.byDigest.TryGetValue(digest, out SortedSet<string>? holders))
+            {
+                holders = new SortedSet<string>(StringComparer.Ordinal);
+                this.byDigest[digest] = holders;
+            }
+
+            holders.Add(environmentName);
+        }
+
+        this.administeredDigests[environmentName] = [.. current];
+    }
+
+    // Drops an environment's current index entries (on delete, or before reindexing a changed set). Called under the gate.
+    private void RetractAdministered(string environmentName)
+    {
+        if (this.administeredDigests.Remove(environmentName, out string[]? previous))
+        {
+            foreach (string digest in previous)
+            {
+                if (this.byDigest.TryGetValue(digest, out SortedSet<string>? holders))
+                {
+                    holders.Remove(environmentName);
+                    if (holders.Count == 0)
+                    {
+                        this.byDigest.Remove(digest);
+                    }
+                }
+            }
+        }
     }
 
     private WorkflowEtag NextEtag() => new((++this.etagSequence).ToString(CultureInfo.InvariantCulture));
