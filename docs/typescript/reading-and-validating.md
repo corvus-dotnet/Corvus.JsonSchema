@@ -7,12 +7,27 @@ This guide covers the read side of a generated module: the `readonly` type surfa
 The generated `interface` describes the parsed value directly. A value returned by `JSON.parse`, once it passes evaluation, is an instance of the type: you read it with ordinary property access, indexing, and iteration. There is no wrapper object and no accessor layer — the parsed value is the value.
 
 ```typescript
-const person = JSON.parse(text) as Person;
+const person = Person.parse(text);
 person.familyName;                 // string
 person.otherNames !== undefined;   // optional, absent?
 ```
 
 Optionality is explicit: a required property is `name: T`, an optional one is `name?: T`. An absent optional reads as `undefined` (the key is missing); a property that may be the JSON literal `null` is typed `| null`. The two are distinct in JSON Schema and in the generated type.
+
+## From bytes or a string
+
+`build` / `patch` / `produce` return UTF-8 JSON bytes (a `Uint8Array`), so reading a result back used to mean `JSON.parse(new TextDecoder().decode(bytes))`. The companion gives you two shorter forms:
+
+- **`Type.parse(value)`** — pass a `Uint8Array` (it decodes) or a `string` (it `JSON.parse`s) and get the value typed as `Type`. It does **not** validate — it is the convenience form of `JSON.parse(decode(bytes)) as Type`, so use it for trusted input (or call `evaluate` first).
+- **`Type.evaluate(value)`** — accepts a parsed value *or* the JSON bytes directly (it decodes them), so `Person.evaluate(bytes)` replaces `Person.evaluate(JSON.parse(decode(bytes)))`.
+
+```typescript
+const bytes = Person.build({ familyName: "Brontë", givenName: "Anne" });
+Person.evaluate(bytes);        // validate the bytes directly
+const person = Person.parse(bytes);   // -> Person (typed, unvalidated)
+```
+
+For the untyped case, every module also re-exports `decodeAndParse(bytes)` (decode + `JSON.parse`, returning `unknown`).
 
 ## Evaluating: a boolean by default
 
@@ -61,12 +76,12 @@ const area = Shape.match(shape, {
 
 ## Trusting evaluated data
 
-After `Order.evaluate(value)` returns `true`, the value matched the schema, so `value as T` is a safe assertion. A common pattern at a trust boundary — an HTTP body, a queue message — is to evaluate, then cast:
+After `Order.evaluate(value)` returns `true`, the value matched the schema, so treating it as `Order` is safe. A common pattern at a trust boundary — an HTTP body, a queue message — is to parse, then gate the trust on `evaluate`:
 
 ```typescript
-const incoming: unknown = JSON.parse(body);
-if (!Order.evaluate(incoming)) return badRequest();
-const order = incoming as Order;   // safe to treat as Order from here on
+const order = Order.parse(body);                  // string (or bytes) -> typed, but NOT yet validated
+if (!Order.evaluate(order)) return badRequest();  // evaluate is the trust gate
+// from here, order is known to match the schema
 ```
 
 ## See also

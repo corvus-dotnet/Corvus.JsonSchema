@@ -1,5 +1,6 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+export { decodeAndParse };
 
 /**
  * Grid
@@ -77,20 +78,21 @@ function evaluateItems2(value: unknown, ev: Ev, il: string = "", kl: string = ""
 
 
 export const Grid = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateGrid(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateGrid(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Grid => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Grid,
   build: buildGrid,
   buildCanonical: buildCanonicalGrid,
   patch: patchGrid,
   produce: produceGrid,
 };
 export const Cells = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateCells(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateCells(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Items = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateItems(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateItems(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Items2 = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateItems2(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateItems2(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 
 export default Grid;

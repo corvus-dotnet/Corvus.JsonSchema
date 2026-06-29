@@ -4,7 +4,7 @@ import { Circle, Rectangle, Shape } from "./generated.js";
 const dec = new TextDecoder();
 
 // `oneOf` -> a union `Shape = Circle | Rectangle`, with per-branch type guards and an exhaustive `Shape.match`.
-const circle = JSON.parse(dec.decode(Circle.build({ kind: "circle", radius: 2 }))) as Shape;
+const circle = Shape.parse(Circle.build({ kind: "circle", radius: 2 }));
 console.log("valid circle: ", Shape.evaluate(circle)); // true
 
 // Shape.match is exhaustive — TypeScript requires a branch for every member of the union.
@@ -21,5 +21,5 @@ if (Circle.is(circle)) {
 }
 
 // A rectangle takes the other branch.
-const rect = JSON.parse(dec.decode(Rectangle.build({ kind: "rectangle", width: 3, height: 4 }))) as Shape;
+const rect = Shape.parse(Rectangle.build({ kind: "rectangle", width: 3, height: 4 }));
 console.log("rect area:    ", area(rect)); // 12

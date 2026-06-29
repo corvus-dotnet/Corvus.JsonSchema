@@ -13,13 +13,13 @@ const bytes = Person.build({
 });
 console.log("1. built:        ", dec.decode(bytes));
 
-// 2. Validate untrusted input — a boolean, no exceptions, no allocation of an error graph.
-const incoming: unknown = JSON.parse(dec.decode(bytes));
-console.log("2. valid:        ", Person.evaluate(incoming)); // true
+// 2. Validate untrusted input — a boolean, no exceptions. evaluate accepts the JSON bytes directly
+//    (it decodes them) or an already-parsed value.
+console.log("2. valid:        ", Person.evaluate(bytes)); // true
 console.log("   missing reqd: ", Person.evaluate({ givenName: "Anne" })); // false (familyName required)
 
-// 3. Read it as a typed, readonly Person (the parsed value IS the value — nothing to wrap).
-const person = incoming as Person;
+// 3. Parse to a typed, readonly Person — no JSON.parse / decode / cast boilerplate.
+const person = Person.parse(bytes);
 console.log("3. familyName:   ", person.familyName);
 console.log("   birthDate:    ", person.birthDate);
 console.log("   otherNames?:  ", person.otherNames !== undefined); // false — optional, absent

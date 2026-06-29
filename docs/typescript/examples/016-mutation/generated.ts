@@ -1,5 +1,6 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+export { decodeAndParse };
 
 /**
  * Document
@@ -156,36 +157,38 @@ function evaluateVersion(value: unknown, ev: Ev, il: string = "", kl: string = "
 
 
 export const Document = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateDocument(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateDocument(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Document => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Document,
   build: buildDocument,
   buildCanonical: buildCanonicalDocument,
   patch: patchDocument,
   produce: produceDocument,
 };
 export const Owner = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateOwner(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateOwner(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Owner => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Owner,
   build: buildOwner,
   buildCanonical: buildCanonicalOwner,
   patch: patchOwner,
   produce: produceOwner,
 };
 export const Email = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateEmail(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateEmail(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Name = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateName(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateName(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Tags = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateTags(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateTags(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Items = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateItems(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateItems(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Title = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateTitle(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateTitle(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Version = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateVersion(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateVersion(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 
 export default Document;

@@ -128,8 +128,9 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         this.moduleTopLevelNames.Add(entry);
         return
             $"\nimport {{ evaluate{rootName} }} from \"./{rootName}.js\";\n" +
-            $"import {{ fresh, type Results }} from \"{this.runtimeModuleSpecifier}\";\n" +
-            $"export const {entry} = (v: unknown, results?: Results): boolean => evaluate{rootName}(v, fresh(), \"\", \"\", results ?? null);\n" +
+            $"import {{ fresh, decodeAndParse, type Results }} from \"{this.runtimeModuleSpecifier}\";\n" +
+            $"export {{ decodeAndParse }};\n" +
+            $"export const {entry} = (v: unknown, results?: Results): boolean => evaluate{rootName}(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), \"\", \"\", results ?? null);\n" +
             $"export default {entry};\n";
     }
 
@@ -332,9 +333,24 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         string camel = Camel(name);
         var props = new List<string>
         {
-            // evaluate seeds a fresh tracker (like .NET EvaluateSchema); always present.
-            $"  evaluate: (v: unknown, results?: Results): boolean => evaluate{name}(v, fresh(), \"\", \"\", results ?? null)",
+            // evaluate seeds a fresh tracker (like .NET EvaluateSchema); always present. Accepts the parsed
+            // value, or UTF-8 JSON bytes (e.g. build/patch/produce output), which it decodes-and-parses first.
+            $"  evaluate: (v: unknown, results?: Results): boolean => evaluate{name}(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), \"\", \"\", results ?? null)",
         };
+
+        // parse: decode (if bytes) or JSON.parse (if a string), returning the value typed as this type WITHOUT
+        // validating — the convenience form of `JSON.parse(decode(bytes)) as {Type}`. Only emitted when {name}
+        // names a TYPE (interface or alias); a plain scalar property has a value-only companion (evaluate) and
+        // no type to return.
+        bool nameIsType =
+            content.Contains($"interface {name} ", StringComparison.Ordinal)
+            || content.Contains($"interface {name}<", StringComparison.Ordinal)
+            || content.Contains($"type {name} ", StringComparison.Ordinal)
+            || content.Contains($"type {name}<", StringComparison.Ordinal);
+        if (nameIsType)
+        {
+            props.Add($"  parse: (v: Uint8Array | string): {name} => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as {name}");
+        }
 
         void Add(string marker, string member, string fn)
         {
@@ -449,8 +465,9 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 
     // The shared-runtime import line every generated module emits (§5.5); identical across emission modes.
     private string RuntimeImportLine()
-        => "import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from \""
-         + this.runtimeModuleSpecifier + "\";\n";
+        => "import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from \""
+         + this.runtimeModuleSpecifier + "\";\n"
+         + "export { decodeAndParse };\n";
 
     // True when the relative runtime specifier means re-emit corvus-runtime.ts alongside the module(s); a
     // bare package specifier (e.g. "@endjin/corvus-json-runtime") means the consumer installs it instead.

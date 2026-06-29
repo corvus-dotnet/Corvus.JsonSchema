@@ -53,7 +53,7 @@ const bytes = Order.build({ id: "ord-1", shipTo: home, billTo: home });
 ### Read through the reference
 
 ```typescript
-const order = JSON.parse(new TextDecoder().decode(bytes)) as Order;
+const order = Order.parse(bytes);
 order.shipTo.city; // "Cambridge" — shipTo is an Address
 ```
 

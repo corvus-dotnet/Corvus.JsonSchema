@@ -7,5 +7,5 @@ const bytes = Account.build({
   website: Website.from("https://example.com"),
   created: Created.from("2026-06-26T10:00:00Z"),
 });
-console.log("valid:    ", Account.evaluate(JSON.parse(dec.decode(bytes)))); // true
+console.log("valid:    ", Account.evaluate(bytes)); // true
 try { Id.from("nope"); } catch (e) { console.log("Id.from threw:", (e as Error).message); }

@@ -1,5 +1,6 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+export { decodeAndParse };
 
 /**
  * Widget
@@ -173,36 +174,40 @@ function evaluateId(value: unknown, ev: Ev, il: string = "", kl: string = "", r:
 
 
 export const Widget = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateWidget(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateWidget(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Widget => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Widget,
   build: buildWidget,
   buildCanonical: buildCanonicalWidget,
   patch: patchWidget,
   produce: produceWidget,
 };
 export const Named = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateNamed(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateNamed(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Named => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Named,
   build: buildNamed,
   buildCanonical: buildCanonicalNamed,
   patch: patchNamed,
   produce: produceNamed,
 };
 export const Name = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateName(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateName(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Timestamped = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateTimestamped(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateTimestamped(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Timestamped => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Timestamped,
   build: buildTimestamped,
   buildCanonical: buildCanonicalTimestamped,
   patch: patchTimestamped,
   produce: produceTimestamped,
 };
 export const CreatedAt = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateCreatedAt(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateCreatedAt(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): CreatedAt => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as CreatedAt,
   from: fromCreatedAt,
   toTemporal: createdAtToTemporal,
 };
 export const Id = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateId(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateId(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 
 export default Widget;

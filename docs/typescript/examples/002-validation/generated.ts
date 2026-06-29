@@ -1,5 +1,6 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+export { decodeAndParse };
 
 /**
  * Registration
@@ -99,24 +100,26 @@ function evaluateUsername(value: unknown, ev: Ev, il: string = "", kl: string = 
 
 
 export const Registration = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateRegistration(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateRegistration(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Registration => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Registration,
   build: buildRegistration,
   buildCanonical: buildCanonicalRegistration,
   patch: patchRegistration,
   produce: produceRegistration,
 };
 export const Age = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateAge(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateAge(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Email = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateEmail(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateEmail(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Email => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Email,
   from: fromEmail,
 };
 export const Score = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateScore(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateScore(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Username = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateUsername(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateUsername(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 
 export default Registration;

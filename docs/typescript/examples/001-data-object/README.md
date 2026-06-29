@@ -8,7 +8,7 @@ It is very common to define a simple data object composed of primitive values fo
 
 The generator emits, for the root schema, a `readonly` **interface** whose name is derived from the schema (here `Person`). Required properties are `name: T`; optional properties are `name?: T`. JSON Schema scalar types map to TypeScript primitives (`string`, `number`, `boolean`), and a `format` keyword becomes a **branded** type with a validating factory (here `birthDate` is `Brand<string, "date">` with `BirthDate.from(...)`).
 
-There is **nothing to wrap**: a JSON value parsed with `JSON.parse` *{Type}.is a `Person` once `Person.evaluate` accepts it — you read it with ordinary property access. The generator adds only what the language can't express for free:
+There is **nothing to wrap**: a JSON value parsed with `JSON.parse` *is* a `Person` once `Person.evaluate` accepts it — you read it with ordinary property access. The generator adds only what the language can't express for free:
 
 - `Person.evaluate(value)` / `Person.evaluate(value, ev)` — an AOT-compiled boolean evaluator (no exceptions, no error-object graph).
 - `Person.build(props)` — construct canonical UTF-8 JSON **bytes** from plain values.
@@ -70,17 +70,16 @@ const bytes = Person.build({
 `Person.evaluate` is a boolean — no exceptions, no allocated error graph:
 
 ```typescript
-const incoming: unknown = JSON.parse(new TextDecoder().decode(bytes));
-Person.evaluate(incoming);                  // true
+Person.evaluate(bytes);                     // true — evaluate accepts bytes (decodes them) or a value
 Person.evaluate({ givenName: "Anne" });     // false — familyName is required
 ```
 
 ### Read
 
-Once `Person.evaluate` accepts it, the value *{Type}.is a `Person`; read it with ordinary property access:
+Once `Person.evaluate` accepts it, the value *is* a `Person`; read it with ordinary property access. `Person.parse` decodes the bytes (or JSON.parses a string) and returns it typed:
 
 ```typescript
-const person = incoming as Person;
+const person = Person.parse(bytes);
 person.familyName;                  // "Brontë"
 person.birthDate;                   // "1820-01-17"
 person.otherNames !== undefined;    // false — optional and absent

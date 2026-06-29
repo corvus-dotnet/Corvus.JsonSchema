@@ -1,5 +1,6 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+export { decodeAndParse };
 
 /**
  * Order
@@ -135,30 +136,32 @@ function evaluateId(value: unknown, ev: Ev, il: string = "", kl: string = "", r:
 
 
 export const Order = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateOrder(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateOrder(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Order => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Order,
   build: buildOrder,
   buildCanonical: buildCanonicalOrder,
   patch: patchOrder,
   produce: produceOrder,
 };
 export const Address = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateAddress(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateAddress(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Address => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Address,
   build: buildAddress,
   buildCanonical: buildCanonicalAddress,
   patch: patchAddress,
   produce: produceAddress,
 };
 export const City = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateCity(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateCity(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Line1 = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateLine1(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateLine1(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Postcode = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluatePostcode(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluatePostcode(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Id = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateId(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateId(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 
 export default Order;

@@ -23,12 +23,11 @@ const bytes = Person.build({
 console.log(decoder.decode(bytes));
 // {"familyName":"Brontë","givenName":"Anne","birthDate":"1820-01-17"}
 
-// Validate untrusted input. evaluate returns a boolean and never throws.
-const incoming: unknown = JSON.parse(decoder.decode(bytes));
-
-if (Person.evaluate(incoming)) {
-  // The value matched the schema, so this assertion cannot be wrong.
-  const person = incoming as Person;
+// Validate untrusted input. evaluate accepts the JSON bytes directly (it decodes them) or an
+// already-parsed value, returns a boolean, and never throws.
+if (Person.evaluate(bytes)) {
+  // The value matched the schema. parse() decodes and returns it typed — no JSON.parse or cast.
+  const person = Person.parse(bytes);
   console.log(person.familyName); // "Brontë"
 }
 

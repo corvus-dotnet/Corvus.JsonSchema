@@ -572,12 +572,12 @@ typescript-recipes:
       - {index: 0, language: json, lines: [23, 36]}
       - {index: 1, language: typescript, lines: [40, 48]}
       - {index: 2, language: typescript, lines: [58, 66]}
-      - {index: 3, language: typescript, lines: [72, 76]}
-      - {index: 4, language: typescript, lines: [82, 87]}
-      - {index: 5, language: typescript, lines: [91, 94]}
-      - {index: 6, language: typescript, lines: [98, 102]}
-      - {index: 7, language: typescript, lines: [106, 108]}
-      - {index: 8, language: bash, lines: [114, 117]}
+      - {index: 3, language: typescript, lines: [72, 75]}
+      - {index: 4, language: typescript, lines: [81, 86]}
+      - {index: 5, language: typescript, lines: [90, 93]}
+      - {index: 6, language: typescript, lines: [97, 101]}
+      - {index: 7, language: typescript, lines: [105, 107]}
+      - {index: 8, language: bash, lines: [113, 116]}
   - path: "docs/typescript/examples/002-validation/README.md"
     blocks:
       - {index: 0, language: json, lines: [15, 27]}
@@ -1592,7 +1592,7 @@ typescript-docs:
       - {index: 1, language: bash, lines: [19, 21]}
       - {index: 2, language: json, lines: [29, 42]}
       - {index: 3, language: bash, lines: [50, 52]}
-      - {index: 4, language: typescript, lines: [60, 85]}
+      - {index: 4, language: typescript, lines: [60, 84]}
   - path: "docs/typescript/mutation.md"
     blocks:
       - {index: 0, language: typescript, lines: [9, 11]}
@@ -1602,9 +1602,10 @@ typescript-docs:
   - path: "docs/typescript/reading-and-validating.md"
     blocks:
       - {index: 0, language: typescript, lines: [9, 13]}
-      - {index: 1, language: typescript, lines: [21, 25]}
-      - {index: 2, language: typescript, lines: [49, 58]}
-      - {index: 3, language: typescript, lines: [66, 70]}
+      - {index: 1, language: typescript, lines: [24, 28]}
+      - {index: 2, language: typescript, lines: [36, 40]}
+      - {index: 3, language: typescript, lines: [64, 73]}
+      - {index: 4, language: typescript, lines: [81, 85]}
   - path: "docs/typescript/README.md"
     blocks:
       - {index: 0, language: bash, lines: [13, 15]}

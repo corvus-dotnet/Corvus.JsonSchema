@@ -1,5 +1,6 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+export { decodeAndParse };
 
 /**
  * Cart
@@ -126,27 +127,29 @@ function evaluateSku(value: unknown, ev: Ev, il: string = "", kl: string = "", r
 
 
 export const Cart = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateCart(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateCart(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Cart => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Cart,
   build: buildCart,
   buildCanonical: buildCanonicalCart,
   patch: patchCart,
   produce: produceCart,
 };
 export const Items = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateItems(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateItems(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const LineItem = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateLineItem(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateLineItem(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): LineItem => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as LineItem,
   build: buildLineItem,
   buildCanonical: buildCanonicalLineItem,
   patch: patchLineItem,
   produce: produceLineItem,
 };
 export const Qty = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateQty(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateQty(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Sku = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateSku(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateSku(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 
 export default Cart;

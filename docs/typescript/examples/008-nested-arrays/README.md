@@ -22,7 +22,7 @@ The generated `interface Grid` has `cells: readonly (readonly number[])[]`.
 [Example code](./demo.ts)
 
 ```typescript
-const grid = JSON.parse(new TextDecoder().decode(bytes)) as Grid;
+const grid = Grid.parse(bytes);
 grid.cells[1][2]; // 6 — typed at every level
 ```
 

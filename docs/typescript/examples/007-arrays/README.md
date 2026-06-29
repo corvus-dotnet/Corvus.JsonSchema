@@ -24,7 +24,7 @@ The generated `interface Cart` has `items: readonly LineItem[]`.
 [Example code](./demo.ts)
 
 ```typescript
-const cart = JSON.parse(new TextDecoder().decode(bytes)) as Cart;
+const cart = Cart.parse(bytes);
 cart.items[0].sku;                              // indexed, typed as LineItem
 cart.items.reduce((n, i) => n + i.qty, 0);      // ordinary array methods
 Cart.evaluate({ items: [] });                    // false — minItems 1

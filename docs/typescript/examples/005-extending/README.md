@@ -27,7 +27,7 @@ The generated `interface Employee` has `name`, `email?`, `employeeId`, `departme
 
 ```typescript
 const bytes = Employee.build({ name: "Ada", email: Email.from("ada@example.com"), employeeId: "E-1", department: "R&D" });
-const e = JSON.parse(new TextDecoder().decode(bytes)) as Employee;
+const e = Employee.parse(bytes);
 e.name;        // from Person (the base)
 e.employeeId;  // from Employee (the extension)
 Employee.evaluate({ employeeId: "E-2" }); // false — name is required by the base

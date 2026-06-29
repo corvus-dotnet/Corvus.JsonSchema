@@ -8,10 +8,10 @@ const dec = new TextDecoder();
 const home: Address = { line1: "1 Mill Rd", city: "Cambridge", postcode: "CB1 2AB" };
 const bytes = Order.build({ id: "ord-1", shipTo: home, billTo: home });
 console.log("order:     ", dec.decode(bytes));
-console.log("valid:     ", Order.evaluate(JSON.parse(dec.decode(bytes)))); // true
+console.log("valid:     ", Order.evaluate(bytes)); // true
 
 // Read through the reference — shipTo IS an Address.
-const order = JSON.parse(dec.decode(bytes)) as Order;
+const order = Order.parse(bytes);
 console.log("ship city: ", order.shipTo.city); // Cambridge
 
 // Patch a referenced sub-object (the whole member value is replaced; the rest is copied through).

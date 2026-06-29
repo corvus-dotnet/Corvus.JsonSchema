@@ -8,7 +8,7 @@ const describe = (e: Event) =>
     keyPress: (k) => `key ${k.key}`,
     scroll: (s) => `scroll ${s.delta}`,
   });
-const click = JSON.parse(dec.decode(Click.build({ type: "click", x: 10, y: 20 }))) as Event;
+const click = Event.parse(Click.build({ type: "click", x: 10, y: 20 }));
 console.log("valid: ", Event.evaluate(click)); // true
 console.log(describe(click));
-console.log(describe(JSON.parse(dec.decode(KeyPress.build({ type: "keypress", key: "Enter" }))) as Event));
+console.log(describe(Event.parse(KeyPress.build({ type: "keypress", key: "Enter" }))));

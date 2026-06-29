@@ -57,4 +57,4 @@ From `docs/typescript/examples/` (`npm install` once): `npm run build` then `nod
 
 ### Why bytes rather than an object?
 
-The wire/persistence shape *{Type}.is bytes. Working at the byte level lets an update splice only the changed spans and copy the rest verbatim, which is dramatically cheaper than parse → mutate object → re-serialise for large documents.
+The wire/persistence shape *is* bytes. Working at the byte level lets an update splice only the changed spans and copy the rest verbatim, which is dramatically cheaper than parse → mutate object → re-serialise for large documents.

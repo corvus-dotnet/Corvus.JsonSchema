@@ -1,5 +1,6 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+export { decodeAndParse };
 
 /**
  * Account
@@ -92,23 +93,27 @@ function evaluateWebsite(value: unknown, ev: Ev, il: string = "", kl: string = "
 
 
 export const Account = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateAccount(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateAccount(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Account => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Account,
   build: buildAccount,
   buildCanonical: buildCanonicalAccount,
   patch: patchAccount,
   produce: produceAccount,
 };
 export const Created = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateCreated(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateCreated(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Created => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Created,
   from: fromCreated,
   toTemporal: createdToTemporal,
 };
 export const Id = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateId(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateId(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Id => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Id,
   from: fromId,
 };
 export const Website = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateWebsite(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateWebsite(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Website => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Website,
   from: fromWebsite,
 };
 

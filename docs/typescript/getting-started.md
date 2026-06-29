@@ -72,12 +72,11 @@ const bytes = Person.build({
 console.log(decoder.decode(bytes));
 // {"familyName":"Brontë","givenName":"Anne","birthDate":"1820-01-17"}
 
-// Validate untrusted input. evaluate returns a boolean and never throws.
-const incoming: unknown = JSON.parse(decoder.decode(bytes));
-
-if (Person.evaluate(incoming)) {
-  // The value matched the schema, so this assertion cannot be wrong.
-  const person = incoming as Person;
+// Validate untrusted input. evaluate accepts the JSON bytes directly (it decodes them) or an
+// already-parsed value, returns a boolean, and never throws.
+if (Person.evaluate(bytes)) {
+  // The value matched the schema. parse() decodes and returns it typed — no JSON.parse or cast.
+  const person = Person.parse(bytes);
   console.log(person.familyName); // "Brontë"
 }
 
@@ -92,7 +91,8 @@ For each type in the schema, the generated module emits:
 
 - an **`interface`** describing the value's shape — here, `Person` with `readonly` properties;
 - a **companion object** of the same name carrying that type's operations:
-  - `Person.evaluate(value, results?)` — validate against the schema; returns a `boolean`, or collects detailed failures into an optional results object;
+  - `Person.evaluate(value, results?)` — validate against the schema; returns a `boolean`, or collects detailed failures into an optional results object. Accepts a parsed value, or the JSON bytes directly (it decodes them);
+  - `Person.parse(bytes | string)` — decode bytes (or `JSON.parse` a string) and return the value typed as `Person`, without validating;
   - `Person.build(props)` / `Person.buildCanonical(props)` — construct UTF-8 JSON bytes;
   - `Person.patch(bytes, changes)` / `Person.produce(bytes, recipe)` — edit existing bytes, splicing only what changed;
   - for a property with a `format`, a factory such as `BirthDate.from(value)` (plus `BirthDate.toTemporal()` for dates and times);

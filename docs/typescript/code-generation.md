@@ -91,13 +91,17 @@ with the type's `interface` or alias, so the name is both the type and the place
 
 | Member | Present when | Purpose |
 |---|---|---|
-| `Type.evaluate(value, results?)` | always | Validate a value against the schema; returns a `boolean`. |
+| `Type.evaluate(value, results?)` | always | Validate against the schema; returns a `boolean`. Accepts a parsed value, or the JSON bytes (a `Uint8Array`), which it decodes first. |
+| `Type.parse(bytes \| string)` | type surface | Decode (a `Uint8Array`) or `JSON.parse` (a `string`) and return the value typed as `Type`, **without** validating — the convenience form of `JSON.parse(decode(bytes)) as Type`. |
 | `Type.build(props)` / `Type.buildCanonical(props)` | type surface | Construct UTF-8 JSON bytes (canonical per RFC 8785). |
 | `Type.patch(bytes, changes)` / `Type.produce(bytes, recipe)` | type surface | Edit existing bytes, splicing only what changed. |
 | `Type.from(value)` | `format` brands | Validate a plain value and brand it. |
 | `Type.match(value, cases)` | `oneOf` unions | Exhaustive dispatch over the union's branches. |
 
-The root type's companion is the module's `default` export. See [Reading and validating](./reading-and-validating.md),
+The root type's companion is the module's `default` export. Every module also re-exports a `decodeAndParse(bytes)`
+helper (decode UTF-8 + `JSON.parse`, returning `unknown`) for the untyped case. So instead of
+`Type.evaluate(JSON.parse(new TextDecoder().decode(bytes)))` you write `Type.evaluate(bytes)`, and instead of
+`JSON.parse(decode(bytes)) as Type` you write `Type.parse(bytes)`. See [Reading and validating](./reading-and-validating.md),
 [The type surface](./the-type-surface.md), and [Mutation](./mutation.md) for each of these in depth.
 
 ## JSON Schema draft support

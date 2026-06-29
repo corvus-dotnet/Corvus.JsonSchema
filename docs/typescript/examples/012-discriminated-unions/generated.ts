@@ -1,5 +1,6 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+export { decodeAndParse };
 
 export type Event = Click | KeyPress | Scroll;
 function isClick(value: unknown): value is Click { return evaluateClick(value, fresh()); }
@@ -217,11 +218,13 @@ function evaluateType3(value: unknown, ev: Ev, il: string = "", kl: string = "",
 
 
 export const Event = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateEvent(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateEvent(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Event => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Event,
   match: matchEvent,
 };
 export const Click = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateClick(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateClick(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Click => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Click,
   build: buildClick,
   buildCanonical: buildCanonicalClick,
   patch: patchClick,
@@ -229,16 +232,17 @@ export const Click = {
   is: isClick,
 };
 export const Type = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateType(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateType(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const X = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateX(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateX(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Y = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateY(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateY(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const KeyPress = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateKeyPress(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateKeyPress(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): KeyPress => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as KeyPress,
   build: buildKeyPress,
   buildCanonical: buildCanonicalKeyPress,
   patch: patchKeyPress,
@@ -246,13 +250,14 @@ export const KeyPress = {
   is: isKeyPress,
 };
 export const Key = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateKey(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateKey(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Type2 = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateType2(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateType2(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Scroll = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateScroll(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateScroll(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Scroll => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Scroll,
   build: buildScroll,
   buildCanonical: buildCanonicalScroll,
   patch: patchScroll,
@@ -260,10 +265,10 @@ export const Scroll = {
   is: isScroll,
 };
 export const Delta = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateDelta(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateDelta(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Type3 = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateType3(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateType3(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 
 export default Event;

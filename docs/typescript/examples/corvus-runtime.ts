@@ -471,6 +471,8 @@ export function __lowerArray(bytes: Uint8Array, ops: __DraftOp[]): Uint8Array {
 // push touches ~nothing (see __makeArrayDraft); only a reordering array op materialises. Writes record
 // a change-set the byte lowering (__lower) consumes -- a pure overwrite (or push) decodes nothing.
 export function __decodeValue(bytes: Uint8Array, vs: number, ve: number): unknown { return JSON.parse(new TextDecoder().decode(bytes.subarray(vs, ve))); }
+// Convenience: decode UTF-8 JSON bytes (e.g. the output of build/patch/produce) and JSON.parse in one call.
+export function decodeAndParse(bytes: Uint8Array): unknown { return JSON.parse(new TextDecoder().decode(bytes)); }
 export function __spanKind(bytes: Uint8Array, vs: number): number { const c = bytes[vs]; return c === 0x7b ? 0 : c === 0x5b ? 1 : 2; }
 // Lazy drafts. An object navigates by byte span (no value decode); a scalar decodes on read; an
 // array is element-lazy too: items[i].field = v touches only element i's span, an in-bounds index

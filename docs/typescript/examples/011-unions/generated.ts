@@ -1,5 +1,6 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+export { decodeAndParse };
 
 export type Shape = Circle | Rectangle;
 function isCircle(value: unknown): value is Circle { return evaluateCircle(value, fresh()); }
@@ -154,11 +155,13 @@ function evaluateWidth(value: unknown, ev: Ev, il: string = "", kl: string = "",
 
 
 export const Shape = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateShape(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateShape(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Shape => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Shape,
   match: matchShape,
 };
 export const Circle = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateCircle(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateCircle(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Circle => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Circle,
   build: buildCircle,
   buildCanonical: buildCanonicalCircle,
   patch: patchCircle,
@@ -166,13 +169,14 @@ export const Circle = {
   is: isCircle,
 };
 export const Kind = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateKind(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateKind(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Radius = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateRadius(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateRadius(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Rectangle = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateRectangle(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateRectangle(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Rectangle => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Rectangle,
   build: buildRectangle,
   buildCanonical: buildCanonicalRectangle,
   patch: patchRectangle,
@@ -180,13 +184,13 @@ export const Rectangle = {
   is: isRectangle,
 };
 export const Height = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateHeight(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateHeight(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Kind2 = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateKind2(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateKind2(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Width = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateWidth(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateWidth(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 
 export default Shape;

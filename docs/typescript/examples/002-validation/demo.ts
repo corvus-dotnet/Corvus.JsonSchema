@@ -11,7 +11,7 @@ const bytes = Registration.build({
   email: Email.from("ada@example.com"),
   score: 4.5,
 });
-console.log("valid:          ", Registration.evaluate(JSON.parse(dec.decode(bytes)))); // true
+console.log("valid:          ", Registration.evaluate(bytes)); // true
 
 // Each constraint rejection is just `false` — no thrown error, no error-object graph.
 console.log("short username: ", Registration.evaluate({ username: "ab", age: 36, email: "a@b.com" })); // minLength 3

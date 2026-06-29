@@ -1,5 +1,6 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+export { decodeAndParse };
 
 /**
  * SmallBatch
@@ -106,24 +107,26 @@ function evaluateSize2(value: unknown, ev: Ev, il: string = "", kl: string = "",
 
 
 export const SmallBatch = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateSmallBatch(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateSmallBatch(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): SmallBatch => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as SmallBatch,
   build: buildSmallBatch,
   buildCanonical: buildCanonicalSmallBatch,
   patch: patchSmallBatch,
   produce: produceSmallBatch,
 };
 export const Batch = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateBatch(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateBatch(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Batch => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Batch,
   build: buildBatch,
   buildCanonical: buildCanonicalBatch,
   patch: patchBatch,
   produce: produceBatch,
 };
 export const Size = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateSize(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateSize(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Size2 = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateSize2(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateSize2(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 
 export default SmallBatch;

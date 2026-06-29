@@ -36,7 +36,7 @@ File: [`registration.json`](./registration.json)
 
 ```typescript
 const bytes = Registration.build({ username: "ada_lovelace", age: 36, email: Email.from("ada@example.com"), score: 4.5 });
-Registration.evaluate(JSON.parse(new TextDecoder().decode(bytes))); // true
+Registration.evaluate(bytes); // true
 ```
 
 Each constraint rejection is just `false`:

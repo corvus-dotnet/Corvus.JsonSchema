@@ -1,5 +1,6 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+export { decodeAndParse };
 
 /**
  * Person
@@ -101,28 +102,30 @@ function evaluateOtherNames(value: unknown, ev: Ev, il: string = "", kl: string 
 
 
 export const Person = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluatePerson(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluatePerson(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Person => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Person,
   build: buildPerson,
   buildCanonical: buildCanonicalPerson,
   patch: patchPerson,
   produce: producePerson,
 };
 export const BirthDate = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateBirthDate(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateBirthDate(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): BirthDate => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as BirthDate,
   from: fromBirthDate,
   toTemporal: birthDateToTemporal,
 };
 export const FamilyName = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateFamilyName(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateFamilyName(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const GivenName = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateGivenName(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateGivenName(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Height = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateHeight(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateHeight(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const OtherNames = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateOtherNames(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateOtherNames(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 
 export default Person;

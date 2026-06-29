@@ -1,5 +1,6 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+export { decodeAndParse };
 
 /**
  * Payment
@@ -103,20 +104,22 @@ function evaluateThen(value: unknown, ev: Ev, il: string = "", kl: string = "", 
 
 
 export const Payment = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluatePayment(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluatePayment(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Payment => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Payment,
   build: buildPayment,
   buildCanonical: buildCanonicalPayment,
   patch: patchPayment,
   produce: producePayment,
 };
 export const Method = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateMethod(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateMethod(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const CardNumber = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateCardNumber(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateCardNumber(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Method2 = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateMethod2(v, fresh(), "", "", results ?? null),
+  evaluate: (v: unknown, results?: Results): boolean => evaluateMethod2(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Method2 => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Method2,
 };
 
 export default Payment;
