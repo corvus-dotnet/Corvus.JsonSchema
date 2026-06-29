@@ -1580,6 +1580,12 @@ main-docs:
       - {index: 24, language: csharp, lines: [626, 636], category: compilable, verified: false}
 
 typescript-docs:
+  - path: "docs/typescript/code-generation.md"
+    blocks:
+      - {index: 0, language: bash, lines: [17, 19]}
+      - {index: 1, language: bash, lines: [25, 27]}
+      - {index: 2, language: bash, lines: [31, 33]}
+      - {index: 3, language: bash, lines: [57, 60]}
   - path: "docs/typescript/getting-started.md"
     blocks:
       - {index: 0, language: bash, lines: [11, 13]}
@@ -1602,6 +1608,12 @@ typescript-docs:
   - path: "docs/typescript/README.md"
     blocks:
       - {index: 0, language: bash, lines: [13, 15]}
+  - path: "docs/typescript/runtime.md"
+    blocks:
+      - {index: 0, language: bash, lines: [19, 21]}
+      - {index: 1, language: typescript, lines: [26, 28]}
+      - {index: 2, language: bash, lines: [38, 40]}
+      - {index: 3, language: json, lines: [73, 82]}
   - path: "docs/typescript/value-types.md"
     blocks:
       - {index: 0, language: typescript, lines: [9, 16]}

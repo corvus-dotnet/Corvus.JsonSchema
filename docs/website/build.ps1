@@ -899,7 +899,7 @@ $tsRecipeDirs = @(Get-ChildItem (Join-Path $tsSourceDir "examples") -Directory -
     Where-Object { $_.Name -match '^\d+-(.+)$' } | Sort-Object Name)
 foreach ($rd in $tsRecipeDirs) { if ($rd.Name -match '^\d+-(.+)$') { $tsRecipeSlugMap[$rd.Name] = $Matches[1] } }
 
-$tsGuideFiles = @('reading-and-validating', 'mutation', 'the-type-surface', 'value-types')
+$tsGuideFiles = @('code-generation', 'the-type-surface', 'reading-and-validating', 'value-types', 'mutation', 'runtime')
 $tsPageCount = 0
 
 # --- Guides (getting-started IS the /typescript/ landing, so it is not regenerated here) ---
@@ -919,7 +919,7 @@ foreach ($g in $tsGuideFiles) {
     }
     $body = $body -replace '\]\(\./examples/?\)', '](/typescript/examples/index.html)'
     $body = $body -replace '\]\(\.\./playground-typescript/?\)', '](/playground-typescript/index.html)'
-    $desc = if ($body -match '^(.+?\.)(\s|$)') { ($Matches[1] -replace '`', '' -replace '\*', '' -replace '\s+', ' ').Trim() } else { $title }
+    $desc = if ($body -match '(?s)^(.+?\.)(\s|$)') { ($Matches[1] -replace '`', '' -replace '\*', '' -replace '\s+', ' ').Trim() } else { $title }
     Write-TsDocPage "Generated_Guide_$g" $g $title $desc "/typescript/guides/index.html" "/typescript/guides/$g.html" $tsGuidesTaxDir $guideRank $body
     $tsPageCount++
     Write-Host "  guide -> /typescript/guides/$g.html" -ForegroundColor Gray
@@ -940,7 +940,7 @@ foreach ($dir in $tsRecipeDirs) {
     }
     $ghDir = "$tsGhExamplesBase/$($dir.Name)"
     $body = $body -replace '\]\(\./([^)]+)\)', "](${ghDir}/`$1)"
-    $desc = if ($body -match '^(.+?\.)(\s|$)') { ($Matches[1] -replace '`', '' -replace '\*', '' -replace '\s+', ' ').Trim() } else { $title }
+    $desc = if ($body -match '(?s)^(.+?\.)(\s|$)') { ($Matches[1] -replace '`', '' -replace '\*', '' -replace '\s+', ' ').Trim() } else { $title }
     $recipeRank = [int]($dir.Name -replace '^0*(\d+)-.*$', '$1')
     Write-TsDocPage "Generated_Recipe_$slug" $slug $title $desc "/typescript/examples/index.html" "/typescript/examples/$slug.html" $tsExamplesTaxDir $recipeRank $body
     $tsPageCount++
