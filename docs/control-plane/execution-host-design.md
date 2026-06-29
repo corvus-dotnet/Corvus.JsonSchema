@@ -1255,7 +1255,7 @@ it (no later migration).
 
 **3c — as built (settled).** (a) A new terminal request status **`Eligible`**, distinct from `Approved` (a live
 grant): the request records that it was satisfied by an *eligibility assignment*, not an active grant. (b)
-**Approve-as-eligible is a dedicated operation** — `POST /accessRequests/{id}/approve-as-eligible` (optional
+**Approve-as-eligible is a dedicated operation** — `POST /accessRequests/{id}/approveAsEligible` (optional
 `AccessRequestEligibilityNote` = note + eligibility window), symmetric with approve/deny/withdraw/revoke — writing
 the `eligibleOnly` binding (subject + the per-workflow reach rule + scopes capped to the run-access allowlist + an
 optional eligibility window); the resolver ignores it, so it confers nothing active and no in-process refresh is

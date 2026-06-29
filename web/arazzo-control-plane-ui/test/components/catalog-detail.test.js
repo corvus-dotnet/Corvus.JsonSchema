@@ -36,6 +36,30 @@ describe('<arazzo-catalog-detail>', () => {
     equal(el.shadowRoot.querySelector('header .badge').textContent, 'Obsolete', 'status badge reflects the version');
   });
 
+  it('shows which environments the version is available in', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read' });
+    mount(el);
+    await waitFor(() => el.shadowRoot.querySelector('[part="availability"]'));
+    // adopt-pet v1 is seeded as available in production.
+    await waitFor(() => [...el.shadowRoot.querySelectorAll('.avail-env')].some((c) => c.textContent === 'production'));
+    ok(true, 'availability lists production');
+    ok(!el.shadowRoot.querySelector('.request-promotion'), 'no promote button — it is ready only where it is already available');
+  });
+
+  it('offers Request promotion when the version is ready somewhere it is not yet available', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'onboard-customer', 'version-number': '1', scopes: 'catalog:read' });
+    mount(el);
+    // onboard-customer v1 is ready in staging (events credentialed there) and not yet available anywhere → promotable.
+    const btn = await waitFor(() => el.shadowRoot.querySelector('.request-promotion'));
+    btn.click();
+    const dlg = await waitFor(() => el.shadowRoot.querySelector('arazzo-availability-request-dialog'));
+    await waitFor(() => dlg.shadowRoot.querySelector('dialog')?.open);
+    // Locked to this version; staging is the ready environment offered.
+    const envSel = await waitFor(() => dlg.shadowRoot.querySelector('.env-in'));
+    await waitFor(() => [...envSel.options].some((o) => o.value === 'staging'));
+    ok(true, 'promotion dialog opened locked to the version with its ready environment');
+  });
+
   it('offers a version switcher and loads another version when picked', async () => {
     el = detailWithMock({ 'base-workflow-id': 'nightly-reconcile', 'version-number': '3', scopes: 'catalog:read' });
     mount(el);
