@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -199,6 +201,56 @@ public sealed class SourceCredentialTransportTests
 
         handler.LastRequestUri?.ToString().ShouldBe("https://default.petstore.example/x");
         f.Cache.Dispose();
+    }
+
+    [TestMethod]
+    public async Task CreateSourceHttpClientAsync_resolves_the_mtls_client_certificate_and_sets_the_base_address()
+    {
+        var clock = new TestClock(Start);
+        using X509Certificate2 cert = SelfSignedPfxBase64(out string pfxBase64);
+        var resolver = new FakeSecretResolver(new() { ["env://petstore-cert"] = pfxBase64 });
+        var store = new InMemorySourceCredentialStore(clock);
+        var factory = new SourceCredentialProviderFactory(resolver, timeProvider: clock);
+        await store.AddAsync(Mtls("petstore", "production", "petstore-cert"), "alice", default);
+
+        using HttpClient client = await SourceCredentialTransports.CreateSourceHttpClientAsync(
+            store, factory, "petstore", "production", new Uri("https://petstore.example/"), default);
+
+        client.BaseAddress!.ToString().ShouldBe("https://petstore.example/");
+        resolver.Issued.ShouldNotBeEmpty("the mTLS certificate is resolved for the handler at client construction");
+    }
+
+    [TestMethod]
+    public async Task CreateSourceHttpClientAsync_builds_a_plain_client_for_a_non_mtls_source()
+    {
+        var clock = new TestClock(Start);
+        var resolver = new FakeSecretResolver(new() { ["env://petstore-production"] = "key-v1" });
+        var store = new InMemorySourceCredentialStore(clock);
+        var factory = new SourceCredentialProviderFactory(resolver, timeProvider: clock);
+        await store.AddAsync(ApiKey("petstore", "production", "petstore-production"), "alice", default);
+
+        using HttpClient client = await SourceCredentialTransports.CreateSourceHttpClientAsync(
+            store, factory, "petstore", "production", new Uri("https://petstore.example/"), default);
+
+        client.BaseAddress!.ToString().ShouldBe("https://petstore.example/");
+
+        // A non-mTLS source resolves no certificate at client construction (its secret is applied per request instead).
+        resolver.Issued.ShouldBeEmpty();
+    }
+
+    private static SourceCredentialDefinition Mtls(string sourceName, string environment, string certEnvVar) => new(
+        sourceName,
+        environment,
+        SourceCredentialKind.Mtls,
+        [new SecretReferenceDefinition("certificate", $"env://{certEnvVar}")]);
+
+    private static X509Certificate2 SelfSignedPfxBase64(out string pfxBase64)
+    {
+        using RSA rsa = RSA.Create(2048);
+        var request = new CertificateRequest("CN=mtls-petstore", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        X509Certificate2 cert = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+        pfxBase64 = Convert.ToBase64String(cert.Export(X509ContentType.Pkcs12));
+        return cert;
     }
 
     private static string? Header(HttpRequestMessage request, string name)

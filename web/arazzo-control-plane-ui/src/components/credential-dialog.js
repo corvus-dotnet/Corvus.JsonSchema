@@ -28,13 +28,19 @@ import './grantee-picker.js';
 const SECRET_REF = /^(keyvault|awssm|vault|env|file):\/\/.+/;
 
 // The supported auth kinds and the secret slot(s) each one consumes (role = the `secretRefs[].name` the runner
-// resolves; label = plain-language name for the slot). mTLS is intentionally absent — it is not implemented (the
-// durability `SourceCredentialKind` would reject it) and needs two slots (certificate + key); see design §13.1.
+// resolves; label = plain-language name for the slot; optional = the slot may be left empty). mTLS (§13.1) is the one
+// kind that needs more than one slot — a client certificate (a base64 PKCS#12, or a PEM certificate paired with a PEM
+// private key) plus an optional passphrase — and is connection-level, so the dialog never offers it a usage grantee.
 const SLOTS = {
   apiKey: [{ role: 'value', label: 'API key' }],
   bearer: [{ role: 'value', label: 'Bearer token' }],
   basic: [{ role: 'password', label: 'Password' }],
   oauth2ClientCredentials: [{ role: 'clientSecret', label: 'Client secret' }],
+  mtls: [
+    { role: 'certificate', label: 'Client certificate (PKCS#12 or PEM)' },
+    { role: 'privateKey', label: 'Private key (PEM, if separate)', optional: true },
+    { role: 'passphrase', label: 'Passphrase', optional: true },
+  ],
 };
 const AUTH_KINDS = Object.keys(SLOTS);
 
@@ -276,9 +282,22 @@ class ArazzoCredentialDialog extends ArazzoElement {
     return this.$('#authKind').value.trim();
   }
 
-  /** Show the usage grantee picker only when "Restrict to…" is chosen; "Shared" writes no usage grant. */
+  /** Show the usage grantee picker only when "Restrict to…" is chosen; "Shared" writes no usage grant. mTLS is
+   * connection-level (the TLS handshake authenticates the deployment, not a run), so it can never be usage-scoped:
+   * force "Shared" and hide the "Restrict" option (the server rejects a usage-scoped mTLS binding, §13.1). */
   syncUsageMode() {
-    const restricted = this.$('input[name="usageMode"]:checked')?.value === 'restricted';
+    const isMtls = this.authKind === 'mtls';
+    if (isMtls) {
+      const shared = this.$('input[name="usageMode"][value="shared"]');
+      if (shared) shared.checked = true;
+    }
+
+    const restrictLabel = this.$('input[name="usageMode"][value="restricted"]')?.closest('.radio');
+    if (restrictLabel) restrictLabel.hidden = isMtls;
+    const mtlsNote = this.$('.usage-mtls-note');
+    if (mtlsNote) mtlsNote.hidden = !isMtls;
+
+    const restricted = !isMtls && this.$('input[name="usageMode"]:checked')?.value === 'restricted';
     const picker = this.$('.usage-grantee');
     if (!picker) return;
     picker.hidden = !restricted;
@@ -363,7 +382,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
 
     const used = new Set();
     for (const slot of slots) {
-      this.addRefRow({ role: slot.role, label: slot.label, ref: refsByRole.get(slot.role) || '', required: true });
+      this.addRefRow({ role: slot.role, label: slot.label, ref: refsByRole.get(slot.role) || '', required: !slot.optional });
       used.add(slot.role);
     }
     // Preserve any existing references this kind does not consume (legacy / wrong-role) so a save never drops them.
@@ -613,7 +632,8 @@ class ArazzoCredentialDialog extends ArazzoElement {
       // Usage scopes which runs may use the binding. "Shared" (the default) writes no usage grant → usable by any run
       // that references the source. "Restrict to…" carries the picked grantee's identity (AND-matched); kind/label are
       // for display. Management tags stay the {key,value} rows.
-      const restricted = this.$('input[name="usageMode"]:checked')?.value === 'restricted';
+      // mTLS is connection-level and cannot be usage-scoped (the server rejects it), so it never carries a grantee.
+      const restricted = this.authKind !== 'mtls' && this.$('input[name="usageMode"]:checked')?.value === 'restricted';
       const grantee = restricted ? this.$('.usage-grantee')?.grant : null;
       if (grantee) {
         body.usageGrantee = { identity: grantee.identity, kind: grantee.kind, label: grantee.label };
@@ -753,6 +773,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
                 </div>
                 <arazzo-grantee-picker class="usage-grantee" hidden></arazzo-grantee-picker>
                 <div class="usage-hint">Shared is usable by every workflow that references this source. Restrict only to lock the credential to specific runs (a workflow that isn’t named can’t use it).</div>
+                <div class="usage-hint usage-mtls-note" hidden>An mTLS certificate authenticates the connection at the TLS handshake, so it is shared by every run that reaches this source — it cannot be restricted to a grantee.</div>
               </div>
               <div><label>Management tags — who may administer the binding</label><div class="mgmt"></div><button class="add ghost addmgmt" type="button">+ Add tag</button></div>
             </fieldset>
@@ -772,6 +793,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
     this.$('#authKind').addEventListener('change', () => {
       this.renderRefs(this.snapshotRefs());
       this.renderConfig(this.snapshotConfig());
+      this.syncUsageMode(); // mTLS forces "Shared" and hides "Restrict"
     });
     this.$('.addcfg').addEventListener('click', () => this.addRow('.config-extra', 'cfg'));
     this.$('.addmgmt').addEventListener('click', () => this.addRow('.mgmt', 'mgmt'));

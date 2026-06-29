@@ -22,6 +22,13 @@ public enum SourceCredentialKind
 
     /// <summary>OAuth 2.0 client-credentials flow (a secret named <c>clientSecret</c>; token endpoint/scopes in config).</summary>
     OAuth2ClientCredentials,
+
+    /// <summary>Mutual TLS — the runner presents a client certificate at the TLS handshake (design §13.1). The one kind
+    /// that needs more than one secret slot: a <c>certificate</c> (a base64 PKCS#12/PFX, or a PEM certificate paired with
+    /// a <c>privateKey</c> PEM) and an optional <c>passphrase</c>. Because the certificate is established at the
+    /// connection (handshake) level — not per request — an mTLS binding is connection-scoped: it authenticates the
+    /// deployment to the source and cannot be usage-scoped to an individual run.</summary>
+    Mtls,
 }
 
 /// <summary>Maps <see cref="SourceCredentialKind"/> to and from its persisted JSON token.</summary>
@@ -36,6 +43,7 @@ public static class SourceCredentialKindExtensions
         SourceCredentialKind.Bearer => "bearer",
         SourceCredentialKind.Basic => "basic",
         SourceCredentialKind.OAuth2ClientCredentials => "oauth2ClientCredentials",
+        SourceCredentialKind.Mtls => "mtls",
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown source credential kind."),
     };
 
@@ -48,6 +56,7 @@ public static class SourceCredentialKindExtensions
         "bearer" => SourceCredentialKind.Bearer,
         "basic" => SourceCredentialKind.Basic,
         "oauth2ClientCredentials" => SourceCredentialKind.OAuth2ClientCredentials,
+        "mtls" => SourceCredentialKind.Mtls,
         _ => throw new ArgumentException($"Unknown source credential auth kind '{token}'.", nameof(token)),
     };
 }

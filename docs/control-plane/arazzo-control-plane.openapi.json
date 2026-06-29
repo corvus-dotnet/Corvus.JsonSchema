@@ -3372,8 +3372,8 @@
       },
       "SourceCredentialKind": {
         "type": "string",
-        "description": "The HTTP auth scheme the resolved secret(s) build into a provider (non-sensitive metadata).",
-        "enum": ["apiKey", "bearer", "basic", "oauth2ClientCredentials"]
+        "description": "The HTTP auth scheme the resolved secret(s) build into a provider (non-sensitive metadata). 'mtls' is connection-level (a client certificate presented at the TLS handshake, §13.1): it carries a 'certificate' secret (a base64 PKCS#12, or a PEM 'certificate' paired with a PEM 'privateKey') plus an optional 'passphrase', and — being connection-scoped — cannot be usage-scoped to an individual run.",
+        "enum": ["apiKey", "bearer", "basic", "oauth2ClientCredentials", "mtls"]
       },
       "CredentialStatus": {
         "type": "string",
