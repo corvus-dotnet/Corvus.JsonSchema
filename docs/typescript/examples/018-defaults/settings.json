@@ -1,2 +1,2 @@
-{ "title": "Settings", "type": "object",
+{ "title": "Settings", "type": "object", "additionalProperties": false,
   "properties": { "theme": { "type": "string", "default": "light" }, "fontSize": { "type": "integer", "default": 14 } } }

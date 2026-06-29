@@ -41,10 +41,10 @@ function produceSettings(source: Uint8Array, recipe: (draft: Draft<Settings>) =>
 }
 
 function withDefaultsSettings(value: Settings): Settings {
-  const out: Record<string, unknown> = { ...(value as Record<string, unknown>) };
+  const out: Record<string, unknown> = { ...(value as unknown as Record<string, unknown>) };
   if (!("fontSize" in value)) { out["fontSize"] = 14; }
   if (!("theme" in value)) { out["theme"] = "light"; }
-  return out as Settings;
+  return out as unknown as Settings;
 }
 
 function evaluateSettings(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
@@ -55,8 +55,10 @@ function evaluateSettings(value: unknown, ev: Ev, il: string = "", kl: string = 
     let i = -1;
     for (const k in o) {
       i++;
-      if (k === "fontSize") { if (!evaluateFontSize(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/fontSize"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
-      else if (k === "theme") { if (!evaluateTheme(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/theme"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
+      let m = false;
+      if (k === "fontSize") { if (!evaluateFontSize(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/fontSize"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); m = true; }
+      else if (k === "theme") { if (!evaluateTheme(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/properties/theme"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); m = true; }
+      if (!m) { if (!evaluateJsonNotAny(o[k], NOEV, (r === null ? il : il + "/" + __ptr(k)), (r === null ? kl : kl + "/additionalProperties"), r)) { if (r === null) return false; ok = false; } ev.markProp(i); }
     }
   }
   if (r !== null && r.verbose && ok) { r.annotate("title", "Settings", kl + "/title", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/018-defaults/settings.json#/title"); }
@@ -77,6 +79,10 @@ function evaluateTheme(value: unknown, ev: Ev, il: string = "", kl: string = "",
   return ok;
 }
 
+function evaluateJsonNotAny(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  if (r !== null) { r.fail(kl, il, "corvus:/JsonNotAny#"); } return false;
+}
+
 
 export const Settings = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateSettings(v, fresh(), "", "", results ?? null),
@@ -91,6 +97,9 @@ export const FontSize = {
 };
 export const Theme = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateTheme(v, fresh(), "", "", results ?? null),
+};
+export const JsonNotAny = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateJsonNotAny(v, fresh(), "", "", results ?? null),
 };
 
 export default Settings;

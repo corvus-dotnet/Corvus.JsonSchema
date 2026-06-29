@@ -828,7 +828,9 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 
         // Shallow clone so the caller's input is never mutated; absent defaults and recursed nested values
         // are written onto the clone. Typed `Record<string, unknown>` for index assignment, cast back on return.
-        sb.Append("  const out: Record<string, unknown> = { ...(value as Record<string, unknown>) };\n");
+        // The casts go via `unknown`: a CLOSED interface (no index signature) doesn't overlap
+        // `Record<string, unknown>`, so a direct `as` is a strict-tsc error (TS2352).
+        sb.Append("  const out: Record<string, unknown> = { ...(value as unknown as Record<string, unknown>) };\n");
 
         foreach (PropertyDeclaration p in td.PropertyDeclarations)
         {
@@ -860,7 +862,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             }
         }
 
-        sb.Append("  return out as ").Append(name).Append(";\n");
+        sb.Append("  return out as unknown as ").Append(name).Append(";\n");
         sb.Append("}\n\n");
     }
 
