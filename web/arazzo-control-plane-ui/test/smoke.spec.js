@@ -88,6 +88,29 @@ test('the Catalog tab lists versions and opens a version detail with downloads',
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
 
+test('the Catalog detail shows the promotion matrix and makes a version available', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/index.html');
+  await page.getByRole('tab', { name: 'Catalog' }).click();
+
+  // Open nightly-reconcile (3 versions) → the detail hosts the (version × environment) promotion matrix.
+  await page.locator('arazzo-catalog-table tbody tr[data-key="nightly-reconcile"]').click();
+  const matrix = page.locator('arazzo-availability-matrix');
+  await expect(matrix).toBeVisible();
+  await expect(matrix.locator('thead th', { hasText: 'Production' })).toHaveCount(1);
+
+  // A ready, not-yet-available cell offers a direct Make available (the demo grants availability:write); it flips to Withdraw.
+  const make = matrix.locator('button[data-action="make"]').first();
+  await expect(make).toBeVisible();
+  await make.click();
+  await expect(matrix.locator('button[data-action="withdraw"]').first()).toBeVisible();
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
 test('the Catalog Add wizard reuses a registered source and versions the workflow', async ({ page }) => {
   const errors = [];
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });

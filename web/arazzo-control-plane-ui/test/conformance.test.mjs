@@ -341,6 +341,31 @@ test('environments: each client method emits the contract method + templated pat
   }
 });
 
+test('the contract declares the version-availability (promotion matrix) operations', () => {
+  for (const id of ['listVersionAvailability', 'makeVersionAvailable', 'withdrawVersionAvailability']) {
+    assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);
+  }
+});
+
+test('version availability: each client method emits the contract method + templated path', async () => {
+  const { client, calls } = capturing();
+  const sub = (op) => OPS[op].path.replace('{baseWorkflowId}', 'flow').replace('{versionNumber}', '2').replace('{environment}', 'production');
+  await client.listVersionAvailability('flow', 2, { limit: 10 });
+  assert.equal(calls[0].method, OPS.listVersionAvailability.method);
+  assert.equal(calls[0].path, sub('listVersionAvailability'));
+  for (const key of calls[0].query.keys()) {
+    assert.ok(OPS.listVersionAvailability.queryParams.has(key), `availability query param '${key}' is declared in the contract`);
+  }
+
+  await client.makeVersionAvailable('flow', 2, 'production');
+  assert.equal(calls[1].method, OPS.makeVersionAvailable.method);
+  assert.equal(calls[1].path, sub('makeVersionAvailable'));
+
+  await client.withdrawVersionAvailability('flow', 2, 'production');
+  assert.equal(calls[2].method, OPS.withdrawVersionAvailability.method);
+  assert.equal(calls[2].path, sub('withdrawVersionAvailability'));
+});
+
 test('the contract declares the identity / grantee-resolution operation', () => {
   assert.ok(OPS.searchGrantees, 'operation searchGrantees present in the OpenAPI document');
 });

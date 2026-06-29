@@ -630,3 +630,30 @@ test('listEnvironmentAvailability lists the versions made available in an enviro
   const keys = availability.map((a) => `${a.baseWorkflowId}@${a.versionNumber}`);
   assert.deepEqual(keys, [...keys].sort(), 'ordered by base workflow id then version');
 });
+
+test('makeVersionAvailable promotes a ready version (idempotent); withdrawVersionAvailability removes it', async () => {
+  const c = makeClient();
+  // adopt-pet v1 is seeded available in production; withdraw then re-make it to exercise both verbs.
+  await c.withdrawVersionAvailability('adopt-pet', 1, 'production');
+  assert.equal((await c.listVersionAvailability('adopt-pet', 1)).availability.length, 0, 'withdrawn');
+  const made = await c.makeVersionAvailable('adopt-pet', 1, 'production');
+  assert.equal(made.environment, 'production');
+  assert.equal(made.baseWorkflowId, 'adopt-pet');
+  // idempotent: making it again succeeds and returns the existing entry.
+  const again = await c.makeVersionAvailable('adopt-pet', 1, 'production');
+  assert.equal(again.environment, 'production');
+  assert.deepEqual((await c.listVersionAvailability('adopt-pet', 1)).availability.map((a) => a.environment), ['production']);
+});
+
+test('makeVersionAvailable is readiness-gated (409) and 404s for an unknown environment', async () => {
+  const c = makeClient();
+  await c.createEnvironment({ name: 'qa' });
+  // onboard-customer v1 references a source with no usable credential in the fresh 'qa' environment.
+  await assert.rejects(() => c.makeVersionAvailable('onboard-customer', 1, 'qa'), (e) => e.status === 409);
+  await assert.rejects(() => c.makeVersionAvailable('adopt-pet', 1, 'no-such-env'), (e) => e.status === 404);
+});
+
+test('withdrawVersionAvailability 404s when the version is not available in that environment', async () => {
+  const c = makeClient();
+  await assert.rejects(() => c.withdrawVersionAvailability('adopt-pet', 1, 'staging'), (e) => e.status === 404);
+});
