@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Availability",
+  "description": "The persisted form of one cell of the availability matrix (design §7.8): a workflow version made available in a deployment environment. Availability is additive and many-to-many — a version may be available in many environments, and an environment may have many versions of one workflow available at once. The record is keyed by (baseWorkflowId, versionNumber, environment); its presence means available, and deleting it withdraws availability. Governed by the target environment's administrators and gated by readiness (a full source-credential set, §7.7) at the surface, not by the store. Backends store this document verbatim.",
+  "type": "object",
+  "required": ["baseWorkflowId", "versionNumber", "environment", "createdBy", "createdAt", "etag"],
+  "properties": {
+    "baseWorkflowId": {
+      "type": "string",
+      "description": "The base workflow id the made-available version belongs to."
+    },
+    "versionNumber": {
+      "type": "integer",
+      "format": "int32",
+      "description": "The 1-based version number made available."
+    },
+    "environment": {
+      "type": "string",
+      "description": "The deployment environment the version is available in."
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "The actor that made the version available."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the version was made available."
+    },
+    "etag": {
+      "type": "string",
+      "description": "The optimistic-concurrency token."
+    }
+  },
+  "additionalProperties": false
+}
