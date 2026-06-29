@@ -566,6 +566,100 @@ example-recipes:
       - {index: 10, language: csharp, lines: [127, 134], category: compilable, verified: false}
       - {index: 11, language: bash, lines: [140, 143]}
 
+typescript-recipes:
+  - path: "docs/typescript/examples/001-data-object/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [23, 36]}
+      - {index: 1, language: typescript, lines: [40, 48]}
+      - {index: 2, language: typescript, lines: [58, 66]}
+      - {index: 3, language: typescript, lines: [72, 76]}
+      - {index: 4, language: typescript, lines: [82, 87]}
+      - {index: 5, language: typescript, lines: [91, 94]}
+      - {index: 6, language: typescript, lines: [98, 102]}
+      - {index: 7, language: typescript, lines: [106, 108]}
+      - {index: 8, language: bash, lines: [114, 117]}
+  - path: "docs/typescript/examples/002-validation/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [15, 27]}
+      - {index: 1, language: typescript, lines: [37, 40]}
+      - {index: 2, language: typescript, lines: [44, 49]}
+      - {index: 3, language: typescript, lines: [53, 56]}
+      - {index: 4, language: bash, lines: [62, 65]}
+  - path: "docs/typescript/examples/003-references/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [15, 38]}
+      - {index: 1, language: typescript, lines: [48, 51]}
+      - {index: 2, language: typescript, lines: [55, 58]}
+      - {index: 3, language: typescript, lines: [62, 67]}
+      - {index: 4, language: bash, lines: [73, 76]}
+  - path: "docs/typescript/examples/004-open-and-closed/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [13, 17]}
+      - {index: 1, language: typescript, lines: [23, 27]}
+  - path: "docs/typescript/examples/005-extending/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [13, 20]}
+      - {index: 1, language: typescript, lines: [28, 34]}
+  - path: "docs/typescript/examples/006-constraining/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [13, 19]}
+      - {index: 1, language: typescript, lines: [25, 29]}
+  - path: "docs/typescript/examples/007-arrays/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [13, 18]}
+      - {index: 1, language: typescript, lines: [26, 34]}
+  - path: "docs/typescript/examples/008-nested-arrays/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [13, 16]}
+      - {index: 1, language: typescript, lines: [24, 27]}
+  - path: "docs/typescript/examples/009-tuples/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [13, 17]}
+      - {index: 1, language: typescript, lines: [25, 29]}
+  - path: "docs/typescript/examples/010-mixins/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [13, 20]}
+      - {index: 1, language: typescript, lines: [28, 30]}
+  - path: "docs/typescript/examples/011-unions/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [18, 28]}
+      - {index: 1, language: typescript, lines: [36, 42]}
+      - {index: 2, language: typescript, lines: [46, 50]}
+      - {index: 3, language: typescript, lines: [54, 56]}
+      - {index: 4, language: bash, lines: [62, 65]}
+  - path: "docs/typescript/examples/012-discriminated-unions/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [13, 19]}
+      - {index: 1, language: typescript, lines: [27, 34]}
+  - path: "docs/typescript/examples/013-string-enums/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [13, 16]}
+      - {index: 1, language: typescript, lines: [24, 28]}
+  - path: "docs/typescript/examples/014-numeric-enums/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [13, 16]}
+      - {index: 1, language: typescript, lines: [22, 25]}
+  - path: "docs/typescript/examples/015-maps/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [13, 15]}
+      - {index: 1, language: typescript, lines: [21, 27]}
+  - path: "docs/typescript/examples/016-mutation/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [17, 24]}
+      - {index: 1, language: typescript, lines: [30, 41]}
+  - path: "docs/typescript/examples/017-conditional/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [13, 18]}
+      - {index: 1, language: typescript, lines: [24, 28]}
+  - path: "docs/typescript/examples/018-defaults/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [13, 16]}
+      - {index: 1, language: typescript, lines: [22, 27]}
+  - path: "docs/typescript/examples/019-formats/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [13, 16]}
+      - {index: 1, language: typescript, lines: [22, 29]}
+
 main-docs:
   - path: "docs/AddingKeywords.md"
     blocks:
@@ -1484,6 +1578,41 @@ main-docs:
       - {index: 22, language: yaml, lines: [477, 493]}
       - {index: 23, language: csharp, lines: [498, 502], category: compilable, verified: false}
       - {index: 24, language: csharp, lines: [626, 636], category: compilable, verified: false}
+
+typescript-docs:
+  - path: "docs/typescript/getting-started.md"
+    blocks:
+      - {index: 0, language: bash, lines: [11, 13]}
+      - {index: 1, language: bash, lines: [19, 21]}
+      - {index: 2, language: json, lines: [29, 42]}
+      - {index: 3, language: bash, lines: [50, 52]}
+      - {index: 4, language: typescript, lines: [60, 85]}
+  - path: "docs/typescript/mutation.md"
+    blocks:
+      - {index: 0, language: typescript, lines: [9, 11]}
+      - {index: 1, language: typescript, lines: [19, 23]}
+      - {index: 2, language: typescript, lines: [31, 34]}
+      - {index: 3, language: typescript, lines: [44, 50]}
+  - path: "docs/typescript/reading-and-validating.md"
+    blocks:
+      - {index: 0, language: typescript, lines: [9, 13]}
+      - {index: 1, language: typescript, lines: [21, 25]}
+      - {index: 2, language: typescript, lines: [49, 58]}
+      - {index: 3, language: typescript, lines: [66, 70]}
+  - path: "docs/typescript/README.md"
+    blocks:
+      - {index: 0, language: bash, lines: [13, 15]}
+  - path: "docs/typescript/value-types.md"
+    blocks:
+      - {index: 0, language: typescript, lines: [9, 16]}
+      - {index: 1, language: typescript, lines: [20, 23]}
+      - {index: 2, language: typescript, lines: [45, 48]}
+      - {index: 3, language: typescript, lines: [60, 63]}
+      - {index: 4, language: typescript, lines: [76, 79]}
+      - {index: 5, language: typescript, lines: [85, 88]}
+      - {index: 6, language: typescript, lines: [94, 98]}
+      - {index: 7, language: typescript, lines: [108, 110]}
+      - {index: 8, language: typescript, lines: [114, 119]}
 
 v4-docs:
   - path: "docs/V4/GettingStartedWithJsonSchemaCodeGeneration.md"

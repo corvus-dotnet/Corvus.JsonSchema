@@ -2,9 +2,9 @@
 
 This guide covers the read side of a generated module: the `readonly` type surface and the boolean evaluators.
 
-## Reading: there is nothing to wrap
+## Reading the data
 
-The generated `interface` describes the parsed value directly. A value from `JSON.parse`, once it passes evaluation, *is* an instance of the type — you read it with ordinary property access, indexing and iteration. There is no wrapper object, no accessor layer, and no allocation beyond the parse itself.
+The generated `interface` describes the parsed value directly. A value returned by `JSON.parse`, once it passes evaluation, is an instance of the type: you read it with ordinary property access, indexing, and iteration. There is no wrapper object and no accessor layer — the parsed value is the value.
 
 ```typescript
 const person = JSON.parse(text) as Person;
@@ -12,7 +12,7 @@ person.familyName;                 // string
 person.otherNames !== undefined;   // optional, absent?
 ```
 
-Optionality is honest: a required property is `name: T`, an optional one is `name?: T`. An absent optional reads as `undefined` (the key is missing); a property that may be the JSON literal `null` is typed `| null`. The two are distinct in JSON Schema and in the generated type.
+Optionality is explicit: a required property is `name: T`, an optional one is `name?: T`. An absent optional reads as `undefined` (the key is missing); a property that may be the JSON literal `null` is typed `| null`. The two are distinct in JSON Schema and in the generated type.
 
 ## Evaluating: a boolean by default
 
@@ -24,7 +24,7 @@ Person.evaluate(value);                         // true | false
 Root.evaluate(value);                           // same, via the default export
 ```
 
-A rejection is just `false`. There is no thrown exception and no allocated error graph on the common "is this acceptable?" path — that keeps validation cheap on hot request paths. (Producing the *why* — per-keyword failures with instance and keyword locations — is done by passing an optional results collector as the second argument; the boolean is the zero-overhead shape of the same call.)
+A rejection is just `false`: there is no thrown exception and no error object allocated on the "is this acceptable?" path, which keeps validation inexpensive. To find out *why* a value failed — per-keyword failures with instance and keyword locations — pass an optional results collector as the second argument (see [Detailed results](#detailed-results)).
 
 ### Why it's `.evaluate`, not `.validate`
 
@@ -57,16 +57,16 @@ const area = Shape.match(shape, {
 });
 ```
 
-`{Union}.match` is exhaustive by construction — adding a branch to the schema makes a missing handler a compile error.
+`{Union}.match` is exhaustive: adding a branch to the schema turns a missing handler into a compile error.
 
 ## Trusting evaluated data
 
-After `Order.evaluate(value)` returns `true`, `value as T` is sound: the value matched the schema, so the assertion isn't a lie. A common pattern at a trust boundary (an HTTP body, a queue message) is *evaluate then cast*:
+After `Order.evaluate(value)` returns `true`, the value matched the schema, so `value as T` is a safe assertion. A common pattern at a trust boundary — an HTTP body, a queue message — is to evaluate, then cast:
 
 ```typescript
 const incoming: unknown = JSON.parse(body);
 if (!Order.evaluate(incoming)) return badRequest();
-const order = incoming as Order;   // sound from here on
+const order = incoming as Order;   // safe to treat as Order from here on
 ```
 
 ## See also

@@ -15,14 +15,14 @@ function fromEmail(value: string): Email {
 export const Email = { evaluate: /* … */, from: fromEmail };   // companion: Email.from("…")
 ```
 
-`Brand<string, "email">` is a `string` at runtime but a *distinct* type at compile time, so a plain `string` is **not** assignable where an `Email` is expected. The only way to get one is through `Email.from`, which checks the format and throws `FormatError` on failure. The payoff: once a value has type `Email`, "this is a well-formed email" is a fact the type system guarantees — you don't re-check it downstream.
+`Brand<string, "email">` is a `string` at run time but a distinct type at compile time, so a plain `string` is not assignable where an `Email` is expected. The only way to obtain one is through `Email.from`, which checks the format and throws `FormatError` on failure. Once a value has type `Email`, the compiler guarantees it is a well-formed email, so you do not need to validate it again downstream.
 
 ```typescript
 const e: Email = Email.from("ada@example.com"); // ok
-const bad: Email = "ada@example.com";        // compile error — raw string isn't an Email
+const bad: Email = "ada@example.com";        // compile error — a raw string is not an Email
 ```
 
-When you read a value back out of an evaluated document, a branded field already has its brand type — it flows through without re-checking. And `Type.evaluate` checks every format as part of whole-document evaluation, so a brand and an evaluation agree.
+When you read a value back out of an evaluated document, a branded field already has its brand type and carries through without further checking. `Type.evaluate` checks every format as part of whole-document validation, so the brand and the validator agree.
 
 ### Supported formats
 
@@ -80,7 +80,7 @@ const level = Level.from(255);  // Level = Brand<number, "byte">;  throws on 256
 
 ### Typed-array views
 
-For a dense numeric array (`readonly number[]`) on a numeric hot path, the runtime offers opt-in typed-array views — the array type stays `readonly number[]`, so nothing is forced on you:
+For a dense numeric array (`readonly number[]`) in performance-sensitive code, the runtime offers optional typed-array views. The generated array type stays `readonly number[]`; the views are opt-in:
 
 ```typescript
 import { toFloat64Array, toFloat32Array, toInt32Array } from "@endjin/corvus-json-runtime";

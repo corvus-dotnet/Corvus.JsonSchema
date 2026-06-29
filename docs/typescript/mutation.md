@@ -33,7 +33,7 @@ Document.patch(bytes, { version: 2 });            // rewrite only "version"
 Document.patch(bytes, {}, ["owner"]);             // remove the optional "owner"
 ```
 
-Only the named member spans are rewritten; every other byte of `source` is copied through verbatim. There is no parse of the document and no re-serialisation of the unchanged part — for a large document this is dramatically cheaper than the read-modify-write cycle of parsing to an object, mutating, and stringifying.
+Only the named member spans are rewritten; every other byte of `source` is copied through verbatim. The document is not parsed and the unchanged part is not re-serialised, so for a large document this avoids the cost of the usual read-modify-write cycle: parsing to an object, mutating it, and stringifying the whole thing again.
 
 `removals` is typed to the optional properties, so you can't remove a required field.
 
