@@ -816,6 +816,30 @@ function problem(status, title, detail) {
  * @param {{ seed?: object[], latencyMs?: number }} [options]
  * @returns {{ fetch: (url: string, init?: RequestInit) => Promise<Response>, runs: object[] }}
  */
+// The runner registry (§5.4): execution hosts that have registered + heartbeat. Read-only — runners self-register and
+// refresh `lastSeenAt` out of band; the control plane only observes (so the demo seeds a representative fleet, including
+// a STALE one whose heartbeat has lapsed and a host still loading a version, to exercise the health view).
+function seedRunners() {
+  const min = 60000;
+  const r = (runnerId, address, maxConcurrency, transports, hostedVersions, lastSeenAgoMs, startedAgoMs) => ({
+    runnerId, address, maxConcurrency, transports, hostedVersions,
+    startedAt: iso(-startedAgoMs), lastSeenAt: iso(-lastSeenAgoMs),
+  });
+  return [
+    r('runner-eu-1', 'https://runner-eu-1.svc.internal:8443', 8, ['http', 'amqp'], [
+      { baseWorkflowId: 'adopt-pet', versionNumber: 1, hash: 'sha256:adopt-pet-v1', loaded: true },
+      { baseWorkflowId: 'nightly-reconcile', versionNumber: 3, hash: 'sha256:nightly-v3', loaded: true },
+    ], 18 * 1000, 6 * 60 * min), // healthy: heartbeat 18s ago, up 6h
+    r('runner-eu-2', 'https://runner-eu-2.svc.internal:8443', 4, ['http'], [
+      { baseWorkflowId: 'nightly-reconcile', versionNumber: 3, hash: 'sha256:nightly-v3', loaded: true },
+      { baseWorkflowId: 'onboard-customer', versionNumber: 1, hash: 'sha256:onboard-v1', loaded: false }, // still loading
+    ], 32 * 1000, 2 * 60 * min),
+    r('runner-us-1', 'https://runner-us-1.svc.internal:8443', 8, ['http', 'kafka'], [
+      { baseWorkflowId: 'adopt-pet', versionNumber: 1, hash: 'sha256:adopt-pet-v1', loaded: true },
+    ], 4 * min, 12 * 60 * min), // STALE: last heartbeat 4 minutes ago
+  ];
+}
+
 // Demo personas — the same user under different privilege, so the **gated-elevation** model is demonstrable end-to-end
 // against the real UI components. The mock is otherwise identity-less; a persona supplies the caller's capability
 // `scopes` (what the components gate their write controls on, and what the mock enforces server-side) and whether the
@@ -842,6 +866,7 @@ export const DEMO_PERSONAS = {
 
 export function createMockControlPlane(options = {}) {
   const runs = options.seed ? structuredClone(options.seed) : seedRuns();
+  const runners = options.runnersSeed ? structuredClone(options.runnersSeed) : seedRunners();
   const catalog = options.catalogSeed ? structuredClone(options.catalogSeed) : seedCatalog();
   const credentials = options.credentialsSeed ? structuredClone(options.credentialsSeed) : seedCredentials();
   const environments = options.environmentsSeed ? structuredClone(options.environmentsSeed) : seedEnvironments();
@@ -898,6 +923,21 @@ export function createMockControlPlane(options = {}) {
   const requireAdministrator = (what) => persona.administers ? null
     : problem(403, 'Not an administrator', `Only an administrator can ${what}; request it instead and an administrator will decide.`);
 
+  // The runner registry read (§5.4): one keyset page of execution hosts, ordered by runnerId. Read-only.
+  function handleRunners(fullPath, method, params) {
+    const idx = fullPath.indexOf('/runners');
+    if (idx < 0) return null;
+    const path = fullPath.slice(idx);
+    if (!/^\/runners\/?$/.test(path)) return null;
+    if (method !== 'GET') return problem(405, 'Method not allowed');
+    const limit = Math.max(1, Math.min(Number(params.get('limit')) || 50, 200));
+    const sorted = [...runners].sort((a, b) => a.runnerId.localeCompare(b.runnerId));
+    const offset = Number(params.get('pageToken')) || 0;
+    const pageItems = sorted.slice(offset, offset + limit).map((x) => structuredClone(x));
+    const nextPageToken = offset + limit < sorted.length ? String(offset + limit) : null;
+    return json({ runners: pageItems, nextPageToken });
+  }
+
   async function handle(url, init = {}) {
     const method = (init.method || 'GET').toUpperCase();
     const u = new URL(url, 'https://mock');
@@ -948,6 +988,9 @@ export function createMockControlPlane(options = {}) {
 
     const securityRulesResponse = handleSecurityRules(path, method, u.searchParams, body);
     if (securityRulesResponse) return securityRulesResponse;
+
+    const runnersResponse = handleRunners(path, method, u.searchParams);
+    if (runnersResponse) return runnersResponse;
 
     // /runs collection
     if (/\/runs\/?$/.test(path)) {
@@ -2118,6 +2161,7 @@ export function createMockControlPlane(options = {}) {
     accessRequests,
     availabilityRequests,
     availabilityEntries,
+    runners,
     // Switch the acting persona (capability scopes + whether the caller administers governance targets) so the demo can
     // show the gated-elevation model from both sides. Defaults to 'administrator'.
     setPersona: (name) => { persona = personaState(name); return persona.name; },

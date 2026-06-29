@@ -88,6 +88,27 @@ test('the Catalog tab lists versions and opens a version detail with downloads',
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
 
+test('the Runners tab shows the registered execution hosts and their health', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/index.html');
+  await page.getByRole('tab', { name: 'Runners' }).click();
+
+  const runners = page.locator('arazzo-runners');
+  await expect(runners).toBeVisible();
+  await expect(runners.locator('.runner').first()).toBeVisible();
+  expect(await runners.locator('.runner').count()).toBeGreaterThan(1);
+
+  // The seeded fleet has fresh-heartbeat runners (Online) and a lapsed one (Stale), plus hosted workflow versions.
+  await expect(runners.locator('.health.online').first()).toBeVisible();
+  await expect(runners.locator('.health.stale').first()).toBeVisible();
+  await expect(runners.locator('.hv').first()).toBeVisible();
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
 test('the Catalog detail shows the promotion matrix and makes a version available', async ({ page }) => {
   const errors = [];
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
