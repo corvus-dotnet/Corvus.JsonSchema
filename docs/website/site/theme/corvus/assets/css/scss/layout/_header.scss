@@ -118,6 +118,26 @@
     }
   }
 
+  // Home-page track selector (C# / TypeScript) — the two primary entry points.
+  &__track {
+    font-size: var(--font-size-rg);
+    color: var(--color-white);
+  }
+
+  // Track switch — "TypeScript ›" on C# pages, "C# ›" on TypeScript pages. Styled as a
+  // brand pill so it reads as a language switch, set off from the regular nav links.
+  &__switch {
+    margin-left: var(--space-sm);
+    color: var(--color-brand);
+    border: 1px solid var(--color-brand-muted);
+    border-radius: 999px;
+
+    &:hover {
+      color: var(--color-bg);
+      background: var(--color-brand);
+    }
+  }
+
   // ---- Mobile nav overlay ----
   &__nav-mobile {
     display: none;

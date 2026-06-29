@@ -855,7 +855,7 @@ foreach ($td in @($tsGuidesTaxDir, $tsExamplesTaxDir)) {
         Where-Object { $_.Name -ne "index.yml" } | Remove-Item -Force
 }
 
-function Write-TsDocPage($contentName, $slug, $title, $description, $parentUrl, $url, $taxDir, $body) {
+function Write-TsDocPage($contentName, $slug, $title, $description, $parentUrl, $url, $taxDir, $rank, $body) {
     $t = $title -replace '"', '\"'
     $d = $description -replace '"', '\"'
     $fm = "---`nContentType: `"application/vnd.endjin.ssg.content+md`"`nPublicationStatus: Published`nDate: 2026-06-29T00:00:00.0+00:00`nTitle: `"$t`"`n---`n"
@@ -869,7 +869,7 @@ Navigation:
   Description: "$d"
   Parent: $parentUrl
   Url: $url
-  Rank: 1
+  Rank: $rank
   Header:
     Visible: False
     Link: False
@@ -903,7 +903,9 @@ $tsGuideFiles = @('reading-and-validating', 'mutation', 'the-type-surface', 'val
 $tsPageCount = 0
 
 # --- Guides (getting-started IS the /typescript/ landing, so it is not regenerated here) ---
+$guideRank = 0
 foreach ($g in $tsGuideFiles) {
+    $guideRank++
     $src = Join-Path $tsSourceDir "$g.md"
     if (!(Test-Path $src)) { continue }
     $raw = Get-Content $src -Raw -Encoding utf8
@@ -917,8 +919,8 @@ foreach ($g in $tsGuideFiles) {
     }
     $body = $body -replace '\]\(\./examples/?\)', '](/typescript/examples/index.html)'
     $body = $body -replace '\]\(\.\./playground-typescript/?\)', '](/playground-typescript/index.html)'
-    $desc = "$title — a Corvus.Text.Json guide to generating idiomatic TypeScript from JSON Schema."
-    Write-TsDocPage "Generated_Guide_$g" $g $title $desc "/typescript/guides/index.html" "/typescript/guides/$g.html" $tsGuidesTaxDir $body
+    $desc = if ($body -match '^(.+?\.)(\s|$)') { ($Matches[1] -replace '`', '' -replace '\*', '' -replace '\s+', ' ').Trim() } else { $title }
+    Write-TsDocPage "Generated_Guide_$g" $g $title $desc "/typescript/guides/index.html" "/typescript/guides/$g.html" $tsGuidesTaxDir $guideRank $body
     $tsPageCount++
     Write-Host "  guide -> /typescript/guides/$g.html" -ForegroundColor Gray
 }
@@ -938,8 +940,9 @@ foreach ($dir in $tsRecipeDirs) {
     }
     $ghDir = "$tsGhExamplesBase/$($dir.Name)"
     $body = $body -replace '\]\(\./([^)]+)\)', "](${ghDir}/`$1)"
-    $desc = "$title — a worked example of generating TypeScript from JSON Schema with Corvus.Text.Json."
-    Write-TsDocPage "Generated_Recipe_$slug" $slug $title $desc "/typescript/examples/index.html" "/typescript/examples/$slug.html" $tsExamplesTaxDir $body
+    $desc = if ($body -match '^(.+?\.)(\s|$)') { ($Matches[1] -replace '`', '' -replace '\*', '' -replace '\s+', ' ').Trim() } else { $title }
+    $recipeRank = [int]($dir.Name -replace '^0*(\d+)-.*$', '$1')
+    Write-TsDocPage "Generated_Recipe_$slug" $slug $title $desc "/typescript/examples/index.html" "/typescript/examples/$slug.html" $tsExamplesTaxDir $recipeRank $body
     $tsPageCount++
     Write-Host "  recipe -> /typescript/examples/$slug.html" -ForegroundColor Gray
 }

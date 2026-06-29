@@ -1,9 +1,9 @@
 ContentType: application/vnd.endjin.ssg.page+yaml
-Title: TypeScript Guides
+Title: TypeScript Documentation
 Navigation:
-  Title: Guides
-  Description: "In-depth guides to the generated TypeScript surface: reading and validating, mutation, the type surface, and value types."
-  Parent: /typescript/index.html
+  Title: Documentation
+  Description: "In-depth documentation for the generated TypeScript surface: reading and validating, mutation, the type surface, and value types."
+  Parent: /
   Url: /typescript/guides/index.html
   Rank: 1
   Header:
@@ -13,12 +13,12 @@ Navigation:
     Visible: True
     Link: True
 MetaData:
-  Title: "TypeScript Guides — Corvus.Text.Json"
-  Description: "In-depth guides to the generated TypeScript surface: reading and validating, the byte-level mutation API, every JSON Schema construct mapped to TypeScript, and the branded value types."
-  Keywords: [TypeScript, JSON Schema, guides, validation, mutation, value types]
+  Title: "TypeScript Documentation — Corvus.Text.Json"
+  Description: "In-depth documentation for the generated TypeScript surface: reading and validating, the byte-level mutation API, every JSON Schema construct mapped to TypeScript, and the branded value types."
+  Keywords: [TypeScript, JSON Schema, documentation, validation, mutation, value types]
 OpenGraph:
-  Title: "TypeScript Guides — Corvus.Text.Json"
-  Description: "In-depth guides to the generated TypeScript surface."
+  Title: "TypeScript Documentation — Corvus.Text.Json"
+  Description: "In-depth documentation for the generated TypeScript surface."
   Image:
 ContentBlocks:
   - ContentType: application/vnd.endjin.ssg.content+md

@@ -1,11 +1,18 @@
 @model SiteViewModel
 @{
     var currentUrl = Model.PageContext.Navigation?.Url;
+    var curStr = (currentUrl?.ToString() ?? "").ToLowerInvariant();
     var parentUrl = Model.PageContext.Navigation?.Parent;
-    var navChildren = Model.SiteContext.Navigation?.Children?
-        .Where(x => x.Header.Visible)
-        .OrderBy(x => x.Rank)
-        .ToList();
+    // The site has two documentation tracks. The home page offers a neutral C# / TypeScript
+    // selector; each track then shows its own nav with a switch to the other on the far right.
+    var isHome = curStr == "/" || curStr == "/index.html" || curStr.Length == 0;
+    var isTs = curStr.Contains("/typescript");
+    var csharpNav = Model.SiteContext.Navigation?.Children?
+        .Where(x => x.Header.Visible && !((x.Url?.ToString() ?? "").Contains("/typescript")))
+        .OrderBy(x => x.Rank).ToList();
+    var tsLanding = curStr == "/typescript/index.html" || curStr == "/typescript/" || curStr == "/typescript";
+    var onTsDocs = curStr.Contains("/typescript/guides");
+    var onTsExamples = curStr.Contains("/typescript/examples");
 }
 <a class="sr-only" href="#main-content">Skip to content</a>
 <header class="site-header">
@@ -15,21 +22,35 @@
             Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
         </a>
         <nav class="site-header__nav-desktop" aria-label="Main navigation">
-            @if (navChildren != null)
+            @if (isHome)
             {
-                @foreach (var child in navChildren)
-                {
-                    var isActive = (parentUrl != null && Vellum.Cli.Domain.Url.AreEquivalent(child.Url, parentUrl))
-                        || (currentUrl != null && Vellum.Cli.Domain.Url.AreEquivalent(child.Url, currentUrl));
-                    <a href="@child.Url"
-                       class="site-header__link @(isActive ? "is-active" : "")"
-                       @(isActive ? "aria-current=page" : "")>@child.Title</a>
-                }
+                <a href="/getting-started/index.html" class="site-header__link site-header__track">C#</a>
+                <a href="/typescript/index.html" class="site-header__link site-header__track">TypeScript</a>
             }
-            <a href="/playground/"
-               class="site-header__link"
-               target="_blank" rel="noopener noreferrer"
-               title="Interactive JSON Schema playground">Playground</a>
+            else if (isTs)
+            {
+                <a href="/typescript/index.html" class="site-header__link @(tsLanding ? "is-active" : "")" @(tsLanding ? "aria-current=page" : "")>Getting Started</a>
+                <a href="/typescript/guides/index.html" class="site-header__link @(onTsDocs ? "is-active" : "")" @(onTsDocs ? "aria-current=page" : "")>Documentation</a>
+                <a href="/typescript/examples/index.html" class="site-header__link @(onTsExamples ? "is-active" : "")" @(onTsExamples ? "aria-current=page" : "")>Examples</a>
+                <a href="/playground-typescript/" class="site-header__link" target="_blank" rel="noopener noreferrer" title="TypeScript playground">Playground</a>
+                <a href="/getting-started/index.html" class="site-header__link site-header__switch" title="Switch to the C# documentation">C# &rsaquo;</a>
+            }
+            else
+            {
+                @if (csharpNav != null)
+                {
+                    @foreach (var child in csharpNav)
+                    {
+                        var isActive = (parentUrl != null && Vellum.Cli.Domain.Url.AreEquivalent(child.Url, parentUrl))
+                            || (currentUrl != null && Vellum.Cli.Domain.Url.AreEquivalent(child.Url, currentUrl));
+                        <a href="@child.Url"
+                           class="site-header__link @(isActive ? "is-active" : "")"
+                           @(isActive ? "aria-current=page" : "")>@child.Title</a>
+                    }
+                }
+                <a href="/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer" title="Interactive JSON Schema playground">Playground</a>
+                <a href="/typescript/index.html" class="site-header__link site-header__switch" title="Switch to the TypeScript documentation">TypeScript &rsaquo;</a>
+            }
             <a href="@ViewBag.GitHubUrl"
                class="site-header__link" target="_blank" rel="noopener noreferrer"
                aria-label="View on GitHub">
@@ -46,14 +67,31 @@
     </div>
 </header>
 <nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
-    @if (navChildren != null)
+    @if (isHome)
     {
-        @foreach (var child in navChildren)
-        {
-            <a href="@child.Url" class="site-header__link">@child.Title</a>
-        }
+        <a href="/getting-started/index.html" class="site-header__link">C#</a>
+        <a href="/typescript/index.html" class="site-header__link">TypeScript</a>
     }
-    <a href="/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    else if (isTs)
+    {
+        <a href="/typescript/index.html" class="site-header__link">Getting Started</a>
+        <a href="/typescript/guides/index.html" class="site-header__link">Documentation</a>
+        <a href="/typescript/examples/index.html" class="site-header__link">Examples</a>
+        <a href="/playground-typescript/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+        <a href="/getting-started/index.html" class="site-header__link site-header__switch">Switch to C#</a>
+    }
+    else
+    {
+        @if (csharpNav != null)
+        {
+            @foreach (var child in csharpNav)
+            {
+                <a href="@child.Url" class="site-header__link">@child.Title</a>
+            }
+        }
+        <a href="/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+        <a href="/typescript/index.html" class="site-header__link site-header__switch">Switch to TypeScript</a>
+    }
     <a href="@ViewBag.GitHubUrl"
        class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
 </nav>

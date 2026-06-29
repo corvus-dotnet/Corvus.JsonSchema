@@ -1,20 +1,60 @@
 @model SiteViewModel
 @{
-    var cur = Model.PageContext?.Navigation?.Url?.ToString() ?? "";
-    var onExamples = cur.Contains("/typescript/examples");
-    var onGuides = cur.Contains("/typescript/guides");
-    var onStart = !onExamples && !onGuides;
+    var docsLanding = Model.SiteContext.Navigation?.Children?
+        .FirstOrDefault(x => (x.Url?.ToString() ?? "").Contains("/typescript/guides/"));
+    var examplesLanding = Model.SiteContext.Navigation?.Children?
+        .FirstOrDefault(x => (x.Url?.ToString() ?? "").Contains("/typescript/examples/"));
+    var docs = docsLanding?.Children?.OrderBy(x => x.Rank).ToList();
+    var recipes = examplesLanding?.Children?.OrderBy(x => x.Rank).ToList();
+    var currentUrl = Model.PageContext.Navigation?.Url;
+    var curStr = (currentUrl?.ToString() ?? "").ToLowerInvariant();
+    var onLanding = curStr == "/typescript/index.html" || curStr == "/typescript/";
 }
+<button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
 <aside class="sidebar">
-    <div class="sidebar__section">
-        <button class="sidebar__heading">TypeScript</button>
-        <div class="sidebar__body">
-            <ul class="sidebar__list">
-                <li class="sidebar__item"><a class="sidebar__link @(onStart ? "is-active" : "")" href="/typescript/index.html">Getting started</a></li>
-                <li class="sidebar__item"><a class="sidebar__link @(onGuides ? "is-active" : "")" href="/typescript/guides/index.html">Guides</a></li>
-                <li class="sidebar__item"><a class="sidebar__link @(onExamples ? "is-active" : "")" href="/typescript/examples/index.html">Examples</a></li>
-                <li class="sidebar__item"><a class="sidebar__link" href="/playground-typescript/index.html" target="_blank" rel="noopener noreferrer">Playground</a></li>
-            </ul>
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link @(onLanding ? "is-active" : "")" href="/typescript/index.html">Introduction</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    @if (docs != null)
+                    {
+                        @foreach (var d in docs)
+                        {
+                            var isActive = currentUrl != null && Vellum.Cli.Domain.Url.AreEquivalent(d.Url, currentUrl);
+                            <li class="sidebar__item">
+                                <a class="sidebar__link @(isActive ? "is-active" : "")" href="@d.Url">@d.Title</a>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    @if (recipes != null)
+                    {
+                        @foreach (var r in recipes)
+                        {
+                            var isActive = currentUrl != null && Vellum.Cli.Domain.Url.AreEquivalent(r.Url, currentUrl);
+                            <li class="sidebar__item">
+                                <a class="sidebar__link @(isActive ? "is-active" : "")" href="@r.Url">@r.Title</a>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
         </div>
     </div>
 </aside>
