@@ -1,26 +1,30 @@
-// <arazzo-administrators-panel> — manage a workflow's administrator set (§15).
+// <arazzo-administrators-panel> — manage the administrator set of a workflow (§15) or an environment (§7.7).
 //
 //   <arazzo-administrators-panel base-url="/arazzo/v1" base-workflow-id="nightly-reconcile"
 //                                scopes="administrators:write"></arazzo-administrators-panel>
+//   <arazzo-administrators-panel base-url="/arazzo/v1" environment="production"
+//                                scopes="administrators:write"></arazzo-administrators-panel>
 //
-// Attributes : base-url, base-workflow-id, scopes (gates the mutating controls)
-// Properties : .client, .baseWorkflowId
+// Attributes : base-url, base-workflow-id OR environment (the subject), scopes (gates the mutating controls)
+// Properties : .client, .baseWorkflowId, .environment
 // Events     : administrators-changed {administrators}, error {problem}
 // Parts      : panel, list, row, add
 //
-// An administrator is a resolved identity (§16.5.4): the deployment-mapped {dimension, value} grants it resolves
-// from (never a raw internal tag), an optional resolved kind/label for display, and a stable digest that is the
-// removal key. Adding names a real person/team/role/workflow grantee via the picker (which resolves it to its exact
-// sys: identity), not a hand-typed tuple. The set is governed by current-administrator membership: a caller who is
-// not an administrator is refused (403), shown here as a plain banner, never a disclosure of who is. The set is
-// never empty — removing the last administrator is refused (409).
+// The same resolved-identity administrator set governs a workflow (§15) and a deployment environment (§7.7): set
+// `base-workflow-id` for a workflow, or `environment` for an environment (the panel binds the matching client
+// operations). An administrator is a resolved identity (§16.5.4): the deployment-mapped {dimension, value} grants it
+// resolves from (never a raw internal tag), an optional resolved kind/label for display, and a stable digest that is
+// the removal key. Adding names a real person/team/role grantee via the picker (which resolves it to its exact sys:
+// identity), not a hand-typed tuple. The set is governed by current-administrator membership: a caller who is not an
+// administrator is refused (403), shown here as a plain banner, never a disclosure of who is. The set is never empty —
+// removing the last administrator is refused (409).
 
 import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, confirmDialog, define } from './base.js';
 import './grantee-picker.js';
 
 class ArazzoAdministratorsPanel extends ArazzoElement {
   static get observedAttributes() {
-    return ['base-url', 'base-workflow-id', 'scopes'];
+    return ['base-url', 'base-workflow-id', 'environment', 'scopes'];
   }
 
   constructor() {
@@ -51,6 +55,36 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
     else this.removeAttribute('base-workflow-id');
   }
 
+  get environment() {
+    return this.getAttribute('environment') || '';
+  }
+
+  set environment(value) {
+    if (value) this.setAttribute('environment', value);
+    else this.removeAttribute('environment');
+  }
+
+  // Binds the subject (a workflow §15 or an environment §7.7) to its client operations. `environment` takes
+  // precedence when both are set, but a host sets exactly one.
+  _subject() {
+    const env = this.environment;
+    if (env) {
+      return {
+        id: env, noun: 'environment',
+        list: () => this.client.listEnvironmentAdministrators(env),
+        add: (m) => this.client.addEnvironmentAdministrator(env, m),
+        remove: (d) => this.client.removeEnvironmentAdministrator(env, d),
+      };
+    }
+    const base = this.baseWorkflowId;
+    return {
+      id: base, noun: 'workflow',
+      list: () => this.client.listAdministrators(base),
+      add: (m) => this.client.addAdministrator(base, m),
+      remove: (d) => this.client.removeAdministrator(base, d),
+    };
+  }
+
   requestRender() {
     this.load();
   }
@@ -61,16 +95,18 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
 
   get canWrite() {
     const scopes = (this.getAttribute('scopes') || '').split(/\s+/).filter(Boolean);
-    return scopes.length === 0 || scopes.includes('administrators:write');
+    if (scopes.length === 0) return true;
+    // An environment's administrator set is governed by environments:write; a workflow's by administrators:write.
+    return scopes.includes(this.environment ? 'environments:write' : 'administrators:write');
   }
 
   async load() {
     const client = this.client;
-    const base = this.baseWorkflowId;
+    const subject = this._subject();
     const grantIn = this.$('.grant-in');
     if (grantIn && client && grantIn.client !== client) grantIn.client = client;
-    if (!client || !base) {
-      this._error = !base ? { title: 'No workflow selected', detail: 'Set a base-workflow-id.' } : { title: 'Not configured', detail: 'Set a base-url or .client.' };
+    if (!client || !subject.id) {
+      this._error = !subject.id ? { title: `No ${subject.noun} selected`, detail: `Set a ${subject.noun === 'environment' ? 'environment' : 'base-workflow-id'}.` } : { title: 'Not configured', detail: 'Set a base-url or .client.' };
       this._admins = [];
       this.renderBody();
       return;
@@ -80,7 +116,7 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
     this._error = null;
     this.renderBody();
     try {
-      const { administrators } = await client.listAdministrators(base);
+      const { administrators } = await subject.list();
       if (seq !== this._reqSeq) return;
       this._admins = administrators;
       this._loading = false;
@@ -102,17 +138,18 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
     if (!grantee) { this.showError({ title: 'Select a grantee to add as an administrator.' }); return; }
     // The picker resolved the grantee to its exact identity; carry kind/value/identity/label/complete straight through.
     const member = { kind: grantee.kind, value: grantee.value, identity: grantee.identity, label: grantee.label, complete: grantee.complete };
-    await this.mutate(() => this.client.addAdministrator(this.baseWorkflowId, member), () => this.$('.grant-in').reset());
+    await this.mutate(() => this._subject().add(member), () => this.$('.grant-in').reset());
   }
 
   async removeMember(digest, describe) {
+    const subject = this._subject();
     const confirmed = await confirmDialog(this, {
       title: 'Remove administrator',
-      message: `Remove ${describe} from the administrators of '${this.baseWorkflowId}'?`,
+      message: `Remove ${describe} from the administrators of '${subject.id}'?`,
       confirmLabel: 'Remove', danger: true,
     });
     if (!confirmed) return;
-    await this.mutate(() => this.client.removeAdministrator(this.baseWorkflowId, digest));
+    await this.mutate(() => subject.remove(digest));
   }
 
   async mutate(action, onOk) {
@@ -170,8 +207,9 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
   }
 
   renderBody() {
+    const subject = this._subject();
     const base = this.$('.base');
-    if (base) base.textContent = this.baseWorkflowId || '';
+    if (base) base.textContent = subject.id || '';
     const err = this.$('.err');
     const list = this.$('.list');
     const add = this.$('.add');
@@ -181,14 +219,14 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
       ? `<div class="error-banner"><span><strong>${escapeHtml(this._error.title || 'Request failed')}</strong>${this._error.detail ? ' — ' + escapeHtml(this._error.detail) : ''}</span></div>`
       : '';
 
-    add.hidden = !this.canWrite || !this.baseWorkflowId;
+    add.hidden = !this.canWrite || !subject.id;
 
     if (this._loading && this._admins.length === 0) {
       list.innerHTML = '<div class="skl"></div><div class="skl"></div>';
       return;
     }
     if (this._admins.length === 0) {
-      list.innerHTML = `<div class="empty">${this.baseWorkflowId ? 'No administration established for this workflow.' : 'Select a workflow to manage its administrators.'}</div>`;
+      list.innerHTML = `<div class="empty">${subject.id ? `No administration established for this ${subject.noun}.` : `Select a ${subject.noun} to manage its administrators.`}</div>`;
       return;
     }
 

@@ -552,3 +552,81 @@ test('searchGrantees pages via the keyset nextPageToken', async () => {
   const firstValues = new Set(first.grantees.map((g) => g.value));
   assert.ok(second.grantees.every((g) => !firstValues.has(g.value)), 'pages do not overlap');
 });
+
+// ---- environments (§7.7) ------------------------------------------------------------------------
+
+test('listEnvironments returns the seeded environments, ordered by name', async () => {
+  const c = makeClient();
+  const { environments, nextPageToken } = await c.listEnvironments();
+  assert.deepEqual(environments.map((e) => e.name), ['production', 'staging']);
+  assert.equal(nextPageToken, null);
+});
+
+test('getEnvironment returns one environment and 404s for an unknown name', async () => {
+  const c = makeClient();
+  const e = await c.getEnvironment('production');
+  assert.equal(e.displayName, 'Production');
+  await assert.rejects(() => c.getEnvironment('nope'), (err) => err instanceof ProblemError && err.status === 404);
+});
+
+test('createEnvironment adds an environment, makes the creator an administrator, and 409s on a duplicate', async () => {
+  const c = makeClient();
+  const created = await c.createEnvironment({ name: 'qa', displayName: 'QA', description: 'Quality assurance' });
+  assert.equal(created.name, 'qa');
+  assert.equal(created.displayName, 'QA');
+  assert.ok(created.createdBy, 'stamps the creator');
+  // creation grants the creator administration of the new environment (§7.7).
+  const { administrators } = await c.listEnvironmentAdministrators('qa');
+  assert.equal(administrators.length, 1, 'the creator is the sole administrator');
+  await assert.rejects(() => c.createEnvironment({ name: 'qa' }), (err) => err.status === 409);
+});
+
+test('updateEnvironment replaces the mutable metadata and 404s for an unknown name', async () => {
+  const c = makeClient();
+  const updated = await c.updateEnvironment('staging', { displayName: 'Staging (EU)', description: 'EU staging' });
+  assert.equal(updated.displayName, 'Staging (EU)');
+  assert.equal(updated.description, 'EU staging');
+  assert.ok(updated.lastUpdatedBy, 'stamps the updater');
+  await assert.rejects(() => c.updateEnvironment('nope', { displayName: 'x' }), (err) => err.status === 404);
+});
+
+test('deleteEnvironment removes an environment (and its dependent state) and 404s when absent', async () => {
+  const c = makeClient();
+  await c.createEnvironment({ name: 'qa' });
+  await c.deleteEnvironment('qa');
+  assert.equal((await c.listEnvironments()).environments.some((e) => e.name === 'qa'), false);
+  await assert.rejects(() => c.getEnvironment('qa'), (err) => err.status === 404);
+  await assert.rejects(() => c.deleteEnvironment('qa'), (err) => err.status === 404);
+});
+
+test('environment administrators: add a resolved grantee, then refuse removing the last one (409)', async () => {
+  const c = makeClient();
+  const added = await c.addEnvironmentAdministrator('staging', {
+    kind: 'team', value: 'payments', identity: [{ dimension: 'team', value: 'payments' }], label: 'Payments',
+  });
+  assert.equal(added.administrators.length, 2, 'the seeded admin plus the added team');
+  const payments = added.administrators.find((a) => a.label === 'Payments');
+  const removed = await c.removeEnvironmentAdministrator('staging', payments.digest);
+  assert.equal(removed.administrators.length, 1, 'back to the sole seeded administrator');
+  await assert.rejects(
+    () => c.removeEnvironmentAdministrator('staging', removed.administrators[0].digest),
+    (err) => err.status === 409, 'the set may never be left empty');
+});
+
+test('transferEnvironmentAdministration replaces the whole administrator set', async () => {
+  const c = makeClient();
+  const result = await c.transferEnvironmentAdministration('production', {
+    administrators: [{ dimension: 'tenant', value: 'platform' }],
+  });
+  assert.equal(result.administrators.length, 1);
+  assert.ok(result.administrators[0].identity.some((g) => g.dimension === 'tenant' && g.value === 'platform'));
+});
+
+test('listEnvironmentAvailability lists the versions made available in an environment, ordered', async () => {
+  const c = makeClient();
+  const { availability } = await c.listEnvironmentAvailability('production');
+  assert.ok(availability.length >= 1, 'production has seeded availability');
+  assert.ok(availability.every((a) => a.environment === 'production'), 'only this environment');
+  const keys = availability.map((a) => `${a.baseWorkflowId}@${a.versionNumber}`);
+  assert.deepEqual(keys, [...keys].sort(), 'ordered by base workflow id then version');
+});

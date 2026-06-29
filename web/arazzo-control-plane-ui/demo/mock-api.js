@@ -622,6 +622,21 @@ function seedAdministrators() {
   };
 }
 
+// Environment administration (§7.7) — the same resolved-identity set as the workflow administrator set (§15), keyed by
+// environment name. The demo user administers both seeded environments (so the env-admin panel and the self-management
+// round-trip have something to act on), alongside the platform team.
+function seedEnvironmentAdministrators() {
+  return {
+    production: [
+      adminGrant([{ dimension: 'sys:sub', value: 'demo-user' }], 'person', 'You (creator)'),
+      adminGrant([{ dimension: 'tenant', value: 'platform' }], 'team', 'Platform'),
+    ],
+    staging: [
+      adminGrant([{ dimension: 'sys:sub', value: 'demo-user' }], 'person', 'You (creator)'),
+    ],
+  };
+}
+
 // The well-known grantee kind a single-grant dimension is inferred as (mirrors the server's TryGranteeKindForDimension);
 // a custom dimension names no well-known kind.
 function kindForDimension(dimension) {
@@ -800,6 +815,7 @@ export function createMockControlPlane(options = {}) {
   const environments = options.environmentsSeed ? structuredClone(options.environmentsSeed) : seedEnvironments();
   const sourceRegistry = options.sourcesSeed ? structuredClone(options.sourcesSeed) : seedSources();
   const administrators = options.administratorsSeed ? structuredClone(options.administratorsSeed) : seedAdministrators();
+  const environmentAdministrators = options.environmentAdministratorsSeed ? structuredClone(options.environmentAdministratorsSeed) : seedEnvironmentAdministrators();
   const grantees = options.granteesSeed ? structuredClone(options.granteesSeed) : seedGrantees();
   const accessRequests = options.accessRequestsSeed ? structuredClone(options.accessRequestsSeed) : seedAccessRequests();
   const availabilityRequests = options.availabilityRequestsSeed ? structuredClone(options.availabilityRequestsSeed) : seedAvailabilityRequests();
@@ -836,7 +852,7 @@ export function createMockControlPlane(options = {}) {
     const credentialsResponse = handleCredentials(path, method, u.searchParams, body);
     if (credentialsResponse) return credentialsResponse;
 
-    const environmentsResponse = handleEnvironments(path, method, u.searchParams);
+    const environmentsResponse = handleEnvironments(path, method, u.searchParams, body);
     if (environmentsResponse) return environmentsResponse;
 
     const sourcesResponse = handleSources(path, method, u.searchParams, body);
@@ -1259,23 +1275,25 @@ export function createMockControlPlane(options = {}) {
 
     const memberMatch = path.match(/^\/administrators\/([^/]+)\/members\/([^/]+)$/);
     if (memberMatch && method === 'DELETE') {
-      return removeAdministrator(decodeURIComponent(memberMatch[1]), decodeURIComponent(memberMatch[2]));
+      return removeAdminFrom(administrators, decodeURIComponent(memberMatch[1]), decodeURIComponent(memberMatch[2]), 'workflow');
     }
     const membersMatch = path.match(/^\/administrators\/([^/]+)\/members$/);
     if (membersMatch && method === 'POST') {
-      return addAdministrator(decodeURIComponent(membersMatch[1]), body);
+      return addAdminTo(administrators, decodeURIComponent(membersMatch[1]), body);
     }
     const baseMatch = path.match(/^\/administrators\/([^/]+)$/);
     if (baseMatch) {
       const base = decodeURIComponent(baseMatch[1]);
       if (method === 'GET') return json({ administrators: administrators[base] ?? [] });
-      if (method === 'PUT') return transferAdministration(base, body);
+      if (method === 'PUT') return transferAdminTo(administrators, base, body);
       return problem(405, 'Method not allowed');
     }
     return null;
   }
 
-  function addAdministrator(base, member) {
+  // The administrator helpers are subject-agnostic — the same resolved-identity set governs a workflow (§15) and a
+  // deployment environment (§7.7). The store + key select which set; `noun` only shapes the last-administrator message.
+  function addAdminTo(store, key, member) {
     // Resolved-grantee form (a full identity[] from the picker) or the interim single {dimension,value} grant.
     let identity;
     let kind;
@@ -1292,22 +1310,22 @@ export function createMockControlPlane(options = {}) {
     }
 
     const grant = adminGrant(identity, kind, label);
-    const set = administrators[base] ?? (administrators[base] = []);
+    const set = store[key] ?? (store[key] = []);
     if (!set.some((a) => a.digest === grant.digest)) set.push(grant);
     return json({ administrators: set });
   }
 
-  function removeAdministrator(base, digest) {
-    const set = administrators[base] ?? [];
+  function removeAdminFrom(store, key, digest, noun) {
+    const set = store[key] ?? [];
     const i = set.findIndex((a) => a.digest === digest);
     if (i >= 0) {
-      if (set.length === 1) return problem(409, 'Cannot remove the last administrator', 'A workflow must always have at least one administrator.');
+      if (set.length === 1) return problem(409, 'Cannot remove the last administrator', `A ${noun} must always have at least one administrator.`);
       set.splice(i, 1);
     }
     return json({ administrators: set });
   }
 
-  function transferAdministration(base, body) {
+  function transferAdminTo(store, key, body) {
     if (!Array.isArray(body?.administrators) || body.administrators.length === 0) {
       return problem(400, 'Invalid administrator set', 'At least one administrator is required.');
     }
@@ -1318,7 +1336,7 @@ export function createMockControlPlane(options = {}) {
         if (!deduped.some((d) => d.digest === grant.digest)) deduped.push(grant);
       }
     }
-    administrators[base] = deduped;
+    store[key] = deduped;
     return json({ administrators: deduped });
   }
 
@@ -1574,21 +1592,130 @@ export function createMockControlPlane(options = {}) {
   }
 
   // ---- deployment environments (§7.7) -----------------------------------------------------------
-  // Read-only here (the promotion dialog needs the environment set to compute readiness). Ordered by name and
-  // keyset-paged with a numeric offset token, like the grantee typeahead.
+  // The governed environment registry: the collection (list/create), a single environment (read/update/delete), its
+  // administrator set (§15-style resolved identities), and the workflow versions made available in it (§7.8). The
+  // collection is ordered by name and keyset-paged with a numeric offset token, like the grantee typeahead. The mock
+  // is identity-less and treats the demo user as an administrator of every environment, so it does not enforce the 403
+  // the server applies to a non-administrator (consistent with the rest of the mock).
 
-  function handleEnvironments(fullPath, method, params) {
+  function handleEnvironments(fullPath, method, params, body) {
     const idx = fullPath.indexOf('/environments');
     if (idx < 0) return null;
     const path = fullPath.slice(idx);
-    if (!/^\/environments\/?$/.test(path)) return null; // only the collection list is mocked
-    if (method !== 'GET') return problem(405, 'Method not allowed');
+
+    // /environments/{name}/administrators[...] and /environments/{name}/availability sub-routes.
+    const memberMatch = path.match(/^\/environments\/([^/]+)\/administrators\/members\/([^/]+)$/);
+    if (memberMatch && method === 'DELETE') {
+      const name = decodeURIComponent(memberMatch[1]);
+      if (!findEnvironment(name)) return notFoundEnvironment(name);
+      return removeAdminFrom(environmentAdministrators, name, decodeURIComponent(memberMatch[2]), 'environment');
+    }
+    const membersMatch = path.match(/^\/environments\/([^/]+)\/administrators\/members$/);
+    if (membersMatch && method === 'POST') {
+      const name = decodeURIComponent(membersMatch[1]);
+      if (!findEnvironment(name)) return notFoundEnvironment(name);
+      return addAdminTo(environmentAdministrators, name, body);
+    }
+    const adminsMatch = path.match(/^\/environments\/([^/]+)\/administrators$/);
+    if (adminsMatch) {
+      const name = decodeURIComponent(adminsMatch[1]);
+      if (!findEnvironment(name)) return notFoundEnvironment(name);
+      if (method === 'GET') return json({ administrators: environmentAdministrators[name] ?? [] });
+      if (method === 'PUT') return transferAdminTo(environmentAdministrators, name, body);
+      return problem(405, 'Method not allowed');
+    }
+    const availMatch = path.match(/^\/environments\/([^/]+)\/availability\/?$/);
+    if (availMatch) {
+      const name = decodeURIComponent(availMatch[1]);
+      if (method !== 'GET') return problem(405, 'Method not allowed');
+      if (!findEnvironment(name)) return notFoundEnvironment(name);
+      return listEnvironmentAvailabilityPage(name, params);
+    }
+
+    // /environments/{name} — single environment read/update/delete.
+    const oneMatch = path.match(/^\/environments\/([^/]+)\/?$/);
+    if (oneMatch) {
+      const name = decodeURIComponent(oneMatch[1]);
+      if (method === 'GET') {
+        const e = findEnvironment(name);
+        return e ? json(structuredClone(e)) : notFoundEnvironment(name);
+      }
+      if (method === 'PUT') return updateEnvironment(name, body);
+      if (method === 'DELETE') return deleteEnvironment(name);
+      return problem(405, 'Method not allowed');
+    }
+
+    // /environments — collection list/create.
+    if (/^\/environments\/?$/.test(path)) {
+      if (method === 'GET') return listEnvironmentsPage(params);
+      if (method === 'POST') return createEnvironment(body);
+      return problem(405, 'Method not allowed');
+    }
+    return null;
+  }
+
+  function findEnvironment(name) {
+    return environments.find((e) => e.name === name);
+  }
+
+  function notFoundEnvironment(name) {
+    return problem(404, 'Environment not found', `No environment named '${name}'.`);
+  }
+
+  function listEnvironmentsPage(params) {
     const limit = Math.max(1, Math.min(Number(params.get('limit')) || 50, 200));
     const sorted = [...environments].sort((a, b) => a.name.localeCompare(b.name));
     const offset = Number(params.get('pageToken')) || 0;
     const pageItems = sorted.slice(offset, offset + limit).map((e) => structuredClone(e));
     const nextPageToken = offset + limit < sorted.length ? String(offset + limit) : null;
     return json({ environments: pageItems, nextPageToken });
+  }
+
+  function createEnvironment(body) {
+    if (!body || !body.name) return problem(400, 'Invalid environment', 'A name is required.');
+    if (findEnvironment(body.name)) return problem(409, 'Environment exists', `An environment named '${body.name}' already exists.`);
+    const e = {
+      name: body.name, displayName: body.displayName || body.name, description: body.description,
+      managementTags: body.managementTags ?? [],
+      createdBy: demoUser, createdAt: iso(0), etag: nextEtag(),
+    };
+    environments.push(e);
+    // Creating an environment grants the creator administration of it (§7.7), mirroring catalog version creation.
+    environmentAdministrators[e.name] = [adminGrant([{ dimension: 'sys:sub', value: demoUser }], 'person', 'You (creator)')];
+    return json(structuredClone(e), 201);
+  }
+
+  function updateEnvironment(name, body) {
+    const e = findEnvironment(name);
+    if (!e) return notFoundEnvironment(name);
+    // Only display name and description are mutable; the name, reach scope, and created-* audit fields are immutable.
+    if (body?.displayName !== undefined) e.displayName = body.displayName;
+    if (body?.description !== undefined) e.description = body.description;
+    e.lastUpdatedBy = demoUser; e.lastUpdatedAt = iso(0); e.etag = nextEtag();
+    return json(structuredClone(e));
+  }
+
+  function deleteEnvironment(name) {
+    const i = environments.findIndex((e) => e.name === name);
+    if (i < 0) return notFoundEnvironment(name);
+    environments.splice(i, 1);
+    // Cascade the mock's dependent state so nothing references a deleted environment.
+    delete environmentAdministrators[name];
+    for (let j = availabilityEntries.length - 1; j >= 0; j--) {
+      if (availabilityEntries[j].environment === name) availabilityEntries.splice(j, 1);
+    }
+    return new Response(null, { status: 204 });
+  }
+
+  function listEnvironmentAvailabilityPage(name, params) {
+    const entries = availabilityEntries
+      .filter((a) => a.environment === name)
+      .sort((a, b) => a.baseWorkflowId.localeCompare(b.baseWorkflowId) || (a.versionNumber - b.versionNumber));
+    const limit = Math.max(1, Math.min(Number(params.get('limit')) || 50, 200));
+    const offset = Number(params.get('pageToken')) || 0;
+    const pageItems = entries.slice(offset, offset + limit).map((a) => structuredClone(a));
+    const nextPageToken = offset + limit < entries.length ? String(offset + limit) : null;
+    return json({ availability: pageItems, nextPageToken });
   }
 
   // ---- identity / grantee resolution (§16.5.4) --------------------------------------------------
@@ -1855,9 +1982,12 @@ export function createMockControlPlane(options = {}) {
     runs,
     catalog,
     credentials,
+    environments,
     administrators,
+    environmentAdministrators,
     accessRequests,
     availabilityRequests,
+    availabilityEntries,
     fetch: async (url, init) => {
       if (latency) await new Promise((r) => setTimeout(r, latency));
       return handle(url, init);

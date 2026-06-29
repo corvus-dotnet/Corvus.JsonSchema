@@ -290,6 +290,13 @@ disagree with the auth those credentials assume. The fix is to make a **source f
   current "set up credentials after adding" checkbox + sequential post-add dialogs are removed. The admin step replaces
   the interim `{workflow|tenant}` `admin-grant-input` with the resolved-identity grantee-picker (no `tenant`).
 
+> **Delivered.** The `/sources` registry ships full-stack (OpenAPI → 10 durability backends + conformance → handler →
+> CLI → mock); the **stepped add-workflow wizard** (`<arazzo-catalog-add-dialog>`: Details → Sources & credentials →
+> Administrators → Review) resolves registered sources with no re-upload, registers new ones, sets credentials
+> **inline**, and names administrators with the resolved-grantee picker. Sources are reach-scoped; readiness is a
+> wizard hard-gate (see §7.7). The server still reads source names from the uploaded package (`CatalogPackage.ReadSourceNames`)
+> — "registered ⇒ no re-upload" is delivered by the wizard packing the registered document client-side at commit.
+
 ### 7.7 Environment is a first-class, system-wide axis (P1, cross-cutting)
 The `environment` we added to a credential is not a per-binding detail — it is a **deployment axis** the whole system
 must honour consistently. The governing rule: **a workflow is runnable in environment E only if it has a *full set* of
@@ -333,6 +340,15 @@ created-grants-admin) — not a free-text field. Readiness is a reach-scoped que
 environment credentials), reused by the catalog detail, the Add-workflow review step, promotion (§7.8), and (later)
 runs and runners. The demo models an environments registry (reach-scoped list + administrators + audit + create).
 
+> **Delivered.** Environments are first-class governed resources full-stack (`/environments` CRUD + per-environment
+> administrator set with a reverse digest index, across 10 durability backends + conformance → handler → CLI →
+> mock). Creating one **grants the creator administration**. The UI is `<arazzo-environments>` (list / create /
+> administer + the versions available in each), administered by the subject-agnostic `<arazzo-administrators-panel
+> environment=…>`. **Readiness is a wizard hard-gate**: the add-workflow wizard refuses a build-from-docs workflow
+> unless every source has a *usable* credential (§13 `IsUsableBy`, not mere presence) in some environment; the
+> upload path defers to the CLI `catalog add`, which runs the same gate. A source's per-environment **server base URL**
+> override (§8) rides on the credential binding's `config.baseUrl` and is applied at the runtime transport seam.
+
 ### 7.8 Making a workflow version available in an environment ("promotion") (P1, new surface)
 "Promotion" is shorthand for **"make this version of this workflow available in this environment."** It is **additive
 and many-to-many**, NOT a supersede:
@@ -358,6 +374,14 @@ hand, but that is the less-secure fallback; the secure path is CLI + CI.
 
 Model: an availability matrix `(workflowVersion × environment) → available` + an availability-request resource, the
 environment's administrator set as approval authority — the access-request inbox shape, parameterised by environment.
+
+> **Delivered.** Both slices ship full-stack across 10 durability backends + conformance → handler → CLI → mock + UI.
+> Slice 1 = the availability **matrix** (admins `makeVersionAvailable`/`withdraw` directly, two-layer env-reach→env-admin
+> gate + readiness `409`); slice 2 = the **availability-request approver inbox** (`/availabilityRequests` submit / list
+> [mine|environment-queue|inbox] / approve / deny / withdraw, the §16.5 machinery parameterised by environment, using the
+> env-admin reverse index). UI: the catalog version detail shows "Available in" + a **Request promotion…** action
+> (offering only ready, not-yet-available environments), and `<arazzo-availability-requests>` is the Promotions inbox.
+> Bootstrapping via CLI + CI is supported (`environments`/`availability` command trees).
 
 ---
 

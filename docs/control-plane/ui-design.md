@@ -30,7 +30,9 @@ reference assembly that proves the pieces compose; it doubles as the sample's ru
 
 The kit tracks the control-plane OpenAPI document across its operator surfaces and capability-scope tiers
 (from [`README.md`](./README.md)). **Runs**, the **workflow catalog**, **source credentials**, **workflow
-administration**, and the **§16.5 access-request** surface all ship today.
+administration**, the **§16.5 access-request** surface, the **reach vocabulary** (§14.2 scopes + grant bindings),
+the **sources registry** (§7.6), **governed environments** (§7.7), and **availability/promotion** (§7.8) all ship
+today.
 
 ### Runs — `runs:read` / `runs:write` / `runs:purge`
 
@@ -77,6 +79,59 @@ administration**, and the **§16.5 access-request** surface all ship today.
 | `withdrawAccessRequest` · `revokeAccessRequest` | `POST .../{id}/{withdraw,revoke}` | `<arazzo-access-requests>` |
 
 An approval is **capped to run access** (`runs:read`/`runs:write`); the requesting subject is always the caller.
+
+### Reach vocabulary (§14.2) — `security:read` / `security:write`
+
+The reusable scope/grant vocabulary a deployment's row security is built from ("scope" is the user-facing term for a
+named security **rule** — a row-filter expression; a **grant binding** maps a principal claim to per-verb read/write/purge
+reach).
+
+| Operation | HTTP | Scope | Kit surface |
+|-----------|------|-------|-------------|
+| `listSecurityRules` · `getSecurityRule` | `GET /security/rules[/{ruleName}]` | `security:read` | `<arazzo-scopes-panel>` |
+| `createSecurityRule` · `updateSecurityRule` · `deleteSecurityRule` | `POST /security/rules` · `PUT`/`DELETE …/{ruleName}` | `security:write` | `<arazzo-scopes-panel>` (modal editor) |
+| `listSecurityOrderings` | `GET /security/orderings` | `security:read` | `<arazzo-scopes-panel>` (ordered/classification templates) |
+| `listSecurityBindings` · `getSecurityBinding` | `GET /security/bindings[/{bindingId}]` | `security:read` | `<arazzo-grants-panel>` |
+| `createSecurityBinding` · `updateSecurityBinding` · `deleteSecurityBinding` | `POST /security/bindings` · `PUT`/`DELETE …/{bindingId}` | `security:write` | `<arazzo-grants-panel>` (self-elevation rejected `403`) |
+
+### Sources registry (§7.6) — `sources:read` / `sources:write`
+
+A source (`{name, type, document}` + per-environment credentials) registered once and **referenced** by workflows; the
+list omits the heavy `document` (returned only on a single read). Consumed by the add-workflow wizard (resolve a
+registered source, no re-upload) and the credential dialog (derive auth/server from the doc), not a standalone panel.
+
+| Operation | HTTP | Scope | Kit surface |
+|-----------|------|-------|-------------|
+| `listSources` · `getSource` | `GET /sources[/{name}]` | `sources:read` | add-workflow wizard, credential dialog |
+| `registerSource` | `POST /sources` | `sources:write` | add-workflow wizard (commit) |
+
+### Governed environments (§7.7) — `environments:read` / `environments:write` / `availability:read`
+
+An environment is a first-class, reach-scoped, **governed** resource (administrator set + audit, exactly like a
+workflow §15 — *creating one grants the creator administration*).
+
+| Operation | HTTP | Scope | Kit surface |
+|-----------|------|-------|-------------|
+| `listEnvironments` · `getEnvironment` | `GET /environments[/{name}]` | `environments:read` | `<arazzo-environments>` |
+| `createEnvironment` · `updateEnvironment` · `deleteEnvironment` | `POST /environments` · `PUT`/`DELETE …/{name}` | `environments:write` | `<arazzo-environments>` |
+| `listEnvironmentAdministrators` | `GET …/{name}/administrators` | `environments:read` | `<arazzo-administrators-panel environment=…>` |
+| `addEnvironmentAdministrator` · `removeEnvironmentAdministrator` · `transferEnvironmentAdministration` | `POST …/members` · `DELETE …/members/{digest}` · `PUT …/administrators` | `environments:write` | `<arazzo-administrators-panel environment=…>` |
+| `listEnvironmentAvailability` | `GET …/{name}/availability` | `availability:read` | `<arazzo-environments>` (available-versions list) |
+
+### Availability / promotion (§7.8) — `availability:read` / `availability:write` + the approver inbox
+
+"Promotion" = make a workflow **version** available in an environment (additive, many-to-many), governed by the **target
+environment's administrators**; readiness-gated (every source credentialed in that environment). An administrator makes a
+version available directly; everyone else raises a **request** to a per-environment approver inbox (the §16.5 shape,
+parameterised by environment — auth-only, gated in-handler).
+
+| Operation | HTTP | Scope | Kit surface |
+|-----------|------|-------|-------------|
+| `listVersionAvailability` | `GET /catalog/{base}/versions/{n}/availability` | `availability:read` | `<arazzo-catalog-detail>` ("Available in") |
+| `makeVersionAvailable` · `withdrawVersionAvailability` | `PUT`/`DELETE …/availability/{environment}` | `availability:write` | (admin direct, host-composed) |
+| `submitAvailabilityRequest` | `POST /availabilityRequests` | auth-only | `<arazzo-availability-request-dialog>` |
+| `listAvailabilityRequests` · `getAvailabilityRequest` | `GET /availabilityRequests[?environment&scope&status]` · `GET .../{id}` | auth-only | `<arazzo-availability-requests>` |
+| `approveAvailabilityRequest` · `denyAvailabilityRequest` · `withdrawAvailabilityRequest` | `POST .../{id}/{approve,deny,withdraw}` | auth-only | `<arazzo-availability-requests>` (approver inbox) |
 
 Key model facts the **runs** UI renders (the catalog, credential, and administrator surfaces carry their own
 summary/detail models — `CatalogVersionSummary`/`CatalogVersion`, `CredentialBindingSummary`,
@@ -185,10 +240,11 @@ await client.createCredential(body);                                 // → Cred
 await client.updateCredential(sourceName, environment, body);       // → CredentialBindingSummary (PUT) | 400 | 404
 await client.deleteCredential(sourceName, environment);             // → void (204) | 404
 
-// administrators:read / administrators:write — identities named by the {dimension,value} grant
-await client.listAdministrators(baseWorkflowId);                          // → { administrators: [{dimension,value}] }
-await client.addAdministrator(baseWorkflowId, { dimension, value });      // → AdministratorList | 400 | 403 | 409
-await client.removeAdministrator(baseWorkflowId, dimension, value);       // → AdministratorList | 403 | 409
+// administrators:read / administrators:write — resolved identities (§16.5.4): a stable digest (the removal key),
+// the deployment-mapped {dimension,value} grants the identity resolves from, and an optional kind/label
+await client.listAdministrators(baseWorkflowId);                          // → { administrators: [{digest, identity, kind?, label?}] }
+await client.addAdministrator(baseWorkflowId, member);                    // member = a resolved grantee {value, dimension?, kind?, identity?, label?} → AdministratorList | 400 | 403 | 409
+await client.removeAdministrator(baseWorkflowId, digest);                 // → AdministratorList | 403 | 409
 await client.transferAdministration(baseWorkflowId, { administrators }); // → AdministratorList | 400 | 403 | 409
 
 // access requests (§16.5) — request → approve → entitlement-write; an approval is capped to run access
@@ -200,6 +256,38 @@ await client.approveAccessRequestAsEligible(requestId, { reason?, eligibilityWin
 await client.denyAccessRequest(requestId, { reason? });                  // → AccessRequestView
 await client.withdrawAccessRequest(requestId, { reason? });              // → AccessRequestView (requester only)
 await client.revokeAccessRequest(requestId, { reason? });                // → AccessRequestView (administrator only)
+
+// reach vocabulary (§14.2) — security:read / security:write
+await client.listSecurityRules({ q?, limit?, pageToken? });              // → { rules, nextPageToken }   ("scopes")
+await client.getSecurityRule(name); await client.createSecurityRule({ name, expression, description? });
+await client.updateSecurityRule(name, { expression, description? }); await client.deleteSecurityRule(name);
+await client.listSecurityOrderings();                                    // → { orderings: [{dimension, labels}] }
+await client.listSecurityBindings({ q?, limit?, pageToken? });           // → { bindings, nextPageToken }   (grant bindings)
+await client.getSecurityBinding(id); await client.createSecurityBinding(body); // self-elevation rejected 403
+await client.updateSecurityBinding(id, body); await client.deleteSecurityBinding(id);
+
+// sources registry (§7.6) — sources:read / sources:write — list omits the document
+await client.listSources({ limit?, pageToken? });                        // → { sources, nextPageToken }
+await client.getSource(name);                                            // → Source WITH document | 404
+await client.registerSource({ name, type, document, displayName?, description?, managementTags? }); // → 201 | 409
+
+// governed environments (§7.7) — environments:read / environments:write; availability list is availability:read
+await client.listEnvironments({ limit?, pageToken? });                   // → { environments, nextPageToken }
+await client.getEnvironment(name);                                       // → EnvironmentSummary | 404
+await client.createEnvironment({ name, displayName?, description?, managementTags? }); // → 201 (grants creator admin) | 409
+await client.updateEnvironment(name, { displayName?, description? }); await client.deleteEnvironment(name);
+await client.listEnvironmentAdministrators(name);                        // → { administrators } (resolved identities)
+await client.addEnvironmentAdministrator(name, member); await client.removeEnvironmentAdministrator(name, digest);
+await client.transferEnvironmentAdministration(name, { administrators });
+await client.listEnvironmentAvailability(name, { limit?, pageToken? });  // → { availability, nextPageToken }
+
+// availability / promotion (§7.8) — version availability + the per-environment approver inbox
+await client.listVersionAvailability(baseWorkflowId, n);                 // → { availability, nextPageToken }
+await client.submitAvailabilityRequest({ baseWorkflowId, versionNumber, environment, reason? });
+await client.listAvailabilityRequests({ status?, environment?, scope? }); // scope = 'mine' | 'queue' (approver inbox)
+await client.getAvailabilityRequest(requestId);
+await client.approveAvailabilityRequest(requestId, { reason? });         // environment administrator only; readiness-gated 409
+await client.denyAvailabilityRequest(requestId, { reason? }); await client.withdrawAvailabilityRequest(requestId, { reason? });
 ```
 
 ### Behaviours baked in
@@ -348,13 +436,16 @@ are **driven by the auth kind**; unrecognised config keys are preserved verbatim
 re-pointing a reference is a rotation and stamps `rotatedAt`; unspecified fields are preserved (management tags and usage
 grants are shown read-only when editing). Emits `credential-saved`. `credentials:write` gates create/edit/delete.
 
-#### `<arazzo-administrators-panel baseworkflowid="…">`
-The administrator set for one base id. Lists the `{dimension, value}` identities; **add**, **remove** (per-row,
-refused for the last — surfaces `409`), and **transfer** (replace the whole set). Non-disclosing: a non-administrator
-caller's mutation is a `403` shown as a plain "you are not an administrator of this workflow" banner, never a leak of
-who is. `administrators:write` gates mutations. The panel renders as a per-workflow **Security** section on the
-catalog detail (authz-gated), not a standalone screen. The administrator identities are entered via the interim
-`<arazzo-admin-grant-input>` (see the §16.5.4 status note below).
+#### `<arazzo-administrators-panel>` (`base-workflow-id="…"` **or** `environment="…"`)
+The administrator set for one subject. **Subject-agnostic**: set `base-workflow-id` for a workflow's administrators
+(§15) or `environment` for an environment's (§7.7) — `_subject()` binds the matching client operations, and `canWrite`
+gates on `administrators:write` (workflow) or `environments:write` (environment). Lists the resolved identities
+(digest + the `{dimension, value}` grants + kind/label); **add**, **remove** (per-row, refused for the last —
+surfaces `409`), and **transfer** (replace the whole set). Members are named with the resolved-grantee
+`<arazzo-grantee-picker>` (which resolves a real person/team/role to its exact `sys:` identity), not a hand-typed
+tuple. Non-disclosing: a non-administrator caller's mutation is a `403` shown as a plain banner, never a leak of who
+is. The panel renders as a per-workflow **Security** section on the catalog detail and as the administrators section
+of `<arazzo-environments>`, not a standalone screen.
 
 ### Access requests (`/accessRequests`, §16.5)
 
@@ -389,14 +480,59 @@ seen**, or a **validated well-known subject id**; it would drive three choices �
 > with `observed` and `directory` sources), the `SupportedGranteeKinds` / `ResolveGranteeIdentity` grantee seam, and
 > §16.5.5 ambient identity dimensions; and `catalog:read` **is** a grantable "view" scope
 > (`AccessRequestApprovalService.GrantableScopes` defaults to `runs:read`/`runs:write`/`catalog:read`). Built **in the
-> UI**: **Operate** (run access through the §16.5 request → approve → entitlement-write path) and **Administer** (the §15
-> administrator set, via `<arazzo-administrators-panel>`). **Design-intent, not built — in the UI:** the resolved-grantee
-> picker that drives those endpoints, and the "view"-grant surface (the scope is grantable server-side; no picker offers
-> it yet). What ships in the meantime is the **interim** `<arazzo-admin-grant-input>`, which **hand-assembles** a
-> `{dimension, value}` tuple from a small, safe set of whole-identity dimensions — `workflow` (catalog autocomplete) and
-> `tenant` (text) — deliberately exposing only dimensions that cannot express an inert finer-grained rule. The
-> resolved-grantee picker (a `GET /identity/grantees` typeahead → resolved identity) replaces it; the remaining server gap
-> is multi-tag **person** resolution (the admin-add records a single `{dimension, value}`).
+> UI**: **Operate** (run access through the §16.5 request → approve → entitlement-write path); **Administer** (the §15
+> workflow administrator set **and** the §7.7 environment administrator set, via the subject-agnostic
+> `<arazzo-administrators-panel>`); and — now built — the **resolved-grantee `<arazzo-grantee-picker>`** itself (a
+> `GET /identity/grantees` typeahead → resolved `sys:` identity, with a `kinds` allow-list so a surface admits only the
+> grantee kinds it should), wired into the administrator panels and the add-workflow wizard. It **replaces** the earlier
+> interim `<arazzo-admin-grant-input>` tuple builder. **Design-intent, not built — in the UI:** the standalone
+> **"view"-grant** surface (the `catalog:read` scope is grantable server-side, but no picker offers a view grant yet).
+
+### Reach vocabulary (`/security`, §14.2)
+
+The reusable scope/grant vocabulary the deployment's row security is built from. Both page + search server-side and gate
+mutations on `security:write`.
+
+#### `<arazzo-scopes-panel>`
+Manages the named **scopes** (security rules — row-filter expressions). A searchable, keyset-paged list; authoring is
+**template-first in a modal editor** (pick a goal — label match, set membership, caller-claim, ABAC superset/intersect,
+ordered classification, or raw advanced — and the template writes the expression with a live preview; `listSecurityOrderings`
+supplies the classification labels). Emits `scopes-changed`, `loaded`, `error`.
+
+#### `<arazzo-grants-panel>`
+Manages the **grant bindings** — a principal claim → per-verb (read/write/purge) reach, each verb `unrestricted` or a set
+of scope names. Searchable, keyset-paged, modal editor with a scope typeahead. The server **rejects self-elevation**
+(`403`) — granting a claim the caller itself holds write/purge reach goes through the access-request flow. Emits
+`grants-changed`, `loaded`, `error`.
+
+### Sources, environments & promotion (`/sources`, `/environments`, `/availabilityRequests`, §7.6–7.8)
+
+#### Sources registry (§7.6) — no standalone panel
+The `/sources` registry (list omits the heavy `document`; a single read returns it) is consumed by the **add-workflow
+wizard** (`<arazzo-catalog-add-dialog>` resolves a workflow's declared `sourceDescriptions` against the registry — a
+registered source needs no re-upload — and registers genuinely-new ones at commit) and the **credential dialog** (derives
+the auth kind + per-environment server base URL from the source document). There is no dedicated sources panel.
+
+#### `<arazzo-environments>`
+The governed-environment management surface (§7.7) — a self-contained **master-detail** panel. Left: a keyset-paged list
+(**Load more**) + a **New environment** modal (`environments:write`; creating one grants the creator administration).
+Right (per selection): editable metadata (display name / description → `updateEnvironment`), the environment's
+administrator set via `<arazzo-administrators-panel environment=…>`, the **workflow versions available in it**
+(`listEnvironmentAvailability`, `availability:read`), and **Delete** (confirmed). Emits `environment-selected`,
+`environment-created`, `environment-changed`, `environment-deleted`, `loaded`, `error`.
+
+#### `<arazzo-availability-request-dialog>`
+The §7.8 "request promotion" submit form (`open({ baseWorkflowId?, versionNumber?, environment?, lockWorkflow? })`):
+choose a workflow + version + target environment. Reused standalone and by `<arazzo-catalog-detail>`'s **Request
+promotion…** action (locked to a version, offering only environments where it is *ready* and not already available).
+Emits `availability-request-submitted`.
+
+#### `<arazzo-availability-requests>`
+Two views over the identity-gated API (`view="mine|queue"`): **My requests** (the caller's own; submit / withdraw) and
+the per-environment **Approver inbox** (every request across the environments the caller administers; approve / deny). An
+approval is **readiness-gated** (`409` when a source is uncredentialed in the target environment). Columns: workflow ·
+version · environment · requester. Emits `availability-request-submitted`, `availability-request-decided {request,
+action}`, `loaded`, `error`.
 
 ---
 
@@ -434,12 +570,20 @@ composes directly (as the demo page does) — there is no separate packaged cred
   flow can stage administration (the interim `<arazzo-admin-grant-input>`) and set up per-source credential
   bindings after the version lands (the guided `<arazzo-credential-dialog>` locked to each declared source).
 
-### Credentials & access-request surfaces (Layer-1, host-composed)
-These ship as Layer-1 components rather than a packaged Layer-2 panel — the host (or the demo page) composes them:
-- `<arazzo-credentials-table>` (status worklist) paired with `<arazzo-credential-dialog>` for create/edit/rotate
-  (`credentials:read`/`write`).
-- `<arazzo-access-requests>` for the §16.5 request/approval surface (My requests + the approver queue).
-- `<arazzo-administrators-panel>` is embedded by the catalog detail (above), not a standalone screen.
+### Credentials, access, permissions, environments & promotion surfaces (Layer-1, host-composed)
+These ship as Layer-1 components rather than packaged Layer-2 panels — the host (or the demo page) composes them, one
+per tab:
+- **Sources** — `<arazzo-credentials-table>` (status worklist) paired with `<arazzo-credential-dialog>` for
+  create/edit/rotate (`credentials:read`/`write`).
+- **Access** — `<arazzo-access-requests>` for the §16.5 request/approval surface (My requests + the approver queue).
+- **Permissions** — `<arazzo-grants-panel>` + `<arazzo-scopes-panel>` for the §14.2 reach vocabulary
+  (`security:read`/`write`).
+- **Environments** — `<arazzo-environments>` for the governed §7.7 registry (it embeds `<arazzo-administrators-panel>`
+  in `environment` mode).
+- **Promotions** — `<arazzo-availability-requests>` (+ `<arazzo-availability-request-dialog>`) for the §7.8 approver
+  inbox.
+- `<arazzo-administrators-panel>` is embedded by the catalog detail and by `<arazzo-environments>` (above), not a
+  standalone screen.
 
 ---
 
@@ -589,3 +733,25 @@ live *on the workflow*, not in standalone, deployment-wide tabs.
 
 Still captured as a work item: **mTLS source credentials** (design §13.1) — the only auth kind the
 `SourceCredentialProviderFactory` does not yet implement; required before this security epic closes.
+
+### Subsequent epic — sources / environments / promotion (§7.6–7.8) — DELIVERED
+
+The review feedback above led into the larger **governed-deployment** epic (design `ux-review.md` §7.6–7.8), now
+delivered full-stack (API-first → 10 durability backends + conformance → handler → CLI → mock + UI):
+
+- **§7.6 sources registry** — a first-class `/sources` registry consumed by the **stepped add-workflow wizard**
+  (`<arazzo-catalog-add-dialog>`: Details → Sources & credentials → Administrators → Review; resolves registered
+  sources with no re-upload, registers new ones, sets credentials **inline** during the wizard) and the credential
+  dialog (auth + per-environment **server base URL** override, §8, derived from the source document and applied at the
+  transport seam).
+- **§7.7 governed environments** — `<arazzo-environments>` (list / create / administer + available-versions), with the
+  subject-agnostic `<arazzo-administrators-panel environment=…>` for per-environment administration.
+- **§7.8 promotion** — version availability on the catalog detail ("Available in" + **Request promotion…**), and the
+  per-environment approver inbox (`<arazzo-availability-requests>`), readiness-gated.
+- **Readiness as a hard gate** — the wizard refuses to register a build-from-docs workflow unless every source has a
+  usable credential in some environment (usability per §13 `IsUsableBy`, not mere presence); the upload path defers to
+  the **CLI** `catalog add`, which runs the same gate.
+- The demo composes these as the **Sources / Environments / Access / Permissions / Promotions** tabs.
+
+The remaining UI follow-ups are deferred: a richer catalog-version ↔ environment availability **matrix** view, and a
+"view"-grant picker surface.

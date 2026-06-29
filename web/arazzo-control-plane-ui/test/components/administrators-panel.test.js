@@ -76,4 +76,39 @@ describe('<arazzo-administrators-panel>', () => {
     ok(el.shadowRoot.querySelector('.add').hidden, 'the add form is hidden');
     ok(!el.shadowRoot.querySelector('.rm'), 'no remove buttons');
   });
+
+  // ---- environment subject (§7.7) — the same set governs an environment via the env-admin operations ----------
+
+  it('lists an environment\'s administrators when the environment subject is set', async () => {
+    el = panelWithMock({ environment: 'production', scopes: 'environments:read' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    equal(rows(el).length, 2, 'two seeded environment administrators');
+    ok(el.shadowRoot.textContent.includes('tenant=platform'), 'shows a grant identity');
+  });
+
+  it('adds an environment administrator via the picker and emits administrators-changed', async () => {
+    el = panelWithMock({ environment: 'staging', scopes: 'environments:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    equal(rows(el).length, 1, 'one seeded administrator');
+    const picker = el.shadowRoot.querySelector('arazzo-grantee-picker');
+    const q = picker.shadowRoot.querySelector('.q');
+    q.value = 'payments';
+    q.dispatchEvent(new Event('input'));
+    const pickerResults = () => picker.shadowRoot.querySelectorAll('.results li[data-index]');
+    await waitFor(() => pickerResults().length === 1);
+    pickerResults()[0].click();
+    const changed = nextEvent(el, 'administrators-changed');
+    el.shadowRoot.querySelector('.addbtn').click();
+    const e = await changed;
+    equal(e.detail.administrators.length, 2, 'the environment\'s set grew');
+  });
+
+  it('gates the environment add form on environments:write (not administrators:write)', async () => {
+    el = panelWithMock({ environment: 'production', scopes: 'administrators:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    ok(el.shadowRoot.querySelector('.add').hidden, 'administrators:write does not unlock the env subject');
+  });
 });

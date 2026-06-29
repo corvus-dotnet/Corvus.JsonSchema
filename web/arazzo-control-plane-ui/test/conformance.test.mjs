@@ -280,6 +280,67 @@ test('administrators: each client method emits the contract method + templated p
   assert.equal(calls[3].body.administrators[0].value, 'acme');
 });
 
+test('the contract declares the environment operations', () => {
+  for (const id of ['listEnvironments', 'createEnvironment', 'getEnvironment', 'updateEnvironment', 'deleteEnvironment',
+                    'listEnvironmentAdministrators', 'addEnvironmentAdministrator', 'removeEnvironmentAdministrator',
+                    'transferEnvironmentAdministration', 'listEnvironmentAvailability']) {
+    assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);
+  }
+});
+
+test('environments: each client method emits the contract method + templated path + body', async () => {
+  const { client, calls } = capturing();
+  await client.listEnvironments({ limit: 25, pageToken: 'tok' });
+  assert.equal(calls[0].method, OPS.listEnvironments.method);
+  assert.equal(calls[0].path, OPS.listEnvironments.path);
+  for (const key of calls[0].query.keys()) {
+    assert.ok(OPS.listEnvironments.queryParams.has(key), `environments query param '${key}' is declared in the contract`);
+  }
+
+  await client.createEnvironment({ name: 'qa', displayName: 'QA', description: 'd' });
+  assert.equal(calls[1].method, OPS.createEnvironment.method);
+  assert.equal(calls[1].path, OPS.createEnvironment.path);
+  assert.equal(calls[1].body.name, 'qa');
+
+  await client.getEnvironment('qa');
+  assert.equal(calls[2].method, OPS.getEnvironment.method);
+  assert.equal(calls[2].path, OPS.getEnvironment.path.replace('{name}', 'qa'));
+
+  await client.updateEnvironment('qa', { displayName: 'QA2' });
+  assert.equal(calls[3].method, OPS.updateEnvironment.method);
+  assert.equal(calls[3].path, OPS.updateEnvironment.path.replace('{name}', 'qa'));
+  assert.equal(calls[3].body.displayName, 'QA2');
+
+  await client.deleteEnvironment('qa');
+  assert.equal(calls[4].method, OPS.deleteEnvironment.method);
+  assert.equal(calls[4].path, OPS.deleteEnvironment.path.replace('{name}', 'qa'));
+
+  await client.listEnvironmentAdministrators('qa');
+  assert.equal(calls[5].method, OPS.listEnvironmentAdministrators.method);
+  assert.equal(calls[5].path, OPS.listEnvironmentAdministrators.path.replace('{name}', 'qa'));
+
+  await client.addEnvironmentAdministrator('qa', { dimension: 'tenant', value: 'acme' });
+  assert.equal(calls[6].method, OPS.addEnvironmentAdministrator.method);
+  assert.equal(calls[6].path, OPS.addEnvironmentAdministrator.path.replace('{name}', 'qa'));
+  assert.equal(calls[6].body.value, 'acme');
+
+  await client.removeEnvironmentAdministrator('qa', 'deadbeef');
+  assert.equal(calls[7].method, OPS.removeEnvironmentAdministrator.method);
+  assert.equal(calls[7].path, OPS.removeEnvironmentAdministrator.path.replace('{name}', 'qa').replace('{digest}', 'deadbeef'));
+
+  await client.transferEnvironmentAdministration('qa', { administrators: [{ dimension: 'tenant', value: 'acme' }] });
+  assert.equal(calls[8].method, OPS.transferEnvironmentAdministration.method);
+  assert.equal(calls[8].path, OPS.transferEnvironmentAdministration.path.replace('{name}', 'qa'));
+  assert.equal(calls[8].body.administrators[0].value, 'acme');
+
+  await client.listEnvironmentAvailability('qa', { limit: 10 });
+  assert.equal(calls[9].method, OPS.listEnvironmentAvailability.method);
+  assert.equal(calls[9].path, OPS.listEnvironmentAvailability.path.replace('{name}', 'qa'));
+  for (const key of calls[9].query.keys()) {
+    assert.ok(OPS.listEnvironmentAvailability.queryParams.has(key), `availability query param '${key}' is declared in the contract`);
+  }
+});
+
 test('the contract declares the identity / grantee-resolution operation', () => {
   assert.ok(OPS.searchGrantees, 'operation searchGrantees present in the OpenAPI document');
 });

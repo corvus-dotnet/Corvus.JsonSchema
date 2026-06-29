@@ -133,6 +133,38 @@ test('the Catalog Add wizard reuses a registered source and versions the workflo
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
 
+test('the Environments tab lists environments and opens one to administer it', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/index.html');
+  await page.getByRole('tab', { name: 'Environments' }).click();
+
+  const env = page.locator('arazzo-environments');
+  await expect(env).toBeVisible();
+  const rows = env.locator('.erow');
+  await expect(rows.first()).toBeVisible();
+  expect(await rows.count()).toBeGreaterThan(1);
+
+  // Open production → its detail shows the administrators sub-panel (env mode) and the available versions.
+  await env.locator('.erow[data-name="production"]').click();
+  await expect(env.locator('.detail-pane .dtitle')).toContainText('Production');
+  await expect(env.locator('arazzo-administrators-panel')).toBeVisible();
+  await expect(env.locator('.detail-pane')).toContainText('Available workflow versions');
+  await expect(env.locator('.avail-row').first()).toBeVisible();
+
+  // Create a new environment via the dialog; it appears in the list and opens selected.
+  await env.locator('.new').click();
+  await expect(env.locator('dialog[open]')).toBeVisible();
+  await env.locator('.f-name').fill('qa');
+  await env.locator('.confirm').click();
+  await expect(env.locator('.erow[data-name="qa"]')).toBeVisible();
+  await expect(env.locator('.detail-pane .dtitle')).toContainText('qa');
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
 test('Grants and Scopes live on the Permissions tab; Access holds the request inbox', async ({ page }) => {
   await page.goto('/demo/index.html');
 
