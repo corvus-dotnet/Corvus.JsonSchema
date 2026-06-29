@@ -14,8 +14,9 @@ namespace Corvus.Text.Json.Arazzo.Durability.SqlServer;
 /// A SQL Server-backed <see cref="IEnvironmentAdministratorStore"/> (design §7.7): the explicit administration record for
 /// a deployment environment — the mutable set of administrator identities. Each record is stored as its
 /// <see cref="EnvironmentAdministrators"/> document in a <c>varbinary(max)</c> column, keyed by EnvironmentName; its etag
-/// is held in a column for the optimistic-concurrency check. Mirrors <see cref="SqlServerWorkflowAdministratorStore"/>
-/// without the reverse administration index. The record holds deployment-stamped identities only — never secret material.
+/// is held in a column for the optimistic-concurrency check. Mirrors <see cref="SqlServerWorkflowAdministratorStore"/>,
+/// including the reverse administration index that answers "which environments does this administrator administer?". The
+/// record holds deployment-stamped identities only — never secret material.
 /// </summary>
 /// <remarks>
 /// Each operation opens a pooled connection, so the store is naturally concurrent; the <see cref="PutAsync"/>
@@ -108,15 +109,25 @@ public sealed class SqlServerEnvironmentAdministratorStore : IEnvironmentAdminis
             isUpdate = false;
         }
 
-        await using SqlCommand write = connection.CreateCommand();
-        write.CommandText = isUpdate
-            ? "UPDATE EnvironmentAdministrators SET Etag = @etag, Document = @doc WHERE EnvironmentName = @id;"
-            : "INSERT INTO EnvironmentAdministrators (EnvironmentName, Etag, Document) VALUES (@id, @etag, @doc);";
-        write.Parameters.AddWithValue("@etag", etag.Value!);
-        using ReadOnlyMemoryStream docStream = ReadOnlyMemoryStream.Rent(json.AsMemory());
-        write.Parameters.Add(new SqlParameter("@doc", SqlDbType.VarBinary, -1) { Value = docStream });
-        write.Parameters.AddWithValue("@id", environmentName);
-        await write.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        // The document write and the reverse-index rewrite are atomic (design §7.8): the inbox must never observe an
+        // environment indexed under a digest its current administrator set no longer holds, or vice versa.
+        await using SqlTransaction transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+        await using (SqlCommand write = connection.CreateCommand())
+        {
+            write.Transaction = transaction;
+            write.CommandText = isUpdate
+                ? "UPDATE EnvironmentAdministrators SET Etag = @etag, Document = @doc WHERE EnvironmentName = @id;"
+                : "INSERT INTO EnvironmentAdministrators (EnvironmentName, Etag, Document) VALUES (@id, @etag, @doc);";
+            write.Parameters.AddWithValue("@etag", etag.Value!);
+            using ReadOnlyMemoryStream docStream = ReadOnlyMemoryStream.Rent(json.AsMemory());
+            write.Parameters.Add(new SqlParameter("@doc", SqlDbType.VarBinary, -1) { Value = docStream });
+            write.Parameters.AddWithValue("@id", environmentName);
+            await write.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await RewriteIndexAsync(connection, transaction, environmentName, administrators, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<EnvironmentAdministrators>(json);
     }
 
@@ -125,16 +136,94 @@ public sealed class SqlServerEnvironmentAdministratorStore : IEnvironmentAdminis
     {
         ArgumentException.ThrowIfNullOrEmpty(environmentName);
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
-        await using SqlCommand delete = connection.CreateCommand();
-        delete.CommandText = "DELETE FROM EnvironmentAdministrators WHERE EnvironmentName = @id;";
-        delete.Parameters.AddWithValue("@id", environmentName);
-        await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        // Deleting the record must also retract this environment from every administrator-digest bucket it sat in, so the
+        // reverse index never strands an environment that no longer exists. The document delete and the index retraction
+        // are atomic for the same reason PutAsync's rewrite is (design §7.8). A missing record remains a no-op: both
+        // statements simply affect zero rows.
+        await using SqlTransaction transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+        await using (SqlCommand delete = connection.CreateCommand())
+        {
+            delete.Transaction = transaction;
+            delete.CommandText = "DELETE FROM EnvironmentAdministrators WHERE EnvironmentName = @id;";
+            delete.Parameters.AddWithValue("@id", environmentName);
+            await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await using (SqlCommand clear = connection.CreateCommand())
+        {
+            clear.Transaction = transaction;
+            clear.CommandText = "DELETE FROM EnvironmentAdministratorIndex WHERE EnvironmentName = @id;";
+            clear.Parameters.AddWithValue("@id", environmentName);
+            await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        int pageSize = limit > 0 ? limit : EnvironmentAdministeredPage.DefaultPageSize;
+
+        // The keyset cursor (the environment name to page strictly after) reifies once here for the @after parameter — the
+        // SQL leaf — never per row. The index columns are Latin1_General_BIN2 so the keyset compare is ordinal (the
+        // contract's order).
+        string? after = EnvironmentAdministeredContinuationToken.DecodeCursorToString(pageToken);
+
+        await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using SqlCommand select = connection.CreateCommand();
+        select.CommandText = after is null
+            ? "SELECT TOP (@n) EnvironmentName FROM EnvironmentAdministratorIndex WHERE AdminDigest = @digest ORDER BY EnvironmentName;"
+            : "SELECT TOP (@n) EnvironmentName FROM EnvironmentAdministratorIndex WHERE AdminDigest = @digest AND EnvironmentName > @after ORDER BY EnvironmentName;";
+        select.Parameters.AddWithValue("@digest", adminDigest);
+        select.Parameters.AddWithValue("@n", pageSize + 1);
+        if (after is not null)
+        {
+            select.Parameters.AddWithValue("@after", after);
+        }
+
+        var rows = new List<string>(pageSize + 1);
+        await using (SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+        {
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                rows.Add(reader.GetString(0));
+            }
+        }
+
+        return EnvironmentAdministeredPaging.ToPage(rows, pageSize);
     }
 
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
+
+    // Rewrites this environment's reverse-index rows within the write transaction (§7.8): retract the stale digests, then
+    // index the current ones. The administrator set is small, so a delete-all-then-insert is simplest and correct.
+    private static async ValueTask RewriteIndexAsync(SqlConnection connection, SqlTransaction transaction, string environmentName, IReadOnlyList<EnvironmentAdministrators.AdministratorIdentity> administrators, CancellationToken cancellationToken)
+    {
+        await using (SqlCommand clear = connection.CreateCommand())
+        {
+            clear.Transaction = transaction;
+            clear.CommandText = "DELETE FROM EnvironmentAdministratorIndex WHERE EnvironmentName = @id;";
+            clear.Parameters.AddWithValue("@id", environmentName);
+            await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        foreach (string digest in EnvironmentAdministeredPaging.DistinctDigests(administrators))
+        {
+            await using SqlCommand index = connection.CreateCommand();
+            index.Transaction = transaction;
+            index.CommandText = "INSERT INTO EnvironmentAdministratorIndex (AdminDigest, EnvironmentName) VALUES (@digest, @id);";
+            index.Parameters.AddWithValue("@digest", digest);
+            index.Parameters.AddWithValue("@id", environmentName);
+            await index.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
 
     private static async ValueTask<byte[]?> ReadDocumentAsync(SqlConnection connection, string environmentName, CancellationToken cancellationToken)
     {
@@ -168,6 +257,14 @@ public sealed class SqlServerEnvironmentAdministratorStore : IEnvironmentAdminis
                 EnvironmentName NVARCHAR(450) NOT NULL PRIMARY KEY,
                 Etag NVARCHAR(255) NOT NULL,
                 Document VARBINARY(MAX) NOT NULL
+            );
+        END;
+        IF OBJECT_ID(N'EnvironmentAdministratorIndex', N'U') IS NULL
+        BEGIN
+            CREATE TABLE EnvironmentAdministratorIndex (
+                AdminDigest NVARCHAR(64) COLLATE Latin1_General_BIN2 NOT NULL,
+                EnvironmentName NVARCHAR(450) COLLATE Latin1_General_BIN2 NOT NULL,
+                PRIMARY KEY (AdminDigest, EnvironmentName)
             );
         END;
         """;

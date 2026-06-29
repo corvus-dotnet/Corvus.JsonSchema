@@ -55,6 +55,62 @@ public sealed class SecuredEnvironmentAdministration
     public ValueTask DeleteRecordAsync(string environmentName, CancellationToken cancellationToken)
         => this.store.DeleteAsync(environmentName, cancellationToken);
 
+    /// <summary>Lists the environment names the caller administers — the reverse administration index (design §7.8) that
+    /// powers the promotion approver inbox. The empty identity (an unscoped deployment) administers nothing.</summary>
+    /// <param name="callerIdentity">The caller's resolved internal identity.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The environment names the caller administers (ordered by name), drained across the reverse index's keyset pages.</returns>
+    public async ValueTask<IReadOnlyList<string>> ListAdministeredEnvironmentsAsync(SecurityTagSet callerIdentity, CancellationToken cancellationToken)
+    {
+        // The reverse administration index is keyed by the identity digest; the empty identity has no digest.
+        if (SecurityIdentityDigest.Compute(callerIdentity) is not { } digest)
+        {
+            return [];
+        }
+
+        // Drain the (keyset-paged, bounded) reverse index into the full administered set the inbox queries across. The
+        // continuation token round-trips through the JsonString seam (the store decodes it bytes-native); the wrapping
+        // document is held only until the next page's call reads its token.
+        var administered = new List<string>();
+        ParsedJsonDocument<JsonString>? tokenDocument = null;
+        JsonString token = default;
+        try
+        {
+            while (true)
+            {
+                using EnvironmentAdministeredPage page = await this.store.ListAdministeredAsync(digest, 0, token, cancellationToken).ConfigureAwait(false);
+                administered.AddRange(page.EnvironmentNames);
+
+                tokenDocument?.Dispose();
+                tokenDocument = null;
+                if (page.NextPageToken.IsEmpty)
+                {
+                    break;
+                }
+
+                tokenDocument = WrapPageToken(page.NextPageToken);
+                token = tokenDocument.RootElement;
+            }
+        }
+        finally
+        {
+            tokenDocument?.Dispose();
+        }
+
+        return administered;
+    }
+
+    // Wraps a continuation token's UTF-8 (a page's NextPageToken) as the JSON string value the store's paged read decodes it
+    // from — the same seam the HTTP layer carries it over, used here to drain the reverse index across pages.
+    private static ParsedJsonDocument<JsonString> WrapPageToken(ReadOnlyMemory<byte> tokenUtf8)
+    {
+        byte[] quoted = new byte[tokenUtf8.Length + 2];
+        quoted[0] = (byte)'"';
+        tokenUtf8.Span.CopyTo(quoted.AsSpan(1));
+        quoted[^1] = (byte)'"';
+        return ParsedJsonDocument<JsonString>.Parse(quoted);
+    }
+
     /// <summary>Materializes the initial administration record for a freshly-created environment (§7.7): the creator's
     /// resolved identity becomes the sole, removable administrator. Idempotent — a concurrent establish (None-etag race)
     /// is harmless. The identity is built in an unrented workspace held across the <c>PutAsync</c> await.</summary>

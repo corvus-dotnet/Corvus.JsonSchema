@@ -13,8 +13,9 @@ namespace Corvus.Text.Json.Arazzo.Durability.MySql;
 /// A MySQL-backed <see cref="IEnvironmentAdministratorStore"/> (design §7.7): the explicit administration record for a
 /// deployment environment — the mutable set of administrator identities entitled to manage administration. Each record is
 /// stored as its <see cref="EnvironmentAdministrators"/> document in a <c>LONGBLOB</c> column, keyed by EnvironmentName;
-/// its etag is held in a column for the optimistic-concurrency check. Mirrors <see cref="MySqlWorkflowAdministratorStore"/>
-/// without the reverse administration index. The record holds deployment-stamped identities only — never secret material.
+/// its etag is held in a column for the optimistic-concurrency check. A companion reverse administration index (design §7.8)
+/// maps each administrator digest to the environments it administers, powering the promotion approver inbox. Mirrors
+/// <see cref="MySqlWorkflowAdministratorStore"/>. The record holds deployment-stamped identities only — never secret material.
 /// </summary>
 /// <remarks>
 /// Each operation opens a pooled connection, so the store is naturally concurrent; the <see cref="PutAsync"/>
@@ -132,14 +133,24 @@ public sealed class MySqlEnvironmentAdministratorStore : IEnvironmentAdministrat
             isUpdate = false;
         }
 
-        await using MySqlCommand write = connection.CreateCommand();
-        write.CommandText = isUpdate
-            ? "UPDATE EnvironmentAdministrators SET Etag = @etag, Document = @doc WHERE EnvironmentName = @id;"
-            : "INSERT INTO EnvironmentAdministrators (EnvironmentName, Etag, Document) VALUES (@id, @etag, @doc);";
-        write.Parameters.AddWithValue("@id", environmentName);
-        write.Parameters.AddWithValue("@etag", etag.Value!);
-        write.Parameters.AddWithValue("@doc", json);
-        await write.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        // The document write and the reverse-index rewrite are atomic (design §7.8): the inbox must never observe an
+        // environment indexed under a digest its current administrator set no longer holds, or vice versa.
+        await using MySqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+        await using (MySqlCommand write = connection.CreateCommand())
+        {
+            write.Transaction = transaction;
+            write.CommandText = isUpdate
+                ? "UPDATE EnvironmentAdministrators SET Etag = @etag, Document = @doc WHERE EnvironmentName = @id;"
+                : "INSERT INTO EnvironmentAdministrators (EnvironmentName, Etag, Document) VALUES (@id, @etag, @doc);";
+            write.Parameters.AddWithValue("@id", environmentName);
+            write.Parameters.AddWithValue("@etag", etag.Value!);
+            write.Parameters.AddWithValue("@doc", json);
+            await write.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await RewriteIndexAsync(connection, transaction, environmentName, administrators, cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<EnvironmentAdministrators>(json);
     }
 
@@ -148,10 +159,63 @@ public sealed class MySqlEnvironmentAdministratorStore : IEnvironmentAdministrat
     {
         ArgumentException.ThrowIfNullOrEmpty(environmentName);
         await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        await using MySqlCommand delete = connection.CreateCommand();
-        delete.CommandText = "DELETE FROM EnvironmentAdministrators WHERE EnvironmentName = @id;";
-        delete.Parameters.AddWithValue("@id", environmentName);
-        await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        // The document delete and the reverse-index retraction are atomic (design §7.8): the inbox must never observe an
+        // environment still indexed under a digest after its record is gone. Deleting a missing record is a harmless no-op
+        // (both deletes affect zero rows), preserving the contract's "delete of an absent environment is a no-op" semantics.
+        await using MySqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+        await using (MySqlCommand delete = connection.CreateCommand())
+        {
+            delete.Transaction = transaction;
+            delete.CommandText = "DELETE FROM EnvironmentAdministrators WHERE EnvironmentName = @id;";
+            delete.Parameters.AddWithValue("@id", environmentName);
+            await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await using (MySqlCommand clear = connection.CreateCommand())
+        {
+            clear.Transaction = transaction;
+            clear.CommandText = "DELETE FROM EnvironmentAdministratorIndex WHERE EnvironmentName = @id;";
+            clear.Parameters.AddWithValue("@id", environmentName);
+            await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        int pageSize = limit > 0 ? limit : EnvironmentAdministeredPage.DefaultPageSize;
+
+        // The keyset cursor (the environment name to page strictly after) reifies once here for the @after parameter — the
+        // SQL leaf — never per row. The index columns are utf8mb4_bin so the keyset compare is binary (ordinal; the contract's order).
+        string? after = EnvironmentAdministeredContinuationToken.DecodeCursorToString(pageToken);
+
+        await using MySqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand select = connection.CreateCommand();
+        select.CommandText = after is null
+            ? "SELECT EnvironmentName FROM EnvironmentAdministratorIndex WHERE AdminDigest = @digest ORDER BY EnvironmentName LIMIT @n;"
+            : "SELECT EnvironmentName FROM EnvironmentAdministratorIndex WHERE AdminDigest = @digest AND EnvironmentName > @after ORDER BY EnvironmentName LIMIT @n;";
+        select.Parameters.AddWithValue("@digest", adminDigest);
+        select.Parameters.AddWithValue("@n", pageSize + 1);
+        if (after is not null)
+        {
+            select.Parameters.AddWithValue("@after", after);
+        }
+
+        var rows = new List<string>(pageSize + 1);
+        await using (MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+        {
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                rows.Add(reader.GetString(0));
+            }
+        }
+
+        return EnvironmentAdministeredPaging.ToPage(rows, pageSize);
     }
 
     /// <inheritdoc/>
@@ -160,6 +224,29 @@ public sealed class MySqlEnvironmentAdministratorStore : IEnvironmentAdministrat
         if (this.ownsDataSource)
         {
             await this.dataSource.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    // Rewrites this environment's reverse-index rows within the write transaction (§7.8): retract the stale digests, then
+    // index the current ones. The administrator set is small, so a delete-all-then-insert is simplest and correct.
+    private static async ValueTask RewriteIndexAsync(MySqlConnection connection, MySqlTransaction transaction, string environmentName, IReadOnlyList<EnvironmentAdministrators.AdministratorIdentity> administrators, CancellationToken cancellationToken)
+    {
+        await using (MySqlCommand clear = connection.CreateCommand())
+        {
+            clear.Transaction = transaction;
+            clear.CommandText = "DELETE FROM EnvironmentAdministratorIndex WHERE EnvironmentName = @id;";
+            clear.Parameters.AddWithValue("@id", environmentName);
+            await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        foreach (string digest in EnvironmentAdministeredPaging.DistinctDigests(administrators))
+        {
+            await using MySqlCommand index = connection.CreateCommand();
+            index.Transaction = transaction;
+            index.CommandText = "INSERT INTO EnvironmentAdministratorIndex (AdminDigest, EnvironmentName) VALUES (@digest, @id);";
+            index.Parameters.AddWithValue("@digest", digest);
+            index.Parameters.AddWithValue("@id", environmentName);
+            await index.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -187,6 +274,11 @@ public sealed class MySqlEnvironmentAdministratorStore : IEnvironmentAdministrat
             EnvironmentName VARCHAR(255) NOT NULL PRIMARY KEY,
             Etag VARCHAR(255) NOT NULL,
             Document LONGBLOB NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS EnvironmentAdministratorIndex (
+            AdminDigest VARCHAR(64) COLLATE utf8mb4_bin NOT NULL,
+            EnvironmentName VARCHAR(255) COLLATE utf8mb4_bin NOT NULL,
+            PRIMARY KEY (AdminDigest, EnvironmentName)
         );
         """;
 }
