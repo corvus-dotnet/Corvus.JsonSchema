@@ -834,6 +834,117 @@ ContentBlocks:
 }
 Write-StepDuration "Docs generation ($docCount pages)" $sw
 
+# -- Step 5b: Generate TypeScript guide + recipe pages -----------------------
+# Renders the docs/typescript guides and the per-recipe READMEs as native /typescript/ pages
+# (mirrors Step 4/5) so they no longer just link out to the repo. The hand-authored landing
+# blocks in content/TypeScript/ and the two section index.yml files are preserved; everything
+# this step writes is prefixed Generated_ / lives next to the section index so it can be cleaned.
+Write-Host "`n[5b/10] Generating TypeScript guide + recipe pages..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$tsSourceDir = Join-Path $repoRoot "docs\typescript"
+$tsContentDir = Join-Path $siteDir "content\TypeScript"
+$tsGuidesTaxDir = Join-Path $siteDir "taxonomy\typescript-guides"
+$tsExamplesTaxDir = Join-Path $siteDir "taxonomy\typescript-examples"
+$tsGhExamplesBase = "$canonicalRepoUrl/blob/$canonicalBlobRef/docs/typescript/examples"
+
+# Clean previously-generated pages (hand-authored landing blocks + the two index.yml survive)
+Get-ChildItem $tsContentDir -Filter "Generated_*.md" -ErrorAction SilentlyContinue | Remove-Item -Force
+foreach ($td in @($tsGuidesTaxDir, $tsExamplesTaxDir)) {
+    Get-ChildItem $td -Filter "*.yml" -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -ne "index.yml" } | Remove-Item -Force
+}
+
+function Write-TsDocPage($contentName, $slug, $title, $description, $parentUrl, $url, $taxDir, $body) {
+    $t = $title -replace '"', '\"'
+    $d = $description -replace '"', '\"'
+    $fm = "---`nContentType: `"application/vnd.endjin.ssg.content+md`"`nPublicationStatus: Published`nDate: 2026-06-29T00:00:00.0+00:00`nTitle: `"$t`"`n---`n"
+    [System.IO.File]::WriteAllText((Join-Path $tsContentDir "$contentName.md"), ($fm + $body), [System.Text.Encoding]::UTF8)
+    $tax = @"
+ContentType: application/vnd.endjin.ssg.page+yaml
+Title: "$t"
+Template: typescript/doc-page
+Navigation:
+  Title: "$t"
+  Description: "$d"
+  Parent: $parentUrl
+  Url: $url
+  Rank: 1
+  Header:
+    Visible: False
+    Link: False
+  Footer:
+    Visible: False
+    Link: False
+MetaData:
+  Title: "$t — Corvus.Text.Json TypeScript"
+  Description: "$d"
+  Keywords: [TypeScript, JSON Schema, Corvus.Text.Json, code generation]
+OpenGraph:
+  Title: "$t — Corvus.Text.Json TypeScript"
+  Description: "$d"
+  Image:
+ContentBlocks:
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: $contentName
+    Spec:
+      Path: ../../content/TypeScript/$contentName.md
+"@
+    [System.IO.File]::WriteAllText((Join-Path $taxDir "$slug.yml"), $tax, [System.Text.Encoding]::UTF8)
+}
+
+# Recipe slug map (e.g. 019-formats -> formats), used for cross-recipe link rewriting
+$tsRecipeSlugMap = [ordered]@{}
+$tsRecipeDirs = @(Get-ChildItem (Join-Path $tsSourceDir "examples") -Directory -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -match '^\d+-(.+)$' } | Sort-Object Name)
+foreach ($rd in $tsRecipeDirs) { if ($rd.Name -match '^\d+-(.+)$') { $tsRecipeSlugMap[$rd.Name] = $Matches[1] } }
+
+$tsGuideFiles = @('reading-and-validating', 'mutation', 'the-type-surface', 'value-types')
+$tsPageCount = 0
+
+# --- Guides (getting-started IS the /typescript/ landing, so it is not regenerated here) ---
+foreach ($g in $tsGuideFiles) {
+    $src = Join-Path $tsSourceDir "$g.md"
+    if (!(Test-Path $src)) { continue }
+    $raw = Get-Content $src -Raw -Encoding utf8
+    $title = if ($raw -match '^#\s+(.+?)[\r\n]') { ($Matches[1].Trim() -replace '`', '') } else { $g }
+    $body = ($raw -replace '^#[^\n]+\n\s*', '').TrimStart()
+    $body = $body -replace '\]\(\./getting-started\.md(#[^)]*)?\)', '](/typescript/index.html$1)'
+    foreach ($og in $tsGuideFiles) { $body = $body -replace "\]\(\./$og\.md(#[^)]*)?\)", "](/typescript/guides/$og.html`$1)" }
+    foreach ($e in $tsRecipeSlugMap.GetEnumerator()) {
+        $body = $body -replace [regex]::Escape("](./examples/$($e.Key)/)"), "](/typescript/examples/$($e.Value).html)"
+        $body = $body -replace [regex]::Escape("](./examples/$($e.Key))"), "](/typescript/examples/$($e.Value).html)"
+    }
+    $body = $body -replace '\]\(\./examples/?\)', '](/typescript/examples/index.html)'
+    $body = $body -replace '\]\(\.\./playground-typescript/?\)', '](/playground-typescript/index.html)'
+    $desc = "$title — a Corvus.Text.Json guide to generating idiomatic TypeScript from JSON Schema."
+    Write-TsDocPage "Generated_Guide_$g" $g $title $desc "/typescript/guides/index.html" "/typescript/guides/$g.html" $tsGuidesTaxDir $body
+    $tsPageCount++
+    Write-Host "  guide -> /typescript/guides/$g.html" -ForegroundColor Gray
+}
+
+# --- Recipes (one page per docs/typescript/examples/<recipe>/README.md) ---
+foreach ($dir in $tsRecipeDirs) {
+    $readme = Join-Path $dir.FullName "README.md"
+    if (!(Test-Path $readme)) { continue }
+    $slug = $tsRecipeSlugMap[$dir.Name]
+    $raw = Get-Content $readme -Raw -Encoding utf8
+    $title = if ($raw -match '^# TypeScript Patterns\s*[-–]\s*(.+?)[\r\n]') { $Matches[1].Trim() }
+             elseif ($raw -match '^#\s+(.+?)[\r\n]') { $Matches[1].Trim() } else { $slug }
+    $body = ($raw -replace '^#[^\n]+\n\s*', '').TrimStart()
+    foreach ($e in $tsRecipeSlugMap.GetEnumerator()) {
+        $body = $body -replace [regex]::Escape("](../$($e.Key)/)"), "](/typescript/examples/$($e.Value).html)"
+        $body = $body -replace [regex]::Escape("](../$($e.Key))"), "](/typescript/examples/$($e.Value).html)"
+    }
+    $ghDir = "$tsGhExamplesBase/$($dir.Name)"
+    $body = $body -replace '\]\(\./([^)]+)\)', "](${ghDir}/`$1)"
+    $desc = "$title — a worked example of generating TypeScript from JSON Schema with Corvus.Text.Json."
+    Write-TsDocPage "Generated_Recipe_$slug" $slug $title $desc "/typescript/examples/index.html" "/typescript/examples/$slug.html" $tsExamplesTaxDir $body
+    $tsPageCount++
+    Write-Host "  recipe -> /typescript/examples/$slug.html" -ForegroundColor Gray
+}
+Write-StepDuration "TypeScript page generation ($tsPageCount pages)" $sw
+
 # -- Step 6: Run Vellum ------------------------------------------------------
 Write-Host "`n[6/10] Running Vellum..." -ForegroundColor Cyan
 $sw = [System.Diagnostics.Stopwatch]::StartNew()

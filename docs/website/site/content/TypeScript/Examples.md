@@ -22,22 +22,22 @@ Regenerate a recipe's `generated.ts` from its schema with `npm run regenerate`.
 
 | # | Recipe | JSON Schema construct |
 |---|--------|-----------------------|
-| 001 | [data-object](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/001-data-object) | object, required/optional, scalar + `format` |
-| 002 | [validation](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/002-validation) | `minLength` / `minimum` / `pattern` / … constraints |
-| 003 | [references](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/003-references) | `$ref`, `$defs` |
-| 004 | [open-and-closed](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/004-open-and-closed) | `additionalProperties`, `unevaluatedProperties: false` |
-| 005 | [extending](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/005-extending) | `allOf` (base + extension) |
-| 006 | [constraining](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/006-constraining) | `allOf` (constrain a base) |
-| 007 | [arrays](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/007-arrays) | `items` (homogeneous) |
-| 008 | [nested-arrays](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/008-nested-arrays) | arrays of higher rank |
-| 009 | [tuples](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/009-tuples) | `prefixItems` / positional `items` |
-| 010 | [mixins](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/010-mixins) | `allOf` (multiple bases) |
-| 011 | [unions](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/011-unions) | `oneOf` + `match` (untagged) |
-| 012 | [discriminated-unions](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/012-discriminated-unions) | `oneOf` + `const` discriminator |
-| 013 | [string-enums](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/013-string-enums) | `enum` → string-literal union |
-| 014 | [numeric-enums](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/014-numeric-enums) | numeric `enum` / `oneOf` + `const` |
-| 015 | [maps](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/015-maps) | `additionalProperties` / `patternProperties` |
-| 016 | [mutation](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/016-mutation) | `build` / `patch` / `produce` |
-| 017 | [conditional](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/017-conditional) | `if` / `then` / `else` |
-| 018 | [defaults](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/018-defaults) | `default` |
-| 019 | [formats](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples/019-formats) | `date` / `uuid` / `uri` / … branded types |
+| 001 | [data-object](/typescript/examples/data-object.html) | object, required/optional, scalar + `format` |
+| 002 | [validation](/typescript/examples/validation.html) | `minLength` / `minimum` / `pattern` / … constraints |
+| 003 | [references](/typescript/examples/references.html) | `$ref`, `$defs` |
+| 004 | [open-and-closed](/typescript/examples/open-and-closed.html) | `additionalProperties`, `unevaluatedProperties: false` |
+| 005 | [extending](/typescript/examples/extending.html) | `allOf` (base + extension) |
+| 006 | [constraining](/typescript/examples/constraining.html) | `allOf` (constrain a base) |
+| 007 | [arrays](/typescript/examples/arrays.html) | `items` (homogeneous) |
+| 008 | [nested-arrays](/typescript/examples/nested-arrays.html) | arrays of higher rank |
+| 009 | [tuples](/typescript/examples/tuples.html) | `prefixItems` / positional `items` |
+| 010 | [mixins](/typescript/examples/mixins.html) | `allOf` (multiple bases) |
+| 011 | [unions](/typescript/examples/unions.html) | `oneOf` + `match` (untagged) |
+| 012 | [discriminated-unions](/typescript/examples/discriminated-unions.html) | `oneOf` + `const` discriminator |
+| 013 | [string-enums](/typescript/examples/string-enums.html) | `enum` → string-literal union |
+| 014 | [numeric-enums](/typescript/examples/numeric-enums.html) | numeric `enum` / `oneOf` + `const` |
+| 015 | [maps](/typescript/examples/maps.html) | `additionalProperties` / `patternProperties` |
+| 016 | [mutation](/typescript/examples/mutation.html) | `build` / `patch` / `produce` |
+| 017 | [conditional](/typescript/examples/conditional.html) | `if` / `then` / `else` |
+| 018 | [defaults](/typescript/examples/defaults.html) | `default` |
+| 019 | [formats](/typescript/examples/formats.html) | `date` / `uuid` / `uri` / … branded types |
