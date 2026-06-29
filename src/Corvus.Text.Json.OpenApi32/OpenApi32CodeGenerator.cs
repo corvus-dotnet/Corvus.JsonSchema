@@ -10,6 +10,7 @@ using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using EncodingInfo = Corvus.Text.Json.OpenApi.CodeGeneration.EncodingInfo;
 
 namespace Corvus.Text.Json.OpenApi32;
 
@@ -75,133 +76,6 @@ public sealed class OpenApi32CodeGenerator
         OperationMethod Method,
         OpenApiDocument.PathItem PathItem,
         string? CustomMethodName = null);
-
-    // ── Emit-boundary record types (strings for C# code generation) ─────
-    private readonly record struct OperationInfo(
-        string PathTemplate,
-        OperationMethod Method,
-        string? CustomMethodName,
-        string MethodName,
-        string? OperationId,
-        string? Summary,
-        string? Description,
-        bool IsDeprecated,
-        string[] Tags,
-        ParameterInfo[] Parameters,
-        RequestBodyInfo? RequestBody,
-        ResponseInfo[] Responses,
-        ServerInfo? EffectiveServer,
-        OperationSecurityRequirementSet[]? SecurityRequirements = null);
-
-    private readonly record struct ServerInfo(
-        string UrlTemplate,
-        ServerVariableInfo[] Variables);
-
-    private readonly record struct ServerVariableInfo(
-        string Name,
-        string DefaultValue,
-        string[]? AllowedValues);
-
-    private readonly record struct ParameterInfo(
-        string Name,
-        ParameterLocation Location,
-        bool IsRequired,
-        ParameterStyle Style,
-        bool Explode,
-        bool AllowReserved,
-        ParameterSerializationKind SerializationKind,
-        ParameterSerializationKind ElementSerializationKind,
-        string? SchemaPointer,
-        bool HasDeepNesting,
-        string? DefaultValueJson,
-        JsonValueKind DefaultValueKind);
-
-    private readonly record struct RequestBodyInfo(
-        string? Description,
-        bool IsRequired,
-        ContentInfo[] Content,
-        BinaryPropertyInfo[] BinaryProperties,
-        MixedPartInfo[]? PrefixParts = null,
-        MixedPartInfo? ItemPart = null);
-
-    private readonly record struct BinaryPropertyInfo(
-        string PropertyName,
-        string ParameterName,
-        string? ContentType);
-
-    private readonly record struct MixedPartInfo(
-        string SchemaPointer,
-        string ContentType,
-        bool IsBinary);
-
-    private readonly record struct ResponseInfo(
-        string StatusCode,
-        string? Summary,
-        string? Description,
-        ContentInfo[] Content,
-        HeaderInfo[] Headers,
-        LinkInfo[] Links);
-
-    private readonly record struct ContentInfo(
-        string MediaType,
-        string? SchemaPointer,
-        IReadOnlyDictionary<string, EncodingInfo>? Encodings,
-        string? ItemSchemaPointer = null);
-
-    private readonly record struct EncodingInfo(
-        string? Style,
-        bool? Explode,
-        bool AllowReserved,
-        string? ContentType);
-
-    private readonly record struct HeaderInfo(
-        string HeaderName,
-        string? SchemaPointer,
-        bool Explode,
-        ParameterSerializationKind SerializationKind,
-        ParameterSerializationKind ElementSerializationKind,
-        bool HasDeepNesting);
-
-    private readonly record struct LinkInfo(
-        string LinkName,
-        string? TargetOperationId,
-        LinkParameterBinding[] ParameterBindings,
-        string? RequestBodyExpression,
-        string? Description,
-        string SourceStatusCode);
-
-    private readonly record struct LinkParameterBinding(
-        string ParameterName,
-        string Expression);
-
-    private readonly record struct SecuritySchemeInfo(
-        string SchemeName,
-        string SchemeType,
-        bool IsDeprecated,
-        string? Description,
-        string? ApiKeyName,
-        string? ApiKeyIn,
-        string? HttpScheme,
-        string? BearerFormat,
-        string? OpenIdConnectUrl,
-        string? Oauth2MetadataUrl,
-        string? DeviceAuthorizationUrl,
-        string? TokenUrl = null,
-        string? AuthorizationUrl = null,
-        string[]? AvailableScopes = null);
-
-    // One element of an OpenAPI `security` array (a "Security Requirement Object"): an alternative
-    // that, on its own, satisfies the operation's security. The schemes within it are AND'd; the
-    // alternatives across the array are OR'd. An empty object ({}) marks anonymous access as an
-    // accepted alternative.
-    private readonly record struct OperationSecurityRequirementSet(
-        OperationSecurityRequirement[] Requirements,
-        bool IsOptional);
-
-    private readonly record struct OperationSecurityRequirement(
-        string SchemeName,
-        string[] Scopes,
-        string? SchemeType = null);
 
     /// <summary>
     /// Walks the OpenAPI 3.2 specification and collects all schema
@@ -1815,20 +1689,20 @@ public sealed class OpenApi32CodeGenerator
             : null;
 
         return new OperationInfo(
-            pathTemplate,
-            opRef.Method,
-            opRef.CustomMethodName,
-            methodName,
-            operationId,
-            summary,
-            description,
-            isDeprecated,
-            tags,
-            parameters,
-            requestBody,
-            responses,
-            effectiveServer,
-            securityRequirements);
+            PathTemplate: pathTemplate,
+            Method: opRef.Method,
+            MethodName: methodName,
+            OperationId: operationId,
+            Summary: summary,
+            Description: description,
+            IsDeprecated: isDeprecated,
+            Tags: tags,
+            Parameters: parameters,
+            RequestBody: requestBody,
+            Responses: responses,
+            EffectiveServer: effectiveServer,
+            SecurityRequirements: securityRequirements,
+            CustomMethodName: opRef.CustomMethodName);
     }
 
     private static ParameterInfo[] PrepareParameters(
@@ -1864,8 +1738,18 @@ public sealed class OpenApi32CodeGenerator
                 string name = param.Name.IsNotUndefined() ? param.Name.GetString()! : "__querystring";
 
                 result[i] = new ParameterInfo(
-                    name, location, required, style, explode, allowReserved,
-                    ParameterSerializationKind.Object, ParameterSerializationKind.String, schemaPointer, false, null, JsonValueKind.Undefined);
+                    Name: name,
+                    Location: location,
+                    IsRequired: required,
+                    Style: style,
+                    Explode: explode,
+                    SerializationKind: ParameterSerializationKind.Object,
+                    ElementSerializationKind: ParameterSerializationKind.String,
+                    SchemaPointer: schemaPointer,
+                    HasDeepNesting: false,
+                    DefaultValueJson: null,
+                    DefaultValueKind: JsonValueKind.Undefined,
+                    AllowReserved: allowReserved);
                 continue;
             }
 
@@ -1908,8 +1792,18 @@ public sealed class OpenApi32CodeGenerator
             string regularName = param.Name.GetString()!;
 
             result[i] = new ParameterInfo(
-                regularName, location, required, style, explode, allowReserved,
-                serializationKind, elementKind, schemaPointerRegular, deepNesting, defaultValueJson, defaultValueKind);
+                Name: regularName,
+                Location: location,
+                IsRequired: required,
+                Style: style,
+                Explode: explode,
+                SerializationKind: serializationKind,
+                ElementSerializationKind: elementKind,
+                SchemaPointer: schemaPointerRegular,
+                HasDeepNesting: deepNesting,
+                DefaultValueJson: defaultValueJson,
+                DefaultValueKind: defaultValueKind,
+                AllowReserved: allowReserved);
         }
 
         return result;
@@ -2124,7 +2018,13 @@ public sealed class OpenApi32CodeGenerator
 
                 LinkInfo[] links = PrepareLinks(response.Links, referenceResolver, statusCode);
 
-                result.Add(new ResponseInfo(statusCode, responseSummary, responseDescription, content, headers, links));
+                result.Add(new ResponseInfo(
+                    StatusCode: statusCode,
+                    Content: content,
+                    Headers: headers,
+                    Links: links,
+                    Summary: responseSummary,
+                    Description: responseDescription));
             }
         }
 

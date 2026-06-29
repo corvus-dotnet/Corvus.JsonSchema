@@ -9,6 +9,7 @@ using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Microsoft.CodeAnalysis.CSharp;
+using EncodingInfo = Corvus.Text.Json.OpenApi.CodeGeneration.EncodingInfo;
 
 namespace Corvus.Text.Json.OpenApi30;
 
@@ -88,105 +89,6 @@ public sealed class OpenApi30CodeGenerator
         ("patch"u8.ToArray(), OperationMethod.Patch),
         ("trace"u8.ToArray(), OperationMethod.Trace),
     ];
-
-    // ── Emit-boundary record types (strings for C# code generation) ─────
-    private readonly record struct OperationInfo(
-        string PathTemplate,
-        OperationMethod Method,
-        string MethodName,
-        string? OperationId,
-        string? Summary,
-        string? Description,
-        bool IsDeprecated,
-        string[] Tags,
-        ParameterInfo[] Parameters,
-        RequestBodyInfo? RequestBody,
-        ResponseInfo[] Responses,
-        ServerInfo? EffectiveServer,
-        OperationSecurityRequirementSet[]? SecurityRequirements = null);
-
-    // One element of an OpenAPI `security` array (a "Security Requirement Object"): an alternative
-    // that, on its own, satisfies the operation's security. The schemes within it are AND'd; the
-    // alternatives across the array are OR'd. An empty object ({}) marks anonymous access as an
-    // accepted alternative.
-    private readonly record struct OperationSecurityRequirementSet(
-        OperationSecurityRequirement[] Requirements,
-        bool IsOptional);
-
-    private readonly record struct OperationSecurityRequirement(
-        string SchemeName,
-        string[] Scopes,
-        string? SchemeType = null);
-
-    private readonly record struct ServerInfo(
-        string UrlTemplate,
-        ServerVariableInfo[] Variables);
-
-    private readonly record struct ServerVariableInfo(
-        string Name,
-        string DefaultValue,
-        string[]? AllowedValues);
-
-    private readonly record struct ParameterInfo(
-        string Name,
-        ParameterLocation Location,
-        bool IsRequired,
-        ParameterStyle Style,
-        bool Explode,
-        ParameterSerializationKind SerializationKind,
-        ParameterSerializationKind ElementSerializationKind,
-        string? SchemaPointer,
-        bool HasDeepNesting,
-        string? DefaultValueJson,
-        JsonValueKind DefaultValueKind);
-
-    private readonly record struct RequestBodyInfo(
-        string? Description,
-        bool IsRequired,
-        ContentInfo[] Content,
-        BinaryPropertyInfo[] BinaryProperties);
-
-    private readonly record struct BinaryPropertyInfo(
-        string PropertyName,
-        string ParameterName,
-        string? ContentType);
-
-    private readonly record struct ResponseInfo(
-        string StatusCode,
-        ContentInfo[] Content,
-        HeaderInfo[] Headers,
-        LinkInfo[] Links);
-
-    private readonly record struct ContentInfo(
-        string MediaType,
-        string? SchemaPointer,
-        IReadOnlyDictionary<string, EncodingInfo>? Encodings);
-
-    private readonly record struct EncodingInfo(
-        string? Style,
-        bool? Explode,
-        bool AllowReserved,
-        string? ContentType);
-
-    private readonly record struct HeaderInfo(
-        string HeaderName,
-        string? SchemaPointer,
-        bool Explode,
-        ParameterSerializationKind SerializationKind,
-        ParameterSerializationKind ElementSerializationKind,
-        bool HasDeepNesting);
-
-    private readonly record struct LinkInfo(
-        string LinkName,
-        string? TargetOperationId,
-        LinkParameterBinding[] ParameterBindings,
-        string? RequestBodyExpression,
-        string? Description,
-        string SourceStatusCode);
-
-    private readonly record struct LinkParameterBinding(
-        string ParameterName,
-        string Expression);
 
     /// <summary>
     /// Walks the OpenAPI 3.0 specification and collects all schema
