@@ -130,6 +130,15 @@ public static class CliApp
                 sources.AddCommand<SourceDeleteCommand>("delete").WithDescription("Delete a source registration (its credentials are managed separately).");
             });
 
+            c.AddBranch<CommandSettings>("availability", availability =>
+            {
+                availability.SetDescription("Make workflow versions available in environments — \"promotion\" (availability:read / availability:write); governed by the target environment's administrators and readiness-gated (§7.8).");
+                availability.AddCommand<AvailabilityMakeCommand>("make").WithDescription("Make a version available in an environment (baseWorkflowId versionNumber environment); requires environment administration + readiness.");
+                availability.AddCommand<AvailabilityWithdrawCommand>("withdraw").WithDescription("Withdraw a version's availability in an environment (baseWorkflowId versionNumber environment).");
+                availability.AddCommand<AvailabilityListEnvironmentsCommand>("environments").WithDescription("List the environments a version is available in (baseWorkflowId versionNumber; --output json).");
+                availability.AddCommand<AvailabilityListVersionsCommand>("versions").WithDescription("List the workflow versions available in an environment (environment; --output json).");
+            });
+
             c.AddBranch<CommandSettings>("administrators", administrators =>
             {
                 administrators.SetDescription("Manage a workflow's administrator set — the identities entitled to publish versions and govern administration (administrators:read / administrators:write).");

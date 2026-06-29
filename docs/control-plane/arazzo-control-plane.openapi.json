@@ -58,6 +58,10 @@
     "description": "Manage first-class, reach-scoped source registrations (design §7.6): register/list/read/update/delete the OpenAPI/AsyncAPI documents a workflow references by name in its sourceDescriptions. A source is registered once and resolved immutably by the catalog; its per-environment credentials are managed separately (the credentials surface). Reach-scoped management — there is no administrator set; reach membership is the gate (capability scopes sources:read / sources:write). The registered document is returned only on read of a single source, never in the list."
   },
   {
+    "name": "availability",
+    "description": "Make a workflow version available in a deployment environment — \"promotion\" (design §7.8). Availability is an additive, many-to-many matrix (workflow version × environment): a version may be available in many environments and an environment may have many versions of one workflow available at once; making one version available never retires another. Making a version available (or withdrawing it) is governed by the TARGET environment's administrators, and is allowed only where the version is ready in that environment — every source the version references has a usable credential there (design §7.7). Reading availability is reach-scoped to the workflow / environment (capability scopes availability:read / availability:write)."
+  },
+  {
     "name": "accessRequests",
     "description": "Request and approve elevated, time-bound access to a workflow (design §16.5). Any authenticated principal may submit a request and withdraw their own; an administrator of the target workflow (§15) approves, denies, or revokes. An approval writes a single capped, time-boxed grant (run access only, scoped to the workflow); an eligible requester self-elevates without a human approver. These operations are authorized by the per-workflow administrator gate, not a global capability scope."
   },
@@ -674,6 +678,75 @@
             "description": "The named source document.",
             "content": { "application/json": { "schema": { "type": "object" } } }
           },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/availability": {
+      "get": {
+        "operationId": "listVersionAvailability",
+        "security": [
+          { "oauth2": ["availability:read"] },
+          { "openIdConnect": ["availability:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["availability"],
+        "summary": "List the environments a workflow version is available in",
+        "description": "Returns a page of availability entries for this version — the deployment environments it has been made available in (design §7.8), ordered by environment. Visible to a caller who can read the workflow version.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" },
+          { "name": "limit", "in": "query", "required": false, "description": "The maximum number of entries to return.", "schema": { "$ref": "#/components/schemas/PageLimit" } },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": { "description": "The availability entries.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityList" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/availability/{environment}": {
+      "put": {
+        "operationId": "makeVersionAvailable",
+        "security": [
+          { "oauth2": ["availability:write"] },
+          { "openIdConnect": ["availability:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["availability"],
+        "summary": "Make a workflow version available in an environment",
+        "description": "Makes this workflow version available in the environment (design §7.8) — additive, never retiring another version. The caller must be a current administrator of the TARGET environment (403 otherwise), and the version must be ready in that environment: every source it references must resolve a usable credential there (design §7.7), else 409 with the missing sources. Idempotent — making an already-available version available again returns the existing entry (200).",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" },
+          { "$ref": "#/components/parameters/EnvironmentPath" }
+        ],
+        "responses": {
+          "200": { "description": "The version was already available (the existing entry).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityEntry" } } } },
+          "201": { "description": "The version was made available.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityEntry" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      },
+      "delete": {
+        "operationId": "withdrawVersionAvailability",
+        "security": [
+          { "oauth2": ["availability:write"] },
+          { "openIdConnect": ["availability:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["availability"],
+        "summary": "Withdraw a workflow version's availability in an environment",
+        "description": "Removes this version's availability in the environment (design §7.8). The caller must be a current administrator of the target environment (403 otherwise). Does not affect any other version or environment.",
+        "parameters": [
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" },
+          { "$ref": "#/components/parameters/EnvironmentPath" }
+        ],
+        "responses": {
+          "204": { "description": "The version's availability was withdrawn." },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" }
         }
       }
@@ -1606,6 +1679,28 @@
         }
       }
     },
+    "/environments/{name}/availability": {
+      "get": {
+        "operationId": "listEnvironmentAvailability",
+        "security": [
+          { "oauth2": ["availability:read"] },
+          { "openIdConnect": ["availability:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["availability"],
+        "summary": "List the workflow versions available in an environment",
+        "description": "Returns a page of availability entries for this environment — the (workflow, version) pairs made available in it (design §7.8), ordered by base workflow id then version. Visible to a caller whose reach admits the environment.",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" },
+          { "name": "limit", "in": "query", "required": false, "description": "The maximum number of entries to return.", "schema": { "$ref": "#/components/schemas/PageLimit" } },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": { "description": "The availability entries.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityList" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
     "/sources": {
       "get": {
         "operationId": "listSources",
@@ -2110,7 +2205,9 @@
               "environments:read": "List and read governed deployment environments (reach-scoped).",
               "environments:write": "Create, update, and delete deployment environments and manage their administrators (current-administrator membership applies).",
               "sources:read": "List and read registered sources (reach-scoped; the source document is returned only on single read).",
-              "sources:write": "Register, update, and delete sources (reach-scoped)."
+              "sources:write": "Register, update, and delete sources (reach-scoped).",
+              "availability:read": "List where workflow versions are available across environments (reach-scoped).",
+              "availability:write": "Make a workflow version available in an environment, or withdraw it (target-environment-administrator gated; readiness-gated)."
             }
           },
           "clientCredentials": {
@@ -2131,7 +2228,9 @@
               "environments:read": "List and read governed deployment environments (reach-scoped).",
               "environments:write": "Create, update, and delete deployment environments and manage their administrators (current-administrator membership applies).",
               "sources:read": "List and read registered sources (reach-scoped; the source document is returned only on single read).",
-              "sources:write": "Register, update, and delete sources (reach-scoped)."
+              "sources:write": "Register, update, and delete sources (reach-scoped).",
+              "availability:read": "List where workflow versions are available across environments (reach-scoped).",
+              "availability:write": "Make a workflow version available in an environment, or withdraw it (target-environment-administrator gated; readiness-gated)."
             }
           }
         }
@@ -3576,6 +3675,31 @@
           "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page, or null/absent if this is the last page." }
         },
         "required": ["sources"]
+      },
+      "AvailabilityEntry": {
+        "type": "object",
+        "description": "One cell of the availability matrix (design §7.8): a workflow version made available in a deployment environment.",
+        "properties": {
+          "baseWorkflowId": { "type": "string", "description": "The base workflow id the version belongs to." },
+          "versionNumber": { "type": "integer", "format": "int32", "description": "The 1-based version number made available." },
+          "environment": { "type": "string", "description": "The deployment environment the version is available in." },
+          "createdBy": { "type": "string", "description": "The actor that made the version available." },
+          "createdAt": { "type": "string", "format": "date-time", "description": "When the version was made available." },
+          "etag": { "type": "string", "description": "The optimistic-concurrency token." }
+        },
+        "required": ["baseWorkflowId", "versionNumber", "environment", "createdBy", "createdAt", "etag"]
+      },
+      "AvailabilityList": {
+        "type": "object",
+        "description": "A page of availability matrix entries (design §7.8) — either the environments a version is available in, or the versions available in an environment.",
+        "properties": {
+          "availability": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AvailabilityEntry" }
+          },
+          "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page, or null/absent if this is the last page." }
+        },
+        "required": ["availability"]
       },
       "GranteeKind": {
         "type": "string",
