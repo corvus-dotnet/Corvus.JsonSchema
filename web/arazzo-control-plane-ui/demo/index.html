@@ -38,14 +38,16 @@
           <option value="dark">dark</option>
         </select>
       </label>
-      <label>Scopes
-        <select id="scopes">
-          <option value="runs:read runs:write runs:purge catalog:read catalog:write catalog:purge" selected>read + write + purge (full)</option>
-          <option value="runs:read runs:write catalog:read catalog:write">read + write</option>
-          <option value="runs:read catalog:read">read only</option>
+      <label>Persona
+        <select id="persona">
+          <option value="administrator" selected>Administrator</option>
+          <option value="operator">Operator</option>
+          <option value="viewer">Read-only viewer</option>
         </select>
       </label>
-      <span class="sub">Try the faulted run’s <strong>Resume…</strong>, cancel a running one, or browse the <strong>Catalog</strong> and obsolete/purge versions.</span>
+      <span class="sub">Switch to <strong>Operator</strong> to see the gated-elevation model: promoting a version is no longer a direct
+        <strong>Make available</strong> — you must <strong>Request promotion</strong> on the Catalog, and an <strong>Administrator</strong>
+        approves it from the <strong>Promotions</strong> inbox (the same for run access on the <strong>Access</strong> tab).</span>
     </div>
 
     <div class="tabs" role="tablist">
@@ -96,7 +98,7 @@
   </div>
 
   <script type="module">
-    import { createMockControlPlane } from './mock-api.js';
+    import { createMockControlPlane, DEMO_PERSONAS } from './mock-api.js';
     import { DEMO_SEED } from './demo-seed.js';
     import { ArazzoControlPlaneClient } from '../src/arazzo-client.js';
     import '../src/arazzo-control-plane.js';
@@ -157,16 +159,27 @@
     themeSel.addEventListener('change', (e) => applyTheme(e.target.value));
     applyTheme(themeSel.value);
 
-    // The scope selector carries runs:* / catalog:* / credentials:* / administrators:* — split per surface.
+    // The persona selector drives the WHOLE gating model from one source of truth: it sets each component's capability
+    // scopes (the real components hide the write controls they lack) AND tells the mock backend which scopes +
+    // administration the caller has (so it returns the same 401/403/elevation-required responses a real control plane
+    // would). Switch to Operator to watch direct actions become request-then-approve.
     const prefixed = (value, prefix) => value.split(/\s+/).filter((s) => s.startsWith(prefix)).join(' ');
-    document.getElementById('scopes').addEventListener('change', (e) => {
-      const all = e.target.value;
-      panel.setAttribute('scopes', prefixed(all, 'runs:'));
-      // The catalog detail hosts the Security (administrators) section and the §7.8 promotion matrix, so it carries the
-      // catalog + administrators scope families plus availability:* (the matrix's direct make/withdraw).
-      catalog.setAttribute('scopes', `${prefixed(all, 'catalog:')} ${prefixed(all, 'administrators:')} availability:read availability:write`.trim());
-      credTable.setAttribute('scopes', prefixed(all, 'credentials:'));
-    });
+    const applyPersona = (name) => {
+      const scopes = DEMO_PERSONAS[name].scopes;
+      mock.setPersona(name);
+      panel.setAttribute('scopes', prefixed(scopes, 'runs:'));
+      // The catalog detail hosts the Security (administrators §15) section and the §7.8 promotion matrix.
+      catalog.setAttribute('scopes', `${prefixed(scopes, 'catalog:')} ${prefixed(scopes, 'administrators:')} ${prefixed(scopes, 'availability:')}`.trim());
+      credTable.setAttribute('scopes', prefixed(scopes, 'credentials:'));
+      environments.setAttribute('scopes', `${prefixed(scopes, 'environments:')} ${prefixed(scopes, 'availability:')}`.trim());
+      reach.setAttribute('scopes', prefixed(scopes, 'security:'));
+      bindings.setAttribute('scopes', prefixed(scopes, 'security:'));
+      // Re-fetch the data-bearing surfaces so the new persona's enforcement (e.g. an emptied approver inbox) shows.
+      for (const c of [panel, catalog, credTable, environments, access, promotions, reach, bindings]) c.refresh?.();
+    };
+    const personaSel = document.getElementById('persona');
+    personaSel.addEventListener('change', (e) => applyPersona(e.target.value));
+    applyPersona(personaSel.value);
 
     // Tabs.
     const tabNames = ['runs', 'catalog', 'credentials', 'environments', 'access', 'permissions', 'promotions'];

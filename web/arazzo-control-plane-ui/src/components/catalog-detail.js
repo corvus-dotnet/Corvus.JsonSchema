@@ -474,7 +474,12 @@ class ArazzoCatalogDetail extends ArazzoElement {
     const availLine = availableEnvs.length
       ? `<span class="muted">Available in:</span> ${availableEnvs.map((e) => `<span class="tag avail-env">${escapeHtml(e)}</span>`).join(' ')}`
       : `<span class="muted">Not available in any environment yet.</span>`;
-    const action = promotable.length
+    // The "Request promotion" action is the elevation path — offered only when the caller CANNOT make a version
+    // available directly (no availability:write). A caller who can acts through the promotion matrix's "Make available"
+    // instead, so the two surfaces never both offer to promote the same version.
+    const scopeList = (this.getAttribute('scopes') || '').split(/\s+/).filter(Boolean);
+    const canPromoteDirectly = scopeList.length === 0 || scopeList.includes('availability:write');
+    const action = (promotable.length && !canPromoteDirectly)
       ? `<button class="request-promotion ghost" type="button">Request promotion…</button>`
       : (ready.length ? '' : `<span class="muted">Not ready in any environment — set up credentials to promote.</span>`);
     host.innerHTML = `<div class="avail-row">${availLine}</div>${action ? `<div class="avail-actions">${action}</div>` : ''}`;

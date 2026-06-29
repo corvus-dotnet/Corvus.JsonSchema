@@ -675,6 +675,15 @@ requests) and returns RFC 9457 errors so the error/empty/loading paths and the r
 exercisable with **no server**. `demo/index.html` mounts the panels against it. This is the "open it and it
 works" quick-start entry point.
 
+The demo also carries a **persona** selector (Administrator / Operator / Read-only viewer) that drives the whole
+gated-elevation model from one source of truth: it sets each component's capability `scopes` (so the real components
+hide the write controls they lack) **and** tells the mock which scopes + administration the caller has, so the mock
+returns the same `401`/`403`/elevation-required responses a real control plane would (`mock.setPersona(...)`). Switching
+to **Operator** turns the promotion matrix's direct **Make available** into **Request promotion**, empties the approver
+inbox (an operator administers nothing), and `403`s a direct make/approve — so the request → approve loop is visible
+end-to-end; switching back to **Administrator** approves it. This keeps the demo honest: the gates the server enforces
+(and the server/CLI test suites cover) are *shown*, not bypassed.
+
 ## Validation against the real contract
 The kit's `ArazzoControlPlaneClient` is checked against the same OpenAPI document the server/CLI are
 generated from (`arazzo-control-plane.openapi.json`): a small conformance test asserts every request shape
