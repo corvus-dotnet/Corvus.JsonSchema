@@ -63,6 +63,28 @@ eq("parse(bytes).nested", Doc.parse(bytes).address.city, "Anytown");
 eq("parse(string).age", Doc.parse(base).age, 30);
 eq("decodeAndParse(bytes)", (decodeAndParse(bytes) as Doc).name, "Ada");
 
+// JSON Patch (RFC 6902) + Merge Patch (RFC 7396) companion methods over the document bytes.
+const patched = Doc.parse(Doc.applyPatch(bytes, [
+  { op: "test", path: "/age", value: 30 },          // guard
+  { op: "replace", path: "/age", value: 31 },
+  { op: "add", path: "/tags/-", value: "cs" },       // "-" appends
+  { op: "remove", path: "/address/city" },
+]));
+eq("applyPatch replace", patched.age, 31);
+eq("applyPatch add to array", patched.tags, ["math", "cs"]);
+eq("applyPatch remove nested", (patched.address as Record<string, unknown>).city, undefined);
+let aborted = false;
+try { Doc.applyPatch(bytes, [{ op: "test", path: "/age", value: 99 }, { op: "replace", path: "/name", value: "X" }]); }
+catch { aborted = true; }
+eq("applyPatch atomic test-fail aborts", aborted, true);
+const merged = Doc.parse(Doc.applyMergePatch(bytes, { age: 41, address: { city: null }, tags: null }));
+eq("applyMergePatch replace", merged.age, 41);
+eq("applyMergePatch delete nested key", (merged.address as Record<string, unknown>).city, undefined);
+eq("applyMergePatch delete key", (merged as Record<string, unknown>).tags, undefined);
+const target = enc.encode(JSON.stringify({ name: "Ada", age: 31, address: { city: "Anytown" }, tags: ["math", "cs"] }));
+const diff = Doc.createPatch(bytes, target);
+eq("createPatch round-trips", dec.decode(Doc.applyPatch(bytes, diff)), dec.decode(Doc.applyPatch(target, [])));
+
 console.log(`mutation-access: ${pass} passed, ${fail} failed`);
 if (fail > 0) { throw new Error(`mutation-access: ${fail} failed`); }
 console.log("OK — byte produce(recipe) over the typed Draft: edits apply, unchanged bytes verbatim, RFC 6902 patches.");

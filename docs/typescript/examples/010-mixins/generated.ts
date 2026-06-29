@@ -1,6 +1,7 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
-export { decodeAndParse };
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, applyPatch, createPatch, applyMergePatch, createMergePatch, JsonPatchError, type JsonPatch, type JsonPatchOp, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+export { decodeAndParse, applyPatch, createPatch, applyMergePatch, createMergePatch, JsonPatchError };
+export type { JsonPatch, JsonPatchOp };
 
 /**
  * Widget
@@ -180,6 +181,10 @@ export const Widget = {
   buildCanonical: buildCanonicalWidget,
   patch: patchWidget,
   produce: produceWidget,
+  applyPatch: (doc: Uint8Array | Widget, patch: JsonPatch): Uint8Array => canonicalize(applyPatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, patch)),
+  applyMergePatch: (doc: Uint8Array | Widget, mergePatch: unknown): Uint8Array => canonicalize(applyMergePatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, mergePatch)),
+  createPatch: (source: Uint8Array | Widget, target: Uint8Array | Widget): JsonPatchOp[] => createPatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
+  createMergePatch: (source: Uint8Array | Widget, target: Uint8Array | Widget): unknown => createMergePatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
 };
 export const Named = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateNamed(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
@@ -188,6 +193,10 @@ export const Named = {
   buildCanonical: buildCanonicalNamed,
   patch: patchNamed,
   produce: produceNamed,
+  applyPatch: (doc: Uint8Array | Named, patch: JsonPatch): Uint8Array => canonicalize(applyPatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, patch)),
+  applyMergePatch: (doc: Uint8Array | Named, mergePatch: unknown): Uint8Array => canonicalize(applyMergePatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, mergePatch)),
+  createPatch: (source: Uint8Array | Named, target: Uint8Array | Named): JsonPatchOp[] => createPatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
+  createMergePatch: (source: Uint8Array | Named, target: Uint8Array | Named): unknown => createMergePatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
 };
 export const Name = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateName(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
@@ -199,6 +208,10 @@ export const Timestamped = {
   buildCanonical: buildCanonicalTimestamped,
   patch: patchTimestamped,
   produce: produceTimestamped,
+  applyPatch: (doc: Uint8Array | Timestamped, patch: JsonPatch): Uint8Array => canonicalize(applyPatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, patch)),
+  applyMergePatch: (doc: Uint8Array | Timestamped, mergePatch: unknown): Uint8Array => canonicalize(applyMergePatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, mergePatch)),
+  createPatch: (source: Uint8Array | Timestamped, target: Uint8Array | Timestamped): JsonPatchOp[] => createPatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
+  createMergePatch: (source: Uint8Array | Timestamped, target: Uint8Array | Timestamped): unknown => createMergePatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
 };
 export const CreatedAt = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateCreatedAt(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),

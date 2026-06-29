@@ -659,6 +659,13 @@ typescript-recipes:
     blocks:
       - {index: 0, language: json, lines: [13, 16]}
       - {index: 1, language: typescript, lines: [22, 29]}
+  - path: "docs/typescript/examples/020-json-patch/README.md"
+    blocks:
+      - {index: 0, language: json, lines: [22, 36]}
+      - {index: 1, language: typescript, lines: [44, 55]}
+      - {index: 2, language: typescript, lines: [61, 67]}
+      - {index: 3, language: typescript, lines: [71, 75]}
+      - {index: 4, language: bash, lines: [81, 84]}
 
 main-docs:
   - path: "docs/AddingKeywords.md"
@@ -1593,6 +1600,12 @@ typescript-docs:
       - {index: 2, language: json, lines: [29, 42]}
       - {index: 3, language: bash, lines: [50, 52]}
       - {index: 4, language: typescript, lines: [60, 84]}
+  - path: "docs/typescript/json-patch.md"
+    blocks:
+      - {index: 0, language: typescript, lines: [22, 34]}
+      - {index: 1, language: typescript, lines: [42, 48]}
+      - {index: 2, language: typescript, lines: [56, 62]}
+      - {index: 3, language: typescript, lines: [68, 72]}
   - path: "docs/typescript/mutation.md"
     blocks:
       - {index: 0, language: typescript, lines: [9, 11]}

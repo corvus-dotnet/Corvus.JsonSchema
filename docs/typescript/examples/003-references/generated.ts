@@ -1,6 +1,7 @@
 // AUTO-GENERATED: idiomatic TS types + registry-composed validators.
-import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
-export { decodeAndParse };
+import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, applyPatch, createPatch, applyMergePatch, createMergePatch, JsonPatchError, type JsonPatch, type JsonPatchOp, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from "../corvus-runtime.js";
+export { decodeAndParse, applyPatch, createPatch, applyMergePatch, createMergePatch, JsonPatchError };
+export type { JsonPatch, JsonPatchOp };
 
 /**
  * Order
@@ -142,6 +143,10 @@ export const Order = {
   buildCanonical: buildCanonicalOrder,
   patch: patchOrder,
   produce: produceOrder,
+  applyPatch: (doc: Uint8Array | Order, patch: JsonPatch): Uint8Array => canonicalize(applyPatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, patch)),
+  applyMergePatch: (doc: Uint8Array | Order, mergePatch: unknown): Uint8Array => canonicalize(applyMergePatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, mergePatch)),
+  createPatch: (source: Uint8Array | Order, target: Uint8Array | Order): JsonPatchOp[] => createPatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
+  createMergePatch: (source: Uint8Array | Order, target: Uint8Array | Order): unknown => createMergePatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
 };
 export const Address = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateAddress(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
@@ -150,6 +155,10 @@ export const Address = {
   buildCanonical: buildCanonicalAddress,
   patch: patchAddress,
   produce: produceAddress,
+  applyPatch: (doc: Uint8Array | Address, patch: JsonPatch): Uint8Array => canonicalize(applyPatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, patch)),
+  applyMergePatch: (doc: Uint8Array | Address, mergePatch: unknown): Uint8Array => canonicalize(applyMergePatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, mergePatch)),
+  createPatch: (source: Uint8Array | Address, target: Uint8Array | Address): JsonPatchOp[] => createPatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
+  createMergePatch: (source: Uint8Array | Address, target: Uint8Array | Address): unknown => createMergePatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
 };
 export const City = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateCity(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),

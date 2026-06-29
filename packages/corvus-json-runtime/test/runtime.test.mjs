@@ -27,7 +27,15 @@ import {
   toFloat64Array,
   toFloat32Array,
   toInt32Array,
+  applyPatch,
+  createPatch,
+  applyMergePatch,
+  createMergePatch,
+  JsonPatchError,
 } from "../dist/index.js";
+import { readFileSync, existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
 test("__isNum recognises plain numbers and lossless-json source-text numbers", () => {
   assert.equal(__isNum(42), true);
@@ -193,4 +201,54 @@ test("typed-array view helpers build the matching view over a numeric array (gap
   // Float32 narrows precision (the point of a float32 view); Int32 truncates toward zero.
   assert.ok(toFloat32Array([0.1])[0] !== 0.1);
   assert.deepEqual([...toInt32Array([1.9, -2.9])], [1, -2]);
+});
+
+// --- RFC 6902 JSON Patch + RFC 7396 Merge Patch -----------------------------------------------------
+// Order-independent structural equality (object key order is not significant in JSON).
+function jpEqual(a, b) {
+  if (a === b) return true;
+  if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) return false;
+  const aa = Array.isArray(a), ba = Array.isArray(b);
+  if (aa !== ba) return false;
+  if (aa) return a.length === b.length && a.every((x, i) => jpEqual(x, b[i]));
+  const ak = Object.keys(a);
+  return ak.length === Object.keys(b).length && ak.every((k) => k in b && jpEqual(a[k], b[k]));
+}
+
+test("applyPatch passes the RFC 6902 conformance suite (json-patch-tests)", (t) => {
+  const base = join(dirname(fileURLToPath(import.meta.url)), "../../../tests/json-patch-tests");
+  if (!existsSync(join(base, "tests.json"))) { t.skip("json-patch-tests submodule not initialised"); return; }
+  let ok = 0, expectedErrors = 0;
+  for (const file of ["tests.json", "spec_tests.json"]) {
+    for (const t of JSON.parse(readFileSync(join(base, file), "utf8"))) {
+      if (t.disabled || !("doc" in t)) continue;
+      if ("error" in t) {
+        assert.throws(() => applyPatch(t.doc, t.patch), JsonPatchError, t.comment);
+        expectedErrors++;
+      } else {
+        assert.ok(jpEqual(applyPatch(t.doc, t.patch), t.expected), `${t.comment}: ${JSON.stringify(applyPatch(t.doc, t.patch))} != ${JSON.stringify(t.expected)}`);
+        ok++;
+      }
+    }
+  }
+  assert.ok(ok > 60 && expectedErrors > 20, `expected a full suite run, got ${ok} ok / ${expectedErrors} errors`);
+});
+
+test("createPatch and createMergePatch round-trip (diff applied to source reproduces target)", () => {
+  const pairs = [
+    [{ a: 1, b: [1, 2] }, { a: 2, b: [1, 2, 3], c: true }],
+    [{ x: { y: 1 } }, { x: { z: 2 } }],
+    [[1, 2, 3], [1, 9, 3]],
+    [{ keep: 1, drop: 2 }, { keep: 1, add: 3 }],
+  ];
+  for (const [a, b] of pairs) {
+    assert.ok(jpEqual(applyPatch(a, createPatch(a, b)), b), `createPatch ${JSON.stringify(a)} -> ${JSON.stringify(b)}`);
+    assert.ok(jpEqual(applyMergePatch(a, createMergePatch(a, b)), b), `mergePatch ${JSON.stringify(a)} -> ${JSON.stringify(b)}`);
+  }
+});
+
+test("applyMergePatch deletes via null and merges objects recursively (RFC 7396)", () => {
+  assert.deepEqual(applyMergePatch({ a: 1, b: { c: 2, d: 3 } }, { b: { c: null, e: 4 }, f: 5 }), { a: 1, b: { d: 3, e: 4 }, f: 5 });
+  assert.deepEqual(applyMergePatch({ a: 1 }, null), null);          // a non-object patch replaces wholesale
+  assert.deepEqual(applyMergePatch({ a: [1, 2] }, { a: [3] }), { a: [3] }); // arrays are replaced, not merged
 });

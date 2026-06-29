@@ -367,6 +367,16 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         Add($"\nfunction withDefaults{name}(", "withDefaults", $"withDefaults{name}");
         Add($"\nfunction match{name}<", "match", $"match{name}");
 
+        // RFC 6902 JSON Patch + RFC 7396 Merge Patch over the document bytes: apply -> canonical bytes; diff
+        // two documents -> a patch. Emitted for buildable document types (those with a `build`).
+        if (content.Contains($"\nfunction build{name}(", StringComparison.Ordinal))
+        {
+            props.Add($"  applyPatch: (doc: Uint8Array | {name}, patch: JsonPatch): Uint8Array => canonicalize(applyPatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, patch))");
+            props.Add($"  applyMergePatch: (doc: Uint8Array | {name}, mergePatch: unknown): Uint8Array => canonicalize(applyMergePatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, mergePatch))");
+            props.Add($"  createPatch: (source: Uint8Array | {name}, target: Uint8Array | {name}): JsonPatchOp[] => createPatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target)");
+            props.Add($"  createMergePatch: (source: Uint8Array | {name}, target: Uint8Array | {name}): unknown => createMergePatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target)");
+        }
+
         // `from` (validate-and-convert a plain value INTO the brand) — NOT `as`, which is TS's unchecked-cast
         // keyword; `toTemporal`/`toExact` convert the brand OUT to another representation.
         Add($"\nfunction from{name}(", "from", $"from{name}");
@@ -465,9 +475,9 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 
     // The shared-runtime import line every generated module emits (§5.5); identical across emission modes.
     private string RuntimeImportLine()
-        => "import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from \""
+        => "import { __isNum, __isObj, __isInt, __cmp, __multipleOf, __eq, __re, __ptr, Ev, NOEV, fresh, decodeAndParse, applyPatch, createPatch, applyMergePatch, createMergePatch, JsonPatchError, type JsonPatch, type JsonPatchOp, __fmt, __fmtContent, FormatError, produce, canonicalize, exactNumber, type Draft, rmwUpsert, rmwProduceFull, type RmwTarget, type ListOps, type RmwArrayOps, type RmwArrayEdit, type Brand, Results, toPlainDate, toInstant, toPlainTime, toDuration, Temporal } from \""
          + this.runtimeModuleSpecifier + "\";\n"
-         + "export { decodeAndParse };\n";
+         + "export { decodeAndParse, applyPatch, createPatch, applyMergePatch, createMergePatch, JsonPatchError };\nexport type { JsonPatch, JsonPatchOp };\n";
 
     // True when the relative runtime specifier means re-emit corvus-runtime.ts alongside the module(s); a
     // bare package specifier (e.g. "@endjin/corvus-json-runtime") means the consumer installs it instead.

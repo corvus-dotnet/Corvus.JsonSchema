@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Contact",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": { "type": "string" },
+    "displayName": { "type": "string" },
+    "email": { "type": "string" },
+    "phones": { "type": "array", "items": { "type": "string" } },
+    "address": {
+      "type": "object",
+      "properties": {
+        "city": { "type": "string" },
+        "zip": { "type": "string" }
+      }
+    },
+    "version": { "type": "integer" }
+  }
+}

@@ -359,7 +359,16 @@ export type Draft<T> =
   T extends object ? { -readonly [K in keyof T]: Draft<T[K]> } :
   T;
 export interface JsonDocument<T> { readonly value: T; }
-export interface JsonPatchOp { readonly op: "replace" | "add" | "remove"; readonly path: string; readonly value?: unknown; }
+// RFC 6902 JSON Patch operation. `__diff`/`recordChanges` only ever emit add/remove/replace; applyPatch
+// accepts and createPatch may emit the full set.
+export type JsonPatchOp =
+  | { readonly op: "add"; readonly path: string; readonly value: unknown }
+  | { readonly op: "remove"; readonly path: string }
+  | { readonly op: "replace"; readonly path: string; readonly value: unknown }
+  | { readonly op: "move"; readonly from: string; readonly path: string }
+  | { readonly op: "copy"; readonly from: string; readonly path: string }
+  | { readonly op: "test"; readonly path: string; readonly value: unknown };
+export type JsonPatch = readonly JsonPatchOp[];
 export const __escPtr = (k: string): string => k.replace(/~/g, "~0").replace(/\//g, "~1");
 // immer-faithful recorder: structuredClone the substrate, run the recipe DIRECTLY on the clone
 // (plain mutation -- no Proxy), then diff(original, clone) -> a minimal RFC 6902 change-set. Array
@@ -388,6 +397,183 @@ export function recordChanges<T>(value: T, recipe: (draft: Draft<T>) => void): {
   const patches: JsonPatchOp[] = [];
   __diff(value, next, "", patches);
   return { next, patches };
+}
+
+// --- RFC 6902 JSON Patch + RFC 7396 JSON Merge Patch ------------------------------------------------
+// applyPatch/createPatch/applyMergePatch/createMergePatch operate on parsed JSON VALUES (use parse /
+// decodeAndParse to get one from bytes, and build to serialise back). A failed op throws JsonPatchError
+// and leaves the input untouched (apply works on a clone).
+
+export class JsonPatchError extends Error {}
+
+// JSON Pointer (RFC 6901): "" -> [] (whole document); "/a/b" -> ["a","b"] (with ~1 -> /, ~0 -> ~).
+function __ptrTokens(pointer: string): string[] {
+  if (pointer === "") return [];
+  if (pointer.charCodeAt(0) !== 0x2f) throw new JsonPatchError(`invalid JSON Pointer: ${JSON.stringify(pointer)}`);
+  return pointer.slice(1).split("/").map((t) => t.replace(/~1/g, "/").replace(/~0/g, "~"));
+}
+
+function __deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) return false;
+  const aa = Array.isArray(a), ba = Array.isArray(b);
+  if (aa !== ba) return false;
+  if (aa) {
+    const x = a as unknown[], y = b as unknown[];
+    if (x.length !== y.length) return false;
+    for (let i = 0; i < x.length; i++) { if (!__deepEqual(x[i], y[i])) return false; }
+    return true;
+  }
+  const x = a as Record<string, unknown>, y = b as Record<string, unknown>;
+  const xk = Object.keys(x);
+  if (xk.length !== Object.keys(y).length) return false;
+  for (const k of xk) { if (!Object.prototype.hasOwnProperty.call(y, k) || !__deepEqual(x[k], y[k])) return false; }
+  return true;
+}
+
+// Parse an array-index token per RFC 6902 (non-negative, no leading zeros); -1 if invalid. "-" -> len when allowed.
+function __arrIndex(token: string, len: number, allowDash: boolean): number {
+  if (token === "-") return allowDash ? len : -1;
+  if (token.length === 0 || (token.length > 1 && token[0] === "0") || !/^[0-9]+$/.test(token)) return -1;
+  return Number(token);
+}
+
+function __ptrGet(doc: unknown, tokens: readonly string[]): unknown {
+  let cur = doc;
+  for (const t of tokens) {
+    if (Array.isArray(cur)) {
+      const i = __arrIndex(t, cur.length, false);
+      if (i < 0 || i >= cur.length) throw new JsonPatchError(`path not found: ${t}`);
+      cur = cur[i];
+    } else if (cur !== null && typeof cur === "object" && Object.prototype.hasOwnProperty.call(cur, t)) {
+      cur = (cur as Record<string, unknown>)[t];
+    } else {
+      throw new JsonPatchError(`path not found: ${t}`);
+    }
+  }
+  return cur;
+}
+
+function __ptrAdd(doc: unknown, tokens: string[], value: unknown): unknown {
+  if (tokens.length === 0) return value;
+  const last = tokens[tokens.length - 1];
+  const parent = __ptrGet(doc, tokens.slice(0, -1));
+  if (Array.isArray(parent)) {
+    const i = __arrIndex(last, parent.length, true);
+    if (i < 0 || i > parent.length) throw new JsonPatchError(`invalid array index for add: ${last}`);
+    parent.splice(i, 0, value);
+  } else if (parent !== null && typeof parent === "object") {
+    (parent as Record<string, unknown>)[last] = value;
+  } else {
+    throw new JsonPatchError(`cannot add at ${last}: parent is not a container`);
+  }
+  return doc;
+}
+
+function __ptrRemove(doc: unknown, tokens: string[]): unknown {
+  if (tokens.length === 0) throw new JsonPatchError("cannot remove the whole document");
+  const last = tokens[tokens.length - 1];
+  const parent = __ptrGet(doc, tokens.slice(0, -1));
+  if (Array.isArray(parent)) {
+    const i = __arrIndex(last, parent.length, false);
+    if (i < 0 || i >= parent.length) throw new JsonPatchError(`array index out of range for remove: ${last}`);
+    parent.splice(i, 1);
+  } else if (parent !== null && typeof parent === "object" && Object.prototype.hasOwnProperty.call(parent, last)) {
+    delete (parent as Record<string, unknown>)[last];
+  } else {
+    throw new JsonPatchError(`path not found for remove: ${last}`);
+  }
+  return doc;
+}
+
+function __ptrReplace(doc: unknown, tokens: string[], value: unknown): unknown {
+  if (tokens.length === 0) return value;
+  const last = tokens[tokens.length - 1];
+  const parent = __ptrGet(doc, tokens.slice(0, -1));
+  if (Array.isArray(parent)) {
+    const i = __arrIndex(last, parent.length, false);
+    if (i < 0 || i >= parent.length) throw new JsonPatchError(`array index out of range for replace: ${last}`);
+    parent[i] = value;
+  } else if (parent !== null && typeof parent === "object" && Object.prototype.hasOwnProperty.call(parent, last)) {
+    (parent as Record<string, unknown>)[last] = value;
+  } else {
+    throw new JsonPatchError(`path not found for replace: ${last}`);
+  }
+  return doc;
+}
+
+// Apply an RFC 6902 patch to a JSON value, returning the patched value (the input is not mutated).
+export function applyPatch(document: unknown, patch: JsonPatch): unknown {
+  let doc = structuredClone(document);
+  for (const op of patch) {
+    // RFC 6902: every op has a string "path"; add/replace/test require a "value"; move/copy require a string
+    // "from". Check against a loose view because the patch may come from untrusted JSON that violates the shape.
+    const raw = op as { readonly op: string; readonly path?: unknown; readonly value?: unknown; readonly from?: unknown };
+    if (typeof raw.path !== "string") {
+      throw new JsonPatchError(`operation '${raw.op}' requires a "path" member`);
+    }
+    if ((raw.op === "add" || raw.op === "replace" || raw.op === "test") && !("value" in raw)) {
+      throw new JsonPatchError(`operation '${raw.op}' requires a "value" member`);
+    }
+    if ((raw.op === "move" || raw.op === "copy") && typeof raw.from !== "string") {
+      throw new JsonPatchError(`operation '${raw.op}' requires a "from" member`);
+    }
+    const path = __ptrTokens(op.path);
+    switch (op.op) {
+      case "add": doc = __ptrAdd(doc, path, structuredClone(op.value)); break;
+      case "remove": doc = __ptrRemove(doc, path); break;
+      case "replace": doc = __ptrReplace(doc, path, structuredClone(op.value)); break;
+      case "test": if (!__deepEqual(__ptrGet(doc, path), op.value)) throw new JsonPatchError(`test failed at ${op.path}`); break;
+      case "move": {
+        const from = __ptrTokens(op.from);
+        if (path.length > from.length && from.every((t, i) => t === path[i])) throw new JsonPatchError("cannot move a location into one of its children");
+        const val = __ptrGet(doc, from);
+        doc = __ptrRemove(doc, from);
+        doc = __ptrAdd(doc, path, val);
+        break;
+      }
+      case "copy": doc = __ptrAdd(doc, path, structuredClone(__ptrGet(doc, __ptrTokens(op.from)))); break;
+      default: throw new JsonPatchError(`unknown op: ${JSON.stringify((op as { op: unknown }).op)}`);
+    }
+  }
+  return doc;
+}
+
+// Compute a minimal RFC 6902 patch (add/remove/replace) that turns source into target.
+export function createPatch(source: unknown, target: unknown): JsonPatchOp[] {
+  const out: JsonPatchOp[] = [];
+  __diff(source, target, "", out);
+  return out;
+}
+
+// Apply an RFC 7396 JSON Merge Patch (a null member deletes a key; a non-object patch replaces wholesale).
+export function applyMergePatch(target: unknown, patch: unknown): unknown {
+  if (patch === null || typeof patch !== "object" || Array.isArray(patch)) {
+    return structuredClone(patch);
+  }
+  const base: Record<string, unknown> = (target !== null && typeof target === "object" && !Array.isArray(target))
+    ? { ...(target as Record<string, unknown>) }
+    : {};
+  for (const [k, v] of Object.entries(patch as Record<string, unknown>)) {
+    if (v === null) { delete base[k]; }
+    else { base[k] = applyMergePatch(base[k], v); }
+  }
+  return base;
+}
+
+// Compute an RFC 7396 merge patch that turns source into target.
+export function createMergePatch(source: unknown, target: unknown): unknown {
+  const sObj = source !== null && typeof source === "object" && !Array.isArray(source);
+  const tObj = target !== null && typeof target === "object" && !Array.isArray(target);
+  if (!sObj || !tObj) { return structuredClone(target); }
+  const s = source as Record<string, unknown>, t = target as Record<string, unknown>;
+  const patch: Record<string, unknown> = {};
+  for (const k of Object.keys(s)) { if (!(k in t)) { patch[k] = null; } }
+  for (const k of Object.keys(t)) {
+    if (!(k in s)) { patch[k] = structuredClone(t[k]); }
+    else if (!__deepEqual(s[k], t[k])) { patch[k] = createMergePatch(s[k], t[k]); }
+  }
+  return patch;
 }
 
 interface __DraftOp { path: string[]; op: "replace" | "add" | "remove" | "append"; value?: unknown; }

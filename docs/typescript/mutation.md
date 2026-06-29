@@ -71,5 +71,6 @@ All three return new bytes and leave their input untouched, so they compose free
 
 ## See also
 
+- [json-patch](./json-patch.md) — RFC 6902 JSON Patch and RFC 7396 Merge Patch over the same bytes.
 - [reading-and-validating](./reading-and-validating.md) — the read surface these produce.
 - [examples/016-mutation](./examples/016-mutation/) — a runnable walkthrough.

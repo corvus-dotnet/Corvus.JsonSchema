@@ -287,6 +287,13 @@ jobs:
         env:
           NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
 
+      # The @endjin/corvus-json-runtime package's own unit tests, including the RFC 6902 / 7396 JSON Patch
+      # conformance suite (the tests/json-patch-tests submodule). Builds the package (tsc) then runs node --test.
+      - name: Runtime package tests
+        run: npm ci && npm run build && node --test
+        working-directory: packages/corvus-json-runtime
+        timeout-minutes: 5
+
   deploy-docs:
     name: Deploy Documentation
     needs:
