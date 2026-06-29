@@ -5,6 +5,7 @@
 using System.Security.Claims;
 using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Availability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sources;
@@ -76,7 +77,7 @@ public static class ControlPlaneEndpointExtensions
     /// and the named scope policies, so a deployment supplies any ASP.NET Core scheme (JWT bearer, OIDC, mTLS,
     /// a dev key) and how a principal acquires scopes.
     /// </remarks>
-    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, ISecuredWorkflowManagement management, ISecuredWorkflowCatalog catalog, IRunnerRegistry runners, ControlPlaneSecurityMode securityMode, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null, IObservedIdentityStore? observedIdentityStore = null, IPrincipalDirectory? principalDirectory = null, IEnvironmentStore? environmentStore = null, IEnvironmentAdministratorStore? environmentAdministratorStore = null, ISourceStore? sourceStore = null)
+    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, ISecuredWorkflowManagement management, ISecuredWorkflowCatalog catalog, IRunnerRegistry runners, ControlPlaneSecurityMode securityMode, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null, IObservedIdentityStore? observedIdentityStore = null, IPrincipalDirectory? principalDirectory = null, IEnvironmentStore? environmentStore = null, IEnvironmentAdministratorStore? environmentAdministratorStore = null, ISourceStore? sourceStore = null, IAvailabilityStore? availabilityStore = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -156,10 +157,17 @@ public static class ControlPlaneEndpointExtensions
         ISourceStore srcStore = sourceStore ?? new InMemorySourceStore();
         var sourcesHandler = new ArazzoControlPlaneSourcesHandler(srcStore, access);
 
+        // The availability ("promotion") API (§7.8): the additive (workflow version × environment) matrix. Making a
+        // version available is governed by the TARGET environment's administrators and readiness-gated (every source the
+        // version references must resolve a credential in that environment, §7.7). Defaults to an in-memory store.
+        IAvailabilityStore availStore = availabilityStore ?? new InMemoryAvailabilityStore();
+        var availabilityHandler = new ArazzoControlPlaneAvailabilityHandler(availStore, envStore, environmentAdministration, catalog, credentialStore, access);
+
         return endpoints.MapApiEndpoints(
             new ArazzoControlPlaneHandler(management, access),
             new ArazzoControlPlaneRunnersHandler(runners),
             new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access),
+            availabilityHandler,
             securityHandler,
             credentialsHandler,
             environmentsHandler,

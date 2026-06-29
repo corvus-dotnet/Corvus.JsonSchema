@@ -100,6 +100,17 @@ internal class RunsSettings : CommandSettings
         return (http, transport, new ApiSourcesClient(transport));
     }
 
+    /// <summary>Builds the availability ("promotion") API client (and the HTTP client / transport it owns) for this invocation.</summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The HTTP client, transport, and availability API client. Dispose the HTTP client and transport.</returns>
+    public async Task<(HttpClient Http, HttpClientTransport Transport, ApiAvailabilityClient Client)> CreateAvailabilityClientAsync(CancellationToken cancellationToken)
+    {
+        string? token = await TokenSource.ResolveAsync(this.Token, cancellationToken).ConfigureAwait(false);
+        HttpClient http = this.CreateHttpClient();
+        var transport = new HttpClientTransport(http, token is null ? null : new BearerTokenAuthentication(token));
+        return (http, transport, new ApiAvailabilityClient(transport));
+    }
+
     /// <summary>Builds the workflow-administration API client (and the HTTP client / transport it owns) for this invocation.</summary>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The HTTP client, transport, and administrators API client. Dispose the HTTP client and transport.</returns>
