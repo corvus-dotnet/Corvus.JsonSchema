@@ -62,11 +62,11 @@ async function timeAsync(fn, instances) {
 async function buildValidators(name, schema, schemaId) {
   const out = {};
 
-  // corvus-ts: the production CLI output (default export = the 1-arg root validator).
+  // corvus-ts: the production CLI output (default export = the root type's companion; `.evaluate` validates).
   try {
     const mod = await import(`${GEN_DIR}/${name}/generated.js`);
     const v = mod.default;
-    out["corvus-ts"] = { kind: "sync", fn: (i) => v(i) === true };
+    out["corvus-ts"] = { kind: "sync", fn: (i) => v.evaluate(i) === true };
   } catch (e) { out["corvus-ts"] = { error: String(e.message || e) }; }
 
   // Ajv (no ajv-formats, matching its benchmark config — formats as annotations, like corvus default).
