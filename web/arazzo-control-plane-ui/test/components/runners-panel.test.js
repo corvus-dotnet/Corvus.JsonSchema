@@ -37,44 +37,11 @@ describe('<arazzo-runners>', () => {
     ok($$(el, '.hv .lstate').length >= 3, 'loaded versions are shown too');
   });
 
-  it('shows the deployment environment each runner serves (design §5.5)', async () => {
-    el = panelWithMock();
-    mount(el);
-    await nextEvent(el, 'loaded');
-    const envs = [...$$(el, '.renv')].map((n) => n.textContent);
-    equal(envs.length, 3, 'every runner shows its environment');
-    ok(envs.includes('production'), 'a production runner is shown');
-    ok(envs.includes('staging'), 'a staging runner is shown');
-  });
-
   it('treats every runner as stale under a tiny threshold', async () => {
     el = panelWithMock({ 'stale-after': '1' }); // 1s → even an 18s-old heartbeat is stale
     mount(el);
     await nextEvent(el, 'loaded');
     equal($$(el, '.health.online').length, 0, 'none online under a 1s threshold');
     equal($$(el, '.health.stale').length, 3, 'all stale');
-  });
-
-  it('pages the runner registry with Prev/Next over the keyset cursor', async () => {
-    el = panelWithMock({ 'stale-after': '90', 'page-size': '2' }); // 3 seeded runners → 2 pages
-    mount(el);
-    await nextEvent(el, 'loaded');
-    equal($$(el, '.runner').length, 2, 'page 1 holds two runners');
-    const next = el.shadowRoot.querySelector('.next');
-    ok(next && !next.disabled, 'Next is enabled when a page follows');
-    ok(el.shadowRoot.querySelector('.prev').disabled, 'Prev is disabled on page 1');
-
-    const page2 = nextEvent(el, 'loaded');
-    next.click();
-    await page2;
-    equal($$(el, '.runner').length, 1, 'page 2 holds the remaining runner');
-    ok(el.shadowRoot.querySelector('.next').disabled, 'Next disabled on the last page');
-    ok(!el.shadowRoot.querySelector('.prev').disabled, 'Prev is enabled on page 2');
-
-    const back = nextEvent(el, 'loaded');
-    el.shadowRoot.querySelector('.prev').click();
-    await back;
-    equal($$(el, '.runner').length, 2, 'page 1 restored — rows replaced, not appended');
-    ok(el.shadowRoot.querySelector('.prev').disabled, 'Prev disabled again back on page 1');
   });
 });

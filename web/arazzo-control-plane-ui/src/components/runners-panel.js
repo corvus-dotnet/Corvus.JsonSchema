@@ -14,23 +14,21 @@
 // `stale-after`), uptime, advertised concurrency, transports, and the workflow versions it hosts (loaded / loading).
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, define } from './base.js';
-import './pager.js';
+import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, define } from './base.js';
 
 const DEFAULT_STALE_AFTER_SECONDS = 90;
 
 class ArazzoRunners extends ArazzoElement {
   static get observedAttributes() {
-    return ['base-url', 'stale-after', 'poll', 'scopes', 'page-size'];
+    return ['base-url', 'stale-after', 'poll', 'scopes'];
   }
 
   constructor() {
     super();
     /** @private */ this._runners = [];
     /** @private */ this._loading = false;
+    /** @private */ this._loadingMore = false;
     /** @private */ this._error = null;
-    /** @private */ this._history = [];          // pageTokens of pages before the current one
-    /** @private */ this._currentToken = undefined;
     /** @private */ this._nextPageToken = null;
     /** @private */ this._reqSeq = 0;
     /** @private */ this._timer = null;
@@ -38,7 +36,7 @@ class ArazzoRunners extends ArazzoElement {
 
   connectedCallback() {
     this.renderShell();
-    this.reload();
+    this.load();
     this.startPolling();
   }
 
@@ -50,7 +48,7 @@ class ArazzoRunners extends ArazzoElement {
     if (!this.isConnected) return;
     if (name === 'poll') this.startPolling();
     else if (name === 'stale-after' || name === 'scopes') this.renderBody(); // scopes is informational here; never reset the client
-    else { this._client = undefined; this.reload(); } // base-url, page-size
+    else { this._client = undefined; this.load(); } // base-url
   }
 
   buildClient() {
@@ -60,17 +58,13 @@ class ArazzoRunners extends ArazzoElement {
     return this._client;
   }
 
-  set fetch(fn) { this._fetch = fn; this._client = undefined; this.reload(); }
+  set fetch(fn) { this._fetch = fn; this._client = undefined; this.load(); }
 
-  set authProvider(fn) { this._authProvider = fn; this._client = undefined; this.reload(); }
+  set authProvider(fn) { this._authProvider = fn; this._client = undefined; this.load(); }
 
-  requestRender() { this.reload(); }
+  requestRender() { this.load(); }
 
-  refresh() { this.reload(); }
-
-  get pageSize() {
-    return Number(this.getAttribute('page-size')) || 50;
-  }
+  refresh() { this.load(); }
 
   get staleAfterMs() {
     const s = Number(this.getAttribute('stale-after'));
@@ -92,13 +86,6 @@ class ArazzoRunners extends ArazzoElement {
 
   // ---- data -------------------------------------------------------------------------------------
 
-  /** Reload from page 1 (resets the keyset cursor). */
-  reload() {
-    this._history = [];
-    this._currentToken = undefined;
-    this.load();
-  }
-
   async load({ silent = false } = {}) {
     const client = this.buildClient();
     if (!client) {
@@ -110,9 +97,10 @@ class ArazzoRunners extends ArazzoElement {
     const seq = ++this._reqSeq;
     if (!silent) { this._loading = true; this._runners = []; }
     this._error = null;
+    this._nextPageToken = null;
     this.renderBody();
     try {
-      const page = await client.listRunners({ pageToken: this._currentToken, limit: this.pageSize });
+      const page = await client.listRunners();
       if (seq !== this._reqSeq) return;
       this._runners = page.runners;
       this._nextPageToken = page.nextPageToken;
@@ -128,17 +116,25 @@ class ArazzoRunners extends ArazzoElement {
     }
   }
 
-  nextPage() {
-    if (!this._nextPageToken) return;
-    this._history.push(this._currentToken);
-    this._currentToken = this._nextPageToken;
-    this.load();
-  }
-
-  prevPage() {
-    if (this._history.length === 0) return;
-    this._currentToken = this._history.pop();
-    this.load();
+  async loadMore() {
+    const client = this.buildClient();
+    if (!client || !this._nextPageToken || this._loadingMore) return;
+    const seq = this._reqSeq;
+    this._loadingMore = true;
+    this.renderBody();
+    try {
+      const page = await client.listRunners({ pageToken: this._nextPageToken });
+      if (seq !== this._reqSeq) return;
+      this._runners.push(...page.runners);
+      this._nextPageToken = page.nextPageToken;
+      this._loadingMore = false;
+      this.renderBody();
+    } catch (err) {
+      if (seq !== this._reqSeq) return;
+      this._loadingMore = false;
+      this._error = err.problem || { title: err.message };
+      this.renderBody();
+    }
   }
 
   /** A runner is Stale once its most recent heartbeat is older than `stale-after` (§5.4: missed-intervals → Stale). */
@@ -165,7 +161,6 @@ class ArazzoRunners extends ArazzoElement {
         .runner:last-child { border-bottom: none; }
         .rhead { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
         .rid { font-weight: 600; }
-        .renv { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_text); font-weight: 600; }
         .raddr { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
         .health { flex: none; font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; display: inline-flex; align-items: center; gap: 5px; }
         .health.online { color: #1a7f37; }
@@ -182,24 +177,22 @@ class ArazzoRunners extends ArazzoElement {
         .hv .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--_muted); }
         .hv .lstate { font-size: 11px; padding: 0 6px; border-radius: 999px; border: 1px solid var(--_border); color: var(--_muted); }
         .hv .lstate.loading { color: #b45309; border-color: currentColor; }
-        ${PAGER_CSS}
+        .more-row { display: flex; justify-content: center; padding: 10px; border-top: 1px solid var(--_border); }
         .skl { height: 16px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 11px 12px; }
         @keyframes pulse { 50% { opacity: 0.45; } }
       </style>
       <div class="panel" part="panel">
         <div class="head">
           <span class="title">Runners</span>
+          <span class="count"></span>
           <span class="grow"></span>
           <button class="refresh ghost" type="button" title="Refresh">↻</button>
         </div>
         <div class="err"></div>
         <div class="list" part="list"></div>
-        <arazzo-pager class="pager" part="pager"></arazzo-pager>
       </div>
     `;
-    this.$('.refresh').addEventListener('click', () => this.reload());
-    this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
-    this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
+    this.$('.refresh').addEventListener('click', () => this.load());
   }
 
   renderBody() {
@@ -212,23 +205,27 @@ class ArazzoRunners extends ArazzoElement {
       : '';
 
     if (this._loading && this._runners.length === 0) {
+      this.$('.count').textContent = '';
       list.innerHTML = '<div class="skl"></div><div class="skl"></div>';
-      this.$('arazzo-pager')?.update({ loading: true, info: 'Loading…' });
       return;
     }
     if (this._runners.length === 0) {
+      this.$('.count').textContent = '';
       list.innerHTML = '<div class="empty">No runners are registered.</div>';
-      this.$('arazzo-pager')?.update({ info: '' });
       return;
     }
 
     const now = Date.now();
     const stale = this._runners.filter((r) => this.isStale(r, now)).length;
-    list.innerHTML = this._runners.map((r) => this.runnerHtml(r, now)).join('');
+    this.$('.count').textContent = stale > 0 ? `${this._runners.length} registered · ${stale} stale` : `${this._runners.length} registered`;
 
-    const parts = [stale > 0 ? `${this._runners.length} registered · ${stale} stale` : `${this._runners.length} registered`];
-    if (this._history.length) parts.push(`page ${this._history.length + 1}`);
-    this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextPageToken, loading: this._loading, info: parts.join(' · ') });
+    const rows = this._runners.map((r) => this.runnerHtml(r, now)).join('');
+    const more = this._nextPageToken
+      ? `<div class="more-row"><button class="more ghost" type="button"${this._loadingMore ? ' disabled' : ''}>${this._loadingMore ? 'Loading…' : 'Load more'}</button></div>`
+      : '';
+    list.innerHTML = rows + more;
+    const moreBtn = this.$('.more');
+    if (moreBtn) moreBtn.addEventListener('click', () => this.loadMore());
   }
 
   runnerHtml(r, now) {
@@ -246,7 +243,6 @@ class ArazzoRunners extends ArazzoElement {
       <div class="runner" part="runner">
         <div class="rhead">
           <span class="rid">${escapeHtml(r.runnerId)}</span>
-          ${r.environment ? `<span class="renv" title="Serves the ${escapeHtml(r.environment)} environment">${escapeHtml(r.environment)}</span>` : ''}
           ${r.address ? `<span class="raddr">${escapeHtml(r.address)}</span>` : ''}
           <span class="rgrow"></span>
           <span class="health ${stale ? 'stale' : 'online'}" title="Last heartbeat ${escapeHtml(absoluteTime(r.lastSeenAt))}"><span class="dot"></span>${stale ? 'Stale' : 'Online'}</span>

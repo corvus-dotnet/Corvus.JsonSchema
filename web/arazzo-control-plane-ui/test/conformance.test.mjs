@@ -341,6 +341,20 @@ test('environments: each client method emits the contract method + templated pat
   }
 });
 
+test('the contract declares the runner registry operation', () => {
+  assert.ok(OPS.listRunners, 'operation listRunners present in the OpenAPI document');
+});
+
+test('runners: listRunners emits the contract method + path + declared query params', async () => {
+  const { client, calls } = capturing();
+  await client.listRunners({ limit: 10, pageToken: 'tok' });
+  assert.equal(calls[0].method, OPS.listRunners.method);
+  assert.equal(calls[0].path, OPS.listRunners.path);
+  for (const key of calls[0].query.keys()) {
+    assert.ok(OPS.listRunners.queryParams.has(key), `runners query param '${key}' is declared in the contract`);
+  }
+});
+
 test('the contract declares the version-availability (promotion matrix) operations', () => {
   for (const id of ['listVersionAvailability', 'makeVersionAvailable', 'withdrawVersionAvailability']) {
     assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);

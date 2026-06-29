@@ -44,6 +44,7 @@ today.
 | `cancelRun` | `POST /runs/{runId}/cancel` | `runs:write` | `<arazzo-cancel-button>` |
 | `deleteRun` | `DELETE /runs/{runId}` | `runs:purge` | `<arazzo-run-detail>` (guarded action) |
 | `purgeRuns` | `PURGE /runs?olderThan&limit` | `runs:purge` | `<arazzo-purge-dialog>` |
+| `listRunners` | `GET /runners?limit&pageToken` | `runs:read` | `<arazzo-runners>` (the §5.4 registry / health view) |
 
 ### Workflow catalog — `catalog:read` / `catalog:write` / `catalog:purge`
 
@@ -215,6 +216,9 @@ await client.cancelRun(runId, { reason });                              // → W
 // runs:purge
 await client.deleteRun(runId);                                         // → void (204)
 await client.purgeRuns({ olderThan, limit });                         // → { purgedCount }
+// runners:read — the execution-host registry (§5.4), read-only (runners self-register + heartbeat out of band)
+await client.listRunners({ limit, pageToken });                      // → { runners, nextPageToken }
+for await (const page of client.listRunnersPaged({ limit })) { … }
 
 // catalog:read — search + per-version documents
 await client.searchCatalog({ q, baseWorkflowId, workflowIdPrefix, tags, status, owner, limit, pageToken });
@@ -374,6 +378,16 @@ Three smaller elements the run widgets compose (and a host can reuse standalone)
 - **`<arazzo-value-editor>`** — a **strongly-typed form built from a step's precomputed schema metadata**
   (unions/tuples/maps/`const`, inline booleans, live per-field validation). It is the editor for Skip's
   `skipOutputs` and for typed inputs; validates against the baked schema before emitting `value-changed`.
+
+### Runners (`/runners`, §5.4)
+
+#### `<arazzo-runners>`
+The runner registry / health view — a **read-only** observability surface (runners self-register and heartbeat out of
+band; the control plane only observes, so there are no mutating controls). Lists each execution host with its liveness
+(**Online** / **Stale**, derived from the most recent `lastSeenAt` against `stale-after`, default 90s — past the TTL a
+runner is pruned server-side), uptime, advertised `maxConcurrency`, transports, and the workflow versions it hosts
+(loaded / loading). Keyset-paged (Load more); an optional `poll` (ms) keeps the heartbeat ages + health current.
+`runs:read`. Emits `loaded`, `error`.
 
 ### Catalog (`/catalog`)
 
@@ -780,7 +794,7 @@ delivered full-stack (API-first → 10 durability backends + conformance → han
 - **Readiness as a hard gate** — the wizard refuses to register a build-from-docs workflow unless every source has a
   usable credential in some environment (usability per §13 `IsUsableBy`, not mere presence); the upload path defers to
   the **CLI** `catalog add`, which runs the same gate.
-- The demo composes these as the **Sources / Environments / Access / Permissions / Promotions** tabs.
+- The demo composes these as the **Runners / Sources / Environments / Access / Permissions / Promotions** tabs (plus Runs and Catalog).
 - **Promotion matrix** — `<arazzo-availability-matrix>` (the `(version × environment)` rollout grid, with direct
   make/withdraw + request-promotion) is embedded in the catalog version detail.
 
