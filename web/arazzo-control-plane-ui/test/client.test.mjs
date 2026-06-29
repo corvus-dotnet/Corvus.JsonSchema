@@ -657,3 +657,38 @@ test('withdrawVersionAvailability 404s when the version is not available in that
   const c = makeClient();
   await assert.rejects(() => c.withdrawVersionAvailability('adopt-pet', 1, 'staging'), (e) => e.status === 404);
 });
+
+// ---- persona enforcement (the gated-elevation model) --------------------------------------------
+
+test('persona enforcement: an operator must request promotion and an administrator approves it', async () => {
+  const mock = createMockControlPlane({ latencyMs: 0 });
+  const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+
+  // Operator lacks availability:write → a direct make-available is refused (403, insufficient scope); and because the
+  // operator administers nothing, their approver inbox is empty.
+  mock.setPersona('operator');
+  await assert.rejects(() => c.makeVersionAvailable('nightly-reconcile', 1, 'production'), (e) => e.status === 403);
+  assert.equal((await c.listAvailabilityRequests({ scope: 'queue' })).availabilityRequests.length, 0);
+
+  // The operator CAN request promotion (auth-only) but cannot approve it (not an administrator → 403).
+  const req = await c.submitAvailabilityRequest({ baseWorkflowId: 'nightly-reconcile', versionNumber: 1, environment: 'production' });
+  assert.equal(req.status, 'Pending');
+  await assert.rejects(() => c.approveAvailabilityRequest(req.id), (e) => e.status === 403);
+
+  // The administrator sees it in the inbox and approves → the version becomes available.
+  mock.setPersona('administrator');
+  assert.ok((await c.listAvailabilityRequests({ scope: 'queue' })).availabilityRequests.some((r) => r.id === req.id));
+  assert.equal((await c.approveAvailabilityRequest(req.id)).status, 'Approved');
+  assert.ok((await c.listVersionAvailability('nightly-reconcile', 1)).availability.some((a) => a.environment === 'production'));
+});
+
+test('persona enforcement: a viewer cannot perform run or governance writes but can read', async () => {
+  const mock = createMockControlPlane({ latencyMs: 0 });
+  const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+  mock.setPersona('viewer');
+
+  await assert.rejects(() => c.createEnvironment({ name: 'qa' }), (e) => e.status === 403);             // environments:write
+  await assert.rejects(() => c.makeVersionAvailable('adopt-pet', 1, 'production'), (e) => e.status === 403); // availability:write
+  await assert.rejects(() => c.cancelRun('run-1'), (e) => e.status === 403);                            // runs:write
+  assert.ok((await c.listEnvironments()).environments.length >= 1, 'reads still work');
+});

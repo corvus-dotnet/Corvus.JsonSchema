@@ -808,6 +808,30 @@ function problem(status, title, detail) {
  * @param {{ seed?: object[], latencyMs?: number }} [options]
  * @returns {{ fetch: (url: string, init?: RequestInit) => Promise<Response>, runs: object[] }}
  */
+// Demo personas — the same user under different privilege, so the **gated-elevation** model is demonstrable end-to-end
+// against the real UI components. The mock is otherwise identity-less; a persona supplies the caller's capability
+// `scopes` (what the components gate their write controls on, and what the mock enforces server-side) and whether the
+// caller `administers` the workflow/environment a governance action targets (so a non-administrator must REQUEST
+// promotion / access and an administrator approves it). A real deployment derives both from the principal's token; here
+// the demo selects a persona. `administrator` is the default so existing tests (which never set a persona) are unchanged.
+export const DEMO_PERSONAS = {
+  administrator: {
+    label: 'Administrator',
+    scopes: 'runs:read runs:write runs:purge catalog:read catalog:write catalog:purge credentials:read credentials:write sources:read sources:write environments:read environments:write availability:read availability:write administrators:read administrators:write security:read security:write',
+    administers: true,
+  },
+  operator: {
+    label: 'Operator',
+    scopes: 'runs:read runs:write catalog:read credentials:read sources:read environments:read availability:read administrators:read security:read',
+    administers: false,
+  },
+  viewer: {
+    label: 'Read-only viewer',
+    scopes: 'runs:read catalog:read credentials:read sources:read environments:read availability:read administrators:read security:read',
+    administers: false,
+  },
+};
+
 export function createMockControlPlane(options = {}) {
   const runs = options.seed ? structuredClone(options.seed) : seedRuns();
   const catalog = options.catalogSeed ? structuredClone(options.catalogSeed) : seedCatalog();
@@ -836,12 +860,50 @@ export function createMockControlPlane(options = {}) {
   };
   const findUsableCredential = (s, e, wf) => credentials.find((c) => c.sourceName === s && c.environment === e && credentialUsableBy(c, wf));
 
+  // The current persona (default administrator → all scopes + administers everything, so existing callers are unchanged).
+  function personaState(name) {
+    const p = DEMO_PERSONAS[name] || DEMO_PERSONAS.administrator;
+    return { name: DEMO_PERSONAS[name] ? name : 'administrator', scopes: new Set(p.scopes.split(/\s+/).filter(Boolean)), administers: p.administers };
+  }
+
+  let persona = personaState(options.persona || 'administrator');
+
+  // The capability scope a write requires, mirroring the OpenAPI security on each operation (reads are reach-gated in
+  // the real backend; the demo gates the capability/write scopes). Access-/availability-request endpoints are auth-only
+  // (no capability scope) — they are governed by the administrator check instead. Path carries the /arazzo/v1 prefix.
+  function requiredScopeFor(method, path) {
+    if (method === 'GET') return null;
+    if (/\/catalog\/[^/]+\/versions\/[^/]+\/availability\/[^/]+$/.test(path)) return 'availability:write';
+    if (path.includes('/accessRequests') || path.includes('/availabilityRequests')) return null;
+    if (path.includes('/catalog')) return method === 'PURGE' || method === 'DELETE' ? 'catalog:purge' : 'catalog:write';
+    if (path.includes('/credentials')) return 'credentials:write';
+    if (path.includes('/environments')) return 'environments:write'; // incl. env-admin governance (§7.7)
+    if (path.includes('/sources')) return 'sources:write';
+    if (path.includes('/security')) return 'security:write';
+    if (path.includes('/administrators')) return 'administrators:write';
+    if (path.includes('/runs')) return method === 'PURGE' || method === 'DELETE' ? 'runs:purge' : 'runs:write';
+    return null;
+  }
+
+  // The administrator gate (§7.7/§15/§16.5): a governance decision — make a version available, approve/deny a promotion
+  // or access request — requires that the caller administers the target. A non-administrator must raise a REQUEST.
+  const requireAdministrator = (what) => persona.administers ? null
+    : problem(403, 'Not an administrator', `Only an administrator can ${what}; request it instead and an administrator will decide.`);
+
   async function handle(url, init = {}) {
     const method = (init.method || 'GET').toUpperCase();
     const u = new URL(url, 'https://mock');
     const path = u.pathname;
     const isForm = typeof FormData !== 'undefined' && init.body instanceof FormData;
     const body = init.body && !isForm ? JSON.parse(init.body) : undefined;
+
+    // Capability-scope enforcement (the server-side gate, mirroring the OpenAPI security): a write the persona's scopes
+    // do not admit is a 403 — exactly what the real control plane returns, so the components' scope-hidden controls and
+    // the backend agree.
+    const requiredScope = requiredScopeFor(method, path);
+    if (requiredScope && !persona.scopes.has(requiredScope)) {
+      return problem(403, 'Insufficient scope', `This action requires the '${requiredScope}' scope, which the current persona does not hold.`);
+    }
 
     const versionAvailabilityResponse = handleVersionAvailability(path, method, u.searchParams);
     if (versionAvailabilityResponse) return versionAvailabilityResponse;
@@ -1566,6 +1628,8 @@ export function createMockControlPlane(options = {}) {
     const version = findVersion(base, versionNumber);
     if (!version) return problem(404, 'Workflow version not found', `Version ${versionNumber} of '${base}' does not exist.`);
     if (!findEnvironment(environment)) return notFoundEnvironment(environment);
+    const denied = requireAdministrator(`make a version available in '${environment}'`);
+    if (denied) return denied;
     const existing = availabilityEntries.find((a) => a.baseWorkflowId === base && a.versionNumber === versionNumber && a.environment === environment);
     if (existing) return json(structuredClone(existing)); // already available (idempotent → 200)
     const missing = (version.sources ?? []).filter((s) => !findUsableCredential(s.name, environment, base)).map((s) => s.name);
@@ -1578,6 +1642,8 @@ export function createMockControlPlane(options = {}) {
   }
 
   function withdrawVersionAvailability(base, versionNumber, environment) {
+    const denied = requireAdministrator(`withdraw availability in '${environment}'`);
+    if (denied) return denied;
     const i = availabilityEntries.findIndex((a) => a.baseWorkflowId === base && a.versionNumber === versionNumber && a.environment === environment);
     if (i < 0) return problem(404, 'Availability entry not found', `Version ${versionNumber} of '${base}' is not available in '${environment}'.`);
     availabilityEntries.splice(i, 1);
@@ -1835,10 +1901,11 @@ export function createMockControlPlane(options = {}) {
     const limit = Math.max(1, Number(params.get('limit')) || 50);
     let rows = [...accessRequests].sort((a, b) => (Date.parse(a.createdAt) - Date.parse(b.createdAt)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     if (base) {
-      // A single workflow's queue (the demo user administers everything in the mock).
-      rows = rows.filter((r) => r.baseWorkflowId === base);
+      // A single workflow's queue — visible only to an administrator of it (a non-administrator sees an empty queue).
+      rows = persona.administers ? rows.filter((r) => r.baseWorkflowId === base) : [];
     } else if (scope === 'queue') {
-      // The approver inbox: every request across all workflows (no subject filter).
+      // The approver inbox: every request across the workflows the caller administers (empty for a non-administrator).
+      if (!persona.administers) rows = [];
     } else {
       // The caller's own requests (scope=mine / absent).
       rows = rows.filter((r) => r.subjectClaimValue === demoUser);
@@ -1873,6 +1940,11 @@ export function createMockControlPlane(options = {}) {
   function decideAccessRequest(id, action, body) {
     const r = accessRequests.find((x) => x.id === id);
     if (!r) return notFoundAccessRequest(id);
+    // approve/approveAsEligible/deny/revoke are workflow-administrator decisions; withdraw is the requester's own.
+    if (action !== 'withdraw') {
+      const denied = requireAdministrator(`${action} an access request`);
+      if (denied) return denied;
+    }
     const reason = body?.reason;
     const requirePending = (verb) => r.status === 'Pending' ? null
       : problem(409, 'Invalid access-request state', `Request '${id}' is ${r.status}; only a pending request can be ${verb}.`);
@@ -1945,10 +2017,11 @@ export function createMockControlPlane(options = {}) {
     const limit = Math.max(1, Number(params.get('limit')) || 50);
     let rows = [...availabilityRequests].sort((a, b) => (Date.parse(a.createdAt) - Date.parse(b.createdAt)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     if (environment) {
-      // A single environment's queue (the demo user administers everything in the mock).
-      rows = rows.filter((r) => r.environment === environment);
+      // A single environment's queue — visible only to an administrator of it (a non-administrator sees an empty queue).
+      rows = persona.administers ? rows.filter((r) => r.environment === environment) : [];
     } else if (scope === 'queue') {
-      // The approver inbox: every request across all environments (no requester filter).
+      // The approver inbox: every request across the environments the caller administers (empty for a non-administrator).
+      if (!persona.administers) rows = [];
     } else {
       // The caller's own requests (scope=mine / absent).
       rows = rows.filter((r) => r.createdBy === demoUser);
@@ -1983,6 +2056,11 @@ export function createMockControlPlane(options = {}) {
   function decideAvailabilityRequest(id, action, body) {
     const r = availabilityRequests.find((x) => x.id === id);
     if (!r) return notFoundAvailabilityRequest(id);
+    // approve/deny are environment-administrator decisions; withdraw is the requester's own.
+    if (action !== 'withdraw') {
+      const denied = requireAdministrator(`${action} a promotion request`);
+      if (denied) return denied;
+    }
     const reason = body?.reason;
     const requirePending = (verb) => r.status === 'Pending' ? null
       : problem(409, 'Invalid availability-request state', `Request '${id}' is ${r.status}; only a pending request can be ${verb}.`);
@@ -2032,6 +2110,10 @@ export function createMockControlPlane(options = {}) {
     accessRequests,
     availabilityRequests,
     availabilityEntries,
+    // Switch the acting persona (capability scopes + whether the caller administers governance targets) so the demo can
+    // show the gated-elevation model from both sides. Defaults to 'administrator'.
+    setPersona: (name) => { persona = personaState(name); return persona.name; },
+    get persona() { return persona.name; },
     fetch: async (url, init) => {
       if (latency) await new Promise((r) => setTimeout(r, latency));
       return handle(url, init);
