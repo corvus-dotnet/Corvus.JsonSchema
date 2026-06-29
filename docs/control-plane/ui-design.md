@@ -434,7 +434,10 @@ A single create/edit/rotate dialog (`open()` to create, `open(binding)` to edit)
 element. It edits **references and metadata** — auth-kind-driven `secretRef` slots, config key/values, auth kind,
 optional `expiresAt`, usage grants — and rejects a value that isn't a well-formed `secretRef` *before* submit (the same
 boundary the server enforces, so a secret can't be smuggled in). The `secretRef` slots and the non-secret config fields
-are **driven by the auth kind**; unrecognised config keys are preserved verbatim. **Edit is a merge** mirroring the CLI:
+are **driven by the auth kind**; unrecognised config keys are preserved verbatim. The kinds are `apiKey`/`bearer`/
+`basic`/`oauth2ClientCredentials` (one slot each) and **`mtls`** (§13.1: a `certificate` slot plus optional
+`privateKey`/`passphrase`) — for `mtls` the dialog forces "Shared" and hides the usage "Restrict" option, since a client
+certificate is connection-level (the TLS handshake) and cannot be usage-scoped. **Edit is a merge** mirroring the CLI:
 re-pointing a reference is a rotation and stamps `rotatedAt`; unspecified fields are preserved (management tags and usage
 grants are shown read-only when editing). Emits `credential-saved`. `credentials:write` gates create/edit/delete.
 

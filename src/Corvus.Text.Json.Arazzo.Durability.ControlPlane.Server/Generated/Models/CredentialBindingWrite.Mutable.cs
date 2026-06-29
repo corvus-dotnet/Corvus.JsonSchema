@@ -273,7 +273,7 @@ public readonly partial struct CredentialBindingWrite
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// <para>
-        /// The HTTP auth scheme the resolved secret(s) build into a provider (non-sensitive metadata).
+        /// The HTTP auth scheme the resolved secret(s) build into a provider (non-sensitive metadata). &#39;mtls&#39; is connection-level (a client certificate presented at the TLS handshake, &#167;13.1): it carries a &#39;certificate&#39; secret (a base64 PKCS#12, or a PEM &#39;certificate&#39; paired with a PEM &#39;privateKey&#39;) plus an optional &#39;passphrase&#39;, and — being connection-scoped — cannot be usage-scoped to an individual run.
         /// </para>
         /// </remarks>
         public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCredentialKind.Mutable AuthKind

@@ -535,26 +535,30 @@ any control-plane response.
   plane and the durability stores still never hold a resolver, and a scheme with no registered resolver still
   fails closed.
 
-> **Work item — mTLS source credentials (NOT yet implemented; required before this epic closes).** The `kind`
-> enumeration above lists `mtls`, but it is **not built**: `SourceCredentialKind` has only `ApiKey`/`Bearer`/
-> `Basic`/`OAuth2ClientCredentials`, `SourceCredentialKindExtensions.Parse` *throws* on `"mtls"` (so a binding
-> with `authKind: mtls` is rejected `400`), and `SourceCredentialProviderFactory.CreateAsync` falls through to
-> `_ => throw "Unsupported source credential kind"`. Every other supported kind resolves **exactly one** secret
-> reference (`apiKey`/`bearer` → `value`, `basic` → `password`, `oauth2ClientCredentials` → `clientSecret`); mTLS
-> is the one kind that genuinely needs **more than one** secret slot (a client **certificate**, plus a **private
-> key**/passphrase where they are separate). The slice to implement:
-> 1. add `SourceCredentialKind.Mtls` (+ `"mtls"` JSON token, `Parse`/`ToJsonToken`);
-> 2. add a multi-secret branch to `SourceCredentialProviderFactory` resolving the certificate (and key/passphrase)
->    roles into a client-certificate `IHttpAuthenticationProvider` / `HttpClientHandler.ClientCertificates` wiring
->    (the existing AsyncApi `CertificateAuthenticationProvider` reads a base64 PFX + optional password — reuse the
->    shape, but via §13 secret **references**, never inline);
-> 3. extend the §13 conformance to cover it; surface it in the control-plane/CLI/UI only once it resolves.
+> **mTLS source credentials — DELIVERED.** `SourceCredentialKind.Mtls` (+ the `"mtls"` JSON token, `Parse`/
+> `ToJsonToken`, and the OpenAPI `SourceCredentialKind` enum, regenerated into the Server+CLI `Generated/`) is built.
+> It is the one kind that uses **more than one** secret slot: a `certificate` (required) plus an optional `privateKey`
+> and `passphrase`. **The crucial design point** — a client certificate is established at the **TLS handshake
+> (connection-level)**, not per request, so it does **not** flow through the §13.4 per-request resolution path: it is
+> resolved once and configured on the source's `HttpClient` handler at construction. Concretely:
+> - **Resolution.** `SourceCredentialProviderFactory.ResolveClientCertificateAsync` dereferences the `certificate`
+>   (and optional `privateKey`/`passphrase`) secret **references** via the `ISecretResolver` into an
+>   `X509Certificate2` — a base64 PKCS#12/PFX (optionally passphrase-protected), or a PEM `certificate` paired with a
+>   PEM `privateKey` (a PEM key is re-exported to PKCS#12 so it is usable for client auth on every platform). The
+>   per-request `CreateAsync(mtls)` returns a **no-op** `IHttpAuthenticationProvider` (nothing to add per request).
+> - **Wiring.** `SourceCredentialTransports.CreateSourceHttpClientAsync` builds the host-owned per-source client with
+>   the certificate on a `SocketsHttpHandler.SslOptions.ClientCertificates`, owning the certificate's lifetime; the
+>   host installs the result in the dictionary it hands to `CreateBinder`.
+> - **Connection-scoped, never usage-scoped.** Because the certificate authenticates the *deployment* to the source
+>   (not an individual run), an mTLS binding is **shared** across the runs that reach the source and cannot be
+>   usage-scoped: `SourceCredentialBinding.ValidateDraft` requires the `certificate` reference and rejects usage tags,
+>   and the control-plane create handler refuses an explicit `usageGrantee` (`400`) and never applies the default
+>   creator-identity usage scoping.
+> - **Surface.** The credential UI (`credential-dialog.js`) offers `mtls` with a certificate slot plus optional
+>   key/passphrase slots, forces "Shared", and hides the "Restrict to a grantee" option (correct-by-construction).
 >
-> **Until this lands, `mtls` MUST NOT be offered by the control-plane/CLI/UI** (it would fail at validation), and
-> the credential UI shows exactly the one secret slot each *supported* kind consumes — see the auth-kind-driven
-> reference slots in `web/arazzo-control-plane-ui` (`credential-dialog.js`). This is the data model's only use of
-> the multi-`secretRef` capability today; the binding remains a *set* of role-tagged references precisely so this
-> slice (and future multi-secret kinds) drop in without a schema change.
+> The binding remains a *set* of role-tagged references, so this (and future multi-secret kinds) needed no schema
+> change to the binding itself — only the `authKind` enum gained `mtls`.
 
 ### 13.2 Expiry tracking, states, and telemetry
 

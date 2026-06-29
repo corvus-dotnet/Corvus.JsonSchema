@@ -91,6 +91,55 @@ public sealed class ControlPlaneCredentialsApiTests
     }
 
     [TestMethod]
+    public async Task An_mtls_binding_is_created_with_certificate_references_and_is_always_shared()
+    {
+        await using Scoped host = await StartAsync();
+
+        HttpResponseMessage created = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"petstore","environment":"production","authKind":"mtls","secretRefs":[{"name":"certificate","ref":"keyvault://petstore-cert"},{"name":"privateKey","ref":"keyvault://petstore-key"}]}""",
+            Write);
+
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        using Stj.JsonDocument doc = await ReadJsonAsync(created);
+        doc.RootElement.GetProperty("authKind").GetString().ShouldBe("mtls");
+
+        // mTLS is connection-level (the TLS handshake), so it is never usage-scoped — the binding carries no usageGrantee.
+        doc.RootElement.TryGetProperty("usageGrantee", out _).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task An_mtls_binding_without_a_certificate_reference_is_rejected()
+    {
+        await using Scoped host = await StartAsync();
+
+        HttpResponseMessage rejected = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"petstore","environment":"production","authKind":"mtls","secretRefs":[{"name":"value","ref":"keyvault://petstore-key"}]}""",
+            Write);
+
+        rejected.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [TestMethod]
+    public async Task A_usage_scoped_mtls_binding_is_rejected()
+    {
+        await using Scoped host = await StartAsync();
+
+        // A client certificate is presented at the connection, not per request, so it cannot be scoped to a run: an
+        // explicit usageGrantee on an mTLS binding is refused (400) rather than silently ignored.
+        HttpResponseMessage rejected = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"petstore","environment":"production","authKind":"mtls","secretRefs":[{"name":"certificate","ref":"keyvault://petstore-cert"}],"usageGrantee":{"identity":[{"dimension":"workflow","value":"nightly-reconcile"}],"kind":"workflow"}}""",
+            Write);
+
+        rejected.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [TestMethod]
     public async Task Creating_a_duplicate_binding_conflicts()
     {
         await using Scoped host = await StartAsync();

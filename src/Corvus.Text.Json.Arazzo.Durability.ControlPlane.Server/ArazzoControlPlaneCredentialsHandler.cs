@@ -145,7 +145,20 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 throw new ArgumentException("An 'environment' is required.");
             }
 
-            _ = ReadAuthKind(body.AuthKind);
+            SourceCredentialKind authKind = ReadAuthKind(body.AuthKind);
+
+            // mTLS (§13.1) authenticates the deployment to the source at the TLS handshake (connection-level), so it
+            // cannot be scoped to an individual run: reject an explicit usage grantee, and never apply the default
+            // creator-identity usage scoping — an mTLS binding is always shared across the runs that reach the source.
+            if (authKind == SourceCredentialKind.Mtls)
+            {
+                if (hasUsageGrantee)
+                {
+                    throw new ArgumentException("An mTLS credential authenticates the deployment to the source at the TLS handshake (connection-level), so it cannot be scoped to a usage grantee; remove 'usageGrantee'.");
+                }
+
+                hasUsageTags = false;
+            }
         }
         catch (ArgumentException ex)
         {
