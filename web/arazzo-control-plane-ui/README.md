@@ -28,7 +28,8 @@ package `exports` — `@corvus-dotnet/arazzo-control-plane-ui`, `.../client`, `.
   `<arazzo-status-badge>`, `<arazzo-workflow-id-input>` (workflowId filter with catalog autocomplete),
   `<arazzo-workflow-step-picker>` (choose a resume target step by name), `<arazzo-value-editor>` (a
   strongly-typed form built from a step's precomputed schema metadata — the output editor for Skip's
-  `skipOutputs`) for runs;
+  `skipOutputs`), and `<arazzo-runners>` (the §5.4 runner registry / health view — a read-only list of the
+  execution hosts with Online/Stale liveness, capacity, transports, and hosted workflow versions) for runs;
   `<arazzo-catalog-table>`,
   `<arazzo-catalog-detail>`, `<arazzo-catalog-add-dialog>` (which can also set up a credential binding §13 per
   declared source, and stage the workflow's administrator set, as the workflow is added) for the workflow catalog;
@@ -126,6 +127,7 @@ The kit never embeds an IdP flow. Configure credentials one of three ways (prece
 | `<arazzo-cancel-button>` | `base-url`, `runid`, `label`, `disabled`, `no-confirm` | `run-cancelled`, `error` |
 | `<arazzo-purge-dialog>` | (`.client`, `.open()`) | `purge-completed`, `error` |
 | `<arazzo-status-badge>` | `status` | — |
+| `<arazzo-runners>` | `base-url`, `stale-after`, `poll`, `scopes` | `loaded`, `error` |
 | `<arazzo-credentials-table>` | `base-url`, `status`, `source`, `selectable`, `scopes` | `credential-selected`, `credential-new`, `loaded`, `error` |
 | `<arazzo-credential-dialog>` | (`.client`, `.open(binding?)`) | `credential-saved`, `error` |
 | `<arazzo-administrators-panel>` | `base-url`, `base-workflow-id` **or** `environment` (the subject), `scopes` | `administrators-changed`, `error` |
