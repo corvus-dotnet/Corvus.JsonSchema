@@ -9,10 +9,18 @@
   top: 0;
   z-index: 50;
   height: var(--header-height);
-  background: rgb(28 29 33 / 0.85);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
+  // A translucent + backdrop-filter sticky header forces a full-viewport
+  // repaint on every scroll frame, which on mobile is the main cause of scroll
+  // jitter. Use an opaque background by default and only enable the blur on
+  // larger screens, where the GPU handles it without jank.
+  background: rgb(28 29 33);
   border-bottom: 1px solid var(--color-border);
+
+  @include breakpoint-md {
+    background: rgb(28 29 33 / 0.85);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+  }
 
   &__inner {
     display: flex;

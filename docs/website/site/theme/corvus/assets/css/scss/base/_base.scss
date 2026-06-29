@@ -19,6 +19,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh; // dynamic viewport unit: avoids reflow as the mobile URL bar shows/hides
   background-color: var(--color-bg);
   color: var(--color-gray-light);
   font-family: var(--font-family);

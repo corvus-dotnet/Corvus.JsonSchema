@@ -45,6 +45,7 @@
   margin: 0 auto;
   padding: var(--space-md) var(--space-md);
   min-height: calc(100vh - var(--header-height));
+  min-height: calc(100dvh - var(--header-height)); // dynamic viewport unit: no reflow as the mobile URL bar moves
 
   @include breakpoint-md {
     grid-template-columns: var(--sidebar-width) 1fr;
