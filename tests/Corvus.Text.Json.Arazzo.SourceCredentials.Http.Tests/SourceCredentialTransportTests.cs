@@ -169,8 +169,47 @@ public sealed class SourceCredentialTransportTests
         f.Cache.Dispose();
     }
 
+    [TestMethod]
+    public async Task A_binding_base_url_override_sends_the_request_to_that_environments_endpoint()
+    {
+        Fixture f = NewFixture();
+
+        // The binding carries a per-environment base URL override (§8) in its non-secret config.
+        await f.Store.AddAsync(ApiKeyWithBaseUrl("petstore", "production", "petstore-production", "https://staging.petstore.example/"), "alice", default);
+        using var handler = new RecordingHandler();
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("https://default.petstore.example/") };
+
+        IApiTransport transport = SourceCredentialTransports.CreateApiTransportFactory(client, "petstore", "production", f.Cache).CreateTransport();
+        await transport.SendAsync<FakeRequest, FakeResponse>(default, default);
+
+        handler.LastRequestUri?.ToString().ShouldBe("https://staging.petstore.example/x");
+        f.Cache.Dispose();
+    }
+
+    [TestMethod]
+    public async Task Without_a_base_url_override_the_request_uses_the_clients_base_address()
+    {
+        Fixture f = NewFixture();
+        await f.Store.AddAsync(ApiKey("petstore", "production", "petstore-production"), "alice", default);
+        using var handler = new RecordingHandler();
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("https://default.petstore.example/") };
+
+        IApiTransport transport = SourceCredentialTransports.CreateApiTransportFactory(client, "petstore", "production", f.Cache).CreateTransport();
+        await transport.SendAsync<FakeRequest, FakeResponse>(default, default);
+
+        handler.LastRequestUri?.ToString().ShouldBe("https://default.petstore.example/x");
+        f.Cache.Dispose();
+    }
+
     private static string? Header(HttpRequestMessage request, string name)
         => request.Headers.TryGetValues(name, out IEnumerable<string>? values) ? values.Single() : null;
+
+    private static SourceCredentialDefinition ApiKeyWithBaseUrl(string sourceName, string environment, string envVar, string baseUrl) => new(
+        sourceName,
+        environment,
+        SourceCredentialKind.ApiKey,
+        [new SecretReferenceDefinition("value", $"env://{envVar}")],
+        [new CredentialConfigDefinition("parameterName", "X-Api-Key"), new CredentialConfigDefinition("baseUrl", baseUrl)]);
 
     private static SourceCredentialDefinition ApiKey(string sourceName, string environment, string envVar) => new(
         sourceName,
@@ -247,6 +286,18 @@ public sealed class SourceCredentialTransportTests
     }
 
     private sealed record Fixture(TestClock Clock, InMemorySourceCredentialStore Store, SourceCredentialCache Cache);
+
+    // Captures the absolute request URI HttpClient sends (after BaseAddress / override resolution) and returns 200.
+    private sealed class RecordingHandler : HttpMessageHandler
+    {
+        public Uri? LastRequestUri { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            this.LastRequestUri = request.RequestUri;
+            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent("{}") });
+        }
+    }
 
     // An inner transport that returns a fixed HTTP status for every call — drives the decorator's response check.
     private sealed class FixedStatusTransport(int statusCode) : IApiTransport

@@ -1991,7 +1991,7 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "catalog:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "catalog:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __GetCatalogExecutorEndpoint);
 
-        IEndpointConventionBuilder __GetCatalogExecutorManifestEndpoint = app.MapGet("/catalog/{baseWorkflowId}/versions/{versionNumber}/executor-manifest", async (HttpContext context) =>
+        IEndpointConventionBuilder __GetCatalogExecutorManifestEndpoint = app.MapGet("/catalog/{baseWorkflowId}/versions/{versionNumber}/executorManifest", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -2086,7 +2086,7 @@ public static class ApiEndpointRegistration
                 operationId: "getCatalogExecutorManifest",
                 methodName: "GetCatalogExecutorManifest",
                 httpMethod: "GET",
-                routeTemplate: "/catalog/{baseWorkflowId}/versions/{versionNumber}/executor-manifest",
+                routeTemplate: "/catalog/{baseWorkflowId}/versions/{versionNumber}/executorManifest",
                 tags: new[] { "catalog" },
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "catalog:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "catalog:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
@@ -6405,7 +6405,7 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", System.Array.Empty<string>(), "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", System.Array.Empty<string>(), "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __ApproveAccessRequestEndpoint);
 
-        IEndpointConventionBuilder __ApproveAccessRequestAsEligibleEndpoint = app.MapPost("/accessRequests/{requestId}/approve-as-eligible", async (HttpContext context) =>
+        IEndpointConventionBuilder __ApproveAccessRequestAsEligibleEndpoint = app.MapPost("/accessRequests/{requestId}/approveAsEligible", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestEligibilityNote>? bodyDoc = null;
@@ -6507,7 +6507,7 @@ public static class ApiEndpointRegistration
                 operationId: "approveAccessRequestAsEligible",
                 methodName: "ApproveAccessRequestAsEligible",
                 httpMethod: "POST",
-                routeTemplate: "/accessRequests/{requestId}/approve-as-eligible",
+                routeTemplate: "/accessRequests/{requestId}/approveAsEligible",
                 tags: new[] { "accessRequests" },
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", System.Array.Empty<string>(), "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", System.Array.Empty<string>(), "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),

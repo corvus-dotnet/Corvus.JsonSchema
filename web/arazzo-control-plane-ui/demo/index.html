@@ -53,6 +53,8 @@
       <button id="tab-catalog" role="tab" aria-selected="false" aria-controls="view-catalog">Catalog</button>
       <button id="tab-credentials" role="tab" aria-selected="false" aria-controls="view-credentials">Sources</button>
       <button id="tab-access" role="tab" aria-selected="false" aria-controls="view-access">Access</button>
+      <button id="tab-permissions" role="tab" aria-selected="false" aria-controls="view-permissions">Permissions</button>
+      <button id="tab-promotions" role="tab" aria-selected="false" aria-controls="view-promotions">Promotions</button>
     </div>
 
     <div id="view-runs" role="tabpanel">
@@ -69,9 +71,16 @@
     </div>
 
     <div id="view-access" role="tabpanel" hidden>
+      <arazzo-access-requests base-url="https://mock/arazzo/v1" theme="auto"></arazzo-access-requests>
+    </div>
+
+    <div id="view-permissions" role="tabpanel" hidden>
       <arazzo-grants-panel base-url="https://mock/arazzo/v1" scopes="security:read security:write"></arazzo-grants-panel>
       <arazzo-scopes-panel base-url="https://mock/arazzo/v1" scopes="security:read security:write" style="margin-top: 16px;"></arazzo-scopes-panel>
-      <arazzo-access-requests base-url="https://mock/arazzo/v1" theme="auto" style="margin-top: 16px;"></arazzo-access-requests>
+    </div>
+
+    <div id="view-promotions" role="tabpanel" hidden>
+      <arazzo-availability-requests base-url="https://mock/arazzo/v1" theme="auto"></arazzo-availability-requests>
     </div>
 
     <p class="note">
@@ -90,6 +99,7 @@
     import '../src/components/credentials-table.js';
     import '../src/components/credential-dialog.js';
     import '../src/components/access-requests-panel.js';
+    import '../src/components/availability-requests-panel.js';
     import '../src/components/scopes-panel.js';
     import '../src/components/grants-panel.js';
 
@@ -105,11 +115,13 @@
     const credTable = document.querySelector('arazzo-credentials-table');
     const credDialog = document.querySelector('arazzo-credential-dialog');
     const access = document.querySelector('arazzo-access-requests');
+    const promotions = document.querySelector('arazzo-availability-requests');
     const reach = document.querySelector('arazzo-scopes-panel');
     const bindings = document.querySelector('arazzo-grants-panel');
     credTable.client = client;
     credDialog.client = client;
     access.client = client;
+    promotions.client = client;
     reach.client = client;
     bindings.client = client;
 
@@ -129,6 +141,7 @@
       panel.setAttribute('theme', v);
       catalog.setAttribute('theme', v);
       access.setAttribute('theme', v);
+      promotions.setAttribute('theme', v);
       if (v === 'auto') document.documentElement.removeAttribute('data-theme');
       else document.documentElement.setAttribute('data-theme', v);
     };
@@ -147,7 +160,7 @@
     });
 
     // Tabs.
-    const tabNames = ['runs', 'catalog', 'credentials', 'access'];
+    const tabNames = ['runs', 'catalog', 'credentials', 'access', 'permissions', 'promotions'];
     const tabs = Object.fromEntries(tabNames.map((n) => [n, document.getElementById(`tab-${n}`)]));
     const views = Object.fromEntries(tabNames.map((n) => [n, document.getElementById(`view-${n}`)]));
     const selectTab = (name) => {
@@ -170,6 +183,9 @@
     }
     for (const type of ['access-request-submitted', 'access-request-decided', 'loaded', 'error']) {
       access.addEventListener(type, (e) => console.log(`[arazzo:access] ${type}`, e.detail));
+    }
+    for (const type of ['availability-request-submitted', 'availability-request-decided', 'loaded', 'error']) {
+      promotions.addEventListener(type, (e) => console.log(`[arazzo:promotions] ${type}`, e.detail));
     }
   </script>
 </body>

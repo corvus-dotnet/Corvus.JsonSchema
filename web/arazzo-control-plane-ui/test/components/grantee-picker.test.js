@@ -81,6 +81,20 @@ describe('<arazzo-grantee-picker>', () => {
     ok([...results(el)].every((r) => r.textContent.includes('team')), 'only the locked kind');
   });
 
+  it('restricts the offered kinds via the kinds allow-list and excludes others from "Any kind" results', async () => {
+    // An administrator picker allows person/team/role but never `workflow` (a workflow is a valid credential-usage
+    // grantee, not a workflow administrator).
+    el = pickerWithMock({ kinds: 'person team role' });
+    mount(el);
+    const opts = [...el.shadowRoot.querySelectorAll('.kind option')].map((o) => o.value);
+    ok(!opts.includes('workflow'), 'workflow is not offered as a selectable kind');
+    ok(['person', 'team', 'role'].every((k) => opts.includes(k)), 'the allowed kinds are offered');
+    // 'onboard' resolves only to the seed's workflow grantee → filtered out under "Any kind", so no actionable rows.
+    type(el, 'onboard');
+    await waitFor(() => el.shadowRoot.querySelector('.results:not([hidden]) li'));
+    equal(results(el).length, 0, 'the workflow grantee is filtered out of an admin picker');
+  });
+
   it('reset() clears the selection', async () => {
     el = pickerWithMock();
     mount(el);

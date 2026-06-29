@@ -96,6 +96,45 @@ public sealed class SourceCredentialCache : IDisposable
         return this.GetSlowAsync(key, runTags, cancellationToken);
     }
 
+    /// <summary>Resolves the per-environment server base URL override (§8) for the binding the run is entitled to use,
+    /// or <see langword="null"/> when it sets none. Shares the cached binding resolution with
+    /// <see cref="GetAsync(string, string, string, SecurityTagSet, CancellationToken)"/> — on the warm path it is a
+    /// lock-free read; a cold read resolves (and caches) the same binding the provider is built from.</summary>
+    /// <param name="sourceName">The Arazzo source description name.</param>
+    /// <param name="environment">The deployment environment.</param>
+    /// <param name="runTagsKey">The pre-computed canonical run-tags key (the cache discriminator).</param>
+    /// <param name="runTags">The run's own security tags (used only on a miss, to entitle the binding).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The override base URL, or <see langword="null"/>.</returns>
+    public ValueTask<Uri?> GetBaseUrlAsync(string sourceName, string environment, string runTagsKey, SecurityTagSet runTags, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(sourceName);
+        ArgumentNullException.ThrowIfNull(environment);
+        ArgumentNullException.ThrowIfNull(runTagsKey);
+
+        (string, string, string) key = (sourceName, environment, runTagsKey);
+        if (this.entries.TryGetValue(key, out Entry? warm) && this.timeProvider.GetUtcNow() < warm.ExpiresAt)
+        {
+            return new ValueTask<Uri?>(warm.BaseUrlOverride);
+        }
+
+        return GetSlowBaseUrlAsync(key, runTags, cancellationToken);
+
+        async ValueTask<Uri?> GetSlowBaseUrlAsync((string, string, string) k, SecurityTagSet tags, CancellationToken ct)
+        {
+            try
+            {
+                await this.GetSlowAsync(k, tags, ct).ConfigureAwait(false); // resolves + caches the entry (provider + base URL)
+            }
+            catch (SourceCredentialExpiredException)
+            {
+                // Expiry is the auth path's concern; the base URL is still resolvable from the (published) entry.
+            }
+
+            return this.entries.TryGetValue(k, out Entry? e) ? e.BaseUrlOverride : null;
+        }
+    }
+
     /// <summary>Explicitly invalidates the cached entries for a source/environment (e.g. on a control-plane rotation),
     /// disposing their providers — across every run-tag scope, since a rotation in the store affects them all.</summary>
     /// <param name="sourceName">The Arazzo source description name.</param>
@@ -168,7 +207,7 @@ public sealed class SourceCredentialCache : IDisposable
             if (document is null)
             {
                 // Negative cache: remember "no binding" for the TTL so an unauthenticated source costs no repeat I/O.
-                this.Publish(key, current, new Entry(null, cacheExpiresAt, WorkflowEtag.None, credentialExpiresAt: null));
+                this.Publish(key, current, new Entry(null, cacheExpiresAt, WorkflowEtag.None, credentialExpiresAt: null, baseUrlOverride: null));
                 return null;
             }
 
@@ -178,21 +217,22 @@ public sealed class SourceCredentialCache : IDisposable
             // explicit Invalidate) refreshes it.
             DateTimeOffset? credentialExpiresAt = document.RootElement.ExpiresAtOrNull;
             WorkflowEtag etag = document.RootElement.EtagValue;
+            Uri? baseUrlOverride = document.RootElement.BaseUrlOverrideOrNull;
             if (credentialExpiresAt is { } expiry && now >= expiry)
             {
-                this.Publish(key, current, new Entry(null, cacheExpiresAt, etag, credentialExpiresAt));
+                this.Publish(key, current, new Entry(null, cacheExpiresAt, etag, credentialExpiresAt, baseUrlOverride));
                 throw new SourceCredentialExpiredException(key.SourceName);
             }
 
             if (current is { Provider: not null } && current.Etag == etag)
             {
                 // Unchanged binding: keep the existing provider (no secret re-resolve), just extend the warm window.
-                this.Publish(key, current, new Entry(current.Provider, cacheExpiresAt, etag, credentialExpiresAt), disposePrevious: false);
+                this.Publish(key, current, new Entry(current.Provider, cacheExpiresAt, etag, credentialExpiresAt, baseUrlOverride), disposePrevious: false);
                 return current.Provider;
             }
 
             IHttpAuthenticationProvider provider = await this.factory.CreateAsync(document.RootElement, cancellationToken).ConfigureAwait(false);
-            this.Publish(key, current, new Entry(provider, cacheExpiresAt, etag, credentialExpiresAt));
+            this.Publish(key, current, new Entry(provider, cacheExpiresAt, etag, credentialExpiresAt, baseUrlOverride));
             return provider;
         }
         finally
@@ -211,7 +251,7 @@ public sealed class SourceCredentialCache : IDisposable
     }
 
     // Immutable once published, so the lock-free warm-path read sees a consistent snapshot (no torn DateTimeOffset).
-    private sealed class Entry(IHttpAuthenticationProvider? provider, DateTimeOffset expiresAt, WorkflowEtag etag, DateTimeOffset? credentialExpiresAt)
+    private sealed class Entry(IHttpAuthenticationProvider? provider, DateTimeOffset expiresAt, WorkflowEtag etag, DateTimeOffset? credentialExpiresAt, Uri? baseUrlOverride)
     {
         public IHttpAuthenticationProvider? Provider { get; } = provider;
 
@@ -222,5 +262,9 @@ public sealed class SourceCredentialCache : IDisposable
 
         // The bound credential's own expiry (§13.2), or null when it has no known expiry (non-expiring).
         public DateTimeOffset? CredentialExpiresAt { get; } = credentialExpiresAt;
+
+        // The binding's per-environment server base URL override (§8), resolved from the same binding read as the
+        // provider, or null when the binding sets none. The HTTP transport sends to this endpoint when present.
+        public Uri? BaseUrlOverride { get; } = baseUrlOverride;
     }
 }

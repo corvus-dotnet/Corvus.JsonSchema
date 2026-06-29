@@ -120,7 +120,7 @@ public interface IApiCatalogHandler
     ValueTask<GetCatalogExecutorResult> HandleGetCatalogExecutorAsync(GetCatalogExecutorParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Handles GET /catalog/{baseWorkflowId}/versions/{versionNumber}/executor-manifest — Get a version's executor manifest
+    /// Handles GET /catalog/{baseWorkflowId}/versions/{versionNumber}/executorManifest — Get a version's executor manifest
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
     /// <param name="workspace">The workspace for building response values.</param>

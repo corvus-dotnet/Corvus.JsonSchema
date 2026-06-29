@@ -220,6 +220,14 @@ public readonly partial struct SourceCredentialBinding
         return false;
     }
 
+    /// <summary>Gets the per-environment server base URL override (the non-secret <c>baseUrl</c> config), or
+    /// <see langword="null"/> when the binding carries none or it is not a well-formed absolute URI. A source's base URL
+    /// is commonly environment-specific (design §8); when set, the run's transport sends to this endpoint instead of the
+    /// source document's declared server. (The AsyncAPI <c>serverHost</c> equivalent targets the message transport and
+    /// is not applied by the HTTP transport.)</summary>
+    public Uri? BaseUrlOverrideOrNull
+        => this.TryGetConfigValue("baseUrl", out string? value) && Uri.TryCreate(value, UriKind.Absolute, out Uri? uri) ? uri : null;
+
     /// <summary>Parses a binding from its persisted JSON as a detached value (one owned copy).</summary>
     /// <param name="utf8">The UTF-8 JSON document.</param>
     /// <returns>The binding.</returns>
