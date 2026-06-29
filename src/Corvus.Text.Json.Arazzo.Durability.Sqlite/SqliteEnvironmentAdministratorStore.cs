@@ -13,7 +13,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.Sqlite;
 /// deployment environment — the mutable set of administrator identities — persisted for a single-file / embedded host.
 /// Each record is stored as its <see cref="EnvironmentAdministrators"/> document in a BLOB column, keyed by
 /// EnvironmentName; its etag is held in a column for the optimistic-concurrency check. Mirrors
-/// <see cref="SqliteWorkflowAdministratorStore"/> without the reverse administration index.
+/// <see cref="SqliteWorkflowAdministratorStore"/>, including the reverse administration index that powers
+/// <see cref="ListAdministeredAsync"/>.
 /// </summary>
 /// <remarks>
 /// One connection is held open and all operations are serialised through a gate, as the other Sqlite stores do; the
@@ -128,14 +129,43 @@ public sealed class SqliteEnvironmentAdministratorStore : IEnvironmentAdministra
                 isUpdate = false;
             }
 
-            using SqliteCommand write = this.connection.CreateCommand();
-            write.CommandText = isUpdate
-                ? "UPDATE EnvironmentAdministrators SET Etag = @etag, Document = @doc WHERE EnvironmentName = @id;"
-                : "INSERT INTO EnvironmentAdministrators (EnvironmentName, Etag, Document) VALUES (@id, @etag, @doc);";
-            write.Parameters.AddWithValue("@id", environmentName);
-            write.Parameters.AddWithValue("@etag", etag.Value!);
-            write.Parameters.AddWithValue("@doc", json);
-            await write.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            // The document write and the reverse-index rewrite are atomic (design §15.4): the inbox must never observe an
+            // environment indexed under a digest its current administrator set no longer holds, or vice versa.
+            await using SqliteTransaction transaction = (SqliteTransaction)await this.connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+            using (SqliteCommand write = this.connection.CreateCommand())
+            {
+                write.Transaction = transaction;
+                write.CommandText = isUpdate
+                    ? "UPDATE EnvironmentAdministrators SET Etag = @etag, Document = @doc WHERE EnvironmentName = @id;"
+                    : "INSERT INTO EnvironmentAdministrators (EnvironmentName, Etag, Document) VALUES (@id, @etag, @doc);";
+                write.Parameters.AddWithValue("@id", environmentName);
+                write.Parameters.AddWithValue("@etag", etag.Value!);
+                write.Parameters.AddWithValue("@doc", json);
+                await write.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            // Rewrite this environment's reverse-index rows: retract the stale digests, then index the current ones. The
+            // administrator set is small, so a delete-all-then-insert is simplest and correct.
+            using (SqliteCommand clear = this.connection.CreateCommand())
+            {
+                clear.Transaction = transaction;
+                clear.CommandText = "DELETE FROM EnvironmentAdministratorIndex WHERE EnvironmentName = @id;";
+                clear.Parameters.AddWithValue("@id", environmentName);
+                await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            foreach (string digest in EnvironmentAdministeredPaging.DistinctDigests(administrators))
+            {
+                using SqliteCommand index = this.connection.CreateCommand();
+                index.Transaction = transaction;
+                index.CommandText = "INSERT INTO EnvironmentAdministratorIndex (AdminDigest, EnvironmentName) VALUES (@digest, @id);";
+                index.Parameters.AddWithValue("@digest", digest);
+                index.Parameters.AddWithValue("@id", environmentName);
+                await index.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return PersistedJson.ToPooledDocument<EnvironmentAdministrators>(json);
         }
         finally
@@ -151,10 +181,70 @@ public sealed class SqliteEnvironmentAdministratorStore : IEnvironmentAdministra
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            using SqliteCommand delete = this.connection.CreateCommand();
-            delete.CommandText = "DELETE FROM EnvironmentAdministrators WHERE EnvironmentName = @id;";
-            delete.Parameters.AddWithValue("@id", environmentName);
-            await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            // The document delete and the reverse-index retraction are atomic, mirroring the PutAsync rewrite: the inbox
+            // must never observe an environment indexed under a digest after its record has been removed. A missing record
+            // is a no-op (both deletes simply affect no rows). The administrator set is small, so retracting every
+            // index row for this environment — removing it from each administrator-digest bucket it was in — is simplest.
+            await using SqliteTransaction transaction = (SqliteTransaction)await this.connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+            using (SqliteCommand delete = this.connection.CreateCommand())
+            {
+                delete.Transaction = transaction;
+                delete.CommandText = "DELETE FROM EnvironmentAdministrators WHERE EnvironmentName = @id;";
+                delete.Parameters.AddWithValue("@id", environmentName);
+                await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            using (SqliteCommand clear = this.connection.CreateCommand())
+            {
+                clear.Transaction = transaction;
+                clear.CommandText = "DELETE FROM EnvironmentAdministratorIndex WHERE EnvironmentName = @id;";
+                clear.Parameters.AddWithValue("@id", environmentName);
+                await clear.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        int pageSize = limit > 0 ? limit : EnvironmentAdministeredPage.DefaultPageSize;
+
+        // The keyset cursor (the environment name to page strictly after) reifies once here for the @after parameter — the
+        // SQL leaf — never per row. SQLite TEXT compares with BINARY (ordinal) collation, matching the contract's order.
+        string? after = EnvironmentAdministeredContinuationToken.DecodeCursorToString(pageToken);
+
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            using SqliteCommand select = this.connection.CreateCommand();
+            select.CommandText = after is null
+                ? "SELECT EnvironmentName FROM EnvironmentAdministratorIndex WHERE AdminDigest = @digest ORDER BY EnvironmentName LIMIT @n;"
+                : "SELECT EnvironmentName FROM EnvironmentAdministratorIndex WHERE AdminDigest = @digest AND EnvironmentName > @after ORDER BY EnvironmentName LIMIT @n;";
+            select.Parameters.AddWithValue("@digest", adminDigest);
+            select.Parameters.AddWithValue("@n", pageSize + 1);
+            if (after is not null)
+            {
+                select.Parameters.AddWithValue("@after", after);
+            }
+
+            var rows = new List<string>(pageSize + 1);
+            using (SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    rows.Add(reader.GetString(0));
+                }
+            }
+
+            return EnvironmentAdministeredPaging.ToPage(rows, pageSize);
         }
         finally
         {
@@ -182,6 +272,11 @@ public sealed class SqliteEnvironmentAdministratorStore : IEnvironmentAdministra
             EnvironmentName TEXT NOT NULL PRIMARY KEY,
             Etag TEXT NOT NULL,
             Document BLOB NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS EnvironmentAdministratorIndex (
+            AdminDigest TEXT NOT NULL,
+            EnvironmentName TEXT NOT NULL,
+            PRIMARY KEY (AdminDigest, EnvironmentName)
         );
         """;
 }

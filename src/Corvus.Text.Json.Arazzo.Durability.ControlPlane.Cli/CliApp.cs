@@ -160,6 +160,17 @@ public static class CliApp
                 accessRequests.AddCommand<AccessRequestWithdrawCommand>("withdraw").WithDescription("Withdraw your own pending request.");
                 accessRequests.AddCommand<AccessRequestRevokeCommand>("revoke").WithDescription("Revoke an approved grant or eligibility assignment early (administrator only).");
             });
+
+            c.AddBranch<CommandSettings>("availability-requests", availabilityRequests =>
+            {
+                availabilityRequests.SetDescription("Request that a workflow version be made available in an environment, and — as an environment administrator — decide requests (§7.8): submit, the approver inbox, approve / deny / withdraw.");
+                availabilityRequests.AddCommand<AvailabilityRequestSubmitCommand>("submit").WithDescription("Request that a version be made available in an environment (<baseWorkflowId> <versionNumber> <environment>; --reason).");
+                availabilityRequests.AddCommand<AvailabilityRequestListCommand>("list").WithDescription("List your own requests, an environment's queue (--environment), or the approver inbox (--inbox); --status filter; --output json.");
+                availabilityRequests.AddCommand<AvailabilityRequestGetCommand>("get").WithDescription("Show one availability request.");
+                availabilityRequests.AddCommand<AvailabilityRequestApproveCommand>("approve").WithDescription("Approve a pending request, making the version available (environment administrator only; readiness-gated).");
+                availabilityRequests.AddCommand<AvailabilityRequestDenyCommand>("deny").WithDescription("Deny a pending request (environment administrator only).");
+                availabilityRequests.AddCommand<AvailabilityRequestWithdrawCommand>("withdraw").WithDescription("Withdraw your own pending request.");
+            });
         });
 
         return app;

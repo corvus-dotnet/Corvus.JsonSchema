@@ -66,6 +66,10 @@
     "description": "Request and approve elevated, time-bound access to a workflow (design §16.5). Any authenticated principal may submit a request and withdraw their own; an administrator of the target workflow (§15) approves, denies, or revokes. An approval writes a single capped, time-boxed grant (run access only, scoped to the workflow); an eligible requester self-elevates without a human approver. These operations are authorized by the per-workflow administrator gate, not a global capability scope."
   },
   {
+    "name": "availabilityRequests",
+    "description": "Request and approve making a workflow version available in an environment — \"promotion\" requests (design §7.8). When a principal cannot make a version available directly (they do not administer the target environment), they raise a request; an administrator of that environment approves or denies it, and the requester may withdraw their own. The subject is (workflow version → environment); approval makes the version available (subject to the same §7.7 readiness gate as a direct make). These operations are authorized by the per-environment administrator gate, mirroring the §16.5 access-request inbox, not a global capability scope."
+  },
+  {
     "name": "identity",
     "description": "Resolve real grantees (person/team/role/workflow) to their exact deployment-stamped identity for the view/operate/administer grant pickers (design §16.5.4), and report the caller's own identity. Read-only: resolution uses a pluggable directory and a store-indexed typeahead of identities the control plane has already observed, so the picker never hand-assembles a {dimension,value} tuple that could silently match no one."
   }
@@ -2098,6 +2102,133 @@
         }
       }
     },
+    "/availabilityRequests": {
+      "post": {
+        "operationId": "submitAvailabilityRequest",
+        "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
+        "tags": ["availabilityRequests"],
+        "summary": "Submit an availability request",
+        "description": "Requests that a workflow version be made available in an environment (design §7.8), for a principal who cannot make it available directly because they do not administer the target environment. The requesting identity is taken from the caller. The request is created pending an environment administrator's decision; approval makes the version available (subject to the §7.7 readiness gate at approval time).",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityRequestSubmit" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "The created request (pending an environment administrator's decision).",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityRequestView" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      },
+      "get": {
+        "operationId": "listAvailabilityRequests",
+        "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
+        "tags": ["availabilityRequests"],
+        "summary": "List availability requests",
+        "description": "Lists availability requests visible to the caller, oldest first. With environment, returns that environment's request queue — the caller must be an administrator of it (403 otherwise). Without environment, scope selects the view: 'mine' (default) the caller's own requests; 'queue' the approver inbox — every request across the environments the caller administers. Optionally filtered by status.",
+        "parameters": [
+          { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["Pending", "Approved", "Denied", "Withdrawn"] }, "description": "Only requests in this state." },
+          { "name": "environment", "in": "query", "required": false, "schema": { "type": "string" }, "description": "The target environment whose request queue to list (requires administrator of it); absent lists per scope." },
+          { "name": "scope", "in": "query", "required": false, "schema": { "type": "string", "enum": ["mine", "queue"] }, "description": "When environment is absent, which requests to list: 'mine' (default) the caller's own; 'queue' the approver inbox across every environment the caller administers. Ignored when environment is present." },
+          { "$ref": "#/components/parameters/LimitQuery" },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The visible availability requests.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityRequestList" } } }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/availabilityRequests/{requestId}": {
+      "parameters": [
+        { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The availability request id." }
+      ],
+      "get": {
+        "operationId": "getAvailabilityRequest",
+        "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
+        "tags": ["availabilityRequests"],
+        "summary": "Get an availability request",
+        "description": "Returns a single availability request. The caller must be its requester or an administrator of its target environment (403 otherwise).",
+        "responses": {
+          "200": {
+            "description": "The availability request.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityRequestView" } } }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/availabilityRequests/{requestId}/approve": {
+      "parameters": [
+        { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The availability request id." }
+      ],
+      "post": {
+        "operationId": "approveAvailabilityRequest",
+        "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
+        "tags": ["availabilityRequests"],
+        "summary": "Approve an availability request",
+        "description": "Approves a pending request, making the workflow version available in the target environment. The caller must be an administrator of that environment (403 otherwise). A request that is not pending conflicts (409); a request whose version is not ready in the environment — a referenced source has no usable credential there (§7.7) — is rejected (409).",
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityRequestDecisionNote" } } }
+        },
+        "responses": {
+          "200": { "description": "The approved request.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityRequestView" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/availabilityRequests/{requestId}/deny": {
+      "parameters": [
+        { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The availability request id." }
+      ],
+      "post": {
+        "operationId": "denyAvailabilityRequest",
+        "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
+        "tags": ["availabilityRequests"],
+        "summary": "Deny an availability request",
+        "description": "Denies a pending request. The caller must be an administrator of the target environment (403 otherwise). A request that is not pending conflicts (409).",
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityRequestDecisionNote" } } }
+        },
+        "responses": {
+          "200": { "description": "The denied request.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityRequestView" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/availabilityRequests/{requestId}/withdraw": {
+      "parameters": [
+        { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The availability request id." }
+      ],
+      "post": {
+        "operationId": "withdrawAvailabilityRequest",
+        "security": [{ "oauth2": [] }, { "openIdConnect": [] }, { "mtls": [] }],
+        "tags": ["availabilityRequests"],
+        "summary": "Withdraw an availability request",
+        "description": "Withdraws the caller's own pending request. The caller must be its requester (403 otherwise). A request that is not pending conflicts (409).",
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityRequestDecisionNote" } } }
+        },
+        "responses": {
+          "200": { "description": "The withdrawn request.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AvailabilityRequestView" } } } },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
     "/identity/whoami": {
       "get": {
         "operationId": "getWhoami",
@@ -3829,6 +3960,52 @@
         "properties": {
           "reason": { "type": "string", "description": "An optional note explaining the decision." },
           "eligibilityWindowSeconds": { "type": "integer", "format": "int64", "minimum": 1, "description": "How long the eligibility itself lasts, in seconds; absent means standing eligibility. Each activation is independently capped at the deployment maximum TTL." }
+        }
+      },
+      "AvailabilityRequestSubmit": {
+        "type": "object",
+        "description": "A request to make a workflow version available in an environment (design §7.8). The requesting identity is taken from the caller, not this body.",
+        "properties": {
+          "baseWorkflowId": { "type": "string", "description": "The base workflow id whose version to make available." },
+          "versionNumber": { "type": "integer", "format": "int32", "minimum": 1, "description": "The version number to make available." },
+          "environment": { "type": "string", "description": "The target environment to make the version available in." },
+          "reason": { "type": "string", "description": "An optional justification." }
+        },
+        "required": ["baseWorkflowId", "versionNumber", "environment"]
+      },
+      "AvailabilityRequestView": {
+        "type": "object",
+        "description": "An availability request and its decision state (design §7.8).",
+        "properties": {
+          "id": { "type": "string", "description": "The request's stable id." },
+          "baseWorkflowId": { "type": "string", "description": "The base workflow id." },
+          "versionNumber": { "type": "integer", "format": "int32", "description": "The version number requested." },
+          "environment": { "type": "string", "description": "The target environment." },
+          "reason": { "type": "string", "description": "The optional justification supplied with the request." },
+          "status": { "type": "string", "enum": ["Pending", "Approved", "Denied", "Withdrawn"], "description": "The lifecycle state. 'Approved' means the version was made available in the environment; 'Withdrawn' means the requester withdrew the pending request." },
+          "createdBy": { "type": "string", "description": "The requester's audit identity." },
+          "createdAt": { "type": "string", "format": "date-time", "description": "When the request was created." },
+          "decidedBy": { "type": "string", "description": "The deciding identity, if decided." },
+          "decidedAt": { "type": "string", "format": "date-time", "description": "When the request was decided, if decided." },
+          "decisionReason": { "type": "string", "description": "An optional note recorded with the decision." },
+          "etag": { "type": "string", "description": "The request's optimistic-concurrency token." }
+        },
+        "required": ["id", "baseWorkflowId", "versionNumber", "environment", "status", "createdBy", "createdAt", "etag"]
+      },
+      "AvailabilityRequestList": {
+        "type": "object",
+        "description": "A keyset page of availability requests (design §7.8), oldest first by (createdAt, id).",
+        "properties": {
+          "availabilityRequests": { "type": "array", "items": { "$ref": "#/components/schemas/AvailabilityRequestView" } },
+          "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page, or null/absent if this is the last page." }
+        },
+        "required": ["availabilityRequests"]
+      },
+      "AvailabilityRequestDecisionNote": {
+        "type": "object",
+        "description": "An optional note recorded with an approve/deny/withdraw decision (design §7.8).",
+        "properties": {
+          "reason": { "type": "string", "description": "An optional note explaining the decision." }
         }
       }
     }

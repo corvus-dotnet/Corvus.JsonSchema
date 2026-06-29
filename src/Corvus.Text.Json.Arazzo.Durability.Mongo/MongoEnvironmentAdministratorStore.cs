@@ -16,7 +16,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
 /// stored as its <see cref="EnvironmentAdministrators"/> document in a binary <c>doc</c> field, keyed directly by
 /// EnvironmentName (the Mongo <c>_id</c>); its etag travels in an <c>etag</c> field for the optimistic-concurrency check.
 /// The record holds deployment-stamped identities only — never secret material. Mirrors
-/// <see cref="MongoWorkflowAdministratorStore"/> without the reverse administration index.
+/// <see cref="MongoWorkflowAdministratorStore"/>, including the reverse administration index that powers
+/// <see cref="ListAdministeredAsync"/>.
 /// </summary>
 /// <remarks>
 /// The id is the EnvironmentName verbatim — there is no composite key, tags, or reach, so this seam is a plain CAS
@@ -119,6 +120,12 @@ public sealed class MongoEnvironmentAdministratorStore : IEnvironmentAdministrat
         byte[]? existing = await this.ReadDocumentAsync(environmentName, cancellationToken).ConfigureAwait(false);
         WorkflowEtag etag = NewEtag();
 
+        // Mirror the administrator digests top-level (design §7.8) so the reverse index is an indexed multikey query, not a
+        // scan of opaque document bytes. These are the exact digests the forward IsAdministeredBy compares. Writing this
+        // array alongside the document (one single-document update/insert) retracts the record's previous digests and indexes
+        // the current ones atomically — the inbox never observes the index out of step with the record's administrator set.
+        var digests = new BsonArray(EnvironmentAdministeredPaging.DistinctDigests(administrators));
+
         byte[] json;
         if (existing is not null)
         {
@@ -133,7 +140,8 @@ public sealed class MongoEnvironmentAdministratorStore : IEnvironmentAdministrat
             json = EnvironmentAdministratorsSerialization.SerializeUpdated(current.RootElement, administrators, actor, this.timeProvider.GetUtcNow(), etag);
             var update = Builders<BsonDocument>.Update
                 .Set("etag", etag.Value!)
-                .Set("doc", new BsonBinaryData(json));
+                .Set("doc", new BsonBinaryData(json))
+                .Set("adminDigests", digests);
             await this.administrators.UpdateOneAsync(
                 Builders<BsonDocument>.Filter.Eq("_id", environmentName),
                 update,
@@ -154,6 +162,7 @@ public sealed class MongoEnvironmentAdministratorStore : IEnvironmentAdministrat
                 ["_id"] = environmentName,
                 ["etag"] = etag.Value!,
                 ["doc"] = new BsonBinaryData(json),
+                ["adminDigests"] = digests,
             };
             await this.administrators.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
         }
@@ -165,9 +174,47 @@ public sealed class MongoEnvironmentAdministratorStore : IEnvironmentAdministrat
     public async ValueTask DeleteAsync(string environmentName, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(environmentName);
+
+        // The reverse-index keys live in the record's own <c>adminDigests</c> array, so removing the document retracts the
+        // environment from every administrator-digest bucket it was in atomically (design §7.8) — the inbox never observes an
+        // environment indexed under a digest after its record has been removed. A missing record is a no-op (the delete
+        // simply affects no rows), mirroring the retract-before-reindex consistency PutAsync maintains.
         await this.administrators.DeleteOneAsync(
             Builders<BsonDocument>.Filter.Eq("_id", environmentName),
             cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(adminDigest);
+        int pageSize = limit > 0 ? limit : EnvironmentAdministeredPage.DefaultPageSize;
+
+        // The keyset cursor (the environment name == _id to page strictly after) reifies once here for the filter leaf,
+        // never per row. Mongo's default string sort/compare is binary over UTF-8 (ordinal) — the contract's order.
+        string? after = EnvironmentAdministeredContinuationToken.DecodeCursorToString(pageToken);
+
+        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.AnyEq("adminDigests", adminDigest);
+        if (after is not null)
+        {
+            filter &= Builders<BsonDocument>.Filter.Gt("_id", after);
+        }
+
+        // The (_id) sort + Limit(n+1) bounds the read to one page + 1 (lookahead) — never every administered environment.
+        List<BsonDocument> documents = await this.administrators
+            .Find(filter)
+            .Sort(Builders<BsonDocument>.Sort.Ascending("_id"))
+            .Limit(pageSize + 1)
+            .Project(Builders<BsonDocument>.Projection.Include("_id"))
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+        var rows = new List<string>(documents.Count);
+        foreach (BsonDocument document in documents)
+        {
+            rows.Add(document["_id"].AsString);
+        }
+
+        return EnvironmentAdministeredPaging.ToPage(rows, pageSize);
     }
 
     /// <inheritdoc/>

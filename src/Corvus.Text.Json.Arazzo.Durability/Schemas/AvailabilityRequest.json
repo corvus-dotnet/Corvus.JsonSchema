@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AvailabilityRequest",
+  "description": "The persisted form of a request to make a workflow version available in an environment (design §7.8): the target workflow version and environment, the requesting actor, the decision state, and audit/optimistic-concurrency metadata. Governed by the target environment's administrators. Backends store this document verbatim; it is congruent with the API's AvailabilityRequestView.",
+  "type": "object",
+  "required": ["id", "baseWorkflowId", "versionNumber", "environment", "status", "createdBy", "createdAt", "etag"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "The request's stable identifier."
+    },
+    "baseWorkflowId": {
+      "type": "string",
+      "description": "The base workflow id whose version the request targets."
+    },
+    "versionNumber": {
+      "type": "integer",
+      "format": "int32",
+      "minimum": 1,
+      "description": "The version number to make available."
+    },
+    "environment": {
+      "type": "string",
+      "description": "The target environment; approval routes to this environment's administrators (design §7.7)."
+    },
+    "reason": {
+      "type": "string",
+      "description": "An optional justification supplied with the request."
+    },
+    "status": {
+      "type": "string",
+      "description": "The request's lifecycle state.",
+      "enum": ["Pending", "Approved", "Denied", "Withdrawn"]
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "The actor (the requester) that created the request; the 'mine' list filter keys on it."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the request was created."
+    },
+    "decidedBy": {
+      "type": "string",
+      "description": "The actor (an environment administrator, or the requester for a withdrawal) that decided the request, if decided."
+    },
+    "decidedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the request was decided, if decided."
+    },
+    "decisionReason": {
+      "type": "string",
+      "description": "An optional note recorded with the decision."
+    },
+    "etag": {
+      "type": "string",
+      "description": "The optimistic-concurrency token."
+    }
+  },
+  "additionalProperties": false
+}

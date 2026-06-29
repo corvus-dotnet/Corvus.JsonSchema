@@ -77,7 +77,7 @@ public static class ControlPlaneEndpointExtensions
     /// and the named scope policies, so a deployment supplies any ASP.NET Core scheme (JWT bearer, OIDC, mTLS,
     /// a dev key) and how a principal acquires scopes.
     /// </remarks>
-    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, ISecuredWorkflowManagement management, ISecuredWorkflowCatalog catalog, IRunnerRegistry runners, ControlPlaneSecurityMode securityMode, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null, IObservedIdentityStore? observedIdentityStore = null, IPrincipalDirectory? principalDirectory = null, IEnvironmentStore? environmentStore = null, IEnvironmentAdministratorStore? environmentAdministratorStore = null, ISourceStore? sourceStore = null, IAvailabilityStore? availabilityStore = null)
+    public static IEndpointRouteBuilder MapArazzoControlPlane(this IEndpointRouteBuilder endpoints, ISecuredWorkflowManagement management, ISecuredWorkflowCatalog catalog, IRunnerRegistry runners, ControlPlaneSecurityMode securityMode, ControlPlaneRowSecurityPolicy? rowSecurity = null, ISecurityPolicyStore? securityPolicyStore = null, ISourceCredentialStore? sourceCredentialStore = null, IAccessRequestStore? accessRequestStore = null, AccessRequestApprovalOptions? accessRequestApprovalOptions = null, string accessRequestSubjectClaimType = "sub", Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null, IObservedIdentityStore? observedIdentityStore = null, IPrincipalDirectory? principalDirectory = null, IEnvironmentStore? environmentStore = null, IEnvironmentAdministratorStore? environmentAdministratorStore = null, ISourceStore? sourceStore = null, IAvailabilityStore? availabilityStore = null, IAvailabilityRequestStore? availabilityRequestStore = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -163,6 +163,13 @@ public static class ControlPlaneEndpointExtensions
         IAvailabilityStore availStore = availabilityStore ?? new InMemoryAvailabilityStore();
         var availabilityHandler = new ArazzoControlPlaneAvailabilityHandler(availStore, envStore, environmentAdministration, catalog, credentialStore, access);
 
+        // The availability-request ("promotion request") API (§7.8): a principal who cannot make a version available
+        // directly raises a request; the TARGET environment's administrators approve (readiness-gated, mirroring the direct
+        // make) or deny, and the requester may withdraw their own. The approver inbox spans the environments the caller
+        // administers (the reverse administration index). Defaults to an in-memory store.
+        IAvailabilityRequestStore availRequestStore = availabilityRequestStore ?? new InMemoryAvailabilityRequestStore();
+        var availabilityRequestsHandler = new ArazzoControlPlaneAvailabilityRequestsHandler(availRequestStore, availStore, envStore, environmentAdministration, catalog, credentialStore, access, accessRequestSubjectClaimType);
+
         return endpoints.MapApiEndpoints(
             new ArazzoControlPlaneHandler(management, access),
             new ArazzoControlPlaneRunnersHandler(runners),
@@ -174,6 +181,7 @@ public static class ControlPlaneEndpointExtensions
             sourcesHandler,
             administratorsHandler,
             accessRequestsHandler,
+            availabilityRequestsHandler,
             identityHandler,
             gateScopes ? ControlPlaneAuthorization.RequireDeclaredScopes : null);
     }

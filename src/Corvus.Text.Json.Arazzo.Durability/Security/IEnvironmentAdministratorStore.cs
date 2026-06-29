@@ -52,4 +52,21 @@ public interface IEnvironmentAdministratorStore
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A task that completes once the record is gone.</returns>
     ValueTask DeleteAsync(string environmentName, CancellationToken cancellationToken);
+
+    /// <summary>Lists the environment names the given administrator identity administers — the reverse administration index
+    /// (design §7.8) that powers the promotion approver inbox. Because administration membership is exact, order-independent
+    /// set equality, and <see cref="SecurityIdentityDigest"/> is canonical (two identities are set-equal iff their digests
+    /// are equal), the reverse lookup is an indexed digest seek, never a scan: an environment appears here iff
+    /// <paramref name="adminDigest"/> is the digest of one of its administrator identities.</summary>
+    /// <param name="adminDigest">The administrator identity's collision-probe digest (<see cref="SecurityIdentityDigest.Compute(SecurityTagSet)"/>
+    /// of the caller's resolved identity). The empty identity has no digest and administers nothing.</param>
+    /// <param name="limit">The maximum environment names to return (a non-positive value uses <see cref="EnvironmentAdministeredPage.DefaultPageSize"/>).</param>
+    /// <param name="pageToken">The opaque token (its JSON value) from a previous page's <see cref="EnvironmentAdministeredPage.NextPageToken"/>,
+    /// or undefined for the first page; decoded bytes-native from its UTF-8.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>One keyset page of administered environment names (ordered by <c>environmentName</c>), as a disposable the caller must dispose.</returns>
+    /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
+    /// <exception cref="NotSupportedException">The store does not maintain the reverse administration index.</exception>
+    ValueTask<EnvironmentAdministeredPage> ListAdministeredAsync(string adminDigest, int limit, JsonString pageToken, CancellationToken cancellationToken)
+        => throw new NotSupportedException("This administrator store does not maintain the reverse administration index (design §7.8).");
 }

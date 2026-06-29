@@ -46,7 +46,7 @@ public sealed class SqlServerEnvironmentAdministratorStoreConformanceTests : Env
         {
             await connection.OpenAsync();
             await using SqlCommand reset = connection.CreateCommand();
-            reset.CommandText = "DROP TABLE IF EXISTS EnvironmentAdministrators;";
+            reset.CommandText = "DROP TABLE IF EXISTS EnvironmentAdministrators; DROP TABLE IF EXISTS EnvironmentAdministratorIndex;";
             await reset.ExecuteNonQueryAsync();
         }
 
