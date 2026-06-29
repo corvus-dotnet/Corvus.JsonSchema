@@ -6,4 +6,4 @@ Title: "High-performance JSON for .NET"
 CTA: "Get Started"
 Url: "/getting-started/index.html"
 ---
-From schema to code. Source-generated, strongly-typed C# models from JSON Schema with pooled-memory parsing, full draft 4 through 2020-12 validation, and 136B per-document allocation. The same engine now generates idiomatic, high-performance [TypeScript](/typescript/index.html) from your schemas, too.
+From schema to code. Source-generated, strongly-typed C# models from JSON Schema with pooled-memory parsing, full draft 4 through 2020-12 validation, and 136B per-document allocation.

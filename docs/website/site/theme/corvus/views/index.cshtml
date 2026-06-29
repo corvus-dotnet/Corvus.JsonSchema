@@ -12,10 +12,13 @@
         <p class="hero__subtitle">
             Source-generated strongly-typed C# from JSON Schema. Zero-allocation parsing,
             full validation for all drafts, mutable documents, JSONata, JMESPath, JSONPath, JsonLogic, YAML, JSON Patch, and more.
+            The same engine also generates idiomatic, high-performance <a href="/typescript/index.html">TypeScript</a>.
         </p>
         <div class="hero__actions">
             <a href="/getting-started/index.html" class="btn btn--primary btn--lg">Get Started</a>
+            <a href="/typescript/index.html" class="btn btn--primary btn--lg">TypeScript</a>
             <a href="/playground/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try the Playground</a>
+            <a href="/playground-typescript/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try TypeScript</a>
             <a href="/playground-jsonata/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSONata</a>
             <a href="/playground-jmespath/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JMESPath</a>
             <a href="/playground-jsonlogic/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSON Logic</a>
@@ -63,6 +66,11 @@
                 <div class="card__icon">🔧</div>
                 <h3 class="card__title">Source Generation</h3>
                 <p class="card__body">Roslyn incremental source generator or CLI tool produces strongly-typed C# from any JSON Schema. Type-safe accessors, validation, serialization — all from a single schema file.</p>
+            </div>
+            <div class="card">
+                <div class="card__icon">🟦</div>
+                <h3 class="card__title">TypeScript Code Generation</h3>
+                <p class="card__body">The same engine generates idiomatic, high-performance TypeScript from JSON Schema. A companion object per type carries <code>evaluate()</code> validators (all drafts, no runtime schema interpretation), <code>build()</code>/<code>patch()</code>/<code>produce()</code> byte-level mutation, branded <code>format</code> types, and exhaustive <code>match()</code>. <a href="/typescript/index.html">Get started</a>.</p>
             </div>
             <div class="card">
                 <div class="card__icon">📋</div>
