@@ -16,18 +16,21 @@ public sealed class HttpClientApiTransportFactory : IApiTransportFactory
 {
     private readonly HttpClient httpClient;
     private readonly IHttpAuthenticationProvider? authenticationProvider;
+    private readonly Func<CancellationToken, ValueTask<Uri?>>? baseUrlOverride;
 
     /// <summary>Initializes a new instance of the <see cref="HttpClientApiTransportFactory"/> class.</summary>
     /// <param name="httpClient">The shared client to send through; its <see cref="HttpClient.BaseAddress"/> is the source's base URL. The host owns its lifetime.</param>
     /// <param name="authenticationProvider">An optional authentication provider applied to each request; <see langword="null"/> for unauthenticated sources.</param>
-    public HttpClientApiTransportFactory(HttpClient httpClient, IHttpAuthenticationProvider? authenticationProvider = null)
+    /// <param name="baseUrlOverride">An optional per-environment base URL override resolver (design §8); when it yields a non-null URI, relative requests resolve against it instead of the client's base address.</param>
+    public HttpClientApiTransportFactory(HttpClient httpClient, IHttpAuthenticationProvider? authenticationProvider = null, Func<CancellationToken, ValueTask<Uri?>>? baseUrlOverride = null)
     {
         ArgumentNullException.ThrowIfNull(httpClient);
         this.httpClient = httpClient;
         this.authenticationProvider = authenticationProvider;
+        this.baseUrlOverride = baseUrlOverride;
     }
 
     /// <inheritdoc/>
     public IApiTransport CreateTransport()
-        => new HttpClientTransport(this.httpClient, this.authenticationProvider, disposeClient: false);
+        => new HttpClientTransport(this.httpClient, this.authenticationProvider, disposeClient: false, baseUrlOverride: this.baseUrlOverride);
 }

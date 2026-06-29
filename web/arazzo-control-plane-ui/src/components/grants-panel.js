@@ -315,6 +315,8 @@ class ArazzoGrantsPanel extends ArazzoElement {
         .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; background: var(--_surface); border: 1px solid var(--_border); border-radius: 999px; padding: 2px 8px; }
         .chip button { border: none; background: none; cursor: pointer; color: var(--_muted); font-size: 13px; line-height: 1; padding: 0; }
         .scope-empty { font-size: 12px; color: var(--_muted); }
+        .verb-mode { font: inherit; padding: 7px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
+        .scope-input { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); box-sizing: border-box; }
         .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
       </style>
       <div class="panel" part="panel">

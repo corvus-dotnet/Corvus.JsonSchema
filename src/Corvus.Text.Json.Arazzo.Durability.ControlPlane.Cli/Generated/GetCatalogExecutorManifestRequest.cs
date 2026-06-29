@@ -43,7 +43,7 @@ public readonly struct GetCatalogExecutorManifestRequest : IApiRequest<GetCatalo
     }
 
     /// <inheritdoc/>
-    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/catalog/{baseWorkflowId}/versions/{versionNumber}/executor-manifest"u8;
+    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/catalog/{baseWorkflowId}/versions/{versionNumber}/executorManifest"u8;
 
     /// <inheritdoc/>
     public static OperationMethod Method => OperationMethod.Get;
@@ -74,7 +74,7 @@ public readonly struct GetCatalogExecutorManifestRequest : IApiRequest<GetCatalo
         Span<byte> bufVersionNumber = stackalloc byte[11];
         this.VersionNumber.TryFormat(bufVersionNumber, out int bwVersionNumber, default, default);
         writer.Write(bufVersionNumber[..bwVersionNumber]);
-        writer.Write("/executor-manifest"u8);
+        writer.Write("/executorManifest"u8);
     }
 
     /// <inheritdoc/>

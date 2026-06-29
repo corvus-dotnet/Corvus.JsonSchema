@@ -167,10 +167,10 @@ public sealed class ControlPlaneAccessRequestsApiTests
         }
 
         // alice (not an administrator) cannot grant eligibility → 403.
-        (await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/approve-as-eligible", Auth, "alice")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/approveAsEligible", Auth, "alice")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         // boss grants durable eligibility (no live grant) — a bodyless POST (the window is optional).
-        using (Stj.JsonDocument eligible = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/approve-as-eligible", Auth, "boss")))
+        using (Stj.JsonDocument eligible = await ReadJsonAsync(await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/approveAsEligible", Auth, "boss")))
         {
             eligible.RootElement.GetProperty("status").GetString().ShouldBe("Eligible");
             eligible.RootElement.GetProperty("decidedBy").GetString().ShouldBe("boss");

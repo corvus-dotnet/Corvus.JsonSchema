@@ -117,7 +117,7 @@ retrieval endpoints.
 | `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/sources/{sourceName}` | `catalog:read` | Get one referenced source document (OpenAPI/AsyncAPI) by its `sourceDescriptions` name (`application/json`). |
 | `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/schemas` | `catalog:read` | Get the precomputed schema-metadata document (`application/json`). |
 | `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/executor` | `catalog:read` | **Download** the compiled executor assembly (`application/octet-stream`, streamed) — present only on a runnable version. |
-| `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/executor-manifest` | `catalog:read` | Get the executor manifest (`application/json`: target framework, assembly digest, package-hash binding, entry type). |
+| `GET` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/executorManifest` | `catalog:read` | Get the executor manifest (`application/json`: target framework, assembly digest, package-hash binding, entry type). |
 | `POST` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/validate` | `catalog:read` | Validate a value against one of the version's baked schemas. |
 | `POST` | `/catalog/{baseWorkflowId}/versions/{versionNumber}/runs` | `runs:write` | Trigger a run of a **runnable** version: validates inputs, creates a Pending run. `409` if not runnable, `422` if inputs invalid. |
 | `PATCH` | `/catalog/{baseWorkflowId}/versions/{versionNumber}` | `catalog:write` | Update governance metadata (`owner`, `tags`, `status`). Stamps `lastUpdatedBy`; status→Obsolete stamps `obsoletedBy`. |
@@ -141,7 +141,7 @@ repo's OpenAPI generator supports this (a `format: binary` multipart part is bou
   code-generation service). The server generator now has a raw byte-stream response path, so the archive is
   streamed verbatim rather than re-serialised through a JSON writer; the JS client reads it as a `Blob`
   (`getCatalogPackage(...)`, `arazzo-client.js`). The compiled-assembly download (`…/executor`) uses the same
-  raw-stream path; the executor manifest (`…/executor-manifest`) is JSON.
+  raw-stream path; the executor manifest (`…/executorManifest`) is JSON.
 - **Addressable documents** — the package is stored so its constituents are individually retrievable: `…/workflow`
   returns the Arazzo document and `…/sources/{sourceName}` returns one OpenAPI/AsyncAPI document, both as
   `application/json` — so the UI can fetch just the workflow definition (the common case) or a single source
@@ -223,7 +223,7 @@ generated or compiled is still catalogued — just not runnable (`CatalogPackage
 
 **Runnable versions + execution (built).** A version exposes a `runnable` flag (set when an executor was
 produced; `CatalogVersion`/`CatalogVersionSummary`). The compiled assembly and its manifest are downloadable
-(`GET …/executor` as `application/octet-stream`, `GET …/executor-manifest` as `application/json`), and a run can
+(`GET …/executor` as `application/octet-stream`, `GET …/executorManifest` as `application/json`), and a run can
 be triggered directly from a version: `POST …/runs` (`startCatalogWorkflowRun`) validates the inputs, creates a
 Pending run a hosting runner claims and executes, and returns `409` when the version is **not runnable** (carries
 no executor). `WorkflowExecutorLoader` (`Corvus.Text.Json.Arazzo.Execution`) dynamically loads the assembly into

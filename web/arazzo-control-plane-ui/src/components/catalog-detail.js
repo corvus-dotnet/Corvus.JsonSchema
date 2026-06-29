@@ -5,8 +5,9 @@
 //
 // Attributes : base-url, base-workflow-id, version-number, scopes (space-separated), show-forbidden
 // Properties : .client, .version (inject a summary to skip the fetch)
-// Events     : version-changed {version}, version-deleted {baseWorkflowId, versionNumber}, access-requested {request}, error {problem}, close
-// Parts      : panel, header, status, meta, owner, sources, actions
+// Events     : version-changed {version}, version-deleted {baseWorkflowId, versionNumber}, access-requested {request},
+//              promotion-requested {request}, error {problem}, close
+// Parts      : panel, header, status, meta, owner, availability, sources, actions
 //
 // Standalone-capable: it renders metadata + governance (obsolete / delete) itself and offers download links
 // for the package, workflow and each source document. Layer 2 listens to its events to keep the table in sync.
@@ -14,7 +15,19 @@
 import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, copyToClipboard, define } from './base.js';
 import './administrators-panel.js';
 import './access-request-dialog.js';
+import './availability-request-dialog.js';
 import './credential-dialog.js';
+
+/**
+ * Whether a credential binding is usable by a workflow's runs — a client-side approximation of the backend's §13
+ * `IsUsableBy` gate: an unscoped binding is shared; a usage-scoped one is usable here only when its usage names this
+ * workflow. The server does the full label-superset check over the run's resolved identity.
+ */
+function usableByWorkflow(binding, baseWorkflowId) {
+  const identity = binding?.usageGrantee?.identity;
+  if (!identity || identity.length === 0) return true;
+  return identity.every((t) => t.dimension === 'workflow' && t.value === baseWorkflowId);
+}
 
 // Status pill colours for a source's existing credential bindings (mirrors credentials-table).
 const CRED_STATUS = {
@@ -173,6 +186,10 @@ class ArazzoCatalogDetail extends ArazzoElement {
         .bind:hover { background: var(--_surface); }
         .bind .cred-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 0 6px; border-radius: 999px; color: #fff; }
         .downloads { display: flex; gap: 8px; flex-wrap: wrap; }
+        .avail-body { display: grid; gap: 8px; }
+        .avail-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 13px; }
+        .avail-env { color: var(--arazzo-status-completed, #2a8a4a); border-color: color-mix(in srgb, var(--arazzo-status-completed, #2a8a4a) 50%, var(--_border)); }
+        .avail-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--_border); }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
@@ -269,6 +286,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
       </dl>
       ${this.renderOwner(v)}
       ${this.renderGovernance(v)}
+      ${this.renderAvailability(v)}
       ${this.renderSources(v)}
       ${this.renderDownloads(v)}
       <div class="actions" part="actions"></div>
@@ -283,6 +301,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
     this.wireDownloads(v);
     this.wireSources(v);
     this.loadSourceBindings(v);
+    this.loadPromotion(v);
     this.renderActions(v);
     this.renderSecurity(v);
   }
@@ -409,6 +428,64 @@ class ArazzoCatalogDetail extends ArazzoElement {
     const dlg = this.$('arazzo-credential-dialog');
     dlg.client = this.client;
     dlg.open(null, { sourceName, lockSource: true, sourceDoc });
+  }
+
+  renderAvailability() {
+    return `<div class="block availability-block" part="availability"><h4>Availability</h4><div class="avail-body"><span class="muted">Loading…</span></div></div>`;
+  }
+
+  /** Load where the version is available + where it is ready, then render the "Available in" line and a promote action. */
+  async loadPromotion(v) {
+    const host = this.$('.avail-body');
+    if (!host) return;
+    if (!this.client) { host.innerHTML = '<span class="muted">—</span>'; return; }
+    let availableEnvs = [];
+    try {
+      const { availability } = await this.client.listVersionAvailability(v.baseWorkflowId, v.versionNumber, { limit: 200 });
+      availableEnvs = availability.map((a) => a.environment).sort();
+    } catch {
+      host.innerHTML = '<span class="muted">Availability unavailable.</span>';
+      return;
+    }
+    let ready = [];
+    try { ready = await this.readyEnvironments(v); } catch { /* best-effort: leave promotion hidden */ }
+    const promotable = ready.filter((e) => !availableEnvs.includes(e));
+    const availLine = availableEnvs.length
+      ? `<span class="muted">Available in:</span> ${availableEnvs.map((e) => `<span class="tag avail-env">${escapeHtml(e)}</span>`).join(' ')}`
+      : `<span class="muted">Not available in any environment yet.</span>`;
+    const action = promotable.length
+      ? `<button class="request-promotion ghost" type="button">Request promotion…</button>`
+      : (ready.length ? '' : `<span class="muted">Not ready in any environment — set up credentials to promote.</span>`);
+    host.innerHTML = `<div class="avail-row">${availLine}</div>${action ? `<div class="avail-actions">${action}</div>` : ''}`;
+    host.querySelector('.request-promotion')?.addEventListener('click', () => this.requestPromotion(v));
+  }
+
+  /** The environments where every source the version references has a credential USABLE by this workflow (§7.7/§13). */
+  async readyEnvironments(v) {
+    const needed = (Array.isArray(v.sources) ? v.sources : []).map((s) => s.name);
+    const envs = [];
+    for await (const page of this.client.listEnvironmentsPaged()) envs.push(...page.environments);
+    const credByEnv = new Map();
+    for await (const page of this.client.listCredentialsPaged({ limit: 200 })) {
+      for (const c of page.credentials) {
+        if (!usableByWorkflow(c, v.baseWorkflowId)) continue;
+        if (!credByEnv.has(c.environment)) credByEnv.set(c.environment, new Set());
+        credByEnv.get(c.environment).add(c.sourceName);
+      }
+    }
+    return envs.map((e) => e.name).filter((env) => needed.every((n) => credByEnv.get(env)?.has(n)));
+  }
+
+  /** Open the §7.8 "request promotion" dialog locked to this workflow version. */
+  requestPromotion(v) {
+    let dlg = this.$('arazzo-availability-request-dialog');
+    if (!dlg) {
+      dlg = document.createElement('arazzo-availability-request-dialog');
+      dlg.addEventListener('availability-request-submitted', (e) => this.emit('promotion-requested', e.detail));
+      this.$('.panel').appendChild(dlg);
+    }
+    dlg.client = this.client;
+    dlg.open({ baseWorkflowId: v.baseWorkflowId, versionNumber: v.versionNumber, lockWorkflow: true });
   }
 
   renderDownloads() {

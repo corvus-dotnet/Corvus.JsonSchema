@@ -15,7 +15,7 @@ using Corvus.Text.Json.OpenApi;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
-/// Parameters for the ApproveAccessRequestAsEligible operation (POST /accessRequests/{requestId}/approve-as-eligible).
+/// Parameters for the ApproveAccessRequestAsEligible operation (POST /accessRequests/{requestId}/approveAsEligible).
 /// </summary>
 /// <remarks>Approves a pending request as durable eligibility (design §16.5.3) rather than as a live grant: writes a capped eligibility assignment scoped to the workflow, after which the requester may self-elevate JIT without re-approval (each activation independently time-boxed). The caller must be an administrator of the target workflow (403 otherwise). A request that is not pending conflicts (409); a request whose scopes are not grantable is rejected (400).</remarks>
 public readonly struct ApproveAccessRequestAsEligibleParams

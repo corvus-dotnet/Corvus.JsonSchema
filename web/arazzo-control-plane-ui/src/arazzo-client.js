@@ -264,6 +264,22 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `listVersionAvailability` — the environments this workflow version has been made available in (§7.8 promotion),
+   * ordered by environment.
+   * @param {string} baseWorkflowId
+   * @param {number} versionNumber
+   * @param {{ limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ availability: object[], nextPageToken: (string|null) }>} An {@link AvailabilityList}.
+   */
+  async listVersionAvailability(baseWorkflowId, versionNumber, query = {}) {
+    const search = new URLSearchParams();
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const result = await this._request('GET', `${this._versionPath(baseWorkflowId, versionNumber)}/availability${qs(search)}`, { signal: query.signal });
+    return { availability: result.availability ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
    * `getCatalogPackage` — the whole package archive (an opaque binary ZIP).
    * @param {string} baseWorkflowId
    * @param {number} versionNumber
@@ -425,6 +441,89 @@ export class ArazzoControlPlaneClient {
       yield page;
       pageToken = page.nextPageToken || undefined;
     } while (pageToken);
+  }
+
+  /**
+   * `listEnvironments` — one page of deployment environments the caller's reach admits (§7.7), ordered by name. Page
+   * with `limit` and the opaque `pageToken` from a previous page's `nextPageToken`.
+   * @param {{ limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ environments: object[], nextPageToken: (string|null) }>} An {@link EnvironmentList}.
+   */
+  async listEnvironments(query = {}) {
+    const search = new URLSearchParams();
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const result = await this._request('GET', `/environments${qs(search)}`, { signal: query.signal });
+    return { environments: result.environments ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `listEnvironments`, as an async iterator that walks every page via the keyset `nextPageToken`.
+   * @param {{ limit?: number, signal?: AbortSignal }} [query]
+   * @returns {AsyncGenerator<{ environments: object[], nextPageToken: (string|null) }>}
+   */
+  async *listEnvironmentsPaged(query = {}) {
+    let pageToken;
+    do {
+      const page = await this.listEnvironments({ ...query, pageToken });
+      yield page;
+      pageToken = page.nextPageToken || undefined;
+    } while (pageToken);
+  }
+
+  /**
+   * `listSources` — one page of registered sources (§7.6; the list omits each source's document, returned only on a
+   * single read). Ordered by name. Page with `limit` and the opaque `pageToken`.
+   * @param {{ limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ sources: object[], nextPageToken: (string|null) }>} A {@link SourceList}.
+   */
+  async listSources(query = {}) {
+    const search = new URLSearchParams();
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const result = await this._request('GET', `/sources${qs(search)}`, { signal: query.signal });
+    return { sources: result.sources ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `listSources`, as an async iterator that walks every page via the keyset `nextPageToken`.
+   * @param {{ limit?: number, signal?: AbortSignal }} [query]
+   * @returns {AsyncGenerator<{ sources: object[], nextPageToken: (string|null) }>}
+   */
+  async *listSourcesPaged(query = {}) {
+    let pageToken;
+    do {
+      const page = await this.listSources({ ...query, pageToken });
+      yield page;
+      pageToken = page.nextPageToken || undefined;
+    } while (pageToken);
+  }
+
+  /**
+   * `getSource` — a single registered source WITH its OpenAPI/AsyncAPI `document` (§7.6).
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} A {@link Source}. Throws {@link ProblemError} `404` if not registered.
+   */
+  getSource(name, opts = {}) {
+    return this._request('GET', `/sources/${encodeURIComponent(name)}`, { signal: opts.signal });
+  }
+
+  /**
+   * `registerSource` — register a new source (§7.6): its `name` (matching a workflow `sourceDescriptions` entry),
+   * `type`, and `document`. Conflicts (`409`) if a source with that name already exists in the caller's reach.
+   * @param {{ name: string, type: string, document: object, displayName?: string, description?: string, managementTags?: Array<{key: string, value: string}>, signal?: AbortSignal }} source
+   * @returns {Promise<object>} The created {@link Source}.
+   */
+  registerSource(source) {
+    if (!source || !source.name || !source.type || source.document == null) {
+      throw new TypeError('registerSource requires a name, type, and document.');
+    }
+    const body = { name: source.name, type: source.type, document: source.document };
+    if (source.displayName) body.displayName = source.displayName;
+    if (source.description) body.description = source.description;
+    if (source.managementTags) body.managementTags = source.managementTags;
+    return this._request('POST', '/sources', { body, signal: source.signal });
   }
 
   /**
@@ -854,7 +953,7 @@ export class ArazzoControlPlaneClient {
   approveAccessRequestAsEligible(requestId, note = {}, opts = {}) {
     const body = decisionNote(note);
     if (note && note.eligibilityWindowSeconds != null) body.eligibilityWindowSeconds = note.eligibilityWindowSeconds;
-    return this._request('POST', `${this._accessRequestPath(requestId)}/approve-as-eligible`, { body, signal: opts.signal });
+    return this._request('POST', `${this._accessRequestPath(requestId)}/approveAsEligible`, { body, signal: opts.signal });
   }
 
   /**
@@ -894,6 +993,106 @@ export class ArazzoControlPlaneClient {
   /** @private */
   _accessRequestPath(requestId) {
     return `/accessRequests/${encodeURIComponent(requestId)}`;
+  }
+
+  // ---- availability requests ("promotion" requests, §7.8) ---------------------------------------
+
+  /**
+   * `submitAvailabilityRequest` — request that a workflow version be made available in an environment. The requesting
+   * identity is taken from the caller; the request is created `Pending` an environment administrator's decision (an
+   * approval makes the version available, subject to the §7.7 readiness gate).
+   * @param {{ baseWorkflowId: string, versionNumber: number, environment: string, reason?: string, signal?: AbortSignal }} request
+   * @returns {Promise<object>} The created {@link AvailabilityRequestView}. Throws {@link ProblemError} `400`.
+   */
+  submitAvailabilityRequest(request) {
+    if (!request || !request.baseWorkflowId || request.versionNumber == null || !request.environment) {
+      throw new TypeError('submitAvailabilityRequest requires a baseWorkflowId, versionNumber, and environment.');
+    }
+    const body = { baseWorkflowId: request.baseWorkflowId, versionNumber: request.versionNumber, environment: request.environment };
+    if (request.reason) body.reason = request.reason;
+    return this._request('POST', '/availabilityRequests', { body, signal: request.signal });
+  }
+
+  /**
+   * `listAvailabilityRequests` — a keyset page (oldest first by `(createdAt, id)`). With `environment`, that
+   * environment's request queue (the caller must be an administrator of it, `403` otherwise). Without `environment`,
+   * `scope` selects the view: `'mine'` (default) the caller's own requests; `'queue'` the approver inbox — every request
+   * across the environments the caller administers. Optionally filtered by `status`; `limit`/`pageToken` page.
+   * @param {{ status?: string, environment?: string, scope?: ('mine'|'queue'), limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ availabilityRequests: object[], nextPageToken: (string|null) }>} An {@link AvailabilityRequestList}, oldest first.
+   */
+  async listAvailabilityRequests(query = {}) {
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    if (query.environment) search.set('environment', query.environment);
+    if (query.scope) search.set('scope', query.scope);
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const result = await this._request('GET', `/availabilityRequests${qs(search)}`, { signal: query.signal });
+    return { availabilityRequests: result.availabilityRequests ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `listAvailabilityRequests`, as an async iterator that walks every page via the keyset `nextPageToken`.
+   * @param {{ status?: string, environment?: string, scope?: ('mine'|'queue'), limit?: number, signal?: AbortSignal }} [query]
+   * @returns {AsyncGenerator<{ availabilityRequests: object[], nextPageToken: (string|null) }>}
+   */
+  async *listAvailabilityRequestsPaged(query = {}) {
+    let pageToken;
+    do {
+      const page = await this.listAvailabilityRequests({ ...query, pageToken });
+      yield page;
+      pageToken = page.nextPageToken || undefined;
+    } while (pageToken);
+  }
+
+  /**
+   * `getAvailabilityRequest` — a single request. The caller must be its requester or an administrator of its environment.
+   * @param {string} requestId
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} An {@link AvailabilityRequestView}. Throws {@link ProblemError} `403`/`404`.
+   */
+  getAvailabilityRequest(requestId, opts = {}) {
+    return this._request('GET', this._availabilityRequestPath(requestId), { signal: opts.signal });
+  }
+
+  /**
+   * `approveAvailabilityRequest` — approve a pending request, making the workflow version available in the target
+   * environment (readiness-gated, §7.7). The caller must be an administrator of that environment.
+   * @param {string} requestId
+   * @param {{ reason?: string }} [note]
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link AvailabilityRequestView}. Throws {@link ProblemError} `403`/`404`/`409`.
+   */
+  approveAvailabilityRequest(requestId, note = {}, opts = {}) {
+    return this._request('POST', `${this._availabilityRequestPath(requestId)}/approve`, { body: decisionNote(note), signal: opts.signal });
+  }
+
+  /**
+   * `denyAvailabilityRequest` — deny a pending request. The caller must be an administrator of the target environment.
+   * @param {string} requestId
+   * @param {{ reason?: string }} [note]
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link AvailabilityRequestView}. Throws {@link ProblemError} `403`/`404`/`409`.
+   */
+  denyAvailabilityRequest(requestId, note = {}, opts = {}) {
+    return this._request('POST', `${this._availabilityRequestPath(requestId)}/deny`, { body: decisionNote(note), signal: opts.signal });
+  }
+
+  /**
+   * `withdrawAvailabilityRequest` — withdraw a pending request. Only the requester may withdraw it.
+   * @param {string} requestId
+   * @param {{ reason?: string }} [note]
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link AvailabilityRequestView}. Throws {@link ProblemError} `403`/`404`/`409`.
+   */
+  withdrawAvailabilityRequest(requestId, note = {}, opts = {}) {
+    return this._request('POST', `${this._availabilityRequestPath(requestId)}/withdraw`, { body: decisionNote(note), signal: opts.signal });
+  }
+
+  /** @private */
+  _availabilityRequestPath(requestId) {
+    return `/availabilityRequests/${encodeURIComponent(requestId)}`;
   }
 
   // ---- internals --------------------------------------------------------------------------------

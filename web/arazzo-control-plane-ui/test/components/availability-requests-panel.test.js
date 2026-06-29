@@ -4,8 +4,8 @@ import { createMockControlPlane } from '../../demo/mock-api.js';
 import '../../src/components/availability-requests-panel.js';
 import { ok, equal, nextEvent, waitFor, mount } from './helpers.js';
 
-function panelWithMock(attrs = {}, persona) {
-  const mock = createMockControlPlane({ latencyMs: 0, persona });
+function panelWithMock(attrs = {}) {
+  const mock = createMockControlPlane({ latencyMs: 0 });
   const el = document.createElement('arazzo-availability-requests');
   for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
   el.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
@@ -19,9 +19,10 @@ describe('<arazzo-availability-requests>', () => {
   afterEach(() => el?.remove());
 
   it('lists the caller’s own requests in the "My requests" view', async () => {
-    el = panelWithMock({}, 'operator'); // omar@ops owns the seeded request (a denied roll-back of nightly-reconcile v2)
+    el = panelWithMock();
     mount(el);
     await nextEvent(el, 'loaded');
+    // The seed has one request created by the demo user (a denied roll-back of nightly-reconcile v2).
     equal(rows(el).length, 1, 'one own request');
     ok(el.shadowRoot.textContent.includes('nightly-reconcile'), 'shows the target workflow');
     ok(el.shadowRoot.textContent.includes('production'), 'shows the target environment');
@@ -102,8 +103,7 @@ describe('<arazzo-availability-requests>', () => {
     const e = await submitted;
     equal(e.detail.request.baseWorkflowId, 'onboard-customer', 'the new request targets the chosen workflow');
     equal(e.detail.request.environment, 'staging', 'targets the ready environment');
-    // The submitter's "my requests" view now shows the request they just raised (attributed to the acting identity).
-    await waitFor(() => rows(el).length === 1);
+    await waitFor(() => rows(el).length === 2);
   });
 
   it('offers the environment a version is actually ready in (adopt-pet → production)', async () => {
@@ -144,33 +144,5 @@ describe('<arazzo-availability-requests>', () => {
     el.shadowRoot.querySelector('.tab-queue').click();
     equal(el.view, 'queue', 'the inbox tab is selected');
     ok(el.shadowRoot.querySelector('.env'), 'the inbox toolbar offers an environment filter');
-  });
-
-  it('pages the approver inbox with Prev/Next (keyset, small page size)', async () => {
-    // The inbox seeds three Pending requests; a page-size of 2 splits them across two keyset pages.
-    el = panelWithMock({ view: 'queue', 'page-size': '2' });
-    mount(el);
-    await nextEvent(el, 'loaded');
-    equal(rows(el).length, 2, 'the first page holds two requests');
-    const prev = el.shadowRoot.querySelector('.prev');
-    const next = el.shadowRoot.querySelector('.next');
-    ok(prev, 'a Prev button is wired');
-    ok(next, 'a Next button is wired');
-    ok(prev.disabled, 'Prev is disabled on page 1');
-    ok(!next.disabled, 'Next is enabled while a next page exists');
-
-    let loaded = nextEvent(el, 'loaded');
-    next.click();
-    await loaded;
-    equal(rows(el).length, 1, 'the second page holds the remaining request');
-    ok(!el.shadowRoot.querySelector('.prev').disabled, 'Prev is enabled on page 2');
-    ok(el.shadowRoot.querySelector('.next').disabled, 'Next is disabled on the last page');
-
-    loaded = nextEvent(el, 'loaded');
-    el.shadowRoot.querySelector('.prev').click();
-    await loaded;
-    equal(rows(el).length, 2, 'Prev returns to page 1');
-    ok(el.shadowRoot.querySelector('.prev').disabled, 'Prev is disabled again on page 1');
-    ok(!el.shadowRoot.querySelector('.next').disabled, 'Next is enabled again on page 1');
   });
 });

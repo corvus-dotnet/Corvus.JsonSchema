@@ -443,6 +443,28 @@ internal sealed class CatalogAddCommand : AsyncCommand<CatalogAddSettings>
             return 1;
         }
 
+        // Refuse to register an undeployable workflow: it must be "ready" — every source it references has a credential
+        // — in at least one environment (mirrors the §7.7 promotion gate and the add-workflow UI wizard; the UI's
+        // upload path deliberately defers this enforcement to here). Skipped only when readiness can't be verified.
+        IReadOnlyList<string> sourceNames;
+        try
+        {
+            sourceNames = CatalogPackage.ReadSourceNames(envelope);
+        }
+        catch (Exception)
+        {
+            sourceNames = [];
+        }
+
+        if (sourceNames.Count > 0)
+        {
+            int? refusal = await CheckReadinessAsync(settings, sourceNames, cancellationToken);
+            if (refusal is { } code)
+            {
+                return code;
+            }
+        }
+
         var package = new BinaryPartData((stream, ct) => { stream.Write(envelope); return ValueTask.CompletedTask; }, "application/json", "package.json");
 
         (HttpClient http, HttpClientTransport transport, ApiCatalogClient client) = await settings.CreateCatalogClientAsync(cancellationToken);
@@ -481,6 +503,143 @@ internal sealed class CatalogAddCommand : AsyncCommand<CatalogAddSettings>
             Models.JsonIri.Source urlSource = url is { } u ? (Models.JsonIri.Source)u : default;
             b.Create(email: email, name: name, team: teamSource, url: urlSource);
         });
+
+    /// <summary>
+    /// Verifies the workflow is deployable — every referenced source has a credential in at least one environment
+    /// (§7.7). Returns an exit code to refuse the add, or <see langword="null"/> to proceed (ready, or readiness
+    /// could not be verified because the caller cannot read environments/credentials).
+    /// </summary>
+    private static async Task<int?> CheckReadinessAsync(CatalogAddSettings settings, IReadOnlyList<string> sourceNames, CancellationToken cancellationToken)
+    {
+        // The environments the caller can see.
+        List<string>? environments = await CollectAsync(
+            await settings.CreateEnvironmentsClientAsync(cancellationToken),
+            async (client, accumulate) =>
+            {
+                string? pageToken = null;
+                do
+                {
+                    string? next = null;
+                    await using ListEnvironmentsResponse response = await client.ListEnvironmentsAsync(
+                        pageToken: pageToken is { } t ? (Models.JsonString.Source)t : default, cancellationToken: cancellationToken);
+                    bool ok = response.MatchResult(
+                        list =>
+                        {
+                            next = list.NextPageToken.IsNotUndefined() ? (string)list.NextPageToken : null;
+                            foreach (Models.EnvironmentSummary e in list.Environments.EnumerateArray())
+                            {
+                                accumulate((string)e.Name);
+                            }
+
+                            return true;
+                        },
+                        _ => false);
+                    if (!ok)
+                    {
+                        return false;
+                    }
+
+                    pageToken = next;
+                }
+                while (pageToken is not null);
+                return true;
+            });
+
+        if (environments is null)
+        {
+            Console.Error.WriteLine("Warning: could not read environments to verify readiness; skipping the readiness check.");
+            return null;
+        }
+
+        // Per environment, the set of sources that already have a credential there.
+        var credentialedSources = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+        List<string>? credentialsOk = await CollectAsync(
+            await settings.CreateCredentialsClientAsync(cancellationToken),
+            async (client, _) =>
+            {
+                string? pageToken = null;
+                do
+                {
+                    string? next = null;
+                    await using ListCredentialsResponse response = await client.ListCredentialsAsync(
+                        pageToken: pageToken is { } t ? (Models.JsonString.Source)t : default, cancellationToken: cancellationToken);
+                    bool ok = response.MatchResult(
+                        list =>
+                        {
+                            next = list.NextPageToken.IsNotUndefined() ? (string)list.NextPageToken : null;
+                            foreach (Models.CredentialBindingSummary b in list.Credentials.EnumerateArray())
+                            {
+                                string environment = (string)b.Environment;
+                                if (!credentialedSources.TryGetValue(environment, out HashSet<string>? set))
+                                {
+                                    credentialedSources[environment] = set = new HashSet<string>(StringComparer.Ordinal);
+                                }
+
+                                set.Add((string)b.SourceName);
+                            }
+
+                            return true;
+                        },
+                        _ => false);
+                    if (!ok)
+                    {
+                        return false;
+                    }
+
+                    pageToken = next;
+                }
+                while (pageToken is not null);
+                return true;
+            });
+
+        if (credentialsOk is null)
+        {
+            Console.Error.WriteLine("Warning: could not read credentials to verify readiness; skipping the readiness check.");
+            return null;
+        }
+
+        // Ready = an environment in which EVERY source has a credential.
+        bool readyAnywhere = environments.Any(env => sourceNames.All(s => credentialedSources.TryGetValue(env, out HashSet<string>? set) && set.Contains(s)));
+        if (readyAnywhere)
+        {
+            return null;
+        }
+
+        Console.Error.WriteLine("Refusing to add: this workflow is not ready in any environment — every source it references must have a credential in the same environment so it can run.");
+        if (environments.Count == 0)
+        {
+            Console.Error.WriteLine($"  No environments are visible. Create an environment and set up a credential for each source ({string.Join(", ", sourceNames)}).");
+        }
+        else
+        {
+            foreach (string env in environments)
+            {
+                credentialedSources.TryGetValue(env, out HashSet<string>? set);
+                List<string> missing = sourceNames.Where(s => set?.Contains(s) != true).ToList();
+                if (missing.Count > 0)
+                {
+                    Console.Error.WriteLine($"  {env}: missing a credential for {string.Join(", ", missing)}");
+                }
+            }
+        }
+
+        Console.Error.WriteLine("Set credentials up with 'credentials create' and retry.");
+        return 1;
+    }
+
+    /// <summary>Runs <paramref name="walk"/> over a freshly-created client (disposing its transport), returning the
+    /// accumulated names, or <see langword="null"/> if the walk reported it could not read the resource.</summary>
+    private static async Task<List<string>?> CollectAsync<TClient>((HttpClient Http, HttpClientTransport Transport, TClient Client) connection, Func<TClient, Action<string>, Task<bool>> walk)
+    {
+        var items = new List<string>();
+        (HttpClient http, HttpClientTransport transport, TClient client) = connection;
+        using (http)
+        await using (transport)
+        {
+            bool ok = await walk(client, items.Add);
+            return ok ? items : null;
+        }
+    }
 }
 
 internal sealed class CatalogSearchCommand : AsyncCommand<CatalogSearchSettings>

@@ -27,9 +27,12 @@ describe('<arazzo-scopes-panel>', () => {
     mount(el);
     await nextEvent(el, 'loaded');
     ok(rows(el).length >= 4, 'several seeded scopes');
+    // Search is debounced + server-side, so await the reload before asserting on the filtered page.
     setField(el, '.search', 'tenant');
+    await nextEvent(el, 'loaded');
     ok([...rows(el)].every((r) => r.textContent.toLowerCase().includes('tenant')), 'search filters the list');
     setField(el, '.search', 'zzz-no-match');
+    await nextEvent(el, 'loaded');
     ok($(el, '.empty'), 'no-match empty state');
   });
 

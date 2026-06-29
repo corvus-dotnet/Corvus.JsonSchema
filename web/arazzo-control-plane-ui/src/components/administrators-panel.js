@@ -161,7 +161,7 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
         <div class="err"></div>
         <div class="list" part="list"></div>
         <div class="add" part="add" hidden>
-          <arazzo-grantee-picker class="grant-in"></arazzo-grantee-picker>
+          <arazzo-grantee-picker class="grant-in" kinds="person team role" placeholder="Find a person, team or role…"></arazzo-grantee-picker>
           <button class="addbtn primary" type="button">Add</button>
         </div>
       </div>

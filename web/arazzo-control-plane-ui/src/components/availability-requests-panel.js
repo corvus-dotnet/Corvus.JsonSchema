@@ -16,11 +16,10 @@
 //     and a single environment are OPTIONAL filters, never a gate — choosing an environment switches to
 //     GET /availabilityRequests?environment=… (that one environment's queue; 403 if not its administrator, shown as a
 //     plain banner). Approve (makes the version available, readiness-gated) or deny a pending request.
-// Both views page with explicit Prev/Next (keyset, server-side status filter) rather than loading the whole queue.
+// Both views page with an explicit "Load more" (keyset, server-side status filter) rather than loading the whole queue.
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, absoluteTime, relativeTime, confirmDialog, define } from './base.js';
-import './pager.js';
+import { ArazzoElement, SHARED_CSS, escapeHtml, absoluteTime, relativeTime, confirmDialog, define } from './base.js';
 import './availability-request-dialog.js';
 
 const STATUS_COLOR = {
@@ -34,7 +33,7 @@ const STATUS_FILTERS = ['', 'Pending', 'Approved', 'Denied', 'Withdrawn'];
 
 class ArazzoAvailabilityRequests extends ArazzoElement {
   static get observedAttributes() {
-    return ['base-url', 'view', 'environment', 'theme', 'page-size'];
+    return ['base-url', 'view', 'environment', 'theme'];
   }
 
   constructor() {
@@ -43,44 +42,39 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
     /** @private */ this._authProvider = undefined;
     /** @private */ this._requests = [];
     /** @private */ this._loading = false;
+    /** @private */ this._loadingMore = false;
     /** @private */ this._error = null;
     // null = "use the view's default status" (Pending for the approver inbox — the actionable to-do; all for My requests).
     /** @private */ this._statusFilter = null;
-    /** @private */ this._history = [];          // pageTokens of pages before the current one
-    /** @private */ this._currentToken = undefined;
     /** @private */ this._nextPageToken = null;
-    /** @private */ this._query = {};            // the view + filter query (NEVER carries a pageToken)
+    /** @private */ this._query = {};
     /** @private */ this._reqSeq = 0;
   }
 
   connectedCallback() {
     this.renderShell();
-    this.reload();
+    this.load();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (!this.isConnected) return;
-    if (name === 'base-url') { this._client = undefined; this.reload(); }
-    else if (name === 'environment') { if (this.view === 'queue') this.reload(); }
+    if (name === 'base-url') { this._client = undefined; this.load(); }
+    else if (name === 'environment') { if (this.view === 'queue') this.load(); }
     else if (name === 'view' && oldValue !== newValue) {
       // Switching tabs resets the status filter to the new view's default (Pending for the inbox, all for mine).
       this._statusFilter = null;
       this.renderShell();
-      this.reload();
+      this.load();
     }
-    else { this.renderShell(); this.reload(); }
+    else { this.renderShell(); this.load(); }
   }
 
   /** A `fetch`-compatible override (the BFF cookie/CSRF fetch); rebuilds the client. */
-  set fetch(fn) { this._fetch = fn; this._client = undefined; if (this.isConnected) this.reload(); }
+  set fetch(fn) { this._fetch = fn; this._client = undefined; if (this.isConnected) this.load(); }
 
   /** A function returning the `Authorization` header value (when not using a cookie `fetch`). */
-  set authProvider(fn) { this._authProvider = fn; this._client = undefined; if (this.isConnected) this.reload(); }
+  set authProvider(fn) { this._authProvider = fn; this._client = undefined; if (this.isConnected) this.load(); }
   get authProvider() { return this._authProvider; }
-
-  get pageSize() {
-    return Number(this.getAttribute('page-size')) || 50;
-  }
 
   get view() {
     return this.getAttribute('view') === 'queue' ? 'queue' : 'mine';
@@ -108,9 +102,9 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
     return this._client;
   }
 
-  requestRender() { this.reload(); }
+  requestRender() { this.load(); }
 
-  refresh() { this.reload(); }
+  refresh() { this.load(); }
 
   /** The status filter actually in effect: the explicit choice, or the view default (Pending for the inbox, all for mine). */
   effectiveStatus() {
@@ -128,14 +122,6 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
     return query;
   }
 
-  /** Reload from page 1 (resets the keyset cursor and re-derives the view/filter query). */
-  reload() {
-    this._history = [];
-    this._currentToken = undefined;
-    this._query = this.buildQuery();
-    this.load();
-  }
-
   async load() {
     const client = this.buildClient();
     if (!client) {
@@ -147,11 +133,14 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
     const seq = ++this._reqSeq;
     this._loading = true;
     this._error = null;
+    this._requests = [];
+    this._nextPageToken = null;
+    this._query = this.buildQuery();
     this.renderBody();
     try {
-      // One keyset page. The cursor lives in `_currentToken` (Prev/Next walk it); `_query` never carries a pageToken.
-      // Status is filtered server-side, so a page never hides matches on a later page.
-      const page = await client.listAvailabilityRequests({ ...this._query, pageToken: this._currentToken, limit: this.pageSize });
+      // One keyset page; "Load more" fetches the next. Status is filtered server-side, so a page never hides matches on a
+      // later page.
+      const page = await client.listAvailabilityRequests(this._query);
       if (seq !== this._reqSeq) return;
       this._requests = page.availabilityRequests;
       this._nextPageToken = page.nextPageToken;
@@ -167,17 +156,25 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
     }
   }
 
-  nextPage() {
-    if (!this._nextPageToken) return;
-    this._history.push(this._currentToken);
-    this._currentToken = this._nextPageToken;
-    this.load();
-  }
-
-  prevPage() {
-    if (this._history.length === 0) return;
-    this._currentToken = this._history.pop();
-    this.load();
+  /** Fetch and append the next keyset page (the "Load more" action). */
+  async loadMore() {
+    const client = this.buildClient();
+    if (!client || !this._nextPageToken || this._loadingMore) return;
+    const seq = this._reqSeq;
+    this._loadingMore = true;
+    this.renderFoot();
+    try {
+      const page = await client.listAvailabilityRequests({ ...this._query, pageToken: this._nextPageToken });
+      if (seq !== this._reqSeq) return; // a reload superseded this
+      this._requests.push(...page.availabilityRequests);
+      this._nextPageToken = page.nextPageToken;
+      this._loadingMore = false;
+      this.renderBody();
+    } catch (err) {
+      if (seq !== this._reqSeq) return;
+      this._loadingMore = false;
+      this.showError(err.problem || { title: err.message }, err);
+    }
   }
 
   // ---- mutations --------------------------------------------------------------------------------
@@ -196,7 +193,7 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
       const updated = await call(note);
       this._error = null;
       this.emit('availability-request-decided', { request: updated, action });
-      await this.reload();
+      await this.load();
     } catch (err) {
       this.showError(err.problem || { title: err.message }, err);
     }
@@ -252,7 +249,7 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
         .err { margin: 10px 12px; }
-        ${PAGER_CSS}
+        .foot { display: flex; align-items: center; gap: 12px; padding: 9px 12px; background: var(--_surface); border-top: 1px solid var(--_border); font-size: 12px; color: var(--_muted); }
         dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(480px, 94vw); }
         dialog::backdrop { background: rgba(0,0,0,0.4); }
         dialog .dhead { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--_border); }
@@ -273,14 +270,12 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
             <thead></thead>
             <tbody part="rows"></tbody>
           </table>
-          <arazzo-pager class="pager" part="foot"></arazzo-pager>
+          <div class="foot" part="foot"></div>
         </div>
       </div>
     `;
     this.$('.tab-mine').addEventListener('click', () => { if (this.view !== 'mine') this.view = 'mine'; });
     this.$('.tab-queue').addEventListener('click', () => { if (this.view !== 'queue') this.view = 'queue'; });
-    this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
-    this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
     this.renderToolbar();
     this.renderHead();
   }
@@ -312,8 +307,8 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
       });
     }
     // Status is a server-side filter, so a change reloads the first page (it cannot just re-filter a partial page).
-    this.$('.status').addEventListener('change', (e) => { this._statusFilter = e.target.value; this.reload(); });
-    this.$('.refresh').addEventListener('click', () => this.reload());
+    this.$('.status').addEventListener('change', (e) => { this._statusFilter = e.target.value; this.load(); });
+    this.$('.refresh').addEventListener('click', () => this.load());
   }
 
   renderHead() {
@@ -431,17 +426,19 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
   }
 
   renderFoot() {
-    let info;
-    if (this._loading) {
-      info = 'Loading…';
-    } else {
-      const total = this._requests.length;
-      const parts = [`${total} request${total === 1 ? '' : 's'}${this._history.length > 0 ? ` · page ${this._history.length + 1}` : ''}`];
-      const pending = this.effectiveStatus() !== 'Pending' ? this._requests.filter((r) => r.status === 'Pending').length : 0;
-      if (pending > 0) parts.push(`${pending} pending`);
-      info = escapeHtml(parts.join(' · '));
-    }
-    this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextPageToken, loading: this._loading, info });
+    const foot = this.$('.foot');
+    if (!foot) return;
+    if (this._loading) { foot.textContent = 'Loading…'; return; }
+    const total = this._requests.length;
+    const label = `${total} request${total === 1 ? '' : 's'}${this._nextPageToken ? ' loaded' : ''}`;
+    const pending = this.effectiveStatus() !== 'Pending' ? this._requests.filter((r) => r.status === 'Pending').length : 0;
+    const parts = [label];
+    if (pending > 0) parts.push(`${pending} pending`);
+    foot.innerHTML = `<span>${escapeHtml(parts.join(' · '))}</span><span style="flex:1"></span>${
+      this._nextPageToken ? `<button class="more ghost" type="button"${this._loadingMore ? ' disabled' : ''}>${this._loadingMore ? 'Loading…' : 'Load more'}</button>` : ''
+    }`;
+    const more = this.$('.more');
+    if (more) more.addEventListener('click', () => this.loadMore());
   }
 
   // ---- dialogs ----------------------------------------------------------------------------------
@@ -451,7 +448,7 @@ class ArazzoAvailabilityRequests extends ArazzoElement {
     if (!dlg) {
       dlg = document.createElement('arazzo-availability-request-dialog');
       // The dialog submits and emits availability-request-submitted (which bubbles to the host); reload our own list.
-      dlg.addEventListener('availability-request-submitted', () => this.reload());
+      dlg.addEventListener('availability-request-submitted', () => this.load());
       this.shadowRoot.querySelector('[part="panel"]').appendChild(dlg);
     }
     dlg.client = this.buildClient();

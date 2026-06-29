@@ -576,7 +576,7 @@
         }
       }
     },
-    "/catalog/{baseWorkflowId}/versions/{versionNumber}/executor-manifest": {
+    "/catalog/{baseWorkflowId}/versions/{versionNumber}/executorManifest": {
       "get": {
         "operationId": "getCatalogExecutorManifest",
         "security": [
@@ -2013,7 +2013,7 @@
         }
       }
     },
-    "/accessRequests/{requestId}/approve-as-eligible": {
+    "/accessRequests/{requestId}/approveAsEligible": {
       "parameters": [
         { "name": "requestId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "The access request id." }
       ],

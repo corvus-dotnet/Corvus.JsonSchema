@@ -4,6 +4,7 @@
 
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;
@@ -39,9 +40,14 @@ public static class SourceCredentialTransports
         ArgumentNullException.ThrowIfNull(httpClient);
         ArgumentNullException.ThrowIfNull(cache);
 
-        // Inner: applies the entitled credential to each request (§13.4 warm path). Outer: turns a runtime 401/403 on an
+        // Inner: applies the entitled credential to each request (§13.4 warm path) and resolves the binding's
+        // per-environment base URL override (§8) from the same cached read. Outer: turns a runtime 401/403 on an
         // authenticated call into a typed, resumable credentials-expired fault (§13.3 reactive path).
-        var authenticating = new HttpClientApiTransportFactory(httpClient, new SourceCredentialAuthenticationProvider(cache, sourceName, environment, runTags));
+        string runTagsKey = SourceCredentialKey.CanonicalTags(runTags);
+        var authenticating = new HttpClientApiTransportFactory(
+            httpClient,
+            new SourceCredentialAuthenticationProvider(cache, sourceName, environment, runTags),
+            baseUrlOverride: ct => cache.GetBaseUrlAsync(sourceName, environment, runTagsKey, runTags, ct));
         return new SourceCredentialApiTransportFactory(authenticating, cache, sourceName, environment, runTags);
     }
 

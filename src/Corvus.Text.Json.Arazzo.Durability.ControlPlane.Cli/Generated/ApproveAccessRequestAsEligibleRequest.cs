@@ -36,7 +36,7 @@ public readonly struct ApproveAccessRequestAsEligibleRequest : IApiRequest<Appro
     }
 
     /// <inheritdoc/>
-    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/accessRequests/{requestId}/approve-as-eligible"u8;
+    public static ReadOnlySpan<byte> PathTemplateUtf8 => "/accessRequests/{requestId}/approveAsEligible"u8;
 
     /// <inheritdoc/>
     public static OperationMethod Method => OperationMethod.Post;
@@ -63,7 +63,7 @@ public readonly struct ApproveAccessRequestAsEligibleRequest : IApiRequest<Appro
         {
             writer.Write(escRequestId[..ewRequestId]);
         }
-        writer.Write("/approve-as-eligible"u8);
+        writer.Write("/approveAsEligible"u8);
     }
 
     /// <inheritdoc/>

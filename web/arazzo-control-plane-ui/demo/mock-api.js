@@ -431,44 +431,73 @@ function pickVariant(d, value) {
   return best;
 }
 
-function workflowDoc(workflowId, title, description) {
+function workflowDoc(workflowId, title, description, sourceRefs) {
   const base = workflowId.replace(/-v\d+$/, '');
   const stepIds = STEP_SETS[base] || ['start', 'process', 'finish'];
   return {
     arazzo: '1.1.0',
     info: { title, description },
-    sourceDescriptions: [
-      { name: 'petstore', url: './petstore.json', type: 'openapi' },
-      { name: 'events', url: './events.json', type: 'asyncapi' },
-    ],
+    sourceDescriptions: (sourceRefs ?? []).map((s) => ({ name: s.name, url: `./${s.name}.json`, type: s.type })),
     workflows: [{ workflowId, steps: stepIds.map((stepId) => ({ stepId, operationId: stepId })) }],
   };
+}
+
+// The OpenAPI/AsyncAPI documents the demo's sources resolve to. Real security schemes so the credential dialog can
+// DERIVE the auth kind + config from the source document (petstore: an OpenAPI apiKey in a header; events: an
+// AsyncAPI oauth2 client-credentials flow). These back BOTH the per-version embedded sources and the §7.6 registry.
+const SOURCE_DOCS = {
+  petstore: {
+    openapi: '3.1.0', info: { title: 'Petstore', version: '1.0.0' },
+    servers: [{ url: 'https://petstore.example.com/v1' }],
+    components: { securitySchemes: { apiKey: { type: 'apiKey', name: 'X-Api-Key', in: 'header' } } },
+  },
+  events: {
+    asyncapi: '3.0.0', info: { title: 'Events', version: '1.0.0' },
+    servers: { production: { host: 'events.example.com', protocol: 'kafka' } },
+    components: { securitySchemes: { tokenAuth: { type: 'oauth2', flows: { clientCredentials: { tokenUrl: 'https://idp.example.com/oauth/token', scopes: { 'events:read': 'Read events' } } } } } },
+  },
+  billing: {
+    openapi: '3.1.0', info: { title: 'Billing', version: '1.0.0' },
+    servers: [{ url: 'https://billing.example.com' }],
+    components: { securitySchemes: { clientCreds: { type: 'oauth2', flows: { clientCredentials: { tokenUrl: 'https://idp.example.com/oauth/token', scopes: { 'ledger:read': 'Read the ledger' } } } } } },
+  },
+};
+const SOURCE_TYPES = { petstore: 'openapi', events: 'asyncapi', billing: 'openapi' };
+
+// ---- source registry (§7.6) — first-class, reach-scoped registered sources, referenced by name ------------------
+// A source is registered once ({ name, type, document } + per-environment credentials); workflows reference it by
+// name. Add-workflow resolves an already-registered source (no re-upload) and registers genuinely new ones.
+function seedSources() {
+  const day = 24 * 60 * 60000;
+  return Object.keys(SOURCE_TYPES).map((name) => ({
+    name, type: SOURCE_TYPES[name], document: structuredClone(SOURCE_DOCS[name]),
+    displayName: SOURCE_DOCS[name].info?.title || name, managementTags: [],
+    createdBy: 'alice@example.com', createdAt: iso(-40 * day), etag: nextEtag(),
+  }));
 }
 
 function seedCatalog() {
   const hr = 60 * 60000;
   const day = 24 * hr;
-  const sources = {
-    // Real security schemes so the credential dialog can DERIVE the auth kind + config from the source document
-    // (petstore: an OpenAPI apiKey in a header; events: an AsyncAPI oauth2 client-credentials flow).
-    petstore: {
-      openapi: '3.1.0', info: { title: 'Petstore', version: '1.0.0' },
-      components: { securitySchemes: { apiKey: { type: 'apiKey', name: 'X-Api-Key', in: 'header' } } },
-    },
-    events: {
-      asyncapi: '3.0.0', info: { title: 'Events', version: '1.0.0' },
-      components: { securitySchemes: { tokenAuth: { type: 'oauth2', flows: { clientCredentials: { tokenUrl: 'https://idp.example.com/oauth/token', scopes: { 'events:read': 'Read events' } } } } } },
-    },
+  const sources = SOURCE_DOCS;
+  // Each workflow references only the sources it actually uses (design §7.6/§7.7). A version is "ready" in an environment
+  // only where EVERY source it references has a credential there, so these refs are chosen to line up with seedCredentials:
+  // adopt-pet→petstore (credentialed in production), nightly-reconcile→billing (production), onboard-customer→events
+  // (staging). That makes each workflow promotable in exactly one environment and gives the readiness gate something to bite.
+  const refsByBase = {
+    'adopt-pet': [{ name: 'petstore', type: 'openapi' }],
+    'nightly-reconcile': [{ name: 'billing', type: 'openapi' }],
+    'onboard-customer': [{ name: 'events', type: 'asyncapi' }],
   };
-  const sourceRefs = [{ name: 'petstore', type: 'openapi' }, { name: 'events', type: 'asyncapi' }];
+  const refsFor = (base) => refsByBase[base] ?? [{ name: 'petstore', type: 'openapi' }];
   const teamA = { name: 'Reconciliation Team', email: 'reconcile@example.com', team: 'Platform', url: 'https://runbooks.example.com/nightly-reconcile' };
   const teamB = { name: 'Onboarding Team', email: 'onboarding@example.com' };
   const v = (base, n, status, title, owner, tags, ageDays, extra = {}) => ({
     baseWorkflowId: base, versionNumber: n, workflowId: `${base}-v${n}`,
-    title, description: `${title} — versioned workflow.`, status, tags, owner, sources: sourceRefs,
+    title, description: `${title} — versioned workflow.`, status, tags, owner, sources: refsFor(base),
     hash: `${base}${n}`.padEnd(64, '0'),
     createdBy: 'alice@example.com', createdAt: iso(-ageDays * day),
-    _workflow: workflowDoc(`${base}-v${n}`, title, `${title} — versioned workflow.`),
+    _workflow: workflowDoc(`${base}-v${n}`, title, `${title} — versioned workflow.`, refsFor(base)),
     _sources: sources,
     ...extra,
   });
@@ -563,6 +592,22 @@ function toCredentialSummary(b) {
   };
 }
 
+// ---- deployment environments (§7.7) — first-class, governed, reach-scoped resources -----------
+// The environments the seeded credentials reference (production, staging), so the readiness gate and the
+// promotion dialog's environment picker have a real set to work over.
+
+function seedEnvironments() {
+  const day = 24 * 60 * 60000;
+  const e = (name, displayName, description) => ({
+    name, displayName, description, managementTags: [],
+    createdBy: 'alice@example.com', createdAt: iso(-40 * day), etag: nextEtag(),
+  });
+  return [
+    e('production', 'Production', 'The live production environment.'),
+    e('staging', 'Staging', 'Pre-production staging environment.'),
+  ];
+}
+
 // ---- workflow administration (§15) — deployment-mapped {dimension,value} identities ------------
 
 function seedAdministrators() {
@@ -649,6 +694,58 @@ function seedAccessRequests() {
   ];
 }
 
+// The availability MATRIX (§7.8) — which (workflow version) is made available in which environment. Seeded so the
+// catalog detail's "Available in" shows something; approving a promotion request adds to it.
+function seedAvailabilityEntries() {
+  const day = 24 * 60 * 60000;
+  const e = (baseWorkflowId, versionNumber, environment) => ({
+    baseWorkflowId, versionNumber, environment,
+    createdBy: 'alice@example.com', createdAt: iso(-5 * day), etag: nextEtag(),
+  });
+  return [
+    e('adopt-pet', 1, 'production'),       // petstore (shared) is credentialed in production → ready + made available
+    e('nightly-reconcile', 3, 'production'), // billing (scoped to nightly-reconcile) is credentialed in production
+  ];
+}
+
+function seedAvailabilityRequests() {
+  const hr = 60 * 60 * 1000;
+  // Cross-environment "promotion" requests (§7.8) that line up with the source/credential matrix so the readiness gate is
+  // visible. scope=mine → the demo user's own (areq-3004); scope=queue → the approver inbox (all, the demo user administers
+  // every environment in the mock); environment → that environment's queue. Readiness (a version is promotable only where
+  // each source it references is credentialed) is enforced on approve:
+  //   • onboard-customer→production (areq-3001) is NOT ready — its 'events' source has no production credential → Approve 409.
+  //   • adopt-pet→production (areq-3002) IS ready — 'petstore' is credentialed in production → Approve makes it available.
+  //   • onboard-customer→staging (areq-3003) IS ready — 'events' is credentialed in staging.
+  return [
+    {
+      id: 'areq-3001', baseWorkflowId: 'onboard-customer', versionNumber: 1, environment: 'production',
+      reason: 'Promote onboarding to production for the new tenant launch.',
+      status: 'Pending', subjectClaimType: 'preferred_username', subjectClaimValue: 'alice', requesterLabel: 'alice',
+      createdBy: 'alice', createdAt: iso(-3 * hr), etag: nextEtag(),
+    },
+    {
+      id: 'areq-3002', baseWorkflowId: 'adopt-pet', versionNumber: 1, environment: 'production',
+      reason: 'Adopt-a-pet is signed off — make it available in production.',
+      status: 'Pending', subjectClaimType: 'preferred_username', subjectClaimValue: 'bob', requesterLabel: 'bob',
+      createdBy: 'bob', createdAt: iso(-5 * hr), etag: nextEtag(),
+    },
+    {
+      id: 'areq-3003', baseWorkflowId: 'onboard-customer', versionNumber: 1, environment: 'staging',
+      reason: 'Need onboarding in staging for the integration test.',
+      status: 'Pending', subjectClaimType: 'preferred_username', subjectClaimValue: 'carol', requesterLabel: 'carol',
+      createdBy: 'carol', createdAt: iso(-8 * hr), etag: nextEtag(),
+    },
+    {
+      id: 'areq-3004', baseWorkflowId: 'nightly-reconcile', versionNumber: 2, environment: 'production',
+      reason: 'Roll back to v2 while we investigate.',
+      status: 'Denied', subjectClaimType: 'preferred_username', subjectClaimValue: 'demo-user', requesterLabel: 'demo-user',
+      createdBy: 'demo-user', createdAt: iso(-50 * hr), decidedBy: 'boss', decidedAt: iso(-49 * hr),
+      decisionReason: 'v3 supersedes v2; promote v3 instead.', etag: nextEtag(),
+    },
+  ];
+}
+
 function seedSecurityRules() {
   const hr = 60 * 60 * 1000;
   const day = 24 * hr;
@@ -700,9 +797,13 @@ export function createMockControlPlane(options = {}) {
   const runs = options.seed ? structuredClone(options.seed) : seedRuns();
   const catalog = options.catalogSeed ? structuredClone(options.catalogSeed) : seedCatalog();
   const credentials = options.credentialsSeed ? structuredClone(options.credentialsSeed) : seedCredentials();
+  const environments = options.environmentsSeed ? structuredClone(options.environmentsSeed) : seedEnvironments();
+  const sourceRegistry = options.sourcesSeed ? structuredClone(options.sourcesSeed) : seedSources();
   const administrators = options.administratorsSeed ? structuredClone(options.administratorsSeed) : seedAdministrators();
   const grantees = options.granteesSeed ? structuredClone(options.granteesSeed) : seedGrantees();
   const accessRequests = options.accessRequestsSeed ? structuredClone(options.accessRequestsSeed) : seedAccessRequests();
+  const availabilityRequests = options.availabilityRequestsSeed ? structuredClone(options.availabilityRequestsSeed) : seedAvailabilityRequests();
+  const availabilityEntries = options.availabilityEntriesSeed ? structuredClone(options.availabilityEntriesSeed) : seedAvailabilityEntries();
   const securityRules = options.securityRulesSeed ? structuredClone(options.securityRulesSeed) : seedSecurityRules();
   const securityOrderings = options.securityOrderingsSeed ? structuredClone(options.securityOrderingsSeed) : seedSecurityOrderings();
   const securityBindings = options.securityBindingsSeed ? structuredClone(options.securityBindingsSeed) : seedSecurityBindings();
@@ -711,6 +812,13 @@ export function createMockControlPlane(options = {}) {
   const find = (id) => runs.find((r) => r.id === id);
   const findVersion = (base, n) => catalog.find((v) => v.baseWorkflowId === base && v.versionNumber === Number(n));
   const findCredential = (s, e) => credentials.find((c) => c.sourceName === s && c.environment === e);
+  // §13 IsUsableBy (demo approximation): an unscoped binding is shared; a usage-scoped one is usable only by the
+  // workflow it names. The real backend does a full label-superset over the run's resolved identity.
+  const credentialUsableBy = (c, baseWorkflowId) => {
+    const id = c.usageGrantee?.identity;
+    return !id || id.length === 0 || id.every((t) => t.dimension === 'workflow' && t.value === baseWorkflowId);
+  };
+  const findUsableCredential = (s, e, wf) => credentials.find((c) => c.sourceName === s && c.environment === e && credentialUsableBy(c, wf));
 
   async function handle(url, init = {}) {
     const method = (init.method || 'GET').toUpperCase();
@@ -719,11 +827,20 @@ export function createMockControlPlane(options = {}) {
     const isForm = typeof FormData !== 'undefined' && init.body instanceof FormData;
     const body = init.body && !isForm ? JSON.parse(init.body) : undefined;
 
+    const versionAvailabilityResponse = handleVersionAvailability(path, method, u.searchParams);
+    if (versionAvailabilityResponse) return versionAvailabilityResponse;
+
     const catalogResponse = await handleCatalog(path, method, u.searchParams, body, isForm ? init.body : null);
     if (catalogResponse) return catalogResponse;
 
     const credentialsResponse = handleCredentials(path, method, u.searchParams, body);
     if (credentialsResponse) return credentialsResponse;
+
+    const environmentsResponse = handleEnvironments(path, method, u.searchParams);
+    if (environmentsResponse) return environmentsResponse;
+
+    const sourcesResponse = handleSources(path, method, u.searchParams, body);
+    if (sourcesResponse) return sourcesResponse;
 
     const administratorsResponse = handleAdministrators(path, method, body);
     if (administratorsResponse) return administratorsResponse;
@@ -733,6 +850,9 @@ export function createMockControlPlane(options = {}) {
 
     const accessRequestsResponse = handleAccessRequests(path, method, u.searchParams, body);
     if (accessRequestsResponse) return accessRequestsResponse;
+
+    const availabilityRequestsResponse = handleAvailabilityRequests(path, method, u.searchParams, body);
+    if (availabilityRequestsResponse) return availabilityRequestsResponse;
 
     const securityOrderingsResponse = handleSecurityOrderings(path, method);
     if (securityOrderingsResponse) return securityOrderingsResponse;
@@ -1018,6 +1138,12 @@ export function createMockControlPlane(options = {}) {
       _sources: sources,
     };
     catalog.push(v);
+    // The first version of a base id establishes the creator as its first administrator (§15 — "creating it grants
+    // the creator administration", mirroring the backend's SecuredWorkflowCatalog). So a freshly-created workflow
+    // always has a real administrator; the wizard adds further ones on top.
+    if (versionNumber === 1 && !administrators[base]) {
+      administrators[base] = [adminGrant([{ dimension: 'sys:sub', value: demoUser }], 'person', 'You (creator)')];
+    }
     return json(toCatalogSummary(v), 201);
   }
 
@@ -1378,6 +1504,93 @@ export function createMockControlPlane(options = {}) {
     return new Response(null, { status: 204 });
   }
 
+  // ---- availability matrix (§7.8) — where a version is available -------------------------------
+
+  function handleVersionAvailability(fullPath, method, params) {
+    const m = fullPath.match(/\/catalog\/([^/]+)\/versions\/([^/]+)\/availability\/?$/);
+    if (!m) return null;
+    if (method !== 'GET') return problem(405, 'Method not allowed');
+    const base = decodeURIComponent(m[1]);
+    const versionNumber = Number(m[2]);
+    const entries = availabilityEntries
+      .filter((a) => a.baseWorkflowId === base && a.versionNumber === versionNumber)
+      .sort((a, b) => a.environment.localeCompare(b.environment));
+    const limit = Math.max(1, Math.min(Number(params.get('limit')) || 50, 200));
+    const offset = Number(params.get('pageToken')) || 0;
+    const pageItems = entries.slice(offset, offset + limit).map((a) => structuredClone(a));
+    const nextPageToken = offset + limit < entries.length ? String(offset + limit) : null;
+    return json({ availability: pageItems, nextPageToken });
+  }
+
+  // ---- source registry (§7.6) -------------------------------------------------------------------
+  // The registry collection (list omits the document) + a single source read (WITH document) + register. The
+  // catalog's per-version embedded source (/catalog/.../sources/{n}) is a different endpoint, handled earlier.
+
+  function handleSources(fullPath, method, params, body) {
+    const m = fullPath.match(/\/sources(?:\/([^/]+))?\/?$/);
+    if (!m) return null;
+    if (fullPath.includes('/catalog/')) return null; // a version's embedded source, not the registry
+    const name = m[1] ? decodeURIComponent(m[1]) : null;
+    if (!name) {
+      if (method === 'GET') return listSourcesPage(params);
+      if (method === 'POST') return registerSource(body);
+      return problem(405, 'Method not allowed');
+    }
+    if (method === 'GET') return getRegisteredSource(name);
+    return problem(405, 'Method not allowed');
+  }
+
+  function listSourcesPage(params) {
+    const limit = Math.max(1, Math.min(Number(params.get('limit')) || 50, 200));
+    const sorted = [...sourceRegistry].sort((a, b) => a.name.localeCompare(b.name));
+    const offset = Number(params.get('pageToken')) || 0;
+    // The list omits each source's document (returned only on a single read).
+    const pageItems = sorted.slice(offset, offset + limit).map(({ document, ...rest }) => structuredClone(rest));
+    const nextPageToken = offset + limit < sorted.length ? String(offset + limit) : null;
+    return json({ sources: pageItems, nextPageToken });
+  }
+
+  function getRegisteredSource(name) {
+    const s = sourceRegistry.find((x) => x.name === name);
+    if (!s) return problem(404, 'Source not found', `No source named '${name}'.`);
+    return json(structuredClone(s)); // includes the document
+  }
+
+  function registerSource(body) {
+    if (!body || !body.name || !body.type || body.document == null) {
+      return problem(400, 'Invalid source', 'Provide a name, type, and document.');
+    }
+    if (sourceRegistry.some((s) => s.name === body.name)) {
+      return problem(409, 'Source exists', `A source named '${body.name}' already exists.`);
+    }
+    const s = {
+      name: body.name, type: body.type, document: body.document,
+      displayName: body.displayName || body.name, description: body.description,
+      managementTags: body.managementTags ?? [],
+      createdBy: 'demo', createdAt: iso(0), etag: nextEtag(),
+    };
+    sourceRegistry.push(s);
+    return json(structuredClone(s), 201);
+  }
+
+  // ---- deployment environments (§7.7) -----------------------------------------------------------
+  // Read-only here (the promotion dialog needs the environment set to compute readiness). Ordered by name and
+  // keyset-paged with a numeric offset token, like the grantee typeahead.
+
+  function handleEnvironments(fullPath, method, params) {
+    const idx = fullPath.indexOf('/environments');
+    if (idx < 0) return null;
+    const path = fullPath.slice(idx);
+    if (!/^\/environments\/?$/.test(path)) return null; // only the collection list is mocked
+    if (method !== 'GET') return problem(405, 'Method not allowed');
+    const limit = Math.max(1, Math.min(Number(params.get('limit')) || 50, 200));
+    const sorted = [...environments].sort((a, b) => a.name.localeCompare(b.name));
+    const offset = Number(params.get('pageToken')) || 0;
+    const pageItems = sorted.slice(offset, offset + limit).map((e) => structuredClone(e));
+    const nextPageToken = offset + limit < sorted.length ? String(offset + limit) : null;
+    return json({ environments: pageItems, nextPageToken });
+  }
+
   // ---- identity / grantee resolution (§16.5.4) --------------------------------------------------
   // The mock is identity-less, so the reach-filtering and complete-reporting are pre-baked into the seed; the
   // search models q / kind / source filtering and keyset paging so the picker's typeahead and Load-more work.
@@ -1430,7 +1643,7 @@ export function createMockControlPlane(options = {}) {
       if (method === 'POST') return submitAccessRequest(body);
       return problem(405, 'Method not allowed');
     }
-    const actionMatch = path.match(/^\/accessRequests\/([^/]+)\/(approve|approve-as-eligible|deny|withdraw|revoke)$/);
+    const actionMatch = path.match(/^\/accessRequests\/([^/]+)\/(approve|approveAsEligible|deny|withdraw|revoke)$/);
     if (actionMatch && method === 'POST') {
       return decideAccessRequest(decodeURIComponent(actionMatch[1]), actionMatch[2], body);
     }
@@ -1493,10 +1706,10 @@ export function createMockControlPlane(options = {}) {
     const requirePending = (verb) => r.status === 'Pending' ? null
       : problem(409, 'Invalid access-request state', `Request '${id}' is ${r.status}; only a pending request can be ${verb}.`);
 
-    if (action === 'approve' || action === 'approve-as-eligible') {
+    if (action === 'approve' || action === 'approveAsEligible') {
       const conflict = requirePending('approved');
       if (conflict) return conflict;
-      const eligible = action === 'approve-as-eligible';
+      const eligible = action === 'approveAsEligible';
       r.status = eligible ? 'Eligible' : 'Approved';
       r.decidedBy = 'boss'; r.decidedAt = iso(0); r.decisionReason = reason;
       r.grantedBindingId = `bind-${++etagSeq}`;
@@ -1524,12 +1737,127 @@ export function createMockControlPlane(options = {}) {
     return problem(404, 'Access request not found', `No access request with id '${id}'.`);
   }
 
+  // ---- availability ("promotion") requests (§7.8) ----------------------------------------------
+  // Mirrors the access-request inbox, parameterised by ENVIRONMENT: a requester asks for a version to be made available;
+  // the target environment's administrators approve (making it available) or deny; the requester may withdraw their own.
+  //   • scope=mine (or absent, no environment) → the demo user's OWN requests.
+  //   • scope=queue → the approver INBOX across all environments (the mock treats the demo user as an administrator).
+  //   • environment → that one environment's queue.
+  function handleAvailabilityRequests(fullPath, method, params, body) {
+    const idx = fullPath.indexOf('/availabilityRequests');
+    if (idx < 0) return null;
+    const path = fullPath.slice(idx);
+
+    if (/^\/availabilityRequests\/?$/.test(path)) {
+      if (method === 'GET') return listAvailabilityRequests(params);
+      if (method === 'POST') return submitAvailabilityRequest(body);
+      return problem(405, 'Method not allowed');
+    }
+    const actionMatch = path.match(/^\/availabilityRequests\/([^/]+)\/(approve|deny|withdraw)$/);
+    if (actionMatch && method === 'POST') {
+      return decideAvailabilityRequest(decodeURIComponent(actionMatch[1]), actionMatch[2], body);
+    }
+    const idMatch = path.match(/^\/availabilityRequests\/([^/]+)$/);
+    if (idMatch && method === 'GET') {
+      const r = availabilityRequests.find((x) => x.id === decodeURIComponent(idMatch[1]));
+      return r ? json(r) : notFoundAvailabilityRequest(decodeURIComponent(idMatch[1]));
+    }
+    return null;
+  }
+
+  // Keyset pagination over (createdAt, id) oldest-first plus the status / environment filters — the same contract the
+  // durable store implements: filter, order, seek strictly past the opaque token, take `limit`, emit a nextPageToken.
+  function listAvailabilityRequests(params) {
+    const status = params.get('status');
+    const environment = params.get('environment');
+    const scope = params.get('scope');
+    const limit = Math.max(1, Number(params.get('limit')) || 50);
+    let rows = [...availabilityRequests].sort((a, b) => (Date.parse(a.createdAt) - Date.parse(b.createdAt)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    if (environment) {
+      // A single environment's queue (the demo user administers everything in the mock).
+      rows = rows.filter((r) => r.environment === environment);
+    } else if (scope === 'queue') {
+      // The approver inbox: every request across all environments (no requester filter).
+    } else {
+      // The caller's own requests (scope=mine / absent).
+      rows = rows.filter((r) => r.createdBy === demoUser);
+    }
+    if (status) rows = rows.filter((r) => r.status === status);
+    const tok = params.get('pageToken') ? atobSafe(params.get('pageToken')).split(' ') : null;
+    const afterTicks = tok ? Number(tok[0]) : null;
+    const afterId = tok ? tok[1] : null;
+    const start = tok ? rows.findIndex((r) => { const t = Date.parse(r.createdAt); return t > afterTicks || (t === afterTicks && r.id > afterId); }) : 0;
+    const from = start < 0 ? rows.length : start;
+    const pageItems = rows.slice(from, from + limit);
+    const more = from + limit < rows.length;
+    const last = pageItems[pageItems.length - 1];
+    const nextPageToken = more && last ? btoaSafe(`${Date.parse(last.createdAt)} ${last.id}`) : null;
+    return json({ availabilityRequests: pageItems, nextPageToken });
+  }
+
+  function submitAvailabilityRequest(body) {
+    if (!body?.baseWorkflowId || body.versionNumber == null || !body?.environment) {
+      return problem(400, 'Invalid availability request', 'A baseWorkflowId, versionNumber, and environment are required.');
+    }
+    const r = {
+      id: `areq-${++etagSeq}`, baseWorkflowId: body.baseWorkflowId, versionNumber: Number(body.versionNumber), environment: body.environment,
+      reason: body.reason, status: 'Pending',
+      subjectClaimType: 'preferred_username', subjectClaimValue: demoUser, requesterLabel: demoUser,
+      createdBy: demoUser, createdAt: iso(0), etag: nextEtag(),
+    };
+    availabilityRequests.push(r);
+    return json(r, 201);
+  }
+
+  function decideAvailabilityRequest(id, action, body) {
+    const r = availabilityRequests.find((x) => x.id === id);
+    if (!r) return notFoundAvailabilityRequest(id);
+    const reason = body?.reason;
+    const requirePending = (verb) => r.status === 'Pending' ? null
+      : problem(409, 'Invalid availability-request state', `Request '${id}' is ${r.status}; only a pending request can be ${verb}.`);
+
+    if (action === 'approve') {
+      const conflict = requirePending('approved');
+      if (conflict) return conflict;
+      // Readiness (§7.7): the version must still exist and every source it references must have a credential in the target
+      // environment — the same gate the server applies to a direct make-available. Approving makes the version available.
+      const version = findVersion(r.baseWorkflowId, r.versionNumber);
+      if (!version) {
+        return problem(409, 'Workflow version no longer exists', `Version ${r.versionNumber} of '${r.baseWorkflowId}' no longer exists, so the request cannot be approved.`);
+      }
+      const missing = (version.sources ?? []).filter((s) => !findUsableCredential(s.name, r.environment, r.baseWorkflowId)).map((s) => s.name);
+      if (missing.length > 0) {
+        return problem(409, 'Environment not ready', `Version ${r.versionNumber} of '${r.baseWorkflowId}' cannot be made available in '${r.environment}': no usable credential for ${missing.join(', ')}.`);
+      }
+      r.status = 'Approved'; r.decidedBy = 'boss'; r.decidedAt = iso(0); r.decisionReason = reason;
+      // Approval makes the version available — record it in the matrix (idempotent).
+      if (!availabilityEntries.some((a) => a.baseWorkflowId === r.baseWorkflowId && a.versionNumber === r.versionNumber && a.environment === r.environment)) {
+        availabilityEntries.push({ baseWorkflowId: r.baseWorkflowId, versionNumber: r.versionNumber, environment: r.environment, createdBy: r.decidedBy, createdAt: iso(0), etag: nextEtag() });
+      }
+    } else if (action === 'deny') {
+      const conflict = requirePending('denied');
+      if (conflict) return conflict;
+      r.status = 'Denied'; r.decidedBy = 'boss'; r.decidedAt = iso(0); r.decisionReason = reason;
+    } else if (action === 'withdraw') {
+      const conflict = requirePending('withdrawn');
+      if (conflict) return conflict;
+      r.status = 'Withdrawn'; r.decidedAt = iso(0); r.decisionReason = reason;
+    }
+    r.etag = nextEtag();
+    return json(r);
+  }
+
+  function notFoundAvailabilityRequest(id) {
+    return problem(404, 'Availability request not found', `No availability request with id '${id}'.`);
+  }
+
   return {
     runs,
     catalog,
     credentials,
     administrators,
     accessRequests,
+    availabilityRequests,
     fetch: async (url, init) => {
       if (latency) await new Promise((r) => setTimeout(r, latency));
       return handle(url, init);

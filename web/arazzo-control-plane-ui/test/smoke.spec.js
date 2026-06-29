@@ -88,7 +88,7 @@ test('the Catalog tab lists versions and opens a version detail with downloads',
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
 
-test('the Catalog Add version flow builds a package in-browser and the catalog versions it', async ({ page }) => {
+test('the Catalog Add wizard reuses a registered source and versions the workflow', async ({ page }) => {
   const errors = [];
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(String(e)));
@@ -101,30 +101,73 @@ test('the Catalog Add version flow builds a package in-browser and the catalog v
   await expect(ncRow).toContainText('3 versions');
 
   await page.locator('arazzo-catalog .add-btn').click();
-  const dialog = page.locator('arazzo-catalog-add-dialog dialog');
-  await expect(dialog).toBeVisible();
+  const dlg = page.locator('arazzo-catalog-add-dialog');
+  await expect(dlg.locator('dialog')).toBeVisible();
 
-  // Build mode: attach a workflow document for the SAME base id, plus its source.
+  // Step 1 — Details: a workflow document for the SAME base id, declaring the petstore source (already registered).
   const workflow = JSON.stringify({
     arazzo: '1.1.0', info: { title: 'Nightly Reconcile' },
     sourceDescriptions: [{ name: 'petstore', type: 'openapi' }],
     workflows: [{ workflowId: 'nightly-reconcile', steps: [] }],
   });
-  await page.locator('arazzo-catalog-add-dialog #workflowFile').setInputFiles({
+  await dlg.locator('#workflowFile').setInputFiles({
     name: 'workflow.json', mimeType: 'application/json', buffer: Buffer.from(workflow),
   });
-  // The dialog derives a required "petstore" source from sourceDescriptions; attach its document.
-  await page.locator('arazzo-catalog-add-dialog .src-file[data-name="petstore"]').setInputFiles({
-    name: 'petstore.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ openapi: '3.1.0' })),
-  });
-  await page.locator('arazzo-catalog-add-dialog #ownerName').fill('Reconciliation Team');
-  await page.locator('arazzo-catalog-add-dialog #ownerEmail').fill('team@example.com');
-  await page.locator('arazzo-catalog-add-dialog .confirm').click();
+  await expect(dlg.locator('.wf-status.ok')).toBeVisible();
+  await dlg.locator('#ownerName').fill('Reconciliation Team');
+  await dlg.locator('#ownerEmail').fill('team@example.com');
+  await dlg.locator('.next').click();
+
+  // Step 2 — Sources: petstore is a registered source, resolved with no re-upload required.
+  await expect(dlg.locator('.src-badge.registered')).toBeVisible();
+  await dlg.locator('.next').click(); // → Administrators
+  await dlg.locator('.next').click(); // → Review
+  await expect(dlg.locator('.next')).toHaveText('Add workflow');
+  await dlg.locator('.next').click(); // commit
 
   // The catalog assigned v4; the detail opens on it.
   const detail = page.locator('arazzo-catalog-detail');
   await expect(detail).toContainText('nightly-reconcile · v4');
   await expect(ncRow).toContainText('4 versions');
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});
+
+test('Grants and Scopes live on the Permissions tab; Access holds the request inbox', async ({ page }) => {
+  await page.goto('/demo/index.html');
+
+  // Permissions carries the reach vocabulary — grants + scopes.
+  await page.getByRole('tab', { name: 'Permissions' }).click();
+  await expect(page.locator('arazzo-grants-panel')).toBeVisible();
+  await expect(page.locator('arazzo-scopes-panel')).toBeVisible();
+
+  // Access carries the request/approval inbox (and no longer the grants/scopes panels).
+  await page.getByRole('tab', { name: 'Access' }).click();
+  await expect(page.locator('arazzo-access-requests')).toBeVisible();
+  await expect(page.locator('arazzo-grants-panel')).toBeHidden();
+});
+
+test('the Promotions tab shows the requester’s own promotion requests and the approver inbox', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/index.html');
+  await page.getByRole('tab', { name: 'Promotions' }).click();
+
+  const promotions = page.locator('arazzo-availability-requests');
+  await expect(promotions).toBeVisible();
+
+  // "My requests" opens by default with the demo user's own seeded request.
+  const mineRows = promotions.locator('tbody tr[data-id]');
+  await expect(mineRows.first()).toBeVisible();
+  await expect(promotions.locator('tbody')).toContainText('nightly-reconcile');
+
+  // The approver inbox opens to the actionable pending requests across the environments you administer.
+  await promotions.locator('.tab-queue').click();
+  const inboxRows = promotions.locator('tbody tr[data-id]');
+  await expect(inboxRows.first()).toBeVisible();
+  await expect(promotions.locator('.act[data-action="approve"]').first()).toBeVisible();
 
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
