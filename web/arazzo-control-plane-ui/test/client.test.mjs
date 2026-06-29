@@ -692,3 +692,30 @@ test('persona enforcement: a viewer cannot perform run or governance writes but 
   await assert.rejects(() => c.cancelRun('run-1'), (e) => e.status === 403);                            // runs:write
   assert.ok((await c.listEnvironments()).environments.length >= 1, 'reads still work');
 });
+
+// ---- runner registry (§5.4) ---------------------------------------------------------------------
+
+test('listRunners returns the registered runners with their transports and hosted versions', async () => {
+  const c = makeClient();
+  const { runners, nextPageToken } = await c.listRunners();
+  assert.equal(runners.length, 3);
+  assert.equal(nextPageToken, null);
+  const eu1 = runners.find((r) => r.runnerId === 'runner-eu-1');
+  assert.ok(eu1.transports.includes('http'));
+  assert.ok(eu1.hostedVersions.some((h) => h.baseWorkflowId === 'adopt-pet' && h.loaded === true));
+  // The seed includes a version still loading (loaded: false) so the health view can show "loading".
+  const eu2 = runners.find((r) => r.runnerId === 'runner-eu-2');
+  assert.ok(eu2.hostedVersions.some((h) => h.loaded === false));
+});
+
+test('listRunners keyset-pages via the nextPageToken, ordered by runnerId', async () => {
+  const c = makeClient();
+  const first = await c.listRunners({ limit: 2 });
+  assert.equal(first.runners.length, 2);
+  assert.equal(first.nextPageToken, '2');
+  const seen = [];
+  for await (const page of c.listRunnersPaged({ limit: 2 })) seen.push(...page.runners.map((r) => r.runnerId));
+  assert.equal(seen.length, 3);
+  assert.equal(new Set(seen).size, 3);
+  assert.deepEqual(seen, [...seen].sort(), 'ordered by runnerId');
+});

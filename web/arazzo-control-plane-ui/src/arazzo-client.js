@@ -199,6 +199,38 @@ export class ArazzoControlPlaneClient {
     return this._request('PURGE', `/runs${qs(search)}`, { signal: request.signal });
   }
 
+  // ---- runners:read (the execution-host registry, §5.4) -----------------------------------------
+
+  /**
+   * `listRunners` — one page of the runner registry (§5.4): the execution hosts that have registered and heartbeat,
+   * ordered by `runnerId`. Each runner is `{ runnerId, address?, startedAt, lastSeenAt, maxConcurrency, transports[],
+   * hostedVersions: [{ baseWorkflowId, versionNumber, hash, loaded }] }`; `lastSeenAt` is the most recent heartbeat (a
+   * stale/dead runner is one whose heartbeat has lapsed). Read-only — runners self-register and heartbeat out of band.
+   * @param {{ limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ runners: object[], nextPageToken: (string|null) }>} A {@link RunnerPage}.
+   */
+  async listRunners(query = {}) {
+    const search = new URLSearchParams();
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const page = await this._request('GET', `/runners${qs(search)}`, { signal: query.signal });
+    return { runners: page.runners ?? [], nextPageToken: page.nextPageToken ?? null };
+  }
+
+  /**
+   * `listRunners`, as an async iterator that walks every page via the keyset `nextPageToken`.
+   * @param {{ limit?: number, signal?: AbortSignal }} [query]
+   * @returns {AsyncGenerator<{ runners: object[], nextPageToken: (string|null) }>}
+   */
+  async *listRunnersPaged(query = {}) {
+    let pageToken;
+    do {
+      const page = await this.listRunners({ ...query, pageToken });
+      yield page;
+      pageToken = page.nextPageToken || undefined;
+    } while (pageToken);
+  }
+
   // ---- catalog:read -----------------------------------------------------------------------------
 
   /**
