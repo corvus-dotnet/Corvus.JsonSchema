@@ -493,9 +493,11 @@ seen**, or a **validated well-known subject id**; it would drive three choices �
 > interim `<arazzo-admin-grant-input>` tuple builder. The **"view" grant** (`catalog:read`) **is** offered — as the
 > default, least-privilege option in `<arazzo-access-request-dialog>` (§17.3: View / Read runs / Operate), self-service
 > via the request → approve path, with `catalog:read` in the server's `AccessRequestApprovalService.GrantableScopes`.
-> **Design-intent, not built:** a *unified picker* by which an administrator grants View (or Operate) to a **named
-> third party** in one step — the access model today is self-request→approve plus §15 administration, so a
-> third-party view grant would be a new grant primitive (a server endpoint), not just a UI surface.
+> **Deliberate non-goal:** a *unified picker* by which an administrator grants View (or Operate) to a **named third
+> party** in one step. The access model intentionally holds the invariant that **a request can never target a third
+> party** (only §15 administration names others); a direct third-party scope grant would be a new grant primitive that
+> relaxes that invariant, and is **out of scope** — View/Operate are self-service (request → approve), Administer is the
+> only third-party grant.
 
 ### Reach vocabulary (`/security`, §14.2)
 
@@ -783,7 +785,6 @@ delivered full-stack (API-first → 10 durability backends + conformance → han
   make/withdraw + request-promotion) is embedded in the catalog version detail.
 
 The **"view" grant** (`catalog:read`) ships as the default option in `<arazzo-access-request-dialog>` (§17.3,
-self-service request → approve). The only remaining design-intent piece is a *unified picker for an administrator to
-grant View / Operate to a **named third party*** in one step — which the access model does not support today (a request
-can never target a third party; only §15 administration names others), so it would be a **new grant primitive (a server
-endpoint)**, not just a UI surface.
+self-service request → approve). A *unified picker for an administrator to grant View / Operate to a **named third
+party*** is a **deliberate non-goal**: the access model holds the invariant that a request can never target a third
+party (only §15 administration names others), so View/Operate stay self-service and only Administer grants to others.
