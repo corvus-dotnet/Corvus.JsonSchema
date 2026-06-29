@@ -621,6 +621,22 @@ public readonly partial struct SourceCredentialBinding
                     nameof(draft));
             }
         }
+
+        // mTLS (§13.1) is the one kind that needs more than one secret slot and is connection-level: it must carry a
+        // 'certificate' reference, and — because the certificate is established at the TLS handshake, not per request — it
+        // cannot be usage-scoped (the control-plane handler also rejects an explicit usage grantee with a clearer message).
+        if (draft.AuthKind.IsNotUndefined() && draft.AuthKindValue == SourceCredentialKind.Mtls)
+        {
+            if (!draft.TryGetSecretRef("certificate", out _))
+            {
+                throw new ArgumentException("An mTLS credential binding requires a 'certificate' secret reference.", nameof(draft));
+            }
+
+            if (draft.UsageTags.IsNotUndefined() && draft.UsageTags.GetArrayLength() > 0)
+            {
+                throw new ArgumentException("An mTLS credential is connection-level and cannot be usage-scoped; it must not carry usage tags.", nameof(draft));
+            }
+        }
     }
 
     // A create draft must carry the immutable identity (sourceName, environment); an update draft omits it (the store

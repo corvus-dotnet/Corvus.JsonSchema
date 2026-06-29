@@ -1224,6 +1224,16 @@ export function createMockControlPlane(options = {}) {
     }
     const err = refError(body.secretRefs);
     if (err) return problem(400, 'Invalid credential binding', err);
+    // mTLS (§13.1) needs a 'certificate' reference and, being connection-level, cannot be usage-scoped — mirror the
+    // server's boundary validation so the demo behaves like the real control plane.
+    if (body.authKind === 'mtls') {
+      if (!(body.secretRefs || []).some((r) => r.name === 'certificate')) {
+        return problem(400, 'Invalid credential binding', "An mTLS credential requires a 'certificate' secret reference.");
+      }
+      if (body.usageGrantee) {
+        return problem(400, 'Invalid credential binding', 'An mTLS credential is connection-level and cannot be usage-scoped.');
+      }
+    }
     if (findCredential(body.sourceName, body.environment)) {
       return problem(409, 'Credential already exists', `A binding for '${body.sourceName}@${body.environment}' already exists.`);
     }

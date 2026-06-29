@@ -110,6 +110,37 @@ describe('<arazzo-credential-dialog>', () => {
     ok($(el, '.config-fields [data-cfg="username"]'), 'the Config section shows basic\'s username field');
   });
 
+  it('offers mTLS certificate + optional key/passphrase slots, forces Shared, and saves a connection-level binding', async () => {
+    el = dialogWith(clientWithMock());
+    mount(el);
+    el.open();
+    setAuthKind(el, 'mtls');
+
+    // Three slots: certificate (required) + private key + passphrase (both optional).
+    const rows = $$(el, '.refs .refrow');
+    equal(rows.length, 3, 'mtls has certificate + key + passphrase slots');
+    const labels = $$(el, '.refs .refrow .slot-label').map((n) => n.textContent);
+    ok(labels.some((l) => l.includes('Client certificate')), 'a certificate slot');
+    ok(labels.some((l) => l.includes('Private key')), 'a private-key slot');
+
+    // mTLS is connection-level: the "Restrict to a grantee" option is hidden and an explanatory note shows.
+    ok($(el, 'input[name="usageMode"][value="restricted"]').closest('.radio').hidden, 'Restrict is hidden for mtls');
+    ok(!$(el, '.usage-mtls-note').hidden, 'the connection-level note is shown');
+
+    // Fill only the certificate (the optional slots stay empty) and save.
+    $(el, '#sourceName').value = 'securesrc';
+    $(el, '#environment').value = 'production';
+    setRef(rows.find((r) => r.dataset.role === 'certificate'), { scheme: 'raw', fields: { raw: 'keyvault://securesrc-cert' } });
+    const saved = nextEvent(el, 'credential-saved');
+    el.submit();
+    const e = await saved;
+
+    equal(e.detail.binding.authKind, 'mtls');
+    ok((e.detail.binding.secretRefs || []).some((r) => r.name === 'certificate' && r.ref === 'keyvault://securesrc-cert'), 'the certificate ref is saved');
+    ok(!(e.detail.binding.secretRefs || []).some((r) => r.name === 'privateKey'), 'an empty optional slot is omitted');
+    ok(!e.detail.binding.usageGrantee, 'no usage grantee — mtls is shared (connection-level)');
+  });
+
   it('refuses an inline secret entered via the raw escape hatch (shows a banner)', async () => {
     el = dialogWith(clientWithMock());
     mount(el);

@@ -3,6 +3,8 @@
 // </copyright>
 
 using System.Net;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.OpenApi.HttpTransport;
@@ -159,6 +161,106 @@ public sealed class SourceCredentialProviderFactoryTests
             "api", "production", SourceCredentialKind.OAuth2ClientCredentials, [new SecretReferenceDefinition("clientSecret", "env://X")],
             [new CredentialConfigDefinition("tokenUrl", "https://auth.example/token"), new CredentialConfigDefinition("clientId", "c")]));
         await Should.ThrowAsync<InvalidOperationException>(async () => await factory.CreateAsync(oauth, default));
+    }
+
+    [TestMethod]
+    public async Task Mtls_resolves_a_client_certificate_from_a_base64_pfx()
+    {
+        using X509Certificate2 source = SelfSigned("CN=mtls-pfx", out _);
+        var resolver = new FakeSecretResolver(new() { ["env://CERT"] = Convert.ToBase64String(source.Export(X509ContentType.Pkcs12)) });
+        var factory = new SourceCredentialProviderFactory(resolver);
+        SourceCredentialBinding binding = BindingFactory.Create(new(
+            "api", "production", SourceCredentialKind.Mtls, [new SecretReferenceDefinition("certificate", "env://CERT")]));
+
+        using X509Certificate2 resolved = await factory.ResolveClientCertificateAsync(binding, default);
+        resolved.Subject.ShouldBe("CN=mtls-pfx");
+        resolved.HasPrivateKey.ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task Mtls_resolves_a_passphrase_protected_pfx()
+    {
+        using X509Certificate2 source = SelfSigned("CN=mtls-pfx-pass", out _);
+        var resolver = new FakeSecretResolver(new() { ["env://CERT"] = Convert.ToBase64String(source.Export(X509ContentType.Pkcs12, "p@ss")), ["env://PASS"] = "p@ss" });
+        var factory = new SourceCredentialProviderFactory(resolver);
+        SourceCredentialBinding binding = BindingFactory.Create(new(
+            "api", "production", SourceCredentialKind.Mtls,
+            [new SecretReferenceDefinition("certificate", "env://CERT"), new SecretReferenceDefinition("passphrase", "env://PASS")]));
+
+        using X509Certificate2 resolved = await factory.ResolveClientCertificateAsync(binding, default);
+        resolved.Subject.ShouldBe("CN=mtls-pfx-pass");
+        resolved.HasPrivateKey.ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task Mtls_resolves_a_pem_certificate_paired_with_a_pem_private_key()
+    {
+        using X509Certificate2 source = SelfSigned("CN=mtls-pem", out RSA key);
+        using (key)
+        {
+            var resolver = new FakeSecretResolver(new() { ["env://CERT"] = source.ExportCertificatePem(), ["env://KEY"] = key.ExportPkcs8PrivateKeyPem() });
+            var factory = new SourceCredentialProviderFactory(resolver);
+            SourceCredentialBinding binding = BindingFactory.Create(new(
+                "api", "production", SourceCredentialKind.Mtls,
+                [new SecretReferenceDefinition("certificate", "env://CERT"), new SecretReferenceDefinition("privateKey", "env://KEY")]));
+
+            using X509Certificate2 resolved = await factory.ResolveClientCertificateAsync(binding, default);
+            resolved.Subject.ShouldBe("CN=mtls-pem");
+            resolved.HasPrivateKey.ShouldBeTrue();
+        }
+    }
+
+    [TestMethod]
+    public async Task Mtls_resolves_an_encrypted_pem_private_key_with_a_passphrase()
+    {
+        using X509Certificate2 source = SelfSigned("CN=mtls-pem-enc", out RSA key);
+        using (key)
+        {
+            string encryptedKeyPem = key.ExportEncryptedPkcs8PrivateKeyPem("keypwd", new PbeParameters(PbeEncryptionAlgorithm.Aes256Cbc, HashAlgorithmName.SHA256, 100_000));
+            var resolver = new FakeSecretResolver(new() { ["env://CERT"] = source.ExportCertificatePem(), ["env://KEY"] = encryptedKeyPem, ["env://PASS"] = "keypwd" });
+            var factory = new SourceCredentialProviderFactory(resolver);
+            SourceCredentialBinding binding = BindingFactory.Create(new(
+                "api", "production", SourceCredentialKind.Mtls,
+                [new SecretReferenceDefinition("certificate", "env://CERT"), new SecretReferenceDefinition("privateKey", "env://KEY"), new SecretReferenceDefinition("passphrase", "env://PASS")]));
+
+            using X509Certificate2 resolved = await factory.ResolveClientCertificateAsync(binding, default);
+            resolved.Subject.ShouldBe("CN=mtls-pem-enc");
+            resolved.HasPrivateKey.ShouldBeTrue();
+        }
+    }
+
+    [TestMethod]
+    public async Task Mtls_per_request_provider_is_a_no_op()
+    {
+        // The certificate authenticates the connection at the TLS handshake; nothing is applied per request.
+        using X509Certificate2 source = SelfSigned("CN=noop", out _);
+        var resolver = new FakeSecretResolver(new() { ["env://CERT"] = Convert.ToBase64String(source.Export(X509ContentType.Pkcs12)) });
+        var factory = new SourceCredentialProviderFactory(resolver);
+        SourceCredentialBinding binding = BindingFactory.Create(new(
+            "api", "production", SourceCredentialKind.Mtls, [new SecretReferenceDefinition("certificate", "env://CERT")]));
+
+        IHttpAuthenticationProvider provider = await factory.CreateAsync(binding, default);
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example/");
+        await provider.AuthenticateAsync(request, default);
+        request.Headers.Authorization.ShouldBeNull();
+    }
+
+    [TestMethod]
+    public void Mtls_without_a_certificate_reference_is_rejected_at_the_validation_boundary()
+    {
+        // An mTLS binding with no 'certificate' reference cannot be persisted: ValidateDraft (which the control plane
+        // surfaces as a 400) rejects it before it ever reaches the runner's certificate resolution.
+        ArgumentException ex = Should.Throw<ArgumentException>(() => BindingFactory.Create(new(
+            "api", "production", SourceCredentialKind.Mtls, [new SecretReferenceDefinition("notTheCert", "env://X")])));
+        ex.Message.ShouldContain("certificate");
+    }
+
+    // A short-lived self-signed certificate for the mTLS tests; `key` is handed back (for PEM export) but the caller owns it.
+    private static X509Certificate2 SelfSigned(string subject, out RSA key)
+    {
+        key = RSA.Create(2048);
+        var request = new CertificateRequest(subject, key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        return request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
     }
 
     private static async Task<string?> ApplyAndGetHeaderAsync(IHttpAuthenticationProvider provider, string headerName)
