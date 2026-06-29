@@ -4,7 +4,7 @@ This recipe uses `allOf` not to *add* properties but to *tighten* a base type's 
 
 ## The Pattern
 
-A member of `allOf` can re-state an existing property with extra keywords; all members apply together. Here `Batch` requires `size >= 1`, and `SmallBatch` composes it with `size <= 100`, so the effective constraint is `1 <= size <= 100`. The generated shape is unchanged (`{ size }`); the *constraints* are the union of all members and are enforced by `evaluateRoot`.
+A member of `allOf` can re-state an existing property with extra keywords; all members apply together. Here `Batch` requires `size >= 1`, and `SmallBatch` composes it with `size <= 100`, so the effective constraint is `1 <= size <= 100`. The generated shape is unchanged (`{ size }`); the *constraints* are the union of all members and are enforced by `SmallBatch.evaluate`.
 
 ## The Schema
 
@@ -23,9 +23,9 @@ File: [`small-batch.json`](./small-batch.json)
 [Example code](./demo.ts)
 
 ```typescript
-evaluateRoot({ size: 50 });   // true
-evaluateRoot({ size: 200 });  // false — maximum 100 (added by SmallBatch)
-evaluateRoot({ size: 0 });    // false — minimum 1 (from the base)
+SmallBatch.evaluate({ size: 50 });   // true
+SmallBatch.evaluate({ size: 200 });  // false — maximum 100 (added by SmallBatch)
+SmallBatch.evaluate({ size: 0 });    // false — minimum 1 (from the base)
 ```
 
 ## Running the Example
@@ -41,4 +41,4 @@ From `docs/typescript/examples/` (`npm install` once): `npm run build` then `nod
 
 ### Why doesn't the constraint show up in the TypeScript type?
 
-A numeric range can't be expressed in a TypeScript type, so `size` is just `number` in the interface and the `1..100` bound lives in `evaluateRoot` — the same split between *shape* and *constraint* as plain validation (002).
+A numeric range can't be expressed in a TypeScript type, so `size` is just `number` in the interface and the `1..100` bound lives in `SmallBatch.evaluate` — the same split between *shape* and *constraint* as plain validation (002).

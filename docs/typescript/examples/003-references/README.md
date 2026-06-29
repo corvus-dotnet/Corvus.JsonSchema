@@ -6,7 +6,7 @@ This recipe shows how a schema reuses a common type with `$ref` and `$defs`, and
 
 A subschema defined under `$defs` and referenced with `$ref` is generated **once**, as a named `interface`, and every reference to it resolves to that same type. Here `shipTo` and `billTo` both `$ref` `#/$defs/address`, so both properties are typed `Address` — define an address value once and use it for either.
 
-A referenced type is first-class: `Address` gets its own `evaluateAddress` / `buildAddress` / `patchAddress` / `produceAddress` alongside `Order`'s, so you can construct and evaluate it independently.
+A referenced type is first-class: `Address` gets its own `Address.evaluate` / `Address.build` / `Address.patch` / `Address.produce` alongside `Order`'s, so you can construct and evaluate it independently.
 
 ## The Schema
 
@@ -47,7 +47,7 @@ The generated types are `interface Order { id: string; shipTo: Address; billTo?:
 
 ```typescript
 const home: Address = { line1: "1 Mill Rd", city: "Cambridge", postcode: "CB1 2AB" };
-const bytes = buildOrder({ id: "ord-1", shipTo: home, billTo: home });
+const bytes = Order.build({ id: "ord-1", shipTo: home, billTo: home });
 ```
 
 ### Read through the reference
@@ -60,7 +60,7 @@ order.shipTo.city; // "Cambridge" — shipTo is an Address
 ### Patch a referenced sub-object
 
 ```typescript
-const moved = patchOrder(bytes, {
+const moved = Order.patch(bytes, {
   shipTo: { line1: "5 King's Parade", city: "Cambridge", postcode: "CB2 1ST" },
 });
 // only shipTo is rewritten; billTo (and everything else) is copied through

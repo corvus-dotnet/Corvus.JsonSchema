@@ -4,7 +4,7 @@ This recipe shows `enum` of strings generating a string-literal union — the id
 
 ## The Pattern
 
-A string `enum` becomes a `type` alias of string literals (`type Status = "todo" | "in_progress" | "done"`), not a TypeScript `enum`. That gives exhaustive `switch`/lookup with no runtime cost and full editor completion; `evaluateRoot` rejects any value outside the set.
+A string `enum` becomes a `type` alias of string literals (`type Status = "todo" | "in_progress" | "done"`), not a TypeScript `enum`. That gives exhaustive `switch`/lookup with no runtime cost and full editor completion; `Task.evaluate` rejects any value outside the set.
 
 ## The Schema
 
@@ -24,7 +24,7 @@ The generated `type Status = "todo" | "in_progress" | "done"` (and `Priority`), 
 ```typescript
 const label: Record<Status, string> = { todo: "To do", in_progress: "In progress", done: "Done" };
 label[task.status];                        // exhaustive — every member must be handled
-evaluateRoot({ status: "archived" });      // false — not a member
+Task.evaluate({ status: "archived" });      // false — not a member
 ```
 
 ## Running the Example

@@ -4,7 +4,7 @@ This recipe shows `format` keywords generating **branded** types with validating
 
 ## The Pattern
 
-A `format` (e.g. `uuid`, `uri`, `date-time`) generates a branded type — `type Id = Brand<string, "uuid">` — and a factory `asId(value): Id` that checks the format and throws `FormatError` on failure. The brand means a raw `string` is *not* assignable where an `Id` is expected: you must go through the factory, so a value's format is guaranteed by its type. `evaluateRoot` also checks formats as part of whole-document evaluation.
+A `format` (e.g. `uuid`, `uri`, `date-time`) generates a branded type — `type Id = Brand<string, "uuid">` — and a factory `Id.from(value): Id` that checks the format and throws `FormatError` on failure. The brand means a raw `string` is *not* assignable where an `Id` is expected: you must go through the factory, so a value's format is guaranteed by its type. `Account.evaluate` also checks formats as part of whole-document evaluation.
 
 ## The Schema
 
@@ -20,12 +20,12 @@ File: [`account.json`](./account.json)
 [Example code](./demo.ts)
 
 ```typescript
-buildAccount({
-  id: asId("6f9619ff-8b86-d011-b42d-00cf4fc964ff"),
-  website: asWebsite("https://example.com"),
-  created: asCreated("2026-06-26T10:00:00Z"),
+Account.build({
+  id: Id.from("6f9619ff-8b86-d011-b42d-00cf4fc964ff"),
+  website: Website.from("https://example.com"),
+  created: Created.from("2026-06-26T10:00:00Z"),
 });
-asId("nope"); // throws FormatError("uuid")
+Id.from("nope"); // throws FormatError("uuid")
 ```
 
 ## Running the Example
@@ -41,7 +41,7 @@ From `docs/typescript/examples/` (`npm install` once): `npm run build` then `nod
 
 ### Which formats are supported?
 
-The RFC-accurate set from the JSON Schema test suite — `date`/`time`/`date-time`/`duration`, `email`/`idn-email`, `hostname`/`idn-hostname`, `ipv4`/`ipv6`, `uri`/`iri` and relatives, `uuid`, `json-pointer`, `regex`, and more. The runtime ships the checks; `asX` factories are generated for each formatted field.
+The RFC-accurate set from the JSON Schema test suite — `date`/`time`/`date-time`/`duration`, `email`/`idn-email`, `hostname`/`idn-hostname`, `ipv4`/`ipv6`, `uri`/`iri` and relatives, `uuid`, `json-pointer`, `regex`, and more. The runtime ships the checks; `{Type}.from` factories are generated for each formatted field.
 
 ### Do I have to use the factory?
 

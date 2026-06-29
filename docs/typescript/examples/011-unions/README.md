@@ -1,13 +1,13 @@
 # TypeScript Patterns - Unions
 
-This recipe shows how `oneOf` becomes a TypeScript **union** with per-branch type guards and an exhaustive `match*` function — the idiomatic way to handle "one of several shapes".
+This recipe shows how `oneOf` becomes a TypeScript **union** with per-branch type guards and an exhaustive `{Union}.match` function — the idiomatic way to handle "one of several shapes".
 
 ## The Pattern
 
 A `oneOf` of object schemas generates a union type alias (`type Shape = Circle | Rectangle`) plus:
 
-- a **type guard** per branch (`isCircle(value): value is Circle`) that narrows in an `if`;
-- an exhaustive **`matchShape(value, cases)`** that dispatches to a handler per branch and returns a result — the compiler requires a case for *every* member, so adding a branch to the schema turns missing handlers into compile errors.
+- a **type guard** per branch (`Circle.is(value): value is Circle`) that narrows in an `if`;
+- an exhaustive **`Shape.match(value, cases)`** that dispatches to a handler per branch and returns a result — the compiler requires a case for *every* member, so adding a branch to the schema turns missing handlers into compile errors.
 
 When each branch carries a discriminant property (here `kind: "circle"` / `"rectangle"` via `const`), the guards key off it; the same shape with no discriminant still works, distinguished structurally by the evaluator.
 
@@ -35,7 +35,7 @@ File: [`shape.json`](./shape.json)
 
 ```typescript
 const area = (s: Shape) =>
-  matchShape(s, {
+  Shape.match(s, {
     circle: (c) => Math.PI * c.radius * c.radius,
     rectangle: (r) => r.width * r.height,
   });
@@ -44,7 +44,7 @@ const area = (s: Shape) =>
 ### Narrow with a guard
 
 ```typescript
-if (isCircle(shape)) {
+if (Circle.is(shape)) {
   shape.radius; // here `shape` is typed as Circle
 }
 ```
@@ -52,7 +52,7 @@ if (isCircle(shape)) {
 ### Evaluate
 
 ```typescript
-evaluateRoot(shape); // true if the value matches exactly one branch
+Shape.evaluate(shape); // true if the value matches exactly one branch
 ```
 
 ## Running the Example
@@ -73,8 +73,8 @@ node dist/011-unions/demo.js
 
 ### How is `oneOf` different from `anyOf` here?
 
-Both generate a union type and `match*`. The difference is in evaluation: `oneOf` requires the value to match *exactly one* branch (matching two is invalid), while `anyOf` accepts one *or more*. The TypeScript surface is the same; `evaluateRoot` enforces the cardinality.
+Both generate a union type and `{Union}.match`. The difference is in evaluation: `oneOf` requires the value to match *exactly one* branch (matching two is invalid), while `anyOf` accepts one *or more*. The TypeScript surface is the same; `Shape.evaluate` enforces the cardinality.
 
-### Why is `matchShape` better than a manual `switch`?
+### Why is `Shape.match` better than a manual `switch`?
 
-It is exhaustive by construction: the `cases` object must have a handler for every union member, so if you later add a `Triangle` branch to the schema, the regenerated `matchShape` won't type-check until you handle it — you can't silently forget a case.
+It is exhaustive by construction: the `cases` object must have a handler for every union member, so if you later add a `Triangle` branch to the schema, the regenerated `Shape.match` won't type-check until you handle it — you can't silently forget a case.

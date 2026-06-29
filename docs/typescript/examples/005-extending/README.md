@@ -26,11 +26,11 @@ The generated `interface Employee` has `name`, `email?`, `employeeId`, `departme
 [Example code](./demo.ts)
 
 ```typescript
-const bytes = buildEmployee({ name: "Ada", email: asEmail("ada@example.com"), employeeId: "E-1", department: "R&D" });
+const bytes = Employee.build({ name: "Ada", email: Email.from("ada@example.com"), employeeId: "E-1", department: "R&D" });
 const e = JSON.parse(new TextDecoder().decode(bytes)) as Employee;
 e.name;        // from Person (the base)
 e.employeeId;  // from Employee (the extension)
-evaluateRoot({ employeeId: "E-2" }); // false — name is required by the base
+Employee.evaluate({ employeeId: "E-2" }); // false — name is required by the base
 ```
 
 ## Running the Example
@@ -46,4 +46,4 @@ From `docs/typescript/examples/` (`npm install` once): `npm run build` then `nod
 
 ### Is the base type still available on its own?
 
-Yes. `Person` is generated as its own `interface` with its own `evaluatePerson`/`buildPerson`, so you can use the base independently as well as through `Employee`.
+Yes. `Person` is generated as its own `interface` with its own `Person.evaluate`/`Person.build`, so you can use the base independently as well as through `Employee`.

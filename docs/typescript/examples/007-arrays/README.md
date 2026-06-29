@@ -27,10 +27,10 @@ The generated `interface Cart` has `items: readonly LineItem[]`.
 const cart = JSON.parse(new TextDecoder().decode(bytes)) as Cart;
 cart.items[0].sku;                              // indexed, typed as LineItem
 cart.items.reduce((n, i) => n + i.qty, 0);      // ordinary array methods
-evaluateRoot({ items: [] });                    // false — minItems 1
+Cart.evaluate({ items: [] });                    // false — minItems 1
 
 // append an element; produce records the push and the array bytes are spliced.
-const more = produceCart(bytes, (d) => { d.items.push({ sku: "C3", qty: 5 }); });
+const more = Cart.produce(bytes, (d) => { d.items.push({ sku: "C3", qty: 5 }); });
 ```
 
 ## Running the Example
@@ -47,4 +47,4 @@ From `docs/typescript/examples/` (`npm install` once): `npm run build` then `nod
 
 ### Are the arrays mutable?
 
-The read surface is `readonly` (you can't accidentally mutate parsed data in place). To produce a changed copy, use `produce*` with a recipe — `push`, index assignment and splice are recorded and lowered to a byte-level edit, leaving the original untouched.
+The read surface is `readonly` (you can't accidentally mutate parsed data in place). To produce a changed copy, use `{Type}.produce` with a recipe — `push`, index assignment and splice are recorded and lowered to a byte-level edit, leaving the original untouched.

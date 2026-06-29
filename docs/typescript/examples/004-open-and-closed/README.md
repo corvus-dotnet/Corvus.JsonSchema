@@ -4,7 +4,7 @@ This recipe shows the difference between an **open** object (unknown properties 
 
 ## The Pattern
 
-By default a JSON Schema object is **open**: properties beyond those declared are allowed and ignored. Adding `unevaluatedProperties: false` makes it **closed** — any property not accounted for by the schema is rejected. The generated `interface` carries the declared properties either way; the open/closed distinction is enforced by `evaluateRoot`. (A closed type has no index signature, so it also reads as exact in TypeScript.)
+By default a JSON Schema object is **open**: properties beyond those declared are allowed and ignored. Adding `unevaluatedProperties: false` makes it **closed** — any property not accounted for by the schema is rejected. The generated `interface` carries the declared properties either way; the open/closed distinction is enforced by `StrictPoint.evaluate`. (A closed type has no index signature, so it also reads as exact in TypeScript.)
 
 ## The Schema
 
@@ -21,9 +21,9 @@ File: [`point.json`](./point.json)
 [Example code](./demo.ts)
 
 ```typescript
-evaluateRoot({ x: 1, y: 2 });        // true
-evaluateRoot({ x: 1, y: 2, z: 3 });  // false — z is an unevaluated (unknown) property
-evaluateRoot({ x: 1 });              // false — y is required
+StrictPoint.evaluate({ x: 1, y: 2 });        // true
+StrictPoint.evaluate({ x: 1, y: 2, z: 3 });  // false — z is an unevaluated (unknown) property
+StrictPoint.evaluate({ x: 1 });              // false — y is required
 ```
 
 ## Running the Example

@@ -26,7 +26,7 @@ The generated `interface Widget` has `name`, `createdAt?` (a `date-time` brand),
 [Example code](./demo.ts)
 
 ```typescript
-const bytes = buildWidget({ name: "gauge", createdAt: asCreatedAt("2026-06-26T10:00:00Z"), id: "w-1" });
+const bytes = Widget.build({ name: "gauge", createdAt: CreatedAt.from("2026-06-26T10:00:00Z"), id: "w-1" });
 ```
 
 ## Running the Example

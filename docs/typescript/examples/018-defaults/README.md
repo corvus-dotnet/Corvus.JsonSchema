@@ -20,7 +20,7 @@ File: [`settings.json`](./settings.json)
 [Example code](./demo.ts)
 
 ```typescript
-evaluateRoot(JSON.parse("{}"));   // true — both properties are optional
+Settings.evaluate(JSON.parse("{}"));   // true — both properties are optional
 const s = JSON.parse("{}") as Settings;
 s.theme ?? "light";               // apply the documented default at the read site
 s.fontSize ?? 14;

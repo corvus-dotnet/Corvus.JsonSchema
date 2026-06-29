@@ -4,7 +4,7 @@ This recipe shows a numeric `enum` generating a numeric-literal union.
 
 ## The Pattern
 
-A numeric `enum` becomes `type Status = 200 | 404 | 500` — a union of numeric literals, checkable and completable, with `evaluateRoot` rejecting any other number.
+A numeric `enum` becomes `type Status = 200 | 404 | 500` — a union of numeric literals, checkable and completable, with `Response.evaluate` rejecting any other number.
 
 ## The Schema
 
@@ -21,7 +21,7 @@ File: [`response.json`](./response.json)
 
 ```typescript
 r.status === 200;                       // narrowed to the literal union
-evaluateRoot({ status: 418 });          // false — not 200 | 404 | 500
+Response.evaluate({ status: 418 });          // false — not 200 | 404 | 500
 ```
 
 ## Running the Example

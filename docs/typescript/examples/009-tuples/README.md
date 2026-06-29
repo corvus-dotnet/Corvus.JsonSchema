@@ -24,8 +24,8 @@ The generated `interface Point3D` has `coord: readonly [number, number, number]`
 
 ```typescript
 const [x, y, z] = p.coord;                  // positional, each typed number
-evaluateRoot({ coord: [1, 2] });            // false — minItems 3
-evaluateRoot({ coord: [1, 2, 3, 4] });      // false — items: false (no fourth element)
+Point3D.evaluate({ coord: [1, 2] });            // false — minItems 3
+Point3D.evaluate({ coord: [1, 2, 3, 4] });      // false — items: false (no fourth element)
 ```
 
 ## Running the Example

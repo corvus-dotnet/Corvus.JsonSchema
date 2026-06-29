@@ -4,7 +4,7 @@ This recipe shows an open map — `additionalProperties` with a value schema —
 
 ## The Pattern
 
-An object whose keys aren't known ahead of time, but whose *values* share a schema, is a map. `additionalProperties: { "type": "number" }` generates `interface Scores { readonly [key: string]: number }`. A map is a plain object — read it by key, iterate with `Object.entries`, and serialise it directly (there is no `build*` for an open map); `evaluateRoot` checks every value against the value schema.
+An object whose keys aren't known ahead of time, but whose *values* share a schema, is a map. `additionalProperties: { "type": "number" }` generates `interface Scores { readonly [key: string]: number }`. A map is a plain object — read it by key, iterate with `Object.entries`, and serialise it directly (there is no `{Type}.build` for an open map); `Scores.evaluate` checks every value against the value schema.
 
 ## The Schema
 
@@ -23,7 +23,7 @@ const map: Scores = { ada: 9.5, alan: 8 };
 const bytes = new TextEncoder().encode(JSON.stringify(map));
 scores.ada;                              // typed number
 for (const [name, score] of Object.entries(scores)) { /* … */ }
-evaluateRoot({ ada: -1 });               // false — minimum 0 on the values
+Scores.evaluate({ ada: -1 });               // false — minimum 0 on the values
 ```
 
 ## Running the Example
