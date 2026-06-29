@@ -31,13 +31,14 @@ describe('<arazzo-access-requests>', () => {
     el = panelWithMock({ view: 'queue' });
     mount(el);
     await nextEvent(el, 'loaded');
-    // The inbox opens to the actionable Pending set (one seeded pending request); clearing the filter shows them all.
-    equal(rows(el).length, 1, 'one pending request by default');
+    // The inbox opens to the actionable Pending set (a seeded operate request + a seeded view request); clearing the
+    // filter shows them all.
+    equal(rows(el).length, 2, 'two pending requests by default (an operate and a view grant)');
     const status = el.shadowRoot.querySelector('.status');
     status.value = '';
     status.dispatchEvent(new Event('change'));
     await nextEvent(el, 'loaded');
-    equal(rows(el).length, 3, 'all three seeded requests with no status filter');
+    equal(rows(el).length, 4, 'all four seeded requests with no status filter');
   });
 
   it('submits a new request and emits access-request-submitted', async () => {

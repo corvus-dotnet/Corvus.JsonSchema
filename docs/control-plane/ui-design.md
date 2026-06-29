@@ -490,8 +490,12 @@ seen**, or a **validated well-known subject id**; it would drive three choices �
 > `<arazzo-administrators-panel>`); and — now built — the **resolved-grantee `<arazzo-grantee-picker>`** itself (a
 > `GET /identity/grantees` typeahead → resolved `sys:` identity, with a `kinds` allow-list so a surface admits only the
 > grantee kinds it should), wired into the administrator panels and the add-workflow wizard. It **replaces** the earlier
-> interim `<arazzo-admin-grant-input>` tuple builder. **Design-intent, not built — in the UI:** the standalone
-> **"view"-grant** surface (the `catalog:read` scope is grantable server-side, but no picker offers a view grant yet).
+> interim `<arazzo-admin-grant-input>` tuple builder. The **"view" grant** (`catalog:read`) **is** offered — as the
+> default, least-privilege option in `<arazzo-access-request-dialog>` (§17.3: View / Read runs / Operate), self-service
+> via the request → approve path, with `catalog:read` in the server's `AccessRequestApprovalService.GrantableScopes`.
+> **Design-intent, not built:** a *unified picker* by which an administrator grants View (or Operate) to a **named
+> third party** in one step — the access model today is self-request→approve plus §15 administration, so a
+> third-party view grant would be a new grant primitive (a server endpoint), not just a UI surface.
 
 ### Reach vocabulary (`/security`, §14.2)
 
@@ -778,5 +782,8 @@ delivered full-stack (API-first → 10 durability backends + conformance → han
 - **Promotion matrix** — `<arazzo-availability-matrix>` (the `(version × environment)` rollout grid, with direct
   make/withdraw + request-promotion) is embedded in the catalog version detail.
 
-The remaining UI follow-up is deferred: a standalone **"view"-grant picker** surface (the `catalog:read` scope is
-grantable server-side).
+The **"view" grant** (`catalog:read`) ships as the default option in `<arazzo-access-request-dialog>` (§17.3,
+self-service request → approve). The only remaining design-intent piece is a *unified picker for an administrator to
+grant View / Operate to a **named third party*** in one step — which the access model does not support today (a request
+can never target a third party; only §15 administration names others), so it would be a **new grant primitive (a server
+endpoint)**, not just a UI surface.

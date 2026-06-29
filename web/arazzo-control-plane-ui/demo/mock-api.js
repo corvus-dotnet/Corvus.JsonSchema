@@ -706,6 +706,14 @@ function seedAccessRequests() {
       decidedBy: 'boss', decidedAt: iso(-49 * hr), decisionReason: 'Use the shared service account for read-only triage.',
       etag: nextEtag(),
     },
+    {
+      // A §17.3 "view" grant — the least-privilege catalog:read access an auditor requests to see one workflow without
+      // joining its domain or operating it; pending so the approver inbox demonstrates approving a view grant.
+      id: 'req-2004', baseWorkflowId: 'nightly-reconcile', requestedScopes: ['catalog:read'],
+      subjectClaimType: 'preferred_username', subjectClaimValue: 'dave', requesterLabel: 'dave',
+      reason: 'Auditor: read-only view of the reconcile workflow for the quarterly review.',
+      status: 'Pending', createdBy: 'dave', createdAt: iso(-1 * hr), etag: nextEtag(),
+    },
   ];
 }
 
