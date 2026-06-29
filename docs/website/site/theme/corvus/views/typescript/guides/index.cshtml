@@ -1,0 +1,15 @@
+@model SiteViewModel
+@{
+    Layout = "../../Shared/_Layout.cshtml";
+}
+<div class="layout-docs container">
+    @await Html.PartialAsync("_TypeScriptSidebar").ConfigureAwait(false)
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            @foreach (var contentFragment in Model.PageContext.GetAllMarkdownContent())
+            {
+                @Html.Raw(contentFragment.Body)
+            }
+        </div>
+    </main>
+</div>

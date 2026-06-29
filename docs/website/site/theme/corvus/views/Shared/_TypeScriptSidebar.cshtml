@@ -1,0 +1,20 @@
+@model SiteViewModel
+@{
+    var cur = Model.PageContext?.Navigation?.Url?.ToString() ?? "";
+    var onExamples = cur.Contains("/typescript/examples");
+    var onGuides = cur.Contains("/typescript/guides");
+    var onStart = !onExamples && !onGuides;
+}
+<aside class="sidebar">
+    <div class="sidebar__section">
+        <button class="sidebar__heading">TypeScript</button>
+        <div class="sidebar__body">
+            <ul class="sidebar__list">
+                <li class="sidebar__item"><a class="sidebar__link @(onStart ? "is-active" : "")" href="/typescript/index.html">Getting started</a></li>
+                <li class="sidebar__item"><a class="sidebar__link @(onGuides ? "is-active" : "")" href="/typescript/guides/index.html">Guides</a></li>
+                <li class="sidebar__item"><a class="sidebar__link @(onExamples ? "is-active" : "")" href="/typescript/examples/index.html">Examples</a></li>
+                <li class="sidebar__item"><a class="sidebar__link" href="/playground-typescript/index.html" target="_blank" rel="noopener noreferrer">Playground</a></li>
+            </ul>
+        </div>
+    </div>
+</aside>

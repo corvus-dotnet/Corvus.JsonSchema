@@ -1,0 +1,27 @@
+ContentType: application/vnd.endjin.ssg.page+yaml
+Title: TypeScript Examples
+Navigation:
+  Title: Examples
+  Description: "Worked TypeScript recipes — one JSON Schema construct at a time, each a schema, the generated code, and a runnable demo."
+  Parent: /typescript/index.html
+  Url: /typescript/examples/index.html
+  Rank: 2
+  Header:
+    Visible: True
+    Link: True
+  Footer:
+    Visible: True
+    Link: True
+MetaData:
+  Title: "TypeScript Examples — Corvus.Text.Json"
+  Description: "Nineteen worked examples of generating TypeScript from JSON Schema: objects, references, composition, arrays, tuples, unions, enums, maps, mutation, conditionals, defaults, and formats."
+  Keywords: [TypeScript, JSON Schema, examples, recipes, code generation]
+OpenGraph:
+  Title: "TypeScript Examples — Corvus.Text.Json"
+  Description: "Nineteen worked examples of generating TypeScript from JSON Schema."
+  Image:
+ContentBlocks:
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: Examples
+    Spec:
+      Path: ../../content/TypeScript/Examples.md

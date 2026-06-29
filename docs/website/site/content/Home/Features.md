@@ -8,6 +8,10 @@ Title: "Features"
 
 Generate strongly-typed C# from JSON Schema at build time with the Roslyn incremental source generator, or ahead of time with the `corvusjson` CLI tool. Your models get type-safe property accessors, validation, serialization, and implicit conversions — all from a single schema file. The generator walks the schema tree and produces `readonly struct` types that are lightweight indexes into pooled JSON data.
 
+## 🟦 TypeScript Code Generation
+
+Generate idiomatic, high-performance **TypeScript** from the same JSON Schemas, with the same engine. Each type gets a companion object carrying everything: an `evaluate()` validator (fully compliant from draft 4 through 2020-12, with no runtime schema interpretation), `build()` / `patch()` / `produce()` for construction and byte-level mutation over UTF-8 JSON, branded `format` types with validating factories, and exhaustive `match()` on `oneOf` unions. [Get started](/typescript/index.html), browse the [worked examples](/typescript/examples/index.html), or try it in the [playground](/playground-typescript/index.html).
+
 ## 📋 Schema Validation
 
 Full JSON Schema draft 4, 6, 7, 2019-09, and 2020-12 validation with `EvaluateSchema()`. Over 10x faster than other .NET JSON Schema validators. Get detailed diagnostic results including the exact schema location, evaluation path, and error messages for every validation failure. Choose from four levels — flag-only `bool`, basic failure messages, detailed messages with locations, or verbose output including successful validations.
