@@ -719,3 +719,84 @@ test('listRunners keyset-pages via the nextPageToken, ordered by runnerId', asyn
   assert.equal(new Set(seen).size, 3);
   assert.deepEqual(seen, [...seen].sort(), 'ordered by runnerId');
 });
+
+// ---- runner authorizations (§5.5) ---------------------------------------------------------------
+
+test('listRunnerAuthorizations is the approver inbox: defaults to Pending across administered environments', async () => {
+  const c = makeClient();
+  const { authorizations, nextPageToken } = await c.listRunnerAuthorizations();
+  assert.equal(nextPageToken, null);
+  assert.ok(authorizations.every((a) => a.status === 'Pending'), 'defaults to Pending');
+  // The seed lines up with the runner fleet: runner-us-1 (production) and runner-eu-2 (staging) are awaiting a decision.
+  assert.deepEqual(authorizations.map((a) => `${a.environment}/${a.runnerId}`), ['production/runner-us-1', 'staging/runner-eu-2']);
+});
+
+test('listRunnerAuthorizations filters by status (Authorized / Revoked) and by environment', async () => {
+  const c = makeClient();
+  const authorized = await c.listRunnerAuthorizations({ status: 'Authorized' });
+  assert.deepEqual(authorized.authorizations.map((a) => a.runnerId), ['runner-eu-1']);
+  const revoked = await c.listRunnerAuthorizations({ status: 'Revoked' });
+  assert.deepEqual(revoked.authorizations.map((a) => a.runnerId), ['runner-eu-old']);
+  // An environment narrows to that one environment's queue (still Pending-by-default).
+  const prodPending = await c.listRunnerAuthorizations({ environment: 'production' });
+  assert.deepEqual(prodPending.authorizations.map((a) => a.runnerId), ['runner-us-1']);
+});
+
+test('listRunnerAuthorizations keyset-pages via the nextPageToken, ordered by (environment, runnerId)', async () => {
+  const c = makeClient();
+  const first = await c.listRunnerAuthorizations({ limit: 1 });
+  assert.equal(first.authorizations.length, 1);
+  assert.ok(first.nextPageToken);
+  const seen = [];
+  for await (const page of c.listRunnerAuthorizationsPaged({ limit: 1 })) seen.push(...page.authorizations.map((a) => `${a.environment}/${a.runnerId}`));
+  assert.deepEqual(seen, ['production/runner-us-1', 'staging/runner-eu-2']);
+});
+
+test('listEnvironmentRunnerAuthorizations is the per-environment roster (all statuses), 404 for an unknown environment', async () => {
+  const c = makeClient();
+  const { authorizations } = await c.listEnvironmentRunnerAuthorizations('production');
+  // Every production authorization, whatever its status, ordered by runnerId.
+  assert.deepEqual(authorizations.map((a) => a.runnerId), ['runner-eu-1', 'runner-eu-old', 'runner-us-1']);
+  await assert.rejects(() => c.listEnvironmentRunnerAuthorizations('nope'), (e) => e.status === 404);
+});
+
+test('authorizeRunner authorizes a pending runner (idempotent) and 404s for an unregistered runner', async () => {
+  const c = makeClient();
+  const decided = await c.authorizeRunner('production', 'runner-us-1', { reason: 'Vetted.' });
+  assert.equal(decided.status, 'Authorized');
+  assert.equal(decided.reason, 'Vetted.');
+  // It leaves the Pending inbox.
+  assert.ok(!(await c.listRunnerAuthorizations()).authorizations.some((a) => a.runnerId === 'runner-us-1'));
+  // Idempotent — authorizing again returns it unchanged.
+  assert.equal((await c.authorizeRunner('production', 'runner-us-1')).status, 'Authorized');
+  // A runner that never registered for the environment is 404.
+  await assert.rejects(() => c.authorizeRunner('production', 'ghost-runner'), (e) => e.status === 404);
+});
+
+test('revokeRunner revokes an authorization (idempotent) and 404s for an unregistered runner', async () => {
+  const c = makeClient();
+  const decided = await c.revokeRunner('production', 'runner-eu-1', { reason: 'Rotated out.' });
+  assert.equal(decided.status, 'Revoked');
+  assert.equal((await c.revokeRunner('production', 'runner-eu-1')).status, 'Revoked'); // idempotent
+  await assert.rejects(() => c.revokeRunner('staging', 'ghost-runner'), (e) => e.status === 404);
+});
+
+test('runner-authorization client methods validate their arguments before calling the server', async () => {
+  const c = makeClient();
+  assert.throws(() => c.authorizeRunner('', 'runner-1'), TypeError);
+  assert.throws(() => c.authorizeRunner('production', ''), TypeError);
+  assert.throws(() => c.revokeRunner('production', ''), TypeError);
+  await assert.rejects(() => c.listEnvironmentRunnerAuthorizations(''), TypeError);
+});
+
+test('persona enforcement: a non-administrator has an empty runner-authorization inbox and cannot authorize', async () => {
+  const mock = createMockControlPlane({ latencyMs: 0 });
+  const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+  mock.setPersona('operator');
+  assert.equal((await c.listRunnerAuthorizations()).authorizations.length, 0);
+  await assert.rejects(() => c.authorizeRunner('production', 'runner-us-1'), (e) => e.status === 403);
+
+  mock.setPersona('administrator');
+  assert.ok((await c.listRunnerAuthorizations()).authorizations.some((a) => a.runnerId === 'runner-us-1'));
+  assert.equal((await c.authorizeRunner('production', 'runner-us-1')).status, 'Authorized');
+});

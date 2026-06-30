@@ -75,6 +75,11 @@ var catalog = new SecuredWorkflowCatalog(catalogStore, stateStore, "demo", admin
 // control plane's GET /runners (§5.4) — not an in-memory table only this process can see.
 SqliteRunnerRegistry runners = await SqliteRunnerRegistry.ConnectAsync(connectionString);
 
+// The §5.5 runner-authorization store, shared with the runner process: a runner records a Pending authorization to
+// serve its environment when it registers; this control plane reads that inbox and an environment administrator
+// authorizes (or revokes) it. It must be the same store both processes open — hence shared SQLite, not in-memory.
+SqliteEnvironmentRunnerAuthorizationStore runnerAuthorizations = await SqliteEnvironmentRunnerAuthorizationStore.ConnectAsync(connectionString);
+
 // The §13 source-credential store. The control plane manages credential *references* + metadata only — it never
 // binds to the secret store (the §13/§13.5 invariant); the runner is the read-only secret consumer. This lights
 // up the /credentials surface (and the CLI + web UI) over the shared store.
@@ -284,7 +289,8 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     sourceCredentialStore: sourceCredentials,
     accessRequestStore: accessRequests,
     accessRequestSubjectClaimType: "preferred_username",
-    selfElevationEligibility: eligibleForSelfElevation);
+    selfElevationEligibility: eligibleForSelfElevation,
+    environmentRunnerAuthorizationStore: runnerAuthorizations);
 
 // The demo backend services the workflows call (generated from the same OpenAPI sources, returning sample data).
 OnboardingApi.MapApiEndpoints(app.MapGroup("/svc/onboarding"), new OnboardingService());
