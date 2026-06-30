@@ -56,9 +56,11 @@ public static class DemoData
         return resumer.AsResumer();
     }
 
-    /// <summary>Executes a fresh onboarding run live, to demonstrate real execution: it creates a Pending run with
+    /// <summary>Executes fresh onboarding runs live, to demonstrate real execution: each creates a Pending run with
     /// inputs and drives it through the live resumer (which calls the hosted /svc/onboarding backend), so the browsable
-    /// demo shows a genuinely-executed run rather than a hand-seeded state. Best-effort — a failure is logged, not fatal.</summary>
+    /// demo shows genuinely-executed runs rather than hand-seeded states. Two runs are executed: a standard applicant
+    /// who clears the KYC score threshold and completes all four steps, and a sanctioned applicant who scores below it
+    /// and faults live at the verifyIdentity success criterion. Best-effort — a failure is logged, not fatal.</summary>
     /// <param name="runStore">The run state store.</param>
     /// <param name="resumer">The live resumer (from <see cref="CreateLiveResumer"/>).</param>
     /// <param name="log">An optional sink for the outcome line.</param>
@@ -68,16 +70,30 @@ public static class DemoData
         ArgumentNullException.ThrowIfNull(runStore);
         ArgumentNullException.ThrowIfNull(resumer);
         TimeProvider time = timeProvider ?? TimeProvider.System;
+
+        // A standard applicant clears the KYC score threshold → the run completes all four steps.
+        await RunLiveAsync(runStore, resumer, time, "run-onb-live01", "live01", """{"email":"ada@example.com","fullName":"Ada Lovelace","plan":"pro"}""", log).ConfigureAwait(false);
+
+        // A sanctioned applicant scores below the threshold → the run faults live at verifyIdentity. Nothing is
+        // hand-seeded: the success criterion is evaluated against the real backend response. NOTE: a production
+        // workflow would *handle* a KYC failure inside the workflow (an onFailure branch to manual review or a
+        // rejection step), not let it fault the run. This intentionally-unhandled fault demonstrates how a failing
+        // step surfaces in the control plane — the dev-test debugging experience — rather than a recommended design.
+        await RunLiveAsync(runStore, resumer, time, "run-onb-live02", "live02", """{"email":"mallory@example.com","fullName":"Mallory Sanction","plan":"free"}""", log).ConfigureAwait(false);
+    }
+
+    private static async ValueTask RunLiveAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, TimeProvider time, string runId, string correlationId, string inputsJson, Action<string>? log)
+    {
         try
         {
-            using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"email":"ada@example.com","plan":"pro"}"""u8.ToArray());
-            using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-onb-live01", "onboard-customer-v1", inputs.RootElement, time, correlationId: "live01", tags: TagSet.FromTags(["tenant-7"]));
+            using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(inputsJson));
+            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "onboard-customer-v1", inputs.RootElement, time, correlationId: correlationId, tags: TagSet.FromTags(["tenant-7"]));
             WorkflowRunResultKind result = await resumer(run, default).ConfigureAwait(false);
-            log?.Invoke($"Live onboarding run 'run-onb-live01' executed against /svc: {result}.");
+            log?.Invoke($"Live onboarding run '{runId}' executed against /svc: {result}.");
         }
         catch (Exception ex)
         {
-            log?.Invoke($"Live onboarding run failed: {ex}");
+            log?.Invoke($"Live onboarding run '{runId}' failed: {ex}");
         }
     }
 

@@ -85,8 +85,10 @@ public static class RequestBindingEmitter
         if (requestBody is { } body && operation.Operation.RequestBodyTypeName is { } bodyType)
         {
             string source = body.Replacements is { Count: > 0 } replacements
-                ? EmitBodyWithReplacements(
-                    fields, statements, cleanup, body, replacements, contextVariable, stepOutputLocals, inputsVariable, inputAccessors, $"{fieldPrefix}Body")
+                ? ConvertToSourceType(
+                    EmitBodyWithReplacements(
+                        fields, statements, cleanup, body, replacements, contextVariable, stepOutputLocals, inputsVariable, inputAccessors, $"{fieldPrefix}Body"),
+                    bodyType)
                 : EmitValue(
                     fields, statements, cleanup, body.Kind, body.Value, contextVariable, stepOutputLocals, inputsVariable, inputAccessors,
                     $"{fieldPrefix}Body", "Body", bodyType);
