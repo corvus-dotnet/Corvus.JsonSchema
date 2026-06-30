@@ -225,6 +225,27 @@ public readonly partial struct WorkflowRunDetail
     }
 
     /// <summary>
+    /// Gets the (optional) <c>environment</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The deployment environment the run is pinned to (design &#167;5.5): its credential set, and the runners it can be dispatched to.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Environment
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>etag</c> property.
     /// </summary>
     /// <remarks>
@@ -842,6 +863,11 @@ public readonly partial struct WorkflowRunDetail
         public const string Cursor = "cursor";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="Environment"/>.
+        /// </summary>
+        public const string Environment = "environment";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Etag"/>.
         /// </summary>
         public const string Etag = "etag";
@@ -890,6 +916,11 @@ public readonly partial struct WorkflowRunDetail
         /// Gets the JSON property name for <see cref="Cursor"/>.
         /// </summary>
         public static ReadOnlySpan<byte> CursorUtf8 => "cursor"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Environment"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EnvironmentUtf8 => "environment"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Etag"/>.
@@ -948,6 +979,11 @@ public readonly partial struct WorkflowRunDetail
         public static ReadOnlySpan<byte> Cursor => "cursor"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Environment"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Environment => "environment"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Etag"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Etag => "etag"u8;
@@ -1003,6 +1039,11 @@ public readonly partial struct WorkflowRunDetail
         /// Gets the pre-baked property name blob for <see cref="Cursor"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Cursor => [0x85, 0x00, 0x00, 0x00, 0x22, 0x63, 0x75, 0x72, 0x73, 0x6F, 0x72, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Environment"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Environment => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x76, 0x69, 0x72, 0x6F, 0x6E, 0x6D, 0x65, 0x6E, 0x74, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Etag"/>.
