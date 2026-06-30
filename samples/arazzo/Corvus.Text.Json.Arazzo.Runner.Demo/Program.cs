@@ -9,6 +9,7 @@
 // BackgroundServices; the minimal web surface exists only for the §5.4 health probe + Aspire/OTel.
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
+using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sqlite;
 using Corvus.Text.Json.Arazzo.Runner.Demo;
@@ -37,6 +38,11 @@ SqliteSourceCredentialStore credentials = await SqliteSourceCredentialStore.Conn
 // The §7.7 environments registry, shared with the control plane: the runner reads the environment it serves to
 // inherit its reach (managementTags → the registration's reachTags, design §5.5). The control plane owns writes.
 SqliteEnvironmentStore environments = await SqliteEnvironmentStore.ConnectAsync(connectionString);
+
+// The §5.5 runner-authorization store, shared with the control plane: registering only records this runner's intent
+// to serve its environment (an idempotent Pending authorization); an administrator of that environment authorizes it
+// before it is dispatchable. The runner writes Pending here; the control plane reads/decides over the same store.
+SqliteEnvironmentRunnerAuthorizationStore runnerAuthorizations = await SqliteEnvironmentRunnerAuthorizationStore.ConnectAsync(connectionString);
 var catalog = new SecuredWorkflowCatalog(catalogStore, stateStore, "runner");
 
 // The single environment this runner serves (design §5.5). Configurable so one host image can be deployed per
@@ -49,6 +55,7 @@ builder.Services.AddSingleton<IWorkflowStateStore>(stateStore);
 builder.Services.AddSingleton<IWorkflowCatalogStore>(catalogStore);
 builder.Services.AddSingleton<IRunnerRegistry>(registry);
 builder.Services.AddSingleton<IEnvironmentStore>(environments);
+builder.Services.AddSingleton<IEnvironmentRunnerAuthorizationStore>(runnerAuthorizations);
 builder.Services.AddSingleton<ISourceCredentialStore>(credentials);
 builder.Services.AddSingleton(catalog);
 
