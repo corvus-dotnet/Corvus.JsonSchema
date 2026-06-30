@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
+using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 
 namespace Corvus.Text.Json.Arazzo.Runner.Demo;
 
@@ -19,6 +20,7 @@ namespace Corvus.Text.Json.Arazzo.Runner.Demo;
 public sealed class RunnerRegistrationService(
     IRunnerRegistry registry,
     IEnvironmentStore environments,
+    IEnvironmentRunnerAuthorizationStore runnerAuthorizations,
     SecuredWorkflowCatalog catalog,
     RunnerOptions options,
     ILogger<RunnerRegistrationService> logger) : BackgroundService
@@ -38,6 +40,20 @@ public sealed class RunnerRegistrationService(
                 "Runner {RunnerId} registered, hosting {Count} catalog version(s).",
                 options.RunnerId,
                 registration.HostedVersions.GetArrayLength());
+
+            // A runner may not self-assert into an environment (design §5.5): receiving its runs means receiving its
+            // credentials. So registration only records the runner's intent — an idempotent Pending authorization keyed on
+            // (environment, runnerId). It becomes dispatchable only once an administrator of that environment authorizes it;
+            // re-registering (incl. after a stale-heartbeat prune) leaves an existing Authorized/Revoked decision intact.
+            using (ParsedJsonDocument<EnvironmentRunnerAuthorization> authorization =
+                await runnerAuthorizations.EnsurePendingAsync(options.Environment, options.RunnerId, options.RunnerId, stoppingToken).ConfigureAwait(false))
+            {
+                logger.LogInformation(
+                    "Runner {RunnerId} authorization to serve environment '{Environment}' is {Status}.",
+                    options.RunnerId,
+                    options.Environment,
+                    authorization.RootElement.StatusValue);
+            }
 
             using var timer = new PeriodicTimer(HeartbeatInterval);
             while (await timer.WaitForNextTickAsync(stoppingToken).ConfigureAwait(false))

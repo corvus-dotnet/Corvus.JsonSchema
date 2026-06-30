@@ -59,6 +59,7 @@
       <button id="tab-access" role="tab" aria-selected="false" aria-controls="view-access">Access</button>
       <button id="tab-permissions" role="tab" aria-selected="false" aria-controls="view-permissions">Permissions</button>
       <button id="tab-promotions" role="tab" aria-selected="false" aria-controls="view-promotions">Promotions</button>
+      <button id="tab-runner-auth" role="tab" aria-selected="false" aria-controls="view-runner-auth">Runner auth</button>
     </div>
 
     <div id="view-runs" role="tabpanel">
@@ -95,6 +96,10 @@
       <arazzo-availability-requests base-url="https://mock/arazzo/v1" theme="auto"></arazzo-availability-requests>
     </div>
 
+    <div id="view-runner-auth" role="tabpanel" hidden>
+      <arazzo-runner-authorizations base-url="https://mock/arazzo/v1" theme="auto"></arazzo-runner-authorizations>
+    </div>
+
     <p class="note">
       The kit talks to the mock through the client’s <code>fetch</code> hook — in a real app you’d set
       <code>panel.authProvider = () =&gt; 'Bearer …'</code> instead and point <code>base-url</code> at your
@@ -116,6 +121,7 @@
     import '../src/components/grants-panel.js';
     import '../src/components/environments-panel.js';
     import '../src/components/runners-panel.js';
+    import '../src/components/runner-authorizations-panel.js';
 
     const mock = createMockControlPlane(DEMO_SEED);
     const panel = document.querySelector('arazzo-control-plane');
@@ -134,6 +140,7 @@
     const bindings = document.querySelector('arazzo-grants-panel');
     const environments = document.querySelector('arazzo-environments');
     const runnersPanel = document.querySelector('arazzo-runners');
+    const runnerAuth = document.querySelector('arazzo-runner-authorizations');
     credTable.client = client;
     credDialog.client = client;
     access.client = client;
@@ -142,6 +149,7 @@
     bindings.client = client;
     environments.client = client;
     runnersPanel.client = client;
+    runnerAuth.client = client;
 
     // Credentials: the Sources tab is a MANAGEMENT surface — select a row to view/rotate, or Duplicate to another
     // environment (clone source + auth, re-point the secret). Creating a credential is rooted in the catalog's
@@ -160,6 +168,7 @@
       catalog.setAttribute('theme', v);
       access.setAttribute('theme', v);
       promotions.setAttribute('theme', v);
+      runnerAuth.setAttribute('theme', v);
       if (v === 'auto') document.documentElement.removeAttribute('data-theme');
       else document.documentElement.setAttribute('data-theme', v);
     };
@@ -184,14 +193,14 @@
       bindings.setAttribute('scopes', prefixed(scopes, 'security:'));
       runnersPanel.setAttribute('scopes', prefixed(scopes, 'runs:')); // runs:read; read-only observability
       // Re-fetch the data-bearing surfaces so the new persona's enforcement (e.g. an emptied approver inbox) shows.
-      for (const c of [panel, catalog, credTable, environments, access, promotions, reach, bindings, runnersPanel]) c.refresh?.();
+      for (const c of [panel, catalog, credTable, environments, access, promotions, reach, bindings, runnersPanel, runnerAuth]) c.refresh?.();
     };
     const personaSel = document.getElementById('persona');
     personaSel.addEventListener('change', (e) => applyPersona(e.target.value));
     applyPersona(personaSel.value);
 
     // Tabs.
-    const tabNames = ['runs', 'runners', 'catalog', 'credentials', 'environments', 'access', 'permissions', 'promotions'];
+    const tabNames = ['runs', 'runners', 'catalog', 'credentials', 'environments', 'access', 'permissions', 'promotions', 'runner-auth'];
     const tabs = Object.fromEntries(tabNames.map((n) => [n, document.getElementById(`tab-${n}`)]));
     const views = Object.fromEntries(tabNames.map((n) => [n, document.getElementById(`view-${n}`)]));
     const selectTab = (name) => {
