@@ -309,6 +309,76 @@ public class HostedWorkflowResumerTests
         country.GetString().ShouldBe("GB");
     }
 
+    // A workflow whose operation step threads a workflow input into its (typed) request body via a requestBody
+    // replacement. The patched body is a JsonElement; the generated client method takes a {BodyType}.Source, and C#
+    // will not chain JsonElement -> model -> Source — so the replacement result must be wrapped with {BodyType}.From.
+    // Without that wrap the generated executor does not compile and the version is catalogued non-runnable.
+    private const string ReplacementBodyWorkflowJson = """
+        {
+          "arazzo": "1.0.1",
+          "info": { "title": "Submit", "version": "1.0.0" },
+          "sourceDescriptions": [ { "name": "api", "url": "./api.openapi.json", "type": "openapi" } ],
+          "workflows": [
+            {
+              "workflowId": "submit",
+              "inputs": { "type": "object", "properties": { "name": { "type": "string" } }, "required": [ "name" ] },
+              "steps": [
+                {
+                  "stepId": "submit",
+                  "operationId": "submit",
+                  "requestBody": {
+                    "contentType": "application/json",
+                    "payload": { "name": "placeholder" },
+                    "replacements": [ { "target": "/name", "value": "$inputs.name" } ]
+                  },
+                  "successCriteria": [ { "condition": "$statusCode == 200" } ],
+                  "outputs": { "ok": "$response.body#/ok" }
+                }
+              ]
+            }
+          ]
+        }
+        """;
+
+    private const string ReplacementBodyOpenApi = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "Api", "version": "1.0.0" },
+          "paths": {
+            "/submit": {
+              "post": {
+                "operationId": "submit",
+                "requestBody": { "content": { "application/json": { "schema": { "type": "object", "properties": { "name": { "type": "string" } }, "required": [ "name" ] } } } },
+                "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } } }
+              }
+            }
+          }
+        }
+        """;
+
+    [TestMethod]
+    public async Task Runs_a_workflow_with_a_typed_request_body_replacement_to_completion()
+    {
+        var catalog = new InMemoryWorkflowCatalogStore(executorProvider: new WorkflowExecutorProvider());
+        byte[] package = WorkflowPackage.Pack(
+            Encoding.UTF8.GetBytes(ReplacementBodyWorkflowJson),
+            [new("api", Encoding.UTF8.GetBytes(ReplacementBodyOpenApi))]);
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync("submit", package, Meta(), default);
+
+        // The executor must bake: a typed request-body replacement compiles only when wrapped with {BodyType}.From.
+        ((bool)versionDoc.RootElement.Runnable).ShouldBeTrue();
+
+        var runStore = new InMemoryWorkflowStateStore();
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"name":"Ada"}"""));
+        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", versionDoc.RootElement.Ref.WorkflowId, inputs.RootElement);
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Post, "/submit", 200, """{"ok":true}""");
+        using var loader = new WorkflowExecutorLoader();
+        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _t) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
+
+        (await resumer.AsResumer()(run, default)).ShouldBe(WorkflowRunResultKind.Completed);
+    }
+
     private static CatalogMetadata Meta() => new(new CatalogOwner("Team", "team@example.com"), "alice");
 
     private static byte[] Package()
