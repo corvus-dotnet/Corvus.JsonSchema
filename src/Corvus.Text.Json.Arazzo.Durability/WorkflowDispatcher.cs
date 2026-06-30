@@ -19,14 +19,22 @@ public sealed class WorkflowDispatcher
     private readonly TimeProvider timeProvider;
     private readonly string owner;
     private readonly TimeSpan leaseTtl;
+    private readonly Func<CancellationToken, ValueTask<bool>>? dispatchGate;
 
     /// <summary>Initializes a new instance of the <see cref="WorkflowDispatcher"/> class.</summary>
     /// <param name="store">The state store; must also implement <see cref="IWorkflowDispatchIndex"/>.</param>
     /// <param name="owner">This runner's opaque identity, used as the lease owner.</param>
     /// <param name="timeProvider">The time source for lease TTLs and orphan detection; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="leaseTtl">How long a per-run lease is held; defaults to one minute.</param>
+    /// <param name="dispatchGate">
+    /// An optional gate evaluated at the start of every <see cref="DispatchClaimableAsync"/> call: when it returns
+    /// <see langword="false"/> the runner claims nothing this cycle (the method returns 0 without touching the index).
+    /// This is the seam for the §5.5 runner-authorization gate — a runner whose authorization to serve its environment is
+    /// pending or revoked is removed from dispatch (no new or orphaned claims) while it stays registered and heartbeats;
+    /// in-flight runs it already leased drain normally. Default (<see langword="null"/>) is "always dispatch".
+    /// </param>
     /// <exception cref="ArgumentException">The store does not implement <see cref="IWorkflowDispatchIndex"/>.</exception>
-    public WorkflowDispatcher(IWorkflowStateStore store, string owner, TimeProvider? timeProvider = null, TimeSpan? leaseTtl = null)
+    public WorkflowDispatcher(IWorkflowStateStore store, string owner, TimeProvider? timeProvider = null, TimeSpan? leaseTtl = null, Func<CancellationToken, ValueTask<bool>>? dispatchGate = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(owner);
@@ -36,6 +44,7 @@ public sealed class WorkflowDispatcher
         this.owner = owner;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.leaseTtl = leaseTtl ?? TimeSpan.FromMinutes(1);
+        this.dispatchGate = dispatchGate;
     }
 
     /// <summary>
@@ -51,6 +60,13 @@ public sealed class WorkflowDispatcher
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         ArgumentNullException.ThrowIfNull(resume);
+
+        // §5.5 authorization gate: a runner not currently authorized to serve its environment claims nothing — it stays
+        // registered + heartbeating (visible, reclaimable) but takes no new or orphaned work until authorized.
+        if (this.dispatchGate is not null && !await this.dispatchGate(cancellationToken).ConfigureAwait(false))
+        {
+            return 0;
+        }
 
         int dispatched = 0;
         DateTimeOffset now = this.timeProvider.GetUtcNow();
