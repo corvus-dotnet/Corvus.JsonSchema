@@ -26,3 +26,5 @@ export type { TokenFactory } from "./auth/bearer.js";
 export { apiKey } from "./auth/api-key.js";
 export type { ApiKeyLocation } from "./auth/api-key.js";
 export { basicAuth } from "./auth/basic.js";
+export { compose } from "./middleware/handler.js";
+export type { Handler, Next } from "./middleware/handler.js";
