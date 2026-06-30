@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-06-30T12:50:16.6675641\u002B00:00",
+  "generatedAt": "2026-06-30T14:14:42.3996394\u002B00:00",
   "generatedFiles": [
     "ListRunsRequest.cs",
     "ListRunsResponse.cs",
@@ -717,9 +717,10 @@
     "Models/GetRunnerAuthorizationsStatus.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002Bdc8f6a5472de036d4ddf002447ed4730cbdae645",
+  "generatorVersion": "1.0.0\u002Bd7f38c2de957d20dc7a77477d54deaa56a5282a3",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
   "specFileHash": "6e320ec87f37feefda2a319c6ac71ea63d147ee1f8879f9137c94789a78add90",
-  "specVersion": "3.2"
+  "specVersion": "3.2",
+  "clientName": "Api"
 }
