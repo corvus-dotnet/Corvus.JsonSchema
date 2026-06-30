@@ -146,6 +146,17 @@ async function materializeBody(body, signal) {
 }
 
 for (const version of VERSIONS) {
+  test(`${version}: serverUri substitutes server variables (defaults + overrides)`, async () => {
+    const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+    // The server URL is templated as https://{host}/{basePath}; the defaults reconstruct the base.
+    assert.equal(ApiStatusClient.serverUri().toString(), "https://api.example.com/v1");
+    assert.equal(
+      ApiStatusClient.serverUri("staging.example.com", "v2").toString(),
+      "https://staging.example.com/v2",
+    );
+  });
+
   test(`${version}: updatePet composes the exact wire request`, async () => {
     const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
     const { PetUpdate } = await import(`./conformance/dist/${version}/client/models/generated.js`);

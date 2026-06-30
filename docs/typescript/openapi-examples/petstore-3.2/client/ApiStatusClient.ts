@@ -47,9 +47,12 @@ export class ApiStatusClient implements IApiStatusClient {
     this.transport = transport;
   }
 
-  /** Creates the base URL for the default server. */
-  static serverUri(): URL {
-    return new URL("https://api.example.com/v1");
+  /** Creates the base URL for the server, substituting any server variables. */
+  static serverUri(host: string = "api.example.com", basePath: string = "v1"): URL {
+    let url = "https://{host}/{basePath}";
+    url = url.split("{host}").join(host);
+    url = url.split("{basePath}").join(basePath);
+    return new URL(url);
   }
 
   /**
