@@ -19,7 +19,15 @@ public sealed class InMemoryAccessRequestStore : IAccessRequestStore
         Comparer<ParsedJsonDocument<AccessRequest>>.Create(static (a, b) =>
         {
             int byTime = a.RootElement.CreatedAtValue.CompareTo(b.RootElement.CreatedAtValue);
-            return byTime != 0 ? byTime : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue);
+            if (byTime != 0)
+            {
+                return byTime;
+            }
+
+            // Tiebreak on id, string-free: compare the JSON values' UTF-8 bytes (no id string is realised per comparison).
+            using UnescapedUtf8JsonString aid = a.RootElement.Id.GetUtf8String();
+            using UnescapedUtf8JsonString bid = b.RootElement.Id.GetUtf8String();
+            return aid.Span.SequenceCompareTo(bid.Span);
         });
 
     private readonly Lock gate = new();
@@ -104,9 +112,10 @@ public sealed class InMemoryAccessRequestStore : IAccessRequestStore
         }
     }
 
-    private static bool Matches(AccessRequest request, AccessRequestQuery query)
+    private static bool Matches(in AccessRequest request, AccessRequestQuery query)
     {
-        if (query.Status is { } status && !string.Equals(request.StatusValue, AccessRequestStatusNames.ToWire(status), StringComparison.Ordinal))
+        // Status is compared string-free (no status field is realised to a managed string per row).
+        if (query.Status is { } status && !request.HasStatus(status))
         {
             return false;
         }
@@ -123,18 +132,18 @@ public sealed class InMemoryAccessRequestStore : IAccessRequestStore
             }
         }
 
-        if (query.SubjectClaimType is { } subjectType && !string.Equals(request.SubjectClaimTypeValue, subjectType, StringComparison.Ordinal))
+        if (query.SubjectClaimType is { } subjectType && !request.SubjectClaimTypeEquals(subjectType))
         {
             return false;
         }
 
         // The approver inbox: the row's base workflow id must be one the caller administers (server-derived strings).
-        if (!query.MatchesAdministeredSet(request.BaseWorkflowIdValue))
+        if (!query.MatchesAdministeredSet(request))
         {
             return false;
         }
 
-        return query.SubjectClaimValue is not { } subjectValue || string.Equals(request.SubjectClaimValueValue, subjectValue, StringComparison.Ordinal);
+        return query.SubjectClaimValue is not { } subjectValue || request.SubjectClaimValueEquals(subjectValue);
     }
 
     private WorkflowEtag NextEtag() => new((++this.etagSequence).ToString(CultureInfo.InvariantCulture));

@@ -39,7 +39,15 @@ public sealed class AzureStorageAvailabilityRequestStore : IAvailabilityRequestS
         Comparer<ParsedJsonDocument<AvailabilityRequest>>.Create(static (a, b) =>
         {
             int byCreated = a.RootElement.CreatedAtValue.CompareTo(b.RootElement.CreatedAtValue);
-            return byCreated != 0 ? byCreated : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue);
+            if (byCreated != 0)
+            {
+                return byCreated;
+            }
+
+            // Tiebreak on id string-free: compare the JSON values' UTF-8 bytes (no id string is realised per compare).
+            using UnescapedUtf8JsonString aId = a.RootElement.Id.GetUtf8String();
+            using UnescapedUtf8JsonString bId = b.RootElement.Id.GetUtf8String();
+            return aId.Span.SequenceCompareTo(bId.Span);
         });
 
     private readonly TableClient requests;

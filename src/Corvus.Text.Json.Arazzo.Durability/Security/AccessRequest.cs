@@ -26,11 +26,23 @@ public readonly partial struct AccessRequest
     /// <summary>Gets the base workflow id the request targets.</summary>
     public string BaseWorkflowIdValue => (string)this.BaseWorkflowId;
 
+    /// <summary>Tests whether this request's base workflow id is the given one, string-free (no base-workflow-id string is
+    /// realised from the document — the candidate string's bytes are compared against the JSON value).</summary>
+    /// <param name="baseWorkflowId">The base workflow id to test for.</param>
+    /// <returns><see langword="true"/> if the base workflow ids match.</returns>
+    public bool BaseWorkflowIdEquals(string baseWorkflowId) => this.BaseWorkflowId.ValueEquals(baseWorkflowId);
+
     /// <summary>Gets the principal claim type the granted entitlement keys on (e.g. <c>sub</c>).</summary>
     public string SubjectClaimTypeValue => (string)this.SubjectClaimType;
 
     /// <summary>Gets the requester's value for <see cref="SubjectClaimTypeValue"/>.</summary>
     public string SubjectClaimValueValue => (string)this.SubjectClaimValue;
+
+    /// <summary>Tests whether the request's subject claim type equals the given one, string-free (no string realised).</summary>
+    public bool SubjectClaimTypeEquals(string subjectClaimType) => this.SubjectClaimType.ValueEquals(subjectClaimType);
+
+    /// <summary>Tests whether the request's subject claim value equals the given one, string-free (no string realised).</summary>
+    public bool SubjectClaimValueEquals(string subjectClaimValue) => this.SubjectClaimValue.ValueEquals(subjectClaimValue);
 
     /// <summary>Gets the optional human-friendly requester label, or <see langword="null"/>.</summary>
     public string? RequesterLabelOrNull => this.RequesterLabel.IsNotUndefined() ? (string)this.RequesterLabel : null;
@@ -44,8 +56,26 @@ public readonly partial struct AccessRequest
     /// <summary>Gets when the granted entitlement expires, or <see langword="null"/> (undecided, or a standing grant).</summary>
     public DateTimeOffset? GrantedUntilValue => this.GrantedUntil.IsNotUndefined() ? ((NodaTime.OffsetDateTime)this.GrantedUntil).ToDateTimeOffset() : null;
 
-    /// <summary>Gets the request's lifecycle state.</summary>
+    /// <summary>Gets the request's lifecycle state as a realised <see cref="string"/> — for a display/log/serialize sink
+    /// only. To <em>branch</em> on the status, use the string-free <see cref="HasStatus"/> predicate, which compares the
+    /// JSON value's bytes and never allocates.</summary>
     public string StatusValue => (string)this.Status;
+
+    /// <summary>Tests whether the request is in the given lifecycle state, string-free (no status string is realised) — the
+    /// per-row status filter the in-memory and KV/table stores apply when scanning. The u8 literals mirror the schema's
+    /// status enum (see <see cref="AccessRequestStatusNames"/>).</summary>
+    /// <param name="status">The status to test for.</param>
+    /// <returns><see langword="true"/> if the request's status equals <paramref name="status"/>.</returns>
+    public bool HasStatus(AccessRequestStatus status) => status switch
+    {
+        AccessRequestStatus.Pending => this.Status.ValueEquals("Pending"u8),
+        AccessRequestStatus.Approved => this.Status.ValueEquals("Approved"u8),
+        AccessRequestStatus.Denied => this.Status.ValueEquals("Denied"u8),
+        AccessRequestStatus.Withdrawn => this.Status.ValueEquals("Withdrawn"u8),
+        AccessRequestStatus.Revoked => this.Status.ValueEquals("Revoked"u8),
+        AccessRequestStatus.Eligible => this.Status.ValueEquals("Eligible"u8),
+        _ => false,
+    };
 
     /// <summary>Gets the actor (requester) that created the request.</summary>
     public string CreatedByValue => (string)this.CreatedBy;

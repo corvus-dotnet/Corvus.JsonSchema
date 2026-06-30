@@ -41,7 +41,15 @@ public sealed class NatsJetStreamAccessRequestStore : IAccessRequestStore, IAsyn
         Comparer<ParsedJsonDocument<AccessRequest>>.Create(static (a, b) =>
         {
             int byCreated = a.RootElement.CreatedAtValue.CompareTo(b.RootElement.CreatedAtValue);
-            return byCreated != 0 ? byCreated : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue);
+            if (byCreated != 0)
+            {
+                return byCreated;
+            }
+
+            // Tiebreak on id, string-free: compare the JSON values' UTF-8 bytes (no id string is realised per comparison).
+            using UnescapedUtf8JsonString aid = a.RootElement.Id.GetUtf8String();
+            using UnescapedUtf8JsonString bid = b.RootElement.Id.GetUtf8String();
+            return aid.Span.SequenceCompareTo(bid.Span);
         });
 
     private readonly NatsConnection? ownedConnection;
@@ -133,7 +141,6 @@ public sealed class NatsJetStreamAccessRequestStore : IAccessRequestStore, IAsyn
     public async ValueTask<AccessRequestPage> ListAsync(AccessRequestQuery query, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         int pageSize = limit > 0 ? limit : AccessRequestPage.DefaultPageSize;
-        string? wireStatus = query.Status is { } s ? AccessRequestStatusNames.ToWire(s) : null;
 
         // Decode the keyset cursor; createdAt + id reify to strings (the leaf) only here — createdAt as the ISO-8601 "o"
         // form (reconstructed from the token's UTC ticks). Undefined token = first page.
@@ -206,7 +213,7 @@ public sealed class NatsJetStreamAccessRequestStore : IAccessRequestStore, IAsyn
                 }
 
                 ParsedJsonDocument<AccessRequest> document = ParsedJsonDocument<AccessRequest>.Parse(bytes.AsMemory());
-                if (!Matches(document.RootElement, wireStatus, query))
+                if (!Matches(document.RootElement, query))
                 {
                     document.Dispose();
                     continue;
@@ -249,7 +256,6 @@ public sealed class NatsJetStreamAccessRequestStore : IAccessRequestStore, IAsyn
     /// <inheritdoc/>
     public async ValueTask<PooledDocumentList<AccessRequest>> ListAsync(AccessRequestQuery query, CancellationToken cancellationToken)
     {
-        string? status = query.Status is { } s ? AccessRequestStatusNames.ToWire(s) : null;
         var list = new PooledDocumentList<AccessRequest>();
         await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
@@ -265,7 +271,7 @@ public sealed class NatsJetStreamAccessRequestStore : IAccessRequestStore, IAsyn
             }
 
             ParsedJsonDocument<AccessRequest> document = ParsedJsonDocument<AccessRequest>.Parse(bytes.AsMemory());
-            if (Matches(document.RootElement, status, query))
+            if (Matches(document.RootElement, query))
             {
                 list.Add(document);
             }
@@ -319,10 +325,11 @@ public sealed class NatsJetStreamAccessRequestStore : IAccessRequestStore, IAsyn
     private static string IndexKey(DateTimeOffset createdAt, string id)
         => string.Concat(IndexPrefix, Enc(createdAt.UtcDateTime.ToString("o", CultureInfo.InvariantCulture)), ".", Enc(id));
 
-    // The list filter: each absent criterion matches anything, mirroring the SQLite WHERE clause.
-    private static bool Matches(AccessRequest request, string? status, AccessRequestQuery query)
+    // The list filter: each absent criterion matches anything, mirroring the SQLite WHERE clause. Status is compared
+    // string-free (no status field is realised to a managed string per row).
+    private static bool Matches(in AccessRequest request, AccessRequestQuery query)
     {
-        if (status is not null && !string.Equals(request.StatusValue, status, StringComparison.Ordinal))
+        if (query.Status is { } status && !request.HasStatus(status))
         {
             return false;
         }
@@ -337,18 +344,18 @@ public sealed class NatsJetStreamAccessRequestStore : IAccessRequestStore, IAsyn
             }
         }
 
-        if (query.SubjectClaimType is { } subjectType && !string.Equals(request.SubjectClaimTypeValue, subjectType, StringComparison.Ordinal))
+        if (query.SubjectClaimType is { } subjectType && !request.SubjectClaimTypeEquals(subjectType))
         {
             return false;
         }
 
-        if (query.SubjectClaimValue is { } subjectValue && !string.Equals(request.SubjectClaimValueValue, subjectValue, StringComparison.Ordinal))
+        if (query.SubjectClaimValue is { } subjectValue && !request.SubjectClaimValueEquals(subjectValue))
         {
             return false;
         }
 
         // The approver inbox (§16.5): the request's baseWorkflowId must be one the caller administers (server-derived set).
-        return query.MatchesAdministeredSet(request.BaseWorkflowIdValue);
+        return query.MatchesAdministeredSet(request);
     }
 
     private async ValueTask<NatsKVEntry<byte[]>?> TryGetAsync(string key, CancellationToken cancellationToken)
