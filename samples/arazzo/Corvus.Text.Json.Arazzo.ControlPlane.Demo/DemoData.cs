@@ -7,6 +7,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Execution;
+using Corvus.Text.Json.AsyncApi.Testing;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 
@@ -44,6 +45,11 @@ public static class DemoData
             BaseAddress = new Uri(baseUrlProvider()),
         });
 
+        // A workflow with an AsyncAPI receive step needs an IMessageTransport supplied to its executor even though
+        // the durable suspend/resume itself flows through the worker (WorkflowWorker.DeliverMessageAsync); the
+        // in-process transport satisfies that and would also serve any Tier-1 blocking receive. Shared across runs.
+        var messageTransport = new InMemoryMessageTransport();
+
         var resumer = new HostedWorkflowResumer(
             catalog,
             new WorkflowExecutorLoader(),
@@ -52,7 +58,7 @@ public static class DemoData
                     source => source,
                     source => (IApiTransport)new HttpClientApiTransportFactory(ClientFor(source)).CreateTransport(),
                     StringComparer.Ordinal),
-                MessageTransport: null));
+                descriptor.NeedsMessageTransport ? messageTransport : null));
         return resumer.AsResumer();
     }
 
@@ -84,6 +90,33 @@ public static class DemoData
         // applicant-notification step (skipping provisioning), so the run completes via the remediation branch
         // instead of faulting. Same applicant as live02, different (fixed) workflow version — the production design.
         await RunLiveAsync(runStore, resumer, time, "run-onb-live03", "live03", """{"email":"mallory@example.com","fullName":"Mallory Sanction","plan":"free"}""", log, "onboard-customer-v2").ConfigureAwait(false);
+
+        // An asynchronous onboarding: the run suspends durably awaiting an out-of-band KYC verdict on the
+        // kyc.results channel, then a delivered verdict message resumes it to completion — live suspend + resume.
+        await RunLiveSuspendResumeAsync(runStore, resumer, time, "run-onb-live04", "live04", log).ConfigureAwait(false);
+    }
+
+    private static async ValueTask RunLiveSuspendResumeAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, TimeProvider time, string runId, string correlationId, Action<string>? log)
+    {
+        try
+        {
+            // First leg: create the account, then suspend at the awaitKycVerdict receive step (returns Suspended).
+            using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"email":"grace@example.com","fullName":"Grace Hopper","plan":"enterprise"}"""u8.ToArray());
+            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "onboard-customer-async-v1", inputs.RootElement, time, correlationId: correlationId, tags: TagSet.FromTags(["tenant-7"]));
+            WorkflowRunResultKind first = await resumer(run, default).ConfigureAwait(false);
+            log?.Invoke($"Live async onboarding run '{runId}' first leg: {first} (awaiting kyc.verdict message).");
+
+            // The KYC provider posts its verdict out-of-band → deliver it on the channel, which wakes and resumes
+            // the suspended run through the same live resumer, driving it to completion.
+            using ParsedJsonDocument<JsonElement> verdict = ParsedJsonDocument<JsonElement>.Parse("""{"accountId":"3f2504e0-4f89-41d3-9a0c-0305e82c3301","verified":true,"score":0.95}"""u8.ToArray());
+            var worker = new WorkflowWorker(runStore, "demo", time);
+            int resumed = await worker.DeliverMessageAsync("kyc.verdict", null, verdict.RootElement, resumer, default).ConfigureAwait(false);
+            log?.Invoke($"Live async onboarding run '{runId}': delivered kyc.verdict message, resumed {resumed} run(s) to completion.");
+        }
+        catch (Exception ex)
+        {
+            log?.Invoke($"Live async onboarding run '{runId}' failed: {ex}");
+        }
     }
 
     private static async ValueTask RunLiveAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, TimeProvider time, string runId, string correlationId, string inputsJson, Action<string>? log, string workflowId = "onboard-customer-v1")
@@ -129,6 +162,7 @@ public static class DemoData
 
         ReadOnlyMemory<byte> onboarding = Package(specsDir, "onboard-customer.arazzo.json", ("onboarding", "onboarding.openapi.json"));
         ReadOnlyMemory<byte> onboardingV2 = Package(specsDir, "onboard-customer.v2.arazzo.json", ("onboarding", "onboarding.openapi.json"));
+        ReadOnlyMemory<byte> onboardingAsync = Package(specsDir, "onboard-customer.async.arazzo.json", ("onboarding", "onboarding.openapi.json"), ("notifications", "notifications.asyncapi.json"));
         ReadOnlyMemory<byte> reconcile = Package(specsDir, "nightly-reconcile.arazzo.json", ("ledger", "ledger.openapi.json"));
 
         // Catalog: onboarding (one active version) and nightly-reconcile (a v1 that we obsolete, plus an active v2).
@@ -141,6 +175,10 @@ public static class DemoData
         // onboard-customer v2: the resilient revision that routes a failed identity check to applicant notification
         // (verifyIdentity onFailure -> goto) instead of faulting. Catalogued as version 2 of the same workflow.
         await catalog.AddAsync(onboardingV2, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default).ConfigureAwait(false);
+
+        // onboard-customer-async: awaits an out-of-band KYC verdict (AsyncAPI kyc.results channel) — the run
+        // suspends durably at the receive step until a verdict message is delivered, then resumes.
+        await catalog.AddAsync(onboardingAsync, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default).ConfigureAwait(false);
 
         await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing"]), adminFounder, default).ConfigureAwait(false);
         await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing", "beta"]), adminFounder, default).ConfigureAwait(false);
