@@ -54,8 +54,33 @@ public sealed class OpenApi30CodeGenerator
         IReadOnlyDictionary<string, string> schemaTypeMap,
         string? clientNamePrefix = null,
         bool ignoreEmptyFormUrlEncodedBody = false)
+        : this(rootNamespace, new DefaultSchemaTypeResolver(schemaTypeMap), clientNamePrefix, ignoreEmptyFormUrlEncodedBody)
     {
-        ISchemaTypeResolver schemaTypeResolver = new DefaultSchemaTypeResolver(schemaTypeMap);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OpenApi30CodeGenerator"/> class with an explicit
+    /// schema-type resolver.
+    /// </summary>
+    /// <param name="rootNamespace">The root namespace for generated code.</param>
+    /// <param name="schemaTypeResolver">
+    /// Resolves a discovered schema pointer (a <see cref="SchemaRef"/>) to a target-language type name.
+    /// This is the seam a non-C# emitter (e.g. TypeScript) supplies to resolve pointers to its own type
+    /// names; the dictionary-based constructor wraps a pointer map in a <see cref="DefaultSchemaTypeResolver"/>.
+    /// </param>
+    /// <param name="clientNamePrefix">
+    /// Optional prefix for client type names. If <see langword="null"/>, <c>"Api"</c> is used.
+    /// </param>
+    /// <param name="ignoreEmptyFormUrlEncodedBody">
+    /// When <see langword="true"/>, form-urlencoded request bodies whose schema defines no properties are
+    /// treated as if the body were absent.
+    /// </param>
+    public OpenApi30CodeGenerator(
+        string rootNamespace,
+        ISchemaTypeResolver schemaTypeResolver,
+        string? clientNamePrefix = null,
+        bool ignoreEmptyFormUrlEncodedBody = false)
+    {
         this.walker = new OpenApi30Walker(clientNamePrefix, ignoreEmptyFormUrlEncodedBody);
         this.emitter = new OpenApi30CSharpEmitter(
             rootNamespace,
