@@ -202,19 +202,6 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         return null;
     }
 
-    private static ContentInfo? JsonBodyContent(RequestBodyInfo body)
-    {
-        foreach (ContentInfo content in body.Content)
-        {
-            if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
-            {
-                return content;
-            }
-        }
-
-        return null;
-    }
-
     private string ResponseModelType(ResponseInfo response)
     {
         if (JsonContent(response) is { } content)
@@ -226,17 +213,93 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
     }
 
     /// <summary>
-    /// Resolves the JSON request body's TypeScript model type (the <c>Ts_FinalName</c>), or
-    /// <see langword="null"/> when the operation has no JSON request body.
+    /// Selects the request body's primary content entry — the single media type the generated method
+    /// serializes — generalizing the former JSON-only body seam across the non-JSON categories.
+    /// Preference order: JSON, form-urlencoded, text/plain, then octet-stream (any remaining
+    /// non-multipart media type). Multipart is skipped (a later slice): when the only content is
+    /// multipart, <see langword="null"/> is returned so the operation falls back to the no-body shape.
     /// </summary>
-    private string? RequestBodyModelType(OperationInfo op)
+    private static ContentInfo? PrimaryRequestBodyContent(OperationInfo op)
     {
-        if (op.RequestBody is { } body && JsonBodyContent(body) is { } content && content.SchemaPointer is not null)
+        if (op.RequestBody is not { } body || body.Content.Length == 0)
         {
-            return this.schemaTypeResolver.ResolveTypeName(content.SchemaPointer);
+            return null;
         }
 
-        return null;
+        ContentInfo? json = null;
+        ContentInfo? form = null;
+        ContentInfo? text = null;
+        ContentInfo? octet = null;
+
+        foreach (ContentInfo content in body.Content)
+        {
+            // Multipart is out of scope for this slice; skip it so a multipart-only body falls through
+            // to the no-body behaviour rather than being mis-categorized.
+            if (CodeEmitHelpers.IsMultipartMediaType(content.MediaType)
+                || CodeEmitHelpers.IsMultipartMixedMediaType(content.MediaType))
+            {
+                continue;
+            }
+
+            if (json is null && CodeEmitHelpers.IsJsonMediaType(content.MediaType))
+            {
+                json = content;
+            }
+            else if (form is null && CodeEmitHelpers.IsFormUrlEncodedMediaType(content.MediaType))
+            {
+                form = content;
+            }
+            else if (text is null && CodeEmitHelpers.IsTextPlainMediaType(content.MediaType))
+            {
+                text = content;
+            }
+            else if (octet is null)
+            {
+                // Anything not JSON/form/text/multipart categorizes as a raw binary stream.
+                octet = content;
+            }
+        }
+
+        // The only content was multipart (out of scope) — fall back to the no-body shape.
+        return json ?? form ?? text ?? octet;
+    }
+
+    /// <summary>
+    /// Classifies the primary request body content into a <see cref="ContentCategory"/> the emitter
+    /// handles. Multipart is never returned here — <see cref="PrimaryRequestBodyContent"/> has already
+    /// skipped it — so anything that is not JSON / form-urlencoded / text/plain is a raw binary stream.
+    /// </summary>
+    private static ContentCategory RequestBodyCategory(ContentInfo content)
+    {
+        if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
+        {
+            return ContentCategory.Json;
+        }
+
+        if (CodeEmitHelpers.IsFormUrlEncodedMediaType(content.MediaType))
+        {
+            return ContentCategory.FormUrlEncoded;
+        }
+
+        if (CodeEmitHelpers.IsTextPlainMediaType(content.MediaType))
+        {
+            return ContentCategory.TextPlain;
+        }
+
+        return ContentCategory.OctetStream;
+    }
+
+    /// <summary>
+    /// Resolves the form-urlencoded request body's TypeScript param type: the resolved object model
+    /// type when it is a usable named type, otherwise <c>FormBody</c>. The call site always casts to
+    /// <c>FormBody</c> when this is a named type, so a validator-only companion still type-checks.
+    /// </summary>
+    private string FormBodyParamType(ContentInfo content)
+    {
+        string resolved = content.SchemaPointer is null
+            ? "unknown"
+            : this.schemaTypeResolver.ResolveTypeName(content.SchemaPointer);
+        return resolved == "unknown" ? "FormBody" : resolved;
     }
 
     // ── Request module ──────────────────────────────────────────────────
@@ -1079,6 +1142,15 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
         EmitHeader(w);
 
+        // A form-urlencoded body whose param type falls back to `FormBody` references that runtime type
+        // in its method signature, so the interface imports it from the client-runtime module.
+        if (this.AnyFormBodyParam(operations))
+        {
+            w.WriteLine(
+                "import type { FormBody } from " +
+                $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
+        }
+
         // Import each operation's response class (the method return types) and Params interface.
         foreach (OperationInfo op in operations)
         {
@@ -1092,16 +1164,8 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             }
         }
 
-        // Import named JSON request-body model types referenced in method signatures.
-        HashSet<string> bodyTypes = new(StringComparer.Ordinal);
-        foreach (OperationInfo op in operations)
-        {
-            if (this.RequestBodyModelType(op) is { } bt && bt != "unknown")
-            {
-                bodyTypes.Add(bt);
-            }
-        }
-
+        // Import named request-body model types referenced in method signatures (JSON + named form).
+        HashSet<string> bodyTypes = this.RequestBodyModelImports(operations);
         if (bodyTypes.Count > 0)
         {
             string imports = string.Join(", ", bodyTypes.OrderBy(m => m, StringComparer.Ordinal));
@@ -1142,9 +1206,12 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
     /// <summary>
     /// Builds the TypeScript method parameter list shared by the interface and implementation:
-    /// <c>params</c> (when the operation has parameters), then <c>body</c> (when it has a JSON request
-    /// body), then an optional <c>signal</c>. The whole <c>params</c> argument is optional when every
-    /// parameter is optional.
+    /// <c>params</c> (when the operation has parameters), then <c>body</c> (when it has a request body
+    /// in a category this emitter serializes), then an optional <c>signal</c>. The whole <c>params</c>
+    /// argument is optional when every parameter is optional. The <c>body</c> type is per content
+    /// category: JSON → the model type (or <c>unknown</c>); form-urlencoded → the object model type or
+    /// <c>FormBody</c>; octet-stream → <c>Uint8Array | ReadableStream&lt;Uint8Array&gt;</c>; text/plain
+    /// → <c>string</c>.
     /// </summary>
     private string BuildMethodSignature(OperationInfo op)
     {
@@ -1159,15 +1226,110 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             parts.Add($"params{optional}: {ParamsInterfaceName(op)}");
         }
 
-        if (this.RequestBodyModelType(op) is { } bodyType)
+        if (PrimaryRequestBodyContent(op) is { } content)
         {
             bool bodyRequired = op.RequestBody is { } rb && rb.IsRequired;
-            string bodyTsType = bodyType == "unknown" ? "unknown" : bodyType;
+            string bodyTsType = this.BodyParamType(content);
             parts.Add(bodyRequired ? $"body: {bodyTsType}" : $"body?: {bodyTsType}");
         }
 
         parts.Add("signal?: AbortSignal");
         return string.Join(", ", parts);
+    }
+
+    /// <summary>
+    /// The TypeScript <c>body</c> parameter type for the request body's primary content category.
+    /// </summary>
+    private string BodyParamType(ContentInfo content) => RequestBodyCategory(content) switch
+    {
+        ContentCategory.Json => this.RequestBodyJsonType(content),
+        ContentCategory.FormUrlEncoded => this.FormBodyParamType(content),
+        ContentCategory.OctetStream => "Uint8Array | ReadableStream<Uint8Array>",
+        ContentCategory.TextPlain => "string",
+        _ => "unknown",
+    };
+
+    /// <summary>
+    /// The TypeScript type of a JSON request body's primary content: the resolved model type, or
+    /// <c>unknown</c> when the schema is absent or unmapped.
+    /// </summary>
+    private string RequestBodyJsonType(ContentInfo content)
+        => content.SchemaPointer is null
+            ? "unknown"
+            : this.schemaTypeResolver.ResolveTypeName(content.SchemaPointer);
+
+    /// <summary>
+    /// Whether any operation has a form-urlencoded request body (so the implementation imports
+    /// <c>formUrlEncodedBytes</c> from the client-runtime module).
+    /// </summary>
+    private static bool AnyFormUrlEncodedBody(IReadOnlyList<OperationInfo> operations)
+    {
+        foreach (OperationInfo op in operations)
+        {
+            if (PrimaryRequestBodyContent(op) is { } content
+                && RequestBodyCategory(content) == ContentCategory.FormUrlEncoded)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Whether any operation has a form-urlencoded body whose <c>body</c> param type falls back to the
+    /// runtime <c>FormBody</c> type (so the interface/implementation imports it).
+    /// </summary>
+    private bool AnyFormBodyParam(IReadOnlyList<OperationInfo> operations)
+    {
+        foreach (OperationInfo op in operations)
+        {
+            if (PrimaryRequestBodyContent(op) is { } content
+                && RequestBodyCategory(content) == ContentCategory.FormUrlEncoded
+                && this.FormBodyParamType(content) == "FormBody")
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// The named model types referenced as request-body param types across the operations (JSON model
+    /// types, plus a form-urlencoded body's named object model type when it is usable), imported by
+    /// <c>Ts_FinalName</c> alongside the JSON body companions.
+    /// </summary>
+    private HashSet<string> RequestBodyModelImports(IReadOnlyList<OperationInfo> operations)
+    {
+        HashSet<string> bodyTypes = new(StringComparer.Ordinal);
+        foreach (OperationInfo op in operations)
+        {
+            if (PrimaryRequestBodyContent(op) is not { } content)
+            {
+                continue;
+            }
+
+            ContentCategory category = RequestBodyCategory(content);
+            if (category == ContentCategory.Json)
+            {
+                string jsonType = this.RequestBodyJsonType(content);
+                if (jsonType != "unknown")
+                {
+                    bodyTypes.Add(jsonType);
+                }
+            }
+            else if (category == ContentCategory.FormUrlEncoded)
+            {
+                string formType = this.FormBodyParamType(content);
+                if (formType != "FormBody")
+                {
+                    bodyTypes.Add(formType);
+                }
+            }
+        }
+
+        return bodyTypes;
     }
 
     // ── Client implementation ───────────────────────────────────────────
@@ -1181,14 +1343,26 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         IndentedWriter w = new();
         w.IndentString = "  ";
 
+        bool anyForm = AnyFormUrlEncodedBody(operations);
+
         EmitHeader(w);
+
+        // The form-urlencoded `FormBody` type is needed in the implementation whenever any operation has
+        // a form body — either as the `body` param type, or as the `body as FormBody` cast target.
+        string runtimeTypeImports = anyForm ? "ApiTransport, FormBody, RequestBody" : "ApiTransport, RequestBody";
         w.WriteLine(
-            "import type { ApiTransport, RequestBody } from " +
+            $"import type {{ {runtimeTypeImports} }} from " +
             $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
+        if (anyForm)
+        {
+            w.WriteLine(
+                "import { formUrlEncodedBytes } from " +
+                $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
+        }
+
         w.WriteLine($"import type {{ {interfaceName} }} from {StringLiteral($"./{interfaceName}.js")};");
 
-        // Import named JSON request-body model companions (the value, for build()) and Params interfaces.
-        HashSet<string> bodyTypes = new(StringComparer.Ordinal);
+        // Import the per-operation request module, response class + factory, and Params interface.
         foreach (OperationInfo op in operations)
         {
             string requestModule = RequestModuleName(op);
@@ -1204,13 +1378,10 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             w.WriteLine(
                 $"import {{ {responseClass}, {factoryName} }} from " +
                 $"{StringLiteral($"./{responseClass}.js")};");
-
-            if (this.RequestBodyModelType(op) is { } bt && bt != "unknown")
-            {
-                bodyTypes.Add(bt);
-            }
         }
 
+        // Import named request-body model companions (the value, for JSON build() / form param types).
+        HashSet<string> bodyTypes = this.RequestBodyModelImports(operations);
         if (bodyTypes.Count > 0)
         {
             string imports = string.Join(", ", bodyTypes.OrderBy(m => m, StringComparer.Ordinal));
@@ -1264,7 +1435,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         string responseClass = ResponseClassName(op);
         string factoryName = ResponseFactoryName(op);
         bool hasParams = HasParams(op);
-        string? bodyModel = this.RequestBodyModelType(op);
+        ContentInfo? bodyContent = PrimaryRequestBodyContent(op);
         bool bodyRequired = op.RequestBody is { } rb && rb.IsRequired;
 
         w.WriteLine();
@@ -1283,30 +1454,10 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             w.WriteLine($"const request = {requestModule};");
         }
 
-        // The request body: build canonical JSON bytes via the model companion when present.
-        if (bodyModel is not null)
+        // The request body: build it per content category when present.
+        if (bodyContent is { } content)
         {
-            string buildExpr = bodyModel == "unknown"
-                ? "new TextEncoder().encode(JSON.stringify(body))"
-                : $"{bodyModel}.build(body)";
-
-            if (bodyRequired)
-            {
-                w.WriteLine(
-                    $"const requestBody: RequestBody = {{ kind: \"bytes\", content: {buildExpr}, " +
-                    "contentType: \"application/json\" };");
-            }
-            else
-            {
-                w.WriteLine(
-                    "const requestBody: RequestBody = body === undefined");
-                w.PushIndent();
-                w.WriteLine("? { kind: \"none\" }");
-                w.WriteLine(
-                    $": {{ kind: \"bytes\", content: {buildExpr}, contentType: \"application/json\" }};");
-                w.PopIndent();
-            }
-
+            this.EmitRequestBody(w, content, bodyRequired);
             w.WriteLine($"return this.transport.send(request, {factoryName}, requestBody, signal);");
         }
         else
@@ -1316,6 +1467,127 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
         w.PopIndent();
         w.WriteLine("}");
+    }
+
+    // Emits `const requestBody: RequestBody = ...` for the primary content entry, dispatching on its
+    // category. The wire `contentType` is the entry's actual media type (not a hardcoded literal), so an
+    // octet-stream body declared as e.g. `image/png` is sent as `image/png`. An optional body keeps the
+    // `body === undefined ? { kind: "none" } : <built>` shape.
+    private void EmitRequestBody(IndentedWriter w, ContentInfo content, bool bodyRequired)
+    {
+        ContentCategory category = RequestBodyCategory(content);
+
+        // OctetStream chooses kind: "bytes"/"stream" by the runtime value, so it has its own shape.
+        if (category == ContentCategory.OctetStream)
+        {
+            string ct = StringLiteral(content.MediaType);
+            string built =
+                $"body instanceof Uint8Array ? {{ kind: \"bytes\", content: body, contentType: {ct} }} " +
+                $": {{ kind: \"stream\", content: body, contentType: {ct} }}";
+            if (bodyRequired)
+            {
+                w.WriteLine($"const requestBody: RequestBody = {built};");
+            }
+            else
+            {
+                w.WriteLine("const requestBody: RequestBody = body === undefined");
+                w.PushIndent();
+                w.WriteLine("? { kind: \"none\" }");
+                w.WriteLine($": ({built});");
+                w.PopIndent();
+            }
+
+            return;
+        }
+
+        string builtBytes = this.BuildBytesRequestBody(content, category);
+        if (bodyRequired)
+        {
+            w.WriteLine($"const requestBody: RequestBody = {builtBytes};");
+        }
+        else
+        {
+            w.WriteLine("const requestBody: RequestBody = body === undefined");
+            w.PushIndent();
+            w.WriteLine("? { kind: \"none\" }");
+            w.WriteLine($": {builtBytes};");
+            w.PopIndent();
+        }
+    }
+
+    // The `{ kind: "bytes", content: <expr>, contentType: <mediaType> }` literal for a body category
+    // whose content is a single byte buffer (JSON / form-urlencoded / text/plain).
+    private string BuildBytesRequestBody(ContentInfo content, ContentCategory category)
+    {
+        // JSON keeps the hardcoded `application/json` content type for byte-identical output with the
+        // existing (C1) JSON request-body path; the docs media type is also `application/json`.
+        string jsonContentType = StringLiteral("application/json");
+        string mediaContentType = StringLiteral(content.MediaType);
+
+        string contentExpr;
+        string contentType;
+        switch (category)
+        {
+            case ContentCategory.Json:
+                string jsonModel = this.RequestBodyJsonType(content);
+                contentExpr = jsonModel == "unknown"
+                    ? "new TextEncoder().encode(JSON.stringify(body))"
+                    : $"{jsonModel}.build(body)";
+                contentType = jsonContentType;
+                break;
+
+            case ContentCategory.FormUrlEncoded:
+                string formCast = this.FormBodyParamType(content) == "FormBody" ? "body" : "body as FormBody";
+                string encodingsArg = FormEncodingsLiteral(content);
+                contentExpr = encodingsArg.Length == 0
+                    ? $"formUrlEncodedBytes({formCast})"
+                    : $"formUrlEncodedBytes({formCast}, {encodingsArg})";
+                contentType = mediaContentType;
+                break;
+
+            default: // TextPlain
+                contentExpr = "new TextEncoder().encode(body)";
+                contentType = mediaContentType;
+                break;
+        }
+
+        return $"{{ kind: \"bytes\", content: {contentExpr}, contentType: {contentType} }}";
+    }
+
+    // Renders the content entry's Encoding objects as a `FormEncodings` object literal, or the empty
+    // string when there are none (so the call passes no encodings argument and the runtime default
+    // applies). Each entry maps to `{ style?, explode?, allowReserved? }`, omitting absent members.
+    private static string FormEncodingsLiteral(ContentInfo content)
+    {
+        if (content.Encodings is not { Count: > 0 } encodings)
+        {
+            return string.Empty;
+        }
+
+        List<string> entries = [];
+        foreach (KeyValuePair<string, EncodingInfo> kvp in encodings)
+        {
+            EncodingInfo enc = kvp.Value;
+            List<string> members = [];
+            if (enc.Style is { Length: > 0 } style)
+            {
+                members.Add($"style: {StringLiteral(style)}");
+            }
+
+            if (enc.Explode is { } explode)
+            {
+                members.Add($"explode: {(explode ? "true" : "false")}");
+            }
+
+            if (enc.AllowReserved)
+            {
+                members.Add("allowReserved: true");
+            }
+
+            entries.Add($"{StringLiteral(kvp.Key)}: {{ {string.Join(", ", members)} }}");
+        }
+
+        return $"{{ {string.Join(", ", entries)} }}";
     }
 
     private static void EmitServerUriFactory(IndentedWriter w, ServerInfo serverInfo)

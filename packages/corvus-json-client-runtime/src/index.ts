@@ -26,6 +26,13 @@ export type {
   QueryStyle,
   CookieStyle,
 } from "./serializers/style.js";
+export { writeFormUrlEncoded, formUrlEncodedBytes } from "./serializers/form-urlencoded.js";
+export type {
+  FormValue,
+  FormBody,
+  FormPropertyEncoding,
+  FormEncodings,
+} from "./serializers/form-urlencoded.js";
 export type { AuthenticationProvider } from "./auth/authentication-provider.js";
 export { bearerToken } from "./auth/bearer.js";
 export type { TokenFactory } from "./auth/bearer.js";

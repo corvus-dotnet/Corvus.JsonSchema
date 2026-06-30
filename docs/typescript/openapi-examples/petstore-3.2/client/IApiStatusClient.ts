@@ -6,7 +6,10 @@ import type { UpdatePetResponse } from "./UpdatePetResponse.js";
 import type { UpdatePetParams } from "./updatePetRequest.js";
 import type { SearchResponse } from "./SearchResponse.js";
 import type { SearchParams } from "./searchRequest.js";
-import type { PetUpdate } from "./models/generated.js";
+import type { UploadResponse } from "./UploadResponse.js";
+import type { NoteResponse } from "./NoteResponse.js";
+import type { FormResponse } from "./FormResponse.js";
+import type { PetUpdate, Schema } from "./models/generated.js";
 
 /**
  * Client interface for the ApiStatus API operations.
@@ -26,4 +29,19 @@ export interface IApiStatusClient extends AsyncDisposable {
    * Searches pets, exercising the full parameter-style matrix across path/query/cookie/header.
    */
   search(params: SearchParams, signal?: AbortSignal): Promise<SearchResponse>;
+
+  /**
+   * Uploads a raw binary body (application/octet-stream).
+   */
+  upload(body: Uint8Array | ReadableStream<Uint8Array>, signal?: AbortSignal): Promise<UploadResponse>;
+
+  /**
+   * Posts a plain-text body (text/plain).
+   */
+  note(body: string, signal?: AbortSignal): Promise<NoteResponse>;
+
+  /**
+   * Posts a form-urlencoded body (application/x-www-form-urlencoded).
+   */
+  form(body: Schema, signal?: AbortSignal): Promise<FormResponse>;
 }

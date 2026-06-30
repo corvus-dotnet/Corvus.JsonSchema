@@ -176,4 +176,59 @@ for (const version of VERSIONS) {
     // The Accept header for the JSON response.
     assert.equal(wire.headers.get("Accept"), "application/json");
   });
+
+  test(`${version}: upload sends a raw octet-stream body`, async () => {
+    const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+    const transport = new MockApiTransport(ApiStatusClient.serverUri().toString().replace(/\/$/, ""));
+    const client = new ApiStatusClient(transport);
+
+    await client.upload(new Uint8Array([1, 2, 3, 4]));
+
+    const wire = transport.captured;
+
+    assert.equal(wire.method, "POST");
+    assert.equal(wire.url, "https://api.example.com/v1/upload");
+    // The raw bytes are sent verbatim as a "bytes" body with the octet-stream content type.
+    assert.equal(wire.body.kind, "bytes");
+    assert.equal(wire.body.contentType, "application/octet-stream");
+    assert.deepEqual(Array.from(wire.body.content), [1, 2, 3, 4]);
+  });
+
+  test(`${version}: note sends a text/plain body`, async () => {
+    const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+    const transport = new MockApiTransport(ApiStatusClient.serverUri().toString().replace(/\/$/, ""));
+    const client = new ApiStatusClient(transport);
+
+    await client.note("hello world");
+
+    const wire = transport.captured;
+
+    assert.equal(wire.method, "POST");
+    assert.equal(wire.url, "https://api.example.com/v1/note");
+    // The string is UTF-8 encoded into a "bytes" body with the text/plain content type.
+    assert.equal(wire.body.kind, "bytes");
+    assert.equal(wire.body.contentType, "text/plain");
+    assert.equal(decoder.decode(wire.body.content), "hello world");
+  });
+
+  test(`${version}: form sends a form-urlencoded body`, async () => {
+    const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+    const transport = new MockApiTransport(ApiStatusClient.serverUri().toString().replace(/\/$/, ""));
+    const client = new ApiStatusClient(transport);
+
+    await client.form({ name: "Rex", count: 3, tags: ["a", "b"] });
+
+    const wire = transport.captured;
+
+    assert.equal(wire.method, "POST");
+    assert.equal(wire.url, "https://api.example.com/v1/form");
+    // The object is serialized as form-urlencoded with the default form/explode=true encoding: scalars
+    // as name=value, the array exploded into repeated pairs.
+    assert.equal(wire.body.kind, "bytes");
+    assert.equal(wire.body.contentType, "application/x-www-form-urlencoded");
+    assert.equal(decoder.decode(wire.body.content), "name=Rex&count=3&tags=a&tags=b");
+  });
 }
