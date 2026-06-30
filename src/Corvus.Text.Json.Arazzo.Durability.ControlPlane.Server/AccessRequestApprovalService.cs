@@ -125,7 +125,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         }
 
         AccessRequest request = fetched.RootElement;
-        RequireStatus(request, AccessRequestStatusNames.Pending);
+        RequireStatus(request, AccessRequestStatus.Pending);
         await this.EnsureAdministratorAsync(request.BaseWorkflowIdValue, approverIdentity, cancellationToken).ConfigureAwait(false);
         return await this.GrantAndDecideAsync(request, request.EtagValue, actor, reason, cancellationToken).ConfigureAwait(false);
     }
@@ -153,7 +153,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         }
 
         AccessRequest request = fetched.RootElement;
-        RequireStatus(request, AccessRequestStatusNames.Pending);
+        RequireStatus(request, AccessRequestStatus.Pending);
         await this.EnsureAdministratorAsync(request.BaseWorkflowIdValue, approverIdentity, cancellationToken).ConfigureAwait(false);
 
         List<string> granted = this.CapScopes(request.RequestedScopesArray());
@@ -209,7 +209,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         }
 
         AccessRequest request = fetched.RootElement;
-        RequireStatus(request, AccessRequestStatusNames.Pending);
+        RequireStatus(request, AccessRequestStatus.Pending);
         await this.EnsureAdministratorAsync(request.BaseWorkflowIdValue, approverIdentity, cancellationToken).ConfigureAwait(false);
         return await this.requests.DecideAsync(requestId, new AccessRequestDecision(AccessRequestStatus.Denied, reason), request.EtagValue, actor, cancellationToken).ConfigureAwait(false);
     }
@@ -233,9 +233,9 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         }
 
         AccessRequest request = fetched.RootElement;
-        RequireStatus(request, AccessRequestStatusNames.Pending);
-        if (!string.Equals(request.SubjectClaimTypeValue, subjectClaimType, StringComparison.Ordinal)
-            || !string.Equals(request.SubjectClaimValueValue, subjectClaimValue, StringComparison.Ordinal))
+        RequireStatus(request, AccessRequestStatus.Pending);
+        if (!request.SubjectClaimTypeEquals(subjectClaimType)
+            || !request.SubjectClaimValueEquals(subjectClaimValue))
         {
             throw new AccessRequestStateException(requestId, "Only the requester may withdraw their own request.");
         }
@@ -283,22 +283,23 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
             cancellationToken).ConfigureAwait(false);
     }
 
-    private static void RequireStatus(AccessRequest request, string expected)
+    // The status precondition is checked string-free (the JSON value's bytes are compared, no status string is realised);
+    // the human-readable expected/actual names are realised only on the throw path.
+    private static void RequireStatus(AccessRequest request, AccessRequestStatus expected)
     {
-        if (!string.Equals(request.StatusValue, expected, StringComparison.Ordinal))
+        if (!request.HasStatus(expected))
         {
-            throw new AccessRequestStateException(request.IdValue, $"The request is {request.StatusValue}, not {expected}.");
+            throw new AccessRequestStateException(request.IdValue, $"The request is {request.StatusValue}, not {AccessRequestStatusNames.ToWire(expected)}.");
         }
     }
 
-    // Only a live grant (Approved) or a standing eligibility assignment (Eligible) can be revoked.
+    // Only a live grant (Approved) or a standing eligibility assignment (Eligible) can be revoked. Checked string-free; the
+    // actual status name is realised only on the throw path.
     private static void RequireRevocable(AccessRequest request)
     {
-        string status = request.StatusValue;
-        if (!string.Equals(status, AccessRequestStatusNames.Approved, StringComparison.Ordinal)
-            && !string.Equals(status, AccessRequestStatusNames.Eligible, StringComparison.Ordinal))
+        if (!request.HasStatus(AccessRequestStatus.Approved) && !request.HasStatus(AccessRequestStatus.Eligible))
         {
-            throw new AccessRequestStateException(request.IdValue, $"The request is {status}; only an approved grant or an eligibility assignment can be revoked.");
+            throw new AccessRequestStateException(request.IdValue, $"The request is {request.StatusValue}; only an approved grant or an eligibility assignment can be revoked.");
         }
     }
 

@@ -24,7 +24,16 @@ public sealed class InMemorySecurityPolicyStore : ISecurityPolicyStore
         Comparer<ParsedJsonDocument<SecurityBindingDocument>>.Create(static (a, b) =>
         {
             int byOrder = a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue);
-            return byOrder != 0 ? byOrder : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue);
+            if (byOrder != 0)
+            {
+                return byOrder;
+            }
+
+            // Compare the id's unescaped UTF-8 bytes (zero-alloc view) rather than realizing two managed strings; this is
+            // also the COLLATE "C"/binary ordering the SQL backends key on.
+            using UnescapedUtf8JsonString aId = a.RootElement.Id.GetUtf8String();
+            using UnescapedUtf8JsonString bId = b.RootElement.Id.GetUtf8String();
+            return aId.Span.SequenceCompareTo(bId.Span);
         });
 
     private readonly Lock gate = new();

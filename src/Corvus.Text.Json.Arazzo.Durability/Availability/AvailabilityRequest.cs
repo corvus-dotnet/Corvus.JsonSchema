@@ -37,11 +37,39 @@ public readonly partial struct AvailabilityRequest
     /// <summary>Gets the optional justification, or <see langword="null"/>.</summary>
     public string? ReasonOrNull => this.Reason.IsNotUndefined() ? (string)this.Reason : null;
 
-    /// <summary>Gets the request's lifecycle state.</summary>
+    /// <summary>Gets the request's lifecycle state as a realised <see cref="string"/> — for a display/log/serialize sink
+    /// only. To <em>filter</em> on the status, use the string-free <see cref="HasStatus"/> predicate, which compares the
+    /// JSON value's bytes and never allocates.</summary>
     public string StatusValue => (string)this.Status;
+
+    /// <summary>Tests whether the request is in the given lifecycle state, string-free (no status string is realised) — the
+    /// per-row status filter the in-memory and KV/table stores apply when scanning their keyset index. The u8 literals
+    /// mirror the schema's status enum (see <see cref="Availability.AvailabilityRequestStatusNames"/>).</summary>
+    /// <param name="status">The status to test for.</param>
+    /// <returns><see langword="true"/> if the request's status equals <paramref name="status"/>.</returns>
+    public bool HasStatus(Availability.AvailabilityRequestStatus status) => status switch
+    {
+        Availability.AvailabilityRequestStatus.Pending => this.Status.ValueEquals("Pending"u8),
+        Availability.AvailabilityRequestStatus.Approved => this.Status.ValueEquals("Approved"u8),
+        Availability.AvailabilityRequestStatus.Denied => this.Status.ValueEquals("Denied"u8),
+        Availability.AvailabilityRequestStatus.Withdrawn => this.Status.ValueEquals("Withdrawn"u8),
+        _ => false,
+    };
+
+    /// <summary>Tests whether this request's target environment is the given one, string-free (no environment string is
+    /// realised from the document — the candidate string's bytes are compared against the JSON value).</summary>
+    /// <param name="environment">The environment to test for.</param>
+    /// <returns><see langword="true"/> if the environments match.</returns>
+    public bool EnvironmentEquals(string environment) => this.Environment.ValueEquals(environment);
 
     /// <summary>Gets the actor (requester) that created the request.</summary>
     public string CreatedByValue => (string)this.CreatedBy;
+
+    /// <summary>Tests whether this request was created by the given actor, string-free (no requester string is realised from
+    /// the document — the candidate string's bytes are compared against the JSON value) — the per-row "mine" filter.</summary>
+    /// <param name="createdBy">The actor to test for.</param>
+    /// <returns><see langword="true"/> if the requesters match.</returns>
+    public bool CreatedByEquals(string createdBy) => this.CreatedBy.ValueEquals(createdBy);
 
     /// <summary>Gets when the request was created.</summary>
     public DateTimeOffset CreatedAtValue => ((NodaTime.OffsetDateTime)this.CreatedAt).ToDateTimeOffset();

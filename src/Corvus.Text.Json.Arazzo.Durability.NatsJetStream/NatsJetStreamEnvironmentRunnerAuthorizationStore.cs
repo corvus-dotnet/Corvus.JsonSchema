@@ -40,7 +40,22 @@ public sealed class NatsJetStreamEnvironmentRunnerAuthorizationStore : IEnvironm
     // this comparer (mirroring the SQLite ORDER BY Environment, RunnerId).
     private static readonly IComparer<ParsedJsonDocument<EnvironmentRunnerAuthorization>> ByEnvironmentThenRunnerId =
         Comparer<ParsedJsonDocument<EnvironmentRunnerAuthorization>>.Create(static (a, b) =>
-            Compare(a.RootElement.EnvironmentValue, a.RootElement.RunnerIdValue, b.RootElement.EnvironmentValue, b.RootElement.RunnerIdValue));
+        {
+            // String-free ordinal compare over the JSON values' UTF-8 (a view for unescaped values, so no per-comparison
+            // string is realised); byte order also matches the SQL backends' COLLATE "C"/binary ordering. (The string
+            // Compare helper below is retained for the keyset paths, which already hold the parts as strings from the key.)
+            using UnescapedUtf8JsonString ae = a.RootElement.Environment.GetUtf8String();
+            using UnescapedUtf8JsonString be = b.RootElement.Environment.GetUtf8String();
+            int c = ae.Span.SequenceCompareTo(be.Span);
+            if (c != 0)
+            {
+                return c;
+            }
+
+            using UnescapedUtf8JsonString ar = a.RootElement.RunnerId.GetUtf8String();
+            using UnescapedUtf8JsonString br = b.RootElement.RunnerId.GetUtf8String();
+            return ar.Span.SequenceCompareTo(br.Span);
+        });
 
     private readonly NatsConnection? ownedConnection;
     private readonly INatsKVStore store;

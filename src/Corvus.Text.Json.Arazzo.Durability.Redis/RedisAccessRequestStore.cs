@@ -35,7 +35,18 @@ public sealed class RedisAccessRequestStore : IAccessRequestStore, IAsyncDisposa
     // Singleton comparer (created once) for the client-side snapshot ordering, since the index set is unordered:
     // oldest-first by creation instant then id.
     private static readonly IComparer<ParsedJsonDocument<AccessRequest>> ByCreatedThenId =
-        Comparer<ParsedJsonDocument<AccessRequest>>.Create(static (a, b) => a.RootElement.CreatedAtValue != b.RootElement.CreatedAtValue ? a.RootElement.CreatedAtValue.CompareTo(b.RootElement.CreatedAtValue) : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue));
+        Comparer<ParsedJsonDocument<AccessRequest>>.Create(static (a, b) =>
+        {
+            if (a.RootElement.CreatedAtValue != b.RootElement.CreatedAtValue)
+            {
+                return a.RootElement.CreatedAtValue.CompareTo(b.RootElement.CreatedAtValue);
+            }
+
+            // Tiebreak on id, string-free: compare the JSON values' UTF-8 bytes (no id string is realised per comparison).
+            using UnescapedUtf8JsonString aid = a.RootElement.Id.GetUtf8String();
+            using UnescapedUtf8JsonString bid = b.RootElement.Id.GetUtf8String();
+            return aid.Span.SequenceCompareTo(bid.Span);
+        });
 
     private readonly IConnectionMultiplexer connection;
     private readonly IDatabase database;
@@ -120,7 +131,6 @@ public sealed class RedisAccessRequestStore : IAccessRequestStore, IAsyncDisposa
     {
         cancellationToken.ThrowIfCancellationRequested();
         int pageSize = limit > 0 ? limit : AccessRequestPage.DefaultPageSize;
-        string? wireStatus = query.Status is { } status ? AccessRequestStatusNames.ToWire(status) : null;
 
         // Decode the keyset cursor to the index member the previous page ended at ("{createdAtIso}\0{id}"); the id reifies
         // to a string only here (the leaf). Undefined token = first page.
@@ -167,7 +177,7 @@ public sealed class RedisAccessRequestStore : IAccessRequestStore, IAsyncDisposa
                 }
 
                 ParsedJsonDocument<AccessRequest> document = PersistedJson.ToPooledDocument<AccessRequest>(lease.Span);
-                if (!Matches(document.RootElement, query, wireStatus))
+                if (!Matches(document.RootElement, query))
                 {
                     document.Dispose();
                     continue;
@@ -215,7 +225,6 @@ public sealed class RedisAccessRequestStore : IAccessRequestStore, IAsyncDisposa
     public async ValueTask<PooledDocumentList<AccessRequest>> ListAsync(AccessRequestQuery query, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        string? wireStatus = query.Status is { } status ? AccessRequestStatusNames.ToWire(status) : null;
         var list = new PooledDocumentList<AccessRequest>();
         foreach (RedisValue member in await this.database.SetMembersAsync(RequestIndexKey).ConfigureAwait(false))
         {
@@ -228,7 +237,7 @@ public sealed class RedisAccessRequestStore : IAccessRequestStore, IAsyncDisposa
             }
 
             ParsedJsonDocument<AccessRequest> document = PersistedJson.ToPooledDocument<AccessRequest>(lease.Span);
-            if (Matches(document.RootElement, query, wireStatus))
+            if (Matches(document.RootElement, query))
             {
                 list.Add(document);
             }
@@ -292,9 +301,10 @@ public sealed class RedisAccessRequestStore : IAccessRequestStore, IAsyncDisposa
     private static string KeysetMember(DateTimeOffset createdAt, string id)
         => $"{createdAt.UtcDateTime.ToString("o", CultureInfo.InvariantCulture)}{MemberSeparator}{id}";
 
-    private static bool Matches(in AccessRequest request, AccessRequestQuery query, string? wireStatus)
+    private static bool Matches(in AccessRequest request, AccessRequestQuery query)
     {
-        if (wireStatus is not null && !string.Equals(request.StatusValue, wireStatus, StringComparison.Ordinal))
+        // Status is compared string-free (no status field is realised to a managed string per row).
+        if (query.Status is { } status && !request.HasStatus(status))
         {
             return false;
         }
@@ -309,17 +319,17 @@ public sealed class RedisAccessRequestStore : IAccessRequestStore, IAsyncDisposa
             }
         }
 
-        if (query.SubjectClaimType is { } subjectType && !string.Equals(request.SubjectClaimTypeValue, subjectType, StringComparison.Ordinal))
+        if (query.SubjectClaimType is { } subjectType && !request.SubjectClaimTypeEquals(subjectType))
         {
             return false;
         }
 
-        if (query.SubjectClaimValue is { } subjectValue && !string.Equals(request.SubjectClaimValueValue, subjectValue, StringComparison.Ordinal))
+        if (query.SubjectClaimValue is { } subjectValue && !request.SubjectClaimValueEquals(subjectValue))
         {
             return false;
         }
 
         // The approver inbox (§16.5): the request's baseWorkflowId must be one the caller administers (server-derived set).
-        return query.MatchesAdministeredSet(request.BaseWorkflowIdValue);
+        return query.MatchesAdministeredSet(request);
     }
 }

@@ -31,10 +31,29 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     // Singleton comparers (created once) for the client-side snapshot ordering, since Table queries are unordered:
     // rules by name, bindings by Order then id.
     private static readonly IComparer<ParsedJsonDocument<SecurityRuleDocument>> ByRuleName =
-        Comparer<ParsedJsonDocument<SecurityRuleDocument>>.Create(static (a, b) => string.CompareOrdinal(a.RootElement.NameValue, b.RootElement.NameValue));
+        Comparer<ParsedJsonDocument<SecurityRuleDocument>>.Create(static (a, b) =>
+        {
+            // Compare the name's unescaped UTF-8 bytes (zero-alloc view) rather than realizing two managed strings; this is
+            // also the COLLATE "C"/binary ordering the SQL backends key on.
+            using UnescapedUtf8JsonString aName = a.RootElement.Name.GetUtf8String();
+            using UnescapedUtf8JsonString bName = b.RootElement.Name.GetUtf8String();
+            return aName.Span.SequenceCompareTo(bName.Span);
+        });
 
     private static readonly IComparer<ParsedJsonDocument<SecurityBindingDocument>> ByBindingOrder =
-        Comparer<ParsedJsonDocument<SecurityBindingDocument>>.Create(static (a, b) => a.RootElement.OrderValue != b.RootElement.OrderValue ? a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue) : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue));
+        Comparer<ParsedJsonDocument<SecurityBindingDocument>>.Create(static (a, b) =>
+        {
+            if (a.RootElement.OrderValue != b.RootElement.OrderValue)
+            {
+                return a.RootElement.OrderValue.CompareTo(b.RootElement.OrderValue);
+            }
+
+            // Compare the id's unescaped UTF-8 bytes (zero-alloc view) rather than realizing two managed strings; this is
+            // also the COLLATE "C"/binary ordering the SQL backends key on.
+            using UnescapedUtf8JsonString aId = a.RootElement.Id.GetUtf8String();
+            using UnescapedUtf8JsonString bId = b.RootElement.Id.GetUtf8String();
+            return aId.Span.SequenceCompareTo(bId.Span);
+        });
 
     private readonly TableClient rules;
     private readonly TableClient bindings;

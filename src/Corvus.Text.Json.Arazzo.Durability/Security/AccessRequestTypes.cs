@@ -55,13 +55,14 @@ public readonly record struct AccessRequestQuery(
     string? SubjectClaimValue = null,
     IReadOnlyList<string>? AdministeredBaseWorkflowIds = null)
 {
-    /// <summary>Whether a row's base workflow id passes the approver-inbox filter: <see langword="true"/> when no
-    /// administered set is constrained, or when the set contains <paramref name="rowBaseWorkflowId"/> (ordinal). The
-    /// shared client-side membership test for stores that filter in memory (the in-memory store and the KV/table
+    /// <summary>Whether a row passes the approver-inbox filter: <see langword="true"/> when no administered set is
+    /// constrained, or when the set contains the row's base workflow id. String-free — the candidate base-workflow-id
+    /// strings' bytes are compared against the row's JSON value (no base-workflow-id string is realised from the document).
+    /// The shared client-side membership test for stores that filter in memory (the in-memory store and the KV/table
     /// backends, which scan their keyset index and apply this per row).</summary>
-    /// <param name="rowBaseWorkflowId">The candidate row's base workflow id.</param>
+    /// <param name="request">The candidate row.</param>
     /// <returns><see langword="true"/> if the row is admitted by the administered-set filter.</returns>
-    public bool MatchesAdministeredSet(string rowBaseWorkflowId)
+    public bool MatchesAdministeredSet(in AccessRequest request)
     {
         if (this.AdministeredBaseWorkflowIds is not { } administered)
         {
@@ -70,7 +71,7 @@ public readonly record struct AccessRequestQuery(
 
         foreach (string administeredBaseWorkflowId in administered)
         {
-            if (string.Equals(administeredBaseWorkflowId, rowBaseWorkflowId, StringComparison.Ordinal))
+            if (request.BaseWorkflowIdEquals(administeredBaseWorkflowId))
             {
                 return true;
             }
