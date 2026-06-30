@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EnvironmentRunnerAuthorization",
+  "description": "The persisted authorization of a runner to serve a deployment environment (design §5.5): receiving an environment's runs means receiving its credentials, so a runner may not self-assert into an environment. A runner registering for an environment enters the Pending state and is not dispatchable until an administrator of that environment (§15.1) authorizes it; the authorization may later be revoked. Keyed by (environment, runnerId); governed by the target environment's administrators, exactly like Availability (§7.8). Backends store this document verbatim; it is congruent with the API's EnvironmentRunnerAuthorizationView.",
+  "type": "object",
+  "required": ["environment", "runnerId", "status", "createdBy", "createdAt", "etag"],
+  "properties": {
+    "environment": {
+      "type": "string",
+      "description": "The environment the runner asks to serve; authorization routes to this environment's administrators (design §7.7/§15.1)."
+    },
+    "runnerId": {
+      "type": "string",
+      "description": "The runner the authorization applies to."
+    },
+    "status": {
+      "type": "string",
+      "description": "The authorization's lifecycle state. Only an Authorized runner is dispatchable for the environment (§5.5).",
+      "enum": ["Pending", "Authorized", "Revoked"]
+    },
+    "reason": {
+      "type": "string",
+      "description": "An optional note recorded with the most recent decision."
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "The actor that created the record (the runner self-registering enters Pending)."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the record was created (the instant the runner first registered for the environment)."
+    },
+    "decidedBy": {
+      "type": "string",
+      "description": "The environment administrator that last authorized or revoked the runner, if decided."
+    },
+    "decidedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the runner was last authorized or revoked, if decided."
+    },
+    "etag": {
+      "type": "string",
+      "description": "The optimistic-concurrency token."
+    }
+  },
+  "additionalProperties": false
+}
