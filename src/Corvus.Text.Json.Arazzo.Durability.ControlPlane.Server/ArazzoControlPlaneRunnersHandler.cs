@@ -14,13 +14,24 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public sealed class ArazzoControlPlaneRunnersHandler : IApiRunnersHandler
 {
     private readonly IRunnerRegistry runners;
+    private readonly ControlPlaneAccess access;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneRunnersHandler"/> class.</summary>
     /// <param name="runners">The runner registry the endpoint reads.</param>
     public ArazzoControlPlaneRunnersHandler(IRunnerRegistry runners)
+        : this(runners, new ControlPlaneAccess())
+    {
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneRunnersHandler"/> class with a row-security context.</summary>
+    /// <param name="runners">The runner registry the endpoint reads.</param>
+    /// <param name="access">The per-request row-access grant; the list is reach-filtered by it (§5.5/§14.2).</param>
+    internal ArazzoControlPlaneRunnersHandler(IRunnerRegistry runners, ControlPlaneAccess access)
     {
         ArgumentNullException.ThrowIfNull(runners);
+        ArgumentNullException.ThrowIfNull(access);
         this.runners = runners;
+        this.access = access;
     }
 
     /// <inheritdoc/>
@@ -31,7 +42,12 @@ public sealed class ArazzoControlPlaneRunnersHandler : IApiRunnersHandler
         // bytes-native into one keyset page (bounded — never all runners).
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 0;
         JsonString pageToken = JsonString.From(parameters.PageToken);
-        using RunnerRegistryPage page = await this.runners.ListAsync(limit, pageToken, cancellationToken).ConfigureAwait(false);
+
+        // Reach-scoped (§5.5/§14.2): the caller sees only runners whose reachTags its read reach admits — i.e. the
+        // runners serving the environments within its reach. The trusted/unscoped path resolves AccessContext.System
+        // (unrestricted), so it still sees every runner.
+        AccessContext context = this.access.Current();
+        using RunnerRegistryPage page = await this.runners.ListAsync(context, limit, pageToken, cancellationToken).ConfigureAwait(false);
 
         // The persisted RunnerRegistration and the API Runner share the same JSON shape, so each runner is a free
         // whole-document re-wrap (Models.Runner.From) — no per-field projection. The registrations are detached (no pooled

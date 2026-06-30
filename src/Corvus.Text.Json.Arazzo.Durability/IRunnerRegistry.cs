@@ -62,6 +62,27 @@ public interface IRunnerRegistry
     }
 
     /// <summary>
+    /// Lists runners as a <b>reach-scoped</b> keyset page (design §5.5/§14.2): the same keyset page as
+    /// <see cref="ListAsync(int, JsonString, CancellationToken)"/>, but every runner outside the caller's read reach
+    /// (its <c>reachTags</c> not admitted by <paramref name="context"/>) is dropped first, so a tenant sees only the
+    /// runners serving its environments. This is the seam the control-plane <c>GET /runners</c> endpoint uses.
+    /// </summary>
+    /// <param name="context">The caller's resolved row-access grant (<see cref="AccessContext.System"/> for the trusted, full-reach path).</param>
+    /// <param name="limit">The maximum runners to return (a non-positive value uses the store's default page size).</param>
+    /// <param name="pageToken">The opaque token (its JSON value) from a previous page's <see cref="RunnerRegistryPage.NextPageToken"/>, or undefined for the first page; decoded bytes-native from its UTF-8.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>One reach-filtered keyset page, as a disposable the caller must dispose.</returns>
+    /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
+    /// <remarks>The default reach-filters a full read in memory; a backend may override it once it can push the
+    /// <c>reachTags</c> predicate into a native query, exactly as the unscoped overload is overridden for paging.</remarks>
+    async ValueTask<RunnerRegistryPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        IReadOnlyList<RunnerRegistration> all = await this.ListAsync(cancellationToken).ConfigureAwait(false);
+        return RunnerRegistryPaging.PageInMemory(all, context, limit, pageToken);
+    }
+
+    /// <summary>
     /// Determines whether any registered runner currently hosts (with the version loaded) the given catalog version.
     /// </summary>
     /// <param name="baseWorkflowId">The base workflow id of the version.</param>

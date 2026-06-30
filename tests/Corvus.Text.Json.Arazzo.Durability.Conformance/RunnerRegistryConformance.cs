@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Globalization;
+using System.Linq;
 using System.Text.Json;
 using Corvus.Text.Json;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -232,6 +233,31 @@ public abstract class RunnerRegistryConformance
         return ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.JsonString>.Parse(quoted);
     }
 
+    [TestMethod]
+    public async Task List_reach_scoped_returns_only_runners_within_the_callers_read_reach()
+    {
+        IRunnerRegistry registry = await this.NewRegistryAsync();
+        await registry.RegisterAsync(Reg("runner-acme", T0, T0, reachTags: [("tenant", "acme")]), default);
+        await registry.RegisterAsync(Reg("runner-globex", T0, T0, reachTags: [("tenant", "globex")]), default);
+        await registry.RegisterAsync(Reg("runner-unscoped", T0, T0), default); // serves an unscoped environment
+
+        // A tenant-scoped caller sees only the runner whose reachTags its read reach admits; the unscoped runner is
+        // fail-closed out, exactly as every other reach-scoped row.
+        using (RunnerRegistryPage page = await registry.ListAsync(Scope("acme"), 0, default, default))
+        {
+            page.Runners.Select(r => r.RunnerIdValue).ShouldBe(["runner-acme"]);
+        }
+
+        // The trusted system path is unrestricted, so it still observes every runner (sorted by runnerId).
+        using (RunnerRegistryPage page = await registry.ListAsync(AccessContext.System, 0, default, default))
+        {
+            page.Runners.Select(r => r.RunnerIdValue).ShouldBe(["runner-acme", "runner-globex", "runner-unscoped"]);
+        }
+    }
+
+    private static AccessContext Scope(string tenant) => AccessContext.Uniform(
+        new SecurityFilter([SecurityRule.Compile("tenant == $claim.tenant")], new Dictionary<string, IReadOnlyList<string>> { ["tenant"] = [tenant] }));
+
     private static RunnerRegistration Reg(
         string runnerId,
         DateTimeOffset startedAt,
@@ -240,7 +266,8 @@ public abstract class RunnerRegistryConformance
         string[]? transports = null,
         (string BaseId, int Version, string Hash, bool Loaded)[]? hosted = null,
         string? address = null,
-        string environment = "production")
+        string environment = "production",
+        (string Key, string Value)[]? reachTags = null)
     {
         string[] runnerTransports = transports ?? ["http"];
         (string BaseId, int Version, string Hash, bool Loaded)[] hostedVersions = hosted ?? [];
@@ -251,6 +278,20 @@ public abstract class RunnerRegistryConformance
             writer.WriteStartObject();
             writer.WriteString("runnerId", runnerId);
             writer.WriteString("environment", environment);
+            if (reachTags is not null)
+            {
+                writer.WriteStartArray("reachTags");
+                foreach ((string Key, string Value) tag in reachTags)
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("key", tag.Key);
+                    writer.WriteString("value", tag.Value);
+                    writer.WriteEndObject();
+                }
+
+                writer.WriteEndArray();
+            }
+
             if (address is not null)
             {
                 writer.WriteString("address", address);
