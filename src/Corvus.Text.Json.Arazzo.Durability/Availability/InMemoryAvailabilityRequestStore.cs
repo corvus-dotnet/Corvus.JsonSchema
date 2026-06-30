@@ -20,7 +20,15 @@ public sealed class InMemoryAvailabilityRequestStore : IAvailabilityRequestStore
         Comparer<ParsedJsonDocument<AvailabilityRequest>>.Create(static (a, b) =>
         {
             int byTime = a.RootElement.CreatedAtValue.CompareTo(b.RootElement.CreatedAtValue);
-            return byTime != 0 ? byTime : string.CompareOrdinal(a.RootElement.IdValue, b.RootElement.IdValue);
+            if (byTime != 0)
+            {
+                return byTime;
+            }
+
+            // Tiebreak on id string-free: compare the JSON values' UTF-8 bytes (no id string is realised per compare).
+            using UnescapedUtf8JsonString aId = a.RootElement.Id.GetUtf8String();
+            using UnescapedUtf8JsonString bId = b.RootElement.Id.GetUtf8String();
+            return aId.Span.SequenceCompareTo(bId.Span);
         });
 
     private readonly Lock gate = new();
@@ -105,26 +113,27 @@ public sealed class InMemoryAvailabilityRequestStore : IAvailabilityRequestStore
         }
     }
 
-    private static bool Matches(AvailabilityRequest request, AvailabilityRequestQuery query)
+    private static bool Matches(in AvailabilityRequest request, AvailabilityRequestQuery query)
     {
-        if (query.Status is { } status && !string.Equals(request.StatusValue, AvailabilityRequestStatusNames.ToWire(status), StringComparison.Ordinal))
+        // Status + environment + requester are compared string-free (no field is realised to a managed string per row).
+        if (query.Status is { } status && !request.HasStatus(status))
         {
             return false;
         }
 
-        if (query.Environment is { } environment && !string.Equals(request.EnvironmentValue, environment, StringComparison.Ordinal))
+        if (query.Environment is { } environment && !request.EnvironmentEquals(environment))
         {
             return false;
         }
 
         // The approver inbox: the row's environment must be one the caller administers (server-derived strings).
-        if (!query.MatchesAdministeredSet(request.EnvironmentValue))
+        if (!query.MatchesAdministeredSet(request))
         {
             return false;
         }
 
         // The "mine" view: the row was created by the caller.
-        return query.CreatedBy is not { } createdBy || string.Equals(request.CreatedByValue, createdBy, StringComparison.Ordinal);
+        return query.CreatedBy is not { } createdBy || request.CreatedByEquals(createdBy);
     }
 
     private WorkflowEtag NextEtag() => new((++this.etagSequence).ToString(CultureInfo.InvariantCulture));
