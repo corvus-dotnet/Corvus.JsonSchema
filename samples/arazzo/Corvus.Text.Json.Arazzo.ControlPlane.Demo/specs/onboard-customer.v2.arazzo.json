@@ -1,0 +1,63 @@
+{
+  "arazzo": "1.1.0",
+  "info": { "title": "Onboard Customer", "version": "2.0.0", "description": "Create an account, verify identity, provision resources, and welcome the customer — handling a failed identity check by routing to applicant notification instead of faulting (the resilient v2 of onboard-customer)." },
+  "sourceDescriptions": [ { "name": "onboarding", "url": "./onboarding.openapi.json", "type": "openapi" } ],
+  "workflows": [
+    {
+      "workflowId": "onboard-customer",
+      "inputs": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "idn-email", "description": "The applicant's email." },
+          "fullName": { "type": "string", "description": "The applicant's full name, submitted for identity verification." },
+          "plan": { "type": "string", "enum": [ "free", "pro", "enterprise" ] }
+        },
+        "required": [ "email" ]
+      },
+      "steps": [
+        { "stepId": "createAccount", "operationId": "createAccount", "outputs": { "accountId": "$response.body#/accountId" } },
+        {
+          "stepId": "verifyIdentity",
+          "operationId": "verifyIdentity",
+          "parameters": [ { "name": "accountId", "in": "path", "value": "$steps.createAccount.outputs.accountId" } ],
+          "requestBody": {
+            "contentType": "application/json",
+            "payload": { "fullName": "Applicant", "documentNumber": "X1234567" },
+            "replacements": [ { "target": "/fullName", "value": "$inputs.fullName" } ]
+          },
+          "successCriteria": [
+            { "condition": "$statusCode == 200" },
+            { "condition": "$response.body#/score >= 0.8" }
+          ],
+          "onFailure": [
+            { "name": "routeToReview", "type": "goto", "stepId": "notifyApplicant" }
+          ],
+          "outputs": {
+            "score": "$response.body#/score",
+            "method": "$response.body#/method",
+            "applicant": "$response.body#/applicant",
+            "evidence": "$response.body#/evidence",
+            "flags": "$response.body#/flags"
+          }
+        },
+        {
+          "stepId": "provisionResources",
+          "operationId": "provisionResources",
+          "parameters": [ { "name": "accountId", "in": "path", "value": "$steps.createAccount.outputs.accountId" } ],
+          "outputs": {
+            "accountUrl": "$response.body#/accountUrl",
+            "quotaGb": "$response.body#/quotaGb",
+            "resources": "$response.body#/resources",
+            "tags": "$response.body#/tags"
+          }
+        },
+        {
+          "stepId": "notifyApplicant",
+          "operationId": "sendWelcome",
+          "parameters": [ { "name": "accountId", "in": "path", "value": "$steps.createAccount.outputs.accountId" } ],
+          "outputs": {}
+        }
+      ]
+    }
+  ]
+}
