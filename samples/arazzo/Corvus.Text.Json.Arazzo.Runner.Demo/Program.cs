@@ -8,6 +8,7 @@
 // process (its real-life deployment is a container, scaled independently) whose long-running loops are hosted
 // BackgroundServices; the minimal web surface exists only for the §5.4 health probe + Aspire/OTel.
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Sqlite;
 using Corvus.Text.Json.Arazzo.Runner.Demo;
@@ -32,17 +33,22 @@ SqliteRunnerRegistry registry = await SqliteRunnerRegistry.ConnectAsync(connecti
 // The §13 source-credential store, shared with the control plane: the control plane registers the binding
 // (reference + metadata, never the secret), and the runner reads it to learn which Vault references to resolve.
 SqliteSourceCredentialStore credentials = await SqliteSourceCredentialStore.ConnectAsync(connectionString);
+
+// The §7.7 environments registry, shared with the control plane: the runner reads the environment it serves to
+// inherit its reach (managementTags → the registration's reachTags, design §5.5). The control plane owns writes.
+SqliteEnvironmentStore environments = await SqliteEnvironmentStore.ConnectAsync(connectionString);
 var catalog = new SecuredWorkflowCatalog(catalogStore, stateStore, "runner");
 
 // The single environment this runner serves (design §5.5). Configurable so one host image can be deployed per
 // environment; the demo defaults to production. The runner is only dispatchable for runs targeting it.
 string runnerEnvironment = builder.Configuration["Runner:Environment"] ?? "production";
-var options = new RunnerOptions($"runner-{Environment.MachineName}-{Environment.ProcessId}", runnerEnvironment);
+var options = new RunnerOptions($"runner-{System.Environment.MachineName}-{System.Environment.ProcessId}", runnerEnvironment);
 
 builder.Services.AddSingleton(options);
 builder.Services.AddSingleton<IWorkflowStateStore>(stateStore);
 builder.Services.AddSingleton<IWorkflowCatalogStore>(catalogStore);
 builder.Services.AddSingleton<IRunnerRegistry>(registry);
+builder.Services.AddSingleton<IEnvironmentStore>(environments);
 builder.Services.AddSingleton<ISourceCredentialStore>(credentials);
 builder.Services.AddSingleton(catalog);
 
