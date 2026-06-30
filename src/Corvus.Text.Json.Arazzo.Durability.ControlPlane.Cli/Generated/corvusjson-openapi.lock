@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-06-30T10:46:23.4023389\u002B00:00",
+  "generatedAt": "2026-06-30T11:31:44.8122916\u002B00:00",
   "generatedFiles": [
     "ListRunsRequest.cs",
     "ListRunsResponse.cs",
@@ -474,6 +474,9 @@
     "Models/Runner.RunnerHostedVersionArray.cs",
     "Models/Runner.RunnerHostedVersionArray.Mutable.cs",
     "Models/Runner.RunnerHostedVersionArray.JsonSchema.cs",
+    "Models/Runner.RunnerSecurityTagArray.cs",
+    "Models/Runner.RunnerSecurityTagArray.Mutable.cs",
+    "Models/Runner.RunnerSecurityTagArray.JsonSchema.cs",
     "Models/Runner.JsonStringArray.cs",
     "Models/Runner.JsonStringArray.Mutable.cs",
     "Models/Runner.JsonStringArray.JsonSchema.cs",
@@ -486,6 +489,9 @@
     "Models/RunnerPage.RunnerArray.cs",
     "Models/RunnerPage.RunnerArray.Mutable.cs",
     "Models/RunnerPage.RunnerArray.JsonSchema.cs",
+    "Models/RunnerSecurityTag.cs",
+    "Models/RunnerSecurityTag.Mutable.cs",
+    "Models/RunnerSecurityTag.JsonSchema.cs",
     "Models/SecretReference.cs",
     "Models/SecretReference.Mutable.cs",
     "Models/SecretReference.JsonSchema.cs",
@@ -680,9 +686,9 @@
     "Models/GetIdentityGranteesSource.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B22e63af706911b507c2158efafa443d8e1830262",
+  "generatorVersion": "1.0.0\u002Bdc8f6a5472de036d4ddf002447ed4730cbdae645",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "400713b5189725b48eec9c0bcadfe69d3e665075d3f1be63b6146fc511bcba93",
+  "specFileHash": "1479972f9aa1d58efba81d4160d025ed85ec08d3bd22d386b38ee4fd09264360",
   "specVersion": "3.2"
 }

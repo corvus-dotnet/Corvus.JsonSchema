@@ -20,6 +20,44 @@ internal static class RunnerRegistryPaging
     /// <summary>The page size used when a caller passes a non-positive limit (the public store-contract default).</summary>
     internal const int DefaultPageSize = RunnerRegistryPage.DefaultPageSize;
 
+    /// <summary>Pages <paramref name="all"/> (a full read) in memory after dropping every runner outside the caller's
+    /// read reach (§14.2): a runner is visible only when <paramref name="context"/> admits its <c>reachTags</c> for
+    /// <see cref="AccessVerb.Read"/>, so a tenant sees only the runners serving its environments. An unrestricted read
+    /// reach skips the per-row filter entirely. The surviving runners are then keyset-paged exactly as the unscoped
+    /// overload.</summary>
+    /// <param name="all">The registry's full read (detached registrations).</param>
+    /// <param name="context">The caller's resolved row-access grant; its read reach selects the visible runners.</param>
+    /// <param name="limit">The maximum runners in the page (non-positive uses <see cref="DefaultPageSize"/>).</param>
+    /// <param name="pageToken">The opaque continuation token (its JSON value) to resume after, or undefined for the first page.</param>
+    /// <returns>One keyset page over the reach-visible runners (owning its pooled token buffer when more remain).</returns>
+    /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
+    internal static RunnerRegistryPage PageInMemory(IReadOnlyList<RunnerRegistration> all, AccessContext context, int limit, JsonString pageToken)
+    {
+        if (context.ReadReach is null)
+        {
+            // Unrestricted read reach (e.g. the trusted system path) — no row is filtered, so avoid the per-row tag copy.
+            return PageInMemory(all, limit, pageToken);
+        }
+
+        var visible = new List<RunnerRegistration>(all.Count);
+        for (int i = 0; i < all.Count; i++)
+        {
+            RunnerRegistration runner = all[i];
+
+            // reachTags is absent on a runner serving an unscoped environment; an empty tag set fails a scoped reach
+            // (fail-closed, as for every reach-scoped row), so such a runner is invisible to a tenant-scoped caller.
+            SecurityTagSet tags = runner.ReachTags.IsNotUndefined()
+                ? SecurityTagSet.CopyFrom(runner.ReachTags)
+                : SecurityTagSet.Empty;
+            if (context.Admits(AccessVerb.Read, tags))
+            {
+                visible.Add(runner);
+            }
+        }
+
+        return PageInMemory(visible, limit, pageToken);
+    }
+
     /// <summary>Pages <paramref name="all"/> (a full read) in memory: runners ordered by <c>runnerId</c> (ordinal UTF-8),
     /// resuming strictly after the cursor decoded from <paramref name="pageToken"/> (undefined = first page), bounded to
     /// <paramref name="limit"/>.</summary>

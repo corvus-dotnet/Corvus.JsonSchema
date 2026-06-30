@@ -3073,12 +3073,26 @@
         },
         "required": ["baseWorkflowId", "versionNumber", "hash", "loaded"]
       },
+      "RunnerSecurityTag": {
+        "type": "object",
+        "description": "A security label (KVP) scoping a runner for row authorization (§14.2) — e.g. tenant=acme.",
+        "properties": {
+          "key": { "type": "string", "description": "The label key (e.g. tenant)." },
+          "value": { "type": "string", "description": "The label value (e.g. acme)." }
+        },
+        "required": ["key", "value"]
+      },
       "Runner": {
         "type": "object",
         "description": "A workflow runner process registered with the control plane.",
         "properties": {
           "runnerId": { "type": "string", "description": "The stable identifier of the runner process." },
           "environment": { "type": "string", "description": "The single deployment environment this runner serves (design §5.5); the runner is dispatchable only for runs targeting it and inherits its reach." },
+          "reachTags": {
+            "type": "array",
+            "description": "The runner's row-security reach (§14.2), stamped from the serving environment's managementTags at registration; a tenant sees only runners serving its environments. Absent on a runner serving an unscoped environment.",
+            "items": { "$ref": "#/components/schemas/RunnerSecurityTag" }
+          },
           "address": { "type": "string", "description": "An optional address (for example a base URI) at which the runner can be reached." },
           "startedAt": { "type": "string", "format": "date-time", "description": "When the runner process started." },
           "lastSeenAt": { "type": "string", "format": "date-time", "description": "The instant of the runner's most recent heartbeat." },

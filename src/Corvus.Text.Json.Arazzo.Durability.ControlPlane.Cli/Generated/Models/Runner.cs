@@ -276,6 +276,27 @@ public readonly partial struct Runner
     }
 
     /// <summary>
+    /// Gets the (optional) <c>reachTags</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The runner&#39;s row-security reach (&#167;14.2), stamped from the serving environment&#39;s managementTags at registration; a tenant sees only runners serving its environments. Absent on a runner serving an unscoped environment.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Runner.RunnerSecurityTagArray ReachTags
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ReachTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.Runner.RunnerSecurityTagArray value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>runnerId</c> property.
     /// </summary>
     /// <remarks>
@@ -816,6 +837,11 @@ public readonly partial struct Runner
         public const string MaxConcurrency = "maxConcurrency";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="ReachTags"/>.
+        /// </summary>
+        public const string ReachTags = "reachTags";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="RunnerId"/>.
         /// </summary>
         public const string RunnerId = "runnerId";
@@ -854,6 +880,11 @@ public readonly partial struct Runner
         /// Gets the JSON property name for <see cref="MaxConcurrency"/>.
         /// </summary>
         public static ReadOnlySpan<byte> MaxConcurrencyUtf8 => "maxConcurrency"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="ReachTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ReachTagsUtf8 => "reachTags"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="RunnerId"/>.
@@ -902,6 +933,11 @@ public readonly partial struct Runner
         public static ReadOnlySpan<byte> MaxConcurrency => "maxConcurrency"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="ReachTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ReachTags => "reachTags"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="RunnerId"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RunnerId => "runnerId"u8;
@@ -947,6 +983,11 @@ public readonly partial struct Runner
         /// Gets the pre-baked property name blob for <see cref="MaxConcurrency"/>.
         /// </summary>
         public static ReadOnlySpan<byte> MaxConcurrency => [0x05, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x43, 0x6F, 0x6E, 0x63, 0x75, 0x72, 0x72, 0x65, 0x6E, 0x63, 0x79, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ReachTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ReachTags => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x61, 0x63, 0x68, 0x54, 0x61, 0x67, 0x73, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="RunnerId"/>.
