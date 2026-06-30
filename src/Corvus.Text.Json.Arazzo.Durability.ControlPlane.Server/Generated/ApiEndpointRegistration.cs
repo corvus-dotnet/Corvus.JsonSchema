@@ -2235,6 +2235,12 @@ public static class ApiEndpointRegistration
                 {
                     VersionNumberValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.VersionNumber>(VersionNumberRaw, workspace);
                 }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString EnvironmentValue = default;
+                if (context.Request.Query.TryGetValue("environment", out var EnvironmentQueryVal) && EnvironmentQueryVal.Count > 0)
+                {
+                    string EnvironmentRaw = EnvironmentQueryVal[0]!;
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(EnvironmentRaw, workspace);
+                }
 
                 if (BaseWorkflowIdValue.IsUndefined())
                 {
@@ -2252,6 +2258,14 @@ public static class ApiEndpointRegistration
                     return;
                 }
 
+                if (EnvironmentValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'environment' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
                 if (!BaseWorkflowIdValue.IsUndefined() && !BaseWorkflowIdValue.EvaluateSchema())
                 {
                     context.Response.StatusCode = 400;
@@ -2265,6 +2279,14 @@ public static class ApiEndpointRegistration
                     context.Response.StatusCode = 400;
                     context.Response.ContentType = "application/problem+json";
                     await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'versionNumber' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!EnvironmentValue.IsUndefined() && !EnvironmentValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'environment' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
                     return;
                 }
 
@@ -2294,6 +2316,7 @@ public static class ApiEndpointRegistration
                 {
                     BaseWorkflowId = BaseWorkflowIdValue,
                     VersionNumber = VersionNumberValue,
+                    Environment = EnvironmentValue,
                     Body = bodyDoc!.RootElement,
                 }
                 ;

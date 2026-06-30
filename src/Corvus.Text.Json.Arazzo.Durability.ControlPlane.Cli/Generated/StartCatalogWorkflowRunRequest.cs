@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 /// <summary>
 /// Request type for the StartCatalogWorkflowRun operation.
 /// </summary>
-/// <remarks>Triggers a new run of this runnable version: validates the supplied inputs against the version's baked inputs schema, then creates a Pending run that a hosting runner claims and executes asynchronously and durably. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist; 409 if it is not runnable (carries no executor) or no registered runner currently hosts it; 422 if the inputs fail validation.</remarks>
+/// <remarks>Triggers a new run of this runnable version in a deployment environment (design §5.5): validates the supplied inputs against the version's baked inputs schema, pins the run to the required `environment`, then creates a Pending run that a runner serving that environment claims and executes asynchronously and durably. The run is pinned to the environment at start — it selects the credential set and constrains dispatch to runners authorized to serve it. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist, or the environment does not exist or is outside the caller's reach; 409 if the version is not available in the environment (§7.8), is not runnable (carries no executor), or no registered runner currently serves the environment; 422 if the inputs fail validation.</remarks>
 public readonly struct StartCatalogWorkflowRunRequest : IApiRequest<StartCatalogWorkflowRunRequest>
 {
 
@@ -32,14 +32,21 @@ public readonly struct StartCatalogWorkflowRunRequest : IApiRequest<StartCatalog
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber VersionNumber { get; init; }
 
     /// <summary>
+    /// Gets the environment parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Environment { get; init; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="StartCatalogWorkflowRunRequest"/> struct.
     /// </summary>
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
     /// <param name="versionNumber">The versionNumber parameter.</param>
-    public StartCatalogWorkflowRunRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber versionNumber)
+    /// <param name="environment">The environment parameter.</param>
+    public StartCatalogWorkflowRunRequest(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString environment)
     {
         this.BaseWorkflowId = baseWorkflowId;
         this.VersionNumber = versionNumber;
+        this.Environment = environment;
     }
 
     /// <inheritdoc/>
@@ -52,7 +59,7 @@ public readonly struct StartCatalogWorkflowRunRequest : IApiRequest<StartCatalog
     public static bool HasPathParameters => true;
 
     /// <inheritdoc/>
-    public static bool HasQueryParameters => false;
+    public static bool HasQueryParameters => true;
 
     /// <inheritdoc/>
     public static bool HasHeaderParameters => true;
@@ -80,8 +87,28 @@ public readonly struct StartCatalogWorkflowRunRequest : IApiRequest<StartCatalog
     /// <inheritdoc/>
     public int WriteQueryString(IBufferWriter<byte> writer)
     {
-        ThrowHelper.ThrowNoQueryParameters();
-        return default;
+        int totalWritten = 0;
+        bool first = true;
+
+        if (!first)
+        {
+            writer.Write("&"u8);
+            totalWritten++;
+        }
+
+        writer.Write("environment="u8);
+        totalWritten += 12;
+        using UnescapedUtf8JsonString utf8Environment = ((JsonElement)this.Environment).GetUtf8String();
+        Span<byte> escEnvironment = stackalloc byte[utf8Environment.Span.Length * 3];
+        if (Utf8Uri.TryEscapeDataString(utf8Environment.Span, escEnvironment, out int ewEnvironment))
+        {
+            writer.Write(escEnvironment[..ewEnvironment]);
+            totalWritten += ewEnvironment;
+        }
+
+        first = false;
+
+        return totalWritten;
     }
 
     /// <inheritdoc/>
@@ -119,6 +146,12 @@ public readonly struct StartCatalogWorkflowRunRequest : IApiRequest<StartCatalog
                 ThrowHelper.ThrowRequestParameterValidationFailed("versionNumber", SchemaValidationDetail.FormatResults(collectorVersionNumber));
             }
 
+            using JsonSchemaResultsCollector collectorEnvironment = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!this.Environment.EvaluateSchema(collectorEnvironment))
+            {
+                ThrowHelper.ThrowRequestParameterValidationFailed("environment", SchemaValidationDetail.FormatResults(collectorEnvironment));
+            }
+
         }
         else
         {
@@ -130,6 +163,11 @@ public readonly struct StartCatalogWorkflowRunRequest : IApiRequest<StartCatalog
             if (!this.VersionNumber.EvaluateSchema())
             {
                 ThrowHelper.ThrowRequestParameterValidationFailed("versionNumber");
+            }
+
+            if (!this.Environment.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestParameterValidationFailed("environment");
             }
 
         }

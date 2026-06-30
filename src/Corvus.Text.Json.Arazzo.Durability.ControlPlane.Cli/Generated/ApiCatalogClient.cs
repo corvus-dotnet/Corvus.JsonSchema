@@ -375,19 +375,21 @@ public sealed class ApiCatalogClient : IApiCatalogClient
     /// Start a run of a workflow version
     /// </summary>
     /// <remarks>
-    /// Triggers a new run of this runnable version: validates the supplied inputs against the version's baked inputs schema, then creates a Pending run that a hosting runner claims and executes asynchronously and durably. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist; 409 if it is not runnable (carries no executor) or no registered runner currently hosts it; 422 if the inputs fail validation.
+    /// Triggers a new run of this runnable version in a deployment environment (design §5.5): validates the supplied inputs against the version's baked inputs schema, pins the run to the required `environment`, then creates a Pending run that a runner serving that environment claims and executes asynchronously and durably. The run is pinned to the environment at start — it selects the credential set and constrains dispatch to runners authorized to serve it. Returns 202 with the run id; observe the run via the runs endpoints. 404 if the version does not exist, or the environment does not exist or is outside the caller's reach; 409 if the version is not available in the environment (§7.8), is not runnable (carries no executor), or no registered runner currently serves the environment; 422 if the inputs fail validation.
     /// </remarks>
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
     /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="environment">The environment parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<StartCatalogWorkflowRunResponse> StartCatalogWorkflowRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonObject.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<StartCatalogWorkflowRunResponse> StartCatalogWorkflowRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonObject.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonObject bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonObject.CreateBuilder(workspace, body, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber VersionNumberValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.CreateBuilder(workspace, versionNumber, 30).RootElement;
-        StartCatalogWorkflowRunRequest request = new(BaseWorkflowIdValue, VersionNumberValue);
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString EnvironmentValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, environment, 30).RootElement;
+        StartCatalogWorkflowRunRequest request = new(BaseWorkflowIdValue, VersionNumberValue, EnvironmentValue);
 
         request.Validate(validationMode);
 
