@@ -180,6 +180,30 @@ public readonly partial struct Runner
     }
 
     /// <summary>
+    /// Gets the <c>environment</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+    /// </para>
+    /// <para>
+    /// The single deployment environment this runner serves (design &#167;5.5); the runner is dispatchable only for runs targeting it and inherits its reach.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Environment
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>hostedVersions</c> property.
     /// </summary>
     /// <remarks>
@@ -772,6 +796,11 @@ public readonly partial struct Runner
         public const string Address = "address";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="Environment"/>.
+        /// </summary>
+        public const string Environment = "environment";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="HostedVersions"/>.
         /// </summary>
         public const string HostedVersions = "hostedVersions";
@@ -805,6 +834,11 @@ public readonly partial struct Runner
         /// Gets the JSON property name for <see cref="Address"/>.
         /// </summary>
         public static ReadOnlySpan<byte> AddressUtf8 => "address"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Environment"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EnvironmentUtf8 => "environment"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="HostedVersions"/>.
@@ -848,6 +882,11 @@ public readonly partial struct Runner
         public static ReadOnlySpan<byte> Address => "address"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Environment"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Environment => "environment"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="HostedVersions"/>.
         /// </summary>
         public static ReadOnlySpan<byte> HostedVersions => "hostedVersions"u8;
@@ -888,6 +927,11 @@ public readonly partial struct Runner
         /// Gets the pre-baked property name blob for <see cref="Address"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Address => [0x95, 0x00, 0x00, 0x00, 0x22, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Environment"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Environment => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x76, 0x69, 0x72, 0x6F, 0x6E, 0x6D, 0x65, 0x6E, 0x74, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="HostedVersions"/>.

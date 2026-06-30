@@ -287,6 +287,30 @@ public readonly partial struct Runner
         }
 
         /// <summary>
+        /// Gets the <c>environment</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+        /// </para>
+        /// <para>
+        /// The single deployment environment this runner serves (design &#167;5.5); the runner is dispatchable only for runs targeting it and inherits its reach.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable Environment
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
         /// Gets the <c>hostedVersions</c> property.
         /// </summary>
         /// <remarks>
@@ -512,6 +536,37 @@ public readonly partial struct Runner
             bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.AddressUtf8);
             _documentVersion = _parent.Version;
             return result;
+        }
+
+        /// <summary>
+        /// Set the <c>environment</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetEnvironment(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("environment");
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Environment, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
         }
 
         /// <summary>
@@ -1098,13 +1153,14 @@ public readonly partial struct Runner
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg5;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source _createArg6;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg7;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg3;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg6;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source _createArg7;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg8;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1119,7 +1175,7 @@ public readonly partial struct Runner
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7)
+        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source arg7, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1128,6 +1184,7 @@ public readonly partial struct Runner
             _createArg5 = arg5;
             _createArg6 = arg6;
             _createArg7 = arg7;
+            _createArg8 = arg8;
             _kind = Kind.Create;
         }
 
@@ -1148,7 +1205,7 @@ public readonly partial struct Runner
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1173,7 +1230,7 @@ public readonly partial struct Runner
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1198,7 +1255,7 @@ public readonly partial struct Runner
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1223,7 +1280,7 @@ public readonly partial struct Runner
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1248,7 +1305,7 @@ public readonly partial struct Runner
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1276,13 +1333,14 @@ public readonly partial struct Runner
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source<TContext> _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg5;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source<TContext> _createArg6;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg7;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source<TContext> _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg3;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source _createArg6;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source<TContext> _createArg7;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg8;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1295,7 +1353,7 @@ public readonly partial struct Runner
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source<TContext> arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7)
+        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source<TContext> arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source<TContext> arg7, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1305,6 +1363,7 @@ public readonly partial struct Runner
             _createArg5 = arg5;
             _createArg6 = arg6;
             _createArg7 = arg7;
+            _createArg8 = arg8;
             _kind = Kind.Create;
         }
 
@@ -1323,7 +1382,7 @@ public readonly partial struct Runner
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1348,7 +1407,7 @@ public readonly partial struct Runner
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1373,7 +1432,7 @@ public readonly partial struct Runner
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1398,7 +1457,7 @@ public readonly partial struct Runner
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1423,7 +1482,7 @@ public readonly partial struct Runner
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1457,6 +1516,7 @@ public readonly partial struct Runner
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source hostedVersions,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastSeenAt,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source maxConcurrency,
@@ -1465,6 +1525,7 @@ public readonly partial struct Runner
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source transports,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source address = default)
         {
+            environment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Environment, ref builder);
             hostedVersions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HostedVersions, ref builder);
             lastSeenAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LastSeenAt, ref builder);
             maxConcurrency.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxConcurrency, ref builder);
@@ -1478,6 +1539,7 @@ public readonly partial struct Runner
         /// Creates an instance of a <see cref="Runner"/>.
         /// </summary>
         public void Create(
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source hostedVersions,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastSeenAt,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source maxConcurrency,
@@ -1486,7 +1548,7 @@ public readonly partial struct Runner
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source transports,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source address = default)
         {
-            Create(ref _builder, hostedVersions, lastSeenAt, maxConcurrency, runnerId, startedAt, transports, address);
+            Create(ref _builder, environment, hostedVersions, lastSeenAt, maxConcurrency, runnerId, startedAt, transports, address);
         }
 
         /// <summary>
@@ -1495,6 +1557,7 @@ public readonly partial struct Runner
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source<TContext> hostedVersions,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastSeenAt,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source maxConcurrency,
@@ -1506,6 +1569,7 @@ public readonly partial struct Runner
         where TContext : allows ref struct
         #endif
         {
+            environment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Environment, ref builder);
             hostedVersions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HostedVersions, ref builder);
             lastSeenAt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LastSeenAt, ref builder);
             maxConcurrency.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxConcurrency, ref builder);
@@ -1520,6 +1584,7 @@ public readonly partial struct Runner
         /// </summary>
         public void Create<TContext>(
             in TContext context,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source<TContext> hostedVersions,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastSeenAt,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source maxConcurrency,
@@ -1531,7 +1596,7 @@ public readonly partial struct Runner
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, hostedVersions, lastSeenAt, maxConcurrency, runnerId, startedAt, transports, address);
+            Create(context, ref _builder, environment, hostedVersions, lastSeenAt, maxConcurrency, runnerId, startedAt, transports, address);
         }
 
         /// <summary>
@@ -1636,11 +1701,12 @@ public readonly partial struct Runner
         /// <param name="arg5">The value of the property.</param>
         /// <param name="arg6">The value of the property.</param>
         /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source arg7, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
             o.EndObject();
         }
 
@@ -1656,14 +1722,15 @@ public readonly partial struct Runner
         /// <param name="arg5">The value of the property.</param>
         /// <param name="arg6">The value of the property.</param>
         /// <param name="arg7">The value of the property.</param>
+        /// <param name="arg8">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source<TContext> arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source<TContext> arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source<TContext> arg7, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
         {
             o.StartObject();
-            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
             o.EndObject();
         }
     }
@@ -1700,6 +1767,7 @@ public readonly partial struct Runner
     /// <summary>
     /// Build an instance of the value directly from its property values.
     /// </summary>
+    /// <param name="environment">The value of the <c>"environment"</c> property.</param>
     /// <param name="hostedVersions">The value of the <c>"hostedVersions"</c> property.</param>
     /// <param name="lastSeenAt">The value of the <c>"lastSeenAt"</c> property.</param>
     /// <param name="maxConcurrency">The value of the <c>"maxConcurrency"</c> property.</param>
@@ -1708,9 +1776,9 @@ public readonly partial struct Runner
     /// <param name="transports">The value of the <c>"transports"</c> property.</param>
     /// <param name="address">The value of the <c>"address"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source hostedVersions, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastSeenAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source maxConcurrency, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runnerId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source startedAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source transports, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source address = default)
+    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source hostedVersions, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastSeenAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source maxConcurrency, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runnerId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source startedAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source transports, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source address = default)
     {
-        return new Source(hostedVersions, lastSeenAt, maxConcurrency, runnerId, startedAt, transports, address);
+        return new Source(environment, hostedVersions, lastSeenAt, maxConcurrency, runnerId, startedAt, transports, address);
     }
 
     /// <summary>
@@ -1718,6 +1786,7 @@ public readonly partial struct Runner
     /// </summary>
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="context">The context to pass to the builder.</param>
+    /// <param name="environment">The value of the <c>"environment"</c> property.</param>
     /// <param name="hostedVersions">The value of the <c>"hostedVersions"</c> property.</param>
     /// <param name="lastSeenAt">The value of the <c>"lastSeenAt"</c> property.</param>
     /// <param name="maxConcurrency">The value of the <c>"maxConcurrency"</c> property.</param>
@@ -1726,12 +1795,12 @@ public readonly partial struct Runner
     /// <param name="transports">The value of the <c>"transports"</c> property.</param>
     /// <param name="address">The value of the <c>"address"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source<TContext> hostedVersions, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastSeenAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source maxConcurrency, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runnerId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source startedAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source<TContext> transports, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source address = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source<TContext> hostedVersions, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastSeenAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source maxConcurrency, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runnerId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source startedAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source<TContext> transports, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source address = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
     {
-        return new Source<TContext>(context, hostedVersions, lastSeenAt, maxConcurrency, runnerId, startedAt, transports, address);
+        return new Source<TContext>(context, environment, hostedVersions, lastSeenAt, maxConcurrency, runnerId, startedAt, transports, address);
     }
 
     /// <summary>
@@ -1827,6 +1896,7 @@ public readonly partial struct Runner
     /// Creates and initializes a mutable document from the given property values.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
+    /// <param name="environment">The value of the property.</param>
     /// <param name="hostedVersions">The value of the property.</param>
     /// <param name="lastSeenAt">The value of the property.</param>
     /// <param name="maxConcurrency">The value of the property.</param>
@@ -1836,13 +1906,13 @@ public readonly partial struct Runner
     /// <param name="address">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source hostedVersions, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastSeenAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source maxConcurrency, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runnerId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source startedAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source transports, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source address = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source hostedVersions, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastSeenAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source maxConcurrency, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runnerId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source startedAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source transports, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source address = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(hostedVersions, lastSeenAt, maxConcurrency, runnerId, startedAt, transports, address);
+        ovb.Create(environment, hostedVersions, lastSeenAt, maxConcurrency, runnerId, startedAt, transports, address);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1855,6 +1925,7 @@ public readonly partial struct Runner
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="context">The value of the property.</param>
+    /// <param name="environment">The value of the property.</param>
     /// <param name="hostedVersions">The value of the property.</param>
     /// <param name="lastSeenAt">The value of the property.</param>
     /// <param name="maxConcurrency">The value of the property.</param>
@@ -1864,7 +1935,7 @@ public readonly partial struct Runner
     /// <param name="address">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source<TContext> hostedVersions, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastSeenAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source maxConcurrency, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runnerId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source startedAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source<TContext> transports, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source address = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.RunnerHostedVersionArray.Source<TContext> hostedVersions, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source lastSeenAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt32.Source maxConcurrency, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source runnerId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source startedAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Runner.JsonStringArray.Source<TContext> transports, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source address = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1873,7 +1944,7 @@ public readonly partial struct Runner
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, hostedVersions, lastSeenAt, maxConcurrency, runnerId, startedAt, transports, address);
+        ovb.Create(context, environment, hostedVersions, lastSeenAt, maxConcurrency, runnerId, startedAt, transports, address);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

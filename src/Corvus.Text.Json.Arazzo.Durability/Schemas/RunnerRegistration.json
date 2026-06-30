@@ -3,11 +3,15 @@
   "title": "RunnerRegistration",
   "description": "A registration record for a workflow runner process: its identity, liveness timestamps, capacity, supported transports, and the catalog versions it currently hosts.",
   "type": "object",
-  "required": ["runnerId", "startedAt", "lastSeenAt", "maxConcurrency", "transports", "hostedVersions"],
+  "required": ["runnerId", "environment", "startedAt", "lastSeenAt", "maxConcurrency", "transports", "hostedVersions"],
   "properties": {
     "runnerId": {
       "type": "string",
       "description": "The stable identifier of the runner process."
+    },
+    "environment": {
+      "type": "string",
+      "description": "The single deployment environment this runner serves (design §5.5). Its sources, credentials, and network reach are this environment's; the runner is dispatchable only for runs targeting it, and inherits its reach (§14.2). A host serving several environments runs one runner process per environment."
     },
     "address": {
       "type": "string",

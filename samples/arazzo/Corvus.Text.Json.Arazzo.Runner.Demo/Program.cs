@@ -34,7 +34,10 @@ SqliteRunnerRegistry registry = await SqliteRunnerRegistry.ConnectAsync(connecti
 SqliteSourceCredentialStore credentials = await SqliteSourceCredentialStore.ConnectAsync(connectionString);
 var catalog = new SecuredWorkflowCatalog(catalogStore, stateStore, "runner");
 
-var options = new RunnerOptions($"runner-{Environment.MachineName}-{Environment.ProcessId}");
+// The single environment this runner serves (design §5.5). Configurable so one host image can be deployed per
+// environment; the demo defaults to production. The runner is only dispatchable for runs targeting it.
+string runnerEnvironment = builder.Configuration["Runner:Environment"] ?? "production";
+var options = new RunnerOptions($"runner-{Environment.MachineName}-{Environment.ProcessId}", runnerEnvironment);
 
 builder.Services.AddSingleton(options);
 builder.Services.AddSingleton<IWorkflowStateStore>(stateStore);

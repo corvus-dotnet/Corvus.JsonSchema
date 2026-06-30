@@ -239,7 +239,8 @@ public abstract class RunnerRegistryConformance
         int maxConcurrency = 4,
         string[]? transports = null,
         (string BaseId, int Version, string Hash, bool Loaded)[]? hosted = null,
-        string? address = null)
+        string? address = null,
+        string environment = "production")
     {
         string[] runnerTransports = transports ?? ["http"];
         (string BaseId, int Version, string Hash, bool Loaded)[] hostedVersions = hosted ?? [];
@@ -249,6 +250,7 @@ public abstract class RunnerRegistryConformance
         {
             writer.WriteStartObject();
             writer.WriteString("runnerId", runnerId);
+            writer.WriteString("environment", environment);
             if (address is not null)
             {
                 writer.WriteString("address", address);
