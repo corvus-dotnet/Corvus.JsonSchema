@@ -52,19 +52,8 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
     private static readonly IComparer<ParsedJsonDocument<EnvironmentRunnerAuthorization>> ByEnvironmentThenRunner =
         Comparer<ParsedJsonDocument<EnvironmentRunnerAuthorization>>.Create(static (a, b) =>
         {
-            // String-free ordinal compare over the JSON values' UTF-8 (a view for unescaped values, so no per-comparison
-            // string is realised); byte order also matches the SQL backends' COLLATE "C"/binary ordering.
-            using UnescapedUtf8JsonString ae = a.RootElement.Environment.GetUtf8String();
-            using UnescapedUtf8JsonString be = b.RootElement.Environment.GetUtf8String();
-            int c = ae.Span.SequenceCompareTo(be.Span);
-            if (c != 0)
-            {
-                return c;
-            }
-
-            using UnescapedUtf8JsonString ar = a.RootElement.RunnerId.GetUtf8String();
-            using UnescapedUtf8JsonString br = b.RootElement.RunnerId.GetUtf8String();
-            return ar.Span.SequenceCompareTo(br.Span);
+            int c = string.CompareOrdinal(a.RootElement.EnvironmentValue, b.RootElement.EnvironmentValue);
+            return c != 0 ? c : string.CompareOrdinal(a.RootElement.RunnerIdValue, b.RootElement.RunnerIdValue);
         });
 
     private readonly IConnectionMultiplexer connection;
@@ -157,6 +146,7 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
     public async ValueTask<PooledDocumentList<EnvironmentRunnerAuthorization>> ListAsync(RunnerAuthorizationQuery query, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        string? wireStatus = query.Status is { } status ? RunnerAuthorizationStatusNames.ToWire(status) : null;
         var list = new PooledDocumentList<EnvironmentRunnerAuthorization>();
         try
         {
@@ -176,7 +166,7 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
                 }
 
                 ParsedJsonDocument<EnvironmentRunnerAuthorization> document = PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(lease.Span);
-                if (Matches(document.RootElement, query))
+                if (Matches(document.RootElement, query, wireStatus))
                 {
                     list.Add(document);
                 }
@@ -201,6 +191,7 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
     {
         cancellationToken.ThrowIfCancellationRequested();
         int pageSize = limit > 0 ? limit : EnvironmentRunnerAuthorizationPage.DefaultPageSize;
+        string? wireStatus = query.Status is { } status ? RunnerAuthorizationStatusNames.ToWire(status) : null;
 
         // Decode the keyset cursor to the index member the previous page ended at ("{environment}\0{runnerId}"); the parts
         // reify to a string only here (the leaf). Undefined token = first page; a malformed token throws FormatException.
@@ -251,7 +242,7 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
                 }
 
                 ParsedJsonDocument<EnvironmentRunnerAuthorization> document = PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(lease.Span);
-                if (!Matches(document.RootElement, query))
+                if (!Matches(document.RootElement, query, wireStatus))
                 {
                     document.Dispose();
                     continue;
@@ -349,20 +340,19 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
         return true;
     }
 
-    private static bool Matches(in EnvironmentRunnerAuthorization authorization, RunnerAuthorizationQuery query)
+    private static bool Matches(in EnvironmentRunnerAuthorization authorization, RunnerAuthorizationQuery query, string? wireStatus)
     {
-        // Status + environment are compared string-free (no field is realised to a managed string per row).
-        if (query.Status is { } status && !authorization.HasStatus(status))
+        if (wireStatus is not null && !string.Equals(authorization.StatusValue, wireStatus, StringComparison.Ordinal))
         {
             return false;
         }
 
-        if (query.Environment is { } environment && !authorization.EnvironmentEquals(environment))
+        if (query.Environment is { } environment && !string.Equals(authorization.EnvironmentValue, environment, StringComparison.Ordinal))
         {
             return false;
         }
 
         // The approver inbox (§5.5/§7.8): the row's environment must be one the caller administers (server-derived set).
-        return query.MatchesAdministeredSet(authorization);
+        return query.MatchesAdministeredSet(authorization.EnvironmentValue);
     }
 }

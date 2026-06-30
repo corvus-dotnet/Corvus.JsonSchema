@@ -40,22 +40,7 @@ public sealed class NatsJetStreamEnvironmentRunnerAuthorizationStore : IEnvironm
     // this comparer (mirroring the SQLite ORDER BY Environment, RunnerId).
     private static readonly IComparer<ParsedJsonDocument<EnvironmentRunnerAuthorization>> ByEnvironmentThenRunnerId =
         Comparer<ParsedJsonDocument<EnvironmentRunnerAuthorization>>.Create(static (a, b) =>
-        {
-            // String-free ordinal compare over the JSON values' UTF-8 (a view for unescaped values, so no per-comparison
-            // string is realised); byte order also matches the SQL backends' COLLATE "C"/binary ordering. (The string
-            // Compare helper below is retained for the keyset paths, which already hold the parts as strings from the key.)
-            using UnescapedUtf8JsonString ae = a.RootElement.Environment.GetUtf8String();
-            using UnescapedUtf8JsonString be = b.RootElement.Environment.GetUtf8String();
-            int c = ae.Span.SequenceCompareTo(be.Span);
-            if (c != 0)
-            {
-                return c;
-            }
-
-            using UnescapedUtf8JsonString ar = a.RootElement.RunnerId.GetUtf8String();
-            using UnescapedUtf8JsonString br = b.RootElement.RunnerId.GetUtf8String();
-            return ar.Span.SequenceCompareTo(br.Span);
-        });
+            Compare(a.RootElement.EnvironmentValue, a.RootElement.RunnerIdValue, b.RootElement.EnvironmentValue, b.RootElement.RunnerIdValue));
 
     private readonly NatsConnection? ownedConnection;
     private readonly INatsKVStore store;
@@ -161,6 +146,7 @@ public sealed class NatsJetStreamEnvironmentRunnerAuthorizationStore : IEnvironm
     /// <inheritdoc/>
     public async ValueTask<PooledDocumentList<EnvironmentRunnerAuthorization>> ListAsync(RunnerAuthorizationQuery query, CancellationToken cancellationToken)
     {
+        string? status = query.Status is { } s ? RunnerAuthorizationStatusNames.ToWire(s) : null;
         var list = new PooledDocumentList<EnvironmentRunnerAuthorization>();
         await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
@@ -176,7 +162,7 @@ public sealed class NatsJetStreamEnvironmentRunnerAuthorizationStore : IEnvironm
             }
 
             ParsedJsonDocument<EnvironmentRunnerAuthorization> document = ParsedJsonDocument<EnvironmentRunnerAuthorization>.Parse(bytes.AsMemory());
-            if (Matches(document.RootElement, query))
+            if (Matches(document.RootElement, status, query))
             {
                 list.Add(document);
             }
@@ -194,6 +180,7 @@ public sealed class NatsJetStreamEnvironmentRunnerAuthorizationStore : IEnvironm
     public async ValueTask<EnvironmentRunnerAuthorizationPage> ListAsync(RunnerAuthorizationQuery query, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         int pageSize = limit > 0 ? limit : EnvironmentRunnerAuthorizationPage.DefaultPageSize;
+        string? wireStatus = query.Status is { } s ? RunnerAuthorizationStatusNames.ToWire(s) : null;
 
         // Decode the keyset cursor; environment + runnerId reify to strings (the leaf) only here. Undefined token = first
         // page; a malformed token throws FormatException.
@@ -248,7 +235,7 @@ public sealed class NatsJetStreamEnvironmentRunnerAuthorizationStore : IEnvironm
                 }
 
                 ParsedJsonDocument<EnvironmentRunnerAuthorization> document = ParsedJsonDocument<EnvironmentRunnerAuthorization>.Parse(bytes.AsMemory());
-                if (!Matches(document.RootElement, query))
+                if (!Matches(document.RootElement, wireStatus, query))
                 {
                     document.Dispose();
                     continue;
@@ -367,22 +354,21 @@ public sealed class NatsJetStreamEnvironmentRunnerAuthorizationStore : IEnvironm
         }
     }
 
-    // The list filter: each absent criterion matches anything, mirroring the SQLite WHERE clause. Status + environment are
-    // compared string-free (no field is realised to a managed string per row).
-    private static bool Matches(in EnvironmentRunnerAuthorization authorization, RunnerAuthorizationQuery query)
+    // The list filter: each absent criterion matches anything, mirroring the SQLite WHERE clause.
+    private static bool Matches(EnvironmentRunnerAuthorization authorization, string? status, RunnerAuthorizationQuery query)
     {
-        if (query.Status is { } status && !authorization.HasStatus(status))
+        if (status is not null && !string.Equals(authorization.StatusValue, status, StringComparison.Ordinal))
         {
             return false;
         }
 
-        if (query.Environment is { } environment && !authorization.EnvironmentEquals(environment))
+        if (query.Environment is { } environment && !string.Equals(authorization.EnvironmentValue, environment, StringComparison.Ordinal))
         {
             return false;
         }
 
         // The approver inbox (§5.5/§7.8): the authorization's environment must be one the caller administers (server-derived set).
-        return query.MatchesAdministeredSet(authorization);
+        return query.MatchesAdministeredSet(authorization.EnvironmentValue);
     }
 
     private async ValueTask<NatsKVEntry<byte[]>?> TryGetAsync(string key, CancellationToken cancellationToken)
