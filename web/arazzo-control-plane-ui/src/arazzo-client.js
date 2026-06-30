@@ -232,6 +232,95 @@ export class ArazzoControlPlaneClient {
     } while (pageToken);
   }
 
+  // ---- runner authorizations (which runners may serve an environment, §5.5) ----------------------
+
+  /**
+   * `listEnvironmentRunnerAuthorizations` — one environment's runner roster: every runner that has registered for it,
+   * with its authorization state, ordered by `runnerId`. Only a current administrator of the environment may list it
+   * (`403`); an unknown/out-of-reach environment is `404`. Optionally filtered by `status` (`Pending`/`Authorized`/
+   * `Revoked`); `limit`/`pageToken` page. Each item is an {@link EnvironmentRunnerAuthorizationView}
+   * (`{ environment, runnerId, status, reason?, createdBy, createdAt, decidedBy?, decidedAt?, etag }`).
+   * @param {string} name The environment.
+   * @param {{ status?: string, limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ authorizations: object[], nextPageToken: (string|null) }>} An {@link EnvironmentRunnerAuthorizationList}.
+   */
+  async listEnvironmentRunnerAuthorizations(name, query = {}) {
+    if (!name) throw new TypeError('listEnvironmentRunnerAuthorizations requires a name.');
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const result = await this._request('GET', `${this._environmentPath(name)}/runners${qs(search)}`, { signal: query.signal });
+    return { authorizations: result.authorizations ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `listRunnerAuthorizations` — the approver inbox: runner authorizations across the environments the caller
+   * administers, defaulting to `Pending` (the actionable to-do) when no `status` is given. With `environment`, that one
+   * environment's queue (the caller must administer it, `403` otherwise). `limit`/`pageToken` page (keyset, status
+   * filtered server-side).
+   * @param {{ status?: string, environment?: string, limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @returns {Promise<{ authorizations: object[], nextPageToken: (string|null) }>} An {@link EnvironmentRunnerAuthorizationList}.
+   */
+  async listRunnerAuthorizations(query = {}) {
+    const search = new URLSearchParams();
+    if (query.status) search.set('status', query.status);
+    if (query.environment) search.set('environment', query.environment);
+    if (query.limit != null) search.set('limit', String(query.limit));
+    if (query.pageToken) search.set('pageToken', query.pageToken);
+    const result = await this._request('GET', `/runnerAuthorizations${qs(search)}`, { signal: query.signal });
+    return { authorizations: result.authorizations ?? [], nextPageToken: result.nextPageToken ?? null };
+  }
+
+  /**
+   * `listRunnerAuthorizations`, as an async iterator that walks every page via the keyset `nextPageToken`.
+   * @param {{ status?: string, environment?: string, limit?: number, signal?: AbortSignal }} [query]
+   * @returns {AsyncGenerator<{ authorizations: object[], nextPageToken: (string|null) }>}
+   */
+  async *listRunnerAuthorizationsPaged(query = {}) {
+    let pageToken;
+    do {
+      const page = await this.listRunnerAuthorizations({ ...query, pageToken });
+      yield page;
+      pageToken = page.nextPageToken || undefined;
+    } while (pageToken);
+  }
+
+  /**
+   * `authorizeRunner` — authorize a runner to serve an environment (idempotent; an already-authorized runner is returned
+   * unchanged). The caller must be an administrator of the environment (`403`); the runner must have registered for it
+   * (`404`); a concurrent decision is `409`.
+   * @param {string} name The environment.
+   * @param {string} runnerId The runner.
+   * @param {{ reason?: string }} [note]
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link EnvironmentRunnerAuthorizationView}. Throws {@link ProblemError} `403`/`404`/`409`.
+   */
+  authorizeRunner(name, runnerId, note = {}, opts = {}) {
+    if (!name || !runnerId) throw new TypeError('authorizeRunner requires a name and runnerId.');
+    return this._request('POST', `${this._runnerAuthorizationPath(name, runnerId)}`, { body: decisionNote(note), signal: opts.signal });
+  }
+
+  /**
+   * `revokeRunner` — revoke a runner's authorization to serve an environment (unconditional and idempotent; an
+   * already-revoked runner is returned unchanged). The caller must be an administrator of the environment (`403`); the
+   * runner must have registered for it (`404`).
+   * @param {string} name The environment.
+   * @param {string} runnerId The runner.
+   * @param {{ reason?: string }} [note]
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<object>} The updated {@link EnvironmentRunnerAuthorizationView}. Throws {@link ProblemError} `403`/`404`.
+   */
+  revokeRunner(name, runnerId, note = {}, opts = {}) {
+    if (!name || !runnerId) throw new TypeError('revokeRunner requires a name and runnerId.');
+    return this._request('DELETE', `${this._runnerAuthorizationPath(name, runnerId)}`, { body: decisionNote(note), signal: opts.signal });
+  }
+
+  /** @private */
+  _runnerAuthorizationPath(name, runnerId) {
+    return `${this._environmentPath(name)}/runners/${encodeURIComponent(runnerId)}/authorization`;
+  }
+
   // ---- catalog:read -----------------------------------------------------------------------------
 
   /**

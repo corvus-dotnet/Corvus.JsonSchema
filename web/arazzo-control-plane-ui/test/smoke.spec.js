@@ -282,3 +282,23 @@ test('the Promotions tab shows the requester’s own promotion requests and the 
 
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
+
+test('the Runner auth tab opens the approver inbox of runners awaiting authorization (§5.5)', async ({ page }) => {
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', (e) => errors.push(String(e)));
+
+  await page.goto('/demo/index.html');
+  await page.getByRole('tab', { name: 'Runner auth' }).click();
+
+  const inbox = page.locator('arazzo-runner-authorizations');
+  await expect(inbox).toBeVisible();
+
+  // The inbox opens to the Pending runners across the environments the demo user administers; each offers Authorize/Revoke.
+  const rows = inbox.locator('tbody tr[data-key]');
+  await expect(rows.first()).toBeVisible();
+  await expect(inbox.locator('.act[data-action="authorize"]').first()).toBeVisible();
+  await expect(inbox.locator('.act[data-action="revoke"]').first()).toBeVisible();
+
+  expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
+});

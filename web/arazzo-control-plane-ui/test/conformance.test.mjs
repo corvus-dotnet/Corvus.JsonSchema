@@ -449,3 +449,40 @@ test('access requests: each client method emits the contract method + templated 
     assert.ok(OPS.listAccessRequests.queryParams.has(key), `query param '${key}' is declared`);
   }
 });
+
+test('the contract declares the runner-authorization operations', () => {
+  for (const id of ['listEnvironmentRunnerAuthorizations', 'authorizeRunner', 'revokeRunner', 'listRunnerAuthorizations']) {
+    assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);
+  }
+});
+
+test('runner authorizations: each client method emits the contract method + templated path + body + declared query params', async () => {
+  const { client, calls } = capturing();
+
+  // The per-environment roster.
+  await client.listEnvironmentRunnerAuthorizations('production', { status: 'Pending', limit: 10, pageToken: 'tok' });
+  assert.equal(calls[0].method, OPS.listEnvironmentRunnerAuthorizations.method);
+  assert.equal(calls[0].path, OPS.listEnvironmentRunnerAuthorizations.path.replace('{name}', 'production'));
+  for (const key of calls[0].query.keys()) {
+    assert.ok(OPS.listEnvironmentRunnerAuthorizations.queryParams.has(key), `roster query param '${key}' is declared in the contract`);
+  }
+
+  // Authorize / revoke key on (environment, runnerId) and carry the optional decision note.
+  await client.authorizeRunner('production', 'runner-us-1', { reason: 'vetted' });
+  assert.equal(calls[1].method, OPS.authorizeRunner.method);
+  assert.equal(calls[1].path, OPS.authorizeRunner.path.replace('{name}', 'production').replace('{runnerId}', 'runner-us-1'));
+  assert.equal(calls[1].body.reason, 'vetted');
+
+  await client.revokeRunner('production', 'runner-us-1', { reason: 'rotated' });
+  assert.equal(calls[2].method, OPS.revokeRunner.method);
+  assert.equal(calls[2].path, OPS.revokeRunner.path.replace('{name}', 'production').replace('{runnerId}', 'runner-us-1'));
+  assert.equal(calls[2].body.reason, 'rotated');
+
+  // The approver inbox: every administered environment's authorizations, optionally narrowed to one.
+  await client.listRunnerAuthorizations({ status: 'Pending', environment: 'production', limit: 10, pageToken: 'tok' });
+  assert.equal(calls[3].method, OPS.listRunnerAuthorizations.method);
+  assert.equal(calls[3].path, OPS.listRunnerAuthorizations.path);
+  for (const key of calls[3].query.keys()) {
+    assert.ok(OPS.listRunnerAuthorizations.queryParams.has(key), `inbox query param '${key}' is declared in the contract`);
+  }
+});

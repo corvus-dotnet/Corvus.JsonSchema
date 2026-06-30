@@ -841,6 +841,24 @@ function seedRunners() {
   ];
 }
 
+// The §5.5 runner-authorization roster: which runners may serve an environment. A runner enters Pending on registration
+// (it cannot self-assert into an environment — receiving its runs means receiving its credentials) and is dispatchable
+// only once an administrator of that environment authorizes it; authorization is revocable. Keyed by (environment,
+// runnerId), this lines up with the seeded runner fleet so the approver inbox and per-environment roster show real
+// hosts. The demo user administers both environments, so the Pending rows surface as the actionable inbox to-do.
+function seedRunnerAuthorizations() {
+  const hr = 60 * 60 * 1000;
+  const a = (environment, runnerId, status, createdAgoHr, extra = {}) => ({
+    environment, runnerId, status, createdBy: runnerId, createdAt: iso(-createdAgoHr * hr), etag: nextEtag(), ...extra,
+  });
+  return [
+    a('production', 'runner-eu-1', 'Authorized', 30, { decidedBy: 'boss', decidedAt: iso(-29 * hr), reason: 'Vetted EU production host.' }),
+    a('production', 'runner-us-1', 'Pending', 2),
+    a('staging', 'runner-eu-2', 'Pending', 5),
+    a('production', 'runner-eu-old', 'Revoked', 200, { decidedBy: 'boss', decidedAt: iso(-50 * hr), reason: 'Decommissioned host.' }),
+  ];
+}
+
 // Demo personas — the same user under different privilege, so the **gated-elevation** model is demonstrable end-to-end
 // against the real UI components. The mock is otherwise identity-less; a persona supplies the caller's capability
 // `scopes` (what the components gate their write controls on, and what the mock enforces server-side) and whether the
@@ -868,6 +886,7 @@ export const DEMO_PERSONAS = {
 export function createMockControlPlane(options = {}) {
   const runs = options.seed ? structuredClone(options.seed) : seedRuns();
   const runners = options.runnersSeed ? structuredClone(options.runnersSeed) : seedRunners();
+  const runnerAuthorizations = options.runnerAuthorizationsSeed ? structuredClone(options.runnerAuthorizationsSeed) : seedRunnerAuthorizations();
   const catalog = options.catalogSeed ? structuredClone(options.catalogSeed) : seedCatalog();
   const credentials = options.credentialsSeed ? structuredClone(options.credentialsSeed) : seedCredentials();
   const environments = options.environmentsSeed ? structuredClone(options.environmentsSeed) : seedEnvironments();
@@ -939,6 +958,58 @@ export function createMockControlPlane(options = {}) {
     return json({ runners: pageItems, nextPageToken });
   }
 
+  // The §5.5 runner-authorization approver inbox: GET /runnerAuthorizations — every authorization across the environments
+  // the caller administers, defaulting to Pending (the actionable to-do); with `environment`, that one environment's queue
+  // (visible only to an administrator of it). Keyset paged over (environment, runnerId), the order the durable store uses.
+  function handleRunnerAuthorizations(fullPath, method, params) {
+    const idx = fullPath.indexOf('/runnerAuthorizations');
+    if (idx < 0) return null;
+    const path = fullPath.slice(idx);
+    if (!/^\/runnerAuthorizations\/?$/.test(path)) return null;
+    if (method !== 'GET') return problem(405, 'Method not allowed');
+    const status = params.get('status') || 'Pending';
+    const environment = params.get('environment');
+    let rows = runnerAuthorizations.filter((r) => r.status === status);
+    if (environment) {
+      // A single environment's queue — visible only to an administrator of it (a non-administrator sees an empty queue).
+      rows = persona.administers ? rows.filter((r) => r.environment === environment) : [];
+    } else if (!persona.administers) {
+      // The approver inbox: empty for a caller who administers nothing.
+      rows = [];
+    }
+    return pageRunnerAuths(rows, params);
+  }
+
+  // Keyset pagination over (environment, runnerId), the same contract the durable store implements: order, seek strictly
+  // past the opaque token, take `limit`, emit a nextPageToken.
+  function pageRunnerAuths(rows, params) {
+    const limit = Math.max(1, Math.min(Number(params.get('limit')) || 50, 200));
+    const sorted = [...rows].sort((a, b) => a.environment.localeCompare(b.environment) || a.runnerId.localeCompare(b.runnerId));
+    const tok = params.get('pageToken') ? atobSafe(params.get('pageToken')).split(' ') : null;
+    const start = tok ? sorted.findIndex((r) => r.environment > tok[0] || (r.environment === tok[0] && r.runnerId > tok[1])) : 0;
+    const from = start < 0 ? sorted.length : start;
+    const pageItems = sorted.slice(from, from + limit).map((x) => structuredClone(x));
+    const more = from + limit < sorted.length;
+    const last = pageItems[pageItems.length - 1];
+    const nextPageToken = more && last ? btoaSafe(`${last.environment} ${last.runnerId}`) : null;
+    return json({ authorizations: pageItems, nextPageToken });
+  }
+
+  // Apply an authorize (POST) or revoke (DELETE) decision to a runner's authorization for an environment. Idempotent —
+  // deciding to the state it is already in returns it unchanged; an absent (environment, runnerId) is 404 (the runner
+  // never registered for it). The caller's administrator gate is checked by the route before this is reached.
+  function decideRunnerAuthorization(environment, runnerId, target, body) {
+    const r = runnerAuthorizations.find((x) => x.environment === environment && x.runnerId === runnerId);
+    if (!r) return problem(404, 'Runner authorization not found', `No runner '${runnerId}' has registered for environment '${environment}'.`);
+    if (r.status === target) return json(structuredClone(r));
+    r.status = target;
+    r.decidedBy = 'boss';
+    r.decidedAt = iso(0);
+    if (body?.reason) r.reason = body.reason;
+    r.etag = nextEtag();
+    return json(structuredClone(r));
+  }
+
   async function handle(url, init = {}) {
     const method = (init.method || 'GET').toUpperCase();
     const u = new URL(url, 'https://mock');
@@ -989,6 +1060,9 @@ export function createMockControlPlane(options = {}) {
 
     const securityRulesResponse = handleSecurityRules(path, method, u.searchParams, body);
     if (securityRulesResponse) return securityRulesResponse;
+
+    const runnerAuthorizationsResponse = handleRunnerAuthorizations(path, method, u.searchParams);
+    if (runnerAuthorizationsResponse) return runnerAuthorizationsResponse;
 
     const runnersResponse = handleRunners(path, method, u.searchParams);
     if (runnersResponse) return runnersResponse;
@@ -1794,6 +1868,33 @@ export function createMockControlPlane(options = {}) {
       return listEnvironmentAvailabilityPage(name, params);
     }
 
+    // /environments/{name}/runners/{runnerId}/authorization — authorize (POST) / revoke (DELETE) a runner (§5.5). Matched
+    // here (before the top-level /runners handler) so the env prefix wins; env-admin governed (404 unknown, 403 non-admin).
+    const runnerAuthMatch = path.match(/^\/environments\/([^/]+)\/runners\/([^/]+)\/authorization$/);
+    if (runnerAuthMatch) {
+      const name = decodeURIComponent(runnerAuthMatch[1]);
+      const runnerId = decodeURIComponent(runnerAuthMatch[2]);
+      if (!findEnvironment(name)) return notFoundEnvironment(name);
+      const denied = requireAdministrator(`${method === 'DELETE' ? 'revoke' : 'authorize'} a runner for an environment`);
+      if (denied) return denied;
+      if (method === 'POST') return decideRunnerAuthorization(name, runnerId, 'Authorized', body);
+      if (method === 'DELETE') return decideRunnerAuthorization(name, runnerId, 'Revoked', body);
+      return problem(405, 'Method not allowed');
+    }
+    // /environments/{name}/runners — that environment's runner roster (all statuses unless filtered; env-admin governed).
+    const runnerRosterMatch = path.match(/^\/environments\/([^/]+)\/runners\/?$/);
+    if (runnerRosterMatch) {
+      const name = decodeURIComponent(runnerRosterMatch[1]);
+      if (method !== 'GET') return problem(405, 'Method not allowed');
+      if (!findEnvironment(name)) return notFoundEnvironment(name);
+      const denied = requireAdministrator('list the runner authorizations of an environment');
+      if (denied) return denied;
+      const status = params.get('status');
+      let rows = runnerAuthorizations.filter((r) => r.environment === name);
+      if (status) rows = rows.filter((r) => r.status === status);
+      return pageRunnerAuths(rows, params);
+    }
+
     // /environments/{name} — single environment read/update/delete.
     const oneMatch = path.match(/^\/environments\/([^/]+)\/?$/);
     if (oneMatch) {
@@ -2163,6 +2264,7 @@ export function createMockControlPlane(options = {}) {
     availabilityRequests,
     availabilityEntries,
     runners,
+    runnerAuthorizations,
     // Switch the acting persona (capability scopes + whether the caller administers governance targets) so the demo can
     // show the gated-elevation model from both sides. Defaults to 'administrator'.
     setPersona: (name) => { persona = personaState(name); return persona.name; },
