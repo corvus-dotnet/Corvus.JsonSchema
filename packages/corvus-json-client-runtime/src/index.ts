@@ -33,6 +33,13 @@ export type {
   FormPropertyEncoding,
   FormEncodings,
 } from "./serializers/form-urlencoded.js";
+export {
+  parseHeaderString,
+  parseHeaderNumber,
+  parseHeaderBoolean,
+  parseHeaderArray,
+  parseHeaderObject,
+} from "./serializers/header.js";
 export { multipartFormData, multipartMixed } from "./serializers/multipart.js";
 export type {
   MultipartBinaryPart,

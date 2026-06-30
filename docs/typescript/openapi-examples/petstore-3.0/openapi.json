@@ -468,6 +468,47 @@
           }
         }
       }
+    },
+    "/limits": {
+      "get": {
+        "operationId": "limits",
+        "summary": "Returns rate-limit metadata in response headers.",
+        "tags": [
+          "status"
+        ],
+        "responses": {
+          "200": {
+            "description": "The current limits.",
+            "headers": {
+              "X-Rate-Limit": {
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Tags": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pet"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

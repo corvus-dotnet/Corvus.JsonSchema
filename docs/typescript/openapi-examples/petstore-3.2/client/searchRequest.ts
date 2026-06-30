@@ -4,7 +4,7 @@
 import { OperationMethod, ValidationMode } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
 import type { ApiRequest, ByteWriter, HeaderSink } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
 import { writePathParam, writeQueryParam, writeHeaderParam, writeCookieParam } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
-import { Schema10, Schema11, Schema12, Schema13, Schema14, Schema15, Schema8, Schema9 } from "./models/generated.js";
+import { Schema11, Schema12, Schema13, Schema14, Schema15, Schema16, Schema17, Schema18 } from "./models/generated.js";
 
 /**
  * Parameters for the Search operation.
@@ -100,28 +100,28 @@ export function searchRequest(params: SearchParams): ApiRequest {
       if (mode === ValidationMode.None) {
         return;
       }
-      if (!Schema8.evaluate(params.scope)) {
+      if (!Schema11.evaluate(params.scope)) {
         throw new Error("Search parameter 'scope' failed schema validation.");
       }
-      if (params.tags !== undefined && !Schema9.evaluate(params.tags)) {
+      if (params.tags !== undefined && !Schema12.evaluate(params.tags)) {
         throw new Error("Search parameter 'tags' failed schema validation.");
       }
-      if (params.codes !== undefined && !Schema10.evaluate(params.codes)) {
+      if (params.codes !== undefined && !Schema13.evaluate(params.codes)) {
         throw new Error("Search parameter 'codes' failed schema validation.");
       }
-      if (params.filter !== undefined && !Schema11.evaluate(params.filter)) {
+      if (params.filter !== undefined && !Schema14.evaluate(params.filter)) {
         throw new Error("Search parameter 'filter' failed schema validation.");
       }
-      if (params.fields !== undefined && !Schema12.evaluate(params.fields)) {
+      if (params.fields !== undefined && !Schema15.evaluate(params.fields)) {
         throw new Error("Search parameter 'fields' failed schema validation.");
       }
-      if (params.opts !== undefined && !Schema13.evaluate(params.opts)) {
+      if (params.opts !== undefined && !Schema16.evaluate(params.opts)) {
         throw new Error("Search parameter 'opts' failed schema validation.");
       }
-      if (params.session !== undefined && !Schema14.evaluate(params.session)) {
+      if (params.session !== undefined && !Schema17.evaluate(params.session)) {
         throw new Error("Search parameter 'session' failed schema validation.");
       }
-      if (params.xTags !== undefined && !Schema15.evaluate(params.xTags)) {
+      if (params.xTags !== undefined && !Schema18.evaluate(params.xTags)) {
         throw new Error("Search parameter 'X-Tags' failed schema validation.");
       }
     },

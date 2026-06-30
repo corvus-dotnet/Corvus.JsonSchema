@@ -990,12 +990,27 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             }
         }
 
+        // Distinct typed response headers (deduped by getter name across all responses).
+        List<HeaderInfo> headers = DistinctResponseHeaders(responses);
+        bool hasHeaders = headers.Count > 0;
+        List<string> headerParseFns = ResponseHeaderParseFns(headers);
+
         EmitHeader(w);
         w.WriteLine(
             "import { ValidationMode } from " +
             $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
+        if (headerParseFns.Count > 0)
+        {
+            w.WriteLine(
+                $"import {{ {string.Join(", ", headerParseFns)} }} from " +
+                $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
+        }
+
+        string responseTypeImports = hasHeaders
+            ? "ApiResponse, ResponseContext, ResponseFactory, ResponseHeaders"
+            : "ApiResponse, ResponseContext, ResponseFactory";
         w.WriteLine(
-            "import type { ApiResponse, ResponseContext, ResponseFactory } from " +
+            $"import type {{ {responseTypeImports} }} from " +
             $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
 
         modelTypes.Remove("unknown");
@@ -1017,12 +1032,25 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
         w.WriteLine("readonly statusCode: number;");
         w.WriteLine("private readonly bytes: Uint8Array | null;");
+        if (hasHeaders)
+        {
+            w.WriteLine("private readonly headers: ResponseHeaders;");
+        }
+
         w.WriteLine();
 
-        w.WriteLine("private constructor(statusCode: number, bytes: Uint8Array | null) {");
+        string ctorParams = hasHeaders
+            ? "statusCode: number, bytes: Uint8Array | null, headers: ResponseHeaders"
+            : "statusCode: number, bytes: Uint8Array | null";
+        w.WriteLine($"private constructor({ctorParams}) {{");
         w.PushIndent();
         w.WriteLine("this.statusCode = statusCode;");
         w.WriteLine("this.bytes = bytes;");
+        if (hasHeaders)
+        {
+            w.WriteLine("this.headers = headers;");
+        }
+
         w.PopIndent();
         w.WriteLine("}");
         w.WriteLine();
@@ -1031,7 +1059,10 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.WriteLine("static async createFrom(context: ResponseContext): Promise<" + className + "> {");
         w.PushIndent();
         w.WriteLine("const bytes = context.body === null ? null : await readAllBytes(context.body);");
-        w.WriteLine($"return new {className}(context.statusCode, bytes);");
+        string ctorArgs = hasHeaders
+            ? "context.statusCode, bytes, context.headers"
+            : "context.statusCode, bytes";
+        w.WriteLine($"return new {className}({ctorArgs});");
         w.PopIndent();
         w.WriteLine("}");
         w.WriteLine();
@@ -1041,6 +1072,9 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.WriteLine("return this.statusCode >= 200 && this.statusCode < 300;");
         w.PopIndent();
         w.WriteLine("}");
+
+        // Typed per-header getters (lazy parse of the raw header string per the OpenAPI simple style).
+        EmitResponseHeaderGetters(w, headers);
 
         // Per-status typed accessors via the model companion `Type.parse`.
         foreach (ResponseInfo response in responses)
@@ -1211,6 +1245,127 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.WriteLine("}");
 
         return new GeneratedFile($"{className}.ts", w.ToString());
+    }
+
+    // The distinct response headers across all responses, deduped by getter name (first wins).
+    private static List<HeaderInfo> DistinctResponseHeaders(ResponseInfo[] responses)
+    {
+        List<HeaderInfo> result = [];
+        HashSet<string> seen = new(StringComparer.Ordinal);
+        foreach (ResponseInfo response in responses)
+        {
+            foreach (HeaderInfo header in response.Headers)
+            {
+                if (seen.Add(HeaderGetterName(header)))
+                {
+                    result.Add(header);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    // The getter name for a response header, e.g. "X-Rate-Limit" -> "xRateLimitHeader".
+    private static string HeaderGetterName(HeaderInfo header)
+        => CamelCase(CodeEmitHelpers.HeaderNameToPropertyName(header.HeaderName)) + "Header";
+
+    // The TypeScript type a header getter returns (schemaless -> raw string; arrays/objects/scalars
+    // per the serialization kind).
+    private static string HeaderTsType(HeaderInfo header)
+    {
+        if (header.SchemaPointer is null)
+        {
+            return "string";
+        }
+
+        return header.SerializationKind switch
+        {
+            ParameterSerializationKind.Array => $"{ScalarTsType(header.ElementSerializationKind)}[]",
+            ParameterSerializationKind.Object => "Record<string, string>",
+            _ => ScalarTsType(header.SerializationKind),
+        };
+    }
+
+    // The runtime element parse-function for a scalar kind (null for Array/Object aggregates).
+    private static string? ScalarHeaderParseFn(ParameterSerializationKind kind) => kind switch
+    {
+        ParameterSerializationKind.String => "parseHeaderString",
+        ParameterSerializationKind.Boolean => "parseHeaderBoolean",
+        ParameterSerializationKind.Object => null,
+        ParameterSerializationKind.Array => null,
+        _ => "parseHeaderNumber",
+    };
+
+    // The expression turning the raw header string `raw` into the typed value.
+    private static string HeaderParseExpr(HeaderInfo header)
+    {
+        if (header.SchemaPointer is null)
+        {
+            return "raw";
+        }
+
+        return header.SerializationKind switch
+        {
+            ParameterSerializationKind.Array =>
+                $"parseHeaderArray(raw, {ScalarHeaderParseFn(header.ElementSerializationKind) ?? "parseHeaderString"})",
+            ParameterSerializationKind.Object =>
+                $"parseHeaderObject(raw, {(header.Explode ? "true" : "false")})",
+            ParameterSerializationKind.String => "raw",
+            _ => $"{ScalarHeaderParseFn(header.SerializationKind)}(raw)",
+        };
+    }
+
+    // The distinct runtime parse functions these headers reference (the value import).
+    private static List<string> ResponseHeaderParseFns(List<HeaderInfo> headers)
+    {
+        SortedSet<string> fns = new(StringComparer.Ordinal);
+        foreach (HeaderInfo header in headers)
+        {
+            if (header.SchemaPointer is null)
+            {
+                continue;
+            }
+
+            switch (header.SerializationKind)
+            {
+                case ParameterSerializationKind.Array:
+                    fns.Add("parseHeaderArray");
+                    fns.Add(ScalarHeaderParseFn(header.ElementSerializationKind) ?? "parseHeaderString");
+                    break;
+                case ParameterSerializationKind.Object:
+                    fns.Add("parseHeaderObject");
+                    break;
+                case ParameterSerializationKind.String:
+                    break;
+                default:
+                    fns.Add(ScalarHeaderParseFn(header.SerializationKind)!);
+                    break;
+            }
+        }
+
+        return [.. fns];
+    }
+
+    private static void EmitResponseHeaderGetters(IndentedWriter w, List<HeaderInfo> headers)
+    {
+        foreach (HeaderInfo header in headers)
+        {
+            string getter = HeaderGetterName(header);
+            string tsType = HeaderTsType(header);
+            string parseExpr = HeaderParseExpr(header);
+
+            w.WriteLine();
+            w.WriteLine("/**");
+            w.WriteLine($" * The `{header.HeaderName}` response header, parsed; undefined when absent.");
+            w.WriteLine(" */");
+            w.WriteLine($"get {getter}(): {tsType} | undefined {{");
+            w.PushIndent();
+            w.WriteLine($"const raw = this.headers.tryGet({StringLiteral(header.HeaderName)});");
+            w.WriteLine($"return raw === undefined ? undefined : {parseExpr};");
+            w.PopIndent();
+            w.WriteLine("}");
+        }
     }
 
     private static void EmitMatch(IndentedWriter w, ResponseInfo[] responses, TypeScriptApiEmitter self)

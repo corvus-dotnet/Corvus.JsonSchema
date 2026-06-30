@@ -24,6 +24,8 @@ import { downloadRequest } from "./downloadRequest.js";
 import { DownloadResponse, downloadResponseFactory } from "./DownloadResponse.js";
 import { pingRequest } from "./pingRequest.js";
 import { PingResponse, pingResponseFactory } from "./PingResponse.js";
+import { limitsRequest } from "./limitsRequest.js";
+import { LimitsResponse, limitsResponseFactory } from "./LimitsResponse.js";
 import { PetUpdate, Schema2 } from "./models/generated.js";
 
 /**
@@ -116,6 +118,14 @@ export class ApiStatusClient implements IApiStatusClient {
   ping(signal?: AbortSignal): Promise<PingResponse> {
     const request = pingRequest;
     return this.transport.send(request, pingResponseFactory, undefined, signal);
+  }
+
+  /**
+   * Returns rate-limit metadata in response headers.
+   */
+  limits(signal?: AbortSignal): Promise<LimitsResponse> {
+    const request = limitsRequest;
+    return this.transport.send(request, limitsResponseFactory, undefined, signal);
   }
 
   async [Symbol.asyncDispose](): Promise<void> {

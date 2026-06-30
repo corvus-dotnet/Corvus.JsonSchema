@@ -88,11 +88,26 @@ class MockApiTransport {
         controller.close();
       },
     });
+    // Case-insensitive header lookup over the canned headers (mirrors a real ResponseHeaders).
+    const cannedHeaders = this.canned.headers ?? {};
+    const responseHeaders = {
+      tryGet(name) {
+        const lower = name.toLowerCase();
+        for (const key of Object.keys(cannedHeaders)) {
+          if (key.toLowerCase() === lower) {
+            return cannedHeaders[key];
+          }
+        }
+
+        return undefined;
+      },
+    };
+
     return factory.create({
       statusCode: this.canned.status,
       body: responseStream,
       contentType: this.canned.contentType,
-      headers: { tryGet: () => undefined },
+      headers: responseHeaders,
       transport: this,
     });
   }
@@ -384,5 +399,32 @@ for (const version of VERSIONS) {
       response.match({ ok: (body) => body.toUpperCase() }),
       "PONG",
     );
+  });
+
+  test(`${version}: limits exposes typed response headers`, async () => {
+    const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+    const transport = new MockApiTransport(ApiStatusClient.serverUri().toString().replace(/\/$/, ""), {
+      status: 200,
+      bytes: new TextEncoder().encode(JSON.stringify({ id: "p-1", name: "Rex", tag: "dog" })),
+      contentType: "application/json",
+      headers: {
+        "X-Rate-Limit": "100",
+        "X-Request-Id": "req-7",
+        "X-Tags": "a,b,c",
+      },
+    });
+    const client = new ApiStatusClient(transport);
+
+    const response = await client.limits();
+
+    assert.equal(transport.captured.method, "GET");
+    assert.equal(transport.captured.url, "https://api.example.com/v1/limits");
+    // Scalar integer header parses to a number; string header is verbatim; array header splits on comma.
+    assert.equal(response.xRateLimitHeader, 100);
+    assert.equal(response.xRequestIdHeader, "req-7");
+    assert.deepEqual(response.xTagsHeader, ["a", "b", "c"]);
+    // The body still decodes via the JSON model companion.
+    assert.deepEqual(response.tryGetOk(), { id: "p-1", name: "Rex", tag: "dog" });
   });
 }

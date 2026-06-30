@@ -13,6 +13,7 @@ import type { FormResponse } from "./FormResponse.js";
 import type { AvatarResponse } from "./AvatarResponse.js";
 import type { DownloadResponse } from "./DownloadResponse.js";
 import type { PingResponse } from "./PingResponse.js";
+import type { LimitsResponse } from "./LimitsResponse.js";
 import type { PetUpdate, Schema2 } from "./models/generated.js";
 
 /**
@@ -63,4 +64,9 @@ export interface IApiStatusClient extends AsyncDisposable {
    * Returns a plain-text body (text/plain response).
    */
   ping(signal?: AbortSignal): Promise<PingResponse>;
+
+  /**
+   * Returns rate-limit metadata in response headers.
+   */
+  limits(signal?: AbortSignal): Promise<LimitsResponse>;
 }
