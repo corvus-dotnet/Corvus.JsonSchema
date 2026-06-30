@@ -203,8 +203,9 @@ export class ArazzoControlPlaneClient {
 
   /**
    * `listRunners` — one page of the runner registry (§5.4): the execution hosts that have registered and heartbeat,
-   * ordered by `runnerId`. Each runner is `{ runnerId, address?, startedAt, lastSeenAt, maxConcurrency, transports[],
-   * hostedVersions: [{ baseWorkflowId, versionNumber, hash, loaded }] }`; `lastSeenAt` is the most recent heartbeat (a
+   * ordered by `runnerId`. Each runner is `{ runnerId, environment, address?, startedAt, lastSeenAt, maxConcurrency,
+   * transports[], hostedVersions: [{ baseWorkflowId, versionNumber, hash, loaded }] }`; `environment` is the single
+   * deployment environment the runner serves (§5.5); `lastSeenAt` is the most recent heartbeat (a
    * stale/dead runner is one whose heartbeat has lapsed). Read-only — runners self-register and heartbeat out of band.
    * @param {{ limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
    * @returns {Promise<{ runners: object[], nextPageToken: (string|null) }>} A {@link RunnerPage}.

@@ -765,13 +765,14 @@ public sealed class ControlPlaneServerTests
         await app.StopAsync();
     }
 
-    private static RunnerRegistration Runner(string baseWorkflowId, int versionNumber, string runnerId = "r1")
+    private static RunnerRegistration Runner(string baseWorkflowId, int versionNumber, string runnerId = "r1", string environment = "production")
     {
         var buffer = new System.Buffers.ArrayBufferWriter<byte>();
         using (var w = new Stj.Utf8JsonWriter(buffer))
         {
             w.WriteStartObject();
             w.WriteString("runnerId", runnerId);
+            w.WriteString("environment", environment);
             w.WriteString("startedAt", "2026-01-01T00:00:00.0000000+00:00");
             w.WriteString("lastSeenAt", "2026-01-01T00:00:00.0000000+00:00");
             w.WriteNumber("maxConcurrency", 4);

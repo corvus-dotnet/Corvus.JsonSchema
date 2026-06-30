@@ -3078,6 +3078,7 @@
         "description": "A workflow runner process registered with the control plane.",
         "properties": {
           "runnerId": { "type": "string", "description": "The stable identifier of the runner process." },
+          "environment": { "type": "string", "description": "The single deployment environment this runner serves (design §5.5); the runner is dispatchable only for runs targeting it and inherits its reach." },
           "address": { "type": "string", "description": "An optional address (for example a base URI) at which the runner can be reached." },
           "startedAt": { "type": "string", "format": "date-time", "description": "When the runner process started." },
           "lastSeenAt": { "type": "string", "format": "date-time", "description": "The instant of the runner's most recent heartbeat." },
@@ -3085,7 +3086,7 @@
           "transports": { "type": "array", "items": { "type": "string" }, "description": "The transport identifiers the runner supports." },
           "hostedVersions": { "type": "array", "items": { "$ref": "#/components/schemas/RunnerHostedVersion" }, "description": "The catalog versions the runner currently hosts." }
         },
-        "required": ["runnerId", "startedAt", "lastSeenAt", "maxConcurrency", "transports", "hostedVersions"]
+        "required": ["runnerId", "environment", "startedAt", "lastSeenAt", "maxConcurrency", "transports", "hostedVersions"]
       },
       "RunnerPage": {
         "type": "object",
