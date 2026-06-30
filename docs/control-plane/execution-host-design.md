@@ -354,6 +354,28 @@ isolation against it.
 - **Container/pod-per-run (e.g. a k8s Job).** Another point on the spectrum — coarser startup, strong isolation,
   familiar ops.
 
+**Warm capacity (cold-start avoidance).** A per-run backend need not pay a cold start every time — the runner is a
+*capacity manager*, not just a dispatcher: it can keep a **warm pool** of instances already running with the
+appropriate executor loaded, and assign an incoming run to a warm one. Two levels of warmth: *runtime-warm* (the
+host/runtime + runner shell are up; a run still loads the version's ALC on assignment) and *version-warm* (the
+version's executor is already loaded — instant). The §5.4 registry already models the version-warm signal:
+`RunnerHostedVersion.loaded` ("the runner has the version loaded and ready to execute"), so **dispatch (§7.1) can
+prefer a runner/instance that already has the run's version loaded** (`loaded: true`) — warm-pool routing falls
+out of the existing readiness gate; for pooled backends each warm instance is effectively a sub-runner with its
+own loaded-version set the runner aggregates. Some backends provide this natively (Lambda *provisioned
+concurrency* / SnapStart, Azure Functions *always-ready* instances); for container/guest pools the runner manages
+it explicitly. Keep-warm vs scale-to-zero is the cost ↔ latency dial and is **policy** (per environment/version):
+hot paths hold warm capacity for the appropriate versions; cold paths scale to zero and accept the cold start.
+
+*Isolation caveat for reuse.* Reusing a warm instance **across** runs is only safe where execution is stateless
+per run — which the executor already is: `RunAsync` scopes a fresh `JsonWorkspace` per run, loads inputs +
+checkpoint per run, and shares no mutable state between runs, so a warm in-process/container worker can serve many
+runs back-to-back. Where the *point* is per-run VM isolation (Hyperlight), a warm pool means **pre-spawned,
+single-use** guests (take one run, then recycle), or a **snapshot/restore** start (resume from a warm snapshot)
+to get fast start *and* fresh isolation per run — i.e. warmth must respect the chosen isolation model, not defeat
+it. Warm capacity is per-environment (a runner serves one, §5.5), so a pool is scoped to its environment's
+credentials/network by construction.
+
 **Wake-ups (resume) ride the same seam.** A due timer (§5.5/the timer model) or a delivered message (the message
 model) is just a *trigger* that calls the backend to resume from the checkpoint. In-process: the worker poll loop
 re-enters. Serverless: the trigger is an event source — EventBridge Scheduler / Azure Timer for due timers, a
