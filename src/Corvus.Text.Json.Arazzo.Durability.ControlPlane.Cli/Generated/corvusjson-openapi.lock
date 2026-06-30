@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-06-29T19:14:15.7215966\u002B00:00",
+  "generatedAt": "2026-06-30T10:46:23.4023389\u002B00:00",
   "generatedFiles": [
     "ListRunsRequest.cs",
     "ListRunsResponse.cs",
@@ -680,9 +680,9 @@
     "Models/GetIdentityGranteesSource.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B33a625dec8e219cccd892a17699c7512f5b9aed0",
+  "generatorVersion": "1.0.0\u002B22e63af706911b507c2158efafa443d8e1830262",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "50c67cfb3caa8027dd994e876abb12e5e8644e8612b8f31195060b3416beb829",
+  "specFileHash": "400713b5189725b48eec9c0bcadfe69d3e665075d3f1be63b6146fc511bcba93",
   "specVersion": "3.2"
 }

@@ -821,20 +821,21 @@ function problem(status, title, detail) {
 // a STALE one whose heartbeat has lapsed and a host still loading a version, to exercise the health view).
 function seedRunners() {
   const min = 60000;
-  const r = (runnerId, address, maxConcurrency, transports, hostedVersions, lastSeenAgoMs, startedAgoMs) => ({
-    runnerId, address, maxConcurrency, transports, hostedVersions,
+  const r = (runnerId, environment, address, maxConcurrency, transports, hostedVersions, lastSeenAgoMs, startedAgoMs) => ({
+    runnerId, environment, address, maxConcurrency, transports, hostedVersions,
     startedAt: iso(-startedAgoMs), lastSeenAt: iso(-lastSeenAgoMs),
   });
+  // Each runner serves exactly one environment (design §5.5); a host serving several runs one process per environment.
   return [
-    r('runner-eu-1', 'https://runner-eu-1.svc.internal:8443', 8, ['http', 'amqp'], [
+    r('runner-eu-1', 'production', 'https://runner-eu-1.svc.internal:8443', 8, ['http', 'amqp'], [
       { baseWorkflowId: 'adopt-pet', versionNumber: 1, hash: 'sha256:adopt-pet-v1', loaded: true },
       { baseWorkflowId: 'nightly-reconcile', versionNumber: 3, hash: 'sha256:nightly-v3', loaded: true },
     ], 18 * 1000, 6 * 60 * min), // healthy: heartbeat 18s ago, up 6h
-    r('runner-eu-2', 'https://runner-eu-2.svc.internal:8443', 4, ['http'], [
+    r('runner-eu-2', 'staging', 'https://runner-eu-2.svc.internal:8443', 4, ['http'], [
       { baseWorkflowId: 'nightly-reconcile', versionNumber: 3, hash: 'sha256:nightly-v3', loaded: true },
       { baseWorkflowId: 'onboard-customer', versionNumber: 1, hash: 'sha256:onboard-v1', loaded: false }, // still loading
     ], 32 * 1000, 2 * 60 * min),
-    r('runner-us-1', 'https://runner-us-1.svc.internal:8443', 8, ['http', 'kafka'], [
+    r('runner-us-1', 'production', 'https://runner-us-1.svc.internal:8443', 8, ['http', 'kafka'], [
       { baseWorkflowId: 'adopt-pet', versionNumber: 1, hash: 'sha256:adopt-pet-v1', loaded: true },
     ], 4 * min, 12 * 60 * min), // STALE: last heartbeat 4 minutes ago
   ];

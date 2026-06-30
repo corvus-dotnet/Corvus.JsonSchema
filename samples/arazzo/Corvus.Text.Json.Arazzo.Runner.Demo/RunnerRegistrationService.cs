@@ -69,6 +69,7 @@ public sealed class RunnerRegistrationService(
             DateTimeOffset now = DateTimeOffset.UtcNow;
             writer.WriteStartObject();
             writer.WriteString("runnerId", options.RunnerId);
+            writer.WriteString("environment", options.Environment);
             writer.WriteString("startedAt", startedAt.ToString("O", CultureInfo.InvariantCulture));
             writer.WriteString("lastSeenAt", now.ToString("O", CultureInfo.InvariantCulture));
             writer.WriteNumber("maxConcurrency", options.MaxConcurrency);

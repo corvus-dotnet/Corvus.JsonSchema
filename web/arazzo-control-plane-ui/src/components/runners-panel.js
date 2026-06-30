@@ -161,6 +161,7 @@ class ArazzoRunners extends ArazzoElement {
         .runner:last-child { border-bottom: none; }
         .rhead { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
         .rid { font-weight: 600; }
+        .renv { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_text); font-weight: 600; }
         .raddr { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
         .health { flex: none; font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; display: inline-flex; align-items: center; gap: 5px; }
         .health.online { color: #1a7f37; }
@@ -243,6 +244,7 @@ class ArazzoRunners extends ArazzoElement {
       <div class="runner" part="runner">
         <div class="rhead">
           <span class="rid">${escapeHtml(r.runnerId)}</span>
+          ${r.environment ? `<span class="renv" title="Serves the ${escapeHtml(r.environment)} environment">${escapeHtml(r.environment)}</span>` : ''}
           ${r.address ? `<span class="raddr">${escapeHtml(r.address)}</span>` : ''}
           <span class="rgrow"></span>
           <span class="health ${stale ? 'stale' : 'online'}" title="Last heartbeat ${escapeHtml(absoluteTime(r.lastSeenAt))}"><span class="dot"></span>${stale ? 'Stale' : 'Online'}</span>
