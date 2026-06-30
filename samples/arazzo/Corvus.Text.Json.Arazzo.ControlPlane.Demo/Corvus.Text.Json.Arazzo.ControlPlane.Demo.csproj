@@ -31,6 +31,9 @@
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Generation\Corvus.Text.Json.Arazzo.Generation.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Execution\Corvus.Text.Json.Arazzo.Execution.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.OpenApi.HttpTransport\Corvus.Text.Json.OpenApi.HttpTransport.csproj" />
+    <!-- In-process AsyncAPI message transport: the async onboarding workflow's receive step needs an
+         IMessageTransport supplied to the executor (the durable suspend/resume itself flows through the worker). -->
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.AsyncApi.Testing\Corvus.Text.Json.AsyncApi.Testing.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.Sqlite\Corvus.Text.Json.Arazzo.Durability.Sqlite.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.csproj" />

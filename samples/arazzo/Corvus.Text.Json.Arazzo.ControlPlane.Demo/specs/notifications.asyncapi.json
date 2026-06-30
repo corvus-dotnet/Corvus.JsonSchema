@@ -1,0 +1,36 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Onboarding Notifications",
+    "version": "1.0.0",
+    "description": "Asynchronous events the onboarding workflow awaits. The identity-verification (KYC) provider posts its verdict to the kyc.results channel when an out-of-band review completes; a workflow run suspends until that message arrives."
+  },
+  "defaultContentType": "application/json",
+  "channels": {
+    "kycResults": {
+      "address": "kyc.verdict",
+      "messages": {
+        "kycVerdict": {
+          "name": "kycVerdict",
+          "title": "KYC verdict",
+          "payload": {
+            "type": "object",
+            "properties": {
+              "accountId": { "type": "string" },
+              "verified": { "type": "boolean" },
+              "score": { "type": "number", "minimum": 0, "maximum": 1 }
+            },
+            "required": [ "verified", "score" ]
+          }
+        }
+      }
+    }
+  },
+  "operations": {
+    "receiveKycVerdict": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/kycResults" },
+      "messages": [ { "$ref": "#/channels/kycResults/messages/kycVerdict" } ]
+    }
+  }
+}
