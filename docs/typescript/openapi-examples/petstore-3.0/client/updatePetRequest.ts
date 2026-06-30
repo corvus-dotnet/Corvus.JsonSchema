@@ -3,7 +3,7 @@
 // </auto-generated>
 import { OperationMethod, ValidationMode } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
 import type { ApiRequest, ByteWriter, HeaderSink } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
-import { writePathSimple, writeQueryForm, writeHeaderSimple } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
+import { writePathParam, writeQueryParam, writeHeaderParam } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
 import { Schema, Schema2, Schema3, Schema4 } from "./models/generated.js";
 
 /**
@@ -46,21 +46,21 @@ export function updatePetRequest(params: UpdatePetParams): ApiRequest {
     hasCookieParameters: false,
     writeResolvedPath(writer: ByteWriter): void {
       writer.writeAscii("/pets/");
-      writePathSimple(writer, params.petId, false);
+      writePathParam(writer, "petId", params.petId, "simple", false, false);
     },
     writeQueryString(writer: ByteWriter): number {
       let written = 0;
       if (params.tags !== undefined) {
-        written += writeQueryForm(writer, "tags", params.tags, false, false, written === 0);
+        written += writeQueryParam(writer, "tags", params.tags, "form", false, false, written === 0);
       }
       if (params.verbose !== undefined) {
-        written += writeQueryForm(writer, "verbose", params.verbose, true, false, written === 0);
+        written += writeQueryParam(writer, "verbose", params.verbose, "form", true, false, written === 0);
       }
       return written;
     },
     writeHeaders(sink: HeaderSink): void {
       sink("Accept", "application/json");
-      sink("X-Request-Id", writeHeaderSimple(params.xRequestId, false));
+      sink("X-Request-Id", writeHeaderParam(params.xRequestId, false));
     },
     writeCookies(_writer: ByteWriter): number {
       return 0;

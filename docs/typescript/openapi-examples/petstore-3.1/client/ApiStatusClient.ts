@@ -8,6 +8,9 @@ import { GetStatusResponse, getStatusResponseFactory } from "./GetStatusResponse
 import { updatePetRequest } from "./updatePetRequest.js";
 import type { UpdatePetParams } from "./updatePetRequest.js";
 import { UpdatePetResponse, updatePetResponseFactory } from "./UpdatePetResponse.js";
+import { searchRequest } from "./searchRequest.js";
+import type { SearchParams } from "./searchRequest.js";
+import { SearchResponse, searchResponseFactory } from "./SearchResponse.js";
 import { PetUpdate } from "./models/generated.js";
 
 /**
@@ -40,6 +43,14 @@ export class ApiStatusClient implements IApiStatusClient {
     const request = updatePetRequest(params);
     const requestBody: RequestBody = { kind: "bytes", content: PetUpdate.build(body), contentType: "application/json" };
     return this.transport.send(request, updatePetResponseFactory, requestBody, signal);
+  }
+
+  /**
+   * Searches pets, exercising the full parameter-style matrix across path/query/cookie/header.
+   */
+  search(params: SearchParams, signal?: AbortSignal): Promise<SearchResponse> {
+    const request = searchRequest(params);
+    return this.transport.send(request, searchResponseFactory, undefined, signal);
   }
 
   async [Symbol.asyncDispose](): Promise<void> {

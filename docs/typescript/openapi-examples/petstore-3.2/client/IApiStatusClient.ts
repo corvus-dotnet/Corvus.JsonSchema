@@ -4,6 +4,8 @@
 import type { GetStatusResponse } from "./GetStatusResponse.js";
 import type { UpdatePetResponse } from "./UpdatePetResponse.js";
 import type { UpdatePetParams } from "./updatePetRequest.js";
+import type { SearchResponse } from "./SearchResponse.js";
+import type { SearchParams } from "./searchRequest.js";
 import type { PetUpdate } from "./models/generated.js";
 
 /**
@@ -19,4 +21,9 @@ export interface IApiStatusClient extends AsyncDisposable {
    * Updates a pet by id, exercising path/query/header params and a JSON body.
    */
   updatePet(params: UpdatePetParams, body: PetUpdate, signal?: AbortSignal): Promise<UpdatePetResponse>;
+
+  /**
+   * Searches pets, exercising the full parameter-style matrix across path/query/cookie/header.
+   */
+  search(params: SearchParams, signal?: AbortSignal): Promise<SearchResponse>;
 }

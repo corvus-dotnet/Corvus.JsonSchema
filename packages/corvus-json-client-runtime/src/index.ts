@@ -17,8 +17,15 @@ export type { WireRequest, WireResponse } from "./contracts/wire.js";
 export { ByteWriter } from "./serializers/buffer-writer.js";
 export type { ByteSink } from "./serializers/buffer-writer.js";
 export { encodeData, encodeAllowReserved } from "./serializers/percent-encoding.js";
-export { writePathSimple, writeQueryForm, writeHeaderSimple } from "./serializers/style.js";
-export type { StyleScalar, StyleValue } from "./serializers/style.js";
+export { writePathParam, writeQueryParam, writeHeaderParam, writeCookieParam } from "./serializers/style.js";
+export type {
+  StyleScalar,
+  StyleObject,
+  StyleValue,
+  PathStyle,
+  QueryStyle,
+  CookieStyle,
+} from "./serializers/style.js";
 export type { AuthenticationProvider } from "./auth/authentication-provider.js";
 export { bearerToken } from "./auth/bearer.js";
 export type { TokenFactory } from "./auth/bearer.js";

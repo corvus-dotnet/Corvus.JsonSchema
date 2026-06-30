@@ -20,15 +20,15 @@ namespace Corvus.Text.Json.OpenApi.TypeScript.CodeGeneration;
 /// (<see cref="TypeScriptSchemaTypeResolver"/>).
 /// </para>
 /// <para>
-/// Phase 0 scope: an operation with no parameters, no request body, and a single 2xx JSON response
-/// (plus an optional <c>default</c>/error response). Phase 1 adds path parameters (style=simple),
-/// query parameters (style=form), and header parameters (style=simple) for scalar and array values,
-/// plus a JSON request body. A parameterised operation's request becomes a factory
-/// (<c>{op}Request(params)</c>) that captures the params in a closure and serializes them via the
-/// runtime style helpers (<c>writePathSimple</c> / <c>writeQueryForm</c> / <c>writeHeaderSimple</c>);
-/// a no-parameter operation keeps the Phase-0 const for back-compat. The generated client imports the
-/// byte-native runtime contracts from <c>@endjin/corvus-json-client-runtime</c> and the generated
-/// models by their <c>Ts_FinalName</c>. The server members return <see langword="null"/> (client-only).
+/// A no-parameter operation with no request body and a single 2xx JSON response (plus an optional
+/// <c>default</c>/error response) is emitted as a const request. A parameterised operation's request
+/// becomes a factory (<c>{op}Request(params)</c>) that captures the params in a closure and serializes
+/// path, query, header, and cookie parameters across the full OpenAPI parameter-style matrix via the
+/// generalized runtime helpers (<c>writePathParam</c> / <c>writeQueryParam</c> / <c>writeHeaderParam</c>
+/// / <c>writeCookieParam</c>), each of which dispatches on the value shape (scalar / array / object) and
+/// the parameter's style. The generated client imports the byte-native runtime contracts from
+/// <c>@endjin/corvus-json-client-runtime</c> and the generated models by their <c>Ts_FinalName</c>. The
+/// server members return <see langword="null"/> (client-only).
 /// </para>
 /// </remarks>
 public sealed class TypeScriptApiEmitter : IClientEmitter
@@ -132,9 +132,10 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
     };
 
     // ── Parameter helpers ───────────────────────────────────────────────
-    // Phase 1 supports path (simple), query (form), and header (simple) parameters, for scalar and
-    // array values. Object-typed parameters and the label/matrix/spaceDelimited/pipeDelimited/
-    // deepObject/cookie styles are out of scope and routed through the generic JSON fallback below.
+    // Path, query, header, and cookie parameters across the full OpenAPI parameter-style matrix
+    // (simple/label/matrix, form/spaceDelimited/pipeDelimited/deepObject, header simple, cookie
+    // form/cookie) for scalar, array, and object values. Each parameter is serialized through a single
+    // runtime `write*Param` entry point that dispatches on the value shape + style.
     private static ParameterInfo[] PathParams(OperationInfo op)
         => [.. op.Parameters.Where(p => p.Location == ParameterLocation.Path)];
 
@@ -144,8 +145,19 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
     private static ParameterInfo[] HeaderParams(OperationInfo op)
         => [.. op.Parameters.Where(p => p.Location == ParameterLocation.Header)];
 
+    private static ParameterInfo[] CookieParams(OperationInfo op)
+        => [.. op.Parameters.Where(p => p.Location == ParameterLocation.Cookie)];
+
     private static bool IsArrayParam(ParameterInfo p)
         => p.SerializationKind == ParameterSerializationKind.Array;
+
+    // Whether a parameter is one this emitter serializes onto the wire (path/query/header/cookie). The
+    // single predicate keeps every gathering/filtering site in lockstep across the four locations.
+    private static bool IsSerializedParameter(ParameterInfo p)
+        => p.Location is ParameterLocation.Path
+            or ParameterLocation.Query
+            or ParameterLocation.Header
+            or ParameterLocation.Cookie;
 
     private static string PropertyName(ParameterInfo p) => CamelCase(CodeEmitHelpers.SanitizeIdentifier(p.Name));
 
@@ -171,7 +183,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
     {
         ParameterSerializationKind.String => "string",
         ParameterSerializationKind.Boolean => "boolean",
-        ParameterSerializationKind.Object => "Record<string, unknown>",
+        ParameterSerializationKind.Object => "Record<string, string | number | boolean>",
         ParameterSerializationKind.Array => "unknown[]",
         _ => "number",
     };
@@ -233,10 +245,14 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         ParameterInfo[] pathParams = PathParams(op);
         ParameterInfo[] queryParams = QueryParams(op);
         ParameterInfo[] headerParams = HeaderParams(op);
-        bool hasParams = pathParams.Length > 0 || queryParams.Length > 0 || headerParams.Length > 0;
+        ParameterInfo[] cookieParams = CookieParams(op);
+        bool hasParams = pathParams.Length > 0
+            || queryParams.Length > 0
+            || headerParams.Length > 0
+            || cookieParams.Length > 0;
 
         return hasParams
-            ? this.EmitRequestFactory(op, pathParams, queryParams, headerParams)
+            ? this.EmitRequestFactory(op, pathParams, queryParams, headerParams, cookieParams)
             : this.EmitRequestConst(op);
     }
 
@@ -322,26 +338,29 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         return new GeneratedFile($"{moduleName}.ts", w.ToString());
     }
 
-    // Phase-1 path: parameters present. The request is a factory capturing the params in a closure.
+    // Parameters present. The request is a factory capturing the params in a closure.
     private GeneratedFile EmitRequestFactory(
         OperationInfo op,
         ParameterInfo[] pathParams,
         ParameterInfo[] queryParams,
-        ParameterInfo[] headerParams)
+        ParameterInfo[] headerParams,
+        ParameterInfo[] cookieParams)
     {
         string moduleName = RequestModuleName(op);
         string paramsInterface = ParamsInterfaceName(op);
         IndentedWriter w = new();
         w.IndentString = "  ";
 
-        // Which runtime style helpers does this operation need?
-        bool needsPathSimple = pathParams.Length > 0;
-        bool needsQueryForm = queryParams.Length > 0;
-        bool needsHeaderSimple = headerParams.Length > 0;
+        // Which runtime style helpers does this operation need? Each location maps to one generalized
+        // entry point that dispatches on the value shape + style internally.
+        bool needsPath = pathParams.Length > 0;
+        bool needsQuery = queryParams.Length > 0;
+        bool needsHeader = headerParams.Length > 0;
+        bool needsCookie = cookieParams.Length > 0;
 
         // Does any parameter have a named model type with an `evaluate` companion for validate()?
         bool hasValidatable = op.Parameters.Any(p =>
-            (p.Location is ParameterLocation.Path or ParameterLocation.Query or ParameterLocation.Header)
+            IsSerializedParameter(p)
             && this.schemaTypeResolver.ResolveTypeName(p.SchemaPointer) != "unknown");
 
         EmitHeader(w);
@@ -353,20 +372,26 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
 
         // Import only the style helpers this operation actually uses (keeps the import list minimal).
+        // Each location maps to one generalized entry point regardless of the parameter's style/shape.
         List<string> styleImports = [];
-        if (needsPathSimple)
+        if (needsPath)
         {
-            styleImports.Add("writePathSimple");
+            styleImports.Add("writePathParam");
         }
 
-        if (needsQueryForm)
+        if (needsQuery)
         {
-            styleImports.Add("writeQueryForm");
+            styleImports.Add("writeQueryParam");
         }
 
-        if (needsHeaderSimple)
+        if (needsHeader)
         {
-            styleImports.Add("writeHeaderSimple");
+            styleImports.Add("writeHeaderParam");
+        }
+
+        if (needsCookie)
+        {
+            styleImports.Add("writeCookieParam");
         }
 
         if (styleImports.Count > 0)
@@ -382,7 +407,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         HashSet<string> validatorCompanions = new(StringComparer.Ordinal);
         foreach (ParameterInfo p in op.Parameters)
         {
-            if (p.Location is not (ParameterLocation.Path or ParameterLocation.Query or ParameterLocation.Header))
+            if (!IsSerializedParameter(p))
             {
                 continue;
             }
@@ -427,17 +452,12 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.WriteLine($"hasPathParameters: {(pathParams.Length > 0 ? "true" : "false")},");
         w.WriteLine($"hasQueryParameters: {(queryParams.Length > 0 ? "true" : "false")},");
         w.WriteLine($"hasHeaderParameters: {(hasHeaders ? "true" : "false")},");
-        w.WriteLine("hasCookieParameters: false,");
+        w.WriteLine($"hasCookieParameters: {(cookieParams.Length > 0 ? "true" : "false")},");
 
         EmitFactoryWriteResolvedPath(w, op.PathTemplate, pathParams);
         EmitFactoryWriteQueryString(w, queryParams);
         EmitFactoryWriteHeaders(w, headerParams, acceptMediaTypes);
-
-        w.WriteLine("writeCookies(_writer: ByteWriter): number {");
-        w.PushIndent();
-        w.WriteLine("return 0;");
-        w.PopIndent();
-        w.WriteLine("},");
+        EmitFactoryWriteCookies(w, cookieParams);
 
         this.EmitFactoryValidate(w, op, hasValidatable);
 
@@ -459,7 +479,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
         foreach (ParameterInfo p in op.Parameters)
         {
-            if (p.Location is not (ParameterLocation.Path or ParameterLocation.Query or ParameterLocation.Header))
+            if (!IsSerializedParameter(p))
             {
                 continue;
             }
@@ -483,7 +503,21 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         ParameterLocation.Path => "path",
         ParameterLocation.Query => "query",
         ParameterLocation.Header => "header",
+        ParameterLocation.Cookie => "cookie",
         _ => "",
+    };
+
+    private static string StyleWord(ParameterStyle style) => style switch
+    {
+        ParameterStyle.Simple => "simple",
+        ParameterStyle.Label => "label",
+        ParameterStyle.Matrix => "matrix",
+        ParameterStyle.Form => "form",
+        ParameterStyle.SpaceDelimited => "spaceDelimited",
+        ParameterStyle.PipeDelimited => "pipeDelimited",
+        ParameterStyle.DeepObject => "deepObject",
+        ParameterStyle.Cookie => "cookie",
+        _ => "simple",
     };
 
     private static void EmitFactoryWriteResolvedPath(
@@ -540,7 +574,10 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             {
                 string propertyName = PropertyName(mp);
                 string explode = mp.Explode ? "true" : "false";
-                w.WriteLine($"writePathSimple(writer, params.{propertyName}, {explode});");
+                string allowReserved = mp.AllowReserved ? "true" : "false";
+                w.WriteLine(
+                    $"writePathParam(writer, {StringLiteral(mp.Name)}, params.{propertyName}, " +
+                    $"{StringLiteral(StyleWord(mp.Style))}, {explode}, {allowReserved});");
             }
             else
             {
@@ -576,19 +613,21 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             string explode = p.Explode ? "true" : "false";
             string allowReserved = p.AllowReserved ? "true" : "false";
 
+            string styleWord = StyleWord(p.Style);
+
             if (p.IsRequired)
             {
                 w.WriteLine(
-                    $"written += writeQueryForm(writer, {StringLiteral(p.Name)}, params.{propertyName}, " +
-                    $"{explode}, {allowReserved}, written === 0);");
+                    $"written += writeQueryParam(writer, {StringLiteral(p.Name)}, params.{propertyName}, " +
+                    $"{StringLiteral(styleWord)}, {explode}, {allowReserved}, written === 0);");
             }
             else
             {
                 w.WriteLine($"if (params.{propertyName} !== undefined) {{");
                 w.PushIndent();
                 w.WriteLine(
-                    $"written += writeQueryForm(writer, {StringLiteral(p.Name)}, params.{propertyName}, " +
-                    $"{explode}, {allowReserved}, written === 0);");
+                    $"written += writeQueryParam(writer, {StringLiteral(p.Name)}, params.{propertyName}, " +
+                    $"{StringLiteral(styleWord)}, {explode}, {allowReserved}, written === 0);");
                 w.PopIndent();
                 w.WriteLine("}");
             }
@@ -632,19 +671,64 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             if (p.IsRequired)
             {
                 w.WriteLine(
-                    $"sink({StringLiteral(p.Name)}, writeHeaderSimple(params.{propertyName}, {explode}));");
+                    $"sink({StringLiteral(p.Name)}, writeHeaderParam(params.{propertyName}, {explode}));");
             }
             else
             {
                 w.WriteLine($"if (params.{propertyName} !== undefined) {{");
                 w.PushIndent();
                 w.WriteLine(
-                    $"sink({StringLiteral(p.Name)}, writeHeaderSimple(params.{propertyName}, {explode}));");
+                    $"sink({StringLiteral(p.Name)}, writeHeaderParam(params.{propertyName}, {explode}));");
                 w.PopIndent();
                 w.WriteLine("}");
             }
         }
 
+        w.PopIndent();
+        w.WriteLine("},");
+    }
+
+    private static void EmitFactoryWriteCookies(IndentedWriter w, ParameterInfo[] cookieParams)
+    {
+        if (cookieParams.Length == 0)
+        {
+            w.WriteLine("writeCookies(_writer: ByteWriter): number {");
+            w.PushIndent();
+            w.WriteLine("return 0;");
+            w.PopIndent();
+            w.WriteLine("},");
+            return;
+        }
+
+        w.WriteLine("writeCookies(writer: ByteWriter): number {");
+        w.PushIndent();
+        w.WriteLine("let written = 0;");
+
+        foreach (ParameterInfo p in cookieParams)
+        {
+            string propertyName = PropertyName(p);
+            string explode = p.Explode ? "true" : "false";
+            string styleWord = StyleWord(p.Style);
+
+            if (p.IsRequired)
+            {
+                w.WriteLine(
+                    $"written += writeCookieParam(writer, {StringLiteral(p.Name)}, params.{propertyName}, " +
+                    $"{StringLiteral(styleWord)}, {explode}, written === 0);");
+            }
+            else
+            {
+                w.WriteLine($"if (params.{propertyName} !== undefined) {{");
+                w.PushIndent();
+                w.WriteLine(
+                    $"written += writeCookieParam(writer, {StringLiteral(p.Name)}, params.{propertyName}, " +
+                    $"{StringLiteral(styleWord)}, {explode}, written === 0);");
+                w.PopIndent();
+                w.WriteLine("}");
+            }
+        }
+
+        w.WriteLine("return written;");
         w.PopIndent();
         w.WriteLine("},");
     }
@@ -670,7 +754,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
         foreach (ParameterInfo p in op.Parameters)
         {
-            if (p.Location is not (ParameterLocation.Path or ParameterLocation.Query or ParameterLocation.Header))
+            if (!IsSerializedParameter(p))
             {
                 continue;
             }
@@ -1054,8 +1138,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
     }
 
     private static bool HasParams(OperationInfo op)
-        => op.Parameters.Any(p =>
-            p.Location is ParameterLocation.Path or ParameterLocation.Query or ParameterLocation.Header);
+        => op.Parameters.Any(IsSerializedParameter);
 
     /// <summary>
     /// Builds the TypeScript method parameter list shared by the interface and implementation:
@@ -1070,7 +1153,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         if (HasParams(op))
         {
             bool allOptional = op.Parameters
-                .Where(p => p.Location is ParameterLocation.Path or ParameterLocation.Query or ParameterLocation.Header)
+                .Where(IsSerializedParameter)
                 .All(p => !p.IsRequired);
             string optional = allOptional ? "?" : string.Empty;
             parts.Add($"params{optional}: {ParamsInterfaceName(op)}");

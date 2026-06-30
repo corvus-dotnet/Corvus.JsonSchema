@@ -1,19 +1,21 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-06-30T10:02:32.2812341\u002B00:00",
+  "generatedAt": "2026-06-30T13:39:11.2654123\u002B00:00",
   "generatedFiles": [
     "getStatusRequest.ts",
     "GetStatusResponse.ts",
     "updatePetRequest.ts",
     "UpdatePetResponse.ts",
+    "searchRequest.ts",
+    "SearchResponse.ts",
     "IApiStatusClient.ts",
     "ApiStatusClient.ts",
     "models/generated.ts",
     "models/corvus-runtime.ts"
   ],
-  "generatorVersion": "1.0.0\u002B698dbe1d976456c62ebe4c38c33116e455c2f1dc",
+  "generatorVersion": "1.0.0\u002B0a22ce9a4da15c4867fe8f2fa70b13ac27003217",
   "includePaths": [],
   "rootNamespace": "GeneratedApi",
-  "specFileHash": "2e0fbc903e10717569b7dfe78b57214fc68abd6f4cf06321b96e5df4a2fb517d",
+  "specFileHash": "ed72c452697a468dbe48785e6c2c4bc6821e04806f162c81e282d4a5ccaa7b41",
   "specVersion": "3.2"
 }

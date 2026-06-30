@@ -41,6 +41,16 @@ class MockApiTransport {
     const headers = new Headers();
     request.writeHeaders((name, value) => headers.append(name, value));
 
+    // Cookies compose into a single `Cookie` header value, exactly as a real transport would. Mirror
+    // the path/query write contract: writeCookies streams the cookie pairs into a ByteWriter.
+    if (request.hasCookieParameters) {
+      const cookieWriter = new ByteWriter();
+      const written = request.writeCookies(cookieWriter);
+      if (written > 0) {
+        headers.append("Cookie", decoder.decode(cookieWriter.written));
+      }
+    }
+
     const url = this.baseUrl + path + query;
     this.captured = {
       method: methodName(request.method),
@@ -125,5 +135,45 @@ for (const version of VERSIONS) {
     // The response decodes via the generated factory + model companion.
     const pet = response.tryGetOk();
     assert.deepEqual(pet, { id: "p-1", name: "Rex", tag: "dog" });
+  });
+
+  test(`${version}: search composes the full parameter-style matrix`, async () => {
+    const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+    const transport = new MockApiTransport(ApiStatusClient.serverUri().toString().replace(/\/$/, ""));
+    const client = new ApiStatusClient(transport);
+
+    await client.search({
+      scope: { kind: "pet", region: "eu" }, // matrix object, explode=false -> ;scope=kind,pet,region,eu.
+      tags: ["a", "b c"], // spaceDelimited array, explode=false -> tags=a%20b%20c.
+      codes: ["x", "y"], // pipeDelimited array, explode=false -> codes=x%7Cy.
+      filter: { min: "1", max: "9" }, // deepObject, explode=true -> filter[min]=1&filter[max]=9 (brackets %5B/%5D).
+      fields: ["a", "b"], // form array, explode=true -> fields=a&fields=b.
+      opts: { sort: "name", dir: "asc" }, // form object, explode=true -> sort=name&dir=asc.
+      session: "abc123", // form cookie scalar -> session=abc123.
+      xTags: ["t1", "t2"], // simple header array -> t1,t2.
+    });
+
+    const wire = transport.captured;
+
+    // Method.
+    assert.equal(wire.method, "GET");
+
+    // URL: base + matrix-object path + the query params in declaration order (tags, codes, filter,
+    // fields, opts) with each style's exact composition (these are the verified locked-runtime outputs).
+    assert.equal(
+      wire.url,
+      "https://api.example.com/v1/search/;scope=kind,pet,region,eu" +
+        "?tags=a%20b%20c&codes=x%7Cy&filter%5Bmin%5D=1&filter%5Bmax%5D=9&fields=a&fields=b&sort=name&dir=asc",
+    );
+
+    // The form cookie scalar composes into the Cookie header.
+    assert.equal(wire.headers.get("Cookie"), "session=abc123");
+
+    // The simple header array is comma-joined, verbatim (header values are not percent-encoded).
+    assert.equal(wire.headers.get("X-Tags"), "t1,t2");
+
+    // The Accept header for the JSON response.
+    assert.equal(wire.headers.get("Accept"), "application/json");
   });
 }
