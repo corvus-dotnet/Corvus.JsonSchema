@@ -13,6 +13,21 @@ import { ByteWriter } from "@endjin/corvus-json-client-runtime";
 
 const VERSIONS = ["petstore-3.0", "petstore-3.1", "petstore-3.2"];
 const decoder = new TextDecoder();
+const encoder = new TextEncoder();
+
+// Concatenates string + byte chunks into one Uint8Array (for reconstructing multipart framing bytes).
+function bytes(...chunks) {
+  const parts = chunks.map((c) => (typeof c === "string" ? encoder.encode(c) : c));
+  const total = parts.reduce((n, p) => n + p.length, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const p of parts) {
+    out.set(p, offset);
+    offset += p.length;
+  }
+
+  return out;
+}
 
 // A transport that records the composed wire request and returns a canned 200 JSON response. It mirrors
 // the byte-native composition contract: writeResolvedPath + writeQueryString build the URL path/query
@@ -56,7 +71,7 @@ class MockApiTransport {
       method: methodName(request.method),
       url,
       headers,
-      body: body ?? { kind: "none" },
+      body: await materializeBody(body, _signal),
     };
 
     // Return a canned 200 JSON body via the generated response factory.
@@ -88,6 +103,27 @@ class MockApiTransport {
 function methodName(method) {
   // OperationMethod: Get=0, Put=1, Post=2, Delete=3, ... (see contracts/operation-method.ts).
   return ["GET", "PUT", "POST", "DELETE", "OPTIONS", "HEAD", "PATCH", "TRACE", "QUERY"][method] ?? String(method);
+}
+
+// A "writer" body (multipart) is materialized by driving its write callback into a ByteWriter sink —
+// exactly as a real transport does — so the captured body exposes the framed `content` bytes. Other
+// body kinds are captured verbatim.
+async function materializeBody(body, signal) {
+  if (body !== undefined && body.kind === "writer") {
+    const w = new ByteWriter();
+    const sink = {
+      write(b) {
+        w.writeBytes(b);
+      },
+      async flush() {
+        /* buffered */
+      },
+    };
+    await body.write(sink, signal ?? new AbortController().signal);
+    return { kind: "writer", contentType: body.contentType, content: w.written.slice() };
+  }
+
+  return body ?? { kind: "none" };
 }
 
 for (const version of VERSIONS) {
@@ -231,4 +267,75 @@ for (const version of VERSIONS) {
     assert.equal(wire.body.contentType, "application/x-www-form-urlencoded");
     assert.equal(decoder.decode(wire.body.content), "name=Rex&count=3&tags=a&tags=b");
   });
+
+  test(`${version}: avatar sends a multipart/form-data body`, async () => {
+    const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+    const transport = new MockApiTransport(ApiStatusClient.serverUri().toString().replace(/\/$/, ""));
+    const client = new ApiStatusClient(transport);
+
+    // body = the non-binary fields; the binary `file` part is a separate, hoisted parameter.
+    await client.avatar(
+      { id: "p1", tags: ["x", "y"] },
+      { content: new Uint8Array([1, 2, 3]), filename: "a.png", contentType: "image/png" },
+    );
+
+    const wire = transport.captured;
+
+    assert.equal(wire.method, "POST");
+    assert.equal(wire.url, "https://api.example.com/v1/avatar");
+    assert.equal(wire.body.kind, "writer");
+
+    // The boundary is minted at runtime; recover it from the content type and reconstruct the framing.
+    const prefix = "multipart/form-data; boundary=";
+    assert.ok(wire.body.contentType.startsWith(prefix));
+    const b = wire.body.contentType.slice(prefix.length);
+
+    assert.deepEqual(
+      Array.from(wire.body.content),
+      Array.from(
+        bytes(
+          `--${b}\r\nContent-Disposition: form-data; name="id"\r\n\r\np1\r\n`,
+          `--${b}\r\nContent-Disposition: form-data; name="tags"\r\nContent-Type: application/json\r\n\r\n["x","y"]\r\n`,
+          `--${b}\r\nContent-Disposition: form-data; name="file"; filename="a.png"\r\nContent-Type: image/png\r\n\r\n`,
+          new Uint8Array([1, 2, 3]),
+          `\r\n--${b}--\r\n`,
+        ),
+      ),
+    );
+  });
+
+  // multipart/mixed (prefixEncoding / itemEncoding) is an OpenAPI 3.2 feature; only that spec defines it.
+  if (version === "petstore-3.2") {
+    test(`${version}: batch sends a multipart/mixed body`, async () => {
+      const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+      const transport = new MockApiTransport(ApiStatusClient.serverUri().toString().replace(/\/$/, ""));
+      const client = new ApiStatusClient(transport);
+
+      // A homogeneous (itemEncoding) batch: each item is framed as an application/json part.
+      await client.batch([
+        { name: "A", tag: "x" },
+        { name: "B", tag: "y" },
+      ]);
+
+      const wire = transport.captured;
+
+      assert.equal(wire.method, "POST");
+      assert.equal(wire.url, "https://api.example.com/v1/batch");
+      assert.equal(wire.body.kind, "writer");
+
+      const prefix = "multipart/mixed; boundary=";
+      assert.ok(wire.body.contentType.startsWith(prefix));
+      const b = wire.body.contentType.slice(prefix.length);
+      assert.match(b, /^----CorvusBoundary[0-9a-f]{32}$/);
+
+      assert.equal(
+        decoder.decode(wire.body.content),
+        `--${b}\r\nContent-Type: application/json\r\n\r\n{"name":"A","tag":"x"}\r\n` +
+          `--${b}\r\nContent-Type: application/json\r\n\r\n{"name":"B","tag":"y"}\r\n` +
+          `--${b}--\r\n`,
+      );
+    });
+  }
 }

@@ -302,6 +302,59 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         return resolved == "unknown" ? "FormBody" : resolved;
     }
 
+    /// <summary>
+    /// Whether the operation's request body is an OpenAPI 3.2 sequential <c>multipart/mixed</c> body
+    /// (declared via <c>prefixEncoding</c> or <c>itemEncoding</c>). Mirrors the C#
+    /// <c>IsMultipartMixedRequestBody</c>.
+    /// </summary>
+    private static bool IsMultipartMixedBody(OperationInfo op)
+        => op.RequestBody is { } rb && (rb.PrefixParts is not null || rb.ItemPart is not null);
+
+    /// <summary>
+    /// Whether the operation's request body is a <c>multipart/form-data</c> body that no simpler content
+    /// category claims. Multipart is only the body shape when <see cref="PrimaryRequestBodyContent"/>
+    /// found no JSON/form/text/octet entry (those win), mirroring the C# <c>IsMultipartRequestBody</c>.
+    /// </summary>
+    private static bool IsMultipartFormDataBody(OperationInfo op)
+        => PrimaryRequestBodyContent(op) is null
+            && !IsMultipartMixedBody(op)
+            && op.RequestBody is { } rb
+            && Array.Exists(rb.Content, c => CodeEmitHelpers.IsMultipartMediaType(c.MediaType));
+
+    /// <summary>
+    /// The <c>multipart/form-data</c> content entry (carrying the part schema + per-part encodings), or
+    /// <see langword="null"/> when the body has none.
+    /// </summary>
+    private static ContentInfo? MultipartFormContent(OperationInfo op)
+    {
+        if (op.RequestBody is not { } rb)
+        {
+            return null;
+        }
+
+        foreach (ContentInfo content in rb.Content)
+        {
+            if (CodeEmitHelpers.IsMultipartMediaType(content.MediaType))
+            {
+                return content;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The TypeScript parameter identifier for a <c>multipart/form-data</c> binary file part.
+    /// </summary>
+    private static string BinaryPartParamName(BinaryPropertyInfo prop) => CamelCase(prop.ParameterName);
+
+    /// <summary>
+    /// The TypeScript type of a <c>multipart/mixed</c> part — <c>MultipartBinaryPart</c> for a binary
+    /// part, else the resolved JSON model type (or <c>unknown</c>).
+    /// </summary>
+    private string MixedPartType(MixedPartInfo part)
+        => part.IsBinary ? "MultipartBinaryPart" : this.schemaTypeResolver.ResolveTypeName(part.SchemaPointer);
+
     // ── Request module ──────────────────────────────────────────────────
     private GeneratedFile EmitRequestObject(OperationInfo op)
     {
@@ -1142,12 +1195,28 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
         EmitHeader(w);
 
-        // A form-urlencoded body whose param type falls back to `FormBody` references that runtime type
-        // in its method signature, so the interface imports it from the client-runtime module.
+        // Runtime types referenced by the method signatures: the form-urlencoded `FormBody` fallback and
+        // the multipart `MultipartFormFields` / `MultipartBinaryPart` part types.
+        List<string> signatureRuntimeTypes = [];
         if (this.AnyFormBodyParam(operations))
         {
+            signatureRuntimeTypes.Add("FormBody");
+        }
+
+        if (AnyMultipartFormData(operations))
+        {
+            signatureRuntimeTypes.Add("MultipartFormFields");
+        }
+
+        if (AnyMultipartBinaryParam(operations))
+        {
+            signatureRuntimeTypes.Add("MultipartBinaryPart");
+        }
+
+        if (signatureRuntimeTypes.Count > 0)
+        {
             w.WriteLine(
-                "import type { FormBody } from " +
+                $"import type {{ {string.Join(", ", signatureRuntimeTypes)} }} from " +
                 $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
         }
 
@@ -1232,6 +1301,32 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             string bodyTsType = this.BodyParamType(content);
             parts.Add(bodyRequired ? $"body: {bodyTsType}" : $"body?: {bodyTsType}");
         }
+        else if (IsMultipartFormDataBody(op))
+        {
+            // The non-binary fields as a structural record (binary properties are hoisted to their own
+            // params below). The body is always required: a required binary param cannot follow an
+            // optional one in a TypeScript signature.
+            parts.Add("body: MultipartFormFields");
+            foreach (BinaryPropertyInfo bp in op.RequestBody!.Value.BinaryProperties)
+            {
+                parts.Add($"{BinaryPartParamName(bp)}: MultipartBinaryPart");
+            }
+        }
+        else if (IsMultipartMixedBody(op))
+        {
+            RequestBodyInfo rb = op.RequestBody!.Value;
+            if (rb.PrefixParts is { } prefix)
+            {
+                for (int i = 0; i < prefix.Length; i++)
+                {
+                    parts.Add($"part{i}: {this.MixedPartType(prefix[i])}");
+                }
+            }
+            else if (rb.ItemPart is { } item)
+            {
+                parts.Add($"items: readonly {this.MixedPartType(item)}[]");
+            }
+        }
 
         parts.Add("signal?: AbortSignal");
         return string.Join(", ", parts);
@@ -1303,8 +1398,44 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
     private HashSet<string> RequestBodyModelImports(IReadOnlyList<OperationInfo> operations)
     {
         HashSet<string> bodyTypes = new(StringComparer.Ordinal);
+
+        void AddMixedJsonType(MixedPartInfo part)
+        {
+            if (part.IsBinary)
+            {
+                return;
+            }
+
+            string t = this.schemaTypeResolver.ResolveTypeName(part.SchemaPointer);
+            if (t != "unknown")
+            {
+                bodyTypes.Add(t);
+            }
+        }
+
         foreach (OperationInfo op in operations)
         {
+            // multipart/mixed JSON parts are typed by their model — collect those before the
+            // single-content path (PrimaryRequestBodyContent is null for a multipart-only body).
+            if (IsMultipartMixedBody(op))
+            {
+                RequestBodyInfo rb = op.RequestBody!.Value;
+                if (rb.PrefixParts is { } prefix)
+                {
+                    foreach (MixedPartInfo part in prefix)
+                    {
+                        AddMixedJsonType(part);
+                    }
+                }
+
+                if (rb.ItemPart is { } item)
+                {
+                    AddMixedJsonType(item);
+                }
+
+                continue;
+            }
+
             if (PrimaryRequestBodyContent(op) is not { } content)
             {
                 continue;
@@ -1332,6 +1463,45 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         return bodyTypes;
     }
 
+    /// <summary>Whether any operation has a <c>multipart/form-data</c> request body.</summary>
+    private static bool AnyMultipartFormData(IReadOnlyList<OperationInfo> operations)
+        => operations.Any(IsMultipartFormDataBody);
+
+    /// <summary>Whether any operation has an OpenAPI 3.2 <c>multipart/mixed</c> request body.</summary>
+    private static bool AnyMultipartMixed(IReadOnlyList<OperationInfo> operations)
+        => operations.Any(IsMultipartMixedBody);
+
+    /// <summary>
+    /// Whether any operation has a multipart binary part (a form-data file field, or a binary
+    /// prefix/item part), so the generated code references the runtime <c>MultipartBinaryPart</c> type.
+    /// </summary>
+    private static bool AnyMultipartBinaryParam(IReadOnlyList<OperationInfo> operations)
+    {
+        foreach (OperationInfo op in operations)
+        {
+            if (IsMultipartFormDataBody(op) && op.RequestBody!.Value.BinaryProperties.Length > 0)
+            {
+                return true;
+            }
+
+            if (IsMultipartMixedBody(op))
+            {
+                RequestBodyInfo rb = op.RequestBody!.Value;
+                if (rb.PrefixParts is { } prefix && Array.Exists(prefix, p => p.IsBinary))
+                {
+                    return true;
+                }
+
+                if (rb.ItemPart is { IsBinary: true })
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     // ── Client implementation ───────────────────────────────────────────
     private GeneratedFile EmitImplementation(
         string clientName,
@@ -1344,19 +1514,54 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.IndentString = "  ";
 
         bool anyForm = AnyFormUrlEncodedBody(operations);
+        bool anyMultipartForm = AnyMultipartFormData(operations);
+        bool anyMultipartMixed = AnyMultipartMixed(operations);
 
         EmitHeader(w);
 
-        // The form-urlencoded `FormBody` type is needed in the implementation whenever any operation has
-        // a form body — either as the `body` param type, or as the `body as FormBody` cast target.
-        string runtimeTypeImports = anyForm ? "ApiTransport, FormBody, RequestBody" : "ApiTransport, RequestBody";
-        w.WriteLine(
-            $"import type {{ {runtimeTypeImports} }} from " +
-            $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
+        // Runtime types the implementation references: ApiTransport + RequestBody always, the
+        // form-urlencoded `FormBody` (param/cast target), and the multipart part types.
+        List<string> implRuntimeTypes = ["ApiTransport", "RequestBody"];
         if (anyForm)
         {
+            implRuntimeTypes.Add("FormBody");
+        }
+
+        if (anyMultipartForm)
+        {
+            implRuntimeTypes.Add("MultipartFormFields");
+        }
+
+        if (AnyMultipartBinaryParam(operations))
+        {
+            implRuntimeTypes.Add("MultipartBinaryPart");
+        }
+
+        w.WriteLine(
+            $"import type {{ {string.Join(", ", implRuntimeTypes)} }} from " +
+            $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
+
+        // Runtime body serializers the implementation calls (value imports).
+        List<string> implRuntimeValues = [];
+        if (anyForm)
+        {
+            implRuntimeValues.Add("formUrlEncodedBytes");
+        }
+
+        if (anyMultipartForm)
+        {
+            implRuntimeValues.Add("multipartFormData");
+        }
+
+        if (anyMultipartMixed)
+        {
+            implRuntimeValues.Add("multipartMixed");
+        }
+
+        if (implRuntimeValues.Count > 0)
+        {
             w.WriteLine(
-                "import { formUrlEncodedBytes } from " +
+                $"import {{ {string.Join(", ", implRuntimeValues)} }} from " +
                 $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
         }
 
@@ -1455,9 +1660,26 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         }
 
         // The request body: build it per content category when present.
+        bool hasBody = true;
         if (bodyContent is { } content)
         {
             this.EmitRequestBody(w, content, bodyRequired);
+        }
+        else if (IsMultipartFormDataBody(op))
+        {
+            this.EmitMultipartFormDataBody(w, op);
+        }
+        else if (IsMultipartMixedBody(op))
+        {
+            EmitMultipartMixedBody(w, op);
+        }
+        else
+        {
+            hasBody = false;
+        }
+
+        if (hasBody)
+        {
             w.WriteLine($"return this.transport.send(request, {factoryName}, requestBody, signal);");
         }
         else
@@ -1589,6 +1811,121 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
         return $"{{ {string.Join(", ", entries)} }}";
     }
+
+    // Emits `const requestBody: RequestBody = multipartFormData(body, {binaryParts}, {options});` — the
+    // non-binary `body` fields, the hoisted binary file parts (keyed by part name), and any per-field
+    // Content-Type overrides from the OpenAPI Encoding objects.
+    private void EmitMultipartFormDataBody(IndentedWriter w, OperationInfo op)
+    {
+        RequestBodyInfo rb = op.RequestBody!.Value;
+
+        string binaryArg = "undefined";
+        if (rb.BinaryProperties.Length > 0)
+        {
+            List<string> entries = [];
+            foreach (BinaryPropertyInfo bp in rb.BinaryProperties)
+            {
+                entries.Add($"{StringLiteral(bp.PropertyName)}: {BinaryPartParamName(bp)}");
+            }
+
+            binaryArg = $"{{ {string.Join(", ", entries)} }}";
+        }
+
+        string optionsArg = MultipartFormOptionsLiteral(MultipartFormContent(op), rb);
+
+        string call;
+        if (optionsArg.Length > 0)
+        {
+            call = $"multipartFormData(body, {binaryArg}, {optionsArg})";
+        }
+        else if (binaryArg != "undefined")
+        {
+            call = $"multipartFormData(body, {binaryArg})";
+        }
+        else
+        {
+            call = "multipartFormData(body)";
+        }
+
+        w.WriteLine($"const requestBody: RequestBody = {call};");
+    }
+
+    // The `{ fieldContentTypes: { ... } }` options literal for a multipart/form-data body, mapping each
+    // non-binary field's Encoding `contentType` (binary parts carry their own content type on the part
+    // param). Returns the empty string when there are no such overrides.
+    private static string MultipartFormOptionsLiteral(ContentInfo? content, RequestBodyInfo rb)
+    {
+        if (content is not { Encodings: { Count: > 0 } encodings })
+        {
+            return string.Empty;
+        }
+
+        HashSet<string> binaryNames = new(StringComparer.Ordinal);
+        foreach (BinaryPropertyInfo bp in rb.BinaryProperties)
+        {
+            binaryNames.Add(bp.PropertyName);
+        }
+
+        List<string> entries = [];
+        foreach (KeyValuePair<string, EncodingInfo> kvp in encodings)
+        {
+            if (binaryNames.Contains(kvp.Key))
+            {
+                continue;
+            }
+
+            if (kvp.Value.ContentType is { Length: > 0 } ct)
+            {
+                entries.Add($"{StringLiteral(kvp.Key)}: {StringLiteral(ct)}");
+            }
+        }
+
+        return entries.Count == 0
+            ? string.Empty
+            : $"{{ fieldContentTypes: {{ {string.Join(", ", entries)} }} }}";
+    }
+
+    // Emits `const requestBody: RequestBody = multipartMixed([ ... ]);` for an OpenAPI 3.2 sequential
+    // body: positional `prefixEncoding` parts become `part0`/`part1`/… entries, a homogeneous
+    // `itemEncoding` body maps the `items` array.
+    private void EmitMultipartMixedBody(IndentedWriter w, OperationInfo op)
+    {
+        RequestBodyInfo rb = op.RequestBody!.Value;
+
+        if (rb.PrefixParts is { } prefix)
+        {
+            List<string> entries = [];
+            for (int i = 0; i < prefix.Length; i++)
+            {
+                entries.Add(MixedPartLiteral(prefix[i], $"part{i}"));
+            }
+
+            w.WriteLine($"const requestBody: RequestBody = multipartMixed([{string.Join(", ", entries)}]);");
+            return;
+        }
+
+        if (rb.ItemPart is { } item)
+        {
+            string mapped = item.IsBinary
+                ? "items.map((item) => ({ kind: \"binary\" as const, ...item }))"
+                : $"items.map((item) => ({{ kind: \"json\" as const, value: item{MixedJsonContentTypeSuffix(item)} }}))";
+            w.WriteLine($"const requestBody: RequestBody = multipartMixed([...{mapped}]);");
+        }
+    }
+
+    // A single multipart/mixed part literal: binary parts spread the `MultipartBinaryPart` param (so an
+    // absent optional stays absent under exactOptionalPropertyTypes), JSON parts carry the typed value.
+    private static string MixedPartLiteral(MixedPartInfo part, string varName)
+        => part.IsBinary
+            ? $"{{ kind: \"binary\" as const, ...{varName} }}"
+            : $"{{ kind: \"json\" as const, value: {varName}{MixedJsonContentTypeSuffix(part)} }}";
+
+    // The `, contentType: "<ct>"` suffix for a JSON mixed part whose declared content type is not the
+    // `application/json` default; otherwise the empty string.
+    private static string MixedJsonContentTypeSuffix(MixedPartInfo part)
+        => part.ContentType is { Length: > 0 } ct && ct != "application/json"
+            ? $", contentType: {StringLiteral(ct)}"
+            : string.Empty;
 
     private static void EmitServerUriFactory(IndentedWriter w, ServerInfo serverInfo)
     {

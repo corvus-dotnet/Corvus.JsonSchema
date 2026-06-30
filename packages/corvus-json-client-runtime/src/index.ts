@@ -33,6 +33,16 @@ export type {
   FormPropertyEncoding,
   FormEncodings,
 } from "./serializers/form-urlencoded.js";
+export { multipartFormData, multipartMixed } from "./serializers/multipart.js";
+export type {
+  MultipartBinaryPart,
+  MultipartScalar,
+  MultipartFieldValue,
+  MultipartFormFields,
+  MultipartFormOptions,
+  MultipartMixedPart,
+  MultipartMixedOptions,
+} from "./serializers/multipart.js";
 export type { AuthenticationProvider } from "./auth/authentication-provider.js";
 export { bearerToken } from "./auth/bearer.js";
 export type { TokenFactory } from "./auth/bearer.js";

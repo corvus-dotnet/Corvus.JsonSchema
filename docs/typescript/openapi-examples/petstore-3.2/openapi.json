@@ -379,6 +379,89 @@
           }
         }
       }
+    },
+    "/avatar": {
+      "post": {
+        "operationId": "avatar",
+        "summary": "Uploads an avatar via multipart/form-data.",
+        "tags": [
+          "status"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The stored pet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pet"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/batch": {
+      "post": {
+        "operationId": "batch",
+        "summary": "Posts a batch of pet updates via multipart/mixed.",
+        "tags": [
+          "status"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/mixed": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PetUpdate"
+                }
+              },
+              "itemEncoding": {
+                "contentType": "application/json"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The stored pet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pet"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
