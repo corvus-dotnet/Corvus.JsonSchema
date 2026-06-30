@@ -2,8 +2,13 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Concurrent;
+using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Corvus.Text.Json.Arazzo.Execution;
+using Corvus.Text.Json.OpenApi;
+using Corvus.Text.Json.OpenApi.HttpTransport;
 
 namespace Corvus.Text.Json.Arazzo.ControlPlane.Demo;
 
@@ -18,11 +23,76 @@ public static class DemoData
     private static readonly CatalogOwner OnboardingOwner = new("Onboarding Team", "onboarding@example.com", "Identity", "https://runbooks.example.com/onboard");
     private static readonly CatalogOwner ReconcileOwner = new("Reconciliation Team", "reconcile@example.com", "Platform", "https://runbooks.example.com/nightly-reconcile");
 
-    /// <summary>A resumer that drives a resumed run to completion (stands in for re-entering a generated executor).</summary>
-    public static async ValueTask<WorkflowRunResultKind> CompleteResumer(WorkflowRun run, CancellationToken cancellationToken)
+    /// <summary>Builds the live <see cref="WorkflowResumer"/> that re-enters a run's compiled executor (§5/§8): it
+    /// resolves the run's catalogued executor through the loader and runs it against transports that call this host's
+    /// own /svc backends. <paramref name="baseUrlProvider"/> yields the host's base URL once it has started listening
+    /// (the resumer is built before the server binds, but invoked only after).</summary>
+    /// <param name="catalog">The catalog store the baked executor is loaded from.</param>
+    /// <param name="baseUrlProvider">Yields this host's base URL (resolved after it starts listening).</param>
+    /// <returns>The resumer delegate.</returns>
+    public static WorkflowResumer CreateLiveResumer(IWorkflowCatalogStore catalog, Func<string> baseUrlProvider)
     {
-        await run.CompleteAsync(default, cancellationToken).ConfigureAwait(false);
-        return WorkflowRunResultKind.Completed;
+        ArgumentNullException.ThrowIfNull(catalog);
+        ArgumentNullException.ThrowIfNull(baseUrlProvider);
+
+        // One client per source, each rooted at the host with a handler that prefixes the source's /svc base path —
+        // the generated client emits absolute operation paths (e.g. /accounts), so rooting at the host + prefixing in
+        // a handler routes them to /svc/<source>/... (a base address WITH a path is dropped by absolute-path resolution).
+        var clients = new ConcurrentDictionary<string, HttpClient>(StringComparer.Ordinal);
+        HttpClient ClientFor(string source) => clients.GetOrAdd(source, s => new HttpClient(new SvcPrefixHandler($"/svc/{s}") { InnerHandler = new HttpClientHandler() })
+        {
+            BaseAddress = new Uri(baseUrlProvider()),
+        });
+
+        var resumer = new HostedWorkflowResumer(
+            catalog,
+            new WorkflowExecutorLoader(),
+            (descriptor, runTags) => new WorkflowTransports(
+                descriptor.Sources.ToDictionary(
+                    source => source,
+                    source => (IApiTransport)new HttpClientApiTransportFactory(ClientFor(source)).CreateTransport(),
+                    StringComparer.Ordinal),
+                MessageTransport: null));
+        return resumer.AsResumer();
+    }
+
+    /// <summary>Executes a fresh onboarding run live, to demonstrate real execution: it creates a Pending run with
+    /// inputs and drives it through the live resumer (which calls the hosted /svc/onboarding backend), so the browsable
+    /// demo shows a genuinely-executed run rather than a hand-seeded state. Best-effort — a failure is logged, not fatal.</summary>
+    /// <param name="runStore">The run state store.</param>
+    /// <param name="resumer">The live resumer (from <see cref="CreateLiveResumer"/>).</param>
+    /// <param name="log">An optional sink for the outcome line.</param>
+    /// <param name="timeProvider">The time provider (defaults to the system clock).</param>
+    public static async ValueTask RunLiveOnboardingAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, Action<string>? log = null, TimeProvider? timeProvider = null)
+    {
+        ArgumentNullException.ThrowIfNull(runStore);
+        ArgumentNullException.ThrowIfNull(resumer);
+        TimeProvider time = timeProvider ?? TimeProvider.System;
+        try
+        {
+            using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"email":"ada@example.com","plan":"pro"}"""u8.ToArray());
+            using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-onb-live01", "onboard-customer-v1", inputs.RootElement, time, correlationId: "live01", tags: TagSet.FromTags(["tenant-7"]));
+            WorkflowRunResultKind result = await resumer(run, default).ConfigureAwait(false);
+            log?.Invoke($"Live onboarding run 'run-onb-live01' executed against /svc: {result}.");
+        }
+        catch (Exception ex)
+        {
+            log?.Invoke($"Live onboarding run failed: {ex}");
+        }
+    }
+
+    // Prefixes the source's /svc base path onto each outgoing request (the host root is the client's base address).
+    private sealed class SvcPrefixHandler(string prefix) : DelegatingHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            if (request.RequestUri is { } uri)
+            {
+                request.RequestUri = new UriBuilder(uri) { Path = prefix + uri.AbsolutePath }.Uri;
+            }
+
+            return base.SendAsync(request, cancellationToken);
+        }
     }
 
     /// <summary>Seeds the catalog with demo workflow versions and the run store with runs across every status.</summary>
