@@ -74,20 +74,24 @@ public static class DemoData
         // A standard applicant clears the KYC score threshold → the run completes all four steps.
         await RunLiveAsync(runStore, resumer, time, "run-onb-live01", "live01", """{"email":"ada@example.com","fullName":"Ada Lovelace","plan":"pro"}""", log).ConfigureAwait(false);
 
-        // A sanctioned applicant scores below the threshold → the run faults live at verifyIdentity. Nothing is
-        // hand-seeded: the success criterion is evaluated against the real backend response. NOTE: a production
-        // workflow would *handle* a KYC failure inside the workflow (an onFailure branch to manual review or a
-        // rejection step), not let it fault the run. This intentionally-unhandled fault demonstrates how a failing
-        // step surfaces in the control plane — the dev-test debugging experience — rather than a recommended design.
+        // The same sanctioned applicant on v1 scores below the threshold and — because v1 does not handle the
+        // failure — faults live at verifyIdentity. Nothing is hand-seeded: the success criterion is evaluated
+        // against the real backend response. This intentionally-unhandled fault demonstrates how a failing step
+        // surfaces in the control plane (the dev-test debugging experience), not a recommended design.
         await RunLiveAsync(runStore, resumer, time, "run-onb-live02", "live02", """{"email":"mallory@example.com","fullName":"Mallory Sanction","plan":"free"}""", log).ConfigureAwait(false);
+
+        // The resilient v2 of the workflow HANDLES the same KYC failure: verifyIdentity's onFailure routes to the
+        // applicant-notification step (skipping provisioning), so the run completes via the remediation branch
+        // instead of faulting. Same applicant as live02, different (fixed) workflow version — the production design.
+        await RunLiveAsync(runStore, resumer, time, "run-onb-live03", "live03", """{"email":"mallory@example.com","fullName":"Mallory Sanction","plan":"free"}""", log, "onboard-customer-v2").ConfigureAwait(false);
     }
 
-    private static async ValueTask RunLiveAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, TimeProvider time, string runId, string correlationId, string inputsJson, Action<string>? log)
+    private static async ValueTask RunLiveAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, TimeProvider time, string runId, string correlationId, string inputsJson, Action<string>? log, string workflowId = "onboard-customer-v1")
     {
         try
         {
             using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(inputsJson));
-            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "onboard-customer-v1", inputs.RootElement, time, correlationId: correlationId, tags: TagSet.FromTags(["tenant-7"]));
+            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, workflowId, inputs.RootElement, time, correlationId: correlationId, tags: TagSet.FromTags(["tenant-7"]));
             WorkflowRunResultKind result = await resumer(run, default).ConfigureAwait(false);
             log?.Invoke($"Live onboarding run '{runId}' executed against /svc: {result}.");
         }
@@ -124,6 +128,7 @@ public static class DemoData
         TimeProvider time = timeProvider ?? TimeProvider.System;
 
         ReadOnlyMemory<byte> onboarding = Package(specsDir, "onboard-customer.arazzo.json", ("onboarding", "onboarding.openapi.json"));
+        ReadOnlyMemory<byte> onboardingV2 = Package(specsDir, "onboard-customer.v2.arazzo.json", ("onboarding", "onboarding.openapi.json"));
         ReadOnlyMemory<byte> reconcile = Package(specsDir, "nightly-reconcile.arazzo.json", ("ledger", "ledger.openapi.json"));
 
         // Catalog: onboarding (one active version) and nightly-reconcile (a v1 that we obsolete, plus an active v2).
@@ -132,6 +137,11 @@ public static class DemoData
         // grant's reach matches because the catalog stamps each version with its sys:workflow tag).
         SecurityTagSet adminFounder = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "group", "arazzo-admins")]);
         await catalog.AddAsync(onboarding, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default).ConfigureAwait(false);
+
+        // onboard-customer v2: the resilient revision that routes a failed identity check to applicant notification
+        // (verifyIdentity onFailure -> goto) instead of faulting. Catalogued as version 2 of the same workflow.
+        await catalog.AddAsync(onboardingV2, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default).ConfigureAwait(false);
+
         await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing"]), adminFounder, default).ConfigureAwait(false);
         await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing", "beta"]), adminFounder, default).ConfigureAwait(false);
         (await catalog.UpdateAsync("nightly-reconcile", 1, owner: null, tags: null, status: CatalogStatus.Obsolete, AccessContext.System, default).ConfigureAwait(false)).Document?.Dispose();
