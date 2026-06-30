@@ -122,8 +122,8 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             return AuthorizeRunnerResult.NotFound(RunnerNotFoundProblem(environment, runnerId), workspace);
         }
 
-        // Idempotent — authorizing an already-Authorized runner returns the existing record.
-        if (string.Equals(fetched.RootElement.StatusValue, RunnerAuthorizationStatusNames.Authorized, StringComparison.Ordinal))
+        // Idempotent — authorizing an already-Authorized runner returns the existing record (status compared string-free).
+        if (fetched.RootElement.IsAuthorized)
         {
             workspace.TakeOwnership(fetched);
             return AuthorizeRunnerResult.Ok(ToView(fetched.RootElement), workspace);
@@ -172,8 +172,8 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             return RevokeRunnerResult.NotFound(RunnerNotFoundProblem(environment, runnerId), workspace);
         }
 
-        // Idempotent — revoking an already-Revoked runner returns the existing record.
-        if (string.Equals(fetched.RootElement.StatusValue, RunnerAuthorizationStatusNames.Revoked, StringComparison.Ordinal))
+        // Idempotent — revoking an already-Revoked runner returns the existing record (status compared string-free).
+        if (fetched.RootElement.IsRevoked)
         {
             workspace.TakeOwnership(fetched);
             return RevokeRunnerResult.Ok(ToView(fetched.RootElement), workspace);
@@ -241,11 +241,33 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         return ListRunnerAuthorizationsResult.Ok(body, workspace);
     }
 
+    // The status query param is parsed string-free: the JSON value's bytes are matched against the wire literals rather
+    // than realising it and running Enum.TryParse over a managed string.
     private static RunnerAuthorizationStatus? ParseStatus(Models.GetEnvironmentsByNameRunnersStatus status)
-        => status.IsNotUndefined() && Enum.TryParse((string)status, out RunnerAuthorizationStatus parsed) ? parsed : null;
+    {
+        if (!status.IsNotUndefined())
+        {
+            return null;
+        }
+
+        return status.ValueEquals("Pending"u8) ? RunnerAuthorizationStatus.Pending
+            : status.ValueEquals("Authorized"u8) ? RunnerAuthorizationStatus.Authorized
+            : status.ValueEquals("Revoked"u8) ? RunnerAuthorizationStatus.Revoked
+            : null;
+    }
 
     private static RunnerAuthorizationStatus? ParseStatus(Models.GetRunnerAuthorizationsStatus status)
-        => status.IsNotUndefined() && Enum.TryParse((string)status, out RunnerAuthorizationStatus parsed) ? parsed : null;
+    {
+        if (!status.IsNotUndefined())
+        {
+            return null;
+        }
+
+        return status.ValueEquals("Pending"u8) ? RunnerAuthorizationStatus.Pending
+            : status.ValueEquals("Authorized"u8) ? RunnerAuthorizationStatus.Authorized
+            : status.ValueEquals("Revoked"u8) ? RunnerAuthorizationStatus.Revoked
+            : null;
+    }
 
     private static string? NoteReason(Models.RunnerAuthorizationDecisionNote body)
         => body.IsNotUndefined() && body.Reason.IsNotUndefined() ? (string)body.Reason : null;
