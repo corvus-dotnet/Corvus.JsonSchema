@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Only upgrade NuGetAudit warnings to errors for official builds. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <NoWarn>$(NoWarn);NU1504;CS8500;CS8969;CS1591;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573;CS1574;CS1584;CS1658</NoWarn>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <IsPackable>true</IsPackable>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Description>TypeScript code generation for API clients from OpenAPI specifications. Emits idiomatic TypeScript that consumes the @endjin/corvus-json-client-runtime byte-native transport and Corvus.Text.Json-generated TypeScript models.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi.CodeGeneration\Corvus.Text.Json.OpenApi.CodeGeneration.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+</Project>

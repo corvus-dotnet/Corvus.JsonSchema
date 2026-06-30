@@ -41,6 +41,22 @@ internal sealed class OpenApiGenerateSettings : OpenApiSettings
     [CommandOption("--yaml")]
     [Description("Treat the input specification as YAML. If not specified, YAML is auto-detected from .yaml/.yml file extension.")]
     public bool? Yaml { get; init; }
+
+    [CommandOption("--engine")]
+    [Description("The code generation engine: 'V5' (default; idiomatic C#) or 'TypeScript' (idiomatic TypeScript client + models). V4 is not supported for OpenAPI client generation.")]
+    public Engine? Engine { get; init; }
+
+    [CommandOption("--tsRuntimeModule")]
+    [Description("TypeScript engine only. The module specifier the generated models import the shared model runtime from. A relative specifier (e.g. './corvus-runtime.js') re-emits the runtime alongside the models; a bare package specifier imports the installed package and does not re-emit it.")]
+    public string? TsRuntimeModule { get; init; }
+
+    [CommandOption("--tsClientRuntimeModule")]
+    [Description("TypeScript engine only. The module specifier the generated client imports the byte-native transport runtime from. Defaults to '@endjin/corvus-json-client-runtime'; supply a relative path to resolve the runtime from the working tree without an install step.")]
+    public string? TsClientRuntimeModule { get; init; }
+
+    [CommandOption("--tsModulePerType")]
+    [Description("TypeScript engine only. Emit one model module per type plus a barrel index.ts instead of a single generated.ts.")]
+    public bool? TsModulePerType { get; init; }
 }
 
 #endif

@@ -236,12 +236,38 @@ public sealed class OpenApi32CodeGenerator
         JsonElement specRoot,
         OperationFilter? filter = null,
         IOpenApiReferenceResolver? referenceResolver = null)
+        => this.GenerateUsing(this.emitter, specRoot, filter, referenceResolver);
+
+    /// <summary>
+    /// Walks the OpenAPI 3.2 specification into the shared intermediate representation and drives the
+    /// supplied <see cref="IClientEmitter"/> over it.
+    /// </summary>
+    /// <remarks>
+    /// This is the language-neutral seam: it produces the same intermediate representation the
+    /// built-in C# <see cref="Generate(JsonElement, OperationFilter?, IOpenApiReferenceResolver?)"/>
+    /// entry point uses (which delegates here with its own C# emitter), but lets a caller supply a
+    /// different emitter — for example a TypeScript emitter — so a non-C# target consumes the exact
+    /// same walk.
+    /// </remarks>
+    /// <param name="emitter">The target-language emitter to drive.</param>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="filter">Optional operation filter.</param>
+    /// <param name="referenceResolver">
+    /// Optional reference resolver. If <see langword="null"/>, a <see cref="LocalReferenceResolver"/>
+    /// is used.
+    /// </param>
+    /// <returns>The generated source files.</returns>
+    public IReadOnlyList<GeneratedFile> GenerateUsing(
+        IClientEmitter emitter,
+        JsonElement specRoot,
+        OperationFilter? filter = null,
+        IOpenApiReferenceResolver? referenceResolver = null)
     {
         referenceResolver ??= new LocalReferenceResolver(specRoot);
         ServerInfo? rootServer = OpenApi32Walker.GetDefaultServerInfo(specRoot);
         List<OperationInfo> operations = [.. this.walker.Walk(specRoot, filter, referenceResolver)];
 
-        return this.driver.EmitClient(this.emitter, operations, specRoot, referenceResolver, rootServer);
+        return this.driver.EmitClient(emitter, operations, specRoot, referenceResolver, rootServer);
     }
 
     // ═══════════════════════════════════════════════════════════════════
