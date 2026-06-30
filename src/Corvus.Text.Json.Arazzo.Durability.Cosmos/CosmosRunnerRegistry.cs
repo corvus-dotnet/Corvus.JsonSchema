@@ -240,6 +240,72 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    // This project generates its own RunnerDocument model, which emits a Cosmos-namespace JsonString (per-root type
+    // identity), so the seam parameter is fully qualified to the core JsonString IRunnerRegistry's signature uses.
+    public async ValueTask<RunnerRegistryPage> ListAsync(AccessContext context, int limit, global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (context.ReadReach is null)
+        {
+            // Unrestricted read reach (e.g. the trusted system path): no row is filtered, so the bounded keyset query
+            // (one page, no per-row tag work) is exactly right — no full read, no in-memory filter.
+            return await this.ListAsync(limit, pageToken, cancellationToken).ConfigureAwait(false);
+        }
+
+        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
+
+        // Decode the keyset cursor; the runner id reifies to a string only for the Cosmos @after query parameter (leaf).
+        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
+
+        // Reach (§14.2) is a per-row ABAC predicate, not expressible in the Cosmos query, so the query orders by the
+        // document id (== runner id; Cosmos orders strings ordinally, the same order the in-memory pager sorts by) and
+        // seeks strictly past the cursor, and rows are streamed + reach-filtered in flight. The lazy stream iterator is
+        // drained only until the page fills (with a one-row look-ahead), never every registration the in-memory fallback
+        // reads. (No page-size limit on the query: filtered-out rows don't count toward the page, so the page-fill +
+        // one-row look-ahead governs how far the scan reads.)
+        string where = after is null ? string.Empty : " WHERE c.id > @after";
+        var definition = new QueryDefinition("SELECT * FROM c" + where + " ORDER BY c.id");
+        if (after is not null)
+        {
+            definition = definition.WithParameter("@after", after);
+        }
+
+        var page = new List<RunnerRegistration>(pageSize);
+        bool hasMore = false;
+        await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(definition, cancellationToken).ConfigureAwait(false))
+        {
+            RunnerRegistration runner = RunnerRegistration.FromJson(CosmosJson.GetRawValue(element, "doc"u8));
+
+            // reachTags is absent on a runner serving an unscoped environment; an empty tag set fails a scoped reach
+            // (fail-closed), so such a runner is invisible to a tenant-scoped caller — matching the in-memory pager.
+            SecurityTagSet tags = runner.ReachTags.IsNotUndefined()
+                ? SecurityTagSet.CopyFrom(runner.ReachTags)
+                : SecurityTagSet.Empty;
+            if (!context.Admits(AccessVerb.Read, tags))
+            {
+                continue;
+            }
+
+            if (page.Count == pageSize)
+            {
+                hasMore = true; // a further reach-visible row exists → there is a next page after the last included row
+                break;
+            }
+
+            page.Add(runner);
+        }
+
+        if (!hasMore)
+        {
+            return RunnerRegistryPage.Create(page);
+        }
+
+        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
+        return RunnerRegistryPage.Create(page, lastId.Span);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<int> PruneAsync(DateTimeOffset deadBefore, CancellationToken cancellationToken)
     {
         var definition = new QueryDefinition("SELECT c.id FROM c WHERE c.lastSeenAt < @cutoff")

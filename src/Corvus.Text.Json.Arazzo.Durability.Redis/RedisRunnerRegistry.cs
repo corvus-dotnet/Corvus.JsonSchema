@@ -210,6 +210,84 @@ public sealed class RedisRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RunnerRegistryPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (context.ReadReach is null)
+        {
+            // Unrestricted read reach (e.g. the trusted system path): no row is filtered, so the look-ahead-bounded
+            // keyset walk (one page of documents fetched, no per-row tag work) is exactly right — no full fleet read.
+            return await this.ListAsync(limit, pageToken, cancellationToken).ConfigureAwait(false);
+        }
+
+        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
+
+        // Decode the keyset cursor; the runner id reifies to a string only for the ordinal compare + key lookup (the leaf).
+        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
+
+        // Reach (§14.2) is a per-row ABAC predicate, not something Redis can evaluate, so — exactly like the unscoped
+        // overload — the keyset order is materialised client-side over the id index (small strings, ordinal == the
+        // in-memory pager's order). Documents are then fetched one at a time in that order, seeking past the cursor and
+        // reach-filtering in flight, until the page fills with a one-row look-ahead — never the full fleet the in-memory
+        // fallback reads. (No fetch limit: filtered-out rows don't count toward the page, so the page-fill governs the walk.)
+        RedisValue[] members = await this.database.SetMembersAsync(IndexKey).ConfigureAwait(false);
+        var ids = new List<string>(members.Length);
+        foreach (RedisValue member in members)
+        {
+            ids.Add((string)member!);
+        }
+
+        ids.Sort(static (a, b) => string.CompareOrdinal(a, b));
+
+        var page = new List<RunnerRegistration>(pageSize);
+        bool hasMore = false;
+        foreach (string runnerId in ids)
+        {
+            if (after is not null && string.CompareOrdinal(runnerId, after) <= 0)
+            {
+                continue; // already returned in an earlier page
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            RedisValue value = await this.database.StringGetAsync(RunnerKey(runnerId)).ConfigureAwait(false);
+            if (value.IsNullOrEmpty)
+            {
+                continue; // id indexed but doc gone (raced with prune) — skip
+            }
+
+            RunnerRegistration runner = RunnerRegistration.FromJson((byte[])value!);
+
+            // reachTags is absent on a runner serving an unscoped environment; an empty tag set fails a scoped reach
+            // (fail-closed), so such a runner is invisible to a tenant-scoped caller — matching the in-memory pager.
+            SecurityTagSet tags = runner.ReachTags.IsNotUndefined()
+                ? SecurityTagSet.CopyFrom(runner.ReachTags)
+                : SecurityTagSet.Empty;
+            if (!context.Admits(AccessVerb.Read, tags))
+            {
+                continue; // FromJson allocates a managed registration, not a pooled lease — nothing to dispose for a skip
+            }
+
+            if (page.Count == pageSize)
+            {
+                hasMore = true; // a further reach-visible row exists → there is a next page after the last included row
+                break;
+            }
+
+            page.Add(runner);
+        }
+
+        if (!hasMore)
+        {
+            return RunnerRegistryPage.Create(page);
+        }
+
+        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
+        return RunnerRegistryPage.Create(page, lastId.Span);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<int> PruneAsync(DateTimeOffset deadBefore, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

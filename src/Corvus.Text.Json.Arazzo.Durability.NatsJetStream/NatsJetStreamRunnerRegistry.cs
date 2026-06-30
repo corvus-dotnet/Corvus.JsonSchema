@@ -251,6 +251,83 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RunnerRegistryPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (context.ReadReach is null)
+        {
+            // Unrestricted read reach (e.g. the trusted system path): no runner is filtered, so the unscoped keyset page —
+            // which fetches only the page's documents (plus one look-ahead) — is exactly right, no per-row tag work.
+            return await this.ListAsync(limit, pageToken, cancellationToken).ConfigureAwait(false);
+        }
+
+        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
+        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
+
+        // Recover the keyset order from the runner keys alone (each key is Base64Url(runnerId), so Dec gives the id without
+        // a document fetch), exactly as the unscoped overload. Reach (§14.2) is a per-row ABAC predicate the KV store cannot
+        // express, so the value is fetched and reach-filtered in flight: rows are scanned in id order past the cursor and the
+        // scan stops once the page fills plus one admitted look-ahead — never the full list + in-memory filter the default does.
+        var entries = new List<(string Id, string Key)>();
+        await foreach (string key in this.registry.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (IsHostingKey(key))
+            {
+                continue;
+            }
+
+            entries.Add((Dec(key), key));
+        }
+
+        entries.Sort(static (a, b) => string.CompareOrdinal(a.Id, b.Id));
+
+        var page = new List<RunnerRegistration>(pageSize);
+        bool hasMore = false;
+        foreach ((string id, string key) in entries)
+        {
+            if (after is not null && string.CompareOrdinal(id, after) <= 0)
+            {
+                continue; // already returned in an earlier page (no page-size limit: filtered-out rows don't count toward the page)
+            }
+
+            NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            if (entry is not { Value: { } value })
+            {
+                continue; // key listed but entry gone (raced with prune) — skip
+            }
+
+            RunnerRegistration runner = RunnerRegistration.FromJson(value);
+
+            // reachTags is absent on a runner serving an unscoped environment; an empty tag set fails a scoped reach
+            // (fail-closed), so such a runner is invisible to a tenant-scoped caller — matching the in-memory pager.
+            SecurityTagSet tags = runner.ReachTags.IsNotUndefined()
+                ? SecurityTagSet.CopyFrom(runner.ReachTags)
+                : SecurityTagSet.Empty;
+            if (!context.Admits(AccessVerb.Read, tags))
+            {
+                continue;
+            }
+
+            if (page.Count == pageSize)
+            {
+                hasMore = true; // a further reach-visible row exists → there is a next page after the last included row
+                break;
+            }
+
+            page.Add(runner);
+        }
+
+        if (!hasMore)
+        {
+            return RunnerRegistryPage.Create(page);
+        }
+
+        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
+        return RunnerRegistryPage.Create(page, lastId.Span);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);

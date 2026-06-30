@@ -243,6 +243,71 @@ public sealed class PostgresRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RunnerRegistryPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (context.ReadReach is null)
+        {
+            // Unrestricted read reach (e.g. the trusted system path): no row is filtered, so the bounded LIMIT keyset query
+            // (one page, no per-row tag work) is exactly right — no full read, no in-memory filter.
+            return await this.ListAsync(limit, pageToken, cancellationToken).ConfigureAwait(false);
+        }
+
+        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
+        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
+
+        await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using NpgsqlCommand select = connection.CreateCommand();
+
+        // Reach (§14.2) is a per-row ABAC predicate, not expressible as SQL, so runner_id COLLATE "C" drives an ordered
+        // range SEEK past the cursor and rows are streamed + reach-filtered in flight — the reader is consumed only until the
+        // page fills, never the full SELECT + parse of every registration the in-memory fallback does. (No LIMIT: filtered-out
+        // rows don't count toward the page, so the page-fill + one-row look-ahead governs how far the scan reads.)
+        select.CommandText =
+            """
+            SELECT doc FROM runner_registrations
+            WHERE (@after IS NULL OR runner_id > @after)
+            ORDER BY runner_id;
+            """;
+        select.Parameters.Add(new NpgsqlParameter("@after", NpgsqlDbType.Text) { Value = (object?)after ?? DBNull.Value });
+
+        var page = new List<RunnerRegistration>(pageSize);
+        bool hasMore = false;
+        await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            RunnerRegistration runner = RunnerRegistration.FromJson((byte[])reader[0]);
+
+            // reachTags is absent on a runner serving an unscoped environment; an empty tag set fails a scoped reach
+            // (fail-closed), so such a runner is invisible to a tenant-scoped caller — matching the in-memory pager.
+            SecurityTagSet tags = runner.ReachTags.IsNotUndefined()
+                ? SecurityTagSet.CopyFrom(runner.ReachTags)
+                : SecurityTagSet.Empty;
+            if (!context.Admits(AccessVerb.Read, tags))
+            {
+                continue;
+            }
+
+            if (page.Count == pageSize)
+            {
+                hasMore = true; // a further reach-visible row exists → there is a next page after the last included row
+                break;
+            }
+
+            page.Add(runner);
+        }
+
+        if (!hasMore)
+        {
+            return RunnerRegistryPage.Create(page);
+        }
+
+        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
+        return RunnerRegistryPage.Create(page, lastId.Span);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<int> PruneAsync(DateTimeOffset deadBefore, CancellationToken cancellationToken)
     {
         await using NpgsqlConnection connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
