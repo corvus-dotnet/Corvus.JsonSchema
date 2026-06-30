@@ -58,7 +58,12 @@ SqliteWorkflowStateStore stateStore = await SqliteWorkflowStateStore.ConnectAsyn
 // metadata) — so a resumed run can re-enter the real generated Arazzo executor (live execution, §5/§8).
 SqliteWorkflowCatalogStore catalogStore = await SqliteWorkflowCatalogStore.ConnectAsync(connectionString, metadataProvider: metadata, executorProvider: new WorkflowExecutorProvider());
 
-var management = new SecuredWorkflowManagement(stateStore, "demo", DemoData.CompleteResumer);
+// Live execution (§5/§8): a resumed run re-enters its baked executor, calling this host's own /svc backends. The
+// resumer is built now but invoked only after the server is listening, so it reads the host base URL lazily (set in
+// the ApplicationStarted callback below) — the same delegate also drives one fresh run at startup to demonstrate it.
+var selfBaseUrl = new System.Runtime.CompilerServices.StrongBox<string?>(null);
+WorkflowResumer liveResumer = DemoData.CreateLiveResumer(catalogStore, () => selfBaseUrl.Value ?? throw new InvalidOperationException("The host base URL is not available until the server has started."));
+var management = new SecuredWorkflowManagement(stateStore, "demo", liveResumer);
 
 // A workflow's §15 administrator set governs who may approve access requests for it (and publish further versions).
 // The submitter of version 1 establishes administration (DemoData seeds the workflows as administered by the
@@ -284,5 +289,13 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
 // The demo backend services the workflows call (generated from the same OpenAPI sources, returning sample data).
 OnboardingApi.MapApiEndpoints(app.MapGroup("/svc/onboarding"), new OnboardingService());
 LedgerApi.MapApiEndpoints(app.MapGroup("/svc/ledger"), new LedgerService());
+
+// Once the server is listening, resolve its own base URL (for the live resumer's /svc transports) and execute one
+// fresh onboarding run live — so the demo shows a genuinely-executed run, not only hand-seeded states.
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    selfBaseUrl.Value = app.Urls.FirstOrDefault();
+    _ = DemoData.RunLiveOnboardingAsync(stateStore, liveResumer, message => app.Logger.LogInformation("{Message}", message));
+});
 
 app.Run();
