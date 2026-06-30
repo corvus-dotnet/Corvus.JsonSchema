@@ -8,6 +8,8 @@
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.ControlPlane.Demo;
+using Corvus.Text.Json.Arazzo.Execution;
+using Corvus.Text.Json.Arazzo.Generation;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -52,7 +54,9 @@ foreach (string path in new[] { dbPath, dbPath + "-wal", dbPath + "-shm" })
 // The catalog store bakes typed-shape + validation metadata at add time via the code-generation provider.
 var metadata = new WorkflowSchemaMetadataProvider();
 SqliteWorkflowStateStore stateStore = await SqliteWorkflowStateStore.ConnectAsync(connectionString);
-SqliteWorkflowCatalogStore catalogStore = await SqliteWorkflowCatalogStore.ConnectAsync(connectionString, metadataProvider: metadata);
+// The executor provider compiles a runnable executor into each catalogued version at add time (alongside the typed
+// metadata) — so a resumed run can re-enter the real generated Arazzo executor (live execution, §5/§8).
+SqliteWorkflowCatalogStore catalogStore = await SqliteWorkflowCatalogStore.ConnectAsync(connectionString, metadataProvider: metadata, executorProvider: new WorkflowExecutorProvider());
 
 var management = new SecuredWorkflowManagement(stateStore, "demo", DemoData.CompleteResumer);
 
