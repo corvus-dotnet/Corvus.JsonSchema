@@ -249,6 +249,27 @@ public readonly partial struct WorkflowRunSummary
     }
 
     /// <summary>
+    /// Gets the (optional) <c>environment</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The deployment environment the run is pinned to (design &#167;5.5): its credential set, and the runners it can be dispatched to.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Environment
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvironmentUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>errorType</c> property.
     /// </summary>
     /// <remarks>
@@ -846,6 +867,11 @@ public readonly partial struct WorkflowRunSummary
         public const string DueAt = "dueAt";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="Environment"/>.
+        /// </summary>
+        public const string Environment = "environment";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="ErrorType"/>.
         /// </summary>
         public const string ErrorType = "errorType";
@@ -899,6 +925,11 @@ public readonly partial struct WorkflowRunSummary
         /// Gets the JSON property name for <see cref="DueAt"/>.
         /// </summary>
         public static ReadOnlySpan<byte> DueAtUtf8 => "dueAt"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Environment"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EnvironmentUtf8 => "environment"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="ErrorType"/>.
@@ -962,6 +993,11 @@ public readonly partial struct WorkflowRunSummary
         public static ReadOnlySpan<byte> DueAt => "dueAt"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Environment"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Environment => "environment"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="ErrorType"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ErrorType => "errorType"u8;
@@ -1022,6 +1058,11 @@ public readonly partial struct WorkflowRunSummary
         /// Gets the pre-baked property name blob for <see cref="DueAt"/>.
         /// </summary>
         public static ReadOnlySpan<byte> DueAt => [0x75, 0x00, 0x00, 0x00, 0x22, 0x64, 0x75, 0x65, 0x41, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Environment"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Environment => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x76, 0x69, 0x72, 0x6F, 0x6E, 0x6D, 0x65, 0x6E, 0x74, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="ErrorType"/>.
