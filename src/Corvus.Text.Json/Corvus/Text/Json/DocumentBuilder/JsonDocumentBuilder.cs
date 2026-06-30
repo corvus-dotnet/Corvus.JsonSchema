@@ -23,7 +23,7 @@ namespace Corvus.Text.Json;
 /// </summary>
 /// <typeparam name="T">The type of mutable JSON element this builder works with.</typeparam>
 [CLSCompliant(false)]
-public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonDocument
+public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonDocument, IWorkspaceCreatedDocument
     where T : struct, IMutableJsonElement<T>
 {
     private readonly JsonWorkspace _workspace;
@@ -66,6 +66,10 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
     /// <inheritdoc />
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     JsonWorkspace IMutableJsonDocument.Workspace => _workspace;
+
+    /// <inheritdoc />
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    JsonWorkspace IWorkspaceCreatedDocument.CreatingWorkspace => _workspace;
 
     /// <summary>
     /// Gets the root element of the JSON document.

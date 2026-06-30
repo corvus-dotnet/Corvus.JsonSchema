@@ -18,6 +18,8 @@
         {
           "stepId": "verifyIdentity",
           "operationId": "verifyIdentity",
+          "parameters": [ { "name": "accountId", "in": "path", "value": "$steps.createAccount.outputs.accountId" } ],
+          "requestBody": { "contentType": "application/json", "payload": { "fullName": "Ada Lovelace", "documentNumber": "X1234567" } },
           "outputs": {
             "score": "$response.body#/score",
             "method": "$response.body#/method",
@@ -29,6 +31,7 @@
         {
           "stepId": "provisionResources",
           "operationId": "provisionResources",
+          "parameters": [ { "name": "accountId", "in": "path", "value": "$steps.createAccount.outputs.accountId" } ],
           "outputs": {
             "accountUrl": "$response.body#/accountUrl",
             "quotaGb": "$response.body#/quotaGb",
@@ -36,7 +39,12 @@
             "tags": "$response.body#/tags"
           }
         },
-        { "stepId": "sendWelcome", "operationId": "sendWelcome", "outputs": {} }
+        {
+          "stepId": "sendWelcome",
+          "operationId": "sendWelcome",
+          "parameters": [ { "name": "accountId", "in": "path", "value": "$steps.createAccount.outputs.accountId" } ],
+          "outputs": {}
+        }
       ]
     }
   ]

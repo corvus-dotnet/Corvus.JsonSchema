@@ -410,7 +410,16 @@ public class JsonWorkspace : IDisposable
     {
         foreach (IJsonDocument document in _documents.AsSpan(0, _length))
         {
-            if (document is IWorkspaceManagedDocument || _ownedDocuments?.Contains(document) == true)
+            // _documents holds both documents this workspace created and documents it merely referenced from
+            // another workspace to resolve a cross-workspace value (registered for index lookup only). A
+            // creator-tracked document (a builder) is disposed only by the workspace that created it — disposing
+            // one another workspace still owns would corrupt that workspace. Other managed documents (pooled
+            // value documents, frozen wrappers) keep their registration-based lifetime, and any document
+            // explicitly taken over via TakeOwnership is owned here regardless of who created it.
+            bool owned = document is IWorkspaceCreatedDocument created
+                ? ReferenceEquals(created.CreatingWorkspace, this)
+                : document is IWorkspaceManagedDocument;
+            if (owned || _ownedDocuments?.Contains(document) == true)
             {
                 document.Dispose();
             }
