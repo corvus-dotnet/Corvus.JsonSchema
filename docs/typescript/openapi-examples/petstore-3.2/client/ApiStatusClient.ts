@@ -31,6 +31,10 @@ import { pingRequest } from "./pingRequest.js";
 import { PingResponse, pingResponseFactory } from "./PingResponse.js";
 import { limitsRequest } from "./limitsRequest.js";
 import { LimitsResponse, limitsResponseFactory } from "./LimitsResponse.js";
+import { eventsRequest } from "./eventsRequest.js";
+import { EventsResponse, eventsResponseFactory } from "./EventsResponse.js";
+import { feedRequest } from "./feedRequest.js";
+import { FeedResponse, feedResponseFactory } from "./FeedResponse.js";
 import { PetUpdate, Schema3 } from "./models/generated.js";
 
 /**
@@ -148,6 +152,22 @@ export class ApiStatusClient implements IApiStatusClient {
   limits(signal?: AbortSignal): Promise<LimitsResponse> {
     const request = limitsRequest;
     return this.transport.send(request, limitsResponseFactory, undefined, signal);
+  }
+
+  /**
+   * Streams pet events via Server-Sent Events (text/event-stream).
+   */
+  events(signal?: AbortSignal): Promise<EventsResponse> {
+    const request = eventsRequest;
+    return this.transport.send(request, eventsResponseFactory, undefined, signal);
+  }
+
+  /**
+   * Streams pets as newline-delimited JSON (application/x-ndjson).
+   */
+  feed(signal?: AbortSignal): Promise<FeedResponse> {
+    const request = feedRequest;
+    return this.transport.send(request, feedResponseFactory, undefined, signal);
   }
 
   async [Symbol.asyncDispose](): Promise<void> {

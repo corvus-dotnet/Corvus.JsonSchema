@@ -583,6 +583,48 @@
           }
         }
       }
+    },
+    "/events": {
+      "get": {
+        "operationId": "events",
+        "summary": "Streams pet events via Server-Sent Events (text/event-stream).",
+        "tags": [
+          "status"
+        ],
+        "responses": {
+          "200": {
+            "description": "A stream of pet events.",
+            "content": {
+              "text/event-stream": {
+                "itemSchema": {
+                  "$ref": "#/components/schemas/Pet"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/feed": {
+      "get": {
+        "operationId": "feed",
+        "summary": "Streams pets as newline-delimited JSON (application/x-ndjson).",
+        "tags": [
+          "status"
+        ],
+        "responses": {
+          "200": {
+            "description": "A stream of pets.",
+            "content": {
+              "application/x-ndjson": {
+                "itemSchema": {
+                  "$ref": "#/components/schemas/Pet"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

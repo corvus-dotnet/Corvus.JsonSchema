@@ -41,6 +41,8 @@ export {
   parseHeaderObject,
 } from "./serializers/header.js";
 export { getByPointer } from "./serializers/json-pointer.js";
+export { readNdjsonItems, readSseEvents, readSseItems } from "./serializers/streaming.js";
+export type { SseEvent } from "./serializers/streaming.js";
 export { multipartFormData, multipartMixed } from "./serializers/multipart.js";
 export type {
   MultipartBinaryPart,

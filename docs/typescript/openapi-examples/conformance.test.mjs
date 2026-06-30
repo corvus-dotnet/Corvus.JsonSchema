@@ -378,6 +378,73 @@ for (const version of VERSIONS) {
           `--${b}--\r\n`,
       );
     });
+
+    test(`${version}: events streams Server-Sent Events as parsed items`, async () => {
+      const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+      const sse =
+        'data: {"id":"p-1","name":"Rex"}\n\nevent: update\ndata: {"id":"p-2","name":"Milo"}\n\n';
+      const transport = new MockApiTransport(ApiStatusClient.serverUri().toString().replace(/\/$/, ""), {
+        status: 200,
+        bytes: new TextEncoder().encode(sse),
+        contentType: "text/event-stream",
+      });
+      const response = await new ApiStatusClient(transport).events();
+
+      const items = [];
+      for await (const pet of response.enumerateOkItems()) {
+        items.push(pet);
+      }
+
+      assert.equal(transport.captured.url, "https://api.example.com/v1/events");
+      assert.deepEqual(items, [
+        { id: "p-1", name: "Rex" },
+        { id: "p-2", name: "Milo" },
+      ]);
+    });
+
+    test(`${version}: events exposes SSE event metadata via enumerateOkSseItems`, async () => {
+      const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+      const sse =
+        'data: {"id":"p-1","name":"Rex"}\n\nevent: update\ndata: {"id":"p-2","name":"Milo"}\n\n';
+      const transport = new MockApiTransport(ApiStatusClient.serverUri().toString().replace(/\/$/, ""), {
+        status: 200,
+        bytes: new TextEncoder().encode(sse),
+        contentType: "text/event-stream",
+      });
+      const response = await new ApiStatusClient(transport).events();
+
+      const events = [];
+      for await (const ev of response.enumerateOkSseItems()) {
+        events.push(ev);
+      }
+
+      assert.deepEqual(events, [
+        { data: { id: "p-1", name: "Rex" } },
+        { data: { id: "p-2", name: "Milo" }, event: "update" },
+      ]);
+    });
+
+    test(`${version}: feed streams newline-delimited JSON as parsed items`, async () => {
+      const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+      const ndjson = '{"id":"p-1"}\n{"id":"p-2"}\n{"id":"p-3"}\n';
+      const transport = new MockApiTransport(ApiStatusClient.serverUri().toString().replace(/\/$/, ""), {
+        status: 200,
+        bytes: new TextEncoder().encode(ndjson),
+        contentType: "application/x-ndjson",
+      });
+      const response = await new ApiStatusClient(transport).feed();
+
+      const items = [];
+      for await (const pet of response.enumerateOkItems()) {
+        items.push(pet);
+      }
+
+      assert.equal(transport.captured.url, "https://api.example.com/v1/feed");
+      assert.deepEqual(items, [{ id: "p-1" }, { id: "p-2" }, { id: "p-3" }]);
+    });
   }
 
   test(`${version}: download decodes a raw octet-stream response body`, async () => {

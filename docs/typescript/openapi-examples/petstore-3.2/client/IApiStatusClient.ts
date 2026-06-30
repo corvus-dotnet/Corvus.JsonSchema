@@ -17,6 +17,8 @@ import type { BatchResponse } from "./BatchResponse.js";
 import type { DownloadResponse } from "./DownloadResponse.js";
 import type { PingResponse } from "./PingResponse.js";
 import type { LimitsResponse } from "./LimitsResponse.js";
+import type { EventsResponse } from "./EventsResponse.js";
+import type { FeedResponse } from "./FeedResponse.js";
 import type { PetUpdate, Schema3 } from "./models/generated.js";
 
 /**
@@ -82,4 +84,14 @@ export interface IApiStatusClient extends AsyncDisposable {
    * Returns rate-limit metadata in response headers.
    */
   limits(signal?: AbortSignal): Promise<LimitsResponse>;
+
+  /**
+   * Streams pet events via Server-Sent Events (text/event-stream).
+   */
+  events(signal?: AbortSignal): Promise<EventsResponse>;
+
+  /**
+   * Streams pets as newline-delimited JSON (application/x-ndjson).
+   */
+  feed(signal?: AbortSignal): Promise<FeedResponse>;
 }

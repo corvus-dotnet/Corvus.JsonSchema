@@ -219,7 +219,8 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
     /// </summary>
     private static ContentInfo? NonJsonResponseContent(ResponseInfo response)
     {
-        if (JsonContent(response) is not null)
+        // A streaming response is decomposed via enumerate* (not a buffered tryGet body).
+        if (JsonContent(response) is not null || IsStreamingResponse(response))
         {
             return null;
         }
@@ -985,13 +986,23 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         List<LinkInfo> links = this.EmittableLinks(op, allOperations, out bool anyLinkBodyExpr);
         bool hasLinks = links.Count > 0;
 
-        // The distinct model type names referenced by JSON responses (imported by Ts_FinalName).
+        // Streaming responses (OpenAPI 3.2 itemSchema): kept as a raw stream + enumerate* accessors.
+        List<ResponseInfo> streamingResponses = [.. responses.Where(IsStreamingResponse)];
+        bool hasStreaming = streamingResponses.Count > 0;
+        bool anySse = streamingResponses.Any(r => StreamingContent(r) is { } c && IsSseMediaType(c.MediaType));
+
+        // The distinct model type names referenced by JSON responses + streaming item schemas.
         HashSet<string> modelTypes = new(StringComparer.Ordinal);
         foreach (ResponseInfo response in responses)
         {
             if (JsonContent(response) is not null)
             {
                 modelTypes.Add(this.ResponseModelType(response));
+            }
+
+            if (StreamingContent(response) is { } streamContent)
+            {
+                modelTypes.Add(this.StreamingItemType(streamContent));
             }
         }
 
@@ -1005,12 +1016,14 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             "import { ValidationMode } from " +
             $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
 
-        // Runtime value imports: header parsers + getByPointer (response-body link expressions).
+        // Runtime value imports: header parsers + getByPointer (links) + streaming readers.
         List<string> runtimeValues = [.. headerParseFns];
         if (anyLinkBodyExpr)
         {
             runtimeValues.Add("getByPointer");
         }
+
+        runtimeValues.AddRange(StreamingReaders(streamingResponses));
 
         if (runtimeValues.Count > 0)
         {
@@ -1028,6 +1041,11 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         if (hasLinks)
         {
             responseTypeImports.Add("ApiTransport");
+        }
+
+        if (anySse)
+        {
+            responseTypeImports.Add("SseEvent");
         }
 
         w.WriteLine(
@@ -1056,6 +1074,11 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
         w.WriteLine("readonly statusCode: number;");
         w.WriteLine("private readonly bytes: Uint8Array | null;");
+        if (hasStreaming)
+        {
+            w.WriteLine("private readonly stream: ReadableStream<Uint8Array> | null;");
+        }
+
         if (hasHeaders)
         {
             w.WriteLine("private readonly headers: ResponseHeaders;");
@@ -1068,25 +1091,32 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
         w.WriteLine();
 
-        // Constructor + factory thread the optional headers / transport in a fixed order.
+        // Constructor + factory thread the optional stream / headers / transport in a fixed order.
         List<string> ctorParams = ["statusCode: number", "bytes: Uint8Array | null"];
-        List<string> ctorArgs = ["context.statusCode", "bytes"];
+        if (hasStreaming)
+        {
+            ctorParams.Add("stream: ReadableStream<Uint8Array> | null");
+        }
+
         if (hasHeaders)
         {
             ctorParams.Add("headers: ResponseHeaders");
-            ctorArgs.Add("context.headers");
         }
 
         if (hasLinks)
         {
             ctorParams.Add("transport: ApiTransport");
-            ctorArgs.Add("context.transport");
         }
 
         w.WriteLine($"private constructor({string.Join(", ", ctorParams)}) {{");
         w.PushIndent();
         w.WriteLine("this.statusCode = statusCode;");
         w.WriteLine("this.bytes = bytes;");
+        if (hasStreaming)
+        {
+            w.WriteLine("this.stream = stream;");
+        }
+
         if (hasHeaders)
         {
             w.WriteLine("this.headers = headers;");
@@ -1101,11 +1131,44 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.WriteLine("}");
         w.WriteLine();
 
+        // The trailing constructor args (headers / transport) shared by every createFrom path.
+        List<string> tailArgs = [];
+        if (hasHeaders)
+        {
+            tailArgs.Add("context.headers");
+        }
+
+        if (hasLinks)
+        {
+            tailArgs.Add("context.transport");
+        }
+
+        string tail = tailArgs.Count > 0 ? ", " + string.Join(", ", tailArgs) : string.Empty;
+
         // Internal factory the ResponseFactory delegates to.
         w.WriteLine("static async createFrom(context: ResponseContext): Promise<" + className + "> {");
         w.PushIndent();
-        w.WriteLine("const bytes = context.body === null ? null : await readAllBytes(context.body);");
-        w.WriteLine($"return new {className}({string.Join(", ", ctorArgs)});");
+        if (hasStreaming)
+        {
+            // A streaming status keeps the raw stream (consumed lazily by enumerate*); others buffer.
+            string streamGuard = string.Join(
+                " || ",
+                streamingResponses.Select(r => StatusGuard(r.StatusCode, "context.statusCode")));
+            w.WriteLine($"if ({streamGuard}) {{");
+            w.PushIndent();
+            w.WriteLine($"return new {className}(context.statusCode, null, context.body{tail});");
+            w.PopIndent();
+            w.WriteLine("}");
+            w.WriteLine();
+            w.WriteLine("const bytes = context.body === null ? null : await readAllBytes(context.body);");
+            w.WriteLine($"return new {className}(context.statusCode, bytes, null{tail});");
+        }
+        else
+        {
+            w.WriteLine("const bytes = context.body === null ? null : await readAllBytes(context.body);");
+            w.WriteLine($"return new {className}(context.statusCode, bytes{tail});");
+        }
+
         w.PopIndent();
         w.WriteLine("}");
         w.WriteLine();
@@ -1193,6 +1256,9 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             w.WriteLine("}");
         }
 
+        // Streaming accessors: enumerate{Status}Items() (+ SseItems() for text/event-stream).
+        this.EmitStreamingMethods(w, streamingResponses);
+
         // match — discriminates on status and dispatches to the supplied handlers.
         EmitMatch(w, responses, this);
 
@@ -1231,11 +1297,23 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.PopIndent();
         w.WriteLine("}");
 
-        // AsyncDisposable — Phase 0 buffers the body, so disposal is a no-op.
+        // AsyncDisposable — a buffered body needs no disposal; an unconsumed stream is cancelled.
         w.WriteLine();
         w.WriteLine("async [Symbol.asyncDispose](): Promise<void> {");
         w.PushIndent();
-        w.WriteLine("/* body fully buffered; nothing to dispose */");
+        if (hasStreaming)
+        {
+            w.WriteLine("if (this.stream !== null) {");
+            w.PushIndent();
+            w.WriteLine("await this.stream.cancel();");
+            w.PopIndent();
+            w.WriteLine("}");
+        }
+        else
+        {
+            w.WriteLine("/* body fully buffered; nothing to dispose */");
+        }
+
         w.PopIndent();
         w.WriteLine("}");
 
@@ -1620,6 +1698,108 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         };
     }
 
+    // ── Streaming responses (OpenAPI 3.2 itemSchema) ────────────────────
+
+    // Whether a response is a streaming body (NDJSON / SSE) declared via 3.2 itemSchema.
+    private static bool IsStreamingResponse(ResponseInfo resp)
+        => Array.Exists(resp.Content, c => c.ItemSchemaPointer is not null);
+
+    // The streaming content entry (with the item schema), or null when the response is not streaming.
+    private static ContentInfo? StreamingContent(ResponseInfo resp)
+    {
+        foreach (ContentInfo c in resp.Content)
+        {
+            if (c.ItemSchemaPointer is not null)
+            {
+                return c;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsSseMediaType(string mediaType)
+        => mediaType.StartsWith("text/event-stream", StringComparison.OrdinalIgnoreCase);
+
+    private string StreamingItemType(ContentInfo content)
+        => content.ItemSchemaPointer is null
+            ? "unknown"
+            : this.schemaTypeResolver.ResolveTypeName(content.ItemSchemaPointer);
+
+    // The distinct runtime stream-reader functions these responses reference (the value import).
+    private static SortedSet<string> StreamingReaders(List<ResponseInfo> streamingResponses)
+    {
+        SortedSet<string> readers = new(StringComparer.Ordinal);
+        foreach (ResponseInfo resp in streamingResponses)
+        {
+            if (StreamingContent(resp) is { } content)
+            {
+                if (IsSseMediaType(content.MediaType))
+                {
+                    readers.Add("readSseItems");
+                    readers.Add("readSseEvents");
+                }
+                else
+                {
+                    readers.Add("readNdjsonItems");
+                }
+            }
+        }
+
+        return readers;
+    }
+
+    private void EmitStreamingMethods(IndentedWriter w, List<ResponseInfo> streamingResponses)
+    {
+        foreach (ResponseInfo resp in streamingResponses)
+        {
+            if (StreamingContent(resp) is not { } content)
+            {
+                continue;
+            }
+
+            string itemType = this.StreamingItemType(content);
+            string accessor = StatusAccessor(resp.StatusCode);
+            bool sse = IsSseMediaType(content.MediaType);
+            string itemsReader = sse ? "readSseItems" : "readNdjsonItems";
+            string missing = $"throw new Error(\"No streaming body is available for the {resp.StatusCode} response.\");";
+
+            w.WriteLine();
+            w.WriteLine("/**");
+            w.WriteLine($" * Enumerates the {resp.StatusCode} streaming response items as they arrive.");
+            w.WriteLine(" */");
+            w.WriteLine($"enumerate{accessor}Items(signal?: AbortSignal): AsyncGenerator<{itemType}> {{");
+            w.PushIndent();
+            w.WriteLine("if (this.stream === null) {");
+            w.PushIndent();
+            w.WriteLine(missing);
+            w.PopIndent();
+            w.WriteLine("}");
+            w.WriteLine($"return {itemsReader}<{itemType}>(this.stream, signal);");
+            w.PopIndent();
+            w.WriteLine("}");
+
+            if (sse)
+            {
+                w.WriteLine();
+                w.WriteLine("/**");
+                w.WriteLine($" * Enumerates the {resp.StatusCode} Server-Sent Events with their event metadata.");
+                w.WriteLine(" */");
+                w.WriteLine(
+                    $"enumerate{accessor}SseItems(signal?: AbortSignal): AsyncGenerator<SseEvent<{itemType}>> {{");
+                w.PushIndent();
+                w.WriteLine("if (this.stream === null) {");
+                w.PushIndent();
+                w.WriteLine(missing);
+                w.PopIndent();
+                w.WriteLine("}");
+                w.WriteLine($"return readSseEvents<{itemType}>(this.stream, signal);");
+                w.PopIndent();
+                w.WriteLine("}");
+            }
+        }
+    }
+
     private static void EmitMatch(IndentedWriter w, ResponseInfo[] responses, TypeScriptApiEmitter self)
     {
         // Build a handler-bag type and a match() that dispatches by status. Any response with a
@@ -1673,22 +1853,22 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
     private static string StatusAccessor(string statusCode)
         => statusCode == "default" ? "Default" : CodeEmitHelpers.StatusCodeToName(statusCode);
 
-    private static string StatusGuard(string statusCode)
+    private static string StatusGuard(string statusCode, string receiver = "this.statusCode")
     {
         if (statusCode == "default")
         {
             // The `default` response matches any status not otherwise handled — Phase 0 treats it as a
             // catch-all gated only on non-2xx so the common 200 + default pattern discriminates cleanly.
-            return "(this.statusCode < 200 || this.statusCode >= 300)";
+            return $"({receiver} < 200 || {receiver} >= 300)";
         }
 
         if (statusCode.Length == 3 && (statusCode[1] == 'X' || statusCode[1] == 'x'))
         {
             int lo = (statusCode[0] - '0') * 100;
-            return $"(this.statusCode >= {lo} && this.statusCode < {lo + 100})";
+            return $"({receiver} >= {lo} && {receiver} < {lo + 100})";
         }
 
-        return $"(this.statusCode === {statusCode})";
+        return $"({receiver} === {statusCode})";
     }
 
     // ── Client interface ────────────────────────────────────────────────
