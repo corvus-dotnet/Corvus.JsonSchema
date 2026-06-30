@@ -40,7 +40,7 @@ public class MultipartFormDataSerializerTests
         string result = SerializeMultipart("""{"active":true}""");
 
         StringAssert.Contains(result, "name=\"active\"");
-        StringAssert.Contains(result, "\r\n\r\nTrue\r\n");
+        StringAssert.Contains(result, "\r\n\r\ntrue\r\n");
     }
 
     [TestMethod]
@@ -124,7 +124,7 @@ public class MultipartFormDataSerializerTests
                 ["flag"] = new(ContentType: "text/plain"),
             });
 
-        StringAssert.Contains(result, "Content-Type: text/plain\r\n\r\nFalse");
+        StringAssert.Contains(result, "Content-Type: text/plain\r\n\r\nfalse");
     }
 
     [TestMethod]

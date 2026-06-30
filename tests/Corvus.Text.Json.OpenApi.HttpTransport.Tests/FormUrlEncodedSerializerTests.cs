@@ -31,7 +31,7 @@ public class FormUrlEncodedSerializerTests
     public void Serialize_BooleanProperty()
     {
         string result = SerializeJson("""{"active":true}""");
-        Assert.AreEqual("active=True", result);
+        Assert.AreEqual("active=true", result);
     }
 
     [TestMethod]
