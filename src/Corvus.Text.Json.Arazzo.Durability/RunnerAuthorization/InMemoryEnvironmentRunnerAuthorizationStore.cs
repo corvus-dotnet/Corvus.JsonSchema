@@ -107,20 +107,21 @@ public sealed class InMemoryEnvironmentRunnerAuthorizationStore : IEnvironmentRu
         }
     }
 
-    private static bool Matches(EnvironmentRunnerAuthorization authorization, RunnerAuthorizationQuery query)
+    private static bool Matches(in EnvironmentRunnerAuthorization authorization, RunnerAuthorizationQuery query)
     {
-        if (query.Status is { } status && !string.Equals(authorization.StatusValue, RunnerAuthorizationStatusNames.ToWire(status), StringComparison.Ordinal))
+        // Status + environment are compared string-free (no field is realised to a managed string per row).
+        if (query.Status is { } status && !authorization.HasStatus(status))
         {
             return false;
         }
 
-        if (query.Environment is { } environment && !string.Equals(authorization.EnvironmentValue, environment, StringComparison.Ordinal))
+        if (query.Environment is { } environment && !authorization.EnvironmentEquals(environment))
         {
             return false;
         }
 
         // The approver inbox: the row's environment must be one the caller administers (server-derived strings).
-        return query.MatchesAdministeredSet(authorization.EnvironmentValue);
+        return query.MatchesAdministeredSet(authorization);
     }
 
     private WorkflowEtag NextEtag() => new((++this.etagSequence).ToString(CultureInfo.InvariantCulture));

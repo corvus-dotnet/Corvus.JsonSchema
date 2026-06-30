@@ -146,7 +146,6 @@ public sealed class NatsJetStreamEnvironmentRunnerAuthorizationStore : IEnvironm
     /// <inheritdoc/>
     public async ValueTask<PooledDocumentList<EnvironmentRunnerAuthorization>> ListAsync(RunnerAuthorizationQuery query, CancellationToken cancellationToken)
     {
-        string? status = query.Status is { } s ? RunnerAuthorizationStatusNames.ToWire(s) : null;
         var list = new PooledDocumentList<EnvironmentRunnerAuthorization>();
         await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
         {
@@ -162,7 +161,7 @@ public sealed class NatsJetStreamEnvironmentRunnerAuthorizationStore : IEnvironm
             }
 
             ParsedJsonDocument<EnvironmentRunnerAuthorization> document = ParsedJsonDocument<EnvironmentRunnerAuthorization>.Parse(bytes.AsMemory());
-            if (Matches(document.RootElement, status, query))
+            if (Matches(document.RootElement, query))
             {
                 list.Add(document);
             }
@@ -180,7 +179,6 @@ public sealed class NatsJetStreamEnvironmentRunnerAuthorizationStore : IEnvironm
     public async ValueTask<EnvironmentRunnerAuthorizationPage> ListAsync(RunnerAuthorizationQuery query, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         int pageSize = limit > 0 ? limit : EnvironmentRunnerAuthorizationPage.DefaultPageSize;
-        string? wireStatus = query.Status is { } s ? RunnerAuthorizationStatusNames.ToWire(s) : null;
 
         // Decode the keyset cursor; environment + runnerId reify to strings (the leaf) only here. Undefined token = first
         // page; a malformed token throws FormatException.
@@ -235,7 +233,7 @@ public sealed class NatsJetStreamEnvironmentRunnerAuthorizationStore : IEnvironm
                 }
 
                 ParsedJsonDocument<EnvironmentRunnerAuthorization> document = ParsedJsonDocument<EnvironmentRunnerAuthorization>.Parse(bytes.AsMemory());
-                if (!Matches(document.RootElement, wireStatus, query))
+                if (!Matches(document.RootElement, query))
                 {
                     document.Dispose();
                     continue;
@@ -354,21 +352,22 @@ public sealed class NatsJetStreamEnvironmentRunnerAuthorizationStore : IEnvironm
         }
     }
 
-    // The list filter: each absent criterion matches anything, mirroring the SQLite WHERE clause.
-    private static bool Matches(EnvironmentRunnerAuthorization authorization, string? status, RunnerAuthorizationQuery query)
+    // The list filter: each absent criterion matches anything, mirroring the SQLite WHERE clause. Status + environment are
+    // compared string-free (no field is realised to a managed string per row).
+    private static bool Matches(in EnvironmentRunnerAuthorization authorization, RunnerAuthorizationQuery query)
     {
-        if (status is not null && !string.Equals(authorization.StatusValue, status, StringComparison.Ordinal))
+        if (query.Status is { } status && !authorization.HasStatus(status))
         {
             return false;
         }
 
-        if (query.Environment is { } environment && !string.Equals(authorization.EnvironmentValue, environment, StringComparison.Ordinal))
+        if (query.Environment is { } environment && !authorization.EnvironmentEquals(environment))
         {
             return false;
         }
 
         // The approver inbox (§5.5/§7.8): the authorization's environment must be one the caller administers (server-derived set).
-        return query.MatchesAdministeredSet(authorization.EnvironmentValue);
+        return query.MatchesAdministeredSet(authorization);
     }
 
     private async ValueTask<NatsKVEntry<byte[]>?> TryGetAsync(string key, CancellationToken cancellationToken)

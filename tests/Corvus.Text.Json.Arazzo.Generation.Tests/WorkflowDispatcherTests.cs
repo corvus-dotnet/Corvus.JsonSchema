@@ -149,6 +149,44 @@ public class WorkflowDispatcherTests
     }
 
     [TestMethod]
+    public async Task A_closed_dispatch_gate_claims_nothing_then_an_open_gate_dispatches()
+    {
+        var clock = new MutableClock(T0);
+        IWorkflowCatalogStore catalog = await RunnableCatalogAsync();
+        var runStore = new InMemoryWorkflowStateStore(clock);
+
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+        using (WorkflowRun pending = WorkflowRun.CreateNew(runStore, "run-1", "adopt-v1", inputs.RootElement, clock))
+        {
+            await pending.EnqueueAsync(default);
+        }
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+        using var loader = new WorkflowExecutorLoader();
+        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
+
+        // The §5.5 authorization gate: while the runner is not authorized for its environment it claims nothing, even
+        // though a Pending run is waiting for a version it hosts. The run stays Pending (claimable by an authorized peer).
+        bool authorized = false;
+        var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock, dispatchGate: _ => ValueTask.FromResult(authorized));
+
+        (await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(0);
+        using (WorkflowRun? stillPending = await WorkflowRun.ResumeAsync(runStore, "run-1", clock, default))
+        {
+            stillPending!.Status.ShouldBe(WorkflowRunStatus.Pending);
+        }
+
+        transport.Requests.Count.ShouldBe(0, "a gated runner must not even reach the transport");
+
+        // Once authorized, the same dispatcher claims and drives the run to completion.
+        authorized = true;
+        (await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(1);
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, "run-1", clock, default);
+        completed!.Status.ShouldBe(WorkflowRunStatus.Completed);
+    }
+
+    [TestMethod]
     public async Task Ignores_runs_for_versions_it_does_not_host()
     {
         var clock = new MutableClock(T0);

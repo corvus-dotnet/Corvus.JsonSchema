@@ -36,13 +36,14 @@ public readonly record struct RunnerAuthorizationQuery(
     string? Environment = null,
     IReadOnlyList<string>? AdministeredEnvironments = null)
 {
-    /// <summary>Whether a row's environment passes the approver-inbox filter: <see langword="true"/> when no administered set
-    /// is constrained, or when the set contains <paramref name="rowEnvironment"/> (ordinal). The shared client-side
-    /// membership test for stores that filter in memory (the in-memory store and the KV/table backends, which scan their
-    /// keyset index and apply this per row).</summary>
-    /// <param name="rowEnvironment">The candidate row's environment.</param>
+    /// <summary>Whether a row passes the approver-inbox filter: <see langword="true"/> when no administered set is
+    /// constrained, or when the set contains the row's environment. String-free — the candidate environment strings'
+    /// bytes are compared against the row's JSON value (no environment string is realised from the document). The shared
+    /// client-side membership test for stores that filter in memory (the in-memory store and the KV/table backends, which
+    /// scan their keyset index and apply this per row).</summary>
+    /// <param name="authorization">The candidate row.</param>
     /// <returns><see langword="true"/> if the row is admitted by the administered-set filter.</returns>
-    public bool MatchesAdministeredSet(string rowEnvironment)
+    public bool MatchesAdministeredSet(in EnvironmentRunnerAuthorization authorization)
     {
         if (this.AdministeredEnvironments is not { } administered)
         {
@@ -51,7 +52,7 @@ public readonly record struct RunnerAuthorizationQuery(
 
         foreach (string administeredEnvironment in administered)
         {
-            if (string.Equals(administeredEnvironment, rowEnvironment, StringComparison.Ordinal))
+            if (authorization.EnvironmentEquals(administeredEnvironment))
             {
                 return true;
             }

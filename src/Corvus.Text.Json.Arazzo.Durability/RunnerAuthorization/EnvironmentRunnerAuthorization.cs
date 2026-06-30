@@ -30,8 +30,39 @@ public readonly partial struct EnvironmentRunnerAuthorization
     /// <summary>Gets the runner the authorization applies to.</summary>
     public string RunnerIdValue => (string)this.RunnerId;
 
-    /// <summary>Gets the authorization's lifecycle state.</summary>
+    /// <summary>Gets the authorization's lifecycle state as a realised <see cref="string"/> — for a display/log/serialize
+    /// sink only. To <em>branch</em> on the status, use the string-free <see cref="IsAuthorized"/>/<see cref="IsPending"/>/
+    /// <see cref="IsRevoked"/> predicates, which compare the JSON value's bytes and never allocate.</summary>
     public string StatusValue => (string)this.Status;
+
+    /// <summary>Gets a value indicating whether the runner is authorized to serve the environment (dispatchable), compared
+    /// string-free against the wire value — no string is realised. The u8 literals mirror the schema's status enum
+    /// (see <see cref="RunnerAuthorization.RunnerAuthorizationStatusNames"/>).</summary>
+    public bool IsAuthorized => this.Status.ValueEquals("Authorized"u8);
+
+    /// <summary>Gets a value indicating whether the runner is awaiting an administrator's decision, compared string-free.</summary>
+    public bool IsPending => this.Status.ValueEquals("Pending"u8);
+
+    /// <summary>Gets a value indicating whether the runner's authorization has been revoked, compared string-free.</summary>
+    public bool IsRevoked => this.Status.ValueEquals("Revoked"u8);
+
+    /// <summary>Tests whether the authorization is in the given lifecycle state, string-free (no status string is realised) —
+    /// the per-row status filter the in-memory and KV/table stores apply when scanning their keyset index.</summary>
+    /// <param name="status">The status to test for.</param>
+    /// <returns><see langword="true"/> if the authorization's status equals <paramref name="status"/>.</returns>
+    public bool HasStatus(RunnerAuthorization.RunnerAuthorizationStatus status) => status switch
+    {
+        RunnerAuthorization.RunnerAuthorizationStatus.Pending => this.IsPending,
+        RunnerAuthorization.RunnerAuthorizationStatus.Authorized => this.IsAuthorized,
+        RunnerAuthorization.RunnerAuthorizationStatus.Revoked => this.IsRevoked,
+        _ => false,
+    };
+
+    /// <summary>Tests whether this authorization's environment is the given one, string-free (no environment string is
+    /// realised from the document — the candidate string's bytes are compared against the JSON value).</summary>
+    /// <param name="environment">The environment to test for.</param>
+    /// <returns><see langword="true"/> if the environments match.</returns>
+    public bool EnvironmentEquals(string environment) => this.Environment.ValueEquals(environment);
 
     /// <summary>Gets the optional note recorded with the most recent decision, or <see langword="null"/>.</summary>
     public string? ReasonOrNull => this.Reason.IsNotUndefined() ? (string)this.Reason : null;

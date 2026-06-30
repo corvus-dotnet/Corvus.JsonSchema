@@ -146,7 +146,6 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
     public async ValueTask<PooledDocumentList<EnvironmentRunnerAuthorization>> ListAsync(RunnerAuthorizationQuery query, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        string? wireStatus = query.Status is { } status ? RunnerAuthorizationStatusNames.ToWire(status) : null;
         var list = new PooledDocumentList<EnvironmentRunnerAuthorization>();
         try
         {
@@ -166,7 +165,7 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
                 }
 
                 ParsedJsonDocument<EnvironmentRunnerAuthorization> document = PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(lease.Span);
-                if (Matches(document.RootElement, query, wireStatus))
+                if (Matches(document.RootElement, query))
                 {
                     list.Add(document);
                 }
@@ -191,7 +190,6 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
     {
         cancellationToken.ThrowIfCancellationRequested();
         int pageSize = limit > 0 ? limit : EnvironmentRunnerAuthorizationPage.DefaultPageSize;
-        string? wireStatus = query.Status is { } status ? RunnerAuthorizationStatusNames.ToWire(status) : null;
 
         // Decode the keyset cursor to the index member the previous page ended at ("{environment}\0{runnerId}"); the parts
         // reify to a string only here (the leaf). Undefined token = first page; a malformed token throws FormatException.
@@ -242,7 +240,7 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
                 }
 
                 ParsedJsonDocument<EnvironmentRunnerAuthorization> document = PersistedJson.ToPooledDocument<EnvironmentRunnerAuthorization>(lease.Span);
-                if (!Matches(document.RootElement, query, wireStatus))
+                if (!Matches(document.RootElement, query))
                 {
                     document.Dispose();
                     continue;
@@ -340,19 +338,20 @@ public sealed class RedisEnvironmentRunnerAuthorizationStore : IEnvironmentRunne
         return true;
     }
 
-    private static bool Matches(in EnvironmentRunnerAuthorization authorization, RunnerAuthorizationQuery query, string? wireStatus)
+    private static bool Matches(in EnvironmentRunnerAuthorization authorization, RunnerAuthorizationQuery query)
     {
-        if (wireStatus is not null && !string.Equals(authorization.StatusValue, wireStatus, StringComparison.Ordinal))
+        // Status + environment are compared string-free (no field is realised to a managed string per row).
+        if (query.Status is { } status && !authorization.HasStatus(status))
         {
             return false;
         }
 
-        if (query.Environment is { } environment && !string.Equals(authorization.EnvironmentValue, environment, StringComparison.Ordinal))
+        if (query.Environment is { } environment && !authorization.EnvironmentEquals(environment))
         {
             return false;
         }
 
         // The approver inbox (§5.5/§7.8): the row's environment must be one the caller administers (server-derived set).
-        return query.MatchesAdministeredSet(authorization.EnvironmentValue);
+        return query.MatchesAdministeredSet(authorization);
     }
 }
