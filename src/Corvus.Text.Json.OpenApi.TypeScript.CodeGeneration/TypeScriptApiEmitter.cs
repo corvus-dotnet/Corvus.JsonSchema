@@ -21,9 +21,14 @@ namespace Corvus.Text.Json.OpenApi.TypeScript.CodeGeneration;
 /// </para>
 /// <para>
 /// Phase 0 scope: an operation with no parameters, no request body, and a single 2xx JSON response
-/// (plus an optional <c>default</c>/error response). The generated client imports the byte-native
-/// runtime contracts from <c>@endjin/corvus-json-client-runtime</c> and the generated models by
-/// their <c>Ts_FinalName</c>. The server members return <see langword="null"/> (client-only).
+/// (plus an optional <c>default</c>/error response). Phase 1 adds path parameters (style=simple),
+/// query parameters (style=form), and header parameters (style=simple) for scalar and array values,
+/// plus a JSON request body. A parameterised operation's request becomes a factory
+/// (<c>{op}Request(params)</c>) that captures the params in a closure and serializes them via the
+/// runtime style helpers (<c>writePathSimple</c> / <c>writeQueryForm</c> / <c>writeHeaderSimple</c>);
+/// a no-parameter operation keeps the Phase-0 const for back-compat. The generated client imports the
+/// byte-native runtime contracts from <c>@endjin/corvus-json-client-runtime</c> and the generated
+/// models by their <c>Ts_FinalName</c>. The server members return <see langword="null"/> (client-only).
 /// </para>
 /// </remarks>
 public sealed class TypeScriptApiEmitter : IClientEmitter
@@ -96,6 +101,8 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
     private static string RequestModuleName(OperationInfo op) => $"{CamelCase(op.MethodName)}Request";
 
+    private static string ParamsInterfaceName(OperationInfo op) => $"{op.MethodName}Params";
+
     private static string ResponseClassName(OperationInfo op) => $"{op.MethodName}Response";
 
     private static string ResponseFactoryName(OperationInfo op) => $"{CamelCase(op.MethodName)}ResponseFactory";
@@ -124,12 +131,70 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         _ => "OperationMethod.Get",
     };
 
+    // ── Parameter helpers ───────────────────────────────────────────────
+    // Phase 1 supports path (simple), query (form), and header (simple) parameters, for scalar and
+    // array values. Object-typed parameters and the label/matrix/spaceDelimited/pipeDelimited/
+    // deepObject/cookie styles are out of scope and routed through the generic JSON fallback below.
+    private static ParameterInfo[] PathParams(OperationInfo op)
+        => [.. op.Parameters.Where(p => p.Location == ParameterLocation.Path)];
+
+    private static ParameterInfo[] QueryParams(OperationInfo op)
+        => [.. op.Parameters.Where(p => p.Location == ParameterLocation.Query)];
+
+    private static ParameterInfo[] HeaderParams(OperationInfo op)
+        => [.. op.Parameters.Where(p => p.Location == ParameterLocation.Header)];
+
+    private static bool IsArrayParam(ParameterInfo p)
+        => p.SerializationKind == ParameterSerializationKind.Array;
+
+    private static string PropertyName(ParameterInfo p) => CamelCase(CodeEmitHelpers.SanitizeIdentifier(p.Name));
+
+    /// <summary>
+    /// The TypeScript type of a Phase-1 parameter as it appears in the Params interface. The structural
+    /// type implied by the serialization kind is used (<c>string</c> / <c>number</c> / <c>boolean</c> and
+    /// arrays of those), rather than the resolved model name, because for an inline scalar/array
+    /// parameter schema the model engine emits a validator companion (a value, with <c>evaluate</c>) but
+    /// no usable exported TypeScript type — so the interface position must use the structural type. The
+    /// companion is still used (by name, in <c>validate()</c>) to evaluate the value against its schema.
+    /// </summary>
+    private static string ParameterTsType(ParameterInfo p)
+    {
+        if (IsArrayParam(p))
+        {
+            return $"{ScalarTsType(p.ElementSerializationKind)}[]";
+        }
+
+        return ScalarTsType(p.SerializationKind);
+    }
+
+    private static string ScalarTsType(ParameterSerializationKind kind) => kind switch
+    {
+        ParameterSerializationKind.String => "string",
+        ParameterSerializationKind.Boolean => "boolean",
+        ParameterSerializationKind.Object => "Record<string, unknown>",
+        ParameterSerializationKind.Array => "unknown[]",
+        _ => "number",
+    };
+
     // ── Schema / media-type helpers ─────────────────────────────────────
     private static ContentInfo? JsonContent(ResponseInfo response)
     {
         foreach (ContentInfo content in response.Content)
         {
             if (CodeEmitHelpers.IsJsonMediaType(content.MediaType) && content.SchemaPointer is not null)
+            {
+                return content;
+            }
+        }
+
+        return null;
+    }
+
+    private static ContentInfo? JsonBodyContent(RequestBodyInfo body)
+    {
+        foreach (ContentInfo content in body.Content)
+        {
+            if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
             {
                 return content;
             }
@@ -148,8 +213,35 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         return "unknown";
     }
 
+    /// <summary>
+    /// Resolves the JSON request body's TypeScript model type (the <c>Ts_FinalName</c>), or
+    /// <see langword="null"/> when the operation has no JSON request body.
+    /// </summary>
+    private string? RequestBodyModelType(OperationInfo op)
+    {
+        if (op.RequestBody is { } body && JsonBodyContent(body) is { } content && content.SchemaPointer is not null)
+        {
+            return this.schemaTypeResolver.ResolveTypeName(content.SchemaPointer);
+        }
+
+        return null;
+    }
+
     // ── Request module ──────────────────────────────────────────────────
     private GeneratedFile EmitRequestObject(OperationInfo op)
+    {
+        ParameterInfo[] pathParams = PathParams(op);
+        ParameterInfo[] queryParams = QueryParams(op);
+        ParameterInfo[] headerParams = HeaderParams(op);
+        bool hasParams = pathParams.Length > 0 || queryParams.Length > 0 || headerParams.Length > 0;
+
+        return hasParams
+            ? this.EmitRequestFactory(op, pathParams, queryParams, headerParams)
+            : this.EmitRequestConst(op);
+    }
+
+    // Phase-0 path: no parameters. The request is a const ApiRequest object (back-compat).
+    private GeneratedFile EmitRequestConst(OperationInfo op)
     {
         string moduleName = RequestModuleName(op);
         IndentedWriter w = new();
@@ -164,11 +256,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
         w.WriteLine();
 
-        // Phase 0: no parameters, no request body. Accept header is the distinct response media types.
-        string[] acceptMediaTypes = CodeEmitHelpers.GetAcceptMediaTypes(
-            op.Responses
-                .SelectMany(r => r.Content)
-                .Select(c => (c.MediaType, c.SchemaPointer?.PositionalPointer)));
+        string[] acceptMediaTypes = AcceptMediaTypes(op);
         bool hasAccept = acceptMediaTypes.Length > 0;
 
         w.WriteLine("/**");
@@ -186,21 +274,18 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.WriteLine($"hasHeaderParameters: {(hasAccept ? "true" : "false")},");
         w.WriteLine("hasCookieParameters: false,");
 
-        // writeResolvedPath — literal template (no path parameters in Phase 0).
         w.WriteLine("writeResolvedPath(writer: ByteWriter): void {");
         w.PushIndent();
         w.WriteLine($"writer.writeAscii({StringLiteral(op.PathTemplate)});");
         w.PopIndent();
         w.WriteLine("},");
 
-        // writeQueryString — no query parameters in Phase 0.
         w.WriteLine("writeQueryString(_writer: ByteWriter): number {");
         w.PushIndent();
         w.WriteLine("return 0;");
         w.PopIndent();
         w.WriteLine("},");
 
-        // writeHeaders — only the Accept header, when there are concrete response media types.
         if (hasAccept)
         {
             string acceptValue = string.Join(", ", acceptMediaTypes);
@@ -219,14 +304,12 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             w.WriteLine("},");
         }
 
-        // writeCookies — no cookie parameters in Phase 0.
         w.WriteLine("writeCookies(_writer: ByteWriter): number {");
         w.PushIndent();
         w.WriteLine("return 0;");
         w.PopIndent();
         w.WriteLine("},");
 
-        // validate — no parameters to validate in Phase 0.
         w.WriteLine("validate(_mode: ValidationMode = ValidationMode.Basic): void {");
         w.PushIndent();
         w.WriteLine("/* no parameters to validate */");
@@ -238,6 +321,388 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
         return new GeneratedFile($"{moduleName}.ts", w.ToString());
     }
+
+    // Phase-1 path: parameters present. The request is a factory capturing the params in a closure.
+    private GeneratedFile EmitRequestFactory(
+        OperationInfo op,
+        ParameterInfo[] pathParams,
+        ParameterInfo[] queryParams,
+        ParameterInfo[] headerParams)
+    {
+        string moduleName = RequestModuleName(op);
+        string paramsInterface = ParamsInterfaceName(op);
+        IndentedWriter w = new();
+        w.IndentString = "  ";
+
+        // Which runtime style helpers does this operation need?
+        bool needsPathSimple = pathParams.Length > 0;
+        bool needsQueryForm = queryParams.Length > 0;
+        bool needsHeaderSimple = headerParams.Length > 0;
+
+        // Does any parameter have a named model type with an `evaluate` companion for validate()?
+        bool hasValidatable = op.Parameters.Any(p =>
+            (p.Location is ParameterLocation.Path or ParameterLocation.Query or ParameterLocation.Header)
+            && this.schemaTypeResolver.ResolveTypeName(p.SchemaPointer) != "unknown");
+
+        EmitHeader(w);
+        w.WriteLine(
+            "import { OperationMethod, ValidationMode } from " +
+            $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
+        w.WriteLine(
+            "import type { ApiRequest, ByteWriter, HeaderSink } from " +
+            $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
+
+        // Import only the style helpers this operation actually uses (keeps the import list minimal).
+        List<string> styleImports = [];
+        if (needsPathSimple)
+        {
+            styleImports.Add("writePathSimple");
+        }
+
+        if (needsQueryForm)
+        {
+            styleImports.Add("writeQueryForm");
+        }
+
+        if (needsHeaderSimple)
+        {
+            styleImports.Add("writeHeaderSimple");
+        }
+
+        if (styleImports.Count > 0)
+        {
+            w.WriteLine(
+                $"import {{ {string.Join(", ", styleImports)} }} from " +
+                $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
+        }
+
+        // Import the validator companions used by validate(). These are the model-engine consts (values,
+        // each exposing `evaluate`), imported by name from the models module. They are values, not types,
+        // so this is a regular (not `import type`) import.
+        HashSet<string> validatorCompanions = new(StringComparer.Ordinal);
+        foreach (ParameterInfo p in op.Parameters)
+        {
+            if (p.Location is not (ParameterLocation.Path or ParameterLocation.Query or ParameterLocation.Header))
+            {
+                continue;
+            }
+
+            string resolved = this.schemaTypeResolver.ResolveTypeName(p.SchemaPointer);
+            if (resolved != "unknown")
+            {
+                validatorCompanions.Add(resolved);
+            }
+        }
+
+        if (validatorCompanions.Count > 0)
+        {
+            string imports = string.Join(", ", validatorCompanions.OrderBy(m => m, StringComparer.Ordinal));
+            w.WriteLine($"import {{ {imports} }} from {StringLiteral(this.options.ModelsModuleSpecifier)};");
+        }
+
+        w.WriteLine();
+
+        // The Params interface: required parameters required, optional parameters `?`.
+        EmitParamsInterface(w, op, paramsInterface);
+        w.WriteLine();
+
+        string[] acceptMediaTypes = AcceptMediaTypes(op);
+        bool hasAccept = acceptMediaTypes.Length > 0;
+        bool hasHeaders = headerParams.Length > 0 || hasAccept;
+
+        w.WriteLine("/**");
+        w.WriteLine($" * Builds the request for the {op.MethodName} operation, capturing the supplied parameters.");
+        w.WriteLine(" *");
+        w.WriteLine(" * Composes the wire request byte-natively: the transport calls the returned object's write*");
+        w.WriteLine(" * methods synchronously before any async I/O.");
+        w.WriteLine($" * @param params The {op.MethodName} parameters.");
+        w.WriteLine(" * @returns The composed request.");
+        w.WriteLine(" */");
+        w.WriteLine($"export function {moduleName}(params: {paramsInterface}): ApiRequest {{");
+        w.PushIndent();
+        w.WriteLine("return {");
+        w.PushIndent();
+        w.WriteLine($"method: {OperationMethodMember(op.Method)},");
+        w.WriteLine($"pathTemplate: {StringLiteral(op.PathTemplate)},");
+        w.WriteLine($"hasPathParameters: {(pathParams.Length > 0 ? "true" : "false")},");
+        w.WriteLine($"hasQueryParameters: {(queryParams.Length > 0 ? "true" : "false")},");
+        w.WriteLine($"hasHeaderParameters: {(hasHeaders ? "true" : "false")},");
+        w.WriteLine("hasCookieParameters: false,");
+
+        EmitFactoryWriteResolvedPath(w, op.PathTemplate, pathParams);
+        EmitFactoryWriteQueryString(w, queryParams);
+        EmitFactoryWriteHeaders(w, headerParams, acceptMediaTypes);
+
+        w.WriteLine("writeCookies(_writer: ByteWriter): number {");
+        w.PushIndent();
+        w.WriteLine("return 0;");
+        w.PopIndent();
+        w.WriteLine("},");
+
+        this.EmitFactoryValidate(w, op, hasValidatable);
+
+        w.PopIndent();
+        w.WriteLine("};");
+        w.PopIndent();
+        w.WriteLine("}");
+
+        return new GeneratedFile($"{moduleName}.ts", w.ToString());
+    }
+
+    private static void EmitParamsInterface(IndentedWriter w, OperationInfo op, string paramsInterface)
+    {
+        w.WriteLine("/**");
+        w.WriteLine($" * Parameters for the {op.MethodName} operation.");
+        w.WriteLine(" */");
+        w.WriteLine($"export interface {paramsInterface} {{");
+        w.PushIndent();
+
+        foreach (ParameterInfo p in op.Parameters)
+        {
+            if (p.Location is not (ParameterLocation.Path or ParameterLocation.Query or ParameterLocation.Header))
+            {
+                continue;
+            }
+
+            string propertyName = PropertyName(p);
+            string tsType = ParameterTsType(p);
+            string optional = p.IsRequired ? string.Empty : "?";
+
+            w.WriteLine("/**");
+            w.WriteLine($" * The {p.Name} {LocationWord(p.Location)} parameter.");
+            w.WriteLine(" */");
+            w.WriteLine($"readonly {propertyName}{optional}: {tsType};");
+        }
+
+        w.PopIndent();
+        w.WriteLine("}");
+    }
+
+    private static string LocationWord(ParameterLocation location) => location switch
+    {
+        ParameterLocation.Path => "path",
+        ParameterLocation.Query => "query",
+        ParameterLocation.Header => "header",
+        _ => "",
+    };
+
+    private static void EmitFactoryWriteResolvedPath(
+        IndentedWriter w,
+        string pathTemplate,
+        ParameterInfo[] pathParams)
+    {
+        w.WriteLine("writeResolvedPath(writer: ByteWriter): void {");
+        w.PushIndent();
+
+        if (pathParams.Length == 0)
+        {
+            w.WriteLine($"writer.writeAscii({StringLiteral(pathTemplate)});");
+            w.PopIndent();
+            w.WriteLine("},");
+            return;
+        }
+
+        // Walk the template, writing literal segments and substituting {name} via the style helper.
+        ReadOnlySpan<char> remaining = pathTemplate;
+        while (remaining.Length > 0)
+        {
+            int openBrace = remaining.IndexOf('{');
+            if (openBrace < 0)
+            {
+                w.WriteLine($"writer.writeAscii({StringLiteral(remaining.ToString())});");
+                break;
+            }
+
+            if (openBrace > 0)
+            {
+                w.WriteLine($"writer.writeAscii({StringLiteral(remaining[..openBrace].ToString())});");
+            }
+
+            int closeBrace = remaining[(openBrace + 1)..].IndexOf('}');
+            if (closeBrace < 0)
+            {
+                w.WriteLine($"writer.writeAscii({StringLiteral(remaining[openBrace..].ToString())});");
+                break;
+            }
+
+            string paramName = remaining[(openBrace + 1)..(openBrace + 1 + closeBrace)].ToString();
+            ParameterInfo? match = null;
+            foreach (ParameterInfo p in pathParams)
+            {
+                if (p.Name == paramName)
+                {
+                    match = p;
+                    break;
+                }
+            }
+
+            if (match is { } mp)
+            {
+                string propertyName = PropertyName(mp);
+                string explode = mp.Explode ? "true" : "false";
+                w.WriteLine($"writePathSimple(writer, params.{propertyName}, {explode});");
+            }
+            else
+            {
+                // Unmatched placeholder — write the template token literally (defensive; should not occur).
+                w.WriteLine($"writer.writeAscii({StringLiteral("{" + paramName + "}")});");
+            }
+
+            remaining = remaining[(openBrace + 1 + closeBrace + 1)..];
+        }
+
+        w.PopIndent();
+        w.WriteLine("},");
+    }
+
+    private static void EmitFactoryWriteQueryString(IndentedWriter w, ParameterInfo[] queryParams)
+    {
+        w.WriteLine("writeQueryString(writer: ByteWriter): number {");
+        w.PushIndent();
+
+        if (queryParams.Length == 0)
+        {
+            w.WriteLine("return 0;");
+            w.PopIndent();
+            w.WriteLine("},");
+            return;
+        }
+
+        w.WriteLine("let written = 0;");
+
+        foreach (ParameterInfo p in queryParams)
+        {
+            string propertyName = PropertyName(p);
+            string explode = p.Explode ? "true" : "false";
+            string allowReserved = p.AllowReserved ? "true" : "false";
+
+            if (p.IsRequired)
+            {
+                w.WriteLine(
+                    $"written += writeQueryForm(writer, {StringLiteral(p.Name)}, params.{propertyName}, " +
+                    $"{explode}, {allowReserved}, written === 0);");
+            }
+            else
+            {
+                w.WriteLine($"if (params.{propertyName} !== undefined) {{");
+                w.PushIndent();
+                w.WriteLine(
+                    $"written += writeQueryForm(writer, {StringLiteral(p.Name)}, params.{propertyName}, " +
+                    $"{explode}, {allowReserved}, written === 0);");
+                w.PopIndent();
+                w.WriteLine("}");
+            }
+        }
+
+        w.WriteLine("return written;");
+        w.PopIndent();
+        w.WriteLine("},");
+    }
+
+    private static void EmitFactoryWriteHeaders(
+        IndentedWriter w,
+        ParameterInfo[] headerParams,
+        string[] acceptMediaTypes)
+    {
+        bool hasAccept = acceptMediaTypes.Length > 0;
+        bool emitsAnything = headerParams.Length > 0 || hasAccept;
+
+        w.WriteLine(emitsAnything ? "writeHeaders(sink: HeaderSink): void {" : "writeHeaders(_sink: HeaderSink): void {");
+        w.PushIndent();
+
+        if (!emitsAnything)
+        {
+            w.WriteLine("/* no headers */");
+            w.PopIndent();
+            w.WriteLine("},");
+            return;
+        }
+
+        if (hasAccept)
+        {
+            string acceptValue = string.Join(", ", acceptMediaTypes);
+            w.WriteLine($"sink(\"Accept\", {StringLiteral(acceptValue)});");
+        }
+
+        foreach (ParameterInfo p in headerParams)
+        {
+            string propertyName = PropertyName(p);
+            string explode = p.Explode ? "true" : "false";
+
+            if (p.IsRequired)
+            {
+                w.WriteLine(
+                    $"sink({StringLiteral(p.Name)}, writeHeaderSimple(params.{propertyName}, {explode}));");
+            }
+            else
+            {
+                w.WriteLine($"if (params.{propertyName} !== undefined) {{");
+                w.PushIndent();
+                w.WriteLine(
+                    $"sink({StringLiteral(p.Name)}, writeHeaderSimple(params.{propertyName}, {explode}));");
+                w.PopIndent();
+                w.WriteLine("}");
+            }
+        }
+
+        w.PopIndent();
+        w.WriteLine("},");
+    }
+
+    private void EmitFactoryValidate(IndentedWriter w, OperationInfo op, bool hasValidatable)
+    {
+        w.WriteLine("validate(mode: ValidationMode = ValidationMode.Basic): void {");
+        w.PushIndent();
+
+        if (!hasValidatable)
+        {
+            w.WriteLine("/* no parameters with a schema to validate */");
+            w.PopIndent();
+            w.WriteLine("},");
+            return;
+        }
+
+        w.WriteLine("if (mode === ValidationMode.None) {");
+        w.PushIndent();
+        w.WriteLine("return;");
+        w.PopIndent();
+        w.WriteLine("}");
+
+        foreach (ParameterInfo p in op.Parameters)
+        {
+            if (p.Location is not (ParameterLocation.Path or ParameterLocation.Query or ParameterLocation.Header))
+            {
+                continue;
+            }
+
+            string modelType = this.schemaTypeResolver.ResolveTypeName(p.SchemaPointer);
+            if (modelType == "unknown")
+            {
+                continue;
+            }
+
+            string propertyName = PropertyName(p);
+            string guard = p.IsRequired
+                ? $"if (!{modelType}.evaluate(params.{propertyName}))"
+                : $"if (params.{propertyName} !== undefined && !{modelType}.evaluate(params.{propertyName}))";
+
+            w.WriteLine(guard + " {");
+            w.PushIndent();
+            w.WriteLine(
+                $"throw new Error({StringLiteral($"{op.MethodName} parameter '{p.Name}' failed schema validation.")});");
+            w.PopIndent();
+            w.WriteLine("}");
+        }
+
+        w.PopIndent();
+        w.WriteLine("},");
+    }
+
+    private string[] AcceptMediaTypes(OperationInfo op)
+        => CodeEmitHelpers.GetAcceptMediaTypes(
+            op.Responses
+                .SelectMany(r => r.Content)
+                .Select(c => (c.MediaType, c.SchemaPointer?.PositionalPointer)));
 
     // ── Response module ─────────────────────────────────────────────────
     private GeneratedFile EmitResponseClass(OperationInfo op)
@@ -530,11 +995,33 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
         EmitHeader(w);
 
-        // Import each operation's response class (the method return types).
+        // Import each operation's response class (the method return types) and Params interface.
         foreach (OperationInfo op in operations)
         {
             string responseClass = ResponseClassName(op);
             w.WriteLine($"import type {{ {responseClass} }} from {StringLiteral($"./{responseClass}.js")};");
+            if (HasParams(op))
+            {
+                string requestModule = RequestModuleName(op);
+                string paramsInterface = ParamsInterfaceName(op);
+                w.WriteLine($"import type {{ {paramsInterface} }} from {StringLiteral($"./{requestModule}.js")};");
+            }
+        }
+
+        // Import named JSON request-body model types referenced in method signatures.
+        HashSet<string> bodyTypes = new(StringComparer.Ordinal);
+        foreach (OperationInfo op in operations)
+        {
+            if (this.RequestBodyModelType(op) is { } bt && bt != "unknown")
+            {
+                bodyTypes.Add(bt);
+            }
+        }
+
+        if (bodyTypes.Count > 0)
+        {
+            string imports = string.Join(", ", bodyTypes.OrderBy(m => m, StringComparer.Ordinal));
+            w.WriteLine($"import type {{ {imports} }} from {StringLiteral(this.options.ModelsModuleSpecifier)};");
         }
 
         w.WriteLine();
@@ -556,13 +1043,48 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             EmitMethodDoc(w, op);
             string methodName = CamelCase(op.MethodName);
             string responseClass = ResponseClassName(op);
-            w.WriteLine($"{methodName}(signal?: AbortSignal): Promise<{responseClass}>;");
+            string signature = this.BuildMethodSignature(op);
+            w.WriteLine($"{methodName}({signature}): Promise<{responseClass}>;");
         }
 
         w.PopIndent();
         w.WriteLine("}");
 
         return new GeneratedFile($"{interfaceName}.ts", w.ToString());
+    }
+
+    private static bool HasParams(OperationInfo op)
+        => op.Parameters.Any(p =>
+            p.Location is ParameterLocation.Path or ParameterLocation.Query or ParameterLocation.Header);
+
+    /// <summary>
+    /// Builds the TypeScript method parameter list shared by the interface and implementation:
+    /// <c>params</c> (when the operation has parameters), then <c>body</c> (when it has a JSON request
+    /// body), then an optional <c>signal</c>. The whole <c>params</c> argument is optional when every
+    /// parameter is optional.
+    /// </summary>
+    private string BuildMethodSignature(OperationInfo op)
+    {
+        List<string> parts = [];
+
+        if (HasParams(op))
+        {
+            bool allOptional = op.Parameters
+                .Where(p => p.Location is ParameterLocation.Path or ParameterLocation.Query or ParameterLocation.Header)
+                .All(p => !p.IsRequired);
+            string optional = allOptional ? "?" : string.Empty;
+            parts.Add($"params{optional}: {ParamsInterfaceName(op)}");
+        }
+
+        if (this.RequestBodyModelType(op) is { } bodyType)
+        {
+            bool bodyRequired = op.RequestBody is { } rb && rb.IsRequired;
+            string bodyTsType = bodyType == "unknown" ? "unknown" : bodyType;
+            parts.Add(bodyRequired ? $"body: {bodyTsType}" : $"body?: {bodyTsType}");
+        }
+
+        parts.Add("signal?: AbortSignal");
+        return string.Join(", ", parts);
     }
 
     // ── Client implementation ───────────────────────────────────────────
@@ -578,19 +1100,38 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
         EmitHeader(w);
         w.WriteLine(
-            "import type { ApiTransport } from " +
+            "import type { ApiTransport, RequestBody } from " +
             $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
         w.WriteLine($"import type {{ {interfaceName} }} from {StringLiteral($"./{interfaceName}.js")};");
 
+        // Import named JSON request-body model companions (the value, for build()) and Params interfaces.
+        HashSet<string> bodyTypes = new(StringComparer.Ordinal);
         foreach (OperationInfo op in operations)
         {
             string requestModule = RequestModuleName(op);
             string responseClass = ResponseClassName(op);
             string factoryName = ResponseFactoryName(op);
             w.WriteLine($"import {{ {requestModule} }} from {StringLiteral($"./{requestModule}.js")};");
+            if (HasParams(op))
+            {
+                string paramsInterface = ParamsInterfaceName(op);
+                w.WriteLine($"import type {{ {paramsInterface} }} from {StringLiteral($"./{requestModule}.js")};");
+            }
+
             w.WriteLine(
                 $"import {{ {responseClass}, {factoryName} }} from " +
                 $"{StringLiteral($"./{responseClass}.js")};");
+
+            if (this.RequestBodyModelType(op) is { } bt && bt != "unknown")
+            {
+                bodyTypes.Add(bt);
+            }
+        }
+
+        if (bodyTypes.Count > 0)
+        {
+            string imports = string.Join(", ", bodyTypes.OrderBy(m => m, StringComparer.Ordinal));
+            w.WriteLine($"import {{ {imports} }} from {StringLiteral(this.options.ModelsModuleSpecifier)};");
         }
 
         w.WriteLine();
@@ -617,18 +1158,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
         foreach (OperationInfo op in operations)
         {
-            string methodName = CamelCase(op.MethodName);
-            string requestModule = RequestModuleName(op);
-            string responseClass = ResponseClassName(op);
-            string factoryName = ResponseFactoryName(op);
-
-            w.WriteLine();
-            EmitMethodDoc(w, op);
-            w.WriteLine($"{methodName}(signal?: AbortSignal): Promise<{responseClass}> {{");
-            w.PushIndent();
-            w.WriteLine($"return this.transport.send({requestModule}, {factoryName}, undefined, signal);");
-            w.PopIndent();
-            w.WriteLine("}");
+            this.EmitClientMethod(w, op);
         }
 
         w.WriteLine();
@@ -642,6 +1172,67 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.WriteLine("}");
 
         return new GeneratedFile($"{className}.ts", w.ToString());
+    }
+
+    private void EmitClientMethod(IndentedWriter w, OperationInfo op)
+    {
+        string methodName = CamelCase(op.MethodName);
+        string requestModule = RequestModuleName(op);
+        string responseClass = ResponseClassName(op);
+        string factoryName = ResponseFactoryName(op);
+        bool hasParams = HasParams(op);
+        string? bodyModel = this.RequestBodyModelType(op);
+        bool bodyRequired = op.RequestBody is { } rb && rb.IsRequired;
+
+        w.WriteLine();
+        EmitMethodDoc(w, op);
+        string signature = this.BuildMethodSignature(op);
+        w.WriteLine($"{methodName}({signature}): Promise<{responseClass}> {{");
+        w.PushIndent();
+
+        // The request: a factory call (params closure) when parameterised, else the const.
+        if (hasParams)
+        {
+            w.WriteLine($"const request = {requestModule}(params);");
+        }
+        else
+        {
+            w.WriteLine($"const request = {requestModule};");
+        }
+
+        // The request body: build canonical JSON bytes via the model companion when present.
+        if (bodyModel is not null)
+        {
+            string buildExpr = bodyModel == "unknown"
+                ? "new TextEncoder().encode(JSON.stringify(body))"
+                : $"{bodyModel}.build(body)";
+
+            if (bodyRequired)
+            {
+                w.WriteLine(
+                    $"const requestBody: RequestBody = {{ kind: \"bytes\", content: {buildExpr}, " +
+                    "contentType: \"application/json\" };");
+            }
+            else
+            {
+                w.WriteLine(
+                    "const requestBody: RequestBody = body === undefined");
+                w.PushIndent();
+                w.WriteLine("? { kind: \"none\" }");
+                w.WriteLine(
+                    $": {{ kind: \"bytes\", content: {buildExpr}, contentType: \"application/json\" }};");
+                w.PopIndent();
+            }
+
+            w.WriteLine($"return this.transport.send(request, {factoryName}, requestBody, signal);");
+        }
+        else
+        {
+            w.WriteLine($"return this.transport.send(request, {factoryName}, undefined, signal);");
+        }
+
+        w.PopIndent();
+        w.WriteLine("}");
     }
 
     private static void EmitServerUriFactory(IndentedWriter w, ServerInfo serverInfo)

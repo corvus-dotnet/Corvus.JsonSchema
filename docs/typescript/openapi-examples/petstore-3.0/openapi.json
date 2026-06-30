@@ -15,7 +15,9 @@
       "get": {
         "operationId": "getStatus",
         "summary": "Gets the current service status.",
-        "tags": ["status"],
+        "tags": [
+          "status"
+        ],
         "responses": {
           "200": {
             "description": "The current service status.",
@@ -39,17 +41,105 @@
           }
         }
       }
+    },
+    "/pets/{petId}": {
+      "post": {
+        "operationId": "updatePet",
+        "summary": "Updates a pet by id, exercising path/query/header params and a JSON body.",
+        "tags": [
+          "status"
+        ],
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "verbose",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PetUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated pet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pet"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An unexpected error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
       "ServiceStatus": {
         "type": "object",
-        "required": ["status"],
+        "required": [
+          "status"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["ok", "degraded", "down"]
+            "enum": [
+              "ok",
+              "degraded",
+              "down"
+            ]
           },
           "uptimeSeconds": {
             "type": "integer"
@@ -58,12 +148,46 @@
       },
       "Error": {
         "type": "object",
-        "required": ["message"],
+        "required": [
+          "message"
+        ],
         "properties": {
           "code": {
             "type": "integer"
           },
           "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PetUpdate": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "tag": {
+            "type": "string"
+          }
+        }
+      },
+      "Pet": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tag": {
             "type": "string"
           }
         }

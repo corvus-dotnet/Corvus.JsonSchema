@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": ["es2023", "dom", "esnext.disposable"],
+    "outDir": "conformance/dist",
+    "rootDir": "conformance",
+    "skipLibCheck": true,
+    "exactOptionalPropertyTypes": true,
+    "noEmitOnError": true
+  },
+  "include": ["conformance/globals.d.ts", "conformance/*/client/**/*.ts"]
+}
