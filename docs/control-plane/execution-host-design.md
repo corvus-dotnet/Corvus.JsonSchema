@@ -227,6 +227,156 @@ heartbeat; the registry is a store-backed table (visible to all control-plane in
 This pairs with the process split: registration is the only thing a runner *pushes* to the control plane;
 everything else flows through the shared store.
 
+### 5.5 Runner ↔ environment binding, authorization, and reach scoping (DRAFT — for review)
+
+The §5.4 registry above is environment-agnostic and unscoped: a flat global list of processes with no notion of
+*which environment* a runner serves or *whose* it is. That is the gap flagged in `ux-review.md §7.7` ("Runners
+(not yet designed): runners execute in/for an environment and must have the environment's credential set"). It is
+also an inconsistency: environments are first-class, governed, **reach-scoped** resources
+(`Environment.managementTags`, e.g. `tenant=acme`, §14.2); availability is per `(workflow, version, environment)`
+(§7.8); source credentials and base URLs resolve **per environment** (the transport binder is literally
+`CreateBinder(sources, environment, cache)`, §8/§13.1). The runner is the one link in that chain that is neither
+environment-associated nor reach-scoped — so the control plane cannot say *which runners serve production*, cannot
+route a run to a runner that can actually reach its target environment, and gives no multi-tenant isolation of
+execution capacity (every caller sees every runner).
+
+**Decisions (resolved).**
+
+- **One environment per runner; many runners per environment.** A runner process is provisioned for exactly one
+  environment's network reach + credential set, and registers as serving that one environment. An environment may
+  be served by any number of runners (capacity/HA). A host that must serve several environments runs several
+  runner processes (one per environment) — this keeps the credential/network blast-radius of a process to a
+  single environment.
+- **A runner's reach is its environment's reach.** At registration the runner inherits (is stamped with) the
+  target environment's `managementTags`. Everything in §14.2/§14.4 then composes for free: the registry list is
+  reach-filtered by the caller's `AccessContext` over those tags, so a tenant sees only the runners serving its
+  environments.
+- **The environment's administrators must authorize which runners may serve it.** A runner may *not* self-assert
+  into an environment — receiving an environment's runs means receiving its credentials, so it is a security
+  boundary. A runner registering for environment *E* enters a **`Pending`** authorization state and is *not*
+  dispatchable until an administrator of *E* (§15.1, the `EnvironmentAdministrators` set) authorizes it. This
+  reuses the §15.4 approver-inbox pattern (the same surface that approves availability/access requests). An
+  authorization can be revoked, which immediately removes the runner from dispatch for *E*.
+- **Run→environment pinning — folded in now.** A run is pinned to an environment at start (`§7.7` already says "a
+  run targets an environment and uses that environment's credential set"). `startCatalogWorkflowRun` takes a
+  required `environment`; the surface validates it against the version's availability (§7.8) and the caller's
+  reach; the run record (and dispatch index) carry it; the runner resolves *that* environment's credentials.
+
+**How dispatch composes (§7.1).** The store-as-queue dispatch already filters claimable `Pending` runs by reach +
+hosted version. Add the environment predicate: a `Pending` run pinned to environment *E* is claimable only by a
+runner that is (a) `Authorized` + live for *E*, (b) hosting the version, (c) within the caller/run reach — which,
+because the runner inherited *E*'s tags, is automatically true for runners of *E*. The credential binder the
+winning runner builds is already per-environment, so the loop closes: a production run can only land on a runner
+provisioned for, and authorized in, production.
+
+**Schema sketch (draft).** Additions to `RunnerRegistration.json`, a new governed `EnvironmentRunnerAuthorization`,
+and `environment` on the run:
+
+```jsonc
+// RunnerRegistration (added properties)
+"environment":   { "type": "string", "description": "The single deployment environment this runner serves; its sources/credentials/network reach." },
+"reachTags":     { "type": "array", "items": { "$ref": "#/$defs/SecurityTagInfo" },
+                   "description": "Stamped from the environment's managementTags at registration; the runner's row-security reach (§14.2)." },
+"authorization": { "type": "string", "enum": ["pending", "authorized", "revoked"],
+                   "description": "Whether an administrator of the environment has authorized this runner to serve it; only 'authorized' runners are dispatchable." }
+// required adds: "environment"
+
+// EnvironmentRunnerAuthorization (new, governed by the environment's administrators — like Availability)
+{ "title": "EnvironmentRunnerAuthorization",
+  "required": ["environment", "runnerId", "status", "decidedBy", "decidedAt", "etag"],
+  "properties": {
+    "environment": { "type": "string" },
+    "runnerId":    { "type": "string" },
+    "status":      { "type": "string", "enum": ["pending", "authorized", "revoked"] },
+    "decidedBy":   { "type": "string" },
+    "decidedAt":   { "type": "string", "format": "date-time" },
+    "etag":        { "type": "string" } } }
+
+// WorkflowRun checkpoint/index (added)
+"environment": { "type": "string", "description": "The environment the run targets; selects the credential set and constrains dispatch to runners serving it (§7.7)." }
+```
+
+**API surface sketch (draft).**
+
+- **Runner registration (runner-side seam, `IRunnerRegistry.RegisterAsync`)** now requires `environment`. If the
+  runner is not yet authorized for it, registration succeeds in `Pending` and the runner is listed but not
+  dispatchable.
+- `GET /arazzo/v1/runners` — **reach-scoped** (was global); optional `?environment=` filter; each row carries
+  `environment` + `authorization`.
+- `GET /arazzo/v1/environments/{name}/runners` — runners serving an environment with their authorization status
+  (governed by the environment's administrators).
+- `POST /arazzo/v1/environments/{name}/runners/{runnerId}/authorization` (+ `DELETE` to revoke) — an environment
+  administrator authorizes/revokes a runner; appears in the approver inbox (§15.4).
+- `startCatalogWorkflowRun` request body gains a required `environment`, validated against availability (§7.8) +
+  reach; surfaced on the run (the runs UI already wants this, §7.7).
+
+**Open / deferred.** The runner's own identity should be a machine principal (§16.4) so its authorization binds to
+a trusted identity rather than a self-asserted `runnerId`; pre-authorization (admin allow-lists a `runnerId`
+before it appears) vs. register-then-approve are both expressible on the same record; migration of any existing
+flat (environment-less) runner rows requires a backfill/abandon decision. These are implementation-phasing
+details (§11), not model decisions.
+
+### 5.6 Execution backends and isolation models (DRAFT — for review)
+
+§5.4/§5.5 describe a runner as a process that loads the executor into a collectible ALC and runs it **in
+process**. That is one execution model, not the only one. The runner is better understood as an *execution host*
+that **dispatches a run to a pluggable execution backend** with a chosen isolation model — in-process today, but
+equally a per-run micro-guest, a serverless function, or a container — and **wake-ups (resume) use the same
+seam**.
+
+**Why this is cheap to add — two properties already designed for it.** (1) The executor is a **portable,
+self-contained, content-hashed compiled assembly** baked at catalog-add (§3) and dynamically loadable from the
+package — it isn't tied to the control-plane process. (2) Execution is **resumable from a durable checkpoint**
+(§7.2: "resume shares the path"); a run is a serializable state in the store, so *any* host that can load the
+package and read/write the checkpoint can advance it one step (or to the next suspend) and persist. Together these
+make *where* a run executes a late-bound, policy-driven choice rather than an architectural assumption. So this
+section adds no new requirement to the core; it names a seam the existing shape already permits.
+
+**The seam.** Generalise the in-process `HostedWorkflowResumer.RunAsync` into an execution-backend strategy —
+`IRunExecutionBackend.AdvanceAsync(packageRef, checkpoint, environmentTransports, ct) → WorkflowRunResult`. The
+`WorkflowResumer`/`WorkflowWorker` already invoke "advance this run" through a delegate, so the backend slots in
+behind that delegate without touching dispatch, leases, timers, or message delivery. A runner advertises its
+backend + isolation model in its registration capabilities (§5.4), and dispatch (§7.1) can match a run's required
+isolation against it.
+
+**Candidate models (a spectrum of isolation ↔ latency ↔ cost ↔ ops).**
+
+- **In-process collectible ALC (ships first).** Lowest latency, version coexistence, clean unload; isolation
+  boundary = the process. Best for trusted/first-party workflows and high throughput.
+- **Per-run micro-guest (e.g. Hyperlight).** Spin a micro-VM/guest per run for hardware-grade isolation at
+  ~sub-millisecond startup; the executor (native or a wasm build) runs in the guest with inputs + checkpoint
+  marshalled in and the next checkpoint/result marshalled out. Best for untrusted or strongly multi-tenant
+  workflows where per-run blast-radius containment matters.
+- **Serverless function (AWS Lambda / Azure Functions).** A run — or a single step-to-next-suspend — executes as
+  a function invocation: per-invocation isolation, elastic scale, no idle cost. The function loads the package +
+  checkpoint by run id, advances, persists. The function's identity (IAM role / managed identity) *is* the
+  environment's credential principal — which is exactly why §5.5 pins a runner/backend to **one** environment.
+- **Container/pod-per-run (e.g. a k8s Job).** Another point on the spectrum — coarser startup, strong isolation,
+  familiar ops.
+
+**Wake-ups (resume) ride the same seam.** A due timer (§5.5/the timer model) or a delivered message (the message
+model) is just a *trigger* that calls the backend to resume from the checkpoint. In-process: the worker poll loop
+re-enters. Serverless: the trigger is an event source — EventBridge Scheduler / Azure Timer for due timers, a
+queue/topic for messages — that invokes the function with the run id. Micro-guest: the runner spins a guest on the
+trigger. Because resume == execute-from-checkpoint, wake-ups are backend-agnostic; only the *trigger plumbing*
+differs per backend.
+
+**Why §5.5 is the security anchor for out-of-process backends.** A Lambda or a guest executes with the
+environment's credentials and network reach. The one-environment-per-runner + admin-authorized model (§5.5) is
+therefore not just for the in-process case: it is the boundary that says *this function/guest is provisioned for,
+and authorized in, exactly this environment* — the function's role holds that environment's secrets; an
+unauthorized backend can never receive that environment's runs.
+
+**Policy.** Required isolation is a routing input, not hard-wired: an environment policy ("require VM isolation")
+or a per-version label ("untrusted") routes to a micro-guest/serverless backend, while a trusted high-throughput
+version stays in-process. Dispatch matches the run's required isolation against runners' advertised backends.
+
+**What an adapter needs (deferred to phasing, §11).** The checkpoint is already serialisable; the transport
+binding (§8) must be constructible *inside* the backend (credentials resolved in-function/in-guest, per
+environment — §13.1); the result is the tri-state `WorkflowRunResult` written back. In-process ships first;
+each additional backend is a new `IRunExecutionBackend` + its wake-up trigger plumbing + a dispatch policy entry —
+additive, not a re-architecture.
+
 ## 6. "Make it available to run" — the trigger surface
 
 This is the open question. A run is *started* by a **trigger**; the host owns the
