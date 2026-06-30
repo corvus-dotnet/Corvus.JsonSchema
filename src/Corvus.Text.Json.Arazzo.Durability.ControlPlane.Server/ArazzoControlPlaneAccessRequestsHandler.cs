@@ -397,8 +397,8 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     {
         string? subject = this.SubjectOf(this.access.CurrentPrincipal);
         return subject is not null
-            && string.Equals(request.SubjectClaimTypeValue, this.subjectClaimType, StringComparison.Ordinal)
-            && string.Equals(request.SubjectClaimValueValue, subject, StringComparison.Ordinal);
+            && request.SubjectClaimTypeEquals(this.subjectClaimType)
+            && request.SubjectClaimValueEquals(subject);
     }
 
     private async ValueTask<bool> IsAdministratorAsync(string baseWorkflowId, CancellationToken cancellationToken)
