@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Concurrent;
 using Corvus.Text.Json;
 using Models = Corvus.Text.Json.Arazzo.ControlPlane.Demo.Onboarding.Models;
 
@@ -29,6 +30,22 @@ public sealed class OnboardingService : IApiDefaultHandler
           "evidence": { "kind": "document", "documentType": "passport", "documentNumber": "X1234567", "expiry": "2031-01-01" }
         }
         """u8.ToArray();
+
+    private static readonly byte[] IdentityResultPending = """
+        {
+          "verified": false,
+          "score": 0.30,
+          "method": "document",
+          "reviewedAt": "2026-06-10T09:30:00Z",
+          "applicant": { "fullName": "Pending Applicant", "dateOfBirth": "1990-12-10", "email": "pending@example.com", "country": "GB" },
+          "flags": [],
+          "evidence": { "kind": "document", "documentType": "passport", "documentNumber": "X1234567", "expiry": "2031-01-01" }
+        }
+        """u8.ToArray();
+
+    // Per-applicant attempt counter, so a "transient" applicant's first identity check returns an incomplete
+    // (low-score) result and a retry returns a complete one — driving the demo's retry-with-backoff timer suspend.
+    private static readonly ConcurrentDictionary<string, int> TransientAttempts = new(StringComparer.OrdinalIgnoreCase);
 
     private static readonly byte[] IdentityResultBlocked = """
         {
@@ -65,21 +82,28 @@ public sealed class OnboardingService : IApiDefaultHandler
     /// <inheritdoc/>
     public ValueTask<VerifyIdentityResult> HandleVerifyIdentityAsync(VerifyIdentityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        // The KYC score reflects the applicant: a sanctioned/blocked name scores below the workflow's acceptance
-        // threshold, so the run faults at this step's success criterion; everyone else clears it. This drives the
-        // demo's live success-criterion fault (see onboard-customer.arazzo.json verifyIdentity successCriteria).
-        byte[] result = IsBlockedApplicant(parameters.Body) ? IdentityResultBlocked : IdentityResult;
+        // The KYC score reflects the applicant:
+        //  - a sanctioned/blocked name scores below the acceptance threshold (drives the live fault / handled demos);
+        //  - a "transient" name returns an incomplete low score on its FIRST check and a complete one on retry
+        //    (drives the retry-with-backoff timer-suspend demo — see onboard-customer.retry.arazzo.json);
+        //  - everyone else clears the threshold.
+        byte[] result = ApplicantName(parameters.Body) switch
+        {
+            { } name when name.Contains("transient", StringComparison.OrdinalIgnoreCase)
+                => TransientAttempts.AddOrUpdate(name, 1, (_, attempts) => attempts + 1) == 1 ? IdentityResultPending : IdentityResult,
+            { } name when name.Contains("sanction", StringComparison.OrdinalIgnoreCase) => IdentityResultBlocked,
+            _ => IdentityResult,
+        };
         var doc = ParsedJsonDocument<Models.IdentityResult>.Parse(result);
         workspace.TakeOwnership(doc);
         return ValueTask.FromResult(VerifyIdentityResult.Ok(doc.RootElement, workspace));
     }
 
-    // A sanctioned applicant (recognised by name) scores below the KYC threshold.
-    private static bool IsBlockedApplicant(in Models.IdentityRequest request)
-        => ((JsonElement)request).TryGetProperty("fullName"u8, out JsonElement fullName)
-            && fullName.ValueKind == JsonValueKind.String
-            && fullName.GetString() is { } name
-            && name.Contains("sanction", StringComparison.OrdinalIgnoreCase);
+    // The submitted applicant full name (used to vary the canned KYC verdict), or null if absent.
+    private static string? ApplicantName(in Models.IdentityRequest request)
+        => ((JsonElement)request).TryGetProperty("fullName"u8, out JsonElement fullName) && fullName.ValueKind == JsonValueKind.String
+            ? fullName.GetString()
+            : null;
 
     /// <inheritdoc/>
     public ValueTask<ProvisionResourcesResult> HandleProvisionResourcesAsync(ProvisionResourcesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
