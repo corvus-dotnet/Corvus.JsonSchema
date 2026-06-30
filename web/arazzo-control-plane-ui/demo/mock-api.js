@@ -647,7 +647,7 @@ function kindForDimension(dimension) {
 // mock is a standalone backend, and a caller only ever feeds back the digest the list/add response handed it — but it is
 // stable, set-independent and 64 hex chars, so the picker/remove round-trip behaves like the real one.
 function digestOf(identity) {
-  const canonical = identity.map((g) => `${g.dimension}=${g.value}`).sort().join(' ');
+  const canonical = identity.map((g) => `${g.dimension}=${g.value}`).sort().join('\u0000');
   let out = '';
   for (let seed = 0; seed < 8; seed++) {
     let h = (0x811c9dc5 ^ Math.imul(seed, 0x9e3779b1)) >>> 0;
@@ -1554,7 +1554,7 @@ export function createMockControlPlane(options = {}) {
   function listSecurityBindingsPage(params) {
     const limit = Math.max(1, Number(params.get('limit')) || 50);
     const q = (params.get('q') || '').trim().toLowerCase();
-    const tok = params.get('pageToken') ? atobSafe(params.get('pageToken')).split(' ') : null;
+    const tok = params.get('pageToken') ? atobSafe(params.get('pageToken')).split('\u0000') : null;
     const afterOrder = tok ? Number(tok[0]) : null;
     const afterId = tok ? tok[1] : null;
     const sorted = [...securityBindings].sort((a, b) => (a.order - b.order) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
@@ -1566,7 +1566,7 @@ export function createMockControlPlane(options = {}) {
     const pageItems = matched.slice(from, from + limit);
     const more = from + limit < matched.length;
     const last = pageItems[pageItems.length - 1];
-    const nextPageToken = more && last ? btoaSafe(`${last.order} ${last.id}`) : null;
+    const nextPageToken = more && last ? btoaSafe(`${last.order}\u0000${last.id}`) : null;
     return json({ bindings: pageItems.map((b) => structuredClone(b)), nextPageToken });
   }
 
