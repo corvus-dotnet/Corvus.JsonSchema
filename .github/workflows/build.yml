@@ -294,6 +294,43 @@ jobs:
         working-directory: packages/corvus-json-runtime
         timeout-minutes: 5
 
+      # ── OpenAPI client generator (the byte-native TypeScript OpenAPI client epic) ──
+
+      # The @endjin/corvus-json-client-runtime package's unit tests: transports, middleware, auth, and the
+      # serializer oracles (parameter styles, form-urlencoded, multipart, header parsing, JSON pointer,
+      # SSE/NDJSON streaming). Builds the package (tsc) then runs node --test. The package-lock is
+      # gitignored, so npm install (not npm ci).
+      - name: OpenAPI client-runtime package tests
+        run: npm install && npm run build && node --test
+        working-directory: packages/corvus-json-client-runtime
+        timeout-minutes: 5
+
+      # The OpenAPI client recipes import the generated model runtime's third-party deps
+      # (lossless-json / @js-temporal/polyfill / tr46) and tsc; the package-lock is gitignored.
+      - name: Install OpenAPI client examples dependencies
+        run: npm install
+        working-directory: docs/typescript/openapi-examples
+        timeout-minutes: 5
+
+      # The load-bearing emitted-code gate: regenerate every petstore-*/client from its spec via the
+      # production CLI (openapi-client --engine TypeScript) and strict-type-check the whole tree.
+      - name: OpenAPI client recipes - generate + strict tsc
+        run: bash regenerate.sh
+        working-directory: docs/typescript/openapi-examples
+        timeout-minutes: 15
+        env:
+          NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
+
+      # Runtime conformance: regenerate an executable client copy (package-name runtime import), compile it,
+      # and run the node:test suite that drives composed requests / decomposed responses through a mock
+      # transport (path/query/header/cookie styles, every body category, streaming, headers, links).
+      - name: OpenAPI client conformance suite
+        run: bash conformance.sh
+        working-directory: docs/typescript/openapi-examples
+        timeout-minutes: 15
+        env:
+          NUGET_PACKAGES: ${{ github.workspace }}/.nuget-packages
+
   deploy-docs:
     name: Deploy Documentation
     needs:
