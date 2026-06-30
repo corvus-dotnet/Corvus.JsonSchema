@@ -240,6 +240,70 @@ public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RunnerRegistryPage> ListAsync(AccessContext context, int limit, JsonString pageToken, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (context.ReadReach is null)
+        {
+            // Unrestricted read reach (e.g. the trusted system path): no row is filtered, so the native keyset query
+            // (server-side RowKey range, capped page) is exactly right — no full read, no in-memory filter.
+            return await this.ListAsync(limit, pageToken, cancellationToken).ConfigureAwait(false);
+        }
+
+        int pageSize = limit > 0 ? limit : RunnerRegistryPage.DefaultPageSize;
+
+        // Decode the keyset cursor; the runner id reifies to a string only for the OData RowKey predicate (a leaf).
+        string? after = RunnerRegistryContinuationToken.DecodeCursorToString(pageToken);
+
+        // Reach (§14.2) is a per-row ABAC predicate, not expressible as an OData filter, so the entities are read in
+        // RowKey order and reach-filtered in flight. Unlike the environment store — whose base64 keys are NOT ordinal so
+        // it must read its keys, sort client-side, then keyset-page — the runner RowKey IS the runner id (ordinal == the
+        // canonical total order), so the server returns the candidates already ordered and the RowKey range predicate
+        // seeks strictly past the cursor. No maxPerPage cap: filtered-out rows don't count toward the page, so the
+        // page-fill + one-row look-ahead governs how far the scan reads — never the full read + in-memory filter the
+        // default fallback does.
+        string filter = after is null
+            ? TableClient.CreateQueryFilter($"PartitionKey eq {PartitionKey}")
+            : TableClient.CreateQueryFilter($"PartitionKey eq {PartitionKey} and RowKey gt {after}");
+
+        var page = new List<RunnerRegistration>(pageSize);
+        bool hasMore = false;
+        await foreach (TableEntity entity in this.runners
+            .QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken)
+            .ConfigureAwait(false))
+        {
+            RunnerRegistration runner = RunnerRegistration.FromJson(entity.GetBinary("Doc") ?? []);
+
+            // reachTags is absent on a runner serving an unscoped environment; an empty tag set fails a scoped reach
+            // (fail-closed), so such a runner is invisible to a tenant-scoped caller — matching the in-memory pager.
+            SecurityTagSet tags = runner.ReachTags.IsNotUndefined()
+                ? SecurityTagSet.CopyFrom(runner.ReachTags)
+                : SecurityTagSet.Empty;
+            if (!context.Admits(AccessVerb.Read, tags))
+            {
+                continue;
+            }
+
+            if (page.Count == pageSize)
+            {
+                hasMore = true; // a further reach-visible row exists → there is a next page after the last included row
+                break;
+            }
+
+            page.Add(runner);
+        }
+
+        if (!hasMore)
+        {
+            return RunnerRegistryPage.Create(page);
+        }
+
+        using UnescapedUtf8JsonString lastId = page[page.Count - 1].RunnerId.GetUtf8String();
+        return RunnerRegistryPage.Create(page, lastId.Span);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<int> PruneAsync(DateTimeOffset deadBefore, CancellationToken cancellationToken)
     {
         long cutoff = deadBefore.ToUnixTimeMilliseconds();
