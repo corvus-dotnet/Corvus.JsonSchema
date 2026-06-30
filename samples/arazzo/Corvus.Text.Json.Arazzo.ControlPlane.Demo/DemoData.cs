@@ -92,8 +92,37 @@ public static class DemoData
         await RunLiveAsync(runStore, resumer, time, "run-onb-live03", "live03", """{"email":"mallory@example.com","fullName":"Mallory Sanction","plan":"free"}""", log, "onboard-customer-v2").ConfigureAwait(false);
 
         // An asynchronous onboarding: the run suspends durably awaiting an out-of-band KYC verdict on the
-        // kyc.results channel, then a delivered verdict message resumes it to completion — live suspend + resume.
+        // kyc.verdict channel, then a delivered verdict message resumes it to completion — live suspend + resume.
         await RunLiveSuspendResumeAsync(runStore, resumer, time, "run-onb-live04", "live04", log).ConfigureAwait(false);
+
+        // A resilient onboarding: the identity provider returns a transient incomplete result on the first check,
+        // so the step retries with a backoff — the run suspends on a durable TIMER between attempts and resumes
+        // when the backoff elapses, succeeding on the retry. Live timer suspend + resume.
+        await RunLiveTimerResumeAsync(runStore, resumer, time, "run-onb-live05", "live05", log).ConfigureAwait(false);
+    }
+
+    private static async ValueTask RunLiveTimerResumeAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, TimeProvider time, string runId, string correlationId, Action<string>? log)
+    {
+        try
+        {
+            // First leg: the identity check fails (transient incomplete result), so the step schedules a retry with
+            // a backoff and the run suspends on a durable timer (returns Suspended).
+            using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"email":"katherine@example.com","fullName":"Katherine Transient","plan":"pro"}"""u8.ToArray());
+            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "onboard-customer-retry-v1", inputs.RootElement, time, correlationId: correlationId, tags: TagSet.FromTags(["tenant-7"]));
+            WorkflowRunResultKind first = await resumer(run, default).ConfigureAwait(false);
+            log?.Invoke($"Live retry onboarding run '{runId}' first leg: {first} (identity check backing off, retry on a durable timer).");
+
+            // Wait for the backoff to elapse, then drive due timers — which wakes and resumes the run; the retried
+            // identity check now succeeds, so the run completes.
+            await Task.Delay(TimeSpan.FromSeconds(3), time).ConfigureAwait(false);
+            var worker = new WorkflowWorker(runStore, "demo", time);
+            int resumed = await worker.ResumeDueTimersAsync(resumer, default).ConfigureAwait(false);
+            log?.Invoke($"Live retry onboarding run '{runId}': backoff elapsed, resumed {resumed} due timer(s) to completion.");
+        }
+        catch (Exception ex)
+        {
+            log?.Invoke($"Live retry onboarding run '{runId}' failed: {ex}");
+        }
     }
 
     private static async ValueTask RunLiveSuspendResumeAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, TimeProvider time, string runId, string correlationId, Action<string>? log)
@@ -163,6 +192,7 @@ public static class DemoData
         ReadOnlyMemory<byte> onboarding = Package(specsDir, "onboard-customer.arazzo.json", ("onboarding", "onboarding.openapi.json"));
         ReadOnlyMemory<byte> onboardingV2 = Package(specsDir, "onboard-customer.v2.arazzo.json", ("onboarding", "onboarding.openapi.json"));
         ReadOnlyMemory<byte> onboardingAsync = Package(specsDir, "onboard-customer.async.arazzo.json", ("onboarding", "onboarding.openapi.json"), ("notifications", "notifications.asyncapi.json"));
+        ReadOnlyMemory<byte> onboardingRetry = Package(specsDir, "onboard-customer.retry.arazzo.json", ("onboarding", "onboarding.openapi.json"));
         ReadOnlyMemory<byte> reconcile = Package(specsDir, "nightly-reconcile.arazzo.json", ("ledger", "ledger.openapi.json"));
 
         // Catalog: onboarding (one active version) and nightly-reconcile (a v1 that we obsolete, plus an active v2).
@@ -176,9 +206,13 @@ public static class DemoData
         // (verifyIdentity onFailure -> goto) instead of faulting. Catalogued as version 2 of the same workflow.
         await catalog.AddAsync(onboardingV2, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default).ConfigureAwait(false);
 
-        // onboard-customer-async: awaits an out-of-band KYC verdict (AsyncAPI kyc.results channel) — the run
+        // onboard-customer-async: awaits an out-of-band KYC verdict (AsyncAPI kyc.verdict channel) — the run
         // suspends durably at the receive step until a verdict message is delivered, then resumes.
         await catalog.AddAsync(onboardingAsync, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default).ConfigureAwait(false);
+
+        // onboard-customer-retry: retries the identity check with a backoff on a transient provider outage — the
+        // run suspends on a durable timer between attempts and resumes when the backoff elapses.
+        await catalog.AddAsync(onboardingRetry, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default).ConfigureAwait(false);
 
         await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing"]), adminFounder, default).ConfigureAwait(false);
         await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing", "beta"]), adminFounder, default).ConfigureAwait(false);
