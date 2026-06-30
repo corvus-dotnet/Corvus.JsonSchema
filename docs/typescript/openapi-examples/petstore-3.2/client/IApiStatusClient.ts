@@ -12,6 +12,8 @@ import type { NoteResponse } from "./NoteResponse.js";
 import type { FormResponse } from "./FormResponse.js";
 import type { AvatarResponse } from "./AvatarResponse.js";
 import type { BatchResponse } from "./BatchResponse.js";
+import type { DownloadResponse } from "./DownloadResponse.js";
+import type { PingResponse } from "./PingResponse.js";
 import type { PetUpdate, Schema3 } from "./models/generated.js";
 
 /**
@@ -57,4 +59,14 @@ export interface IApiStatusClient extends AsyncDisposable {
    * Posts a batch of pet updates via multipart/mixed.
    */
   batch(items: readonly PetUpdate[], signal?: AbortSignal): Promise<BatchResponse>;
+
+  /**
+   * Downloads a raw binary body (application/octet-stream response).
+   */
+  download(signal?: AbortSignal): Promise<DownloadResponse>;
+
+  /**
+   * Returns a plain-text body (text/plain response).
+   */
+  ping(signal?: AbortSignal): Promise<PingResponse>;
 }

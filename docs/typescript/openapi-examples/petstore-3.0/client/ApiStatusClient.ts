@@ -20,6 +20,10 @@ import { formRequest } from "./formRequest.js";
 import { FormResponse, formResponseFactory } from "./FormResponse.js";
 import { avatarRequest } from "./avatarRequest.js";
 import { AvatarResponse, avatarResponseFactory } from "./AvatarResponse.js";
+import { downloadRequest } from "./downloadRequest.js";
+import { DownloadResponse, downloadResponseFactory } from "./DownloadResponse.js";
+import { pingRequest } from "./pingRequest.js";
+import { PingResponse, pingResponseFactory } from "./PingResponse.js";
 import { PetUpdate, Schema2 } from "./models/generated.js";
 
 /**
@@ -96,6 +100,22 @@ export class ApiStatusClient implements IApiStatusClient {
     const request = avatarRequest;
     const requestBody: RequestBody = multipartFormData(body, { "file": file });
     return this.transport.send(request, avatarResponseFactory, requestBody, signal);
+  }
+
+  /**
+   * Downloads a raw binary body (application/octet-stream response).
+   */
+  download(signal?: AbortSignal): Promise<DownloadResponse> {
+    const request = downloadRequest;
+    return this.transport.send(request, downloadResponseFactory, undefined, signal);
+  }
+
+  /**
+   * Returns a plain-text body (text/plain response).
+   */
+  ping(signal?: AbortSignal): Promise<PingResponse> {
+    const request = pingRequest;
+    return this.transport.send(request, pingResponseFactory, undefined, signal);
   }
 
   async [Symbol.asyncDispose](): Promise<void> {

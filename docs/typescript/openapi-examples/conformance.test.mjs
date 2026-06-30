@@ -34,9 +34,15 @@ function bytes(...chunks) {
 // into a ByteWriter; writeHeaders streams header name/value pairs; the body is taken from the supplied
 // RequestBody. The base URL is the client's static serverUri().
 class MockApiTransport {
-  constructor(baseUrl) {
+  constructor(baseUrl, canned) {
     this.baseUrl = baseUrl;
     this.captured = undefined;
+    // The canned response the factory decodes: { status, bytes, contentType }. Defaults to a 200 JSON Pet.
+    this.canned = canned ?? {
+      status: 200,
+      bytes: new TextEncoder().encode(JSON.stringify({ id: "p-1", name: "Rex", tag: "dog" })),
+      contentType: "application/json",
+    };
   }
 
   async send(request, factory, body, _signal) {
@@ -74,10 +80,8 @@ class MockApiTransport {
       body: await materializeBody(body, _signal),
     };
 
-    // Return a canned 200 JSON body via the generated response factory.
-    const responseBytes = new TextEncoder().encode(
-      JSON.stringify({ id: "p-1", name: "Rex", tag: "dog" }),
-    );
+    // Return the canned response via the generated response factory.
+    const responseBytes = this.canned.bytes;
     const responseStream = new ReadableStream({
       start(controller) {
         controller.enqueue(responseBytes);
@@ -85,9 +89,9 @@ class MockApiTransport {
       },
     });
     return factory.create({
-      statusCode: 200,
+      statusCode: this.canned.status,
       body: responseStream,
-      contentType: "application/json",
+      contentType: this.canned.contentType,
       headers: { tryGet: () => undefined },
       transport: this,
     });
@@ -338,4 +342,47 @@ for (const version of VERSIONS) {
       );
     });
   }
+
+  test(`${version}: download decodes a raw octet-stream response body`, async () => {
+    const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+    const transport = new MockApiTransport(ApiStatusClient.serverUri().toString().replace(/\/$/, ""), {
+      status: 200,
+      bytes: new Uint8Array([5, 6, 7, 8]),
+      contentType: "application/octet-stream",
+    });
+    const client = new ApiStatusClient(transport);
+
+    const response = await client.download();
+
+    assert.equal(transport.captured.method, "GET");
+    assert.equal(transport.captured.url, "https://api.example.com/v1/download");
+    // The 200 accessor returns the raw response bytes verbatim (no model companion).
+    assert.deepEqual(Array.from(response.tryGetOk()), [5, 6, 7, 8]);
+    // match() routes the bytes to the ok handler.
+    const viaMatch = response.match({ ok: (body) => Array.from(body) });
+    assert.deepEqual(viaMatch, [5, 6, 7, 8]);
+  });
+
+  test(`${version}: ping decodes a text/plain response body`, async () => {
+    const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+    const transport = new MockApiTransport(ApiStatusClient.serverUri().toString().replace(/\/$/, ""), {
+      status: 200,
+      bytes: new TextEncoder().encode("pong"),
+      contentType: "text/plain",
+    });
+    const client = new ApiStatusClient(transport);
+
+    const response = await client.ping();
+
+    assert.equal(transport.captured.method, "GET");
+    assert.equal(transport.captured.url, "https://api.example.com/v1/ping");
+    // The 200 accessor decodes the bytes to a string.
+    assert.equal(response.tryGetOk(), "pong");
+    assert.equal(
+      response.match({ ok: (body) => body.toUpperCase() }),
+      "PONG",
+    );
+  });
 }

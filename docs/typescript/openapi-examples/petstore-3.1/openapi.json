@@ -425,6 +425,49 @@
           }
         }
       }
+    },
+    "/download": {
+      "get": {
+        "operationId": "download",
+        "summary": "Downloads a raw binary body (application/octet-stream response).",
+        "tags": [
+          "status"
+        ],
+        "responses": {
+          "200": {
+            "description": "The binary content.",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ping": {
+      "get": {
+        "operationId": "ping",
+        "summary": "Returns a plain-text body (text/plain response).",
+        "tags": [
+          "status"
+        ],
+        "responses": {
+          "200": {
+            "description": "The text content.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

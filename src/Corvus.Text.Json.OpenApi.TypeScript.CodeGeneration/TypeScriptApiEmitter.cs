@@ -213,6 +213,71 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
     }
 
     /// <summary>
+    /// The primary non-JSON response content entry — the text/plain or octet-stream body a response
+    /// decomposes to when it has no JSON content. JSON wins (its <c>tryGet</c> stays byte-identical);
+    /// multipart responses are out of scope. Prefers text/plain, then any other non-JSON media type.
+    /// </summary>
+    private static ContentInfo? NonJsonResponseContent(ResponseInfo response)
+    {
+        if (JsonContent(response) is not null)
+        {
+            return null;
+        }
+
+        ContentInfo? text = null;
+        ContentInfo? octet = null;
+        foreach (ContentInfo content in response.Content)
+        {
+            if (CodeEmitHelpers.IsMultipartMediaType(content.MediaType)
+                || CodeEmitHelpers.IsMultipartMixedMediaType(content.MediaType))
+            {
+                continue;
+            }
+
+            if (text is null && CodeEmitHelpers.IsTextPlainMediaType(content.MediaType))
+            {
+                text = content;
+            }
+            else if (octet is null && !CodeEmitHelpers.IsJsonMediaType(content.MediaType))
+            {
+                octet = content;
+            }
+        }
+
+        return text ?? octet;
+    }
+
+    /// <summary>
+    /// Classifies a non-JSON response content entry: text/plain decodes to a <c>string</c>, everything
+    /// else is a raw <c>Uint8Array</c>.
+    /// </summary>
+    private static ContentCategory NonJsonResponseCategory(ContentInfo content)
+        => CodeEmitHelpers.IsTextPlainMediaType(content.MediaType)
+            ? ContentCategory.TextPlain
+            : ContentCategory.OctetStream;
+
+    /// <summary>
+    /// The TypeScript type a response's <c>tryGet{Status}()</c> accessor returns — the JSON model type
+    /// (or <c>unknown</c>), <c>string</c> for text/plain, <c>Uint8Array</c> for octet-stream — or
+    /// <see langword="null"/> when the response has no decodable body (so no accessor is emitted).
+    /// </summary>
+    private string? ResponseAccessorType(ResponseInfo response)
+    {
+        if (JsonContent(response) is not null)
+        {
+            string model = this.ResponseModelType(response);
+            return model == "unknown" ? "unknown" : model;
+        }
+
+        if (NonJsonResponseContent(response) is { } content)
+        {
+            return NonJsonResponseCategory(content) == ContentCategory.TextPlain ? "string" : "Uint8Array";
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// Selects the request body's primary content entry — the single media type the generated method
     /// serializes — generalizing the former JSON-only body seam across the non-JSON categories.
     /// Preference order: JSON, form-urlencoded, text/plain, then octet-stream (any remaining
@@ -1015,6 +1080,39 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             w.WriteLine("}");
         }
 
+        // Per-status accessors for non-JSON bodies: text/plain decodes to a string, octet-stream
+        // returns the raw bytes. (The body is already buffered as `bytes`; no model companion.)
+        foreach (ResponseInfo response in responses)
+        {
+            if (NonJsonResponseContent(response) is not { } content)
+            {
+                continue;
+            }
+
+            ContentCategory category = NonJsonResponseCategory(content);
+            string accessor = $"tryGet{StatusAccessor(response.StatusCode)}";
+            string statusGuard = StatusGuard(response.StatusCode);
+            bool isText = category == ContentCategory.TextPlain;
+            string returnType = isText ? "string" : "Uint8Array";
+            string bodyExpr = isText ? "new TextDecoder().decode(this.bytes)" : "this.bytes";
+
+            w.WriteLine();
+            w.WriteLine("/**");
+            w.WriteLine($" * Returns the {response.StatusCode} response body as {(isText ? "decoded text" : "raw bytes")},");
+            w.WriteLine(" * or undefined when the status does not match.");
+            w.WriteLine(" */");
+            w.WriteLine($"{accessor}(): {returnType} | undefined {{");
+            w.PushIndent();
+            w.WriteLine($"if (!({statusGuard}) || this.bytes === null) {{");
+            w.PushIndent();
+            w.WriteLine("return undefined;");
+            w.PopIndent();
+            w.WriteLine("}");
+            w.WriteLine($"return {bodyExpr};");
+            w.PopIndent();
+            w.WriteLine("}");
+        }
+
         // match — discriminates on status and dispatches to the supplied handlers.
         EmitMatch(w, responses, this);
 
@@ -1117,9 +1215,10 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
     private static void EmitMatch(IndentedWriter w, ResponseInfo[] responses, TypeScriptApiEmitter self)
     {
-        // Build a handler-bag type and a match() that dispatches by status.
-        ResponseInfo[] jsonResponses = [.. responses.Where(r => JsonContent(r) is not null)];
-        if (jsonResponses.Length == 0)
+        // Build a handler-bag type and a match() that dispatches by status. Any response with a
+        // decodable body (JSON model, text/plain string, or octet-stream bytes) gets a case.
+        ResponseInfo[] matchable = [.. responses.Where(r => self.ResponseAccessorType(r) is not null)];
+        if (matchable.Length == 0)
         {
             return;
         }
@@ -1131,11 +1230,10 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.WriteLine(" */");
         w.WriteLine("match<T>(handlers: {");
         w.PushIndent();
-        foreach (ResponseInfo response in jsonResponses)
+        foreach (ResponseInfo response in matchable)
         {
             string handlerName = CamelCase(StatusAccessor(response.StatusCode));
-            string modelType = self.ResponseModelType(response);
-            string argType = modelType == "unknown" ? "unknown" : modelType;
+            string argType = self.ResponseAccessorType(response)!;
             w.WriteLine($"{handlerName}?: (body: {argType}) => T;");
         }
 
@@ -1143,7 +1241,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.PopIndent();
         w.WriteLine("}): T | undefined {");
         w.PushIndent();
-        foreach (ResponseInfo response in jsonResponses)
+        foreach (ResponseInfo response in matchable)
         {
             string handlerName = CamelCase(StatusAccessor(response.StatusCode));
             string accessor = $"tryGet{StatusAccessor(response.StatusCode)}";

@@ -22,6 +22,10 @@ import { avatarRequest } from "./avatarRequest.js";
 import { AvatarResponse, avatarResponseFactory } from "./AvatarResponse.js";
 import { batchRequest } from "./batchRequest.js";
 import { BatchResponse, batchResponseFactory } from "./BatchResponse.js";
+import { downloadRequest } from "./downloadRequest.js";
+import { DownloadResponse, downloadResponseFactory } from "./DownloadResponse.js";
+import { pingRequest } from "./pingRequest.js";
+import { PingResponse, pingResponseFactory } from "./PingResponse.js";
 import { PetUpdate, Schema3 } from "./models/generated.js";
 
 /**
@@ -107,6 +111,22 @@ export class ApiStatusClient implements IApiStatusClient {
     const request = batchRequest;
     const requestBody: RequestBody = multipartMixed([...items.map((item) => ({ kind: "json" as const, value: item }))]);
     return this.transport.send(request, batchResponseFactory, requestBody, signal);
+  }
+
+  /**
+   * Downloads a raw binary body (application/octet-stream response).
+   */
+  download(signal?: AbortSignal): Promise<DownloadResponse> {
+    const request = downloadRequest;
+    return this.transport.send(request, downloadResponseFactory, undefined, signal);
+  }
+
+  /**
+   * Returns a plain-text body (text/plain response).
+   */
+  ping(signal?: AbortSignal): Promise<PingResponse> {
+    const request = pingRequest;
+    return this.transport.send(request, pingResponseFactory, undefined, signal);
   }
 
   async [Symbol.asyncDispose](): Promise<void> {
