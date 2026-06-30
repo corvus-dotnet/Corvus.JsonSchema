@@ -4,7 +4,7 @@
 import { OperationMethod, ValidationMode } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
 import type { ApiRequest, ByteWriter, HeaderSink } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
 import { writePathParam, writeQueryParam, writeHeaderParam } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
-import { Schema10, Schema7, Schema8, Schema9 } from "./models/generated.js";
+import { Schema10, Schema11, Schema8, Schema9 } from "./models/generated.js";
 
 /**
  * Parameters for the UpdatePet operation.
@@ -69,16 +69,16 @@ export function updatePetRequest(params: UpdatePetParams): ApiRequest {
       if (mode === ValidationMode.None) {
         return;
       }
-      if (!Schema7.evaluate(params.petId)) {
+      if (!Schema8.evaluate(params.petId)) {
         throw new Error("UpdatePet parameter 'petId' failed schema validation.");
       }
-      if (params.tags !== undefined && !Schema8.evaluate(params.tags)) {
+      if (params.tags !== undefined && !Schema9.evaluate(params.tags)) {
         throw new Error("UpdatePet parameter 'tags' failed schema validation.");
       }
-      if (params.verbose !== undefined && !Schema9.evaluate(params.verbose)) {
+      if (params.verbose !== undefined && !Schema10.evaluate(params.verbose)) {
         throw new Error("UpdatePet parameter 'verbose' failed schema validation.");
       }
-      if (!Schema10.evaluate(params.xRequestId)) {
+      if (!Schema11.evaluate(params.xRequestId)) {
         throw new Error("UpdatePet parameter 'X-Request-Id' failed schema validation.");
       }
     },

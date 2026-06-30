@@ -43,6 +43,35 @@
       }
     },
     "/pets/{petId}": {
+      "get": {
+        "operationId": "getPet",
+        "summary": "Gets a pet by id.",
+        "tags": [
+          "status"
+        ],
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The pet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pet"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "operationId": "updatePet",
         "summary": "Updates a pet by id, exercising path/query/header params and a JSON body.",
@@ -103,6 +132,14 @@
         "responses": {
           "200": {
             "description": "The updated pet.",
+            "links": {
+              "getPet": {
+                "operationId": "getPet",
+                "parameters": {
+                  "petId": "$response.body#/id"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {

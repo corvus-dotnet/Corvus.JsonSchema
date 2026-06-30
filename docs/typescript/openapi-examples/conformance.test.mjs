@@ -192,6 +192,28 @@ for (const version of VERSIONS) {
     assert.deepEqual(pet, { id: "p-1", name: "Rex", tag: "dog" });
   });
 
+  test(`${version}: updatePet exposes a getPet link follower bound from $response.body`, async () => {
+    const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+    const transport = new MockApiTransport(ApiStatusClient.serverUri().toString().replace(/\/$/, ""));
+    const client = new ApiStatusClient(transport);
+
+    const response = await client.updatePet(
+      { petId: "p 1", xRequestId: "req-42" },
+      { name: "Rex", tag: "dog" },
+    );
+
+    // The link binds the target's petId from $response.body#/id (the canned Pet's id "p-1") and
+    // invokes getPet via the same transport.
+    const followed = await response.links.getPet();
+
+    const wire = transport.captured;
+    assert.equal(wire.method, "GET");
+    assert.equal(wire.url, "https://api.example.com/v1/pets/p-1");
+    // The followed response decodes through the target's factory.
+    assert.deepEqual(followed.tryGetOk(), { id: "p-1", name: "Rex", tag: "dog" });
+  });
+
   test(`${version}: search composes the full parameter-style matrix`, async () => {
     const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
 

@@ -77,7 +77,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
     /// <inheritdoc/>
     public GeneratedFile EmitResponseModule(OperationInfo op, IReadOnlyList<OperationInfo> allOperations)
-        => this.EmitResponseClass(op);
+        => this.EmitResponseClass(op, allOperations);
 
     /// <inheritdoc/>
     public GeneratedFile EmitClientInterface(
@@ -970,7 +970,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
                 .Select(c => (c.MediaType, c.SchemaPointer?.PositionalPointer)));
 
     // ── Response module ─────────────────────────────────────────────────
-    private GeneratedFile EmitResponseClass(OperationInfo op)
+    private GeneratedFile EmitResponseClass(OperationInfo op, IReadOnlyList<OperationInfo> allOperations)
     {
         string className = ResponseClassName(op);
         string factoryName = ResponseFactoryName(op);
@@ -979,6 +979,11 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
         // Order responses: concrete 2xx first, then default/error.
         ResponseInfo[] responses = [.. op.Responses];
+
+        // Followable links (target resolvable; required target params all bound by a supported
+        // response-side expression). hasLinks adds a stored transport + a `links` accessor.
+        List<LinkInfo> links = this.EmittableLinks(op, allOperations, out bool anyLinkBodyExpr);
+        bool hasLinks = links.Count > 0;
 
         // The distinct model type names referenced by JSON responses (imported by Ts_FinalName).
         HashSet<string> modelTypes = new(StringComparer.Ordinal);
@@ -999,18 +1004,34 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.WriteLine(
             "import { ValidationMode } from " +
             $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
-        if (headerParseFns.Count > 0)
+
+        // Runtime value imports: header parsers + getByPointer (response-body link expressions).
+        List<string> runtimeValues = [.. headerParseFns];
+        if (anyLinkBodyExpr)
+        {
+            runtimeValues.Add("getByPointer");
+        }
+
+        if (runtimeValues.Count > 0)
         {
             w.WriteLine(
-                $"import {{ {string.Join(", ", headerParseFns)} }} from " +
+                $"import {{ {string.Join(", ", runtimeValues)} }} from " +
                 $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
         }
 
-        string responseTypeImports = hasHeaders
-            ? "ApiResponse, ResponseContext, ResponseFactory, ResponseHeaders"
-            : "ApiResponse, ResponseContext, ResponseFactory";
+        List<string> responseTypeImports = ["ApiResponse", "ResponseContext", "ResponseFactory"];
+        if (hasHeaders)
+        {
+            responseTypeImports.Add("ResponseHeaders");
+        }
+
+        if (hasLinks)
+        {
+            responseTypeImports.Add("ApiTransport");
+        }
+
         w.WriteLine(
-            $"import type {{ {responseTypeImports} }} from " +
+            $"import type {{ {string.Join(", ", responseTypeImports)} }} from " +
             $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
 
         modelTypes.Remove("unknown");
@@ -1019,6 +1040,9 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             string imports = string.Join(", ", modelTypes.OrderBy(m => m, StringComparer.Ordinal));
             w.WriteLine($"import {{ {imports} }} from {StringLiteral(this.options.ModelsModuleSpecifier)};");
         }
+
+        // Per-link-target imports: the target request builder, response class + factory, and Params type.
+        this.EmitLinkTargetImports(w, links, allOperations);
 
         w.WriteLine();
 
@@ -1037,18 +1061,40 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             w.WriteLine("private readonly headers: ResponseHeaders;");
         }
 
+        if (hasLinks)
+        {
+            w.WriteLine("private readonly transport: ApiTransport;");
+        }
+
         w.WriteLine();
 
-        string ctorParams = hasHeaders
-            ? "statusCode: number, bytes: Uint8Array | null, headers: ResponseHeaders"
-            : "statusCode: number, bytes: Uint8Array | null";
-        w.WriteLine($"private constructor({ctorParams}) {{");
+        // Constructor + factory thread the optional headers / transport in a fixed order.
+        List<string> ctorParams = ["statusCode: number", "bytes: Uint8Array | null"];
+        List<string> ctorArgs = ["context.statusCode", "bytes"];
+        if (hasHeaders)
+        {
+            ctorParams.Add("headers: ResponseHeaders");
+            ctorArgs.Add("context.headers");
+        }
+
+        if (hasLinks)
+        {
+            ctorParams.Add("transport: ApiTransport");
+            ctorArgs.Add("context.transport");
+        }
+
+        w.WriteLine($"private constructor({string.Join(", ", ctorParams)}) {{");
         w.PushIndent();
         w.WriteLine("this.statusCode = statusCode;");
         w.WriteLine("this.bytes = bytes;");
         if (hasHeaders)
         {
             w.WriteLine("this.headers = headers;");
+        }
+
+        if (hasLinks)
+        {
+            w.WriteLine("this.transport = transport;");
         }
 
         w.PopIndent();
@@ -1059,10 +1105,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.WriteLine("static async createFrom(context: ResponseContext): Promise<" + className + "> {");
         w.PushIndent();
         w.WriteLine("const bytes = context.body === null ? null : await readAllBytes(context.body);");
-        string ctorArgs = hasHeaders
-            ? "context.statusCode, bytes, context.headers"
-            : "context.statusCode, bytes";
-        w.WriteLine($"return new {className}({ctorArgs});");
+        w.WriteLine($"return new {className}({string.Join(", ", ctorArgs)});");
         w.PopIndent();
         w.WriteLine("}");
         w.WriteLine();
@@ -1075,6 +1118,9 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
         // Typed per-header getters (lazy parse of the raw header string per the OpenAPI simple style).
         EmitResponseHeaderGetters(w, headers);
+
+        // Link followers (resolve runtime expressions and invoke the target operation via the transport).
+        this.EmitLinksAccessor(w, links, allOperations, anyLinkBodyExpr);
 
         // Per-status typed accessors via the model companion `Type.parse`.
         foreach (ResponseInfo response in responses)
@@ -1366,6 +1412,212 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             w.PopIndent();
             w.WriteLine("}");
         }
+    }
+
+    // ── Response links (runtime expressions) ────────────────────────────
+
+    // Whether a runtime-expression kind is resolvable from the response alone (this slice supports
+    // $response.body and literals; $response.header / $request.* / $url / $method are deferred).
+    private static bool IsSupportedLinkExpr(RuntimeExpressionKind kind)
+        => kind is RuntimeExpressionKind.ResponseBody or RuntimeExpressionKind.Literal;
+
+    // The operation a link targets (by operationId), or null when not present.
+    private static OperationInfo? ResolveTargetOp(LinkInfo link, IReadOnlyList<OperationInfo> allOperations)
+    {
+        foreach (OperationInfo candidate in allOperations)
+        {
+            if (string.Equals(candidate.OperationId, link.TargetOperationId, StringComparison.Ordinal))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private static ParameterInfo? FindLinkParam(OperationInfo op, string name)
+    {
+        foreach (ParameterInfo p in op.Parameters)
+        {
+            if (IsSerializedParameter(p) && string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                return p;
+            }
+        }
+
+        return null;
+    }
+
+    // The followable links for an operation: target resolvable, and every required target parameter
+    // bound by a supported response-side expression. anyBodyExpr is set when any link reads
+    // $response.body (so the response emits linkBody() + imports getByPointer).
+    private List<LinkInfo> EmittableLinks(
+        OperationInfo op,
+        IReadOnlyList<OperationInfo> allOperations,
+        out bool anyBodyExpr)
+    {
+        anyBodyExpr = false;
+        List<LinkInfo> result = [];
+        HashSet<string> seenNames = new(StringComparer.Ordinal);
+
+        foreach (ResponseInfo response in op.Responses)
+        {
+            foreach (LinkInfo link in response.Links)
+            {
+                if (link.TargetOperationId is null || !seenNames.Add(link.LinkName))
+                {
+                    continue;
+                }
+
+                if (ResolveTargetOp(link, allOperations) is not { } target)
+                {
+                    continue;
+                }
+
+                HashSet<string> supportedBound = new(StringComparer.OrdinalIgnoreCase);
+                bool bodyExpr = false;
+                foreach (LinkParameterBinding binding in link.ParameterBindings)
+                {
+                    RuntimeExpression expr = RuntimeExpression.Parse(binding.Expression);
+                    if (IsSupportedLinkExpr(expr.Kind))
+                    {
+                        supportedBound.Add(binding.ParameterName);
+                        bodyExpr |= expr.Kind == RuntimeExpressionKind.ResponseBody;
+                    }
+                }
+
+                bool allRequiredBound = target.Parameters
+                    .Where(p => p.IsRequired && IsSerializedParameter(p))
+                    .All(p => supportedBound.Contains(p.Name));
+                if (!allRequiredBound)
+                {
+                    continue;
+                }
+
+                result.Add(link);
+                anyBodyExpr |= bodyExpr;
+            }
+        }
+
+        return result;
+    }
+
+    private void EmitLinkTargetImports(
+        IndentedWriter w,
+        List<LinkInfo> links,
+        IReadOnlyList<OperationInfo> allOperations)
+    {
+        HashSet<string> emitted = new(StringComparer.Ordinal);
+        foreach (LinkInfo link in links)
+        {
+            if (ResolveTargetOp(link, allOperations) is not { } target || !emitted.Add(target.MethodName))
+            {
+                continue;
+            }
+
+            string requestModule = RequestModuleName(target);
+            string responseClass = ResponseClassName(target);
+            string factory = ResponseFactoryName(target);
+
+            w.WriteLine($"import {{ {requestModule} }} from {StringLiteral($"./{requestModule}.js")};");
+            w.WriteLine(
+                $"import {{ {responseClass}, {factory} }} from {StringLiteral($"./{responseClass}.js")};");
+        }
+    }
+
+    private void EmitLinksAccessor(
+        IndentedWriter w,
+        List<LinkInfo> links,
+        IReadOnlyList<OperationInfo> allOperations,
+        bool anyBodyExpr)
+    {
+        if (links.Count == 0)
+        {
+            return;
+        }
+
+        if (anyBodyExpr)
+        {
+            w.WriteLine();
+            w.WriteLine("/** Parses the response body for link runtime-expression resolution. */");
+            w.WriteLine("private linkBody(): unknown {");
+            w.PushIndent();
+            w.WriteLine("return this.bytes === null ? undefined : JSON.parse(new TextDecoder().decode(this.bytes));");
+            w.PopIndent();
+            w.WriteLine("}");
+        }
+
+        w.WriteLine();
+        w.WriteLine("/** Followers for the links declared on this operation's responses. */");
+        w.WriteLine("get links() {");
+        w.PushIndent();
+        w.WriteLine("return {");
+        w.PushIndent();
+        foreach (LinkInfo link in links)
+        {
+            this.EmitLinkFollower(w, link, allOperations);
+        }
+
+        w.PopIndent();
+        w.WriteLine("};");
+        w.PopIndent();
+        w.WriteLine("}");
+    }
+
+    private void EmitLinkFollower(IndentedWriter w, LinkInfo link, IReadOnlyList<OperationInfo> allOperations)
+    {
+        OperationInfo target = ResolveTargetOp(link, allOperations)!.Value;
+        string methodName = CamelCase(CodeEmitHelpers.SanitizeIdentifier(link.LinkName));
+        string responseClass = ResponseClassName(target);
+        string factory = ResponseFactoryName(target);
+        string requestModule = RequestModuleName(target);
+
+        string requestExpr;
+        if (HasParams(target))
+        {
+            List<string> fields = [];
+            foreach (LinkParameterBinding binding in link.ParameterBindings)
+            {
+                RuntimeExpression expr = RuntimeExpression.Parse(binding.Expression);
+                if (!IsSupportedLinkExpr(expr.Kind) || FindLinkParam(target, binding.ParameterName) is not { } p)
+                {
+                    continue;
+                }
+
+                fields.Add($"{PropertyName(p)}: {LinkValueExpr(expr, p)}");
+            }
+
+            requestExpr = $"{requestModule}({{ {string.Join(", ", fields)} }})";
+        }
+        else
+        {
+            requestExpr = requestModule;
+        }
+
+        if (link.Description is { } desc)
+        {
+            w.WriteLine($"/** {EscapeBlockComment(desc)} */");
+        }
+
+        w.WriteLine($"{methodName}: (signal?: AbortSignal): Promise<{responseClass}> => {{");
+        w.PushIndent();
+        w.WriteLine($"return this.transport.send({requestExpr}, {factory}, undefined, signal);");
+        w.PopIndent();
+        w.WriteLine("},");
+    }
+
+    // The TS expression resolving a supported runtime expression to a target parameter value.
+    private static string LinkValueExpr(RuntimeExpression expr, ParameterInfo param)
+    {
+        string type = ParameterTsType(param);
+        return expr.Kind switch
+        {
+            RuntimeExpressionKind.ResponseBody =>
+                $"getByPointer(this.linkBody(), {StringLiteral(expr.JsonPointer ?? string.Empty)}) as {type}",
+            RuntimeExpressionKind.Literal =>
+                $"{StringLiteral(expr.LiteralValue ?? string.Empty)} as unknown as {type}",
+            _ => $"undefined as unknown as {type}",
+        };
     }
 
     private static void EmitMatch(IndentedWriter w, ResponseInfo[] responses, TypeScriptApiEmitter self)

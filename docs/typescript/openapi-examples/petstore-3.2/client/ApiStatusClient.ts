@@ -6,6 +6,9 @@ import { formUrlEncodedBytes, multipartFormData, multipartMixed } from "../../..
 import type { IApiStatusClient } from "./IApiStatusClient.js";
 import { getStatusRequest } from "./getStatusRequest.js";
 import { GetStatusResponse, getStatusResponseFactory } from "./GetStatusResponse.js";
+import { getPetRequest } from "./getPetRequest.js";
+import type { GetPetParams } from "./getPetRequest.js";
+import { GetPetResponse, getPetResponseFactory } from "./GetPetResponse.js";
 import { updatePetRequest } from "./updatePetRequest.js";
 import type { UpdatePetParams } from "./updatePetRequest.js";
 import { UpdatePetResponse, updatePetResponseFactory } from "./UpdatePetResponse.js";
@@ -51,6 +54,14 @@ export class ApiStatusClient implements IApiStatusClient {
   getStatus(signal?: AbortSignal): Promise<GetStatusResponse> {
     const request = getStatusRequest;
     return this.transport.send(request, getStatusResponseFactory, undefined, signal);
+  }
+
+  /**
+   * Gets a pet by id.
+   */
+  getPet(params: GetPetParams, signal?: AbortSignal): Promise<GetPetResponse> {
+    const request = getPetRequest(params);
+    return this.transport.send(request, getPetResponseFactory, undefined, signal);
   }
 
   /**

@@ -40,6 +40,7 @@ export {
   parseHeaderArray,
   parseHeaderObject,
 } from "./serializers/header.js";
+export { getByPointer } from "./serializers/json-pointer.js";
 export { multipartFormData, multipartMixed } from "./serializers/multipart.js";
 export type {
   MultipartBinaryPart,

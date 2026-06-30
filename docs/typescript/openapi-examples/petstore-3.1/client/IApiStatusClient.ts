@@ -3,6 +3,8 @@
 // </auto-generated>
 import type { MultipartFormFields, MultipartBinaryPart } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
 import type { GetStatusResponse } from "./GetStatusResponse.js";
+import type { GetPetResponse } from "./GetPetResponse.js";
+import type { GetPetParams } from "./getPetRequest.js";
 import type { UpdatePetResponse } from "./UpdatePetResponse.js";
 import type { UpdatePetParams } from "./updatePetRequest.js";
 import type { SearchResponse } from "./SearchResponse.js";
@@ -24,6 +26,11 @@ export interface IApiStatusClient extends AsyncDisposable {
    * Gets the current service status.
    */
   getStatus(signal?: AbortSignal): Promise<GetStatusResponse>;
+
+  /**
+   * Gets a pet by id.
+   */
+  getPet(params: GetPetParams, signal?: AbortSignal): Promise<GetPetResponse>;
 
   /**
    * Updates a pet by id, exercising path/query/header params and a JSON body.
