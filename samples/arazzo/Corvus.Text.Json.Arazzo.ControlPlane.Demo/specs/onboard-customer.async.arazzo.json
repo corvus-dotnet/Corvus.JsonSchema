@@ -1,0 +1,51 @@
+{
+  "arazzo": "1.1.0",
+  "info": { "title": "Onboard Customer (async KYC)", "version": "1.0.0", "description": "Create an account, then await an out-of-band identity-verification (KYC) verdict delivered asynchronously on the kyc.results channel before provisioning and welcoming the customer. The run suspends durably until the verdict message arrives." },
+  "sourceDescriptions": [
+    { "name": "onboarding", "url": "./onboarding.openapi.json", "type": "openapi" },
+    { "name": "notifications", "url": "./notifications.asyncapi.json", "type": "asyncapi" }
+  ],
+  "workflows": [
+    {
+      "workflowId": "onboard-customer-async",
+      "inputs": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "idn-email", "description": "The applicant's email." },
+          "fullName": { "type": "string", "description": "The applicant's full name." },
+          "plan": { "type": "string", "enum": [ "free", "pro", "enterprise" ] }
+        },
+        "required": [ "email" ]
+      },
+      "steps": [
+        { "stepId": "createAccount", "operationId": "createAccount", "outputs": { "accountId": "$response.body#/accountId" } },
+        {
+          "stepId": "awaitKycVerdict",
+          "channelPath": "kyc.verdict",
+          "action": "receive",
+          "outputs": {
+            "verified": "$message.payload#/verified",
+            "score": "$message.payload#/score"
+          }
+        },
+        {
+          "stepId": "provisionResources",
+          "operationId": "provisionResources",
+          "parameters": [ { "name": "accountId", "in": "path", "value": "$steps.createAccount.outputs.accountId" } ],
+          "outputs": {
+            "accountUrl": "$response.body#/accountUrl",
+            "quotaGb": "$response.body#/quotaGb",
+            "resources": "$response.body#/resources",
+            "tags": "$response.body#/tags"
+          }
+        },
+        {
+          "stepId": "notifyApplicant",
+          "operationId": "sendWelcome",
+          "parameters": [ { "name": "accountId", "in": "path", "value": "$steps.createAccount.outputs.accountId" } ],
+          "outputs": {}
+        }
+      ]
+    }
+  ]
+}
