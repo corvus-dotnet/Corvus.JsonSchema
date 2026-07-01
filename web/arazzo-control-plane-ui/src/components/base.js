@@ -42,7 +42,11 @@ export const SHARED_CSS = `
   button:disabled { opacity: 0.5; cursor: not-allowed; }
   button.primary { background: var(--_accent); border-color: var(--_accent); color: #fff; }
   button.danger { background: var(--_danger); border-color: var(--_danger); color: #fff; }
-  button.ghost { background: transparent; border-color: transparent; }
+  /* A secondary (outlined) button: transparent fill but it KEEPS the themed border, so an action that is neither
+     primary nor danger still reads as a button rather than borderless text. Inline icon affordances (copy / close ✕)
+     opt out — they stay outline-free until hover (the base hover rule still gives them an accent edge). */
+  button.ghost { background: transparent; }
+  button.copy, button.close { border-color: transparent; }
   a { color: var(--_accent); }
   .muted { color: var(--_muted); }
   /* Replace the native dropdown chevron (which ignores the kit theme and vanishes on dark surfaces)
