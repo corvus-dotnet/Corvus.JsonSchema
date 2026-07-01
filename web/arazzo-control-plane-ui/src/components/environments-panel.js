@@ -20,7 +20,7 @@ import './administrators-panel.js';
 
 class ArazzoEnvironments extends ArazzoElement {
   static get observedAttributes() {
-    return ['base-url', 'scopes'];
+    return ['base-url', 'scopes', 'page-size'];
   }
 
   constructor() {
@@ -32,9 +32,10 @@ class ArazzoEnvironments extends ArazzoElement {
     /** @private */ this._detail = null;         // the selected environment's full summary
     /** @private */ this._availability = [];     // versions available in the selected environment
     /** @private */ this._loading = false;
-    /** @private */ this._loadingMore = false;
     /** @private */ this._detailLoading = false;
     /** @private */ this._error = null;
+    /** @private */ this._history = [];          // pageTokens of pages before the current one
+    /** @private */ this._currentToken = undefined;
     /** @private */ this._nextPageToken = null;
     /** @private */ this._listSeq = 0;
     /** @private */ this._detailSeq = 0;
@@ -43,23 +44,23 @@ class ArazzoEnvironments extends ArazzoElement {
 
   connectedCallback() {
     this.renderShell();
-    this.load();
+    this.reload();
   }
 
   attributeChangedCallback(name) {
     if (!this.isConnected) return;
     if (name === 'scopes') this.renderBody();
-    else { this._client = undefined; this.load(); }
+    else { this._client = undefined; this.reload(); }
   }
 
-  set authProvider(fn) { this._authProvider = fn; this._client = undefined; this.load(); }
+  set authProvider(fn) { this._authProvider = fn; this._client = undefined; this.reload(); }
   get authProvider() { return this._authProvider; }
 
-  set fetch(fn) { this._fetch = fn; this._client = undefined; this.load(); }
+  set fetch(fn) { this._fetch = fn; this._client = undefined; this.reload(); }
 
-  requestRender() { this.load(); }
+  requestRender() { this.reload(); }
 
-  refresh() { this.load(); }
+  refresh() { this.reload(); }
 
   buildClient() {
     if (this._client) return this._client;
@@ -67,6 +68,10 @@ class ArazzoEnvironments extends ArazzoElement {
     if (!baseUrl) return undefined;
     this._client = new ArazzoControlPlaneClient({ baseUrl, fetch: this._fetch, getAuthHeader: this._authProvider });
     return this._client;
+  }
+
+  get pageSize() {
+    return Number(this.getAttribute('page-size')) || 50;
   }
 
   get scopeList() {
@@ -84,6 +89,13 @@ class ArazzoEnvironments extends ArazzoElement {
 
   // ---- list -------------------------------------------------------------------------------------
 
+  /** Reload from page 1 (resets the keyset cursor). */
+  reload() {
+    this._history = [];
+    this._currentToken = undefined;
+    this.load();
+  }
+
   async load() {
     const client = this.buildClient();
     if (!client) {
@@ -95,17 +107,13 @@ class ArazzoEnvironments extends ArazzoElement {
     const seq = ++this._listSeq;
     this._loading = true;
     this._error = null;
-    this._envs = [];
-    this._nextPageToken = null;
     this.renderBody();
     try {
-      const page = await client.listEnvironments();
+      const page = await client.listEnvironments({ pageToken: this._currentToken, limit: this.pageSize });
       if (seq !== this._listSeq) return;
       this._envs = page.environments;
       this._nextPageToken = page.nextPageToken;
       this._loading = false;
-      // Keep the selection if it is still present; otherwise clear the detail.
-      if (this._selected && !this._envs.some((e) => e.name === this._selected)) this.clearDetail();
       this.renderBody();
       this.emit('loaded', { count: this._envs.length, hasMore: !!this._nextPageToken });
     } catch (err) {
@@ -117,25 +125,17 @@ class ArazzoEnvironments extends ArazzoElement {
     }
   }
 
-  async loadMore() {
-    const client = this.buildClient();
-    if (!client || !this._nextPageToken || this._loadingMore) return;
-    const seq = this._listSeq;
-    this._loadingMore = true;
-    this.renderBody();
-    try {
-      const page = await client.listEnvironments({ pageToken: this._nextPageToken });
-      if (seq !== this._listSeq) return;
-      this._envs.push(...page.environments);
-      this._nextPageToken = page.nextPageToken;
-      this._loadingMore = false;
-      this.renderBody();
-    } catch (err) {
-      if (seq !== this._listSeq) return;
-      this._loadingMore = false;
-      this._error = err.problem || { title: err.message };
-      this.renderBody();
-    }
+  nextPage() {
+    if (!this._nextPageToken) return;
+    this._history.push(this._currentToken);
+    this._currentToken = this._nextPageToken;
+    this.load();
+  }
+
+  prevPage() {
+    if (this._history.length === 0) return;
+    this._currentToken = this._history.pop();
+    this.load();
   }
 
   // ---- selection / detail -----------------------------------------------------------------------
@@ -207,7 +207,7 @@ class ArazzoEnvironments extends ArazzoElement {
     try {
       await this.buildClient().deleteEnvironment(name);
       this.clearDetail();
-      await this.load();
+      await this.reload();
       this.emit('environment-deleted', { name });
     } catch (err) {
       this._error = err.problem || { title: err.message };
@@ -242,7 +242,7 @@ class ArazzoEnvironments extends ArazzoElement {
         description: (form.description || '').trim() || undefined,
       });
       this.closeEditor();
-      await this.load();
+      await this.reload();
       await this.select(created.name);
       this.emit('environment-created', { environment: created });
     } catch (err) {
@@ -277,7 +277,7 @@ class ArazzoEnvironments extends ArazzoElement {
         .ecode { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
         .edesc { color: var(--_muted); font-size: 12px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .etime { flex: none; color: var(--_muted); font-size: 12px; }
-        .more-row { display: flex; justify-content: center; padding: 10px; border-top: 1px solid var(--_border); }
+        .pager { display: flex; gap: 8px; justify-content: center; padding: 10px; border-top: 1px solid var(--_border); }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
         @keyframes pulse { 50% { opacity: 0.45; } }
 
@@ -328,7 +328,7 @@ class ArazzoEnvironments extends ArazzoElement {
         </div>
       </dialog>
     `;
-    this.$('.refresh').addEventListener('click', () => this.load());
+    this.$('.refresh').addEventListener('click', () => this.reload());
     this.$('.new').addEventListener('click', () => this.openCreate());
     this.$('.cancel').addEventListener('click', () => this.closeEditor());
     this.$('.confirm').addEventListener('click', () => this.submitForm());
@@ -360,13 +360,18 @@ class ArazzoEnvironments extends ArazzoElement {
           </span>
           <span class="etime" title="${escapeHtml(absoluteTime(e.createdAt))}">${escapeHtml(relativeTime(e.createdAt))}</span>
         </button>`).join('');
-      const more = this._nextPageToken
-        ? `<div class="more-row"><button class="more ghost" type="button"${this._loadingMore ? ' disabled' : ''}>${this._loadingMore ? 'Loading…' : 'Load more'}</button></div>`
+      const pager = (this._history.length > 0 || this._nextPageToken)
+        ? `<div class="pager">
+             <button class="prev ghost" type="button"${this._history.length === 0 || this._loading ? ' disabled' : ''}>‹ Prev</button>
+             <button class="next ghost" type="button"${!this._nextPageToken || this._loading ? ' disabled' : ''}>Next ›</button>
+           </div>`
         : '';
-      list.innerHTML = rows + more;
+      list.innerHTML = rows + pager;
       this.$$('.erow').forEach((b) => b.addEventListener('click', () => this.select(b.dataset.name)));
-      const moreBtn = this.$('.more');
-      if (moreBtn) moreBtn.addEventListener('click', () => this.loadMore());
+      const prevBtn = this.$('.prev');
+      if (prevBtn) prevBtn.addEventListener('click', () => this.prevPage());
+      const nextBtn = this.$('.next');
+      if (nextBtn) nextBtn.addEventListener('click', () => this.nextPage());
     }
 
     this.renderDetail();
