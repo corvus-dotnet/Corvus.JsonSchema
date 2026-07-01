@@ -53,13 +53,11 @@ const transport = new FetchApiTransport({
 });
 ```
 
-**Scope constants come from the spec.** For an **OpenAPI 3.2** spec that declares `securitySchemes`,
-the generated client exposes a `static readonly securitySchemes` (token/authorization URLs, available
-scopes, API-key name and location) and a `static readonly securityRequirements` (per-operation and
-unioned OAuth2 scopes) block, both `as const`. Read scopes from these rather than hardcoding them, so a
-spec change flows through to your token requests. **These constants are emitted only for OpenAPI 3.2**
-specs with `securitySchemes` — a 3.0 or 3.1 spec produces the client but not the constants, so acquire
-the scopes another way when you target those versions.
+**Scope constants come from the spec.** For an OpenAPI 3.0, 3.1, or 3.2 spec that declares
+`securitySchemes`, the generated client exposes a `static readonly securitySchemes` (token/authorization
+URLs, available scopes, API-key name and location) and a `static readonly securityRequirements`
+(per-operation and unioned OAuth2 scopes) block, both `as const`. Read scopes from these rather than
+hardcoding them, so a spec change flows through to your token requests.
 
 ```typescript
 ApiStatusClient.securitySchemes.oauth2TokenUrl;          // "https://auth.example.com/token"
@@ -132,7 +130,7 @@ import { PublicClientApplication, InteractionRequiredAuthError } from "@azure/ms
 const pca = new PublicClientApplication({
   auth: { clientId: "<client-id>", authority: "https://login.microsoftonline.com/<tenant>" },
 });
-await pca.initialize();                               // required in msal-browser v3+
+await pca.initialize();                               // required in msal-browser v5
 const scopes = ["api://<app-id-uri>/access_as_user"]; // API scopes, NOT ".default" for a delegated flow
 
 bearerToken(async () => {
@@ -149,6 +147,9 @@ bearerToken(async () => {
 `acquireTokenSilent` reads from cache / a hidden iframe, so it is cheap to call per request. Request
 access-token scopes (`api://…/scope`) that match the spec's OAuth2 flow — `openid`/`profile` return an
 ID token, which is not for calling APIs.
+
+Targets `@azure/msal-browser` v5 — call `await pca.initialize()` before the first token call. See the
+[MSAL.js browser docs](https://learn.microsoft.com/entra/msal/javascript/browser/about-msal-browser).
 
 ### Auth0 — auth0-spa-js
 
@@ -171,6 +172,9 @@ bearerToken(() =>
 Without an `audience`, Auth0 returns an opaque token only usable against `/userinfo`.
 `getTokenSilently` throws `login_required` / `consent_required` when interaction is needed — catch those
 and call `loginWithRedirect` / `loginWithPopup`.
+
+Targets `@auth0/auth0-spa-js` v2 (the current major) — the `createAuth0Client` factory and
+`authorizationParams` shape shown are v2. See the [Auth0 SPA SDK docs](https://auth0.com/docs/libraries/auth0-single-page-app-sdk).
 
 ### Okta — okta-auth-js
 
@@ -195,6 +199,10 @@ Ensure the API scope (`pets:read`) is in `scopes` and matches the spec. With `au
 manager renews shortly before expiry. (Pin your `@okta/okta-auth-js` version and check its typings — the
 synchronous-vs-async getter split is easy to get wrong.)
 
+Targets `@okta/okta-auth-js` v8 (the current major), where `getOrRenewAccessToken` is present. The
+synchronous `getAccessToken()` vs async `getOrRenewAccessToken()` distinction is the easy trap — call the
+async one so the token is renewed rather than returned stale. See the [Okta Auth JS docs](https://developer.okta.com/docs/guides/auth-js/main/).
+
 ### Firebase Authentication — firebase/auth
 
 `firebase` (modular `firebase/auth`). Firebase gives you an **ID token**, not an OAuth access token:
@@ -214,6 +222,9 @@ Only appropriate if your API verifies Firebase ID tokens (there are no OAuth sco
 in ~1 hour; `getIdToken(user)` auto-refreshes near expiry, or pass `true` to force. The server must
 verify with the Firebase Admin SDK / JWKS.
 
+Targets `firebase` v12 (the current major), using the modular `firebase/auth` imports shown (the
+namespaced `firebase.auth()` API was removed after v8). See the [Firebase JS SDK setup docs](https://firebase.google.com/docs/web/setup).
+
 ### AWS Cognito — aws-amplify/auth
 
 `aws-amplify` (import from `aws-amplify/auth`, Amplify v6 / Gen 2). Choose the **access** or **ID** token
@@ -232,6 +243,10 @@ Amplify v6 renamed the whole auth surface — it is `fetchAuthSession()` from `a
 `Auth.currentSession()`. A Cognito **access token** carries `scope` (API Gateway / custom scopes); the
 **ID token** carries user-identity claims. `fetchAuthSession()` auto-refreshes when expired if a refresh
 token exists.
+
+Targets `aws-amplify` v6 (Gen 2, the current major): the v5→v6 rename replaced `Auth.currentSession()`
+with the functional `fetchAuthSession()` shown, so a v5 project needs the [migration guide](https://docs.amplify.aws/gen1/javascript/build-a-backend/auth/auth-migration-guide/).
+See the [Amplify auth docs](https://docs.amplify.aws/).
 
 ### Google Identity Services (GIS)
 
@@ -258,6 +273,11 @@ for calling Google APIs, and for your own API only if it accepts Google access t
 fires on every `requestAccessToken()` and the first call may prompt for consent, so don't call it
 outside a user gesture expecting silence.
 
+Loaded from the versionless GIS script (`https://accounts.google.com/gsi/client`) — there is no npm
+package to pin, but the `google.accounts.oauth2` token-model API shown replaced the retired
+`gapi.auth2`/Google Sign-In JS library, so older `gapi`-based snippets no longer apply. See the
+[GIS token-model guide](https://developers.google.com/identity/oauth2/web/guides/use-token-model).
+
 ### Clerk — @clerk/clerk-js
 
 `@clerk/clerk-js`. `session.getToken()` returns a short-lived, self-caching session JWT:
@@ -272,10 +292,14 @@ bearerToken(async () => (await clerk.session?.getToken()) ?? "");
 // getToken({ template: "my-api" }) mints a JWT shaped for a specific downstream API.
 ```
 
-`getToken()` caches and only hits the network when expired, so `await` it fresh per request rather than
-caching it yourself. `clerk.session` is `null` until `await clerk.load()` completes and a user is signed
-in. (Clerk iterates its API frequently — verify the constructor/`load` shape against your installed
-major.)
+`getToken()` caches and refreshes in the background, so `await` it fresh per request rather than caching
+it yourself. `clerk.session` is `null` until `await clerk.load()` completes and a user is signed in — the
+`?.` returns `undefined` when signed out, which the `?? ""` handles. In v6, `getToken()` now **throws** a
+`ClerkOfflineError` when the device is offline (rather than returning `null`), so wrap the call if you
+need to tolerate that.
+
+Targets `@clerk/clerk-js` v6 ("Core 3", the current major): the `new Clerk(publishableKey)` +
+`await clerk.load()` + `session.getToken()` shape shown is v6. See the [Clerk docs](https://clerk.com/docs).
 
 ### Supabase — @supabase/supabase-js
 
@@ -295,6 +319,9 @@ bearerToken(async () => {
 For a pure browser SPA calling your own API, `getSession().access_token` is the intended path. Supabase
 warns the stored session may be inauthentic in cookie-based/server contexts — use `getUser()` (which
 revalidates with the server) when authenticity matters.
+
+Targets `@supabase/supabase-js` v2 (the current major) — the async `auth.getSession()`/`getUser()`
+methods shown are v2. See the [Supabase getSession docs](https://supabase.com/docs/reference/javascript/auth-getsession).
 
 ### Session cookies
 
@@ -345,6 +372,9 @@ Managed Identity works only on Azure hosts that inject it (App Service, Function
 with workload identity, VMs) — locally `DefaultAzureCredential` uses env / CLI / VS credentials. Use the
 resource's `/.default` scope for an app-only token; a bare resource scope throws `AADSTS70011`.
 
+Targets `@azure/identity` v4 (the current major): `getToken` returns `AccessToken | null` with
+`expiresOnTimestamp`. See the [Azure Identity for JavaScript docs](https://learn.microsoft.com/javascript/api/overview/azure/identity-readme).
+
 ### Google Auth Library
 
 `google-auth-library`. Application Default Credentials come from the environment or the GCP metadata
@@ -356,7 +386,7 @@ import { bearerToken } from "@endjin/corvus-json-client-runtime";
 
 const auth = new GoogleAuth({ scopes: "https://www.googleapis.com/auth/cloud-platform" });
 bearerToken(async () => {
-  const { token } = await auth.getAccessToken();      // current majors return { token }; older returned a string
+  const { token } = await auth.getAccessToken();      // v10 returns { token }
   if (!token) throw new Error("No Google access token");
   return token;
 });
@@ -375,6 +405,10 @@ bearerToken(() => idClient.idTokenProvider.fetchIdToken(audience)); // the clien
 Access token vs ID token is the trap: Google APIs want the access token; Cloud Run / IAP want the ID
 token. On GCP hosts ADC comes from the metadata server; locally set `GOOGLE_APPLICATION_CREDENTIALS` or
 `gcloud auth application-default login`.
+
+Targets `google-auth-library` v10 (the current major): `auth.getAccessToken()` returns `{ token }` (read
+`.token`, as shown). See the [google-auth-library docs](https://github.com/googleapis/google-auth-library-nodejs#readme)
+and the [Cloud Run service-to-service auth guide](https://cloud.google.com/run/docs/authenticating/service-to-service).
 
 ### Generic OAuth2 client-credentials
 
@@ -409,6 +443,9 @@ const provider = bearerToken(async (signal) => {
 Cache until shortly *before* `expires_in` (a 30–60 s skew buffer) — a per-request POST to the IdP will
 rate-limit you. Scopes are a **space-separated** string in the form body. For multi-tenant use, key the
 cache by `(clientId, scope)` and guard against a concurrent-refresh stampede.
+
+No SDK to version — the request body follows the OAuth 2.0 client-credentials grant. See
+[RFC 6749 §4.4](https://datatracker.ietf.org/doc/html/rfc6749#section-4.4) for the request/response shape.
 
 ### mTLS (client certificate)
 
@@ -449,9 +486,15 @@ const transport = new NodeApiTransport({ baseUrl: "https://mtls.example.com", ht
 ```
 
 Import `fetch` and `Agent` from the **same `undici` you installed** rather than mixing the global
-`fetch` with a standalone-undici `Agent` — the per-request `dispatcher` broke across some undici majors
-(undici 8 changed the dispatcher interface). Option B avoids undici entirely. Combine mTLS with a token
-provider by passing `authenticationProvider` alongside the transport.
+`fetch` with a standalone-undici `Agent` — undici 8 changed the dispatcher interface, so a per-request
+`dispatcher` from a standalone `undici` is incompatible with a `fetch` backed by a different undici.
+Option B avoids undici entirely. Combine mTLS with a token provider by passing `authenticationProvider`
+alongside the transport.
+
+Option A targets `undici` v8 (the current major): its `dispatcher` interface differs from the undici
+built into Node's global `fetch`, so the standalone `undici` you import must match the one backing your
+`fetch`. Option B uses only the built-in `node:https` `Agent`. See the [undici `Agent` docs](https://undici.nodejs.org/#/docs/api/Agent) and
+[Node.js `https.Agent` docs](https://nodejs.org/api/https.html#class-httpsagent).
 
 ## Request signing
 
@@ -461,12 +504,12 @@ bodies before dispatch, so the body is available to hash (a `stream` body cannot
 
 ### AWS SigV4
 
-`@aws-sdk/signature-v4` + `@aws-crypto/sha256-js` + `@smithy/protocol-http` +
+`@smithy/signature-v4` + `@aws-crypto/sha256-js` + `@smithy/protocol-http` +
 `@aws-sdk/credential-providers`. SigV4 signs the method, host, path, query, headers, **and** body, so it
 must run in the provider where those are known:
 
 ```typescript
-import { SignatureV4 } from "@aws-sdk/signature-v4";
+import { SignatureV4 } from "@smithy/signature-v4";
 import { Sha256 } from "@aws-crypto/sha256-js";
 import { HttpRequest } from "@smithy/protocol-http";
 import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
@@ -500,6 +543,12 @@ Lambda function URLs. Temporary/role credentials carry a `sessionToken`, which `
 supplies automatically. Because the provider already runs once per send, the signature is never replayed
 across a retry.
 
+Package caveat: use **`@smithy/signature-v4`** v5 with `HttpRequest` from `@smithy/protocol-http` v5,
+`fromNodeProviderChain` from `@aws-sdk/credential-providers` v3, and `Sha256` from `@aws-crypto/sha256-js`
+v5. The older `@aws-sdk/signature-v4` and `@aws-sdk/protocol-http` packages are **deprecated** (frozen at
+3.374.0) — don't use them. See the
+[`@smithy/signature-v4` docs](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-smithy-signature-v4/).
+
 ### HMAC (shared secret)
 
 Node's built-in `crypto`. The **string-to-sign must match the server byte-for-byte** — canonicalize the
@@ -529,6 +578,9 @@ Include the timestamp header **inside** the signature and validate a tight windo
 against replay — that makes clock skew a live failure mode. Sign the body *hash* (keeps the header
 small), keep the secret out of source (env / secret store). For an edge runtime without `node:crypto`,
 use `crypto.subtle.importKey(...)` + `crypto.subtle.sign("HMAC", key, ...)` and base64 the result.
+
+No package to pin — this is Node's built-in `node:crypto` (or the platform `crypto.subtle`). See the
+[`node:crypto` docs](https://nodejs.org/api/crypto.html) / [Web Crypto `subtle.sign` docs](https://developer.mozilla.org/docs/Web/API/SubtleCrypto/sign).
 
 ## See also
 
