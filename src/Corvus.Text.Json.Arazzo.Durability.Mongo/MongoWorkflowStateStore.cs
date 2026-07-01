@@ -271,7 +271,11 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+        => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         if (hostedWorkflowIds.Count == 0)
@@ -283,6 +287,16 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         FilterDefinition<BsonDocument> filter = b.And(
             b.In("status", new[] { PendingStatus, RunningStatus }),
             b.In("workflowId", hostedWorkflowIds));
+
+        // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it; an
+        // unpinned run (environment absent/null) or an unscoped dispatcher (runnerEnvironment is null) matches anything.
+        if (runnerEnvironment is not null)
+        {
+            filter = b.And(filter, b.Or(
+                b.Eq<BsonValue>("environment", BsonNull.Value),
+                b.Exists("environment", false),
+                b.Eq("environment", runnerEnvironment)));
+        }
 
         // Buffer the candidates so we can run the leases query without yielding inside the cursor.
         var candidates = new List<(string Id, string Status)>();
@@ -418,7 +432,8 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                     document["errorType"].IsBsonNull ? null : document["errorType"].AsString,
                     CorrelationId: correlationId,
                     Tags: tags,
-                    SecurityTags: securityTags);
+                    SecurityTags: securityTags,
+                    Environment: document.TryGetValue("environment", out BsonValue environment) && !environment.IsBsonNull ? environment.AsString : null);
                 listings.Add(new WorkflowRunListing(new WorkflowRunId(document["_id"].AsString), entry));
                 if (listings.Count > query.Limit)
                 {
@@ -448,23 +463,35 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
     private static readonly ProjectionDefinition<BsonDocument> IdAndStatus = Builders<BsonDocument>.Projection.Include("_id").Include("status");
 
-    private static BsonDocument BuildDocument(WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index, long version) => new()
+    private static BsonDocument BuildDocument(WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index, long version)
     {
-        ["_id"] = id.Value,
-        ["checkpoint"] = new BsonBinaryData(checkpoint),
-        ["version"] = version,
-        ["status"] = index.Status.ToString(),
-        ["workflowId"] = index.WorkflowId,
-        ["createdAt"] = index.CreatedAt.ToUnixTimeMilliseconds(),
-        ["updatedAt"] = index.UpdatedAt.ToUnixTimeMilliseconds(),
-        ["dueAt"] = index.DueAt is { } due ? due.ToUnixTimeMilliseconds() : BsonNull.Value,
-        ["awaitingChannel"] = (BsonValue?)index.AwaitingChannel ?? BsonNull.Value,
-        ["awaitingCorrelationId"] = (BsonValue?)index.AwaitingCorrelationId ?? BsonNull.Value,
-        ["errorType"] = (BsonValue?)index.ErrorType ?? BsonNull.Value,
-        ["correlationId"] = (BsonValue?)index.CorrelationId ?? BsonNull.Value,
-        ["tags"] = index.Tags.IsEmpty ? BsonNull.Value : new BsonArray(index.Tags.ToList()),
-        ["securityTags"] = MongoSecurityTags.ToBson(index.SecurityTags),
-    };
+        var document = new BsonDocument
+        {
+            ["_id"] = id.Value,
+            ["checkpoint"] = new BsonBinaryData(checkpoint),
+            ["version"] = version,
+            ["status"] = index.Status.ToString(),
+            ["workflowId"] = index.WorkflowId,
+            ["createdAt"] = index.CreatedAt.ToUnixTimeMilliseconds(),
+            ["updatedAt"] = index.UpdatedAt.ToUnixTimeMilliseconds(),
+            ["dueAt"] = index.DueAt is { } due ? due.ToUnixTimeMilliseconds() : BsonNull.Value,
+            ["awaitingChannel"] = (BsonValue?)index.AwaitingChannel ?? BsonNull.Value,
+            ["awaitingCorrelationId"] = (BsonValue?)index.AwaitingCorrelationId ?? BsonNull.Value,
+            ["errorType"] = (BsonValue?)index.ErrorType ?? BsonNull.Value,
+            ["correlationId"] = (BsonValue?)index.CorrelationId ?? BsonNull.Value,
+            ["tags"] = index.Tags.IsEmpty ? BsonNull.Value : new BsonArray(index.Tags.ToList()),
+            ["securityTags"] = MongoSecurityTags.ToBson(index.SecurityTags),
+        };
+
+        // §5.5 run→environment pinning: index the environment only when set, so the field is absent (matches anything)
+        // for a run created before pinning — see the environment-scoped claimable predicate.
+        if (index.Environment is { } environment)
+        {
+            document["environment"] = environment;
+        }
+
+        return document;
+    }
 
     private async ValueTask EnsureIndexesAsync(CancellationToken cancellationToken)
     {
