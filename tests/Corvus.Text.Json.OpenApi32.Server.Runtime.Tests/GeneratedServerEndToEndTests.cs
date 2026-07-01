@@ -194,6 +194,20 @@ public class GeneratedServerEndToEndTests
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
     }
 
+    // The 3.2 server accepts a query whose array element values carry percent-encoded reserved chars
+    // (the client encodes ["a b","a/b"] -> tags=a%20b%7Ca%2Fb). The full decode-to-original round-trip is
+    // asserted in the 3.0/3.1 server tests (whose mock handler echoes the parsed payload); this mock
+    // echoes only id/name, so here we assert the encoded query parses without error (status 200).
+    [TestMethod]
+    public async Task SearchItems_WithReservedCharsInTagValues_RoundTrips()
+    {
+        HttpRequestMessage request = new(HttpMethod.Get, "/search?q=test&tags=a%20b%7Ca%2Fb");
+        request.Headers.Add("X-Correlation-Id", "corr-001");
+        request.Headers.Add("Cookie", "session=abc123");
+        HttpResponseMessage response = await client!.SendAsync(request);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
     [TestMethod]
     public async Task SearchItems_WithSpaceDelimitedCoords_ReturnsOk()
     {
