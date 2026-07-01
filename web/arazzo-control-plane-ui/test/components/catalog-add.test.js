@@ -48,6 +48,28 @@ describe('<arazzo-catalog-add-dialog> wizard', () => {
   let el;
   afterEach(() => el?.remove());
 
+  it('the catalog panel reloads its list on a persona change, so the list matches the caller’s reach (no stale full list)', async () => {
+    const mock = createMockControlPlane({ latencyMs: 0 });
+    el = document.createElement('arazzo-catalog');
+    el.setAttribute('base-url', 'https://mock/arazzo/v1');
+    el.setAttribute('scopes', 'catalog:read');
+    el.fetch = mock.fetch;
+    mount(el);
+    const table = el.shadowRoot.querySelector('arazzo-catalog-table');
+    await nextEvent(table, 'loaded');
+    equal(table.shadowRoot.querySelectorAll('tbody tr[data-key]').length, 3, 'full reach: all three seeded workflows');
+
+    // Switch to the reach-scoped reader and reload the wrapper, as the demo's persona selector does. Without the
+    // wrapper's reload() the list would stay stale (all three) while the detail view 404s the out-of-reach ones.
+    mock.setPersona('team-reader');
+    const reloaded = nextEvent(table, 'loaded');
+    el.reload();
+    await reloaded;
+    const keys = [...table.shadowRoot.querySelectorAll('tbody tr[data-key]')].map((tr) => tr.dataset.key);
+    equal(keys.length, 1, 'reach-scoped: only the payments-domain workflow remains');
+    equal(keys[0], 'nightly-reconcile');
+  });
+
   it('reuses an already-registered source (no re-upload) and adds the version through the steps', async () => {
     el = dialogWithMock();
     mount(el);
