@@ -40,7 +40,8 @@ $SkipPublish = $false
 $SolutionToBuild = (Resolve-Path (Join-Path $here ".\Corvus.Text.Json.slnx")).Path
 $ProjectsToPublish = @()
 # npm package(s) the PublishNpmPackages task pushes to npmjs.org on release-tag builds (see PostPublish).
-$NpmPackagesToPublish = @("packages/corvus-json-runtime")
+# Both are scoped to the @endjin org (publishConfig.access: public); the task versions each to the release tag.
+$NpmPackagesToPublish = @("packages/corvus-json-runtime", "packages/corvus-json-client-runtime")
 $NugetPublishSource = property ZF_NUGET_PUBLISH_SOURCE "$here/_local-nuget-feed"
 $IncludeAssembliesInCodeCoverage = @()
 $ExcludeAssembliesInCodeCoverage = @()
