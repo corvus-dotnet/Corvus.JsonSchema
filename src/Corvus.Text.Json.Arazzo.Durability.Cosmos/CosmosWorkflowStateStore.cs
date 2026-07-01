@@ -330,7 +330,11 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+        => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         if (hostedWorkflowIds.Count == 0)
@@ -339,11 +343,16 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
 
         // Candidate runs are Pending (always claimable) or Running (claimable only if no live lease holds them).
+        // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it; an
+        // unpinned run (c.environment absent) or an unscoped dispatcher (@runnerEnvironment is null) matches anything.
+        // (Cosmos SQL has no `@p IS NULL`; a null-valued parameter is tested with IS_NULL, and an absent doc field with
+        // NOT IS_DEFINED — mirroring this store's IS_DEFINED idiom for optional properties.)
         var candidateQuery = new QueryDefinition(
-            "SELECT c.id, c.status FROM c WHERE (c.status = @pending OR c.status = @running) AND ARRAY_CONTAINS(@hosted, c.workflowId)")
+            "SELECT c.id, c.status FROM c WHERE (c.status = @pending OR c.status = @running) AND ARRAY_CONTAINS(@hosted, c.workflowId) AND (NOT IS_DEFINED(@runnerEnvironment) OR IS_NULL(@runnerEnvironment) OR NOT IS_DEFINED(c.environment) OR c.environment = @runnerEnvironment)")
             .WithParameter("@pending", PendingStatus)
             .WithParameter("@running", RunningStatus)
-            .WithParameter("@hosted", new List<string>(hostedWorkflowIds));
+            .WithParameter("@hosted", new List<string>(hostedWorkflowIds))
+            .WithParameter("@runnerEnvironment", runnerEnvironment);
 
         var candidates = new List<(string Id, string Status)>();
         bool anyRunning = false;

@@ -249,6 +249,32 @@ public abstract class WorkflowStateStoreConformance
     }
 
     [TestMethod]
+    public async Task QueryClaimable_constrains_runs_to_the_runners_environment()
+    {
+        var clock = new TestClock(T0);
+        IWorkflowStateStore store = await this.NewStoreAsync(clock);
+        var index = (IWorkflowDispatchIndex)store;
+
+        await store.SaveAsync("prod", Bytes("a"), InEnvironment("production"), WorkflowEtag.None, default);
+        await store.SaveAsync("staging", Bytes("a"), InEnvironment("staging"), WorkflowEtag.None, default);
+        await store.SaveAsync("legacy", Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default); // unpinned (null environment)
+
+        // §5.5: a runner serving production claims the production-pinned run AND the unpinned legacy run (which matches any
+        // environment), but never the staging run — a production run only lands on a production runner.
+        List<string> production = (await Collect(index.QueryClaimableAsync(["wf"], "production", T0, default))).Select(r => r.Value).ToList();
+        production.ShouldContain("prod");
+        production.ShouldContain("legacy");
+        production.ShouldNotContain("staging");
+
+        // An unscoped dispatcher (null environment) claims regardless of a run's environment (the pre-pinning behaviour) —
+        // confirming the environment persisted and round-trips through the store's index.
+        List<string> unscoped = (await Collect(index.QueryClaimableAsync(["wf"], null, T0, default))).Select(r => r.Value).ToList();
+        unscoped.ShouldContain("prod");
+        unscoped.ShouldContain("staging");
+        unscoped.ShouldContain("legacy");
+    }
+
+    [TestMethod]
     public async Task Query_filters_by_status_and_workflow()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
@@ -511,6 +537,9 @@ public abstract class WorkflowStateStoreConformance
 
     private static WorkflowRunIndexEntry Index(WorkflowRunStatus status = WorkflowRunStatus.Running)
         => new("wf", status, T0, T0);
+
+    private static WorkflowRunIndexEntry InEnvironment(string environment, WorkflowRunStatus status = WorkflowRunStatus.Pending)
+        => new("wf", status, T0, T0, Environment: environment);
 
     private static WorkflowRunIndexEntry At(DateTimeOffset createdAt, DateTimeOffset updatedAt)
         => new("wf", WorkflowRunStatus.Running, createdAt, updatedAt);

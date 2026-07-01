@@ -53,6 +53,10 @@
       "type": "string",
       "description": "The run correlation id, if any."
     },
+    "environment": {
+      "type": "string",
+      "description": "The deployment environment the run is pinned to (design §5.5), if any."
+    },
     "tags": {
       "type": "array",
       "description": "The free-form run tags.",
