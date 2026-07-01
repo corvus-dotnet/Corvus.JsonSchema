@@ -330,7 +330,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>explode</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExplode(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.StylesForForm.ElseEntity.DefaultValueFalse.Source value)
+            public void SetExplode(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.StylesForForm.ElseEntity.DefaultValueFalse.Source value)
             {
                 CheckValidInstance();
 
@@ -476,7 +476,7 @@ public readonly partial struct OpenapiSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -499,7 +499,7 @@ public readonly partial struct OpenapiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -546,7 +546,7 @@ public readonly partial struct OpenapiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -819,7 +819,7 @@ public readonly partial struct OpenapiSchema
 
             internal Source(Corvus.OpenapiBenchmark.Current.OpenapiSchema.StylesForForm.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.StylesForForm.ElseEntity.DefaultValueFalse.Source arg1)
+            internal Source(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.StylesForForm.ElseEntity.DefaultValueFalse.Source arg1)
             {
                 _createArg1 = arg1;
                 _kind = Kind.Create;
@@ -1203,7 +1203,7 @@ public readonly partial struct OpenapiSchema
             /// </summary>
             /// <param name="arg1">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.StylesForForm.ElseEntity.DefaultValueFalse.Source arg1, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.StylesForForm.ElseEntity.DefaultValueFalse.Source arg1, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1);
@@ -1245,7 +1245,7 @@ public readonly partial struct OpenapiSchema
         /// </summary>
         /// <param name="explode">The value of the <c>"explode"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.StylesForForm.ElseEntity.DefaultValueFalse.Source explode = default)
+        public static Source Build(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.StylesForForm.ElseEntity.DefaultValueFalse.Source explode = default)
         {
             return new Source(explode);
         }

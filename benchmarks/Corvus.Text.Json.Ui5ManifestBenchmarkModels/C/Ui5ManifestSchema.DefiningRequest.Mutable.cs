@@ -269,7 +269,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>dataSource</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDataSource(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetDataSource(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -300,7 +300,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>path</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPath(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetPath(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -331,7 +331,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>retrieveStreams</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRetrieveStreams(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefiningRequest.RepresentsIndicatorWhetherStreamsShouldBeRetrieved.Source value)
+            public void SetRetrieveStreams(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefiningRequest.RepresentsIndicatorWhetherStreamsShouldBeRetrieved.Source value)
             {
                 CheckValidInstance();
 
@@ -543,7 +543,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefiningRequest.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefiningRequest.RepresentsIndicatorWhetherStreamsShouldBeRetrieved.Source arg3)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefiningRequest.RepresentsIndicatorWhetherStreamsShouldBeRetrieved.Source arg3)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -871,7 +871,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg2">The value of the property.</param>
             /// <param name="arg3">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefiningRequest.RepresentsIndicatorWhetherStreamsShouldBeRetrieved.Source arg3, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefiningRequest.RepresentsIndicatorWhetherStreamsShouldBeRetrieved.Source arg3, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3);
@@ -915,7 +915,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="path">The value of the <c>"path"</c> property.</param>
         /// <param name="retrieveStreams">The value of the <c>"retrieveStreams"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source dataSource, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source path, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefiningRequest.RepresentsIndicatorWhetherStreamsShouldBeRetrieved.Source retrieveStreams = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source dataSource, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source path, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefiningRequest.RepresentsIndicatorWhetherStreamsShouldBeRetrieved.Source retrieveStreams = default)
         {
             return new Source(dataSource, path, retrieveStreams);
         }

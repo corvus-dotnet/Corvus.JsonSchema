@@ -247,7 +247,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>option</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOption(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                public void SetOption(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -292,7 +292,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>values</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetValues(in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source value)
+                public void SetValues(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -539,7 +539,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange.ValueEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source arg2)
+                internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source arg2)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -705,7 +705,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange.ValueEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> arg2)
+                internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> arg2)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -936,7 +936,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source arg2, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2);
@@ -951,7 +951,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -997,7 +997,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="option">The value of the <c>"option"</c> property.</param>
             /// <param name="values">The value of the <c>"values"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source option = default, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source values = default)
+            public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source option = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source values = default)
             {
                 return new Source(option, values);
             }
@@ -1010,7 +1010,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="option">The value of the <c>"option"</c> property.</param>
             /// <param name="values">The value of the <c>"values"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source option = default, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> values = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source option = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> values = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

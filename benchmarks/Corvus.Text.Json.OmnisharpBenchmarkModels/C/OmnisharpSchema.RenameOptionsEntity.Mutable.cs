@@ -357,7 +357,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>RenameInComments</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRenameInComments(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInCommentsEntity.Source value)
+            public void SetRenameInComments(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInCommentsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -402,7 +402,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>RenameInStrings</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRenameInStrings(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInStringsEntity.Source value)
+            public void SetRenameInStrings(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInStringsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -447,7 +447,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>RenameOverloads</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRenameOverloads(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameOverloadsEntity.Source value)
+            public void SetRenameOverloads(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameOverloadsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -593,7 +593,7 @@ public readonly partial struct OmnisharpSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -616,7 +616,7 @@ public readonly partial struct OmnisharpSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -663,7 +663,7 @@ public readonly partial struct OmnisharpSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -835,7 +835,7 @@ public readonly partial struct OmnisharpSchema
 
             internal Source(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInCommentsEntity.Source arg1, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInStringsEntity.Source arg2, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameOverloadsEntity.Source arg3)
+            internal Source(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInCommentsEntity.Source arg1, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInStringsEntity.Source arg2, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameOverloadsEntity.Source arg3)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1232,7 +1232,7 @@ public readonly partial struct OmnisharpSchema
             /// <param name="arg2">The value of the property.</param>
             /// <param name="arg3">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInCommentsEntity.Source arg1, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInStringsEntity.Source arg2, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameOverloadsEntity.Source arg3, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInCommentsEntity.Source arg1, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInStringsEntity.Source arg2, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameOverloadsEntity.Source arg3, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3);
@@ -1276,7 +1276,7 @@ public readonly partial struct OmnisharpSchema
         /// <param name="renameInStrings">The value of the <c>"RenameInStrings"</c> property.</param>
         /// <param name="renameOverloads">The value of the <c>"RenameOverloads"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInCommentsEntity.Source renameInComments = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInStringsEntity.Source renameInStrings = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameOverloadsEntity.Source renameOverloads = default)
+        public static Source Build(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInCommentsEntity.Source renameInComments = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInStringsEntity.Source renameInStrings = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameOverloadsEntity.Source renameOverloads = default)
         {
             return new Source(renameInComments, renameInStrings, renameOverloads);
         }

@@ -678,7 +678,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>attach</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAttach(in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source value)
+        public void SetAttach(scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source value)
         {
             CheckValidInstance();
 
@@ -723,7 +723,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>cli_args</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCliArgs(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetCliArgs(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -768,7 +768,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>defaults</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDefaults(in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source value)
+        public void SetDefaults(scoped in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -849,7 +849,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetName(in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source value)
+        public void SetName(scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source value)
         {
             CheckValidInstance();
 
@@ -894,7 +894,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>on_project_exit</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOnProjectExit(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetOnProjectExit(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -939,7 +939,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>on_project_first_start</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOnProjectFirstStart(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetOnProjectFirstStart(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -984,7 +984,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>on_project_restart</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOnProjectRestart(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetOnProjectRestart(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1029,7 +1029,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>on_project_start</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOnProjectStart(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetOnProjectStart(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1074,7 +1074,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>on_project_stop</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOnProjectStop(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetOnProjectStop(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1119,7 +1119,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>post</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPost(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetPost(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1164,7 +1164,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>pre</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPre(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetPre(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1209,7 +1209,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>pre_window</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPreWindow(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetPreWindow(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1254,7 +1254,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>project_name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetProjectName(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetProjectName(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1299,7 +1299,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>project_root</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetProjectRoot(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetProjectRoot(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1344,7 +1344,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>rbenv</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRbenv(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetRbenv(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1389,7 +1389,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>root</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRoot(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetRoot(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1434,7 +1434,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>socket_name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSocketName(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetSocketName(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1479,7 +1479,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>startup_pane</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStartupPane(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetStartupPane(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1524,7 +1524,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>startup_window</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStartupWindow(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetStartupWindow(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1569,7 +1569,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>tabs</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTabs(in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source value)
+        public void SetTabs(scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source value)
         {
             CheckValidInstance();
 
@@ -1650,7 +1650,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>tmux_command</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTmuxCommand(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetTmuxCommand(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1695,7 +1695,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>tmux_detached</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTmuxDetached(in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source value)
+        public void SetTmuxDetached(scoped in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -1740,7 +1740,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>tmux_options</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTmuxOptions(in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
+        public void SetTmuxOptions(scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1785,7 +1785,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>windows</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetWindows(in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source value)
+        public void SetWindows(scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source value)
         {
             CheckValidInstance();
 
@@ -2054,7 +2054,7 @@ public readonly partial struct TmuxinatorSchema
 
         internal Source(Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source arg1, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg2, in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source arg3, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source arg4, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg5, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg6, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg7, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg8, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg9, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg10, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg11, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg12, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg13, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg14, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg15, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg16, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg17, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg18, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg19, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source arg20, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg21, in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source arg22, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg23, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source arg24)
+        internal Source(scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source arg1, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg2, scoped in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source arg3, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source arg4, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg5, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg6, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg7, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg8, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg9, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg10, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg11, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg12, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg13, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg14, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg15, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg16, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg17, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg18, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg19, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source arg20, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg21, scoped in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source arg22, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg23, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source arg24)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -2264,7 +2264,7 @@ public readonly partial struct TmuxinatorSchema
 
         internal Source(scoped in TContext context, Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source arg1, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg2, in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source<TContext> arg3, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source arg4, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg5, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg6, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg7, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg8, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg9, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg10, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg11, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg12, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg13, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg14, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg15, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg16, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg17, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg18, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg19, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source<TContext> arg20, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg21, in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source arg22, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg23, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source<TContext> arg24)
+        internal Source(scoped in TContext context, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source arg1, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg2, scoped in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source<TContext> arg3, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source arg4, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg5, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg6, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg7, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg8, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg9, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg10, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg11, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg12, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg13, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg14, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg15, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg16, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg17, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg18, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg19, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source<TContext> arg20, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg21, scoped in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source arg22, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg23, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source<TContext> arg24)
         {
             _context = context;
             _createArg1 = arg1;
@@ -2673,7 +2673,7 @@ public readonly partial struct TmuxinatorSchema
         /// <param name="arg23">The value of the property.</param>
         /// <param name="arg24">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source arg1, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg2, in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source arg3, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source arg4, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg5, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg6, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg7, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg8, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg9, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg10, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg11, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg12, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg13, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg14, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg15, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg16, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg17, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg18, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg19, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source arg20, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg21, in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source arg22, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg23, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source arg24, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source arg1, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg2, scoped in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source arg3, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source arg4, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg5, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg6, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg7, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg8, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg9, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg10, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg11, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg12, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg13, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg14, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg15, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg16, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg17, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg18, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg19, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source arg20, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg21, scoped in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source arg22, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg23, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source arg24, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24);
@@ -2710,7 +2710,7 @@ public readonly partial struct TmuxinatorSchema
         /// <param name="arg23">The value of the property.</param>
         /// <param name="arg24">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source arg1, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg2, in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source<TContext> arg3, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source arg4, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg5, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg6, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg7, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg8, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg9, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg10, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg11, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg12, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg13, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg14, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg15, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg16, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg17, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg18, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg19, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source<TContext> arg20, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg21, in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source arg22, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg23, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source<TContext> arg24, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source arg1, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg2, scoped in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source<TContext> arg3, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source arg4, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg5, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg6, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg7, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg8, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg9, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg10, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg11, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg12, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg13, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg14, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg15, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg16, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg17, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg18, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg19, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source<TContext> arg20, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg21, scoped in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source arg22, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source arg23, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source<TContext> arg24, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -2778,7 +2778,7 @@ public readonly partial struct TmuxinatorSchema
     /// <param name="tmuxOptions">The value of the <c>"tmux_options"</c> property.</param>
     /// <param name="windows">The value of the <c>"windows"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source attach = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source cliArgs = default, in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source defaults = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source name = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectExit = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectFirstStart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectRestart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStop = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source post = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source pre = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source preWindow = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectName = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectRoot = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source rbenv = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source root = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source socketName = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupPane = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupWindow = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source tabs = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxCommand = default, in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source tmuxDetached = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxOptions = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source windows = default)
+    public static Source Build(scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source attach = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source cliArgs = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source defaults = default, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source name = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectExit = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectFirstStart = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectRestart = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStart = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStop = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source post = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source pre = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source preWindow = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectName = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectRoot = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source rbenv = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source root = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source socketName = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupPane = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupWindow = default, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source tabs = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxCommand = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source tmuxDetached = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxOptions = default, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source windows = default)
     {
         return new Source(attach, cliArgs, defaults, name, onProjectExit, onProjectFirstStart, onProjectRestart, onProjectStart, onProjectStop, post, pre, preWindow, projectName, projectRoot, rbenv, root, socketName, startupPane, startupWindow, tabs, tmuxCommand, tmuxDetached, tmuxOptions, windows);
     }
@@ -2813,7 +2813,7 @@ public readonly partial struct TmuxinatorSchema
     /// <param name="tmuxOptions">The value of the <c>"tmux_options"</c> property.</param>
     /// <param name="windows">The value of the <c>"windows"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source attach = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source cliArgs = default, in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source<TContext> defaults = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source name = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectExit = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectFirstStart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectRestart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStop = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source post = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source pre = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source preWindow = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectName = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectRoot = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source rbenv = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source root = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source socketName = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupPane = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupWindow = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source<TContext> tabs = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxCommand = default, in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source tmuxDetached = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxOptions = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source<TContext> windows = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source attach = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source cliArgs = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source<TContext> defaults = default, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source name = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectExit = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectFirstStart = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectRestart = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStart = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStop = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source post = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source pre = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source preWindow = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectName = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectRoot = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source rbenv = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source root = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source socketName = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupPane = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupWindow = default, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source<TContext> tabs = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxCommand = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source tmuxDetached = default, scoped in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxOptions = default, scoped in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source<TContext> windows = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

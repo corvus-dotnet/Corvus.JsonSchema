@@ -394,7 +394,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>data</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDataValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source value)
+            public void SetDataValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source value)
             {
                 CheckValidInstance();
 
@@ -475,7 +475,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>date</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDate(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.DateEntity.Source value)
+            public void SetDate(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.DateEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -520,7 +520,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>item</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetItemValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarItem.Source value)
+            public void SetItemValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarItem.Source value)
             {
                 CheckValidInstance();
 
@@ -601,7 +601,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>legendItem</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLegendItem(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItem.Source value)
+            public void SetLegendItem(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItem.Source value)
             {
                 CheckValidInstance();
 
@@ -682,7 +682,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>maxItems</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxItems(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfItemsDisplayed.Source value)
+            public void SetMaxItems(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfItemsDisplayed.Source value)
             {
                 CheckValidInstance();
 
@@ -727,7 +727,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>maxLegendItems</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxLegendItems(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfLegendItemsDisplayed.Source value)
+            public void SetMaxLegendItems(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfLegendItemsDisplayed.Source value)
             {
                 CheckValidInstance();
 
@@ -772,7 +772,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>moreItems</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMoreItems(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.MoreItemsEntity.Source value)
+            public void SetMoreItems(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.MoreItemsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -853,7 +853,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>noItemsText</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNoItemsText(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.TheTextShownWhenThereAreNoItemsForTheSelectedDay.Source value)
+            public void SetNoItemsText(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.TheTextShownWhenThereAreNoItemsForTheSelectedDay.Source value)
             {
                 CheckValidInstance();
 
@@ -898,7 +898,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>specialDate</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpecialDate(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarSpecialDate.Source value)
+            public void SetSpecialDate(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarSpecialDate.Source value)
             {
                 CheckValidInstance();
 
@@ -1152,7 +1152,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.DateEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarItem.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItem.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfItemsDisplayed.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfLegendItemsDisplayed.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.MoreItemsEntity.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.TheTextShownWhenThereAreNoItemsForTheSelectedDay.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarSpecialDate.Source arg9)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.DateEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarItem.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItem.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfItemsDisplayed.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfLegendItemsDisplayed.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.MoreItemsEntity.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.TheTextShownWhenThereAreNoItemsForTheSelectedDay.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarSpecialDate.Source arg9)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1332,7 +1332,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.DateEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarItem.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItem.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfItemsDisplayed.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfLegendItemsDisplayed.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.MoreItemsEntity.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.TheTextShownWhenThereAreNoItemsForTheSelectedDay.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarSpecialDate.Source<TContext> arg9)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.DateEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarItem.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItem.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfItemsDisplayed.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfLegendItemsDisplayed.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.MoreItemsEntity.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.TheTextShownWhenThereAreNoItemsForTheSelectedDay.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarSpecialDate.Source<TContext> arg9)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1621,7 +1621,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg8">The value of the property.</param>
             /// <param name="arg9">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.DateEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarItem.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItem.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfItemsDisplayed.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfLegendItemsDisplayed.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.MoreItemsEntity.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.TheTextShownWhenThereAreNoItemsForTheSelectedDay.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarSpecialDate.Source arg9, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.DateEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarItem.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItem.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfItemsDisplayed.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfLegendItemsDisplayed.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.MoreItemsEntity.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.TheTextShownWhenThereAreNoItemsForTheSelectedDay.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarSpecialDate.Source arg9, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
@@ -1643,7 +1643,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg8">The value of the property.</param>
             /// <param name="arg9">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.DateEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarItem.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItem.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfItemsDisplayed.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfLegendItemsDisplayed.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.MoreItemsEntity.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.TheTextShownWhenThereAreNoItemsForTheSelectedDay.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarSpecialDate.Source<TContext> arg9, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.DateEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarItem.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItem.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfItemsDisplayed.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfLegendItemsDisplayed.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.MoreItemsEntity.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.TheTextShownWhenThereAreNoItemsForTheSelectedDay.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarSpecialDate.Source<TContext> arg9, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1696,7 +1696,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="noItemsText">The value of the <c>"noItemsText"</c> property.</param>
         /// <param name="specialDate">The value of the <c>"specialDate"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.DateEntity.Source date = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarItem.Source itemValue = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItem.Source legendItem = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfItemsDisplayed.Source maxItems = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfLegendItemsDisplayed.Source maxLegendItems = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.MoreItemsEntity.Source moreItems = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.TheTextShownWhenThereAreNoItemsForTheSelectedDay.Source noItemsText = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarSpecialDate.Source specialDate = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.DateEntity.Source date = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarItem.Source itemValue = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItem.Source legendItem = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfItemsDisplayed.Source maxItems = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfLegendItemsDisplayed.Source maxLegendItems = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.MoreItemsEntity.Source moreItems = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.TheTextShownWhenThereAreNoItemsForTheSelectedDay.Source noItemsText = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarSpecialDate.Source specialDate = default)
         {
             return new Source(data, date, itemValue, legendItem, maxItems, maxLegendItems, moreItems, noItemsText, specialDate);
         }
@@ -1716,7 +1716,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="noItemsText">The value of the <c>"noItemsText"</c> property.</param>
         /// <param name="specialDate">The value of the <c>"specialDate"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.DateEntity.Source date = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarItem.Source<TContext> itemValue = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItem.Source<TContext> legendItem = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfItemsDisplayed.Source maxItems = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfLegendItemsDisplayed.Source maxLegendItems = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.MoreItemsEntity.Source<TContext> moreItems = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.TheTextShownWhenThereAreNoItemsForTheSelectedDay.Source noItemsText = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarSpecialDate.Source<TContext> specialDate = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.DateEntity.Source date = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarItem.Source<TContext> itemValue = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarLegendItem.Source<TContext> legendItem = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfItemsDisplayed.Source maxItems = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.RepresentsNumberOfLegendItemsDisplayed.Source maxLegendItems = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.MoreItemsEntity.Source<TContext> moreItems = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendar.TheTextShownWhenThereAreNoItemsForTheSelectedDay.Source noItemsText = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeCalendarSpecialDate.Source<TContext> specialDate = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

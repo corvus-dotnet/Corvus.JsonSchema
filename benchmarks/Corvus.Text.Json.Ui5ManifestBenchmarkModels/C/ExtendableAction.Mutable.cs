@@ -511,7 +511,7 @@ public readonly partial struct ExtendableAction
         /// Set the <c>fallback</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFallback(in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.FallbackEntity.Source value)
+        public void SetFallback(scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.FallbackEntity.Source value)
         {
             CheckValidInstance();
 
@@ -592,7 +592,7 @@ public readonly partial struct ExtendableAction
         /// Set the <c>iconUrl</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIconUrl(in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source value)
+        public void SetIconUrl(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source value)
         {
             CheckValidInstance();
 
@@ -637,7 +637,7 @@ public readonly partial struct ExtendableAction
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetId(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -682,7 +682,7 @@ public readonly partial struct ExtendableAction
         /// Set the <c>isEnabled</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIsEnabled(in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.DeterminesWhetherTheActionShouldBeEnabled.Source value)
+        public void SetIsEnabled(scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.DeterminesWhetherTheActionShouldBeEnabled.Source value)
         {
             CheckValidInstance();
 
@@ -727,7 +727,7 @@ public readonly partial struct ExtendableAction
         /// Set the <c>mode</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMode(in Corvus.Ui5ManifestBenchmark.Current.ActionMode.Source value)
+        public void SetMode(scoped in Corvus.Ui5ManifestBenchmark.Current.ActionMode.Source value)
         {
             CheckValidInstance();
 
@@ -772,7 +772,7 @@ public readonly partial struct ExtendableAction
         /// Set the <c>requires</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRequires(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetRequires(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -853,7 +853,7 @@ public readonly partial struct ExtendableAction
         /// Set the <c>style</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStyle(in Corvus.Ui5ManifestBenchmark.Current.ActionStyle.Source value)
+        public void SetStyle(scoped in Corvus.Ui5ManifestBenchmark.Current.ActionStyle.Source value)
         {
             CheckValidInstance();
 
@@ -898,7 +898,7 @@ public readonly partial struct ExtendableAction
         /// Set the <c>title</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTitle(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -943,7 +943,7 @@ public readonly partial struct ExtendableAction
         /// Set the <c>tooltip</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTooltip(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetTooltip(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1107,7 +1107,7 @@ public readonly partial struct ExtendableAction
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -1130,7 +1130,7 @@ public readonly partial struct ExtendableAction
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1177,7 +1177,7 @@ public readonly partial struct ExtendableAction
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1372,7 +1372,7 @@ public readonly partial struct ExtendableAction
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.FallbackEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.DeterminesWhetherTheActionShouldBeEnabled.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.ActionMode.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.ActionStyle.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9)
+        internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.FallbackEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.DeterminesWhetherTheActionShouldBeEnabled.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionMode.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionStyle.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1552,7 +1552,7 @@ public readonly partial struct ExtendableAction
 
         internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.FallbackEntity.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.DeterminesWhetherTheActionShouldBeEnabled.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.ActionMode.Source arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.ActionStyle.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9)
+        internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.FallbackEntity.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.DeterminesWhetherTheActionShouldBeEnabled.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionMode.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionStyle.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1910,7 +1910,7 @@ public readonly partial struct ExtendableAction
         /// <param name="arg8">The value of the property.</param>
         /// <param name="arg9">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.FallbackEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.DeterminesWhetherTheActionShouldBeEnabled.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.ActionMode.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.ActionStyle.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.FallbackEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.DeterminesWhetherTheActionShouldBeEnabled.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionMode.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionStyle.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
@@ -1932,7 +1932,7 @@ public readonly partial struct ExtendableAction
         /// <param name="arg8">The value of the property.</param>
         /// <param name="arg9">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.FallbackEntity.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.DeterminesWhetherTheActionShouldBeEnabled.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.ActionMode.Source arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.ActionStyle.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.FallbackEntity.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.DeterminesWhetherTheActionShouldBeEnabled.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionMode.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionStyle.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1985,7 +1985,7 @@ public readonly partial struct ExtendableAction
     /// <param name="title">The value of the <c>"title"</c> property.</param>
     /// <param name="tooltip">The value of the <c>"tooltip"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.FallbackEntity.Source fallback = default, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source iconUrl = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id = default, in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.DeterminesWhetherTheActionShouldBeEnabled.Source isEnabled = default, in Corvus.Ui5ManifestBenchmark.Current.ActionMode.Source mode = default, in Corvus.Text.Json.JsonElement.Source requires = default, in Corvus.Ui5ManifestBenchmark.Current.ActionStyle.Source style = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source tooltip = default)
+    public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.FallbackEntity.Source fallback = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source iconUrl = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.DeterminesWhetherTheActionShouldBeEnabled.Source isEnabled = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionMode.Source mode = default, scoped in Corvus.Text.Json.JsonElement.Source requires = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionStyle.Source style = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source tooltip = default)
     {
         return new Source(fallback, iconUrl, id, isEnabled, mode, requires, style, title, tooltip);
     }
@@ -2005,7 +2005,7 @@ public readonly partial struct ExtendableAction
     /// <param name="title">The value of the <c>"title"</c> property.</param>
     /// <param name="tooltip">The value of the <c>"tooltip"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.FallbackEntity.Source<TContext> fallback = default, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source iconUrl = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id = default, in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.DeterminesWhetherTheActionShouldBeEnabled.Source isEnabled = default, in Corvus.Ui5ManifestBenchmark.Current.ActionMode.Source mode = default, in Corvus.Text.Json.JsonElement.Source<TContext> requires = default, in Corvus.Ui5ManifestBenchmark.Current.ActionStyle.Source style = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source tooltip = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.FallbackEntity.Source<TContext> fallback = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source iconUrl = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ExtendableAction.DeterminesWhetherTheActionShouldBeEnabled.Source isEnabled = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionMode.Source mode = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> requires = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ActionStyle.Source style = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source tooltip = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

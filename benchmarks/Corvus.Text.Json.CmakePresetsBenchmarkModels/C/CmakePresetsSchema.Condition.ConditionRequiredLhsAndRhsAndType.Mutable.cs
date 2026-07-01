@@ -282,7 +282,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>lhs</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetLhs(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
+                public void SetLhs(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -313,7 +313,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>rhs</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRhs(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
+                public void SetRhs(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -344,7 +344,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>type</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetType(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType.ARequiredStringSpecifyingTheTypeOfTheCondition.Source value)
+                public void SetType(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType.ARequiredStringSpecifyingTheTypeOfTheCondition.Source value)
                 {
                     CheckValidInstance();
 
@@ -541,7 +541,7 @@ public readonly partial struct CmakePresetsSchema
 
                 internal Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg1, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg2)
+                internal Source(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg2)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -863,7 +863,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg1, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2);
@@ -906,7 +906,7 @@ public readonly partial struct CmakePresetsSchema
             /// <param name="lhs">The value of the <c>"lhs"</c> property.</param>
             /// <param name="rhs">The value of the <c>"rhs"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source lhs, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source rhs)
+            public static Source Build(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source lhs, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source rhs)
             {
                 return new Source(lhs, rhs);
             }

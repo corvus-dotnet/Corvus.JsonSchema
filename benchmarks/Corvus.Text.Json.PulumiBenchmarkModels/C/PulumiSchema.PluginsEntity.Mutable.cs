@@ -382,7 +382,7 @@ public readonly partial struct PulumiSchema
             /// Set the <c>analyzers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAnalyzers(in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginOptionsArray.Source value)
+            public void SetAnalyzers(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginOptionsArray.Source value)
             {
                 CheckValidInstance();
 
@@ -463,7 +463,7 @@ public readonly partial struct PulumiSchema
             /// Set the <c>languages</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLanguages(in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForLanArray.Source value)
+            public void SetLanguages(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForLanArray.Source value)
             {
                 CheckValidInstance();
 
@@ -544,7 +544,7 @@ public readonly partial struct PulumiSchema
             /// Set the <c>providers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetProviders(in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForResArray.Source value)
+            public void SetProviders(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForResArray.Source value)
             {
                 CheckValidInstance();
 
@@ -726,7 +726,7 @@ public readonly partial struct PulumiSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -749,7 +749,7 @@ public readonly partial struct PulumiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -796,7 +796,7 @@ public readonly partial struct PulumiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -968,7 +968,7 @@ public readonly partial struct PulumiSchema
 
             internal Source(Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginOptionsArray.Source arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForLanArray.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForResArray.Source arg3)
+            internal Source(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginOptionsArray.Source arg1, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForLanArray.Source arg2, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForResArray.Source arg3)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1136,7 +1136,7 @@ public readonly partial struct PulumiSchema
 
             internal Source(scoped in TContext context, Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginOptionsArray.Source<TContext> arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForLanArray.Source<TContext> arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForResArray.Source<TContext> arg3)
+            internal Source(scoped in TContext context, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginOptionsArray.Source<TContext> arg1, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForLanArray.Source<TContext> arg2, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForResArray.Source<TContext> arg3)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1446,7 +1446,7 @@ public readonly partial struct PulumiSchema
             /// <param name="arg2">The value of the property.</param>
             /// <param name="arg3">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginOptionsArray.Source arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForLanArray.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForResArray.Source arg3, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginOptionsArray.Source arg1, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForLanArray.Source arg2, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForResArray.Source arg3, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3);
@@ -1462,7 +1462,7 @@ public readonly partial struct PulumiSchema
             /// <param name="arg2">The value of the property.</param>
             /// <param name="arg3">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginOptionsArray.Source<TContext> arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForLanArray.Source<TContext> arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForResArray.Source<TContext> arg3, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginOptionsArray.Source<TContext> arg1, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForLanArray.Source<TContext> arg2, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForResArray.Source<TContext> arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1509,7 +1509,7 @@ public readonly partial struct PulumiSchema
         /// <param name="languages">The value of the <c>"languages"</c> property.</param>
         /// <param name="providers">The value of the <c>"providers"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginOptionsArray.Source analyzers = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForLanArray.Source languages = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForResArray.Source providers = default)
+        public static Source Build(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginOptionsArray.Source analyzers = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForLanArray.Source languages = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForResArray.Source providers = default)
         {
             return new Source(analyzers, languages, providers);
         }
@@ -1523,7 +1523,7 @@ public readonly partial struct PulumiSchema
         /// <param name="languages">The value of the <c>"languages"</c> property.</param>
         /// <param name="providers">The value of the <c>"providers"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginOptionsArray.Source<TContext> analyzers = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForLanArray.Source<TContext> languages = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForResArray.Source<TContext> providers = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginOptionsArray.Source<TContext> analyzers = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForLanArray.Source<TContext> languages = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.PluginsForResArray.Source<TContext> providers = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

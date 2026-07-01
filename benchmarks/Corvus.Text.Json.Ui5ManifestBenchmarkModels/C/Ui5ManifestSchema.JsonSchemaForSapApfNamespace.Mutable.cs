@@ -289,7 +289,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVersion(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.VersionEntity.Source value)
+            public void SetVersion(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.VersionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -334,7 +334,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>activateFilterReduction</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetActivateFilterReduction(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateFilterReductionEntity.Source value)
+            public void SetActivateFilterReduction(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateFilterReductionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -379,7 +379,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>activateLrep</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetActivateLrep(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateLrepEntity.Source value)
+            public void SetActivateLrep(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateLrepEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -424,7 +424,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>useHeadRequestForXsrfToken</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUseHeadRequestForXsrfToken(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.UseHeadRequestForXsrfTokenEntity.Source value)
+            public void SetUseHeadRequestForXsrfToken(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.UseHeadRequestForXsrfTokenEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -637,7 +637,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.VersionEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateFilterReductionEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateLrepEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.UseHeadRequestForXsrfTokenEntity.Source arg4)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.VersionEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateFilterReductionEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateLrepEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.UseHeadRequestForXsrfTokenEntity.Source arg4)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -970,7 +970,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.VersionEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateFilterReductionEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateLrepEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.UseHeadRequestForXsrfTokenEntity.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.VersionEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateFilterReductionEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateLrepEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.UseHeadRequestForXsrfTokenEntity.Source arg4, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4);
@@ -1015,7 +1015,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="activateLrep">The value of the <c>"activateLrep"</c> property.</param>
         /// <param name="useHeadRequestForXsrfToken">The value of the <c>"useHeadRequestForXsrfToken"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateFilterReductionEntity.Source activateFilterReduction = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateLrepEntity.Source activateLrep = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.UseHeadRequestForXsrfTokenEntity.Source useHeadRequestForXsrfToken = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.VersionEntity.Source version = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateFilterReductionEntity.Source activateFilterReduction = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.ActivateLrepEntity.Source activateLrep = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.UseHeadRequestForXsrfTokenEntity.Source useHeadRequestForXsrfToken = default)
         {
             return new Source(version, activateFilterReduction, activateLrep, useHeadRequestForXsrfToken);
         }

@@ -292,7 +292,7 @@ public readonly partial struct TokenExchangeResource
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetId(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -323,7 +323,7 @@ public readonly partial struct TokenExchangeResource
         /// Set the <c>providerId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetProviderId(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetProviderId(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -354,7 +354,7 @@ public readonly partial struct TokenExchangeResource
         /// Set the <c>type</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetType(in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.MustBeTokenExchangeResource.Source value)
+        public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.MustBeTokenExchangeResource.Source value)
         {
             CheckValidInstance();
 
@@ -399,7 +399,7 @@ public readonly partial struct TokenExchangeResource
         /// Set the <c>uri</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUriValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetUriValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -598,7 +598,7 @@ public readonly partial struct TokenExchangeResource
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.MustBeTokenExchangeResource.Source arg4)
+        internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.MustBeTokenExchangeResource.Source arg4)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -931,7 +931,7 @@ public readonly partial struct TokenExchangeResource
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.MustBeTokenExchangeResource.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.MustBeTokenExchangeResource.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4);
@@ -976,7 +976,7 @@ public readonly partial struct TokenExchangeResource
     /// <param name="uri">The value of the <c>"uri"</c> property.</param>
     /// <param name="type">The value of the <c>"type"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source providerId, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source uri, in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.MustBeTokenExchangeResource.Source type = default)
+    public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source id, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source providerId, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source uri, scoped in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.MustBeTokenExchangeResource.Source type = default)
     {
         return new Source(id, providerId, uri, type);
     }

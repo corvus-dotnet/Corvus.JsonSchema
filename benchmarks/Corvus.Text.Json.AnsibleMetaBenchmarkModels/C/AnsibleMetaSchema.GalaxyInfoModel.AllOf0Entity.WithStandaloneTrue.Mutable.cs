@@ -348,7 +348,7 @@ public readonly partial struct AnsibleMetaSchema
                     /// Set the <c>standalone</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetStandalone(in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.AllOf0Entity.WithStandaloneTrue.StandaloneEntity.Source value)
+                    public void SetStandalone(scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.AllOf0Entity.WithStandaloneTrue.StandaloneEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -494,7 +494,7 @@ public readonly partial struct AnsibleMetaSchema
                     ///   </para>
                     /// </remarks>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void SetProperty(string propertyName, in JsonElement.Source value)
+                    public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                     {
                         SetProperty(propertyName.AsSpan(), value);
                     }
@@ -517,7 +517,7 @@ public readonly partial struct AnsibleMetaSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -564,7 +564,7 @@ public readonly partial struct AnsibleMetaSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -734,7 +734,7 @@ public readonly partial struct AnsibleMetaSchema
 
                     internal Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.AllOf0Entity.WithStandaloneTrue.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.AllOf0Entity.WithStandaloneTrue.StandaloneEntity.Source arg1)
+                    internal Source(scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.AllOf0Entity.WithStandaloneTrue.StandaloneEntity.Source arg1)
                     {
                         _createArg1 = arg1;
                         _kind = Kind.Create;
@@ -1118,7 +1118,7 @@ public readonly partial struct AnsibleMetaSchema
                     /// </summary>
                     /// <param name="arg1">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.AllOf0Entity.WithStandaloneTrue.StandaloneEntity.Source arg1, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.AllOf0Entity.WithStandaloneTrue.StandaloneEntity.Source arg1, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1);
@@ -1160,7 +1160,7 @@ public readonly partial struct AnsibleMetaSchema
                 /// </summary>
                 /// <param name="standalone">The value of the <c>"standalone"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.AllOf0Entity.WithStandaloneTrue.StandaloneEntity.Source standalone = default)
+                public static Source Build(scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.AllOf0Entity.WithStandaloneTrue.StandaloneEntity.Source standalone = default)
                 {
                     return new Source(standalone);
                 }

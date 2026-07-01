@@ -847,7 +847,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>body.Modifier</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBodyModifierValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.BodyModifier.Source value)
+            public void SetBodyModifierValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.BodyModifier.Source value)
             {
                 CheckValidInstance();
 
@@ -928,7 +928,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>cookie.Filter</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCookieFilterValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieFilter.Source value)
+            public void SetCookieFilterValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieFilter.Source value)
             {
                 CheckValidInstance();
 
@@ -1009,7 +1009,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>cookie.Modifier</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCookieModifierValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Source value)
+            public void SetCookieModifierValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.CookieModifier.Source value)
             {
                 CheckValidInstance();
 
@@ -1090,7 +1090,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>fifo.Group</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFifoGroupValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.FifoGroup.Source value)
+            public void SetFifoGroupValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.FifoGroup.Source value)
             {
                 CheckValidInstance();
 
@@ -1171,7 +1171,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>header.Append</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeaderAppend(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.AppendAHeader.Source value)
+            public void SetHeaderAppend(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.AppendAHeader.Source value)
             {
                 CheckValidInstance();
 
@@ -1252,7 +1252,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>header.Blacklist</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeaderBlacklist(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.BlacklistHeaders.Source value)
+            public void SetHeaderBlacklist(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.BlacklistHeaders.Source value)
             {
                 CheckValidInstance();
 
@@ -1333,7 +1333,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>header.Copy</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeaderCopyValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Source value)
+            public void SetHeaderCopyValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Source value)
             {
                 CheckValidInstance();
 
@@ -1414,7 +1414,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>header.Filter</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeaderFilterValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderFilter.Source value)
+            public void SetHeaderFilterValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderFilter.Source value)
             {
                 CheckValidInstance();
 
@@ -1495,7 +1495,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>header.Id</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeaderIdValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderId.Source value)
+            public void SetHeaderIdValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderId.Source value)
             {
                 CheckValidInstance();
 
@@ -1576,7 +1576,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>header.Modifier</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeaderModifierValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderModifier.Source value)
+            public void SetHeaderModifierValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderModifier.Source value)
             {
                 CheckValidInstance();
 
@@ -1657,7 +1657,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>header.RegexFilter</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeaderRegexFilterValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderRegexFilter.Source value)
+            public void SetHeaderRegexFilterValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderRegexFilter.Source value)
             {
                 CheckValidInstance();
 
@@ -1738,7 +1738,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>port.Filter</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPortFilterValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortFilter.Source value)
+            public void SetPortFilterValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortFilter.Source value)
             {
                 CheckValidInstance();
 
@@ -1819,7 +1819,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>port.Modifier</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPortModifierValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.Source value)
+            public void SetPortModifierValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PortModifier.Source value)
             {
                 CheckValidInstance();
 
@@ -1900,7 +1900,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>priority.Group</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPriorityGroupValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PriorityGroup.Source value)
+            public void SetPriorityGroupValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.PriorityGroup.Source value)
             {
                 CheckValidInstance();
 
@@ -1981,7 +1981,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>querystring.Filter</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetQuerystringFilter(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.QueryStringFilter.Source value)
+            public void SetQuerystringFilter(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.QueryStringFilter.Source value)
             {
                 CheckValidInstance();
 
@@ -2062,7 +2062,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>querystring.Modifier</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetQuerystringModifierValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.QuerystringModifier.Source value)
+            public void SetQuerystringModifierValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.QuerystringModifier.Source value)
             {
                 CheckValidInstance();
 
@@ -2143,7 +2143,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>stash.Modifier</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStashModifierValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.StashModifier.Source value)
+            public void SetStashModifierValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.StashModifier.Source value)
             {
                 CheckValidInstance();
 
@@ -2224,7 +2224,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>url.Filter</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUrlFilterValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.UrlFilter.Source value)
+            public void SetUrlFilterValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.UrlFilter.Source value)
             {
                 CheckValidInstance();
 
@@ -2305,7 +2305,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>url.Modifier</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUrlModifierValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.UrlModifier.Source value)
+            public void SetUrlModifierValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.UrlModifier.Source value)
             {
                 CheckValidInstance();
 
@@ -2386,7 +2386,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>url.RegexFilter</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUrlRegexFilterValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.UrlRegexFilter.Source value)
+            public void SetUrlRegexFilterValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.UrlRegexFilter.Source value)
             {
                 CheckValidInstance();
 
@@ -2617,7 +2617,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in JsonElement.Source value)
+            public void InsertItem(int itemIndex, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -2643,7 +2643,7 @@ public readonly partial struct KrakendSchema
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in JsonElement.Source value)
+            public void AddItem(scoped in JsonElement.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }
@@ -2920,7 +2920,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -2943,7 +2943,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -2990,7 +2990,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 

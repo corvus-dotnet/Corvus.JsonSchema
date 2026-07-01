@@ -527,7 +527,7 @@ public readonly partial struct LazygitSchema
         /// Set the <c>confirmOnQuit</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetConfirmOnQuitValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.ConfirmOnQuit.Source value)
+        public void SetConfirmOnQuitValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.ConfirmOnQuit.Source value)
         {
             CheckValidInstance();
 
@@ -572,7 +572,7 @@ public readonly partial struct LazygitSchema
         /// Set the <c>customCommands</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCustomCommands(in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.Source value)
+        public void SetCustomCommands(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.Source value)
         {
             CheckValidInstance();
 
@@ -653,7 +653,7 @@ public readonly partial struct LazygitSchema
         /// Set the <c>disableStartupPopups</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDisableStartupPopupsValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.DisableStartupPopups.Source value)
+        public void SetDisableStartupPopupsValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.DisableStartupPopups.Source value)
         {
             CheckValidInstance();
 
@@ -698,7 +698,7 @@ public readonly partial struct LazygitSchema
         /// Set the <c>git</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetGitValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Source value)
+        public void SetGitValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Source value)
         {
             CheckValidInstance();
 
@@ -779,7 +779,7 @@ public readonly partial struct LazygitSchema
         /// Set the <c>gui</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetGuiValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Source value)
+        public void SetGuiValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Source value)
         {
             CheckValidInstance();
 
@@ -860,7 +860,7 @@ public readonly partial struct LazygitSchema
         /// Set the <c>keybinding</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetKeybindingValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Source value)
+        public void SetKeybindingValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Source value)
         {
             CheckValidInstance();
 
@@ -941,7 +941,7 @@ public readonly partial struct LazygitSchema
         /// Set the <c>notARepository</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetNotARepositoryValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.NotARepository.Source value)
+        public void SetNotARepositoryValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.NotARepository.Source value)
         {
             CheckValidInstance();
 
@@ -986,7 +986,7 @@ public readonly partial struct LazygitSchema
         /// Set the <c>os</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOsValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Source value)
+        public void SetOsValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Source value)
         {
             CheckValidInstance();
 
@@ -1067,7 +1067,7 @@ public readonly partial struct LazygitSchema
         /// Set the <c>promptToReturnFromSubprocess</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPromptToReturnFromSubprocessValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.PromptToReturnFromSubprocess.Source value)
+        public void SetPromptToReturnFromSubprocessValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.PromptToReturnFromSubprocess.Source value)
         {
             CheckValidInstance();
 
@@ -1112,7 +1112,7 @@ public readonly partial struct LazygitSchema
         /// Set the <c>quitOnTopLevelReturn</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetQuitOnTopLevelReturnValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.QuitOnTopLevelReturn.Source value)
+        public void SetQuitOnTopLevelReturnValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.QuitOnTopLevelReturn.Source value)
         {
             CheckValidInstance();
 
@@ -1157,7 +1157,7 @@ public readonly partial struct LazygitSchema
         /// Set the <c>refresher</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRefresherValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Refresher.Source value)
+        public void SetRefresherValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Refresher.Source value)
         {
             CheckValidInstance();
 
@@ -1238,7 +1238,7 @@ public readonly partial struct LazygitSchema
         /// Set the <c>services</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetServicesValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Services.Source value)
+        public void SetServicesValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Services.Source value)
         {
             CheckValidInstance();
 
@@ -1319,7 +1319,7 @@ public readonly partial struct LazygitSchema
         /// Set the <c>update</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUpdateValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Update.Source value)
+        public void SetUpdateValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Update.Source value)
         {
             CheckValidInstance();
 

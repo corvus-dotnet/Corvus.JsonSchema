@@ -326,7 +326,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>description</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDescription(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
+                public void SetDescription(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -371,7 +371,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>displayName</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDisplayName(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
+                public void SetDisplayName(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -416,7 +416,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>name</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetName(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.NameEntity.Source value)
+                public void SetName(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.NameEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -447,7 +447,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>steps</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSteps(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.RequiredNameAndTypeArray.Source value)
+                public void SetSteps(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.RequiredNameAndTypeArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -512,7 +512,7 @@ public readonly partial struct CmakePresetsSchema
                 /// Set the <c>vendor</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetVendor(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.VendorEntity.Source value)
+                public void SetVendor(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.VendorEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -762,7 +762,7 @@ public readonly partial struct CmakePresetsSchema
 
                 internal Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.NameEntity.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.RequiredNameAndTypeArray.Source arg2, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg3, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.VendorEntity.Source arg5)
+                internal Source(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.NameEntity.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.RequiredNameAndTypeArray.Source arg2, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg4, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.VendorEntity.Source arg5)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -934,7 +934,7 @@ public readonly partial struct CmakePresetsSchema
 
                 internal Source(scoped in TContext context, Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.NameEntity.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.RequiredNameAndTypeArray.Source<TContext> arg2, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg3, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.VendorEntity.Source<TContext> arg5)
+                internal Source(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.NameEntity.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.RequiredNameAndTypeArray.Source<TContext> arg2, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg4, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.VendorEntity.Source<TContext> arg5)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1191,7 +1191,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.NameEntity.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.RequiredNameAndTypeArray.Source arg2, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg3, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.VendorEntity.Source arg5, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.NameEntity.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.RequiredNameAndTypeArray.Source arg2, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg4, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.VendorEntity.Source arg5, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1209,7 +1209,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.NameEntity.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.RequiredNameAndTypeArray.Source<TContext> arg2, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg3, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg4, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.VendorEntity.Source<TContext> arg5, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.NameEntity.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.RequiredNameAndTypeArray.Source<TContext> arg2, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg4, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.VendorEntity.Source<TContext> arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1258,7 +1258,7 @@ public readonly partial struct CmakePresetsSchema
             /// <param name="displayName">The value of the <c>"displayName"</c> property.</param>
             /// <param name="vendor">The value of the <c>"vendor"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.NameEntity.Source name, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.RequiredNameAndTypeArray.Source steps, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source description = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source displayName = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.VendorEntity.Source vendor = default)
+            public static Source Build(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.NameEntity.Source name, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.RequiredNameAndTypeArray.Source steps, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source description = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source displayName = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.VendorEntity.Source vendor = default)
             {
                 return new Source(name, steps, description, displayName, vendor);
             }
@@ -1274,7 +1274,7 @@ public readonly partial struct CmakePresetsSchema
             /// <param name="displayName">The value of the <c>"displayName"</c> property.</param>
             /// <param name="vendor">The value of the <c>"vendor"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.NameEntity.Source name, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.RequiredNameAndTypeArray.Source<TContext> steps, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source description = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source displayName = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.VendorEntity.Source<TContext> vendor = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.NameEntity.Source name, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.RequiredNameAndTypeArray.Source<TContext> steps, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source description = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source displayName = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.WorkflowPresetsItemsV6.RequiredNameAndSteps.VendorEntity.Source<TContext> vendor = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

@@ -443,7 +443,7 @@ public readonly partial struct Draft04Schema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Draft04Benchmark.Current.Draft04Schema.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -466,7 +466,7 @@ public readonly partial struct Draft04Schema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Draft04Benchmark.Current.Draft04Schema.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.Source value)
             {
                 CheckValidInstance();
 
@@ -513,7 +513,7 @@ public readonly partial struct Draft04Schema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Draft04Benchmark.Current.Draft04Schema.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.Source value)
             {
                 CheckValidInstance();
 

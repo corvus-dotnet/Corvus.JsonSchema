@@ -383,7 +383,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>DocumentAnalysisTimeoutMs</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDocumentAnalysisTimeoutMs(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.DocumentAnalysisTimeoutMsEntity.Source value)
+            public void SetDocumentAnalysisTimeoutMs(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.DocumentAnalysisTimeoutMsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -428,7 +428,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>EnableAnalyzersSupport</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnableAnalyzersSupport(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.IfSetToFalseOnlyRefactoringsAreAvailable.Source value)
+            public void SetEnableAnalyzersSupport(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.IfSetToFalseOnlyRefactoringsAreAvailable.Source value)
             {
                 CheckValidInstance();
 
@@ -473,7 +473,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>EnableDecompilationSupport</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnableDecompilationSupport(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.EnableDecompilationSupportEntity.Source value)
+            public void SetEnableDecompilationSupport(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.EnableDecompilationSupportEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -518,7 +518,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>LocationPaths</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLocationPaths(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.LocationPathsArray.Source value)
+            public void SetLocationPaths(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.LocationPathsArray.Source value)
             {
                 CheckValidInstance();
 
@@ -700,7 +700,7 @@ public readonly partial struct OmnisharpSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -723,7 +723,7 @@ public readonly partial struct OmnisharpSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -770,7 +770,7 @@ public readonly partial struct OmnisharpSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -943,7 +943,7 @@ public readonly partial struct OmnisharpSchema
 
             internal Source(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.DocumentAnalysisTimeoutMsEntity.Source arg1, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.IfSetToFalseOnlyRefactoringsAreAvailable.Source arg2, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.EnableDecompilationSupportEntity.Source arg3, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.LocationPathsArray.Source arg4)
+            internal Source(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.DocumentAnalysisTimeoutMsEntity.Source arg1, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.IfSetToFalseOnlyRefactoringsAreAvailable.Source arg2, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.EnableDecompilationSupportEntity.Source arg3, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.LocationPathsArray.Source arg4)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1113,7 +1113,7 @@ public readonly partial struct OmnisharpSchema
 
             internal Source(scoped in TContext context, Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.DocumentAnalysisTimeoutMsEntity.Source arg1, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.IfSetToFalseOnlyRefactoringsAreAvailable.Source arg2, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.EnableDecompilationSupportEntity.Source arg3, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.LocationPathsArray.Source<TContext> arg4)
+            internal Source(scoped in TContext context, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.DocumentAnalysisTimeoutMsEntity.Source arg1, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.IfSetToFalseOnlyRefactoringsAreAvailable.Source arg2, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.EnableDecompilationSupportEntity.Source arg3, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.LocationPathsArray.Source<TContext> arg4)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1431,7 +1431,7 @@ public readonly partial struct OmnisharpSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.DocumentAnalysisTimeoutMsEntity.Source arg1, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.IfSetToFalseOnlyRefactoringsAreAvailable.Source arg2, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.EnableDecompilationSupportEntity.Source arg3, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.LocationPathsArray.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.DocumentAnalysisTimeoutMsEntity.Source arg1, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.IfSetToFalseOnlyRefactoringsAreAvailable.Source arg2, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.EnableDecompilationSupportEntity.Source arg3, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.LocationPathsArray.Source arg4, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4);
@@ -1448,7 +1448,7 @@ public readonly partial struct OmnisharpSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.DocumentAnalysisTimeoutMsEntity.Source arg1, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.IfSetToFalseOnlyRefactoringsAreAvailable.Source arg2, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.EnableDecompilationSupportEntity.Source arg3, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.LocationPathsArray.Source<TContext> arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.DocumentAnalysisTimeoutMsEntity.Source arg1, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.IfSetToFalseOnlyRefactoringsAreAvailable.Source arg2, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.EnableDecompilationSupportEntity.Source arg3, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.LocationPathsArray.Source<TContext> arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1496,7 +1496,7 @@ public readonly partial struct OmnisharpSchema
         /// <param name="enableDecompilationSupport">The value of the <c>"EnableDecompilationSupport"</c> property.</param>
         /// <param name="locationPaths">The value of the <c>"LocationPaths"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.DocumentAnalysisTimeoutMsEntity.Source documentAnalysisTimeoutMs = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.IfSetToFalseOnlyRefactoringsAreAvailable.Source enableAnalyzersSupport = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.EnableDecompilationSupportEntity.Source enableDecompilationSupport = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.LocationPathsArray.Source locationPaths = default)
+        public static Source Build(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.DocumentAnalysisTimeoutMsEntity.Source documentAnalysisTimeoutMs = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.IfSetToFalseOnlyRefactoringsAreAvailable.Source enableAnalyzersSupport = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.EnableDecompilationSupportEntity.Source enableDecompilationSupport = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.LocationPathsArray.Source locationPaths = default)
         {
             return new Source(documentAnalysisTimeoutMs, enableAnalyzersSupport, enableDecompilationSupport, locationPaths);
         }
@@ -1511,7 +1511,7 @@ public readonly partial struct OmnisharpSchema
         /// <param name="enableDecompilationSupport">The value of the <c>"EnableDecompilationSupport"</c> property.</param>
         /// <param name="locationPaths">The value of the <c>"LocationPaths"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.DocumentAnalysisTimeoutMsEntity.Source documentAnalysisTimeoutMs = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.IfSetToFalseOnlyRefactoringsAreAvailable.Source enableAnalyzersSupport = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.EnableDecompilationSupportEntity.Source enableDecompilationSupport = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.LocationPathsArray.Source<TContext> locationPaths = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.DocumentAnalysisTimeoutMsEntity.Source documentAnalysisTimeoutMs = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.IfSetToFalseOnlyRefactoringsAreAvailable.Source enableAnalyzersSupport = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.EnableDecompilationSupportEntity.Source enableDecompilationSupport = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.LocationPathsArray.Source<TContext> locationPaths = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

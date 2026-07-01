@@ -377,7 +377,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>position</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPosition(in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source value)
+            public void SetPosition(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -422,7 +422,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>press</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPress(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.NameOfThePressHandlerForExtendedActionsInQuickView.Source value)
+            public void SetPress(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.NameOfThePressHandlerForExtendedActionsInQuickView.Source value)
             {
                 CheckValidInstance();
 
@@ -467,7 +467,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>text</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetText(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.TextDisplayedForExtendedActionsInQuickView.Source value)
+            public void SetText(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.TextDisplayedForExtendedActionsInQuickView.Source value)
             {
                 CheckValidInstance();
 
@@ -613,7 +613,7 @@ public readonly partial struct Ui5ManifestSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -636,7 +636,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -683,7 +683,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -855,7 +855,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.NameOfThePressHandlerForExtendedActionsInQuickView.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.TextDisplayedForExtendedActionsInQuickView.Source arg3)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.NameOfThePressHandlerForExtendedActionsInQuickView.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.TextDisplayedForExtendedActionsInQuickView.Source arg3)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1252,7 +1252,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg2">The value of the property.</param>
             /// <param name="arg3">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.NameOfThePressHandlerForExtendedActionsInQuickView.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.TextDisplayedForExtendedActionsInQuickView.Source arg3, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.NameOfThePressHandlerForExtendedActionsInQuickView.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.TextDisplayedForExtendedActionsInQuickView.Source arg3, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3);
@@ -1296,7 +1296,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="press">The value of the <c>"press"</c> property.</param>
         /// <param name="text">The value of the <c>"text"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source position = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.NameOfThePressHandlerForExtendedActionsInQuickView.Source press = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.TextDisplayedForExtendedActionsInQuickView.Source text = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source position = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.NameOfThePressHandlerForExtendedActionsInQuickView.Source press = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CustomActionsSetting.TextDisplayedForExtendedActionsInQuickView.Source text = default)
         {
             return new Source(position, press, text);
         }

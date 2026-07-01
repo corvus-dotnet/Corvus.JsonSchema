@@ -260,11 +260,9 @@ using var builder = MyType.CreateBuilder(
 MyType v5 = builder.RootElement;
 
 // V5 — delegate overload (for advanced scenarios like From() conversions)
-using var builder2 = MyType.CreateBuilder(
-    workspace,
-    (ref MyType.Builder b) => b.Create(
-        name: "Alice",
-        age: 30));
+using var builder2 = MyType.CreateBuilder(workspace, (ref MyType.Builder b) => b.Create(
+    name: "Alice",
+    age: 30));
 ```
 
 ### Nested object creation
@@ -281,9 +279,8 @@ using JsonWorkspace workspace = JsonWorkspace.Create();
 using var builder = OuterType.CreateBuilder(
     workspace,
     address: OuterType.AddressType.Build(
-        static (ref OuterType.AddressType.Builder ab) => ab.Create(
-            city: "London",
-            street: "Baker Street")),
+        city: "London",
+        street: "Baker Street"),
     name: "Sherlock");
 ```
 
@@ -322,10 +319,9 @@ using var builder2 = MyTuple.CreateBuilder(workspace, source);
 using var builder3 = MyTuple.CreateBuilder(
     workspace,
     MyTuple.Build(
-        static (ref MyTuple.Builder b) => b.CreateTuple(
-            item1: "hello",
-            item2: 42,
-            item3: true)));
+        item1: "hello",
+        item2: 42,
+        item3: true));
 ```
 
 ### Numeric array creation from span
@@ -344,8 +340,7 @@ using var builder2 = MyVector.CreateBuilder(workspace, source);
 // V5 — delegate route (for combining with other builder operations)
 using var builder3 = MyVector.CreateBuilder(
     workspace,
-    MyVector.Build(
-        static (ref MyVector.Builder b) => b.CreateTensor([1, 2, 3])));
+    MyVector.Build([1, 2, 3]));
 ```
 
 > **Note:** `Build(ReadOnlySpan<T>)` and `CreateBuilder(workspace, ReadOnlySpan<T>)` work on **all** numeric array types — both fixed-size tensors and variable-length arrays. For fixed-size tensors, the span must contain exactly `ValueBufferSize` elements. For variable-length arrays, any length is accepted.
@@ -690,19 +685,16 @@ When creating objects from scratch with known property values, use the convenien
 using var builder = MyType.CreateBuilder(workspace, name: "Alice", age: 30);
 
 // ✅ Also good — delegate overload for advanced scenarios (From() conversions, conditional logic)
-using var builder2 = MyType.CreateBuilder(workspace, (ref MyType.Builder b) =>
-{
-    b.Create(
-        name: TargetType.NameEntity.From(source.Name),
-        age: source.Age);
-});
+using var builder2 = MyType.CreateBuilder(workspace,
+    name: TargetType.NameEntity.From(source.Name),
+    age: source.Age);
 ```
 
 ### 2. Use `static` lambdas
 Always use `static` on builder delegates and Match lambdas that don't capture variables:
 ```csharp
 // ✅ Good
-MyType.Build(static (ref MyType.Builder b) => b.Create(...));
+MyType.Build(...);
 v5.Match(matchRed: static () => "Red", ...);
 
 // ❌ Only omit static when capturing variables

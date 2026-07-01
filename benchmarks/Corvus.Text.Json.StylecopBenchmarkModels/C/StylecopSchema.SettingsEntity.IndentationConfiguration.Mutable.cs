@@ -283,7 +283,7 @@ public readonly partial struct StylecopSchema
                 /// Set the <c>indentationSize</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetIndentationSize(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheIndentationSize.Source value)
+                public void SetIndentationSize(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheIndentationSize.Source value)
                 {
                     CheckValidInstance();
 
@@ -328,7 +328,7 @@ public readonly partial struct StylecopSchema
                 /// Set the <c>tabSize</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTabSize(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheTabWidth.Source value)
+                public void SetTabSize(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheTabWidth.Source value)
                 {
                     CheckValidInstance();
 
@@ -373,7 +373,7 @@ public readonly partial struct StylecopSchema
                 /// Set the <c>useTabs</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetUseTabs(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.UseTabsEntity.Source value)
+                public void SetUseTabs(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.UseTabsEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -585,7 +585,7 @@ public readonly partial struct StylecopSchema
 
                 internal Source(Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheIndentationSize.Source arg1, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheTabWidth.Source arg2, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.UseTabsEntity.Source arg3)
+                internal Source(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheIndentationSize.Source arg1, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheTabWidth.Source arg2, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.UseTabsEntity.Source arg3)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -913,7 +913,7 @@ public readonly partial struct StylecopSchema
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheIndentationSize.Source arg1, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheTabWidth.Source arg2, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.UseTabsEntity.Source arg3, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheIndentationSize.Source arg1, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheTabWidth.Source arg2, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.UseTabsEntity.Source arg3, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3);
@@ -957,7 +957,7 @@ public readonly partial struct StylecopSchema
             /// <param name="tabSize">The value of the <c>"tabSize"</c> property.</param>
             /// <param name="useTabs">The value of the <c>"useTabs"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheIndentationSize.Source indentationSize = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheTabWidth.Source tabSize = default, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.UseTabsEntity.Source useTabs = default)
+            public static Source Build(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheIndentationSize.Source indentationSize = default, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.SpecifiesTheTabWidth.Source tabSize = default, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.IndentationConfiguration.UseTabsEntity.Source useTabs = default)
             {
                 return new Source(indentationSize, tabSize, useTabs);
             }

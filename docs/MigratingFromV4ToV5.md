@@ -453,12 +453,10 @@ For scenarios that require logic inside the builder (e.g., `From()` conversions,
 
 ```csharp
 // V5 — delegate overload (for advanced scenarios)
-using var builder = MigrationPerson.CreateBuilder(
-    workspace,
-    (ref b) => b.Create(
-        name: "Alice",
-        age: 30,
-        email: "alice@test.com"));
+using var builder = MigrationPerson.CreateBuilder(workspace, (ref MigrationPerson.Builder b) => b.Create(
+    name: "Alice",
+    age: 30,
+    email: "alice@test.com"));
 ```
 
 If all of an object's properties are optional, you can create an empty builder with no initializer:
@@ -525,10 +523,9 @@ using JsonWorkspace workspace = JsonWorkspace.Create();
 using var builder = MigrationNested.CreateBuilder(
     workspace,
     address: MigrationNested.RequiredCityAndStreet.Build(
-        (ref ab) => ab.Create(
-            city: "London",
-            street: "221B Baker Street",
-            zipCode: "12345")),
+        city: "London",
+        street: "221B Baker Street",
+        zipCode: "12345"),
     name: "Sherlock");
 
 MigrationNested.Mutable root = builder.RootElement;
@@ -545,12 +542,9 @@ using var builder = MigrationItemArray.CreateBuilder(
     MigrationItemArray.Build(
         (ref b) =>
         {
-            b.AddItem(MigrationItemArray.RequiredId.Build(
-                (ref ib) => ib.Create(id: 1, label: "First")));
-            b.AddItem(MigrationItemArray.RequiredId.Build(
-                (ref ib) => ib.Create(id: 2, label: "Second")));
-            b.AddItem(MigrationItemArray.RequiredId.Build(
-                (ref ib) => ib.Create(id: 3)));
+            b.AddItem(MigrationItemArray.RequiredId.Build(id: 1, label: "First"));
+            b.AddItem(MigrationItemArray.RequiredId.Build(id: 2, label: "Second"));
+            b.AddItem(MigrationItemArray.RequiredId.Build(id: 3));
         }));
 
 MigrationItemArray.Mutable root = builder.RootElement;
@@ -850,8 +844,7 @@ The delegate-based `Build` + `CreateTensor` pattern also works:
 // V5 — Build + CreateTensor (delegate route)
 using var builder = MigrationIntVector.CreateBuilder(
     workspace,
-    MigrationIntVector.Build(
-        static (ref MigrationIntVector.Builder b) => b.CreateTensor([1, 2, 3])));
+    MigrationIntVector.Build([1, 2, 3]));
 ```
 
 Use the convenience overload when you already have the data in a span. Use the delegate pattern when you need to combine tensor creation with other builder operations.
@@ -925,10 +918,9 @@ using var builder2 = MigrationTuple.CreateBuilder(workspace, source);
 using var builder3 = MigrationTuple.CreateBuilder(
     workspace,
     MigrationTuple.Build(
-        static (ref b) => b.CreateTuple(
-            item1: "hello",
-            item2: 42,
-            item3: true)));
+        item1: "hello",
+        item2: 42,
+        item3: true));
 MigrationTuple result2 = builder2.RootElement;
 ```
 
@@ -1293,7 +1285,7 @@ using var builder = MyTuple.CreateBuilder(workspace, source);
 
 // ⚠️ Verbose — use the delegate pattern only when required (open tuples, combining operations)
 using var builder = MyTuple.CreateBuilder(workspace,
-    MyTuple.Build(static (ref MyTuple.Builder b) => b.CreateTuple("hello", 42, true)));
+    MyTuple.Build("hello", 42, true));
 ```
 
 ### Use `static` lambdas where possible
@@ -1305,10 +1297,9 @@ When creating builder delegates or pattern matching lambdas that don't capture v
 using var doc = Person.CreateBuilder(
     workspace,
     Person.Build(
-        static (ref Person.Builder b) => b.Create(
-            familyName: "Brontë",
-            givenName: "Anne",
-            height: 1.57)));
+        familyName: "Brontë",
+        givenName: "Anne",
+        height: 1.57));
 
 // Pattern matching without captured variables — use static
 string result = color.Match(
@@ -1367,10 +1358,7 @@ using var sourceDoc = ParsedJsonDocument<SourceType>.Parse(json);
 SourceType source = sourceDoc.RootElement;
 
 using JsonWorkspace workspace = JsonWorkspace.Create();
-using var targetBuilder = TargetType.CreateBuilder(workspace, (ref TargetType.Builder b) =>
-{
-    b.Create(nameValue, TargetType.IdentifierEntity.From(idValue));
-});
+using var targetBuilder = TargetType.CreateBuilder(workspace, nameValue, TargetType.IdentifierEntity.From(idValue));
 ```
 
 While `SourceType.IdEntity` and `TargetType.IdentifierEntity` are different types they both represent integers with compatible constraints, so you can safely convert between them, without having to convert to an intermediate .NET value type.
@@ -1459,7 +1447,7 @@ Note that on .NET 9.0 and later, you can pass a `ref struct` as your context.
 | N/A | `v5.TryFormat(byteSpan, ...)` (V5 only — `IUtf8SpanFormattable`) |
 | `MyType.JsonPropertyNames.Name` | `MyType.JsonPropertyNames.Name` (same) |
 | `MyType.JsonPropertyNames.NameUtf8` | `MyType.JsonPropertyNames.NameUtf8` (same) |
-| `MyType.Create(...)` | `MyType.CreateBuilder(workspace, (ref b) => b.Create(...))` |
+| `MyType.Create(...)` | `MyType.CreateBuilder(workspace, ...)` |
 | `MyType.FromItems(item1, item2)` | `MyType.CreateBuilder(workspace, MyType.Build((ref b) => { b.AddItem(...); }))` |
 | `v4.WithName("Bob")` (typed property) | `mutable.SetName("Bob")` (typed property, imperative) |
 | `v4.WithEmail(default)` (typed property) | `mutable.RemoveEmail()` (typed property) |

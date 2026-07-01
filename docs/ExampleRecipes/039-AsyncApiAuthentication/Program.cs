@@ -39,10 +39,7 @@ try
 
     TurnOnProducer producer = new(transport, authProvider: auth);
     await producer.PublishTurnOnOffAsync(
-        payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
-        {
-            b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-        }),
+        payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
         streetlightId: "lamp-001");
 
     Console.WriteLine($"OAuth2 (client credentials): published to {transport.PublishedMessages[^1].Channel}");
@@ -162,10 +159,7 @@ catch (Exception ex)
 
     TurnOnProducer producer = new(transport, authProvider: auth);
     await producer.PublishTurnOnOffAsync(
-        payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
-        {
-            b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
-        }),
+        payload: TurnOnOffPayload.Build(command: "off"u8, sentAt: DateTimeOffset.UtcNow),
         streetlightId: "lamp-002");
 
     Console.WriteLine($"OAuth2 (static token): published to {transport.PublishedMessages[^1].Channel}");
@@ -177,10 +171,7 @@ catch (Exception ex)
 
     TurnOnProducer producer = new(transport, authProvider: auth);
     await producer.PublishTurnOnOffAsync(
-        payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
-        {
-            b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-        }),
+        payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
         streetlightId: "lamp-003");
 
     Console.WriteLine($"Bearer token: published to {transport.PublishedMessages[^1].Channel}");
@@ -206,10 +197,7 @@ catch (Exception ex)
 
     TurnOnProducer producer = new(transport, authProvider: auth);
     await producer.PublishTurnOnOffAsync(
-        payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
-        {
-            b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-        }),
+        payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
         streetlightId: "lamp-004");
 
     Console.WriteLine($"API key: published to {transport.PublishedMessages[^1].Channel}");
@@ -236,10 +224,7 @@ catch (Exception ex)
 
     TurnOnProducer producer = new(transport, authProvider: auth);
     await producer.PublishTurnOnOffAsync(
-        payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
-        {
-            b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
-        }),
+        payload: TurnOnOffPayload.Build(command: "off"u8, sentAt: DateTimeOffset.UtcNow),
         streetlightId: "lamp-005");
 
     Console.WriteLine($"Username/password: published to {transport.PublishedMessages[^1].Channel}");
@@ -284,10 +269,7 @@ catch (Exception ex)
 
     TurnOnProducer producer = new(transport, authProvider: auth);
     await producer.PublishTurnOnOffAsync(
-        payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
-        {
-            b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-        }),
+        payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
         streetlightId: "lamp-006");
 
     Console.WriteLine($"Composite: published to {transport.PublishedMessages[^1].Channel}");
@@ -301,10 +283,7 @@ catch (Exception ex)
 
     TurnOnProducer producer = new(transport, authProvider: auth);
     await producer.PublishTurnOnOffAsync(
-        payload: new TurnOnOffPayload.Source((ref TurnOnOffPayload.Builder b) =>
-        {
-            b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
-        }),
+        payload: TurnOnOffPayload.Build(command: "off"u8, sentAt: DateTimeOffset.UtcNow),
         streetlightId: "lamp-007");
 
     Console.WriteLine($"Custom provider: published to {transport.PublishedMessages[^1].Channel}");

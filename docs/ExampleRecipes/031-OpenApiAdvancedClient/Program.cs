@@ -56,11 +56,8 @@ await using ListPetsResponse listResponse = await petsClient.ListPetsAsync(
         b.AddItem("dog"u8);
         b.AddItem("friendly"u8);
     }),
-    filter: new GetPetsFilter.Source((ref GetPetsFilter.Builder b) =>
-    {
-        // Deep-object params mirror the schema properties
-        b.Create(status: "available"u8, breed: "labrador"u8, minAge: 1, maxAge: 5);
-    }));
+    // Deep-object params mirror the schema properties
+    filter: GetPetsFilter.Build(status: "available"u8, breed: "labrador"u8, minAge: 1, maxAge: 5));
 
 // Wire format: GET /pets?tags=dog&tags=friendly&filter[status]=available&filter[breed]=labrador&filter[minAge]=1&filter[maxAge]=5&limit=10
 // Header: x-request-id: req-abc-123
@@ -127,20 +124,17 @@ Console.WriteLine();
 Console.WriteLine("\n3. Creating a pet (with session cookie)...");
 await using CreatePetResponse createResponse = await petsClient.CreatePetAsync(
     session_token: "sess_k7j2m9x4"u8,
-    body: new NewPet.Source((ref NewPet.Builder b) =>
-    {
-        b.Create(
-            name: "Bella"u8,
-            status: "available"u8,
-            breed: "golden retriever"u8,
-            age: 2,
-            tags: new NewPet.JsonStringArray.Source((ref NewPet.JsonStringArray.Builder tb) =>
-            {
-                tb.AddItem("dog"u8);
-                tb.AddItem("friendly"u8);
-                tb.AddItem("trained"u8);
-            }));
-    }));
+    body: NewPet.Build(
+        name: "Bella"u8,
+        status: "available"u8,
+        breed: "golden retriever"u8,
+        age: 2,
+        tags: new NewPet.JsonStringArray.Source((ref NewPet.JsonStringArray.Builder tb) =>
+        {
+            tb.AddItem("dog"u8);
+            tb.AddItem("friendly"u8);
+            tb.AddItem("trained"u8);
+        })));
 
 // Wire format: POST /pets, Cookie: session_token=sess_k7j2m9x4
 // Body: {"name":"Bella","status":"available","breed":"golden retriever",...}
@@ -178,13 +172,10 @@ byte[] photoBytes = [0x89, 0x50, 0x4E, 0x47]; // PNG header stub
 await using UploadPetPhotoResponse uploadResponse = await photosClient.UploadPetPhotoAsync(
     petId: "pet-42"u8,
     session_token: "sess_k7j2m9x4"u8,
-    body: new PostPetsByPetIdPhotosBody.Source((ref PostPetsByPetIdPhotosBody.Builder b) =>
-    {
-        b.Create(
-            file: "bella-park.png"u8, // binary bytes are supplied by BinaryPartData below
-            caption: "Bella at the park"u8,
-            isPrimary: true);
-    }),
+    body: PostPetsByPetIdPhotosBody.Build(
+        file: "bella-park.png"u8, // binary bytes are supplied by BinaryPartData below
+        caption: "Bella at the park"u8,
+        isPrimary: true),
     file: new BinaryPartData(
         WriteContentAsync: (stream, ct) => { stream.Write(photoBytes); return default; },
         ContentType: "image/png",
@@ -265,10 +256,7 @@ Console.WriteLine("\n6. Starting vet chat (SSE streaming)...");
 await using StartVetChatResponse chatResponse = await chatClient.StartVetChatAsync(
     petId: "pet-42"u8,
     session_token: "sess_k7j2m9x4"u8,
-    body: new PostPetsByPetIdChatBody.Source((ref PostPetsByPetIdChatBody.Builder b) =>
-    {
-        b.Create(message: "My dog hasn't been eating well for two days. Should I be worried?"u8);
-    }));
+    body: PostPetsByPetIdChatBody.Build(message: "My dog hasn't been eating well for two days. Should I be worried?"u8));
 
 // EnumerateOkItems returns IAsyncEnumerable<ParsedJsonDocument<ChatChunk>>
 // Each document is individually pooled — process and dispose as you go.
@@ -329,17 +317,14 @@ Console.WriteLine();
 Console.WriteLine("\n8. Submitting adoption application (form-encoded)...");
 await using SubmitAdoptionApplicationResponse adoptionResponse =
     await adoptionClient.SubmitAdoptionApplicationAsync(
-        body: new PostAdoptionApplyBody.Source((ref PostAdoptionApplyBody.Builder b) =>
-        {
-            b.Create(
-                applicantName: "Jane Smith"u8,
-                email: "jane@example.com"u8,
-                housingType: "house"u8,
-                petId: "pet-42"u8,
-                hasGarden: true,
-                experience: "Had dogs for 10 years"u8,
-                phone: "+44 7700 900000"u8);
-        }));
+        body: PostAdoptionApplyBody.Build(
+            applicantName: "Jane Smith"u8,
+            email: "jane@example.com"u8,
+            housingType: "house"u8,
+            petId: "pet-42"u8,
+            hasGarden: true,
+            experience: "Had dogs for 10 years"u8,
+            phone: "+44 7700 900000"u8));
 
 // Wire format: POST /adoption/apply
 // Content-Type: application/x-www-form-urlencoded

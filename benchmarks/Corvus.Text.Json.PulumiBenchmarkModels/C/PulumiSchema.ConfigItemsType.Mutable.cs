@@ -351,7 +351,7 @@ public readonly partial struct PulumiSchema
             /// Set the <c>items</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetItems(in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source value)
+            public void SetItems(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.Source value)
             {
                 CheckValidInstance();
 
@@ -432,7 +432,7 @@ public readonly partial struct PulumiSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.TypeEntity.Source value)
+            public void SetType(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigItemsType.TypeEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -598,7 +598,7 @@ public readonly partial struct PulumiSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -621,7 +621,7 @@ public readonly partial struct PulumiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -668,7 +668,7 @@ public readonly partial struct PulumiSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 

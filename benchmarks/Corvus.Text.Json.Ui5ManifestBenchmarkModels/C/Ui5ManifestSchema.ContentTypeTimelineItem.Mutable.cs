@@ -355,7 +355,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>actions</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetActions(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.ActionArray.Source value)
+            public void SetActions(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.ActionArray.Source value)
             {
                 CheckValidInstance();
 
@@ -436,7 +436,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>dateTime</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDateTimeValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source value)
+            public void SetDateTimeValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source value)
             {
                 CheckValidInstance();
 
@@ -517,7 +517,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source value)
+            public void SetDescription(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source value)
             {
                 CheckValidInstance();
 
@@ -598,7 +598,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>icon</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIcon(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleIcon.Source value)
+            public void SetIcon(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleIcon.Source value)
             {
                 CheckValidInstance();
 
@@ -679,7 +679,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>owner</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOwner(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source value)
+            public void SetOwner(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source value)
             {
                 CheckValidInstance();
 
@@ -760,7 +760,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>ownerImage</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOwnerImage(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.TheOwnerImageOfTheTimelineItem.Source value)
+            public void SetOwnerImage(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.TheOwnerImageOfTheTimelineItem.Source value)
             {
                 CheckValidInstance();
 
@@ -841,7 +841,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>title</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTitle(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source value)
+            public void SetTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source value)
             {
                 CheckValidInstance();
 
@@ -1093,7 +1093,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.ActionArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleIcon.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.TheOwnerImageOfTheTimelineItem.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source arg7)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.ActionArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleIcon.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.TheOwnerImageOfTheTimelineItem.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source arg7)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1269,7 +1269,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.ActionArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleIcon.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.TheOwnerImageOfTheTimelineItem.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> arg7)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.ActionArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleIcon.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.TheOwnerImageOfTheTimelineItem.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> arg7)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1542,7 +1542,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg6">The value of the property.</param>
             /// <param name="arg7">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.ActionArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleIcon.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.TheOwnerImageOfTheTimelineItem.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source arg7, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.ActionArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleIcon.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.TheOwnerImageOfTheTimelineItem.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source arg7, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
@@ -1562,7 +1562,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg6">The value of the property.</param>
             /// <param name="arg7">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.ActionArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleIcon.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.TheOwnerImageOfTheTimelineItem.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> arg7, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.ActionArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleIcon.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.TheOwnerImageOfTheTimelineItem.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> arg7, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1613,7 +1613,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="ownerImage">The value of the <c>"ownerImage"</c> property.</param>
         /// <param name="title">The value of the <c>"title"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.ActionArray.Source actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source dateTime = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source description = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleIcon.Source icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source owner = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.TheOwnerImageOfTheTimelineItem.Source ownerImage = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source title = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.ActionArray.Source actions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source dateTime = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source description = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleIcon.Source icon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source owner = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.TheOwnerImageOfTheTimelineItem.Source ownerImage = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source title = default)
         {
             return new Source(actions, dateTime, description, icon, owner, ownerImage, title);
         }
@@ -1631,7 +1631,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="ownerImage">The value of the <c>"ownerImage"</c> property.</param>
         /// <param name="title">The value of the <c>"title"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.ActionArray.Source<TContext> actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> dateTime = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> description = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleIcon.Source<TContext> icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> owner = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.TheOwnerImageOfTheTimelineItem.Source<TContext> ownerImage = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> title = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.ActionArray.Source<TContext> actions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> dateTime = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> description = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleIcon.Source<TContext> icon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> owner = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeTimelineItem.TheOwnerImageOfTheTimelineItem.Source<TContext> ownerImage = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Field.Source<TContext> title = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

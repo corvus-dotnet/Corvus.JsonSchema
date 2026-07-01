@@ -450,7 +450,7 @@ public readonly partial struct SemanticReleaseSchema
         /// Set the <c>branches</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBranches(in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Source value)
+        public void SetBranches(scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Source value)
         {
             CheckValidInstance();
 
@@ -531,7 +531,7 @@ public readonly partial struct SemanticReleaseSchema
         /// Set the <c>ci</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCi(in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.CiEntity.Source value)
+        public void SetCi(scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.CiEntity.Source value)
         {
             CheckValidInstance();
 
@@ -576,7 +576,7 @@ public readonly partial struct SemanticReleaseSchema
         /// Set the <c>dryRun</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDryRun(in Corvus.SemanticReleaseBenchmark.Current.JsonBoolean.Source value)
+        public void SetDryRun(scoped in Corvus.SemanticReleaseBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -621,7 +621,7 @@ public readonly partial struct SemanticReleaseSchema
         /// Set the <c>extends</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExtends(in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.ExtendsEntity.Source value)
+        public void SetExtends(scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.ExtendsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -702,7 +702,7 @@ public readonly partial struct SemanticReleaseSchema
         /// Set the <c>plugins</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPlugins(in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.Source value)
+        public void SetPlugins(scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.Source value)
         {
             CheckValidInstance();
 
@@ -783,7 +783,7 @@ public readonly partial struct SemanticReleaseSchema
         /// Set the <c>repositoryUrl</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRepositoryUrl(in Corvus.SemanticReleaseBenchmark.Current.JsonString.Source value)
+        public void SetRepositoryUrl(scoped in Corvus.SemanticReleaseBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -828,7 +828,7 @@ public readonly partial struct SemanticReleaseSchema
         /// Set the <c>tagFormat</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTagFormat(in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TagFormatEntity.Source value)
+        public void SetTagFormat(scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TagFormatEntity.Source value)
         {
             CheckValidInstance();
 
@@ -974,7 +974,7 @@ public readonly partial struct SemanticReleaseSchema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -997,7 +997,7 @@ public readonly partial struct SemanticReleaseSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1044,7 +1044,7 @@ public readonly partial struct SemanticReleaseSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1220,7 +1220,7 @@ public readonly partial struct SemanticReleaseSchema
 
         internal Source(Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Source arg1, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.CiEntity.Source arg2, in Corvus.SemanticReleaseBenchmark.Current.JsonBoolean.Source arg3, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.ExtendsEntity.Source arg4, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.Source arg5, in Corvus.SemanticReleaseBenchmark.Current.JsonString.Source arg6, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TagFormatEntity.Source arg7)
+        internal Source(scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Source arg1, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.CiEntity.Source arg2, scoped in Corvus.SemanticReleaseBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.ExtendsEntity.Source arg4, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.Source arg5, scoped in Corvus.SemanticReleaseBenchmark.Current.JsonString.Source arg6, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TagFormatEntity.Source arg7)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1396,7 +1396,7 @@ public readonly partial struct SemanticReleaseSchema
 
         internal Source(scoped in TContext context, Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Source<TContext> arg1, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.CiEntity.Source arg2, in Corvus.SemanticReleaseBenchmark.Current.JsonBoolean.Source arg3, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.ExtendsEntity.Source<TContext> arg4, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.Source<TContext> arg5, in Corvus.SemanticReleaseBenchmark.Current.JsonString.Source arg6, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TagFormatEntity.Source arg7)
+        internal Source(scoped in TContext context, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Source<TContext> arg1, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.CiEntity.Source arg2, scoped in Corvus.SemanticReleaseBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.ExtendsEntity.Source<TContext> arg4, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.Source<TContext> arg5, scoped in Corvus.SemanticReleaseBenchmark.Current.JsonString.Source arg6, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TagFormatEntity.Source arg7)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1738,7 +1738,7 @@ public readonly partial struct SemanticReleaseSchema
         /// <param name="arg6">The value of the property.</param>
         /// <param name="arg7">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Source arg1, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.CiEntity.Source arg2, in Corvus.SemanticReleaseBenchmark.Current.JsonBoolean.Source arg3, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.ExtendsEntity.Source arg4, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.Source arg5, in Corvus.SemanticReleaseBenchmark.Current.JsonString.Source arg6, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TagFormatEntity.Source arg7, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Source arg1, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.CiEntity.Source arg2, scoped in Corvus.SemanticReleaseBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.ExtendsEntity.Source arg4, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.Source arg5, scoped in Corvus.SemanticReleaseBenchmark.Current.JsonString.Source arg6, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TagFormatEntity.Source arg7, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
@@ -1758,7 +1758,7 @@ public readonly partial struct SemanticReleaseSchema
         /// <param name="arg6">The value of the property.</param>
         /// <param name="arg7">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Source<TContext> arg1, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.CiEntity.Source arg2, in Corvus.SemanticReleaseBenchmark.Current.JsonBoolean.Source arg3, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.ExtendsEntity.Source<TContext> arg4, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.Source<TContext> arg5, in Corvus.SemanticReleaseBenchmark.Current.JsonString.Source arg6, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TagFormatEntity.Source arg7, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Source<TContext> arg1, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.CiEntity.Source arg2, scoped in Corvus.SemanticReleaseBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.ExtendsEntity.Source<TContext> arg4, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.Source<TContext> arg5, scoped in Corvus.SemanticReleaseBenchmark.Current.JsonString.Source arg6, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TagFormatEntity.Source arg7, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1809,7 +1809,7 @@ public readonly partial struct SemanticReleaseSchema
     /// <param name="repositoryUrl">The value of the <c>"repositoryUrl"</c> property.</param>
     /// <param name="tagFormat">The value of the <c>"tagFormat"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Source branches = default, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.CiEntity.Source ci = default, in Corvus.SemanticReleaseBenchmark.Current.JsonBoolean.Source dryRun = default, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.ExtendsEntity.Source extends = default, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.Source plugins = default, in Corvus.SemanticReleaseBenchmark.Current.JsonString.Source repositoryUrl = default, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TagFormatEntity.Source tagFormat = default)
+    public static Source Build(scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Source branches = default, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.CiEntity.Source ci = default, scoped in Corvus.SemanticReleaseBenchmark.Current.JsonBoolean.Source dryRun = default, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.ExtendsEntity.Source extends = default, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.Source plugins = default, scoped in Corvus.SemanticReleaseBenchmark.Current.JsonString.Source repositoryUrl = default, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TagFormatEntity.Source tagFormat = default)
     {
         return new Source(branches, ci, dryRun, extends, plugins, repositoryUrl, tagFormat);
     }
@@ -1827,7 +1827,7 @@ public readonly partial struct SemanticReleaseSchema
     /// <param name="repositoryUrl">The value of the <c>"repositoryUrl"</c> property.</param>
     /// <param name="tagFormat">The value of the <c>"tagFormat"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Source<TContext> branches = default, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.CiEntity.Source ci = default, in Corvus.SemanticReleaseBenchmark.Current.JsonBoolean.Source dryRun = default, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.ExtendsEntity.Source<TContext> extends = default, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.Source<TContext> plugins = default, in Corvus.SemanticReleaseBenchmark.Current.JsonString.Source repositoryUrl = default, in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TagFormatEntity.Source tagFormat = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TheBranchesOnWhichReleasesShouldHappen.Source<TContext> branches = default, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.CiEntity.Source ci = default, scoped in Corvus.SemanticReleaseBenchmark.Current.JsonBoolean.Source dryRun = default, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.ExtendsEntity.Source<TContext> extends = default, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.Source<TContext> plugins = default, scoped in Corvus.SemanticReleaseBenchmark.Current.JsonString.Source repositoryUrl = default, scoped in Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.TagFormatEntity.Source tagFormat = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

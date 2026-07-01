@@ -513,7 +513,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>addBadge</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAddBadge(in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source value)
+                public void SetAddBadge(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -558,7 +558,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>addCheck</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAddCheck(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.AddCheckEntity.Source value)
+                public void SetAddCheck(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.AddCheckEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -603,7 +603,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>addLabel</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAddLabel(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.AddLabelEntity.Source value)
+                public void SetAddLabel(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.AddLabelEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -648,7 +648,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>branches</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetBranches(in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source value)
+                public void SetBranches(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -693,7 +693,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>master</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMaster(in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source value)
+                public void SetMaster(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -738,7 +738,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>pullRequests</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPullRequests(in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source value)
+                public void SetPullRequests(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -783,7 +783,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>pullRequestsFromForks</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPullRequestsFromForks(in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source value)
+                public void SetPullRequestsFromForks(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source value)
                 {
                     CheckValidInstance();
 
@@ -929,7 +929,7 @@ public readonly partial struct GitpodConfigurationSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -952,7 +952,7 @@ public readonly partial struct GitpodConfigurationSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -999,7 +999,7 @@ public readonly partial struct GitpodConfigurationSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1179,7 +1179,7 @@ public readonly partial struct GitpodConfigurationSchema
 
                 internal Source(Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.AddCheckEntity.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.AddLabelEntity.Source arg3, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg4, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg5, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg6, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg7)
+                internal Source(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.AddCheckEntity.Source arg2, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.AddLabelEntity.Source arg3, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg7)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1629,7 +1629,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// <param name="arg6">The value of the property.</param>
                 /// <param name="arg7">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.AddCheckEntity.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.AddLabelEntity.Source arg3, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg4, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg5, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg6, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg7, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.AddCheckEntity.Source arg2, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.AddLabelEntity.Source arg3, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg5, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg7, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
@@ -1677,7 +1677,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// <param name="pullRequests">The value of the <c>"pullRequests"</c> property.</param>
             /// <param name="pullRequestsFromForks">The value of the <c>"pullRequestsFromForks"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source addBadge = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.AddCheckEntity.Source addCheck = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.AddLabelEntity.Source addLabel = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source branches = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source master = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source pullRequests = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source pullRequestsFromForks = default)
+            public static Source Build(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source addBadge = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.AddCheckEntity.Source addCheck = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.PrebuildsEntity.AddLabelEntity.Source addLabel = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source branches = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source master = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source pullRequests = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source pullRequestsFromForks = default)
             {
                 return new Source(addBadge, addCheck, addLabel, branches, master, pullRequests, pullRequestsFromForks);
             }

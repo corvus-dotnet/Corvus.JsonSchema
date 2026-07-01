@@ -72,10 +72,7 @@ TurnOnProducer producer = new(transport);
 
 // Publish a validated message — schema validation runs before the message leaves your process
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-001");
 
 // Inspect what was published
@@ -229,10 +226,7 @@ TurnOnProducer producer = new(transport, validationMode: ValidationMode.Basic);
 try
 {
     await producer.PublishTurnOnOffAsync(
-        payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-        {
-            b.Create(command: "invalid-command"u8, sentAt: DateTimeOffset.UtcNow);
-        }),
+        payload: TurnOnOffPayload.Build(command: "invalid-command"u8, sentAt: DateTimeOffset.UtcNow),
         streetlightId: "lamp-001");
 }
 catch (ArgumentException ex)
@@ -517,10 +511,7 @@ InMemoryMessageTransport transport = new();
 TurnOnProducer producer = new(transport, ValidationMode.None);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-001");
 
 // Assert published messages
@@ -611,10 +602,7 @@ IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-001");
 ```
 
@@ -670,10 +658,7 @@ IMessageAuthenticationProvider auth = new OAuth2AuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "off"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-002");
 ```
 
@@ -696,10 +681,7 @@ IMessageAuthenticationProvider auth = new BearerTokenAuthenticationProvider("my-
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-003");
 ```
 
@@ -782,10 +764,7 @@ IMessageAuthenticationProvider auth = new UserPasswordAuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "off"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-005");
 ```
 
@@ -842,10 +821,7 @@ IMessageAuthenticationProvider auth = new CompositeAuthenticationProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-006");
 ```
 
@@ -868,10 +844,7 @@ IMessageAuthenticationProvider auth = new RotatingSecretProvider(
 TurnOnProducer producer = new(transport, authProvider: auth);
 
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "off"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "off"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-007");
 ```
 
@@ -910,10 +883,7 @@ AsyncAPI channels can contain parameters (e.g., `smartylighting.streetlights.1.0
 ```csharp
 // The streetlightId parameter is part of the publish method signature
 await producer.PublishTurnOnOffAsync(
-    payload: TurnOnOffPayload.Build((ref TurnOnOffPayload.Builder b) =>
-    {
-        b.Create(command: "on"u8, sentAt: DateTimeOffset.UtcNow);
-    }),
+    payload: TurnOnOffPayload.Build(command: "on"u8, sentAt: DateTimeOffset.UtcNow),
     streetlightId: "lamp-42");
 // Wire: publishes to "smartylighting.streetlights.1.0.action.lamp-42.turn.on"
 ```
@@ -964,16 +934,10 @@ The generated producer accepts a typed `CommonHeaders.Source` parameter alongsid
 using Corvus.Text.Json.AsyncApi;
 
 await producer.PublishUserSignedUpAsync(
-    payload: new UserSignedUpPayload.Source((ref UserSignedUpPayload.Builder b) =>
-    {
-        b.Create(email: "alice@example.com"u8, userId: "user-123"u8);
-    }),
-    headers: new CommonHeaders.Source((ref CommonHeaders.Builder b) =>
-    {
-        b.Create(
-            correlationId: Guid.NewGuid().ToString("D"),
-            timestamp: DateTimeOffset.UtcNow.ToString("O"));
-    }));
+    payload: UserSignedUpPayload.Build(email: "alice@example.com"u8, userId: "user-123"u8),
+    headers: CommonHeaders.Build(
+        correlationId: Guid.NewGuid().ToString("D"),
+        timestamp: DateTimeOffset.UtcNow.ToString("O")));
 ```
 
 The transport serializes headers to a JSON object using a thread-static pooled `Utf8JsonWriter`, keeping allocation constant (152 bytes) regardless of header count. For transports that don't support native headers (MQTT, NATS), headers are base64-encoded into a protocol-level property.
@@ -1097,10 +1061,7 @@ AsyncAPI operations can model request/reply patterns. The generator produces met
 ```csharp
 // Generated request/reply method
 (QueryResponse reply, JsonElement replyHeaders) = await queryProducer.RequestQueryAsync(
-    request: new QueryPayload.Source((ref QueryPayload.Builder b) =>
-    {
-        b.Create(filter: "status=active"u8);
-    }),
+    request: QueryPayload.Build(filter: "status=active"u8),
     cancellationToken: ct);
 
 // reply is already deserialized and validated

@@ -488,7 +488,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>after</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAfterValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.After.Source value)
+                public void SetAfterValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.After.Source value)
                 {
                     CheckValidInstance();
 
@@ -569,7 +569,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>command</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCommandValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Command.Source value)
+                public void SetCommandValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Command.Source value)
                 {
                     CheckValidInstance();
 
@@ -600,7 +600,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>context</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetContextValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Context.Source value)
+                public void SetContextValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Context.Source value)
                 {
                     CheckValidInstance();
 
@@ -631,7 +631,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>description</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDescriptionValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Description.Source value)
+                public void SetDescriptionValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Description.Source value)
                 {
                     CheckValidInstance();
 
@@ -676,7 +676,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>key</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetKey(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetKey(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -707,7 +707,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>loadingText</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetLoadingTextValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.LoadingText.Source value)
+                public void SetLoadingTextValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.LoadingText.Source value)
                 {
                     CheckValidInstance();
 
@@ -752,7 +752,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>prompts</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPrompts(in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.Source value)
+                public void SetPrompts(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -833,7 +833,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>showOutput</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetShowOutputValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.ShowOutput.Source value)
+                public void SetShowOutputValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.ShowOutput.Source value)
                 {
                     CheckValidInstance();
 
@@ -878,7 +878,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>stream</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetStreamValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Stream.Source value)
+                public void SetStreamValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Stream.Source value)
                 {
                     CheckValidInstance();
 
@@ -923,7 +923,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>subprocess</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSubprocessValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Subprocess.Source value)
+                public void SetSubprocessValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Subprocess.Source value)
                 {
                     CheckValidInstance();
 
@@ -1142,7 +1142,7 @@ public readonly partial struct LazygitSchema
 
                 internal Source(Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Command.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Context.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.After.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Description.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.LoadingText.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.ShowOutput.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Stream.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Subprocess.Source arg10)
+                internal Source(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Command.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Context.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.After.Source arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Description.Source arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.LoadingText.Source arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.Source arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.ShowOutput.Source arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Stream.Source arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Subprocess.Source arg10)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1324,7 +1324,7 @@ public readonly partial struct LazygitSchema
 
                 internal Source(scoped in TContext context, Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Command.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Context.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.After.Source<TContext> arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Description.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.LoadingText.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.Source<TContext> arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.ShowOutput.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Stream.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Subprocess.Source arg10)
+                internal Source(scoped in TContext context, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Command.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Context.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.After.Source<TContext> arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Description.Source arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.LoadingText.Source arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.Source<TContext> arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.ShowOutput.Source arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Stream.Source arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Subprocess.Source arg10)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1621,7 +1621,7 @@ public readonly partial struct LazygitSchema
                 /// <param name="arg9">The value of the property.</param>
                 /// <param name="arg10">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Command.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Context.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.After.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Description.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.LoadingText.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.ShowOutput.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Stream.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Subprocess.Source arg10, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Command.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Context.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.After.Source arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Description.Source arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.LoadingText.Source arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.Source arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.ShowOutput.Source arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Stream.Source arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Subprocess.Source arg10, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
@@ -1644,7 +1644,7 @@ public readonly partial struct LazygitSchema
                 /// <param name="arg9">The value of the property.</param>
                 /// <param name="arg10">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Command.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Context.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.After.Source<TContext> arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Description.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.LoadingText.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.Source<TContext> arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.ShowOutput.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Stream.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Subprocess.Source arg10, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Command.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Context.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.After.Source<TContext> arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Description.Source arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.LoadingText.Source arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.Source<TContext> arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.ShowOutput.Source arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Stream.Source arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Subprocess.Source arg10, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1698,7 +1698,7 @@ public readonly partial struct LazygitSchema
             /// <param name="stream">The value of the <c>"stream"</c> property.</param>
             /// <param name="subprocess">The value of the <c>"subprocess"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Command.Source command, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Context.Source context, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source key, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.After.Source after = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Description.Source description = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.LoadingText.Source loadingText = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.Source prompts = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.ShowOutput.Source showOutput = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Stream.Source stream = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Subprocess.Source subprocess = default)
+            public static Source Build(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Command.Source command, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Context.Source context, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source key, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.After.Source after = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Description.Source description = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.LoadingText.Source loadingText = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.Source prompts = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.ShowOutput.Source showOutput = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Stream.Source stream = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Subprocess.Source subprocess = default)
             {
                 return new Source(command, context, key, after, description, loadingText, prompts, showOutput, stream, subprocess);
             }
@@ -1719,7 +1719,7 @@ public readonly partial struct LazygitSchema
             /// <param name="stream">The value of the <c>"stream"</c> property.</param>
             /// <param name="subprocess">The value of the <c>"subprocess"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Command.Source command, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Context.Source context1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source key, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.After.Source<TContext> after = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Description.Source description = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.LoadingText.Source loadingText = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.Source<TContext> prompts = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.ShowOutput.Source showOutput = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Stream.Source stream = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Subprocess.Source subprocess = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Command.Source command, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Context.Source context1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source key, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.After.Source<TContext> after = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Description.Source description = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.LoadingText.Source loadingText = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.Source<TContext> prompts = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.ShowOutput.Source showOutput = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Stream.Source stream = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.Subprocess.Source subprocess = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

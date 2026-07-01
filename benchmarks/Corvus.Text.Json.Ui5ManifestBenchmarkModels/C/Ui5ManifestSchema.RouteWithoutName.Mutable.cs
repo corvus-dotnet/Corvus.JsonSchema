@@ -401,7 +401,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>greedy</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGreedy(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+            public void SetGreedy(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -446,7 +446,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>pattern</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPattern(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetPattern(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -491,7 +491,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>target</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTarget(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source value)
+            public void SetTarget(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source value)
             {
                 CheckValidInstance();
 
@@ -572,7 +572,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>titleTarget</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTitleTarget(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetTitleTarget(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -718,7 +718,7 @@ public readonly partial struct Ui5ManifestSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -741,7 +741,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -788,7 +788,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -961,7 +961,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteWithoutName.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1131,7 +1131,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteWithoutName.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1449,7 +1449,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4);
@@ -1466,7 +1466,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1514,7 +1514,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="target">The value of the <c>"target"</c> property.</param>
         /// <param name="titleTarget">The value of the <c>"titleTarget"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source greedy = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source pattern = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source target = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source titleTarget = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source greedy = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source pattern = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source target = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source titleTarget = default)
         {
             return new Source(greedy, pattern, target, titleTarget);
         }
@@ -1529,7 +1529,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="target">The value of the <c>"target"</c> property.</param>
         /// <param name="titleTarget">The value of the <c>"titleTarget"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source greedy = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source pattern = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source<TContext> target = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source titleTarget = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source greedy = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source pattern = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RouteTarget.Source<TContext> target = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source titleTarget = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

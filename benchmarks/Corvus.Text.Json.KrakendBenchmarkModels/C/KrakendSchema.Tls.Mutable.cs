@@ -598,7 +598,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>ca_certs</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCaCerts(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Source value)
+            public void SetCaCerts(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Source value)
             {
                 CheckValidInstance();
 
@@ -679,7 +679,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>cipher_suites</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCipherSuitesValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Source value)
+            public void SetCipherSuitesValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Source value)
             {
                 CheckValidInstance();
 
@@ -760,7 +760,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>curve_preferences</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCurvePreferences(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Source value)
+            public void SetCurvePreferences(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Source value)
             {
                 CheckValidInstance();
 
@@ -841,7 +841,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>disable_system_ca_pool</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisableSystemCaPool(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Source value)
+            public void SetDisableSystemCaPool(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Source value)
             {
                 CheckValidInstance();
 
@@ -886,7 +886,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>disabled</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisabled(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Source value)
+            public void SetDisabled(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Source value)
             {
                 CheckValidInstance();
 
@@ -931,7 +931,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>enable_mtls</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnableMtls(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Source value)
+            public void SetEnableMtls(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Source value)
             {
                 CheckValidInstance();
 
@@ -976,7 +976,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>keys</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetKeys(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.KeysEntityArray.Source value)
+            public void SetKeys(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.KeysEntityArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1057,7 +1057,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>max_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxVersion(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Source value)
+            public void SetMaxVersion(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Source value)
             {
                 CheckValidInstance();
 
@@ -1102,7 +1102,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>min_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMinVersion(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Source value)
+            public void SetMinVersion(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Source value)
             {
                 CheckValidInstance();
 
@@ -1147,7 +1147,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>private_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPrivateKey(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetPrivateKey(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1192,7 +1192,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>public_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPublicKey(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetPublicKey(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1356,7 +1356,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1379,7 +1379,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1426,7 +1426,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1702,7 +1702,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.KeysEntityArray.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Source arg9, in Corvus.KrakendBenchmark.Current.JsonString.Source arg10, in Corvus.KrakendBenchmark.Current.JsonString.Source arg11)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.KeysEntityArray.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Source arg9, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg11)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1908,7 +1908,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.KeysEntityArray.Source<TContext> arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Source arg9, in Corvus.KrakendBenchmark.Current.JsonString.Source arg10, in Corvus.KrakendBenchmark.Current.JsonString.Source arg11)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Source<TContext> arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.KeysEntityArray.Source<TContext> arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Source arg9, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg11)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2282,7 +2282,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg10">The value of the property.</param>
             /// <param name="arg11">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.KeysEntityArray.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Source arg9, in Corvus.KrakendBenchmark.Current.JsonString.Source arg10, in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.KeysEntityArray.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Source arg9, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
@@ -2306,7 +2306,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg10">The value of the property.</param>
             /// <param name="arg11">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.KeysEntityArray.Source<TContext> arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Source arg9, in Corvus.KrakendBenchmark.Current.JsonString.Source arg10, in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Source<TContext> arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.KeysEntityArray.Source<TContext> arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Source arg9, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg10, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg11, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2361,7 +2361,7 @@ public readonly partial struct KrakendSchema
         /// <param name="privateKey">The value of the <c>"private_key"</c> property.</param>
         /// <param name="publicKey">The value of the <c>"public_key"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Source caCerts = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Source cipherSuites = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Source curvePreferences = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Source disableSystemCaPool = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Source disabled = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Source enableMtls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.KeysEntityArray.Source keys = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Source maxVersion = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Source minVersion = default, in Corvus.KrakendBenchmark.Current.JsonString.Source privateKey = default, in Corvus.KrakendBenchmark.Current.JsonString.Source publicKey = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Source caCerts = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Source cipherSuites = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Source curvePreferences = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Source disableSystemCaPool = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Source disabled = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Source enableMtls = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.KeysEntityArray.Source keys = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Source maxVersion = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Source minVersion = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source privateKey = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source publicKey = default)
         {
             return new Source(caCerts, cipherSuites, curvePreferences, disableSystemCaPool, disabled, enableMtls, keys, maxVersion, minVersion, privateKey, publicKey);
         }
@@ -2383,7 +2383,7 @@ public readonly partial struct KrakendSchema
         /// <param name="privateKey">The value of the <c>"private_key"</c> property.</param>
         /// <param name="publicKey">The value of the <c>"public_key"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Source<TContext> caCerts = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Source<TContext> cipherSuites = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Source<TContext> curvePreferences = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Source disableSystemCaPool = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Source disabled = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Source enableMtls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.KeysEntityArray.Source<TContext> keys = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Source maxVersion = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Source minVersion = default, in Corvus.KrakendBenchmark.Current.JsonString.Source privateKey = default, in Corvus.KrakendBenchmark.Current.JsonString.Source publicKey = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CaCertificatesForMtls.Source<TContext> caCerts = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CipherSuites.Source<TContext> cipherSuites = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.CurvePreferencesEntityArray.Source<TContext> curvePreferences = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableSystemSCa.Source disableSystemCaPool = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.DisableTls.Source disabled = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.EnableMutualAuthentication.Source enableMtls = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.KeysEntityArray.Source<TContext> keys = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MaximumTlsVersion.Source maxVersion = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.MinimumTlsVersion.Source minVersion = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source privateKey = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source publicKey = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

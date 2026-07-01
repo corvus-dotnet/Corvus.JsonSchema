@@ -221,7 +221,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>entitySets</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEntitySets(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
+            public void SetEntitySets(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
             {
                 CheckValidInstance();
 
@@ -467,7 +467,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RefreshStrategiesPropDef.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source arg1)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source arg1)
             {
                 _createArg1 = arg1;
                 _kind = Kind.Create;
@@ -631,7 +631,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RefreshStrategiesPropDef.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> arg1)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> arg1)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -851,7 +851,7 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             /// <param name="arg1">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source arg1, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source arg1, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1);
@@ -865,7 +865,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="arg1">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> arg1, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> arg1, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -910,7 +910,7 @@ public readonly partial struct Ui5ManifestSchema
         /// </summary>
         /// <param name="entitySets">The value of the <c>"entitySets"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source entitySets = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source entitySets = default)
         {
             return new Source(entitySets);
         }
@@ -922,7 +922,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="entitySets">The value of the <c>"entitySets"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> entitySets = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> entitySets = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

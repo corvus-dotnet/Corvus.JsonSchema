@@ -452,7 +452,7 @@ public readonly partial struct Media
         /// Set the <c>altText</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAltText(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetAltText(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -497,7 +497,7 @@ public readonly partial struct Media
         /// Set the <c>fallback</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFallback(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetFallback(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -578,7 +578,7 @@ public readonly partial struct Media
         /// Set the <c>height</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHeight(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetHeight(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -659,7 +659,7 @@ public readonly partial struct Media
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetId(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -740,7 +740,7 @@ public readonly partial struct Media
         /// Set the <c>isVisible</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIsVisible(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetIsVisible(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -821,7 +821,7 @@ public readonly partial struct Media
         /// Set the <c>poster</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPoster(in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source value)
+        public void SetPoster(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source value)
         {
             CheckValidInstance();
 
@@ -866,7 +866,7 @@ public readonly partial struct Media
         /// Set the <c>requires</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRequires(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetRequires(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -947,7 +947,7 @@ public readonly partial struct Media
         /// Set the <c>separator</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSeparator(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetSeparator(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1028,7 +1028,7 @@ public readonly partial struct Media
         /// Set the <c>sources</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSources(in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source value)
+        public void SetSources(scoped in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source value)
         {
             CheckValidInstance();
 
@@ -1093,7 +1093,7 @@ public readonly partial struct Media
         /// Set the <c>spacing</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpacing(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetSpacing(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1174,7 +1174,7 @@ public readonly partial struct Media
         /// Set the <c>type</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetType(in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source value)
+        public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source value)
         {
             CheckValidInstance();
 
@@ -1429,7 +1429,7 @@ public readonly partial struct Media
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.Media.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg7, in Corvus.Text.Json.JsonElement.Source arg8, in Corvus.Text.Json.JsonElement.Source arg9, in Corvus.Text.Json.JsonElement.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source arg11)
+        internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, scoped in Corvus.Text.Json.JsonElement.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg7, scoped in Corvus.Text.Json.JsonElement.Source arg8, scoped in Corvus.Text.Json.JsonElement.Source arg9, scoped in Corvus.Text.Json.JsonElement.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source arg11)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1613,7 +1613,7 @@ public readonly partial struct Media
 
         internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Media.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg7, in Corvus.Text.Json.JsonElement.Source<TContext> arg8, in Corvus.Text.Json.JsonElement.Source<TContext> arg9, in Corvus.Text.Json.JsonElement.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source arg11)
+        internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg7, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg8, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg9, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source arg11)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1918,7 +1918,7 @@ public readonly partial struct Media
         /// <param name="arg10">The value of the property.</param>
         /// <param name="arg11">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg7, in Corvus.Text.Json.JsonElement.Source arg8, in Corvus.Text.Json.JsonElement.Source arg9, in Corvus.Text.Json.JsonElement.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source arg11, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, scoped in Corvus.Text.Json.JsonElement.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg7, scoped in Corvus.Text.Json.JsonElement.Source arg8, scoped in Corvus.Text.Json.JsonElement.Source arg9, scoped in Corvus.Text.Json.JsonElement.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source arg11, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
@@ -1942,7 +1942,7 @@ public readonly partial struct Media
         /// <param name="arg10">The value of the property.</param>
         /// <param name="arg11">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg7, in Corvus.Text.Json.JsonElement.Source<TContext> arg8, in Corvus.Text.Json.JsonElement.Source<TContext> arg9, in Corvus.Text.Json.JsonElement.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source arg11, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg7, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg8, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg9, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source arg11, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1997,7 +1997,7 @@ public readonly partial struct Media
     /// <param name="spacing">The value of the <c>"spacing"</c> property.</param>
     /// <param name="type">The value of the <c>"type"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source sources, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source altText = default, in Corvus.Text.Json.JsonElement.Source fallback = default, in Corvus.Text.Json.JsonElement.Source height = default, in Corvus.Text.Json.JsonElement.Source id = default, in Corvus.Text.Json.JsonElement.Source isVisible = default, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source poster = default, in Corvus.Text.Json.JsonElement.Source requires = default, in Corvus.Text.Json.JsonElement.Source separator = default, in Corvus.Text.Json.JsonElement.Source spacing = default, in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source type = default)
+    public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source sources, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source altText = default, scoped in Corvus.Text.Json.JsonElement.Source fallback = default, scoped in Corvus.Text.Json.JsonElement.Source height = default, scoped in Corvus.Text.Json.JsonElement.Source id = default, scoped in Corvus.Text.Json.JsonElement.Source isVisible = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source poster = default, scoped in Corvus.Text.Json.JsonElement.Source requires = default, scoped in Corvus.Text.Json.JsonElement.Source separator = default, scoped in Corvus.Text.Json.JsonElement.Source spacing = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source type = default)
     {
         return new Source(sources, altText, fallback, height, id, isVisible, poster, requires, separator, spacing, type);
     }
@@ -2019,7 +2019,7 @@ public readonly partial struct Media
     /// <param name="spacing">The value of the <c>"spacing"</c> property.</param>
     /// <param name="type">The value of the <c>"type"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source<TContext> sources, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source altText = default, in Corvus.Text.Json.JsonElement.Source<TContext> fallback = default, in Corvus.Text.Json.JsonElement.Source<TContext> height = default, in Corvus.Text.Json.JsonElement.Source<TContext> id = default, in Corvus.Text.Json.JsonElement.Source<TContext> isVisible = default, in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source poster = default, in Corvus.Text.Json.JsonElement.Source<TContext> requires = default, in Corvus.Text.Json.JsonElement.Source<TContext> separator = default, in Corvus.Text.Json.JsonElement.Source<TContext> spacing = default, in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source type = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Media.MediaSourceArray.Source<TContext> sources, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source altText = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> fallback = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> height = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> id = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> isVisible = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source poster = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> requires = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> separator = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> spacing = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Media.MustBeMedia.Source type = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

@@ -505,7 +505,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>actionableArea</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetActionableArea(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source value)
+            public void SetActionableArea(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -550,7 +550,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>actions</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetActions(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source value)
+            public void SetActions(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source value)
             {
                 CheckValidInstance();
 
@@ -631,7 +631,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>chartProperties</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetChartProperties(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source value)
+            public void SetChartProperties(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source value)
             {
                 CheckValidInstance();
 
@@ -712,7 +712,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>chartType</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetChartType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source value)
+            public void SetChartType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source value)
             {
                 CheckValidInstance();
 
@@ -757,7 +757,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>data</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDataValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source value)
+            public void SetDataValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source value)
             {
                 CheckValidInstance();
 
@@ -838,7 +838,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>dimensionAxis</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDimensionAxis(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetDimensionAxis(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -883,7 +883,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>dimensions</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDimensions(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source value)
+            public void SetDimensions(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source value)
             {
                 CheckValidInstance();
 
@@ -964,7 +964,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>feeds</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFeeds(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source value)
+            public void SetFeeds(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1045,7 +1045,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>legend</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLegend(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source value)
+            public void SetLegend(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source value)
             {
                 CheckValidInstance();
 
@@ -1126,7 +1126,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>measureAxis</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMeasureAxis(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetMeasureAxis(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1171,7 +1171,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>measures</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMeasures(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source value)
+            public void SetMeasures(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1252,7 +1252,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>minHeight</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMinHeight(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetMinHeight(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1297,7 +1297,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>plotArea</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPlotArea(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source value)
+            public void SetPlotArea(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source value)
             {
                 CheckValidInstance();
 
@@ -1378,7 +1378,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>popover</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPopover(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source value)
+            public void SetPopover(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1459,7 +1459,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>title</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTitle(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source value)
+            public void SetTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source value)
             {
                 CheckValidInstance();
 
@@ -1719,7 +1719,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source arg15)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source arg13, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source arg15)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1911,7 +1911,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source<TContext> arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source<TContext> arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source<TContext> arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source<TContext> arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source<TContext> arg15)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source<TContext> arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source<TContext> arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source<TContext> arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source<TContext> arg13, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source<TContext> arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source<TContext> arg15)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2248,7 +2248,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg14">The value of the property.</param>
             /// <param name="arg15">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source arg15, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source arg13, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source arg15, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
@@ -2276,7 +2276,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg14">The value of the property.</param>
             /// <param name="arg15">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source<TContext> arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source<TContext> arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source<TContext> arg11, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source<TContext> arg13, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source<TContext> arg14, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source<TContext> arg15, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source<TContext> arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source<TContext> arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source<TContext> arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg12, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source<TContext> arg13, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source<TContext> arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source<TContext> arg15, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2335,7 +2335,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="popover">The value of the <c>"popover"</c> property.</param>
         /// <param name="title">The value of the <c>"title"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source actionableArea = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source chartProperties = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source chartType = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source dimensionAxis = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source dimensions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source feeds = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source legend = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source measureAxis = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source measures = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source plotArea = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source popover = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source title = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source actionableArea = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source actions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source chartProperties = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source chartType = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source dimensionAxis = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source dimensions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source feeds = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source legend = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source measureAxis = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source measures = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source plotArea = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source popover = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source title = default)
         {
             return new Source(actionableArea, actions, chartProperties, chartType, data, dimensionAxis, dimensions, feeds, legend, measureAxis, measures, minHeight, plotArea, popover, title);
         }
@@ -2361,7 +2361,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="popover">The value of the <c>"popover"</c> property.</param>
         /// <param name="title">The value of the <c>"title"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source actionableArea = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source<TContext> actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source<TContext> chartProperties = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source chartType = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source dimensionAxis = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source<TContext> dimensions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source<TContext> feeds = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source<TContext> legend = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source measureAxis = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source<TContext> measures = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source<TContext> plotArea = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source<TContext> popover = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source<TContext> title = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionableAreaEntity.Source actionableArea = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ActionArray.Source<TContext> actions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Source<TContext> chartProperties = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.TheTypeOfTheChart.Source chartType = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source dimensionAxis = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalDimensionArray.Source<TContext> dimensions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalFieldArray.Source<TContext> feeds = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalyticalLegend.Source<TContext> legend = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source measureAxis = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ContentTypeAnalyticalMeasureArray.Source<TContext> measures = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedDescribesThePlotAreaProperties.Source<TContext> plotArea = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.PopoverEntity.Source<TContext> popover = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.DeprecatedRepresentsTitleAttributes.Source<TContext> title = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

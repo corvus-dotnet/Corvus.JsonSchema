@@ -415,7 +415,7 @@ public readonly partial struct FabricModSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.FabricModBenchmark.Current.FabricModSchema.VersionRanges.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.VersionRanges.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -438,7 +438,7 @@ public readonly partial struct FabricModSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.FabricModBenchmark.Current.FabricModSchema.VersionRanges.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.VersionRanges.Source value)
             {
                 CheckValidInstance();
 
@@ -485,7 +485,7 @@ public readonly partial struct FabricModSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.FabricModBenchmark.Current.FabricModSchema.VersionRanges.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.VersionRanges.Source value)
             {
                 CheckValidInstance();
 

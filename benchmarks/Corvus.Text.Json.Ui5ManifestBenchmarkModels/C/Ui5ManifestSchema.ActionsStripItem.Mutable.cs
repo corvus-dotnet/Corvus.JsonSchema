@@ -394,7 +394,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>actions</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetActions(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.ActionArray.Source value)
+            public void SetActions(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.ActionArray.Source value)
             {
                 CheckValidInstance();
 
@@ -475,7 +475,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>ariaHasPopup</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAriaHasPopup(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.AriaHasPopupEntity.Source value)
+            public void SetAriaHasPopup(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.AriaHasPopupEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -520,7 +520,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>buttonType</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetButtonType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheButton.Source value)
+            public void SetButtonType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheButton.Source value)
             {
                 CheckValidInstance();
 
@@ -565,7 +565,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>icon</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIcon(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetIcon(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -610,7 +610,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>overflowPriority</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOverflowPriority(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DefinesItemsPriority.Source value)
+            public void SetOverflowPriority(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DefinesItemsPriority.Source value)
             {
                 CheckValidInstance();
 
@@ -655,7 +655,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>text</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetText(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetText(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -700,7 +700,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>tooltip</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTooltip(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetTooltip(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -745,7 +745,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheItem.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheItem.Source value)
             {
                 CheckValidInstance();
 
@@ -790,7 +790,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>visible</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVisible(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DeterminesWhetherTheItemIsVisible.Source value)
+            public void SetVisible(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DeterminesWhetherTheItemIsVisible.Source value)
             {
                 CheckValidInstance();
 
@@ -1008,7 +1008,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.ActionArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.AriaHasPopupEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheButton.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DefinesItemsPriority.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheItem.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DeterminesWhetherTheItemIsVisible.Source arg9)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.ActionArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.AriaHasPopupEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheButton.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DefinesItemsPriority.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheItem.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DeterminesWhetherTheItemIsVisible.Source arg9)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1188,7 +1188,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.ActionArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.AriaHasPopupEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheButton.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DefinesItemsPriority.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheItem.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DeterminesWhetherTheItemIsVisible.Source arg9)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.ActionArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.AriaHasPopupEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheButton.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DefinesItemsPriority.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheItem.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DeterminesWhetherTheItemIsVisible.Source arg9)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1477,7 +1477,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg8">The value of the property.</param>
             /// <param name="arg9">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.ActionArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.AriaHasPopupEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheButton.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DefinesItemsPriority.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheItem.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DeterminesWhetherTheItemIsVisible.Source arg9, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.ActionArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.AriaHasPopupEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheButton.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DefinesItemsPriority.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheItem.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DeterminesWhetherTheItemIsVisible.Source arg9, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
@@ -1499,7 +1499,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg8">The value of the property.</param>
             /// <param name="arg9">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.ActionArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.AriaHasPopupEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheButton.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DefinesItemsPriority.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheItem.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DeterminesWhetherTheItemIsVisible.Source arg9, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.ActionArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.AriaHasPopupEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheButton.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DefinesItemsPriority.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheItem.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DeterminesWhetherTheItemIsVisible.Source arg9, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1552,7 +1552,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="type">The value of the <c>"type"</c> property.</param>
         /// <param name="visible">The value of the <c>"visible"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.ActionArray.Source actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.AriaHasPopupEntity.Source ariaHasPopup = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheButton.Source buttonType = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DefinesItemsPriority.Source overflowPriority = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source tooltip = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheItem.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DeterminesWhetherTheItemIsVisible.Source visible = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.ActionArray.Source actions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.AriaHasPopupEntity.Source ariaHasPopup = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheButton.Source buttonType = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source icon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DefinesItemsPriority.Source overflowPriority = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source tooltip = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheItem.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DeterminesWhetherTheItemIsVisible.Source visible = default)
         {
             return new Source(actions, ariaHasPopup, buttonType, icon, overflowPriority, text, tooltip, type, visible);
         }
@@ -1572,7 +1572,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="type">The value of the <c>"type"</c> property.</param>
         /// <param name="visible">The value of the <c>"visible"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.ActionArray.Source<TContext> actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.AriaHasPopupEntity.Source ariaHasPopup = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheButton.Source buttonType = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DefinesItemsPriority.Source overflowPriority = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source tooltip = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheItem.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DeterminesWhetherTheItemIsVisible.Source visible = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.ActionArray.Source<TContext> actions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.AriaHasPopupEntity.Source ariaHasPopup = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheButton.Source buttonType = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source icon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DefinesItemsPriority.Source overflowPriority = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source tooltip = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.TheTypeOfTheItem.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ActionsStripItem.DeterminesWhetherTheItemIsVisible.Source visible = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

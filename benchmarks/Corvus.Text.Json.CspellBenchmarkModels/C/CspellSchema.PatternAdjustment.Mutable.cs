@@ -272,7 +272,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>id</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetId(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+            public void SetId(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -303,7 +303,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>penalty</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPenalty(in Corvus.CspellBenchmark.Current.JsonNumber.Source value)
+            public void SetPenalty(scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source value)
             {
                 CheckValidInstance();
 
@@ -334,7 +334,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>regexp</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRegexp(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+            public void SetRegexp(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -532,7 +532,7 @@ public readonly partial struct CspellSchema
 
             internal Source(Corvus.CspellBenchmark.Current.CspellSchema.PatternAdjustment.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.CspellBenchmark.Current.JsonString.Source arg1, in Corvus.CspellBenchmark.Current.JsonNumber.Source arg2, in Corvus.CspellBenchmark.Current.JsonString.Source arg3)
+            internal Source(scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg1, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source arg2, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg3)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -860,7 +860,7 @@ public readonly partial struct CspellSchema
             /// <param name="arg2">The value of the property.</param>
             /// <param name="arg3">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.CspellBenchmark.Current.JsonString.Source arg1, in Corvus.CspellBenchmark.Current.JsonNumber.Source arg2, in Corvus.CspellBenchmark.Current.JsonString.Source arg3, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg1, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source arg2, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg3, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3);
@@ -904,7 +904,7 @@ public readonly partial struct CspellSchema
         /// <param name="penalty">The value of the <c>"penalty"</c> property.</param>
         /// <param name="regexp">The value of the <c>"regexp"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.CspellBenchmark.Current.JsonString.Source id, in Corvus.CspellBenchmark.Current.JsonNumber.Source penalty, in Corvus.CspellBenchmark.Current.JsonString.Source regexp)
+        public static Source Build(scoped in Corvus.CspellBenchmark.Current.JsonString.Source id, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source penalty, scoped in Corvus.CspellBenchmark.Current.JsonString.Source regexp)
         {
             return new Source(id, penalty, regexp);
         }

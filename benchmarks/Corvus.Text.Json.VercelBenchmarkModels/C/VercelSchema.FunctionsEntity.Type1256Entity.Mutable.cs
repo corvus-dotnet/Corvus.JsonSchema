@@ -315,7 +315,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>excludeFiles</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetExcludeFiles(in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.ExcludeFilesEntity.Source value)
+                public void SetExcludeFiles(scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.ExcludeFilesEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -360,7 +360,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>includeFiles</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetIncludeFiles(in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.IncludeFilesEntity.Source value)
+                public void SetIncludeFiles(scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.IncludeFilesEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -405,7 +405,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>maxDuration</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMaxDuration(in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MaxDurationEntity.Source value)
+                public void SetMaxDuration(scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MaxDurationEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -450,7 +450,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>memory</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMemory(in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MemoryEntity.Source value)
+                public void SetMemory(scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MemoryEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -495,7 +495,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>runtime</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRuntime(in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.TheNpmPackageNameOfARuntimeIncludingItsVersion.Source value)
+                public void SetRuntime(scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.TheNpmPackageNameOfARuntimeIncludingItsVersion.Source value)
                 {
                     CheckValidInstance();
 
@@ -709,7 +709,7 @@ public readonly partial struct VercelSchema
 
                 internal Source(Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.ExcludeFilesEntity.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.IncludeFilesEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MaxDurationEntity.Source arg3, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MemoryEntity.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.TheNpmPackageNameOfARuntimeIncludingItsVersion.Source arg5)
+                internal Source(scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.ExcludeFilesEntity.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.IncludeFilesEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MaxDurationEntity.Source arg3, scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MemoryEntity.Source arg4, scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.TheNpmPackageNameOfARuntimeIncludingItsVersion.Source arg5)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1047,7 +1047,7 @@ public readonly partial struct VercelSchema
                 /// <param name="arg4">The value of the property.</param>
                 /// <param name="arg5">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.ExcludeFilesEntity.Source arg1, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.IncludeFilesEntity.Source arg2, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MaxDurationEntity.Source arg3, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MemoryEntity.Source arg4, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.TheNpmPackageNameOfARuntimeIncludingItsVersion.Source arg5, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.ExcludeFilesEntity.Source arg1, scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.IncludeFilesEntity.Source arg2, scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MaxDurationEntity.Source arg3, scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MemoryEntity.Source arg4, scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.TheNpmPackageNameOfARuntimeIncludingItsVersion.Source arg5, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1093,7 +1093,7 @@ public readonly partial struct VercelSchema
             /// <param name="memory">The value of the <c>"memory"</c> property.</param>
             /// <param name="runtime">The value of the <c>"runtime"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.ExcludeFilesEntity.Source excludeFiles = default, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.IncludeFilesEntity.Source includeFiles = default, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MaxDurationEntity.Source maxDuration = default, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MemoryEntity.Source memory = default, in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.TheNpmPackageNameOfARuntimeIncludingItsVersion.Source runtime = default)
+            public static Source Build(scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.ExcludeFilesEntity.Source excludeFiles = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.IncludeFilesEntity.Source includeFiles = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MaxDurationEntity.Source maxDuration = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.MemoryEntity.Source memory = default, scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Type1256Entity.TheNpmPackageNameOfARuntimeIncludingItsVersion.Source runtime = default)
             {
                 return new Source(excludeFiles, includeFiles, maxDuration, memory, runtime);
             }

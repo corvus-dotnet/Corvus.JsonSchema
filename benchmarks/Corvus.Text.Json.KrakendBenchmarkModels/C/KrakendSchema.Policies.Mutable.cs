@@ -452,7 +452,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>auto_join_policies</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAutoJoinPoliciesValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.AutoJoinPolicies.Source value)
+            public void SetAutoJoinPoliciesValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.AutoJoinPolicies.Source value)
             {
                 CheckValidInstance();
 
@@ -497,7 +497,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>debug</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDebugValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DebugEntity.Source value)
+            public void SetDebugValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DebugEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -542,7 +542,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>disable_macros</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisableMacros(in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DisableAdvancedMacros.Source value)
+            public void SetDisableMacros(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DisableAdvancedMacros.Source value)
             {
                 CheckValidInstance();
 
@@ -587,7 +587,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>jwt</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetJwt(in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.JwtPolicies.Source value)
+            public void SetJwt(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.JwtPolicies.Source value)
             {
                 CheckValidInstance();
 
@@ -668,7 +668,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>req</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetReq(in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequestPolicies.Source value)
+            public void SetReq(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequestPolicies.Source value)
             {
                 CheckValidInstance();
 
@@ -749,7 +749,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>resp</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetResp(in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.Source value)
+            public void SetResp(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.Source value)
             {
                 CheckValidInstance();
 
@@ -985,7 +985,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1008,7 +1008,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1055,7 +1055,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1356,7 +1356,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.AutoJoinPolicies.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DebugEntity.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DisableAdvancedMacros.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.JwtPolicies.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequestPolicies.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.Source arg6)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.AutoJoinPolicies.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DebugEntity.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DisableAdvancedMacros.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.JwtPolicies.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequestPolicies.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.Source arg6)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1533,7 +1533,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.AutoJoinPolicies.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DebugEntity.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DisableAdvancedMacros.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.JwtPolicies.Source<TContext> arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequestPolicies.Source<TContext> arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.Source<TContext> arg6)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.AutoJoinPolicies.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DebugEntity.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DisableAdvancedMacros.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.JwtPolicies.Source<TContext> arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequestPolicies.Source<TContext> arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.Source<TContext> arg6)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1867,7 +1867,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.AutoJoinPolicies.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DebugEntity.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DisableAdvancedMacros.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.JwtPolicies.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequestPolicies.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.AutoJoinPolicies.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DebugEntity.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DisableAdvancedMacros.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.JwtPolicies.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequestPolicies.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.Source arg6, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1886,7 +1886,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.AutoJoinPolicies.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DebugEntity.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DisableAdvancedMacros.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.JwtPolicies.Source<TContext> arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequestPolicies.Source<TContext> arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.Source<TContext> arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.AutoJoinPolicies.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DebugEntity.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DisableAdvancedMacros.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.JwtPolicies.Source<TContext> arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequestPolicies.Source<TContext> arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.Source<TContext> arg6, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1936,7 +1936,7 @@ public readonly partial struct KrakendSchema
         /// <param name="req">The value of the <c>"req"</c> property.</param>
         /// <param name="resp">The value of the <c>"resp"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.AutoJoinPolicies.Source autoJoinPolicies = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DebugEntity.Source debug = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DisableAdvancedMacros.Source disableMacros = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.JwtPolicies.Source jwt = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequestPolicies.Source req = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.Source resp = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.AutoJoinPolicies.Source autoJoinPolicies = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DebugEntity.Source debug = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DisableAdvancedMacros.Source disableMacros = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.JwtPolicies.Source jwt = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequestPolicies.Source req = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.Source resp = default)
         {
             return new Source(autoJoinPolicies, debug, disableMacros, jwt, req, resp);
         }
@@ -1953,7 +1953,7 @@ public readonly partial struct KrakendSchema
         /// <param name="req">The value of the <c>"req"</c> property.</param>
         /// <param name="resp">The value of the <c>"resp"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.AutoJoinPolicies.Source autoJoinPolicies = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DebugEntity.Source debug = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DisableAdvancedMacros.Source disableMacros = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.JwtPolicies.Source<TContext> jwt = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequestPolicies.Source<TContext> req = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.Source<TContext> resp = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.AutoJoinPolicies.Source autoJoinPolicies = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DebugEntity.Source debug = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.DisableAdvancedMacros.Source disableMacros = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.JwtPolicies.Source<TContext> jwt = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.RequestPolicies.Source<TContext> req = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Policies.ResponsePolicies.Source<TContext> resp = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

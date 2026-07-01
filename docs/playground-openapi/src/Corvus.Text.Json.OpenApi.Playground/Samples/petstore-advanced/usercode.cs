@@ -22,10 +22,7 @@ await using ListPetsResponse listResponse = await petsClient.ListPetsAsync(
         b.AddItem("dog"u8);
         b.AddItem("friendly"u8);
     }),
-    filter: new GetPetsFilter.Source((ref GetPetsFilter.Builder b) =>
-    {
-        b.Create(status: "available"u8, breed: "labrador"u8, minAge: 1, maxAge: 5);
-    }));
+    filter: GetPetsFilter.Build(status: "available"u8, breed: "labrador"u8, minAge: 1, maxAge: 5));
 
 listResponse.MatchResult(
     matchOk: pets =>
@@ -74,20 +71,17 @@ Console.WriteLine();
 Console.WriteLine("3. Creating a pet (with session cookie)...");
 await using CreatePetResponse createResponse = await petsClient.CreatePetAsync(
     session_token: "sess_k7j2m9x4"u8,
-    body: new NewPet.Source((ref NewPet.Builder b) =>
-    {
-        b.Create(
-            name: "Bella"u8,
-            status: "available"u8,
-            breed: "golden retriever"u8,
-            age: 2,
-            tags: new NewPet.JsonStringArray.Source((ref NewPet.JsonStringArray.Builder tb) =>
-            {
-                tb.AddItem("dog"u8);
-                tb.AddItem("friendly"u8);
-                tb.AddItem("trained"u8);
-            }));
-    }));
+    body: NewPet.Build(
+        name: "Bella"u8,
+        status: "available"u8,
+        breed: "golden retriever"u8,
+        age: 2,
+        tags: new NewPet.JsonStringArray.Source((ref NewPet.JsonStringArray.Builder tb) =>
+        {
+            tb.AddItem("dog"u8);
+            tb.AddItem("friendly"u8);
+            tb.AddItem("trained"u8);
+        })));
 
 createResponse.MatchResult(
     matchCreated: pet =>
@@ -115,13 +109,10 @@ byte[] photoBytes = [0x89, 0x50, 0x4E, 0x47]; // PNG header stub
 await using UploadPetPhotoResponse uploadResponse = await photosClient.UploadPetPhotoAsync(
     petId: "pet-42"u8,
     session_token: "sess_k7j2m9x4"u8,
-    body: new PostPetsByPetIdPhotosBody.Source((ref PostPetsByPetIdPhotosBody.Builder b) =>
-    {
-        b.Create(
-            file: "bella-park.png"u8,
-            caption: "Bella at the park"u8,
-            isPrimary: true);
-    }),
+    body: PostPetsByPetIdPhotosBody.Build(
+        file: "bella-park.png"u8,
+        caption: "Bella at the park"u8,
+        isPrimary: true),
     file: new BinaryPartData(
         WriteContentAsync: (stream, ct) => { stream.Write(photoBytes); return default; },
         ContentType: "image/png",
@@ -150,17 +141,14 @@ Console.WriteLine();
 Console.WriteLine("5. Submitting adoption application (form-encoded)...");
 await using SubmitAdoptionApplicationResponse adoptionResponse =
     await adoptionClient.SubmitAdoptionApplicationAsync(
-        body: new PostAdoptionApplyBody.Source((ref PostAdoptionApplyBody.Builder b) =>
-        {
-            b.Create(
-                applicantName: "Jane Smith"u8,
-                email: "jane@example.com"u8,
-                housingType: "house"u8,
-                petId: "pet-42"u8,
-                hasGarden: true,
-                experience: "Had dogs for 10 years"u8,
-                phone: "+44 7700 900000"u8);
-        }));
+        body: PostAdoptionApplyBody.Build(
+            applicantName: "Jane Smith"u8,
+            email: "jane@example.com"u8,
+            housingType: "house"u8,
+            petId: "pet-42"u8,
+            hasGarden: true,
+            experience: "Had dogs for 10 years"u8,
+            phone: "+44 7700 900000"u8));
 
 adoptionResponse.MatchResult(
     matchAccepted: result =>

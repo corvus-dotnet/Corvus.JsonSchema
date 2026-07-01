@@ -520,7 +520,7 @@ public readonly partial struct AdaptiveCard
         /// Set the <c>$schema</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSchema(in Corvus.Ui5ManifestBenchmark.Current.JsonUri.Source value)
+        public void SetSchema(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUri.Source value)
         {
             CheckValidInstance();
 
@@ -565,7 +565,7 @@ public readonly partial struct AdaptiveCard
         /// Set the <c>actions</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetActions(in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.ImplementationsOfActionArray.Source value)
+        public void SetActions(scoped in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.ImplementationsOfActionArray.Source value)
         {
             CheckValidInstance();
 
@@ -646,7 +646,7 @@ public readonly partial struct AdaptiveCard
         /// Set the <c>authentication</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAuthentication(in Corvus.Ui5ManifestBenchmark.Current.Authentication.Source value)
+        public void SetAuthentication(scoped in Corvus.Ui5ManifestBenchmark.Current.Authentication.Source value)
         {
             CheckValidInstance();
 
@@ -727,7 +727,7 @@ public readonly partial struct AdaptiveCard
         /// Set the <c>backgroundImage</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBackgroundImage(in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.SpecifiesTheBackgroundImageOfTheCard.Source value)
+        public void SetBackgroundImage(scoped in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.SpecifiesTheBackgroundImageOfTheCard.Source value)
         {
             CheckValidInstance();
 
@@ -808,7 +808,7 @@ public readonly partial struct AdaptiveCard
         /// Set the <c>body</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBody(in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.ImplementationsOfElementArray.Source value)
+        public void SetBody(scoped in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.ImplementationsOfElementArray.Source value)
         {
             CheckValidInstance();
 
@@ -889,7 +889,7 @@ public readonly partial struct AdaptiveCard
         /// Set the <c>fallbackText</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFallbackText(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetFallbackText(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -934,7 +934,7 @@ public readonly partial struct AdaptiveCard
         /// Set the <c>lang</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLang(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetLang(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -979,7 +979,7 @@ public readonly partial struct AdaptiveCard
         /// Set the <c>minHeight</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMinHeight(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetMinHeight(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1024,7 +1024,7 @@ public readonly partial struct AdaptiveCard
         /// Set the <c>refresh</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRefresh(in Corvus.Ui5ManifestBenchmark.Current.Refresh.Source value)
+        public void SetRefresh(scoped in Corvus.Ui5ManifestBenchmark.Current.Refresh.Source value)
         {
             CheckValidInstance();
 
@@ -1105,7 +1105,7 @@ public readonly partial struct AdaptiveCard
         /// Set the <c>rtl</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRtl(in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.RtlEntity.Source value)
+        public void SetRtl(scoped in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.RtlEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1150,7 +1150,7 @@ public readonly partial struct AdaptiveCard
         /// Set the <c>selectAction</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSelectAction(in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source value)
+        public void SetSelectAction(scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source value)
         {
             CheckValidInstance();
 
@@ -1231,7 +1231,7 @@ public readonly partial struct AdaptiveCard
         /// Set the <c>speak</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpeak(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetSpeak(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1276,7 +1276,7 @@ public readonly partial struct AdaptiveCard
         /// Set the <c>type</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetType(in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.MustBeAdaptiveCard.Source value)
+        public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.AdaptiveCard.MustBeAdaptiveCard.Source value)
         {
             CheckValidInstance();
 
@@ -1321,7 +1321,7 @@ public readonly partial struct AdaptiveCard
         /// Set the <c>version</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVersion(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetVersion(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1366,7 +1366,7 @@ public readonly partial struct AdaptiveCard
         /// Set the <c>verticalContentAlignment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVerticalContentAlignment(in Corvus.Ui5ManifestBenchmark.Current.VerticalContentAlignment.Source value)
+        public void SetVerticalContentAlignment(scoped in Corvus.Ui5ManifestBenchmark.Current.VerticalContentAlignment.Source value)
         {
             CheckValidInstance();
 

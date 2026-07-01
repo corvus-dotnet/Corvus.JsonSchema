@@ -374,7 +374,7 @@ public readonly partial struct PersonName
         /// Set the <c>firstName</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFirstName(in Corvus.PersonBenchmark.Current.NameComponent.Source value)
+        public void SetFirstName(scoped in Corvus.PersonBenchmark.Current.NameComponent.Source value)
         {
             CheckValidInstance();
 
@@ -405,7 +405,7 @@ public readonly partial struct PersonName
         /// Set the <c>lastName</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLastName(in Corvus.PersonBenchmark.Current.NameComponent.Source value)
+        public void SetLastName(scoped in Corvus.PersonBenchmark.Current.NameComponent.Source value)
         {
             CheckValidInstance();
 
@@ -450,7 +450,7 @@ public readonly partial struct PersonName
         /// Set the <c>otherNames</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOtherNames(in Corvus.PersonBenchmark.Current.OtherNames.Source value)
+        public void SetOtherNames(scoped in Corvus.PersonBenchmark.Current.OtherNames.Source value)
         {
             CheckValidInstance();
 
@@ -632,7 +632,7 @@ public readonly partial struct PersonName
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -655,7 +655,7 @@ public readonly partial struct PersonName
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -702,7 +702,7 @@ public readonly partial struct PersonName
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -874,7 +874,7 @@ public readonly partial struct PersonName
 
         internal Source(Corvus.PersonBenchmark.Current.PersonName.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.PersonBenchmark.Current.NameComponent.Source arg1, in Corvus.PersonBenchmark.Current.NameComponent.Source arg2, in Corvus.PersonBenchmark.Current.OtherNames.Source arg3)
+        internal Source(scoped in Corvus.PersonBenchmark.Current.NameComponent.Source arg1, scoped in Corvus.PersonBenchmark.Current.NameComponent.Source arg2, scoped in Corvus.PersonBenchmark.Current.OtherNames.Source arg3)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1042,7 +1042,7 @@ public readonly partial struct PersonName
 
         internal Source(scoped in TContext context, Corvus.PersonBenchmark.Current.PersonName.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.PersonBenchmark.Current.NameComponent.Source arg1, in Corvus.PersonBenchmark.Current.NameComponent.Source arg2, in Corvus.PersonBenchmark.Current.OtherNames.Source<TContext> arg3)
+        internal Source(scoped in TContext context, scoped in Corvus.PersonBenchmark.Current.NameComponent.Source arg1, scoped in Corvus.PersonBenchmark.Current.NameComponent.Source arg2, scoped in Corvus.PersonBenchmark.Current.OtherNames.Source<TContext> arg3)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1352,7 +1352,7 @@ public readonly partial struct PersonName
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.PersonBenchmark.Current.NameComponent.Source arg1, in Corvus.PersonBenchmark.Current.NameComponent.Source arg2, in Corvus.PersonBenchmark.Current.OtherNames.Source arg3, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.PersonBenchmark.Current.NameComponent.Source arg1, scoped in Corvus.PersonBenchmark.Current.NameComponent.Source arg2, scoped in Corvus.PersonBenchmark.Current.OtherNames.Source arg3, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3);
@@ -1368,7 +1368,7 @@ public readonly partial struct PersonName
         /// <param name="arg2">The value of the property.</param>
         /// <param name="arg3">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.PersonBenchmark.Current.NameComponent.Source arg1, in Corvus.PersonBenchmark.Current.NameComponent.Source arg2, in Corvus.PersonBenchmark.Current.OtherNames.Source<TContext> arg3, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.PersonBenchmark.Current.NameComponent.Source arg1, scoped in Corvus.PersonBenchmark.Current.NameComponent.Source arg2, scoped in Corvus.PersonBenchmark.Current.OtherNames.Source<TContext> arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1415,7 +1415,7 @@ public readonly partial struct PersonName
     /// <param name="lastName">The value of the <c>"lastName"</c> property.</param>
     /// <param name="otherNames">The value of the <c>"otherNames"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.PersonBenchmark.Current.NameComponent.Source firstName, in Corvus.PersonBenchmark.Current.NameComponent.Source lastName = default, in Corvus.PersonBenchmark.Current.OtherNames.Source otherNames = default)
+    public static Source Build(scoped in Corvus.PersonBenchmark.Current.NameComponent.Source firstName, scoped in Corvus.PersonBenchmark.Current.NameComponent.Source lastName = default, scoped in Corvus.PersonBenchmark.Current.OtherNames.Source otherNames = default)
     {
         return new Source(firstName, lastName, otherNames);
     }
@@ -1429,7 +1429,7 @@ public readonly partial struct PersonName
     /// <param name="lastName">The value of the <c>"lastName"</c> property.</param>
     /// <param name="otherNames">The value of the <c>"otherNames"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.PersonBenchmark.Current.NameComponent.Source firstName, in Corvus.PersonBenchmark.Current.NameComponent.Source lastName = default, in Corvus.PersonBenchmark.Current.OtherNames.Source<TContext> otherNames = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.PersonBenchmark.Current.NameComponent.Source firstName, scoped in Corvus.PersonBenchmark.Current.NameComponent.Source lastName = default, scoped in Corvus.PersonBenchmark.Current.OtherNames.Source<TContext> otherNames = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

@@ -305,7 +305,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>cacheFormat</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCacheFormatValue(in Corvus.CspellBenchmark.Current.CspellSchema.CacheFormat.Source value)
+            public void SetCacheFormatValue(scoped in Corvus.CspellBenchmark.Current.CspellSchema.CacheFormat.Source value)
             {
                 CheckValidInstance();
 
@@ -350,7 +350,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>cacheLocation</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCacheLocation(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+            public void SetCacheLocation(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -395,7 +395,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>cacheStrategy</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCacheStrategyValue(in Corvus.CspellBenchmark.Current.CspellSchema.CacheStrategy.Source value)
+            public void SetCacheStrategyValue(scoped in Corvus.CspellBenchmark.Current.CspellSchema.CacheStrategy.Source value)
             {
                 CheckValidInstance();
 
@@ -440,7 +440,7 @@ public readonly partial struct CspellSchema
             /// Set the <c>useCache</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUseCache(in Corvus.CspellBenchmark.Current.CspellSchema.CacheSettings.UseCacheEntity.Source value)
+            public void SetUseCache(scoped in Corvus.CspellBenchmark.Current.CspellSchema.CacheSettings.UseCacheEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -653,7 +653,7 @@ public readonly partial struct CspellSchema
 
             internal Source(Corvus.CspellBenchmark.Current.CspellSchema.CacheSettings.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.CspellBenchmark.Current.CspellSchema.CacheFormat.Source arg1, in Corvus.CspellBenchmark.Current.JsonString.Source arg2, in Corvus.CspellBenchmark.Current.CspellSchema.CacheStrategy.Source arg3, in Corvus.CspellBenchmark.Current.CspellSchema.CacheSettings.UseCacheEntity.Source arg4)
+            internal Source(scoped in Corvus.CspellBenchmark.Current.CspellSchema.CacheFormat.Source arg1, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg2, scoped in Corvus.CspellBenchmark.Current.CspellSchema.CacheStrategy.Source arg3, scoped in Corvus.CspellBenchmark.Current.CspellSchema.CacheSettings.UseCacheEntity.Source arg4)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -986,7 +986,7 @@ public readonly partial struct CspellSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.CspellBenchmark.Current.CspellSchema.CacheFormat.Source arg1, in Corvus.CspellBenchmark.Current.JsonString.Source arg2, in Corvus.CspellBenchmark.Current.CspellSchema.CacheStrategy.Source arg3, in Corvus.CspellBenchmark.Current.CspellSchema.CacheSettings.UseCacheEntity.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.CspellBenchmark.Current.CspellSchema.CacheFormat.Source arg1, scoped in Corvus.CspellBenchmark.Current.JsonString.Source arg2, scoped in Corvus.CspellBenchmark.Current.CspellSchema.CacheStrategy.Source arg3, scoped in Corvus.CspellBenchmark.Current.CspellSchema.CacheSettings.UseCacheEntity.Source arg4, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4);
@@ -1031,7 +1031,7 @@ public readonly partial struct CspellSchema
         /// <param name="cacheStrategy">The value of the <c>"cacheStrategy"</c> property.</param>
         /// <param name="useCache">The value of the <c>"useCache"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.CspellBenchmark.Current.CspellSchema.CacheFormat.Source cacheFormat = default, in Corvus.CspellBenchmark.Current.JsonString.Source cacheLocation = default, in Corvus.CspellBenchmark.Current.CspellSchema.CacheStrategy.Source cacheStrategy = default, in Corvus.CspellBenchmark.Current.CspellSchema.CacheSettings.UseCacheEntity.Source useCache = default)
+        public static Source Build(scoped in Corvus.CspellBenchmark.Current.CspellSchema.CacheFormat.Source cacheFormat = default, scoped in Corvus.CspellBenchmark.Current.JsonString.Source cacheLocation = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.CacheStrategy.Source cacheStrategy = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.CacheSettings.UseCacheEntity.Source useCache = default)
         {
             return new Source(cacheFormat, cacheLocation, cacheStrategy, useCache);
         }

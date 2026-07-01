@@ -482,7 +482,7 @@ public readonly partial struct JasmineSchema
             /// Set the <c>autoCleanClosure</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAutoCleanClosure(in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Source value)
+            public void SetAutoCleanClosure(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -527,7 +527,7 @@ public readonly partial struct JasmineSchema
             /// Set the <c>failSpecWithNoExpectations</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFailSpecWithNoExpectations(in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Source value)
+            public void SetFailSpecWithNoExpectations(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -572,7 +572,7 @@ public readonly partial struct JasmineSchema
             /// Set the <c>hideDisbaled</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHideDisbaled(in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Source value)
+            public void SetHideDisbaled(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -617,7 +617,7 @@ public readonly partial struct JasmineSchema
             /// Set the <c>random</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRandom(in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Source value)
+            public void SetRandom(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Source value)
             {
                 CheckValidInstance();
 
@@ -662,7 +662,7 @@ public readonly partial struct JasmineSchema
             /// Set the <c>seed</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSeed(in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Source value)
+            public void SetSeed(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -707,7 +707,7 @@ public readonly partial struct JasmineSchema
             /// Set the <c>stopOnSpecFailure</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStopOnSpecFailure(in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Source value)
+            public void SetStopOnSpecFailure(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -752,7 +752,7 @@ public readonly partial struct JasmineSchema
             /// Set the <c>stopSpecOnExpectationFailure</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStopSpecOnExpectationFailure(in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Source value)
+            public void SetStopSpecOnExpectationFailure(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Source value)
             {
                 CheckValidInstance();
 
@@ -797,7 +797,7 @@ public readonly partial struct JasmineSchema
             /// Set the <c>verboseDeprication</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVerboseDeprication(in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Source value)
+            public void SetVerboseDeprication(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -943,7 +943,7 @@ public readonly partial struct JasmineSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -966,7 +966,7 @@ public readonly partial struct JasmineSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1013,7 +1013,7 @@ public readonly partial struct JasmineSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1190,7 +1190,7 @@ public readonly partial struct JasmineSchema
 
             internal Source(Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Source arg1, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Source arg2, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Source arg3, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Source arg4, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Source arg5, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Source arg6, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Source arg7, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Source arg8)
+            internal Source(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Source arg1, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Source arg2, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Source arg3, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Source arg4, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Source arg5, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Source arg6, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Source arg7, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Source arg8)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1612,7 +1612,7 @@ public readonly partial struct JasmineSchema
             /// <param name="arg7">The value of the property.</param>
             /// <param name="arg8">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Source arg1, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Source arg2, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Source arg3, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Source arg4, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Source arg5, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Source arg6, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Source arg7, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Source arg8, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Source arg1, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Source arg2, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Source arg3, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Source arg4, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Source arg5, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Source arg6, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Source arg7, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Source arg8, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
@@ -1661,7 +1661,7 @@ public readonly partial struct JasmineSchema
         /// <param name="stopSpecOnExpectationFailure">The value of the <c>"stopSpecOnExpectationFailure"</c> property.</param>
         /// <param name="verboseDeprication">The value of the <c>"verboseDeprication"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Source autoCleanClosure = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Source failSpecWithNoExpectations = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Source hideDisbaled = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Source random = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Source seed = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Source stopOnSpecFailure = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Source stopSpecOnExpectationFailure = default, in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Source verboseDeprication = default)
+        public static Source Build(scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.AutoCleanClosureEntity.Source autoCleanClosure = default, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.FailSpecWithNoExpectationsEntity.Source failSpecWithNoExpectations = default, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.HideDisbaledEntity.Source hideDisbaled = default, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToRandomizeSpecExecutionOrder.Source random = default, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.SeedEntity.Source seed = default, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.StopOnSpecFailureEntity.Source stopOnSpecFailure = default, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.WhetherToCauseSpecsToOnlyHaveOneExpectationFailure.Source stopSpecOnExpectationFailure = default, scoped in Corvus.JasmineBenchmark.Current.JasmineSchema.EnvItems.VerboseDepricationEntity.Source verboseDeprication = default)
         {
             return new Source(autoCleanClosure, failSpecWithNoExpectations, hideDisbaled, random, seed, stopOnSpecFailure, stopSpecOnExpectationFailure, verboseDeprication);
         }

@@ -859,7 +859,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>$schema</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSchema(in Corvus.Draft04Benchmark.Current.JsonString.Source value)
+        public void SetSchema(scoped in Corvus.Draft04Benchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -904,7 +904,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>additionalItems</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAdditionalItems(in Corvus.Draft04Benchmark.Current.Draft04Schema.AdditionalItemsEntity.Source value)
+        public void SetAdditionalItems(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.AdditionalItemsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -985,7 +985,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>additionalProperties</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAdditionalProperties(in Corvus.Draft04Benchmark.Current.Draft04Schema.AdditionalPropertiesEntity.Source value)
+        public void SetAdditionalProperties(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.AdditionalPropertiesEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1066,7 +1066,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>allOf</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAllOf(in Corvus.Draft04Benchmark.Current.Draft04Schema.SchemaArray.Source value)
+        public void SetAllOf(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.SchemaArray.Source value)
         {
             CheckValidInstance();
 
@@ -1147,7 +1147,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>anyOf</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAnyOf(in Corvus.Draft04Benchmark.Current.Draft04Schema.SchemaArray.Source value)
+        public void SetAnyOf(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.SchemaArray.Source value)
         {
             CheckValidInstance();
 
@@ -1228,7 +1228,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>default</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDefault(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetDefault(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1309,7 +1309,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>definitions</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDefinitions(in Corvus.Draft04Benchmark.Current.Draft04Schema.DefinitionsEntity.Source value)
+        public void SetDefinitions(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.DefinitionsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1390,7 +1390,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>dependencies</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDependencies(in Corvus.Draft04Benchmark.Current.Draft04Schema.DependenciesEntity.Source value)
+        public void SetDependencies(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.DependenciesEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1471,7 +1471,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>description</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDescription(in Corvus.Draft04Benchmark.Current.JsonString.Source value)
+        public void SetDescription(scoped in Corvus.Draft04Benchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1516,7 +1516,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>enum</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEnum(in Corvus.Draft04Benchmark.Current.Draft04Schema.EnumArray.Source value)
+        public void SetEnum(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.EnumArray.Source value)
         {
             CheckValidInstance();
 
@@ -1597,7 +1597,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>exclusiveMaximum</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExclusiveMaximum(in Corvus.Draft04Benchmark.Current.Draft04Schema.ExclusiveMaximumEntity.Source value)
+        public void SetExclusiveMaximum(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.ExclusiveMaximumEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1642,7 +1642,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>exclusiveMinimum</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExclusiveMinimum(in Corvus.Draft04Benchmark.Current.Draft04Schema.ExclusiveMinimumEntity.Source value)
+        public void SetExclusiveMinimum(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.ExclusiveMinimumEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1687,7 +1687,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>format</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFormat(in Corvus.Draft04Benchmark.Current.JsonString.Source value)
+        public void SetFormat(scoped in Corvus.Draft04Benchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1732,7 +1732,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in Corvus.Draft04Benchmark.Current.JsonString.Source value)
+        public void SetId(scoped in Corvus.Draft04Benchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1777,7 +1777,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>items</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetItems(in Corvus.Draft04Benchmark.Current.Draft04Schema.ItemsEntity.Source value)
+        public void SetItems(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.ItemsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1858,7 +1858,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>maximum</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMaximum(in Corvus.Draft04Benchmark.Current.JsonNumber.Source value)
+        public void SetMaximum(scoped in Corvus.Draft04Benchmark.Current.JsonNumber.Source value)
         {
             CheckValidInstance();
 
@@ -1903,7 +1903,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>maxItems</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMaxItems(in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveInteger.Source value)
+        public void SetMaxItems(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveInteger.Source value)
         {
             CheckValidInstance();
 
@@ -1948,7 +1948,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>maxLength</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMaxLength(in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveInteger.Source value)
+        public void SetMaxLength(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveInteger.Source value)
         {
             CheckValidInstance();
 
@@ -1993,7 +1993,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>maxProperties</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMaxProperties(in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveInteger.Source value)
+        public void SetMaxProperties(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveInteger.Source value)
         {
             CheckValidInstance();
 
@@ -2038,7 +2038,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>minimum</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMinimum(in Corvus.Draft04Benchmark.Current.JsonNumber.Source value)
+        public void SetMinimum(scoped in Corvus.Draft04Benchmark.Current.JsonNumber.Source value)
         {
             CheckValidInstance();
 
@@ -2083,7 +2083,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>minItems</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMinItems(in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveIntegerDefault0.Source value)
+        public void SetMinItems(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveIntegerDefault0.Source value)
         {
             CheckValidInstance();
 
@@ -2128,7 +2128,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>minLength</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMinLength(in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveIntegerDefault0.Source value)
+        public void SetMinLength(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveIntegerDefault0.Source value)
         {
             CheckValidInstance();
 
@@ -2173,7 +2173,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>minProperties</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMinProperties(in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveIntegerDefault0.Source value)
+        public void SetMinProperties(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.PositiveIntegerDefault0.Source value)
         {
             CheckValidInstance();
 
@@ -2218,7 +2218,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>multipleOf</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMultipleOf(in Corvus.Draft04Benchmark.Current.Draft04Schema.MultipleOfEntity.Source value)
+        public void SetMultipleOf(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.MultipleOfEntity.Source value)
         {
             CheckValidInstance();
 
@@ -2263,7 +2263,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>not</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetNot(in Corvus.Draft04Benchmark.Current.Draft04Schema.Source value)
+        public void SetNot(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.Source value)
         {
             CheckValidInstance();
 
@@ -2344,7 +2344,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>oneOf</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOneOf(in Corvus.Draft04Benchmark.Current.Draft04Schema.SchemaArray.Source value)
+        public void SetOneOf(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.SchemaArray.Source value)
         {
             CheckValidInstance();
 
@@ -2425,7 +2425,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>pattern</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPattern(in Corvus.Draft04Benchmark.Current.JsonRegex.Source value)
+        public void SetPattern(scoped in Corvus.Draft04Benchmark.Current.JsonRegex.Source value)
         {
             CheckValidInstance();
 
@@ -2470,7 +2470,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>patternProperties</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPatternProperties(in Corvus.Draft04Benchmark.Current.Draft04Schema.PatternPropertiesEntity.Source value)
+        public void SetPatternProperties(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.PatternPropertiesEntity.Source value)
         {
             CheckValidInstance();
 
@@ -2551,7 +2551,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>properties</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetProperties(in Corvus.Draft04Benchmark.Current.Draft04Schema.PropertiesEntity.Source value)
+        public void SetProperties(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.PropertiesEntity.Source value)
         {
             CheckValidInstance();
 
@@ -2632,7 +2632,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>required</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRequired(in Corvus.Draft04Benchmark.Current.Draft04Schema.StringArray.Source value)
+        public void SetRequired(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.StringArray.Source value)
         {
             CheckValidInstance();
 
@@ -2713,7 +2713,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>title</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTitle(in Corvus.Draft04Benchmark.Current.JsonString.Source value)
+        public void SetTitle(scoped in Corvus.Draft04Benchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -2758,7 +2758,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>type</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetType(in Corvus.Draft04Benchmark.Current.Draft04Schema.TypeEntity.Source value)
+        public void SetType(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.TypeEntity.Source value)
         {
             CheckValidInstance();
 
@@ -2839,7 +2839,7 @@ public readonly partial struct Draft04Schema
         /// Set the <c>uniqueItems</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUniqueItems(in Corvus.Draft04Benchmark.Current.Draft04Schema.UniqueItemsEntity.Source value)
+        public void SetUniqueItems(scoped in Corvus.Draft04Benchmark.Current.Draft04Schema.UniqueItemsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -2985,7 +2985,7 @@ public readonly partial struct Draft04Schema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -3008,7 +3008,7 @@ public readonly partial struct Draft04Schema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -3055,7 +3055,7 @@ public readonly partial struct Draft04Schema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 

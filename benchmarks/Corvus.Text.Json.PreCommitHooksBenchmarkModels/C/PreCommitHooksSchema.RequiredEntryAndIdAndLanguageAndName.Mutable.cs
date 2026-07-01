@@ -674,7 +674,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>additional_dependencies</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAdditionalDependencies(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.JsonStringArray.Source value)
+            public void SetAdditionalDependencies(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -755,7 +755,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>alias</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAlias(in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source value)
+            public void SetAlias(scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -800,7 +800,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>always_run</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAlwaysRun(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Source value)
+            public void SetAlwaysRun(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -845,7 +845,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>args</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetArgs(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Source value)
+            public void SetArgs(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Source value)
             {
                 CheckValidInstance();
 
@@ -926,7 +926,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Source value)
+            public void SetDescription(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -971,7 +971,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>entry</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEntry(in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source value)
+            public void SetEntry(scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1002,7 +1002,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>exclude</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExclude(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Source value)
+            public void SetExclude(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Source value)
             {
                 CheckValidInstance();
 
@@ -1047,7 +1047,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>exclude_types</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExcludeTypes(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source value)
+            public void SetExcludeTypes(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source value)
             {
                 CheckValidInstance();
 
@@ -1128,7 +1128,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>fail_fast</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFailFast(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Source value)
+            public void SetFailFast(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1173,7 +1173,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>files</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFiles(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Source value)
+            public void SetFiles(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Source value)
             {
                 CheckValidInstance();
 
@@ -1218,7 +1218,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>id</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetId(in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source value)
+            public void SetId(scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1249,7 +1249,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>language</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLanguageValue(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Language.Source value)
+            public void SetLanguageValue(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Language.Source value)
             {
                 CheckValidInstance();
 
@@ -1280,7 +1280,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>language_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLanguageVersion(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Source value)
+            public void SetLanguageVersion(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1325,7 +1325,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>log_file</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLogFile(in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source value)
+            public void SetLogFile(scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1370,7 +1370,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>minimum_pre_commit_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMinimumPreCommitVersion(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Source value)
+            public void SetMinimumPreCommitVersion(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1415,7 +1415,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetName(in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source value)
+            public void SetName(scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1446,7 +1446,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>pass_filenames</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPassFilenames(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Source value)
+            public void SetPassFilenames(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Source value)
             {
                 CheckValidInstance();
 
@@ -1491,7 +1491,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>require_serial</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRequireSerial(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Source value)
+            public void SetRequireSerial(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1536,7 +1536,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>stages</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStagesValue(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stages.Source value)
+            public void SetStagesValue(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stages.Source value)
             {
                 CheckValidInstance();
 
@@ -1617,7 +1617,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>types</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTypes(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source value)
+            public void SetTypes(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source value)
             {
                 CheckValidInstance();
 
@@ -1698,7 +1698,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>types_or</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTypesOr(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source value)
+            public void SetTypesOr(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source value)
             {
                 CheckValidInstance();
 
@@ -1779,7 +1779,7 @@ public readonly partial struct PreCommitHooksSchema
             /// Set the <c>verbose</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVerbose(in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source value)
+            public void SetVerbose(scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2010,7 +2010,7 @@ public readonly partial struct PreCommitHooksSchema
 
             internal Source(Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg1, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg2, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Language.Source arg3, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg4, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.JsonStringArray.Source arg5, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg6, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Source arg7, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Source arg8, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Source arg9, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Source arg10, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source arg11, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Source arg12, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Source arg13, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Source arg14, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg15, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Source arg16, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Source arg17, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Source arg18, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stages.Source arg19, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source arg20, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source arg21, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source arg22)
+            internal Source(scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg1, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg2, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Language.Source arg3, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg4, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.JsonStringArray.Source arg5, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg6, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Source arg7, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Source arg8, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Source arg9, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Source arg10, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source arg11, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Source arg12, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Source arg13, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Source arg14, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg15, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Source arg16, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Source arg17, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Source arg18, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stages.Source arg19, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source arg20, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source arg21, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source arg22)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -2216,7 +2216,7 @@ public readonly partial struct PreCommitHooksSchema
 
             internal Source(scoped in TContext context, Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg1, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg2, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Language.Source arg3, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg4, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.JsonStringArray.Source<TContext> arg5, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg6, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Source arg7, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Source<TContext> arg8, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Source arg9, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Source arg10, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> arg11, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Source arg12, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Source arg13, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Source arg14, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg15, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Source arg16, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Source arg17, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Source arg18, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stages.Source<TContext> arg19, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> arg20, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> arg21, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source arg22)
+            internal Source(scoped in TContext context, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg1, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg2, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Language.Source arg3, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg4, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.JsonStringArray.Source<TContext> arg5, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg6, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Source arg7, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Source<TContext> arg8, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Source arg9, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Source arg10, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> arg11, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Source arg12, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Source arg13, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Source arg14, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg15, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Source arg16, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Source arg17, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Source arg18, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stages.Source<TContext> arg19, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> arg20, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> arg21, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source arg22)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2609,7 +2609,7 @@ public readonly partial struct PreCommitHooksSchema
             /// <param name="arg21">The value of the property.</param>
             /// <param name="arg22">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg1, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg2, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Language.Source arg3, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg4, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.JsonStringArray.Source arg5, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg6, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Source arg7, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Source arg8, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Source arg9, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Source arg10, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source arg11, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Source arg12, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Source arg13, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Source arg14, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg15, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Source arg16, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Source arg17, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Source arg18, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stages.Source arg19, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source arg20, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source arg21, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source arg22, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg1, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg2, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Language.Source arg3, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg4, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.JsonStringArray.Source arg5, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg6, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Source arg7, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Source arg8, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Source arg9, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Source arg10, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source arg11, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Source arg12, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Source arg13, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Source arg14, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg15, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Source arg16, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Source arg17, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Source arg18, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stages.Source arg19, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source arg20, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source arg21, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source arg22, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22);
@@ -2644,7 +2644,7 @@ public readonly partial struct PreCommitHooksSchema
             /// <param name="arg21">The value of the property.</param>
             /// <param name="arg22">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg1, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg2, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Language.Source arg3, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg4, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.JsonStringArray.Source<TContext> arg5, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg6, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Source arg7, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Source<TContext> arg8, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Source arg9, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Source arg10, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> arg11, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Source arg12, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Source arg13, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Source arg14, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg15, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Source arg16, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Source arg17, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Source arg18, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stages.Source<TContext> arg19, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> arg20, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> arg21, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source arg22, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg1, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg2, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Language.Source arg3, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg4, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.JsonStringArray.Source<TContext> arg5, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg6, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Source arg7, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Source<TContext> arg8, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Source arg9, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Source arg10, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> arg11, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Source arg12, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Source arg13, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Source arg14, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source arg15, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Source arg16, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Source arg17, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Source arg18, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stages.Source<TContext> arg19, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> arg20, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> arg21, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source arg22, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2710,7 +2710,7 @@ public readonly partial struct PreCommitHooksSchema
         /// <param name="typesOr">The value of the <c>"types_or"</c> property.</param>
         /// <param name="verbose">The value of the <c>"verbose"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source entry, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source id, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Language.Source language, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source name, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.JsonStringArray.Source additionalDependencies = default, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source alias = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Source alwaysRun = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Source args = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Source description = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Source exclude = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source excludeTypes = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Source failFast = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Source files = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Source languageVersion = default, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source logFile = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Source minimumPreCommitVersion = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Source passFilenames = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Source requireSerial = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stages.Source stages = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source types = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source typesOr = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source verbose = default)
+        public static Source Build(scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source entry, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source id, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Language.Source language, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source name, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.JsonStringArray.Source additionalDependencies = default, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source alias = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Source alwaysRun = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Source args = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Source description = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Source exclude = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source excludeTypes = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Source failFast = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Source files = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Source languageVersion = default, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source logFile = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Source minimumPreCommitVersion = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Source passFilenames = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Source requireSerial = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stages.Source stages = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source types = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source typesOr = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source verbose = default)
         {
             return new Source(entry, id, language, name, additionalDependencies, alias, alwaysRun, args, description, exclude, excludeTypes, failFast, files, languageVersion, logFile, minimumPreCommitVersion, passFilenames, requireSerial, stages, types, typesOr, verbose);
         }
@@ -2743,7 +2743,7 @@ public readonly partial struct PreCommitHooksSchema
         /// <param name="typesOr">The value of the <c>"types_or"</c> property.</param>
         /// <param name="verbose">The value of the <c>"verbose"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source entry, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source id, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Language.Source language, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source name, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.JsonStringArray.Source<TContext> additionalDependencies = default, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source alias = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Source alwaysRun = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Source<TContext> args = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Source description = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Source exclude = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> excludeTypes = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Source failFast = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Source files = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Source languageVersion = default, in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source logFile = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Source minimumPreCommitVersion = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Source passFilenames = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Source requireSerial = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stages.Source<TContext> stages = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> types = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> typesOr = default, in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source verbose = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source entry, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source id, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Language.Source language, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source name, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.JsonStringArray.Source<TContext> additionalDependencies = default, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source alias = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.AlwaysRunEntity.Source alwaysRun = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalLiArray.Source<TContext> args = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.DescriptionEntity.Source description = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalExcludeFilesThatWereMatchedByFiles.Source exclude = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> excludeTypes = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.FailFastEntity.Source failFast = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalThePatternOfFilesToRunOn.Source files = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.LanguageVersionEntity.Source languageVersion = default, scoped in Corvus.PreCommitHooksBenchmark.Current.JsonString.Source logFile = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.MinimumPreCommitVersionEntity.Source minimumPreCommitVersion = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.OptionalIfFalseNoFilenamesWillBePassedToTheHook.Source passFilenames = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.RequireSerialEntity.Source requireSerial = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.Stages.Source<TContext> stages = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> types = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source<TContext> typesOr = default, scoped in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source verbose = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

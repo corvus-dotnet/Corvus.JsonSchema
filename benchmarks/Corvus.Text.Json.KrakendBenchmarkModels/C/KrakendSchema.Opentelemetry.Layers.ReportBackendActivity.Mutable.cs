@@ -315,7 +315,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>metrics</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetMetrics(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.Source value)
+                    public void SetMetrics(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -396,7 +396,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>traces</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetTraces(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.Source value)
+                    public void SetTraces(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -578,7 +578,7 @@ public readonly partial struct KrakendSchema
                     ///   </para>
                     /// </remarks>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         SetProperty(propertyName.AsSpan(), value);
                     }
@@ -601,7 +601,7 @@ public readonly partial struct KrakendSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -648,7 +648,7 @@ public readonly partial struct KrakendSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -819,7 +819,7 @@ public readonly partial struct KrakendSchema
 
                     internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.Source arg2)
+                    internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.Source arg2)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -985,7 +985,7 @@ public readonly partial struct KrakendSchema
 
                     internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.Source<TContext> arg2)
+                    internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.Source<TContext> arg2)
                     {
                         _context = context;
                         _createArg1 = arg1;
@@ -1285,7 +1285,7 @@ public readonly partial struct KrakendSchema
                     /// <param name="arg1">The value of the property.</param>
                     /// <param name="arg2">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.Source arg2, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.Source arg2, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2);
@@ -1300,7 +1300,7 @@ public readonly partial struct KrakendSchema
                     /// <param name="arg1">The value of the property.</param>
                     /// <param name="arg2">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.Source<TContext> arg2, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.Source<TContext> arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -1346,7 +1346,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="metrics">The value of the <c>"metrics"</c> property.</param>
                 /// <param name="traces">The value of the <c>"traces"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.Source metrics = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.Source traces = default)
+                public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.Source metrics = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.Source traces = default)
                 {
                     return new Source(metrics, traces);
                 }
@@ -1359,7 +1359,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="metrics">The value of the <c>"metrics"</c> property.</param>
                 /// <param name="traces">The value of the <c>"traces"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.Source<TContext> metrics = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.Source<TContext> traces = default)
+                public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.MetricsEntity.Source<TContext> metrics = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opentelemetry.Layers.ReportBackendActivity.TracesEntity.Source<TContext> traces = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif

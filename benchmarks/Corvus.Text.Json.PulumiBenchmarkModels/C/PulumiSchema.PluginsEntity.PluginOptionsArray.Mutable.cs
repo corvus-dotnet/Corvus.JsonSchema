@@ -396,7 +396,7 @@ public readonly partial struct PulumiSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void InsertItem(int itemIndex, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginOptions.Source value)
+                public void InsertItem(int itemIndex, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginOptions.Source value)
                 {
                     CheckValidInstance();
 
@@ -422,7 +422,7 @@ public readonly partial struct PulumiSchema
                 ///   The parent <see cref="JsonDocument"/> has been disposed.
                 /// </exception>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void AddItem(in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginOptions.Source value)
+                public void AddItem(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginOptions.Source value)
                 {
                     InsertItem(GetArrayLength(), in value);
                 }

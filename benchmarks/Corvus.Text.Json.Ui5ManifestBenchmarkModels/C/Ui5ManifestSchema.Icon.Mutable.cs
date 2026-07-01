@@ -368,7 +368,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>alt</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAlt(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetAlt(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -413,7 +413,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>backgroundColor</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBackgroundColor(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconBackgroundColor.Source value)
+            public void SetBackgroundColor(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconBackgroundColor.Source value)
             {
                 CheckValidInstance();
 
@@ -458,7 +458,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>initials</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetInitials(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetInitials(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -503,7 +503,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>shape</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShape(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.RepresentsTheShapeOfTheIcon.Source value)
+            public void SetShape(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.RepresentsTheShapeOfTheIcon.Source value)
             {
                 CheckValidInstance();
 
@@ -548,7 +548,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>size</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSize(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.ExperimentalTheSizeOfTheIcon.Source value)
+            public void SetSize(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.ExperimentalTheSizeOfTheIcon.Source value)
             {
                 CheckValidInstance();
 
@@ -593,7 +593,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>src</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSrc(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetSrc(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -638,7 +638,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>text</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetText(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetText(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -683,7 +683,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>visible</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVisible(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source value)
+            public void SetVisible(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source value)
             {
                 CheckValidInstance();
 
@@ -900,7 +900,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconBackgroundColor.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.RepresentsTheShapeOfTheIcon.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.ExperimentalTheSizeOfTheIcon.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg8)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconBackgroundColor.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.RepresentsTheShapeOfTheIcon.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.ExperimentalTheSizeOfTheIcon.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg8)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1253,7 +1253,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg7">The value of the property.</param>
             /// <param name="arg8">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconBackgroundColor.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.RepresentsTheShapeOfTheIcon.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.ExperimentalTheSizeOfTheIcon.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg8, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconBackgroundColor.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.RepresentsTheShapeOfTheIcon.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.ExperimentalTheSizeOfTheIcon.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg8, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
@@ -1302,7 +1302,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="text">The value of the <c>"text"</c> property.</param>
         /// <param name="visible">The value of the <c>"visible"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source alt = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconBackgroundColor.Source backgroundColor = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source initials = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.RepresentsTheShapeOfTheIcon.Source shape = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.ExperimentalTheSizeOfTheIcon.Source size = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source src = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source alt = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconBackgroundColor.Source backgroundColor = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source initials = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.RepresentsTheShapeOfTheIcon.Source shape = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Icon.ExperimentalTheSizeOfTheIcon.Source size = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source src = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default)
         {
             return new Source(alt, backgroundColor, initials, shape, size, src, text, visible);
         }

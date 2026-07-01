@@ -128,4 +128,30 @@ public class GeneratedParamsBuildTests
 
         Assert.AreEqual(delegateJson, paramsJson);
     }
+
+    [TestMethod]
+    public void ParamsBuild_AsArrayElement_InsideArrayBuilder()
+    {
+        // Regression guard: the field-set Build(...) factory must be usable as an array
+        // element inside an array builder lambda — builder.AddItem(Item.Build(field: ...)).
+        // This requires `scoped in` on the Build factory parameters, the capturing Source
+        // constructor, and Array.AddItem/InsertItem; without it the C# ref-safety analysis
+        // rejects the call with CS8347/CS8350 (the Build result's Source would otherwise be
+        // assumed to escape into the wider-scoped array builder). The delegate-form Build —
+        // tested elsewhere — works without the fix because it wraps a heap closure, not refs.
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<ArrayOfItems.Mutable> doc = ArrayOfItems.CreateBuilder(
+            workspace,
+            ArrayOfItems.Build(static (ref ArrayOfItems.Builder b) =>
+            {
+                b.AddItem(ArrayOfItems.RequiredId.Build(id: 1, label: "first"));
+                b.AddItem(ArrayOfItems.RequiredId.Build(id: 2));
+            }));
+
+        Assert.AreEqual(
+            """
+            [{"id":1,"label":"first"},{"id":2}]
+            """,
+            doc.RootElement.ToString());
+    }
 }

@@ -429,7 +429,7 @@ public readonly partial struct CspellSchema
                 /// Set the <c>accentCosts</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAccentCosts(in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.AccentCostsEntity.Source value)
+                public void SetAccentCosts(scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.AccentCostsEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -474,7 +474,7 @@ public readonly partial struct CspellSchema
                 /// Set the <c>baseCost</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetBaseCost(in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheBaseCostForMakingAnEdit.Source value)
+                public void SetBaseCost(scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheBaseCostForMakingAnEdit.Source value)
                 {
                     CheckValidInstance();
 
@@ -519,7 +519,7 @@ public readonly partial struct CspellSchema
                 /// Set the <c>capsCosts</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCapsCosts(in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.CapsCostsEntity.Source value)
+                public void SetCapsCosts(scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.CapsCostsEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -564,7 +564,7 @@ public readonly partial struct CspellSchema
                 /// Set the <c>firstLetterPenalty</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetFirstLetterPenalty(in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.FirstLetterPenaltyEntity.Source value)
+                public void SetFirstLetterPenalty(scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.FirstLetterPenaltyEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -609,7 +609,7 @@ public readonly partial struct CspellSchema
                 /// Set the <c>ioConvertCost</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetIoConvertCost(in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.IoConvertCostEntity.Source value)
+                public void SetIoConvertCost(scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.IoConvertCostEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -654,7 +654,7 @@ public readonly partial struct CspellSchema
                 /// Set the <c>keyboardCost</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetKeyboardCost(in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.KeyboardCostEntity.Source value)
+                public void SetKeyboardCost(scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.KeyboardCostEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -699,7 +699,7 @@ public readonly partial struct CspellSchema
                 /// Set the <c>mapCost</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMapCost(in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.MapCostEntity.Source value)
+                public void SetMapCost(scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.MapCostEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -744,7 +744,7 @@ public readonly partial struct CspellSchema
                 /// Set the <c>nonAlphabetCosts</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNonAlphabetCosts(in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheCostForCharactersNotInTheAlphabet.Source value)
+                public void SetNonAlphabetCosts(scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheCostForCharactersNotInTheAlphabet.Source value)
                 {
                     CheckValidInstance();
 
@@ -789,7 +789,7 @@ public readonly partial struct CspellSchema
                 /// Set the <c>replaceCosts</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetReplaceCosts(in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.TheCostToSubstitutePairsFoundInTheReplaceSettings.Source value)
+                public void SetReplaceCosts(scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.TheCostToSubstitutePairsFoundInTheReplaceSettings.Source value)
                 {
                     CheckValidInstance();
 
@@ -834,7 +834,7 @@ public readonly partial struct CspellSchema
                 /// Set the <c>tryCharCost</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTryCharCost(in Corvus.CspellBenchmark.Current.JsonNumber.Source value)
+                public void SetTryCharCost(scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source value)
                 {
                     CheckValidInstance();
 
@@ -1053,7 +1053,7 @@ public readonly partial struct CspellSchema
 
                 internal Source(Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.AccentCostsEntity.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheBaseCostForMakingAnEdit.Source arg2, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.CapsCostsEntity.Source arg3, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.FirstLetterPenaltyEntity.Source arg4, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.IoConvertCostEntity.Source arg5, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.KeyboardCostEntity.Source arg6, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.MapCostEntity.Source arg7, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheCostForCharactersNotInTheAlphabet.Source arg8, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.TheCostToSubstitutePairsFoundInTheReplaceSettings.Source arg9, in Corvus.CspellBenchmark.Current.JsonNumber.Source arg10)
+                internal Source(scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.AccentCostsEntity.Source arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheBaseCostForMakingAnEdit.Source arg2, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.CapsCostsEntity.Source arg3, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.FirstLetterPenaltyEntity.Source arg4, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.IoConvertCostEntity.Source arg5, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.KeyboardCostEntity.Source arg6, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.MapCostEntity.Source arg7, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheCostForCharactersNotInTheAlphabet.Source arg8, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.TheCostToSubstitutePairsFoundInTheReplaceSettings.Source arg9, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source arg10)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1416,7 +1416,7 @@ public readonly partial struct CspellSchema
                 /// <param name="arg9">The value of the property.</param>
                 /// <param name="arg10">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.AccentCostsEntity.Source arg1, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheBaseCostForMakingAnEdit.Source arg2, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.CapsCostsEntity.Source arg3, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.FirstLetterPenaltyEntity.Source arg4, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.IoConvertCostEntity.Source arg5, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.KeyboardCostEntity.Source arg6, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.MapCostEntity.Source arg7, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheCostForCharactersNotInTheAlphabet.Source arg8, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.TheCostToSubstitutePairsFoundInTheReplaceSettings.Source arg9, in Corvus.CspellBenchmark.Current.JsonNumber.Source arg10, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.AccentCostsEntity.Source arg1, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheBaseCostForMakingAnEdit.Source arg2, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.CapsCostsEntity.Source arg3, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.FirstLetterPenaltyEntity.Source arg4, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.IoConvertCostEntity.Source arg5, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.KeyboardCostEntity.Source arg6, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.MapCostEntity.Source arg7, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheCostForCharactersNotInTheAlphabet.Source arg8, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.TheCostToSubstitutePairsFoundInTheReplaceSettings.Source arg9, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source arg10, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
@@ -1467,7 +1467,7 @@ public readonly partial struct CspellSchema
             /// <param name="replaceCosts">The value of the <c>"replaceCosts"</c> property.</param>
             /// <param name="tryCharCost">The value of the <c>"tryCharCost"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.AccentCostsEntity.Source accentCosts = default, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheBaseCostForMakingAnEdit.Source baseCost = default, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.CapsCostsEntity.Source capsCosts = default, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.FirstLetterPenaltyEntity.Source firstLetterPenalty = default, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.IoConvertCostEntity.Source ioConvertCost = default, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.KeyboardCostEntity.Source keyboardCost = default, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.MapCostEntity.Source mapCost = default, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheCostForCharactersNotInTheAlphabet.Source nonAlphabetCosts = default, in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.TheCostToSubstitutePairsFoundInTheReplaceSettings.Source replaceCosts = default, in Corvus.CspellBenchmark.Current.JsonNumber.Source tryCharCost = default)
+            public static Source Build(scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.AccentCostsEntity.Source accentCosts = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheBaseCostForMakingAnEdit.Source baseCost = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.CapsCostsEntity.Source capsCosts = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.FirstLetterPenaltyEntity.Source firstLetterPenalty = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.IoConvertCostEntity.Source ioConvertCost = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.KeyboardCostEntity.Source keyboardCost = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.MapCostEntity.Source mapCost = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.ThisIsTheCostForCharactersNotInTheAlphabet.Source nonAlphabetCosts = default, scoped in Corvus.CspellBenchmark.Current.CspellSchema.HunspellInformation.TheCostsToApplyWhenUsingTheHunspellSettings.TheCostToSubstitutePairsFoundInTheReplaceSettings.Source replaceCosts = default, scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source tryCharCost = default)
             {
                 return new Source(accentCosts, baseCost, capsCosts, firstLetterPenalty, ioConvertCost, keyboardCost, mapCost, nonAlphabetCosts, replaceCosts, tryCharCost);
             }

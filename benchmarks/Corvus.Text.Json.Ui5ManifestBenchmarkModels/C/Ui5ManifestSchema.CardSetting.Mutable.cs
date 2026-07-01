@@ -1073,7 +1073,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>annotationPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAnnotationPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheAnnotationPath.Source value)
+            public void SetAnnotationPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheAnnotationPath.Source value)
             {
                 CheckValidInstance();
 
@@ -1118,7 +1118,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>category</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCategory(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheCategoryOfTheCardUsedInTheCardHeader.Source value)
+            public void SetCategory(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheCategoryOfTheCardUsedInTheCardHeader.Source value)
             {
                 CheckValidInstance();
 
@@ -1163,7 +1163,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>chartAnnotationPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetChartAnnotationPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheChartAnnotationPath.Source value)
+            public void SetChartAnnotationPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheChartAnnotationPath.Source value)
             {
                 CheckValidInstance();
 
@@ -1208,7 +1208,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>chartProperties</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetChartProperties(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ChartPropertiesEntity.Source value)
+            public void SetChartProperties(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ChartPropertiesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1289,7 +1289,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>colorPalette</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetColorPalette(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ColorPaletteEntity.Source value)
+            public void SetColorPalette(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ColorPaletteEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1370,7 +1370,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>customParams</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCustomParams(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.CustomParamsEntity.Source value)
+            public void SetCustomParams(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.CustomParamsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1415,7 +1415,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>dataPointAnnotationPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDataPointAnnotationPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheDataPointAnnotationPath.Source value)
+            public void SetDataPointAnnotationPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheDataPointAnnotationPath.Source value)
             {
                 CheckValidInstance();
 
@@ -1460,7 +1460,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>defaultSpan</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDefaultSpan(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.Source value)
+            public void SetDefaultSpan(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.Source value)
             {
                 CheckValidInstance();
 
@@ -1541,7 +1541,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>dynamicSubtitleAnnotationPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDynamicSubtitleAnnotationPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source value)
+            public void SetDynamicSubtitleAnnotationPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source value)
             {
                 CheckValidInstance();
 
@@ -1586,7 +1586,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>enableAddToInsights</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnableAddToInsights(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.EnableAddToInsightsEntity.Source value)
+            public void SetEnableAddToInsights(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.EnableAddToInsightsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1631,7 +1631,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>enableLocaleCurrencyFormatting</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnableLocaleCurrencyFormatting(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.EnableLocaleCurrencyFormattingEntity.Source value)
+            public void SetEnableLocaleCurrencyFormatting(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.EnableLocaleCurrencyFormattingEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1676,7 +1676,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>entitySet</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEntitySet(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheEntitySetThatWillBeDisplayedInThisCard.Source value)
+            public void SetEntitySet(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheEntitySetThatWillBeDisplayedInThisCard.Source value)
             {
                 CheckValidInstance();
 
@@ -1721,7 +1721,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>identificationAnnotationPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIdentificationAnnotationPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheIdentificationAnnotationPath.Source value)
+            public void SetIdentificationAnnotationPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheIdentificationAnnotationPath.Source value)
             {
                 CheckValidInstance();
 
@@ -1766,7 +1766,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>ignoreSapText</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIgnoreSapText(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.IgnoreSapTextEntity.Source value)
+            public void SetIgnoreSapText(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.IgnoreSapTextEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1811,7 +1811,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>imageSupported</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetImageSupported(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.FlagForEnablingImagesInACondensedListCard.Source value)
+            public void SetImageSupported(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.FlagForEnablingImagesInACondensedListCard.Source value)
             {
                 CheckValidInstance();
 
@@ -1856,7 +1856,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>itemText</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetItemText(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheUserDefinedStringInPlaceholderCard.Source value)
+            public void SetItemText(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheUserDefinedStringInPlaceholderCard.Source value)
             {
                 CheckValidInstance();
 
@@ -1901,7 +1901,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>kpiAnnotationPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetKpiAnnotationPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheKpiAnnotationPath.Source value)
+            public void SetKpiAnnotationPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheKpiAnnotationPath.Source value)
             {
                 CheckValidInstance();
 
@@ -1946,7 +1946,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>listFlavor</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetListFlavor(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ListFlavorEntity.Source value)
+            public void SetListFlavor(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ListFlavorEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1991,7 +1991,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>listType</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetListType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ListTypeEntity.Source value)
+            public void SetListType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ListTypeEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2036,7 +2036,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>navigation</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetNavigation(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.NavigationEntity.Source value)
+            public void SetNavigation(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.NavigationEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2081,7 +2081,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>objectStreamCardsSettings</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetObjectStreamCardsSettings(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.Source value)
+            public void SetObjectStreamCardsSettings(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.Source value)
             {
                 CheckValidInstance();
 
@@ -2162,7 +2162,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>presentationAnnotationPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPresentationAnnotationPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsThePresentationAnnotationPath.Source value)
+            public void SetPresentationAnnotationPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsThePresentationAnnotationPath.Source value)
             {
                 CheckValidInstance();
 
@@ -2207,7 +2207,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>requireAppAuthorization</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRequireAppAuthorization(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetRequireAppAuthorization(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -2252,7 +2252,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>selectionAnnotationPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSelectionAnnotationPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSelectionAnnotationPath.Source value)
+            public void SetSelectionAnnotationPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSelectionAnnotationPath.Source value)
             {
                 CheckValidInstance();
 
@@ -2297,7 +2297,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>selectionPresentationAnnotationPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSelectionPresentationAnnotationPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSelectionPresentationAnnotationPath.Source value)
+            public void SetSelectionPresentationAnnotationPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSelectionPresentationAnnotationPath.Source value)
             {
                 CheckValidInstance();
 
@@ -2342,7 +2342,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>showFilterInHeader</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShowFilterInHeader(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowFilterInHeaderEntity.Source value)
+            public void SetShowFilterInHeader(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowFilterInHeaderEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2387,7 +2387,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>showLabelText</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShowLabelText(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowLabelTextEntity.Source value)
+            public void SetShowLabelText(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowLabelTextEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2432,7 +2432,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>showLineItemDetail</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShowLineItemDetail(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.FlagForShowLineItemDetailInListAndTableCard.Source value)
+            public void SetShowLineItemDetail(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.FlagForShowLineItemDetailInListAndTableCard.Source value)
             {
                 CheckValidInstance();
 
@@ -2477,7 +2477,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>showRefresh</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShowRefresh(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowRefreshEntity.Source value)
+            public void SetShowRefresh(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowRefreshEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2522,7 +2522,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>showSortingInHeader</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShowSortingInHeader(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowSortingInHeaderEntity.Source value)
+            public void SetShowSortingInHeader(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowSortingInHeaderEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2567,7 +2567,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>sortBy</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSortBy(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetSortBy(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -2612,7 +2612,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>sortOrder</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSortOrder(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSortOrderForTheEntitySet.Source value)
+            public void SetSortOrder(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSortOrderForTheEntitySet.Source value)
             {
                 CheckValidInstance();
 
@@ -2657,7 +2657,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>staticContent</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStaticContent(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.JsonObjectArray.Source value)
+            public void SetStaticContent(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.JsonObjectArray.Source value)
             {
                 CheckValidInstance();
 
@@ -2738,7 +2738,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>subTitle</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSubTitle(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.SubTitleEntity.Source value)
+            public void SetSubTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.SubTitleEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2783,7 +2783,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>title</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTitle(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.TitleEntity.Source value)
+            public void SetTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.TitleEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -2814,7 +2814,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>valueSelectionInfo</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetValueSelectionInfo(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsThingsLikePeopleNumberOfItems.Source value)
+            public void SetValueSelectionInfo(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsThingsLikePeopleNumberOfItems.Source value)
             {
                 CheckValidInstance();
 
@@ -2960,7 +2960,7 @@ public readonly partial struct Ui5ManifestSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -2983,7 +2983,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -3030,7 +3030,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 

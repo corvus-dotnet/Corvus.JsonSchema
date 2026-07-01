@@ -278,7 +278,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>extension</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetExtensionValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.Source value)
+                public void SetExtensionValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.Source value)
                 {
                     CheckValidInstance();
 
@@ -359,7 +359,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>json</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetJson(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.TheDataToBeUsedDirectlyWithoutMakingRequests.Source value)
+                public void SetJson(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.TheDataToBeUsedDirectlyWithoutMakingRequests.Source value)
                 {
                     CheckValidInstance();
 
@@ -440,7 +440,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>request</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRequestValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Source value)
+                public void SetRequestValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Source value)
                 {
                     CheckValidInstance();
 
@@ -688,7 +688,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.TheDataToBeUsedDirectlyWithoutMakingRequests.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Source arg3)
+                internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.TheDataToBeUsedDirectlyWithoutMakingRequests.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Source arg3)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -856,7 +856,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.TheDataToBeUsedDirectlyWithoutMakingRequests.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Source<TContext> arg3)
+                internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.TheDataToBeUsedDirectlyWithoutMakingRequests.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Source<TContext> arg3)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1097,7 +1097,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.TheDataToBeUsedDirectlyWithoutMakingRequests.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Source arg3, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.TheDataToBeUsedDirectlyWithoutMakingRequests.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Source arg3, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3);
@@ -1113,7 +1113,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.TheDataToBeUsedDirectlyWithoutMakingRequests.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Source<TContext> arg3, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.TheDataToBeUsedDirectlyWithoutMakingRequests.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Source<TContext> arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1160,7 +1160,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="json">The value of the <c>"json"</c> property.</param>
             /// <param name="request">The value of the <c>"request"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.Source extension = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.TheDataToBeUsedDirectlyWithoutMakingRequests.Source json = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Source request = default)
+            public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.Source extension = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.TheDataToBeUsedDirectlyWithoutMakingRequests.Source json = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Source request = default)
             {
                 return new Source(extension, json, request);
             }
@@ -1174,7 +1174,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="json">The value of the <c>"json"</c> property.</param>
             /// <param name="request">The value of the <c>"request"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.Source<TContext> extension = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.TheDataToBeUsedDirectlyWithoutMakingRequests.Source<TContext> json = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Source<TContext> request = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.Source<TContext> extension = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.ExperimentalMockDataAttributes.TheDataToBeUsedDirectlyWithoutMakingRequests.Source<TContext> json = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Request.Source<TContext> request = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

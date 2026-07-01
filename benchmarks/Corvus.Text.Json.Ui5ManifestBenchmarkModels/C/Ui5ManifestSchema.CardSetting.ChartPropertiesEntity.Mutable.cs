@@ -257,7 +257,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>plotArea</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPlotArea(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PlotAreaDef.Source value)
+                public void SetPlotArea(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PlotAreaDef.Source value)
                 {
                     CheckValidInstance();
 
@@ -338,7 +338,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>timeAxis</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTimeAxis(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TimeAxisDef.Source value)
+                public void SetTimeAxis(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TimeAxisDef.Source value)
                 {
                     CheckValidInstance();
 
@@ -585,7 +585,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ChartPropertiesEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PlotAreaDef.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TimeAxisDef.Source arg2)
+                internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PlotAreaDef.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TimeAxisDef.Source arg2)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -751,7 +751,7 @@ public readonly partial struct Ui5ManifestSchema
 
                 internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ChartPropertiesEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PlotAreaDef.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TimeAxisDef.Source<TContext> arg2)
+                internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PlotAreaDef.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TimeAxisDef.Source<TContext> arg2)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -982,7 +982,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PlotAreaDef.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TimeAxisDef.Source arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PlotAreaDef.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TimeAxisDef.Source arg2, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2);
@@ -997,7 +997,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PlotAreaDef.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TimeAxisDef.Source<TContext> arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PlotAreaDef.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TimeAxisDef.Source<TContext> arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1043,7 +1043,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="plotArea">The value of the <c>"plotArea"</c> property.</param>
             /// <param name="timeAxis">The value of the <c>"timeAxis"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PlotAreaDef.Source plotArea = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TimeAxisDef.Source timeAxis = default)
+            public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PlotAreaDef.Source plotArea = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TimeAxisDef.Source timeAxis = default)
             {
                 return new Source(plotArea, timeAxis);
             }
@@ -1056,7 +1056,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="plotArea">The value of the <c>"plotArea"</c> property.</param>
             /// <param name="timeAxis">The value of the <c>"timeAxis"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PlotAreaDef.Source<TContext> plotArea = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TimeAxisDef.Source<TContext> timeAxis = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.PlotAreaDef.Source<TContext> plotArea = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TimeAxisDef.Source<TContext> timeAxis = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

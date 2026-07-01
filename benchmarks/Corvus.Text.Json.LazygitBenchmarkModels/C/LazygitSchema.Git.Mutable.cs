@@ -616,7 +616,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>allBranchesLogCmd</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAllBranchesLogCmdValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source value)
+            public void SetAllBranchesLogCmdValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source value)
             {
                 CheckValidInstance();
 
@@ -661,7 +661,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>autoFetch</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAutoFetchValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source value)
+            public void SetAutoFetchValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source value)
             {
                 CheckValidInstance();
 
@@ -706,7 +706,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>autoRefresh</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAutoRefreshValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source value)
+            public void SetAutoRefreshValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source value)
             {
                 CheckValidInstance();
 
@@ -751,7 +751,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>branchLogCmd</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBranchLogCmdValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source value)
+            public void SetBranchLogCmdValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source value)
             {
                 CheckValidInstance();
 
@@ -796,7 +796,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>commit</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCommitValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source value)
+            public void SetCommitValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source value)
             {
                 CheckValidInstance();
 
@@ -877,7 +877,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>commitPrefixes</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCommitPrefixesValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source value)
+            public void SetCommitPrefixesValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source value)
             {
                 CheckValidInstance();
 
@@ -958,7 +958,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>diffContextSize</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDiffContextSizeValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source value)
+            public void SetDiffContextSizeValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source value)
             {
                 CheckValidInstance();
 
@@ -1003,7 +1003,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>disableForcePushing</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisableForcePushingValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source value)
+            public void SetDisableForcePushingValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source value)
             {
                 CheckValidInstance();
 
@@ -1048,7 +1048,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>fetchAll</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFetchAllValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source value)
+            public void SetFetchAllValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source value)
             {
                 CheckValidInstance();
 
@@ -1093,7 +1093,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>log</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLogValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source value)
+            public void SetLogValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source value)
             {
                 CheckValidInstance();
 
@@ -1174,7 +1174,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>mainBranches</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMainBranches(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source value)
+            public void SetMainBranches(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1255,7 +1255,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>merging</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMergingValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source value)
+            public void SetMergingValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source value)
             {
                 CheckValidInstance();
 
@@ -1336,7 +1336,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>overrideGpg</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOverrideGpgValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source value)
+            public void SetOverrideGpgValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source value)
             {
                 CheckValidInstance();
 
@@ -1381,7 +1381,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>paging</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPagingValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source value)
+            public void SetPagingValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source value)
             {
                 CheckValidInstance();
 
@@ -1462,7 +1462,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>parseEmoji</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetParseEmojiValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source value)
+            public void SetParseEmojiValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source value)
             {
                 CheckValidInstance();
 
@@ -1507,7 +1507,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>skipHookPrefix</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSkipHookPrefixValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source value)
+            public void SetSkipHookPrefixValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source value)
             {
                 CheckValidInstance();
 
@@ -1732,7 +1732,7 @@ public readonly partial struct LazygitSchema
 
             internal Source(Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source arg10, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source arg11, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source arg12, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source arg13, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source arg14, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source arg15, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source arg16)
+            internal Source(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source arg10, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source arg11, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source arg12, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source arg13, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source arg14, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source arg15, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source arg16)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1926,7 +1926,7 @@ public readonly partial struct LazygitSchema
 
             internal Source(scoped in TContext context, Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source<TContext> arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source<TContext> arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source<TContext> arg10, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source<TContext> arg11, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source<TContext> arg12, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source arg13, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source<TContext> arg14, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source arg15, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source arg16)
+            internal Source(scoped in TContext context, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source<TContext> arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source<TContext> arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source<TContext> arg10, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source<TContext> arg11, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source<TContext> arg12, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source arg13, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source<TContext> arg14, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source arg15, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source arg16)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2271,7 +2271,7 @@ public readonly partial struct LazygitSchema
             /// <param name="arg15">The value of the property.</param>
             /// <param name="arg16">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source arg10, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source arg11, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source arg12, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source arg13, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source arg14, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source arg15, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source arg16, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source arg10, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source arg11, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source arg12, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source arg13, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source arg14, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source arg15, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source arg16, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16);
@@ -2300,7 +2300,7 @@ public readonly partial struct LazygitSchema
             /// <param name="arg15">The value of the property.</param>
             /// <param name="arg16">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source<TContext> arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source<TContext> arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source arg7, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source arg8, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source arg9, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source<TContext> arg10, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source<TContext> arg11, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source<TContext> arg12, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source arg13, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source<TContext> arg14, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source arg15, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source arg16, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source<TContext> arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source<TContext> arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source arg7, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source arg8, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source arg9, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source<TContext> arg10, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source<TContext> arg11, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source<TContext> arg12, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source arg13, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source<TContext> arg14, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source arg15, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source arg16, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2360,7 +2360,7 @@ public readonly partial struct LazygitSchema
         /// <param name="parseEmoji">The value of the <c>"parseEmoji"</c> property.</param>
         /// <param name="skipHookPrefix">The value of the <c>"skipHookPrefix"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source allBranchesLogCmd = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source autoFetch = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source autoRefresh = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source branchLogCmd = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source commit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source commitPrefixes = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source diffContextSize = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source disableForcePushing = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source fetchAll = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source log = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source mainBranches = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source merging = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source overrideGpg = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source paging = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source parseEmoji = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source skipHookPrefix = default)
+        public static Source Build(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source allBranchesLogCmd = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source autoFetch = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source autoRefresh = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source branchLogCmd = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source commit = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source commitPrefixes = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source diffContextSize = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source disableForcePushing = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source fetchAll = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source log = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source mainBranches = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source merging = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source overrideGpg = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source paging = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source parseEmoji = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source skipHookPrefix = default)
         {
             return new Source(allBranchesLogCmd, autoFetch, autoRefresh, branchLogCmd, commit, commitPrefixes, diffContextSize, disableForcePushing, fetchAll, log, mainBranches, merging, overrideGpg, paging, parseEmoji, skipHookPrefix);
         }
@@ -2387,7 +2387,7 @@ public readonly partial struct LazygitSchema
         /// <param name="parseEmoji">The value of the <c>"parseEmoji"</c> property.</param>
         /// <param name="skipHookPrefix">The value of the <c>"skipHookPrefix"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source allBranchesLogCmd = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source autoFetch = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source autoRefresh = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source branchLogCmd = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source<TContext> commit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source<TContext> commitPrefixes = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source diffContextSize = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source disableForcePushing = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source fetchAll = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source<TContext> log = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source<TContext> mainBranches = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source<TContext> merging = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source overrideGpg = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source<TContext> paging = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source parseEmoji = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source skipHookPrefix = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AllBranchesLogCmd.Source allBranchesLogCmd = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoFetch.Source autoFetch = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.AutoRefresh.Source autoRefresh = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.BranchLogCmd.Source branchLogCmd = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Commit.Source<TContext> commit = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.CommitPrefixes.Source<TContext> commitPrefixes = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DiffContextSize.Source diffContextSize = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.DisableForcePushing.Source disableForcePushing = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.FetchAll.Source fetchAll = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.Source<TContext> log = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.MainBranchesEntityArray.Source<TContext> mainBranches = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Merging.Source<TContext> merging = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.OverrideGpg.Source overrideGpg = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Paging.Source<TContext> paging = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source parseEmoji = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source skipHookPrefix = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

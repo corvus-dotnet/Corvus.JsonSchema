@@ -421,7 +421,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>actions</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetActions(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ActionArray.Source value)
+            public void SetActions(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ActionArray.Source value)
             {
                 CheckValidInstance();
 
@@ -502,7 +502,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>data</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDataValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source value)
+            public void SetDataValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source value)
             {
                 CheckValidInstance();
 
@@ -583,7 +583,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>icon</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIcon(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconWithoutSize.Source value)
+            public void SetIcon(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconWithoutSize.Source value)
             {
                 CheckValidInstance();
 
@@ -664,7 +664,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>status</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStatusValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source value)
+            public void SetStatusValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source value)
             {
                 CheckValidInstance();
 
@@ -745,7 +745,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>subTitle</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSubTitle(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
+            public void SetSubTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
             {
                 CheckValidInstance();
 
@@ -790,7 +790,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>subTitleMaxLines</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSubTitleMaxLines(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source value)
+            public void SetSubTitleMaxLines(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source value)
             {
                 CheckValidInstance();
 
@@ -835,7 +835,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>title</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTitle(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
+            public void SetTitle(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source value)
             {
                 CheckValidInstance();
 
@@ -880,7 +880,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>titleMaxLines</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTitleMaxLines(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheTitle.Source value)
+            public void SetTitleMaxLines(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheTitle.Source value)
             {
                 CheckValidInstance();
 
@@ -925,7 +925,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.RepresentsTheTypeOfTheHeader.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.RepresentsTheTypeOfTheHeader.Source value)
             {
                 CheckValidInstance();
 
@@ -970,7 +970,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>visible</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVisible(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalVisibilityOfTheHeader.Source value)
+            public void SetVisible(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalVisibilityOfTheHeader.Source value)
             {
                 CheckValidInstance();
 
@@ -1189,7 +1189,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ActionArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconWithoutSize.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheTitle.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.RepresentsTheTypeOfTheHeader.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalVisibilityOfTheHeader.Source arg10)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ActionArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconWithoutSize.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheTitle.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.RepresentsTheTypeOfTheHeader.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalVisibilityOfTheHeader.Source arg10)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1371,7 +1371,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ActionArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconWithoutSize.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheTitle.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.RepresentsTheTypeOfTheHeader.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalVisibilityOfTheHeader.Source arg10)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ActionArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconWithoutSize.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheTitle.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.RepresentsTheTypeOfTheHeader.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalVisibilityOfTheHeader.Source arg10)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1668,7 +1668,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ActionArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconWithoutSize.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheTitle.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.RepresentsTheTypeOfTheHeader.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalVisibilityOfTheHeader.Source arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ActionArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconWithoutSize.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheTitle.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.RepresentsTheTypeOfTheHeader.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalVisibilityOfTheHeader.Source arg10, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
@@ -1691,7 +1691,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ActionArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconWithoutSize.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheTitle.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.RepresentsTheTypeOfTheHeader.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalVisibilityOfTheHeader.Source arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ActionArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconWithoutSize.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheTitle.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.RepresentsTheTypeOfTheHeader.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalVisibilityOfTheHeader.Source arg10, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1745,7 +1745,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="type">The value of the <c>"type"</c> property.</param>
         /// <param name="visible">The value of the <c>"visible"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ActionArray.Source actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconWithoutSize.Source icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source status = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source subTitleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheTitle.Source titleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.RepresentsTheTypeOfTheHeader.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalVisibilityOfTheHeader.Source visible = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ActionArray.Source actions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source data = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconWithoutSize.Source icon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source status = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source subTitleMaxLines = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheTitle.Source titleMaxLines = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.RepresentsTheTypeOfTheHeader.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalVisibilityOfTheHeader.Source visible = default)
         {
             return new Source(actions, data, icon, status, subTitle, subTitleMaxLines, title, titleMaxLines, type, visible);
         }
@@ -1766,7 +1766,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="type">The value of the <c>"type"</c> property.</param>
         /// <param name="visible">The value of the <c>"visible"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ActionArray.Source<TContext> actions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconWithoutSize.Source<TContext> icon = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source<TContext> status = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source subTitleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheTitle.Source titleMaxLines = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.RepresentsTheTypeOfTheHeader.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalVisibilityOfTheHeader.Source visible = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ActionArray.Source<TContext> actions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Data.Source<TContext> data = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IconWithoutSize.Source<TContext> icon = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Status.Source<TContext> status = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source subTitle = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheSubTitle.Source subTitleMaxLines = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.I18nKeyString.Source title = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalLimitTheNumberOfLinesForTheTitle.Source titleMaxLines = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.RepresentsTheTypeOfTheHeader.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.ExperimentalVisibilityOfTheHeader.Source visible = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

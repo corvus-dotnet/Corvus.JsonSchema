@@ -393,7 +393,7 @@ public readonly partial struct NewPet
         /// Set the <c>age</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAge(in Petstore.EndToEnd.Server.Models.JsonInteger.Source value)
+        public void SetAge(scoped in Petstore.EndToEnd.Server.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -438,7 +438,7 @@ public readonly partial struct NewPet
         /// Set the <c>breed</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBreed(in Petstore.EndToEnd.Server.Models.JsonString.Source value)
+        public void SetBreed(scoped in Petstore.EndToEnd.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -483,7 +483,7 @@ public readonly partial struct NewPet
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetName(in Petstore.EndToEnd.Server.Models.JsonString.Source value)
+        public void SetName(scoped in Petstore.EndToEnd.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -514,7 +514,7 @@ public readonly partial struct NewPet
         /// Set the <c>status</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStatus(in Petstore.EndToEnd.Server.Models.NewPet.StatusEntity.Source value)
+        public void SetStatus(scoped in Petstore.EndToEnd.Server.Models.NewPet.StatusEntity.Source value)
         {
             CheckValidInstance();
 
@@ -545,7 +545,7 @@ public readonly partial struct NewPet
         /// Set the <c>tags</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTags(in Petstore.EndToEnd.Server.Models.NewPet.JsonStringArray.Source value)
+        public void SetTags(scoped in Petstore.EndToEnd.Server.Models.NewPet.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -727,7 +727,7 @@ public readonly partial struct NewPet
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -750,7 +750,7 @@ public readonly partial struct NewPet
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -797,7 +797,7 @@ public readonly partial struct NewPet
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -971,7 +971,7 @@ public readonly partial struct NewPet
 
         internal Source(Petstore.EndToEnd.Server.Models.NewPet.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Petstore.EndToEnd.Server.Models.JsonString.Source arg1, in Petstore.EndToEnd.Server.Models.NewPet.StatusEntity.Source arg2, in Petstore.EndToEnd.Server.Models.JsonInteger.Source arg3, in Petstore.EndToEnd.Server.Models.JsonString.Source arg4, in Petstore.EndToEnd.Server.Models.NewPet.JsonStringArray.Source arg5)
+        internal Source(scoped in Petstore.EndToEnd.Server.Models.JsonString.Source arg1, scoped in Petstore.EndToEnd.Server.Models.NewPet.StatusEntity.Source arg2, scoped in Petstore.EndToEnd.Server.Models.JsonInteger.Source arg3, scoped in Petstore.EndToEnd.Server.Models.JsonString.Source arg4, scoped in Petstore.EndToEnd.Server.Models.NewPet.JsonStringArray.Source arg5)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1143,7 +1143,7 @@ public readonly partial struct NewPet
 
         internal Source(scoped in TContext context, Petstore.EndToEnd.Server.Models.NewPet.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Petstore.EndToEnd.Server.Models.JsonString.Source arg1, in Petstore.EndToEnd.Server.Models.NewPet.StatusEntity.Source arg2, in Petstore.EndToEnd.Server.Models.JsonInteger.Source arg3, in Petstore.EndToEnd.Server.Models.JsonString.Source arg4, in Petstore.EndToEnd.Server.Models.NewPet.JsonStringArray.Source<TContext> arg5)
+        internal Source(scoped in TContext context, scoped in Petstore.EndToEnd.Server.Models.JsonString.Source arg1, scoped in Petstore.EndToEnd.Server.Models.NewPet.StatusEntity.Source arg2, scoped in Petstore.EndToEnd.Server.Models.JsonInteger.Source arg3, scoped in Petstore.EndToEnd.Server.Models.JsonString.Source arg4, scoped in Petstore.EndToEnd.Server.Models.NewPet.JsonStringArray.Source<TContext> arg5)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1469,7 +1469,7 @@ public readonly partial struct NewPet
         /// <param name="arg4">The value of the property.</param>
         /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Petstore.EndToEnd.Server.Models.JsonString.Source arg1, in Petstore.EndToEnd.Server.Models.NewPet.StatusEntity.Source arg2, in Petstore.EndToEnd.Server.Models.JsonInteger.Source arg3, in Petstore.EndToEnd.Server.Models.JsonString.Source arg4, in Petstore.EndToEnd.Server.Models.NewPet.JsonStringArray.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Petstore.EndToEnd.Server.Models.JsonString.Source arg1, scoped in Petstore.EndToEnd.Server.Models.NewPet.StatusEntity.Source arg2, scoped in Petstore.EndToEnd.Server.Models.JsonInteger.Source arg3, scoped in Petstore.EndToEnd.Server.Models.JsonString.Source arg4, scoped in Petstore.EndToEnd.Server.Models.NewPet.JsonStringArray.Source arg5, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1487,7 +1487,7 @@ public readonly partial struct NewPet
         /// <param name="arg4">The value of the property.</param>
         /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Petstore.EndToEnd.Server.Models.JsonString.Source arg1, in Petstore.EndToEnd.Server.Models.NewPet.StatusEntity.Source arg2, in Petstore.EndToEnd.Server.Models.JsonInteger.Source arg3, in Petstore.EndToEnd.Server.Models.JsonString.Source arg4, in Petstore.EndToEnd.Server.Models.NewPet.JsonStringArray.Source<TContext> arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Petstore.EndToEnd.Server.Models.JsonString.Source arg1, scoped in Petstore.EndToEnd.Server.Models.NewPet.StatusEntity.Source arg2, scoped in Petstore.EndToEnd.Server.Models.JsonInteger.Source arg3, scoped in Petstore.EndToEnd.Server.Models.JsonString.Source arg4, scoped in Petstore.EndToEnd.Server.Models.NewPet.JsonStringArray.Source<TContext> arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1536,7 +1536,7 @@ public readonly partial struct NewPet
     /// <param name="breed">The value of the <c>"breed"</c> property.</param>
     /// <param name="tags">The value of the <c>"tags"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Petstore.EndToEnd.Server.Models.JsonString.Source name, in Petstore.EndToEnd.Server.Models.NewPet.StatusEntity.Source status, in Petstore.EndToEnd.Server.Models.JsonInteger.Source age = default, in Petstore.EndToEnd.Server.Models.JsonString.Source breed = default, in Petstore.EndToEnd.Server.Models.NewPet.JsonStringArray.Source tags = default)
+    public static Source Build(scoped in Petstore.EndToEnd.Server.Models.JsonString.Source name, scoped in Petstore.EndToEnd.Server.Models.NewPet.StatusEntity.Source status, scoped in Petstore.EndToEnd.Server.Models.JsonInteger.Source age = default, scoped in Petstore.EndToEnd.Server.Models.JsonString.Source breed = default, scoped in Petstore.EndToEnd.Server.Models.NewPet.JsonStringArray.Source tags = default)
     {
         return new Source(name, status, age, breed, tags);
     }
@@ -1552,7 +1552,7 @@ public readonly partial struct NewPet
     /// <param name="breed">The value of the <c>"breed"</c> property.</param>
     /// <param name="tags">The value of the <c>"tags"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Petstore.EndToEnd.Server.Models.JsonString.Source name, in Petstore.EndToEnd.Server.Models.NewPet.StatusEntity.Source status, in Petstore.EndToEnd.Server.Models.JsonInteger.Source age = default, in Petstore.EndToEnd.Server.Models.JsonString.Source breed = default, in Petstore.EndToEnd.Server.Models.NewPet.JsonStringArray.Source<TContext> tags = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Petstore.EndToEnd.Server.Models.JsonString.Source name, scoped in Petstore.EndToEnd.Server.Models.NewPet.StatusEntity.Source status, scoped in Petstore.EndToEnd.Server.Models.JsonInteger.Source age = default, scoped in Petstore.EndToEnd.Server.Models.JsonString.Source breed = default, scoped in Petstore.EndToEnd.Server.Models.NewPet.JsonStringArray.Source<TContext> tags = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

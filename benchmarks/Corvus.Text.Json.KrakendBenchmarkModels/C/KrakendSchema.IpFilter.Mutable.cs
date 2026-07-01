@@ -363,7 +363,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>allow</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAllow(in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.AllowOrDenyMode.Source value)
+            public void SetAllow(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.AllowOrDenyMode.Source value)
             {
                 CheckValidInstance();
 
@@ -394,7 +394,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>CIDR</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCidr(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
+            public void SetCidr(scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -459,7 +459,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>client_ip_headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetClientIpHeaders(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
+            public void SetClientIpHeaders(scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -540,7 +540,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>trusted_proxies</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTrustedProxies(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
+            public void SetTrustedProxies(scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -722,7 +722,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -745,7 +745,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -792,7 +792,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -965,7 +965,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.AllowOrDenyMode.Source arg1, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg2, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg3, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg4)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.AllowOrDenyMode.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg4)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1135,7 +1135,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.AllowOrDenyMode.Source arg1, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg4)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.AllowOrDenyMode.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg3, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg4)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1453,7 +1453,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.AllowOrDenyMode.Source arg1, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg2, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg3, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.AllowOrDenyMode.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg4, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4);
@@ -1470,7 +1470,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.AllowOrDenyMode.Source arg1, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.AllowOrDenyMode.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg3, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1518,7 +1518,7 @@ public readonly partial struct KrakendSchema
         /// <param name="clientIpHeaders">The value of the <c>"client_ip_headers"</c> property.</param>
         /// <param name="trustedProxies">The value of the <c>"trusted_proxies"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.AllowOrDenyMode.Source allow, in Corvus.KrakendBenchmark.Current.JsonArray.Source cIdr, in Corvus.KrakendBenchmark.Current.JsonArray.Source clientIpHeaders = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source trustedProxies = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.AllowOrDenyMode.Source allow, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source cIdr, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source clientIpHeaders = default, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source trustedProxies = default)
         {
             return new Source(allow, cIdr, clientIpHeaders, trustedProxies);
         }
@@ -1533,7 +1533,7 @@ public readonly partial struct KrakendSchema
         /// <param name="clientIpHeaders">The value of the <c>"client_ip_headers"</c> property.</param>
         /// <param name="trustedProxies">The value of the <c>"trusted_proxies"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.AllowOrDenyMode.Source allow, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> cIdr, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> clientIpHeaders = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> trustedProxies = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.AllowOrDenyMode.Source allow, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> cIdr, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> clientIpHeaders = default, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> trustedProxies = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

@@ -252,7 +252,7 @@ public readonly partial struct Ui5Schema
                         /// Set the <c>bundleDefinition</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetBundleDefinition(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.Source value)
+                        public void SetBundleDefinition(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.Source value)
                         {
                             CheckValidInstance();
 
@@ -333,7 +333,7 @@ public readonly partial struct Ui5Schema
                         /// Set the <c>bundleOptions</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetBundleOptions(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.Source value)
+                        public void SetBundleOptions(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.Source value)
                         {
                             CheckValidInstance();
 
@@ -580,7 +580,7 @@ public readonly partial struct Ui5Schema
 
                         internal Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundles24Array.BuilderBundles24Entity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                        internal Source(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.Source arg2)
+                        internal Source(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.Source arg2)
                         {
                             _createArg1 = arg1;
                             _createArg2 = arg2;
@@ -746,7 +746,7 @@ public readonly partial struct Ui5Schema
 
                         internal Source(scoped in TContext context, Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundles24Array.BuilderBundles24Entity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                        internal Source(scoped in TContext context, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.Source<TContext> arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.Source<TContext> arg2)
+                        internal Source(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.Source<TContext> arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.Source<TContext> arg2)
                         {
                             _context = context;
                             _createArg1 = arg1;
@@ -977,7 +977,7 @@ public readonly partial struct Ui5Schema
                         /// <param name="arg1">The value of the property.</param>
                         /// <param name="arg2">The value of the property.</param>
                         /// <param name="o">The complex value builder into which to write the object.</param>
-                        internal static void BuildCreateValue(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.Source arg2, ref ComplexValueBuilder o)
+                        internal static void BuildCreateValue(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.Source arg2, ref ComplexValueBuilder o)
                         {
                             o.StartObject();
                             Create(ref o, arg1, arg2);
@@ -992,7 +992,7 @@ public readonly partial struct Ui5Schema
                         /// <param name="arg1">The value of the property.</param>
                         /// <param name="arg2">The value of the property.</param>
                         /// <param name="o">The complex value builder into which to write the object.</param>
-                        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.Source<TContext> arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.Source<TContext> arg2, ref ComplexValueBuilder o)
+                        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.Source<TContext> arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.Source<TContext> arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                             where TContext : allows ref struct
 #endif
@@ -1038,7 +1038,7 @@ public readonly partial struct Ui5Schema
                     /// <param name="bundleDefinition">The value of the <c>"bundleDefinition"</c> property.</param>
                     /// <param name="bundleOptions">The value of the <c>"bundleOptions"</c> property.</param>
                     /// <returns>The source from which to build the value.</returns>
-                    public static Source Build(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.Source bundleDefinition = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.Source bundleOptions = default)
+                    public static Source Build(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.Source bundleDefinition = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.Source bundleOptions = default)
                     {
                         return new Source(bundleDefinition, bundleOptions);
                     }
@@ -1051,7 +1051,7 @@ public readonly partial struct Ui5Schema
                     /// <param name="bundleDefinition">The value of the <c>"bundleDefinition"</c> property.</param>
                     /// <param name="bundleOptions">The value of the <c>"bundleOptions"</c> property.</param>
                     /// <returns>The source from which to build the value.</returns>
-                    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.Source<TContext> bundleDefinition = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.Source<TContext> bundleOptions = default)
+                    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.RequiredSpecVersionAndTypeRequiredName3.Source<TContext> bundleDefinition = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptionsEntity.Source<TContext> bundleOptions = default)
                         #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
                         #endif

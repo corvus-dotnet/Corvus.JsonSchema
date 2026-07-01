@@ -351,7 +351,7 @@ public readonly partial struct Cql2Schema
             /// Set the <c>geometries</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGeometries(in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.GeometriesEntityArray.Source value)
+            public void SetGeometries(scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.GeometriesEntityArray.Source value)
             {
                 CheckValidInstance();
 
@@ -416,7 +416,7 @@ public readonly partial struct Cql2Schema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.TypeEntity.Source value)
+            public void SetType(scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.TypeEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -548,7 +548,7 @@ public readonly partial struct Cql2Schema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -571,7 +571,7 @@ public readonly partial struct Cql2Schema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -618,7 +618,7 @@ public readonly partial struct Cql2Schema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -789,7 +789,7 @@ public readonly partial struct Cql2Schema
 
             internal Source(Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.GeometriesEntityArray.Source arg1, in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.TypeEntity.Source arg2)
+            internal Source(scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.GeometriesEntityArray.Source arg1, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.TypeEntity.Source arg2)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -955,7 +955,7 @@ public readonly partial struct Cql2Schema
 
             internal Source(scoped in TContext context, Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.GeometriesEntityArray.Source<TContext> arg1, in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.TypeEntity.Source arg2)
+            internal Source(scoped in TContext context, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.GeometriesEntityArray.Source<TContext> arg1, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.TypeEntity.Source arg2)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1255,7 +1255,7 @@ public readonly partial struct Cql2Schema
             /// <param name="arg1">The value of the property.</param>
             /// <param name="arg2">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.GeometriesEntityArray.Source arg1, in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.TypeEntity.Source arg2, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.GeometriesEntityArray.Source arg1, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.TypeEntity.Source arg2, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2);
@@ -1270,7 +1270,7 @@ public readonly partial struct Cql2Schema
             /// <param name="arg1">The value of the property.</param>
             /// <param name="arg2">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.GeometriesEntityArray.Source<TContext> arg1, in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.TypeEntity.Source arg2, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.GeometriesEntityArray.Source<TContext> arg1, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.TypeEntity.Source arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1316,7 +1316,7 @@ public readonly partial struct Cql2Schema
         /// <param name="geometries">The value of the <c>"geometries"</c> property.</param>
         /// <param name="type">The value of the <c>"type"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.GeometriesEntityArray.Source geometries, in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.TypeEntity.Source type)
+        public static Source Build(scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.GeometriesEntityArray.Source geometries, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.TypeEntity.Source type)
         {
             return new Source(geometries, type);
         }
@@ -1329,7 +1329,7 @@ public readonly partial struct Cql2Schema
         /// <param name="geometries">The value of the <c>"geometries"</c> property.</param>
         /// <param name="type">The value of the <c>"type"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.GeometriesEntityArray.Source<TContext> geometries, in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.TypeEntity.Source type)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.GeometriesEntityArray.Source<TContext> geometries, scoped in Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.TypeEntity.Source type)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

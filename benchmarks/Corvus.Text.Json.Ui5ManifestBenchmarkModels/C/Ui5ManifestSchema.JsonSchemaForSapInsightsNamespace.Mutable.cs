@@ -458,7 +458,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVersion(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.VersionEntity.Source value)
+            public void SetVersion(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.VersionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -503,7 +503,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>allowedChartTypes</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAllowedChartTypes(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.AllowedChartTypesEntityArray.Source value)
+            public void SetAllowedChartTypes(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.AllowedChartTypesEntityArray.Source value)
             {
                 CheckValidInstance();
 
@@ -584,7 +584,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>cardType</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCardType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheEnvironmentTypeOfInsightsCard.Source value)
+            public void SetCardType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheEnvironmentTypeOfInsightsCard.Source value)
             {
                 CheckValidInstance();
 
@@ -615,7 +615,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>filterEntitySet</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFilterEntitySet(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.FilterEntitySetEntity.Source value)
+            public void SetFilterEntitySet(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.FilterEntitySetEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -660,7 +660,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>isDeletedForUser</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIsDeletedForUser(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheDeletedStateForAUser.Source value)
+            public void SetIsDeletedForUser(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheDeletedStateForAUser.Source value)
             {
                 CheckValidInstance();
 
@@ -705,7 +705,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>isDtCardCopy</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIsDtCardCopy(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheStateOfOriginalOrCopiedCard.Source value)
+            public void SetIsDtCardCopy(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheStateOfOriginalOrCopiedCard.Source value)
             {
                 CheckValidInstance();
 
@@ -750,7 +750,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>parentAppId</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetParentAppId(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetParentAppId(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -781,7 +781,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>rank</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRankValue(in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source value)
+            public void SetRankValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source value)
             {
                 CheckValidInstance();
 
@@ -826,7 +826,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>ranking</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRanking(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetRanking(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -871,7 +871,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>templateName</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTemplateName(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheTemplateNameFromWhereManifestIsGenerated.Source value)
+            public void SetTemplateName(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheTemplateNameFromWhereManifestIsGenerated.Source value)
             {
                 CheckValidInstance();
 
@@ -916,7 +916,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>versions</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVersions(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsUi5AndCardGeneratorMiddlewareVersion.Source value)
+            public void SetVersions(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsUi5AndCardGeneratorMiddlewareVersion.Source value)
             {
                 CheckValidInstance();
 
@@ -997,7 +997,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>visible</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVisible(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheVisibilityTypeOfInsightsCard.Source value)
+            public void SetVisible(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheVisibilityTypeOfInsightsCard.Source value)
             {
                 CheckValidInstance();
 
@@ -1218,7 +1218,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheEnvironmentTypeOfInsightsCard.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.AllowedChartTypesEntityArray.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.FilterEntitySetEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheDeletedStateForAUser.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheStateOfOriginalOrCopiedCard.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheTemplateNameFromWhereManifestIsGenerated.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsUi5AndCardGeneratorMiddlewareVersion.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheVisibilityTypeOfInsightsCard.Source arg12)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheEnvironmentTypeOfInsightsCard.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.VersionEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.AllowedChartTypesEntityArray.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.FilterEntitySetEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheDeletedStateForAUser.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheStateOfOriginalOrCopiedCard.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheTemplateNameFromWhereManifestIsGenerated.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsUi5AndCardGeneratorMiddlewareVersion.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheVisibilityTypeOfInsightsCard.Source arg12)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1404,7 +1404,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheEnvironmentTypeOfInsightsCard.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.AllowedChartTypesEntityArray.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.FilterEntitySetEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheDeletedStateForAUser.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheStateOfOriginalOrCopiedCard.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheTemplateNameFromWhereManifestIsGenerated.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsUi5AndCardGeneratorMiddlewareVersion.Source<TContext> arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheVisibilityTypeOfInsightsCard.Source arg12)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheEnvironmentTypeOfInsightsCard.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.VersionEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.AllowedChartTypesEntityArray.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.FilterEntitySetEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheDeletedStateForAUser.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheStateOfOriginalOrCopiedCard.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheTemplateNameFromWhereManifestIsGenerated.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsUi5AndCardGeneratorMiddlewareVersion.Source<TContext> arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheVisibilityTypeOfInsightsCard.Source arg12)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1717,7 +1717,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg11">The value of the property.</param>
             /// <param name="arg12">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheEnvironmentTypeOfInsightsCard.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.AllowedChartTypesEntityArray.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.FilterEntitySetEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheDeletedStateForAUser.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheStateOfOriginalOrCopiedCard.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheTemplateNameFromWhereManifestIsGenerated.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsUi5AndCardGeneratorMiddlewareVersion.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheVisibilityTypeOfInsightsCard.Source arg12, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheEnvironmentTypeOfInsightsCard.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.VersionEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.AllowedChartTypesEntityArray.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.FilterEntitySetEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheDeletedStateForAUser.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheStateOfOriginalOrCopiedCard.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheTemplateNameFromWhereManifestIsGenerated.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsUi5AndCardGeneratorMiddlewareVersion.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheVisibilityTypeOfInsightsCard.Source arg12, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
@@ -1742,7 +1742,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg11">The value of the property.</param>
             /// <param name="arg12">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheEnvironmentTypeOfInsightsCard.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.AllowedChartTypesEntityArray.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.FilterEntitySetEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheDeletedStateForAUser.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheStateOfOriginalOrCopiedCard.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheTemplateNameFromWhereManifestIsGenerated.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsUi5AndCardGeneratorMiddlewareVersion.Source<TContext> arg11, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheVisibilityTypeOfInsightsCard.Source arg12, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheEnvironmentTypeOfInsightsCard.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.VersionEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.AllowedChartTypesEntityArray.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.FilterEntitySetEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheDeletedStateForAUser.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheStateOfOriginalOrCopiedCard.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheTemplateNameFromWhereManifestIsGenerated.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsUi5AndCardGeneratorMiddlewareVersion.Source<TContext> arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheVisibilityTypeOfInsightsCard.Source arg12, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1798,7 +1798,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="versions">The value of the <c>"versions"</c> property.</param>
         /// <param name="visible">The value of the <c>"visible"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheEnvironmentTypeOfInsightsCard.Source cardType, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source parentAppId, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.AllowedChartTypesEntityArray.Source allowedChartTypes = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.FilterEntitySetEntity.Source filterEntitySet = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheDeletedStateForAUser.Source isDeletedForUser = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheStateOfOriginalOrCopiedCard.Source isDtCardCopy = default, in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source rank = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source ranking = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheTemplateNameFromWhereManifestIsGenerated.Source templateName = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsUi5AndCardGeneratorMiddlewareVersion.Source versions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheVisibilityTypeOfInsightsCard.Source visible = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheEnvironmentTypeOfInsightsCard.Source cardType, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source parentAppId, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.VersionEntity.Source version = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.AllowedChartTypesEntityArray.Source allowedChartTypes = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.FilterEntitySetEntity.Source filterEntitySet = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheDeletedStateForAUser.Source isDeletedForUser = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheStateOfOriginalOrCopiedCard.Source isDtCardCopy = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source rank = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source ranking = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheTemplateNameFromWhereManifestIsGenerated.Source templateName = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsUi5AndCardGeneratorMiddlewareVersion.Source versions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheVisibilityTypeOfInsightsCard.Source visible = default)
         {
             return new Source(cardType, parentAppId, version, allowedChartTypes, filterEntitySet, isDeletedForUser, isDtCardCopy, rank, ranking, templateName, versions, visible);
         }
@@ -1821,7 +1821,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="versions">The value of the <c>"versions"</c> property.</param>
         /// <param name="visible">The value of the <c>"visible"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheEnvironmentTypeOfInsightsCard.Source cardType, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source parentAppId, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.AllowedChartTypesEntityArray.Source<TContext> allowedChartTypes = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.FilterEntitySetEntity.Source filterEntitySet = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheDeletedStateForAUser.Source isDeletedForUser = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheStateOfOriginalOrCopiedCard.Source isDtCardCopy = default, in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source rank = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source ranking = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheTemplateNameFromWhereManifestIsGenerated.Source templateName = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsUi5AndCardGeneratorMiddlewareVersion.Source<TContext> versions = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheVisibilityTypeOfInsightsCard.Source visible = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheEnvironmentTypeOfInsightsCard.Source cardType, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source parentAppId, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.VersionEntity.Source version = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.AllowedChartTypesEntityArray.Source<TContext> allowedChartTypes = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.FilterEntitySetEntity.Source filterEntitySet = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheDeletedStateForAUser.Source isDeletedForUser = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheStateOfOriginalOrCopiedCard.Source isDtCardCopy = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonInteger.Source rank = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source ranking = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheTemplateNameFromWhereManifestIsGenerated.Source templateName = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsUi5AndCardGeneratorMiddlewareVersion.Source<TContext> versions = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.RepresentsTheVisibilityTypeOfInsightsCard.Source visible = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

@@ -267,7 +267,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>debug</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetDebugValue(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
+                    public void SetDebugValue(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -312,7 +312,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>verbose</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetVerbose(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
+                    public void SetVerbose(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source value)
                     {
                         CheckValidInstance();
 
@@ -523,7 +523,7 @@ public readonly partial struct CmakePresetsSchema
 
                     internal Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsItemsV6.RequiredName.AnOptionalObjectSpecifyingOutputOptions.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg1, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg2)
+                    internal Source(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg2)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -844,7 +844,7 @@ public readonly partial struct CmakePresetsSchema
                     /// <param name="arg1">The value of the property.</param>
                     /// <param name="arg2">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg1, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg2, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source arg2, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2);
@@ -887,7 +887,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="debug">The value of the <c>"debug"</c> property.</param>
                 /// <param name="verbose">The value of the <c>"verbose"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source debug = default, in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source verbose = default)
+                public static Source Build(scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source debug = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonBoolean.Source verbose = default)
                 {
                     return new Source(debug, verbose);
                 }

@@ -354,7 +354,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>enabled_layers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnabledLayersValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.EnabledLayers.Source value)
+            public void SetEnabledLayersValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.EnabledLayers.Source value)
             {
                 CheckValidInstance();
 
@@ -435,7 +435,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>exporters</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExportersValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Source value)
+            public void SetExportersValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Source value)
             {
                 CheckValidInstance();
 
@@ -500,7 +500,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>reporting_period</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetReportingPeriodValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.ReportingPeriod.Source value)
+            public void SetReportingPeriodValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.ReportingPeriod.Source value)
             {
                 CheckValidInstance();
 
@@ -545,7 +545,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>sample_rate</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSampleRateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.SampleRate.Source value)
+            public void SetSampleRateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.SampleRate.Source value)
             {
                 CheckValidInstance();
 
@@ -691,7 +691,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -714,7 +714,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -761,7 +761,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -934,7 +934,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.EnabledLayers.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.ReportingPeriod.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.SampleRate.Source arg4)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.EnabledLayers.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.ReportingPeriod.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.SampleRate.Source arg4)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1104,7 +1104,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.EnabledLayers.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.ReportingPeriod.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.SampleRate.Source arg4)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.EnabledLayers.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.ReportingPeriod.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.SampleRate.Source arg4)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1422,7 +1422,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.EnabledLayers.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.ReportingPeriod.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.SampleRate.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.EnabledLayers.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.ReportingPeriod.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.SampleRate.Source arg4, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4);
@@ -1439,7 +1439,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.EnabledLayers.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.ReportingPeriod.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.SampleRate.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.EnabledLayers.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.ReportingPeriod.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.SampleRate.Source arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1487,7 +1487,7 @@ public readonly partial struct KrakendSchema
         /// <param name="reportingPeriod">The value of the <c>"reporting_period"</c> property.</param>
         /// <param name="sampleRate">The value of the <c>"sample_rate"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Source exporters, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.EnabledLayers.Source enabledLayers = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.ReportingPeriod.Source reportingPeriod = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.SampleRate.Source sampleRate = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Source exporters, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.EnabledLayers.Source enabledLayers = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.ReportingPeriod.Source reportingPeriod = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.SampleRate.Source sampleRate = default)
         {
             return new Source(exporters, enabledLayers, reportingPeriod, sampleRate);
         }
@@ -1502,7 +1502,7 @@ public readonly partial struct KrakendSchema
         /// <param name="reportingPeriod">The value of the <c>"reporting_period"</c> property.</param>
         /// <param name="sampleRate">The value of the <c>"sample_rate"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Source<TContext> exporters, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.EnabledLayers.Source<TContext> enabledLayers = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.ReportingPeriod.Source reportingPeriod = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.SampleRate.Source sampleRate = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Source<TContext> exporters, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.EnabledLayers.Source<TContext> enabledLayers = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.ReportingPeriod.Source reportingPeriod = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.SampleRate.Source sampleRate = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

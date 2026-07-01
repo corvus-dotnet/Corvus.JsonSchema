@@ -340,7 +340,7 @@ public readonly partial struct NewPet
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetName(in Petstore.Client.Models.JsonString.Source value)
+        public void SetName(scoped in Petstore.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -371,7 +371,7 @@ public readonly partial struct NewPet
         /// Set the <c>tag</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTag(in Petstore.Client.Models.JsonString.Source value)
+        public void SetTag(scoped in Petstore.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -517,7 +517,7 @@ public readonly partial struct NewPet
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -540,7 +540,7 @@ public readonly partial struct NewPet
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -587,7 +587,7 @@ public readonly partial struct NewPet
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -758,7 +758,7 @@ public readonly partial struct NewPet
 
         internal Source(Petstore.Client.Models.NewPet.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Petstore.Client.Models.JsonString.Source arg1, in Petstore.Client.Models.JsonString.Source arg2)
+        internal Source(scoped in Petstore.Client.Models.JsonString.Source arg1, scoped in Petstore.Client.Models.JsonString.Source arg2)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1148,7 +1148,7 @@ public readonly partial struct NewPet
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Petstore.Client.Models.JsonString.Source arg1, in Petstore.Client.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Petstore.Client.Models.JsonString.Source arg1, scoped in Petstore.Client.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2);
@@ -1191,7 +1191,7 @@ public readonly partial struct NewPet
     /// <param name="name">The value of the <c>"name"</c> property.</param>
     /// <param name="tag">The value of the <c>"tag"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Petstore.Client.Models.JsonString.Source name, in Petstore.Client.Models.JsonString.Source tag = default)
+    public static Source Build(scoped in Petstore.Client.Models.JsonString.Source name, scoped in Petstore.Client.Models.JsonString.Source tag = default)
     {
         return new Source(name, tag);
     }

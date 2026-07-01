@@ -1416,7 +1416,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>$schema</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSchema(in Corvus.CspellBenchmark.Current.CspellSchema.UrlToJsonSchema.Source value)
+        public void SetSchema(scoped in Corvus.CspellBenchmark.Current.CspellSchema.UrlToJsonSchema.Source value)
         {
             CheckValidInstance();
 
@@ -1461,7 +1461,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>allowCompoundWords</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAllowCompoundWords(in Corvus.CspellBenchmark.Current.CspellSchema.AllowCompoundWordsEntity.Source value)
+        public void SetAllowCompoundWords(scoped in Corvus.CspellBenchmark.Current.CspellSchema.AllowCompoundWordsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1506,7 +1506,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>cache</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCache(in Corvus.CspellBenchmark.Current.CspellSchema.CacheSettings.Source value)
+        public void SetCache(scoped in Corvus.CspellBenchmark.Current.CspellSchema.CacheSettings.Source value)
         {
             CheckValidInstance();
 
@@ -1587,7 +1587,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>caseSensitive</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCaseSensitive(in Corvus.CspellBenchmark.Current.CspellSchema.CaseSensitiveEntity.Source value)
+        public void SetCaseSensitive(scoped in Corvus.CspellBenchmark.Current.CspellSchema.CaseSensitiveEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1632,7 +1632,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>description</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDescription(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+        public void SetDescription(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1677,7 +1677,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>dictionaries</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDictionaries(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryReferenceArray.Source value)
+        public void SetDictionaries(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryReferenceArray.Source value)
         {
             CheckValidInstance();
 
@@ -1758,7 +1758,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>dictionaryDefinitions</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDictionaryDefinitions(in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionArray.Source value)
+        public void SetDictionaryDefinitions(scoped in Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionArray.Source value)
         {
             CheckValidInstance();
 
@@ -1839,7 +1839,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>enabled</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEnabled(in Corvus.CspellBenchmark.Current.CspellSchema.IsTheSpellCheckerEnabled.Source value)
+        public void SetEnabled(scoped in Corvus.CspellBenchmark.Current.CspellSchema.IsTheSpellCheckerEnabled.Source value)
         {
             CheckValidInstance();
 
@@ -1884,7 +1884,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>enabledLanguageIds</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEnabledLanguageIds(in Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdsForThArray.Source value)
+        public void SetEnabledLanguageIds(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdsForThArray.Source value)
         {
             CheckValidInstance();
 
@@ -1965,7 +1965,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>enableFiletypes</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEnableFiletypes(in Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdSingleArray.Source value)
+        public void SetEnableFiletypes(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageIdSingleArray.Source value)
         {
             CheckValidInstance();
 
@@ -2046,7 +2046,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>enableGlobDot</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEnableGlobDot(in Corvus.CspellBenchmark.Current.CspellSchema.EnableGlobDotEntity.Source value)
+        public void SetEnableGlobDot(scoped in Corvus.CspellBenchmark.Current.CspellSchema.EnableGlobDotEntity.Source value)
         {
             CheckValidInstance();
 
@@ -2091,7 +2091,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>failFast</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFailFast(in Corvus.CspellBenchmark.Current.CspellSchema.FailFastEntity.Source value)
+        public void SetFailFast(scoped in Corvus.CspellBenchmark.Current.CspellSchema.FailFastEntity.Source value)
         {
             CheckValidInstance();
 
@@ -2136,7 +2136,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>features</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFeaturesValue(in Corvus.CspellBenchmark.Current.CspellSchema.Features.Source value)
+        public void SetFeaturesValue(scoped in Corvus.CspellBenchmark.Current.CspellSchema.Features.Source value)
         {
             CheckValidInstance();
 
@@ -2217,7 +2217,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>files</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFiles(in Corvus.CspellBenchmark.Current.CspellSchema.JsonStringArray.Source value)
+        public void SetFiles(scoped in Corvus.CspellBenchmark.Current.CspellSchema.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -2298,7 +2298,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>flagWords</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFlagWords(in Corvus.CspellBenchmark.Current.CspellSchema.FlagWordsJArray.Source value)
+        public void SetFlagWords(scoped in Corvus.CspellBenchmark.Current.CspellSchema.FlagWordsJArray.Source value)
         {
             CheckValidInstance();
 
@@ -2379,7 +2379,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>gitignoreRoot</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetGitignoreRoot(in Corvus.CspellBenchmark.Current.CspellSchema.GitignoreRootEntity.Source value)
+        public void SetGitignoreRoot(scoped in Corvus.CspellBenchmark.Current.CspellSchema.GitignoreRootEntity.Source value)
         {
             CheckValidInstance();
 
@@ -2460,7 +2460,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>globRoot</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetGlobRoot(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+        public void SetGlobRoot(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -2505,7 +2505,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+        public void SetId(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -2550,7 +2550,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>ignorePaths</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIgnorePaths(in Corvus.CspellBenchmark.Current.CspellSchema.IgnorePathArray.Source value)
+        public void SetIgnorePaths(scoped in Corvus.CspellBenchmark.Current.CspellSchema.IgnorePathArray.Source value)
         {
             CheckValidInstance();
 
@@ -2631,7 +2631,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>ignoreRegExpList</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIgnoreRegExpList(in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source value)
+        public void SetIgnoreRegExpList(scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source value)
         {
             CheckValidInstance();
 
@@ -2712,7 +2712,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>ignoreWords</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIgnoreWords(in Corvus.CspellBenchmark.Current.CspellSchema.IgnoreWordArray.Source value)
+        public void SetIgnoreWords(scoped in Corvus.CspellBenchmark.Current.CspellSchema.IgnoreWordArray.Source value)
         {
             CheckValidInstance();
 
@@ -2793,7 +2793,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>import</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetImport(in Corvus.CspellBenchmark.Current.CspellSchema.ImportEntity.Source value)
+        public void SetImport(scoped in Corvus.CspellBenchmark.Current.CspellSchema.ImportEntity.Source value)
         {
             CheckValidInstance();
 
@@ -2874,7 +2874,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>includeRegExpList</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIncludeRegExpList(in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source value)
+        public void SetIncludeRegExpList(scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternList.Source value)
         {
             CheckValidInstance();
 
@@ -2955,7 +2955,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>language</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLanguage(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+        public void SetLanguage(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -3000,7 +3000,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>languageId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLanguageIdValue(in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source value)
+        public void SetLanguageIdValue(scoped in Corvus.CspellBenchmark.Current.CspellSchema.MatchingFileType.Source value)
         {
             CheckValidInstance();
 
@@ -3081,7 +3081,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>languageSettings</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLanguageSettings(in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSettingArray.Source value)
+        public void SetLanguageSettings(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSettingArray.Source value)
         {
             CheckValidInstance();
 
@@ -3162,7 +3162,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>loadDefaultConfiguration</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLoadDefaultConfiguration(in Corvus.CspellBenchmark.Current.CspellSchema.LoadDefaultConfigurationEntity.Source value)
+        public void SetLoadDefaultConfiguration(scoped in Corvus.CspellBenchmark.Current.CspellSchema.LoadDefaultConfigurationEntity.Source value)
         {
             CheckValidInstance();
 
@@ -3207,7 +3207,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>maxDuplicateProblems</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMaxDuplicateProblems(in Corvus.CspellBenchmark.Current.CspellSchema.MaxDuplicateProblemsEntity.Source value)
+        public void SetMaxDuplicateProblems(scoped in Corvus.CspellBenchmark.Current.CspellSchema.MaxDuplicateProblemsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -3252,7 +3252,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>maxNumberOfProblems</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMaxNumberOfProblems(in Corvus.CspellBenchmark.Current.CspellSchema.TheMaximumNumberOfProblemsToReportInAFile.Source value)
+        public void SetMaxNumberOfProblems(scoped in Corvus.CspellBenchmark.Current.CspellSchema.TheMaximumNumberOfProblemsToReportInAFile.Source value)
         {
             CheckValidInstance();
 
@@ -3297,7 +3297,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>minWordLength</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMinWordLength(in Corvus.CspellBenchmark.Current.CspellSchema.MinWordLengthEntity.Source value)
+        public void SetMinWordLength(scoped in Corvus.CspellBenchmark.Current.CspellSchema.MinWordLengthEntity.Source value)
         {
             CheckValidInstance();
 
@@ -3342,7 +3342,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetName(in Corvus.CspellBenchmark.Current.JsonString.Source value)
+        public void SetName(scoped in Corvus.CspellBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -3387,7 +3387,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>noConfigSearch</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetNoConfigSearch(in Corvus.CspellBenchmark.Current.CspellSchema.NoConfigSearchEntity.Source value)
+        public void SetNoConfigSearch(scoped in Corvus.CspellBenchmark.Current.CspellSchema.NoConfigSearchEntity.Source value)
         {
             CheckValidInstance();
 
@@ -3432,7 +3432,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>noSuggestDictionaries</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetNoSuggestDictionaries(in Corvus.CspellBenchmark.Current.CspellSchema.NoSuggestDictionariArray.Source value)
+        public void SetNoSuggestDictionaries(scoped in Corvus.CspellBenchmark.Current.CspellSchema.NoSuggestDictionariArray.Source value)
         {
             CheckValidInstance();
 
@@ -3513,7 +3513,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>numSuggestions</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetNumSuggestions(in Corvus.CspellBenchmark.Current.CspellSchema.NumberOfSuggestionsToMake.Source value)
+        public void SetNumSuggestions(scoped in Corvus.CspellBenchmark.Current.CspellSchema.NumberOfSuggestionsToMake.Source value)
         {
             CheckValidInstance();
 
@@ -3558,7 +3558,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>overrides</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOverrides(in Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettingsArray.Source value)
+        public void SetOverrides(scoped in Corvus.CspellBenchmark.Current.CspellSchema.OverrideSettingsArray.Source value)
         {
             CheckValidInstance();
 
@@ -3639,7 +3639,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>patterns</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPatterns(in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternDefinitionArray.Source value)
+        public void SetPatterns(scoped in Corvus.CspellBenchmark.Current.CspellSchema.RegExpPatternDefinitionArray.Source value)
         {
             CheckValidInstance();
 
@@ -3720,7 +3720,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>pnpFiles</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPnpFiles(in Corvus.CspellBenchmark.Current.CspellSchema.PnpFilesJsArray.Source value)
+        public void SetPnpFiles(scoped in Corvus.CspellBenchmark.Current.CspellSchema.PnpFilesJsArray.Source value)
         {
             CheckValidInstance();
 
@@ -3801,7 +3801,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>readonly</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetReadonly(in Corvus.CspellBenchmark.Current.CspellSchema.ReadonlyEntity.Source value)
+        public void SetReadonly(scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReadonlyEntity.Source value)
         {
             CheckValidInstance();
 
@@ -3846,7 +3846,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>reporters</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetReporters(in Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettingsArray.Source value)
+        public void SetReporters(scoped in Corvus.CspellBenchmark.Current.CspellSchema.ReporterSettingsArray.Source value)
         {
             CheckValidInstance();
 
@@ -3927,7 +3927,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>showStatus</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetShowStatus(in Corvus.CspellBenchmark.Current.JsonBoolean.Source value)
+        public void SetShowStatus(scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -3972,7 +3972,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>spellCheckDelayMs</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpellCheckDelayMs(in Corvus.CspellBenchmark.Current.JsonNumber.Source value)
+        public void SetSpellCheckDelayMs(scoped in Corvus.CspellBenchmark.Current.JsonNumber.Source value)
         {
             CheckValidInstance();
 
@@ -4017,7 +4017,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>suggestionNumChanges</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSuggestionNumChanges(in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionNumChangesEntity.Source value)
+        public void SetSuggestionNumChanges(scoped in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionNumChangesEntity.Source value)
         {
             CheckValidInstance();
 
@@ -4062,7 +4062,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>suggestionsTimeout</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSuggestionsTimeout(in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionsTimeoutEntity.Source value)
+        public void SetSuggestionsTimeout(scoped in Corvus.CspellBenchmark.Current.CspellSchema.SuggestionsTimeoutEntity.Source value)
         {
             CheckValidInstance();
 
@@ -4107,7 +4107,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>suggestWords</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSuggestWords(in Corvus.CspellBenchmark.Current.CspellSchema.SuggestWorArray.Source value)
+        public void SetSuggestWords(scoped in Corvus.CspellBenchmark.Current.CspellSchema.SuggestWorArray.Source value)
         {
             CheckValidInstance();
 
@@ -4188,7 +4188,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>useGitignore</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUseGitignore(in Corvus.CspellBenchmark.Current.CspellSchema.UseGitignoreEntity.Source value)
+        public void SetUseGitignore(scoped in Corvus.CspellBenchmark.Current.CspellSchema.UseGitignoreEntity.Source value)
         {
             CheckValidInstance();
 
@@ -4233,7 +4233,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>usePnP</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUsePnP(in Corvus.CspellBenchmark.Current.CspellSchema.UsePnPEntity.Source value)
+        public void SetUsePnP(scoped in Corvus.CspellBenchmark.Current.CspellSchema.UsePnPEntity.Source value)
         {
             CheckValidInstance();
 
@@ -4278,7 +4278,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>userWords</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUserWords(in Corvus.CspellBenchmark.Current.CspellSchema.UserWordsJArray.Source value)
+        public void SetUserWords(scoped in Corvus.CspellBenchmark.Current.CspellSchema.UserWordsJArray.Source value)
         {
             CheckValidInstance();
 
@@ -4359,7 +4359,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>validateDirectives</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetValidateDirectives(in Corvus.CspellBenchmark.Current.JsonBoolean.Source value)
+        public void SetValidateDirectives(scoped in Corvus.CspellBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -4404,7 +4404,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>version</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVersionValue(in Corvus.CspellBenchmark.Current.CspellSchema.Version.Source value)
+        public void SetVersionValue(scoped in Corvus.CspellBenchmark.Current.CspellSchema.Version.Source value)
         {
             CheckValidInstance();
 
@@ -4449,7 +4449,7 @@ public readonly partial struct CspellSchema
         /// Set the <c>words</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetWords(in Corvus.CspellBenchmark.Current.CspellSchema.ListOfWordArray.Source value)
+        public void SetWords(scoped in Corvus.CspellBenchmark.Current.CspellSchema.ListOfWordArray.Source value)
         {
             CheckValidInstance();
 

@@ -391,7 +391,7 @@ public readonly partial struct TableCell
         /// Set the <c>backgroundImage</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBackgroundImage(in Corvus.Ui5ManifestBenchmark.Current.TableCell.BackgroundImageEntity.Source value)
+        public void SetBackgroundImage(scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.BackgroundImageEntity.Source value)
         {
             CheckValidInstance();
 
@@ -472,7 +472,7 @@ public readonly partial struct TableCell
         /// Set the <c>bleed</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBleed(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+        public void SetBleed(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -517,7 +517,7 @@ public readonly partial struct TableCell
         /// Set the <c>items</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetItems(in Corvus.Ui5ManifestBenchmark.Current.TableCell.ImplementationsOfElementArray.Source value)
+        public void SetItems(scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.ImplementationsOfElementArray.Source value)
         {
             CheckValidInstance();
 
@@ -582,7 +582,7 @@ public readonly partial struct TableCell
         /// Set the <c>minHeight</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMinHeight(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetMinHeight(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -627,7 +627,7 @@ public readonly partial struct TableCell
         /// Set the <c>rtl?</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRtl(in Corvus.Ui5ManifestBenchmark.Current.TableCell.RtlEntity.Source value)
+        public void SetRtl(scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.RtlEntity.Source value)
         {
             CheckValidInstance();
 
@@ -672,7 +672,7 @@ public readonly partial struct TableCell
         /// Set the <c>selectAction</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSelectAction(in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source value)
+        public void SetSelectAction(scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source value)
         {
             CheckValidInstance();
 
@@ -753,7 +753,7 @@ public readonly partial struct TableCell
         /// Set the <c>style</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStyle(in Corvus.Ui5ManifestBenchmark.Current.TableCell.StyleHintForTableCell.Source value)
+        public void SetStyle(scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.StyleHintForTableCell.Source value)
         {
             CheckValidInstance();
 
@@ -798,7 +798,7 @@ public readonly partial struct TableCell
         /// Set the <c>type</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetType(in Corvus.Ui5ManifestBenchmark.Current.TableCell.MustBeTableCell.Source value)
+        public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.MustBeTableCell.Source value)
         {
             CheckValidInstance();
 
@@ -843,7 +843,7 @@ public readonly partial struct TableCell
         /// Set the <c>verticalContentAlignment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVerticalContentAlignment(in Corvus.Ui5ManifestBenchmark.Current.TableCell.VerticalContentAlignmentEntity.Source value)
+        public void SetVerticalContentAlignment(scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.VerticalContentAlignmentEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1061,7 +1061,7 @@ public readonly partial struct TableCell
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.TableCell.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Ui5ManifestBenchmark.Current.TableCell.ImplementationsOfElementArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.TableCell.BackgroundImageEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.TableCell.RtlEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.TableCell.StyleHintForTableCell.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.TableCell.MustBeTableCell.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.TableCell.VerticalContentAlignmentEntity.Source arg9)
+        internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.ImplementationsOfElementArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.BackgroundImageEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.RtlEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.StyleHintForTableCell.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.MustBeTableCell.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.VerticalContentAlignmentEntity.Source arg9)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1241,7 +1241,7 @@ public readonly partial struct TableCell
 
         internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.TableCell.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.TableCell.ImplementationsOfElementArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.TableCell.BackgroundImageEntity.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.TableCell.RtlEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.TableCell.StyleHintForTableCell.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.TableCell.MustBeTableCell.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.TableCell.VerticalContentAlignmentEntity.Source arg9)
+        internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.ImplementationsOfElementArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.BackgroundImageEntity.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.RtlEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.StyleHintForTableCell.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.MustBeTableCell.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.VerticalContentAlignmentEntity.Source arg9)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1530,7 +1530,7 @@ public readonly partial struct TableCell
         /// <param name="arg8">The value of the property.</param>
         /// <param name="arg9">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.TableCell.ImplementationsOfElementArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.TableCell.BackgroundImageEntity.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.TableCell.RtlEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.TableCell.StyleHintForTableCell.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.TableCell.MustBeTableCell.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.TableCell.VerticalContentAlignmentEntity.Source arg9, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.ImplementationsOfElementArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.BackgroundImageEntity.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.RtlEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.StyleHintForTableCell.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.MustBeTableCell.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.VerticalContentAlignmentEntity.Source arg9, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
@@ -1552,7 +1552,7 @@ public readonly partial struct TableCell
         /// <param name="arg8">The value of the property.</param>
         /// <param name="arg9">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.TableCell.ImplementationsOfElementArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.TableCell.BackgroundImageEntity.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.TableCell.RtlEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg6, in Corvus.Ui5ManifestBenchmark.Current.TableCell.StyleHintForTableCell.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.TableCell.MustBeTableCell.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.TableCell.VerticalContentAlignmentEntity.Source arg9, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.ImplementationsOfElementArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.BackgroundImageEntity.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.RtlEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.StyleHintForTableCell.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.MustBeTableCell.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.VerticalContentAlignmentEntity.Source arg9, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1605,7 +1605,7 @@ public readonly partial struct TableCell
     /// <param name="type">The value of the <c>"type"</c> property.</param>
     /// <param name="verticalContentAlignment">The value of the <c>"verticalContentAlignment"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.TableCell.ImplementationsOfElementArray.Source items, in Corvus.Ui5ManifestBenchmark.Current.TableCell.BackgroundImageEntity.Source backgroundImage = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source bleed = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, in Corvus.Ui5ManifestBenchmark.Current.TableCell.RtlEntity.Source rtl = default, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source selectAction = default, in Corvus.Ui5ManifestBenchmark.Current.TableCell.StyleHintForTableCell.Source style = default, in Corvus.Ui5ManifestBenchmark.Current.TableCell.MustBeTableCell.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.TableCell.VerticalContentAlignmentEntity.Source verticalContentAlignment = default)
+    public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.ImplementationsOfElementArray.Source items, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.BackgroundImageEntity.Source backgroundImage = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source bleed = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.RtlEntity.Source rtl = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source selectAction = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.StyleHintForTableCell.Source style = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.MustBeTableCell.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.VerticalContentAlignmentEntity.Source verticalContentAlignment = default)
     {
         return new Source(items, backgroundImage, bleed, minHeight, rtl, selectAction, style, type, verticalContentAlignment);
     }
@@ -1625,7 +1625,7 @@ public readonly partial struct TableCell
     /// <param name="type">The value of the <c>"type"</c> property.</param>
     /// <param name="verticalContentAlignment">The value of the <c>"verticalContentAlignment"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.TableCell.ImplementationsOfElementArray.Source<TContext> items, in Corvus.Ui5ManifestBenchmark.Current.TableCell.BackgroundImageEntity.Source<TContext> backgroundImage = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source bleed = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, in Corvus.Ui5ManifestBenchmark.Current.TableCell.RtlEntity.Source rtl = default, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> selectAction = default, in Corvus.Ui5ManifestBenchmark.Current.TableCell.StyleHintForTableCell.Source style = default, in Corvus.Ui5ManifestBenchmark.Current.TableCell.MustBeTableCell.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.TableCell.VerticalContentAlignmentEntity.Source verticalContentAlignment = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.ImplementationsOfElementArray.Source<TContext> items, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.BackgroundImageEntity.Source<TContext> backgroundImage = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source bleed = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.RtlEntity.Source rtl = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> selectAction = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.StyleHintForTableCell.Source style = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.MustBeTableCell.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TableCell.VerticalContentAlignmentEntity.Source verticalContentAlignment = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

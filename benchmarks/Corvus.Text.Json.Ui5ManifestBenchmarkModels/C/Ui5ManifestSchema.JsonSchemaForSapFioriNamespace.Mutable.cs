@@ -316,7 +316,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>_version</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVersion(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.VersionEntity.Source value)
+            public void SetVersion(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.VersionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -361,7 +361,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>abstract</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAbstract(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+            public void SetAbstract(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -406,7 +406,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>archeType</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetArcheType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.ArcheTypeEntity.Source value)
+            public void SetArcheType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.ArcheTypeEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -437,7 +437,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>cloudDevAdaptationStatus</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCloudDevAdaptationStatus(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.CloudDevAdaptationStatusEntity.Source value)
+            public void SetCloudDevAdaptationStatus(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.CloudDevAdaptationStatusEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -482,7 +482,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>registrationIds</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRegistrationIds(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.JsonStringArray.Source value)
+            public void SetRegistrationIds(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -716,7 +716,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.ArcheTypeEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.JsonStringArray.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.CloudDevAdaptationStatusEntity.Source arg5)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.ArcheTypeEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.JsonStringArray.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.VersionEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.CloudDevAdaptationStatusEntity.Source arg5)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -888,7 +888,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.ArcheTypeEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.JsonStringArray.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.CloudDevAdaptationStatusEntity.Source arg5)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.ArcheTypeEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.JsonStringArray.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.VersionEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.CloudDevAdaptationStatusEntity.Source arg5)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1145,7 +1145,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg4">The value of the property.</param>
             /// <param name="arg5">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.ArcheTypeEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.JsonStringArray.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.CloudDevAdaptationStatusEntity.Source arg5, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.ArcheTypeEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.JsonStringArray.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.VersionEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.CloudDevAdaptationStatusEntity.Source arg5, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1163,7 +1163,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg4">The value of the property.</param>
             /// <param name="arg5">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.ArcheTypeEntity.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.JsonStringArray.Source<TContext> arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.VersionEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.CloudDevAdaptationStatusEntity.Source arg5, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.ArcheTypeEntity.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.JsonStringArray.Source<TContext> arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.VersionEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.CloudDevAdaptationStatusEntity.Source arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1212,7 +1212,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="abstractValue">The value of the <c>"abstract"</c> property.</param>
         /// <param name="cloudDevAdaptationStatus">The value of the <c>"cloudDevAdaptationStatus"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.ArcheTypeEntity.Source archeType, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.JsonStringArray.Source registrationIds, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source abstractValue = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.CloudDevAdaptationStatusEntity.Source cloudDevAdaptationStatus = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.ArcheTypeEntity.Source archeType, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.JsonStringArray.Source registrationIds, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.VersionEntity.Source version = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source abstractValue = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.CloudDevAdaptationStatusEntity.Source cloudDevAdaptationStatus = default)
         {
             return new Source(archeType, registrationIds, version, abstractValue, cloudDevAdaptationStatus);
         }
@@ -1228,7 +1228,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="abstractValue">The value of the <c>"abstract"</c> property.</param>
         /// <param name="cloudDevAdaptationStatus">The value of the <c>"cloudDevAdaptationStatus"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.ArcheTypeEntity.Source archeType, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.JsonStringArray.Source<TContext> registrationIds, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.VersionEntity.Source version = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source abstractValue = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.CloudDevAdaptationStatusEntity.Source cloudDevAdaptationStatus = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.ArcheTypeEntity.Source archeType, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.JsonStringArray.Source<TContext> registrationIds, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.VersionEntity.Source version = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source abstractValue = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.CloudDevAdaptationStatusEntity.Source cloudDevAdaptationStatus = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

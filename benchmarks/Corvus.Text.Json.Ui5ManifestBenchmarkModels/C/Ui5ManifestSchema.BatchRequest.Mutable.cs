@@ -295,7 +295,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>body</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBody(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsTheRequestBody.Source value)
+            public void SetBody(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsTheRequestBody.Source value)
             {
                 CheckValidInstance();
 
@@ -376,7 +376,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeaders(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsHttpHeaders.Source value)
+            public void SetHeaders(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsHttpHeaders.Source value)
             {
                 CheckValidInstance();
 
@@ -457,7 +457,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>method</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMethod(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.TheHttpMethod.Source value)
+            public void SetMethod(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.TheHttpMethod.Source value)
             {
                 CheckValidInstance();
 
@@ -488,7 +488,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>url</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUrl(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetUrl(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -687,7 +687,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.TheHttpMethod.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsTheRequestBody.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsHttpHeaders.Source arg4)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.TheHttpMethod.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsTheRequestBody.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsHttpHeaders.Source arg4)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -857,7 +857,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.TheHttpMethod.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsTheRequestBody.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsHttpHeaders.Source<TContext> arg4)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.TheHttpMethod.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsTheRequestBody.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsHttpHeaders.Source<TContext> arg4)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1106,7 +1106,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.TheHttpMethod.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsTheRequestBody.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsHttpHeaders.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.TheHttpMethod.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsTheRequestBody.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsHttpHeaders.Source arg4, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4);
@@ -1123,7 +1123,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.TheHttpMethod.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsTheRequestBody.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsHttpHeaders.Source<TContext> arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.TheHttpMethod.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsTheRequestBody.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsHttpHeaders.Source<TContext> arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1171,7 +1171,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="body">The value of the <c>"body"</c> property.</param>
         /// <param name="headers">The value of the <c>"headers"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.TheHttpMethod.Source method, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsTheRequestBody.Source body = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsHttpHeaders.Source headers = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.TheHttpMethod.Source method, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsTheRequestBody.Source body = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsHttpHeaders.Source headers = default)
         {
             return new Source(method, url, body, headers);
         }
@@ -1186,7 +1186,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="body">The value of the <c>"body"</c> property.</param>
         /// <param name="headers">The value of the <c>"headers"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.TheHttpMethod.Source method, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsTheRequestBody.Source<TContext> body = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsHttpHeaders.Source<TContext> headers = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.TheHttpMethod.Source method, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsTheRequestBody.Source<TContext> body = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.BatchRequest.RepresentsHttpHeaders.Source<TContext> headers = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

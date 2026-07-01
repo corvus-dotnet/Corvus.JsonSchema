@@ -241,7 +241,7 @@ public readonly partial struct Ui5Schema
                             /// Set the <c>configuration</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetConfiguration(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.ConfigurationEntity.Source value)
+                            public void SetConfiguration(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.ConfigurationEntity.Source value)
                             {
                                 CheckValidInstance();
 
@@ -487,7 +487,7 @@ public readonly partial struct Ui5Schema
 
                             internal Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                            internal Source(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.ConfigurationEntity.Source arg1)
+                            internal Source(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.ConfigurationEntity.Source arg1)
                             {
                                 _createArg1 = arg1;
                                 _kind = Kind.Create;
@@ -651,7 +651,7 @@ public readonly partial struct Ui5Schema
 
                             internal Source(scoped in TContext context, Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                            internal Source(scoped in TContext context, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.ConfigurationEntity.Source<TContext> arg1)
+                            internal Source(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.ConfigurationEntity.Source<TContext> arg1)
                             {
                                 _context = context;
                                 _createArg1 = arg1;
@@ -871,7 +871,7 @@ public readonly partial struct Ui5Schema
                             /// </summary>
                             /// <param name="arg1">The value of the property.</param>
                             /// <param name="o">The complex value builder into which to write the object.</param>
-                            internal static void BuildCreateValue(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.ConfigurationEntity.Source arg1, ref ComplexValueBuilder o)
+                            internal static void BuildCreateValue(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.ConfigurationEntity.Source arg1, ref ComplexValueBuilder o)
                             {
                                 o.StartObject();
                                 Create(ref o, arg1);
@@ -885,7 +885,7 @@ public readonly partial struct Ui5Schema
                             /// <param name="context">The context to pass to the builder.</param>
                             /// <param name="arg1">The value of the property.</param>
                             /// <param name="o">The complex value builder into which to write the object.</param>
-                            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.ConfigurationEntity.Source<TContext> arg1, ref ComplexValueBuilder o)
+                            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.ConfigurationEntity.Source<TContext> arg1, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                                 where TContext : allows ref struct
 #endif
@@ -930,7 +930,7 @@ public readonly partial struct Ui5Schema
                         /// </summary>
                         /// <param name="configuration">The value of the <c>"configuration"</c> property.</param>
                         /// <returns>The source from which to build the value.</returns>
-                        public static Source Build(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.ConfigurationEntity.Source configuration = default)
+                        public static Source Build(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.ConfigurationEntity.Source configuration = default)
                         {
                             return new Source(configuration);
                         }
@@ -942,7 +942,7 @@ public readonly partial struct Ui5Schema
                         /// <param name="context">The context to pass to the builder.</param>
                         /// <param name="configuration">The value of the <c>"configuration"</c> property.</param>
                         /// <returns>The source from which to build the value.</returns>
-                        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.ConfigurationEntity.Source<TContext> configuration = default)
+                        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.ElseEntity.RequiredMetadataAndSpecVersionAndType.ResourcesEntity.ConfigurationEntity.Source<TContext> configuration = default)
                             #if NET9_0_OR_GREATER
                             where TContext : allows ref struct
                             #endif

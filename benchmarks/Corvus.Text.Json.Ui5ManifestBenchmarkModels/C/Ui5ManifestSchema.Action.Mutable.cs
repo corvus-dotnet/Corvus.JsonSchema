@@ -334,7 +334,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>enabled</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnabled(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.RepresentsTheStateOfTheAction.Source value)
+            public void SetEnabled(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.RepresentsTheStateOfTheAction.Source value)
             {
                 CheckValidInstance();
 
@@ -379,7 +379,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>parameters</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetParameters(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.ParametersPassedToTheNavigationActionHandler.Source value)
+            public void SetParameters(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.ParametersPassedToTheNavigationActionHandler.Source value)
             {
                 CheckValidInstance();
 
@@ -460,7 +460,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>service</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetServiceValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Service.Source value)
+            public void SetServiceValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Service.Source value)
             {
                 CheckValidInstance();
 
@@ -541,7 +541,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>target</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTarget(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.SpecifiesWhereToOpenTheUrlIfItIsProvided.Source value)
+            public void SetTarget(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.SpecifiesWhereToOpenTheUrlIfItIsProvided.Source value)
             {
                 CheckValidInstance();
 
@@ -622,7 +622,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.TheTypeOfTheAction.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.TheTypeOfTheAction.Source value)
             {
                 CheckValidInstance();
 
@@ -653,7 +653,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>url</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUrl(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetUrl(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -868,7 +868,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.TheTypeOfTheAction.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.RepresentsTheStateOfTheAction.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.ParametersPassedToTheNavigationActionHandler.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Service.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.SpecifiesWhereToOpenTheUrlIfItIsProvided.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.TheTypeOfTheAction.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.RepresentsTheStateOfTheAction.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.ParametersPassedToTheNavigationActionHandler.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Service.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.SpecifiesWhereToOpenTheUrlIfItIsProvided.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1042,7 +1042,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.TheTypeOfTheAction.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.RepresentsTheStateOfTheAction.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.ParametersPassedToTheNavigationActionHandler.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Service.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.SpecifiesWhereToOpenTheUrlIfItIsProvided.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.TheTypeOfTheAction.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.RepresentsTheStateOfTheAction.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.ParametersPassedToTheNavigationActionHandler.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Service.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.SpecifiesWhereToOpenTheUrlIfItIsProvided.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1307,7 +1307,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.TheTypeOfTheAction.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.RepresentsTheStateOfTheAction.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.ParametersPassedToTheNavigationActionHandler.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Service.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.SpecifiesWhereToOpenTheUrlIfItIsProvided.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.TheTypeOfTheAction.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.RepresentsTheStateOfTheAction.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.ParametersPassedToTheNavigationActionHandler.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Service.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.SpecifiesWhereToOpenTheUrlIfItIsProvided.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1326,7 +1326,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.TheTypeOfTheAction.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.RepresentsTheStateOfTheAction.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.ParametersPassedToTheNavigationActionHandler.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Service.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.SpecifiesWhereToOpenTheUrlIfItIsProvided.Source<TContext> arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.TheTypeOfTheAction.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.RepresentsTheStateOfTheAction.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.ParametersPassedToTheNavigationActionHandler.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Service.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.SpecifiesWhereToOpenTheUrlIfItIsProvided.Source<TContext> arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg6, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1376,7 +1376,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="target">The value of the <c>"target"</c> property.</param>
         /// <param name="url">The value of the <c>"url"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.TheTypeOfTheAction.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.RepresentsTheStateOfTheAction.Source enabled = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.ParametersPassedToTheNavigationActionHandler.Source parameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Service.Source service = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.SpecifiesWhereToOpenTheUrlIfItIsProvided.Source target = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.TheTypeOfTheAction.Source type, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.RepresentsTheStateOfTheAction.Source enabled = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.ParametersPassedToTheNavigationActionHandler.Source parameters = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Service.Source service = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.SpecifiesWhereToOpenTheUrlIfItIsProvided.Source target = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url = default)
         {
             return new Source(type, enabled, parameters, service, target, url);
         }
@@ -1393,7 +1393,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="target">The value of the <c>"target"</c> property.</param>
         /// <param name="url">The value of the <c>"url"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.TheTypeOfTheAction.Source type, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.RepresentsTheStateOfTheAction.Source enabled = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.ParametersPassedToTheNavigationActionHandler.Source<TContext> parameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Service.Source<TContext> service = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.SpecifiesWhereToOpenTheUrlIfItIsProvided.Source<TContext> target = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.TheTypeOfTheAction.Source type, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.RepresentsTheStateOfTheAction.Source enabled = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.ParametersPassedToTheNavigationActionHandler.Source<TContext> parameters = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Service.Source<TContext> service = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Action.SpecifiesWhereToOpenTheUrlIfItIsProvided.Source<TContext> target = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source url = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

@@ -1704,7 +1704,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>confirm</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetConfirm(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetConfirm(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1749,7 +1749,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>copyToClipboard</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCopyToClipboard(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetCopyToClipboard(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1794,7 +1794,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>createPatchOptionsMenu</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCreatePatchOptionsMenu(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetCreatePatchOptionsMenu(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1839,7 +1839,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>createRebaseOptionsMenu</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCreateRebaseOptionsMenu(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetCreateRebaseOptionsMenu(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1884,7 +1884,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>decreaseContextInDiffView</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDecreaseContextInDiffView(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetDecreaseContextInDiffView(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1929,7 +1929,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>diffingMenu</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDiffingMenu(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetDiffingMenu(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -1974,7 +1974,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>diffingMenu-alt</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDiffingMenuAlt(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetDiffingMenuAlt(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2019,7 +2019,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>edit</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetEdit(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetEdit(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2064,7 +2064,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>executeCustomCommand</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetExecuteCustomCommand(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetExecuteCustomCommand(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2109,7 +2109,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>extrasMenu</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetExtrasMenu(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetExtrasMenu(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2154,7 +2154,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>filteringMenu</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetFilteringMenu(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetFilteringMenu(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2199,7 +2199,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>goInto</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetGoInto(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetGoInto(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2244,7 +2244,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>gotoBottom</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetGotoBottom(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetGotoBottom(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2289,7 +2289,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>gotoTop</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetGotoTop(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetGotoTop(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2334,7 +2334,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>increaseContextInDiffView</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetIncreaseContextInDiffView(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetIncreaseContextInDiffView(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2379,7 +2379,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>jumpToBlock</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetJumpToBlockValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Universal.JumpToBlock.Source value)
+                public void SetJumpToBlockValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Universal.JumpToBlock.Source value)
                 {
                     CheckValidInstance();
 
@@ -2460,7 +2460,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>new</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNew(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetNew(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2505,7 +2505,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>nextBlock</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNextBlock(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetNextBlock(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2550,7 +2550,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>nextBlock-alt</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNextBlockAlt(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetNextBlockAlt(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2595,7 +2595,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>nextItem</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNextItem(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetNextItem(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2640,7 +2640,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>nextItem-alt</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNextItemAlt(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetNextItemAlt(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2685,7 +2685,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>nextMatch</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNextMatch(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetNextMatch(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2730,7 +2730,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>nextPage</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNextPage(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetNextPage(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2775,7 +2775,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>nextScreenMode</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNextScreenMode(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetNextScreenMode(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2820,7 +2820,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>nextTab</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNextTab(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetNextTab(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2865,7 +2865,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>openFile</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOpenFile(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetOpenFile(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2910,7 +2910,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>openRecentRepos</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOpenRecentRepos(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetOpenRecentRepos(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -2955,7 +2955,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>optionMenu</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOptionMenuValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Universal.OptionMenu.Source value)
+                public void SetOptionMenuValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Universal.OptionMenu.Source value)
                 {
                     CheckValidInstance();
 
@@ -3000,7 +3000,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>optionMenu-alt1</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOptionMenuAlt1(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetOptionMenuAlt1(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3045,7 +3045,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>prevBlock</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPrevBlock(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetPrevBlock(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3090,7 +3090,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>prevBlock-alt</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPrevBlockAlt(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetPrevBlockAlt(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3135,7 +3135,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>prevItem</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPrevItem(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetPrevItem(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3180,7 +3180,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>prevItem-alt</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPrevItemAlt(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetPrevItemAlt(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3225,7 +3225,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>prevMatch</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPrevMatch(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetPrevMatch(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3270,7 +3270,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>prevPage</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPrevPage(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetPrevPage(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3315,7 +3315,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>prevScreenMode</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPrevScreenMode(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetPrevScreenMode(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3360,7 +3360,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>prevTab</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPrevTab(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetPrevTab(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3405,7 +3405,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>pullFiles</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPullFiles(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetPullFiles(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3450,7 +3450,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>pushFiles</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPushFiles(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetPushFiles(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3495,7 +3495,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>quit</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetQuit(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetQuit(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3540,7 +3540,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>quit-alt1</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetQuitAlt1(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetQuitAlt1(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3585,7 +3585,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>quitWithoutChangingDirectory</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetQuitWithoutChangingDirectory(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetQuitWithoutChangingDirectory(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3630,7 +3630,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>redo</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRedo(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetRedo(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3675,7 +3675,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>refresh</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRefresh(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetRefresh(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3720,7 +3720,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>remove</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRemoveValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetRemoveValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3765,7 +3765,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>return</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetReturn(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetReturn(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3810,7 +3810,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>scrollDownMain</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScrollDownMain(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetScrollDownMain(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3855,7 +3855,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>scrollDownMain-alt1</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScrollDownMainAlt1(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetScrollDownMainAlt1(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3900,7 +3900,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>scrollDownMain-alt2</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScrollDownMainAlt2(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetScrollDownMainAlt2(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3945,7 +3945,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>scrollLeft</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScrollLeft(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetScrollLeft(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -3990,7 +3990,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>scrollRight</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScrollRight(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetScrollRight(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -4035,7 +4035,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>scrollUpMain</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScrollUpMain(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetScrollUpMain(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -4080,7 +4080,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>scrollUpMain-alt1</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScrollUpMainAlt1(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetScrollUpMainAlt1(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -4125,7 +4125,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>scrollUpMain-alt2</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScrollUpMainAlt2(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetScrollUpMainAlt2(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -4170,7 +4170,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>select</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSelect(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetSelect(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -4215,7 +4215,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>submitEditorText</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSubmitEditorText(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetSubmitEditorText(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -4260,7 +4260,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>togglePanel</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTogglePanel(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetTogglePanel(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -4305,7 +4305,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>toggleWhitespaceInDiffView</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetToggleWhitespaceInDiffView(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetToggleWhitespaceInDiffView(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -4350,7 +4350,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>undo</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetUndo(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetUndo(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 

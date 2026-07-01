@@ -345,7 +345,7 @@ public readonly partial struct Error
         /// Set the <c>code</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCode(in Petstore.Extended.Server.Models.JsonInt32.Source value)
+        public void SetCode(scoped in Petstore.Extended.Server.Models.JsonInt32.Source value)
         {
             CheckValidInstance();
 
@@ -376,7 +376,7 @@ public readonly partial struct Error
         /// Set the <c>message</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMessage(in Petstore.Extended.Server.Models.JsonString.Source value)
+        public void SetMessage(scoped in Petstore.Extended.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -508,7 +508,7 @@ public readonly partial struct Error
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -531,7 +531,7 @@ public readonly partial struct Error
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -578,7 +578,7 @@ public readonly partial struct Error
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -749,7 +749,7 @@ public readonly partial struct Error
 
         internal Source(Petstore.Extended.Server.Models.Error.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Petstore.Extended.Server.Models.JsonInt32.Source arg1, in Petstore.Extended.Server.Models.JsonString.Source arg2)
+        internal Source(scoped in Petstore.Extended.Server.Models.JsonInt32.Source arg1, scoped in Petstore.Extended.Server.Models.JsonString.Source arg2)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1139,7 +1139,7 @@ public readonly partial struct Error
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Petstore.Extended.Server.Models.JsonInt32.Source arg1, in Petstore.Extended.Server.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Petstore.Extended.Server.Models.JsonInt32.Source arg1, scoped in Petstore.Extended.Server.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2);
@@ -1182,7 +1182,7 @@ public readonly partial struct Error
     /// <param name="code">The value of the <c>"code"</c> property.</param>
     /// <param name="message">The value of the <c>"message"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Petstore.Extended.Server.Models.JsonInt32.Source code, in Petstore.Extended.Server.Models.JsonString.Source message)
+    public static Source Build(scoped in Petstore.Extended.Server.Models.JsonInt32.Source code, scoped in Petstore.Extended.Server.Models.JsonString.Source message)
     {
         return new Source(code, message);
     }

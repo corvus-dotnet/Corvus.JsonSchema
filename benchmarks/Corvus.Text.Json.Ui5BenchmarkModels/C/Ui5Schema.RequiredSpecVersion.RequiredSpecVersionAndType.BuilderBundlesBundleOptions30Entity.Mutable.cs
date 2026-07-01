@@ -311,7 +311,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>addTryCatchRestartWrapper</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetAddTryCatchRestartWrapper(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.AddTryCatchRestartWrapperEntity.Source value)
+                    public void SetAddTryCatchRestartWrapper(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.AddTryCatchRestartWrapperEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -356,7 +356,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>decorateBootstrapModule</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetDecorateBootstrapModule(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.DecorateBootstrapModuleEntity.Source value)
+                    public void SetDecorateBootstrapModule(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.DecorateBootstrapModuleEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -401,7 +401,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>numberOfParts</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetNumberOfParts(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.NumberOfPartsEntity.Source value)
+                    public void SetNumberOfParts(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.NumberOfPartsEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -446,7 +446,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>optimize</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetOptimize(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.OptimizeEntity.Source value)
+                    public void SetOptimize(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.OptimizeEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -491,7 +491,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>sourceMap</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetSourceMap(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.SourceMapEntity.Source value)
+                    public void SetSourceMap(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.SourceMapEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -536,7 +536,7 @@ public readonly partial struct Ui5Schema
                     /// Set the <c>usePredefineCalls</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetUsePredefineCalls(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.UsePredefineCallsEntity.Source value)
+                    public void SetUsePredefineCalls(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.UsePredefineCallsEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -751,7 +751,7 @@ public readonly partial struct Ui5Schema
 
                     internal Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.AddTryCatchRestartWrapperEntity.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.DecorateBootstrapModuleEntity.Source arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.NumberOfPartsEntity.Source arg3, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.OptimizeEntity.Source arg4, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.SourceMapEntity.Source arg5, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.UsePredefineCallsEntity.Source arg6)
+                    internal Source(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.AddTryCatchRestartWrapperEntity.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.DecorateBootstrapModuleEntity.Source arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.NumberOfPartsEntity.Source arg3, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.OptimizeEntity.Source arg4, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.SourceMapEntity.Source arg5, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.UsePredefineCallsEntity.Source arg6)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -1094,7 +1094,7 @@ public readonly partial struct Ui5Schema
                     /// <param name="arg5">The value of the property.</param>
                     /// <param name="arg6">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.AddTryCatchRestartWrapperEntity.Source arg1, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.DecorateBootstrapModuleEntity.Source arg2, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.NumberOfPartsEntity.Source arg3, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.OptimizeEntity.Source arg4, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.SourceMapEntity.Source arg5, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.UsePredefineCallsEntity.Source arg6, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.AddTryCatchRestartWrapperEntity.Source arg1, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.DecorateBootstrapModuleEntity.Source arg2, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.NumberOfPartsEntity.Source arg3, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.OptimizeEntity.Source arg4, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.SourceMapEntity.Source arg5, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.UsePredefineCallsEntity.Source arg6, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1141,7 +1141,7 @@ public readonly partial struct Ui5Schema
                 /// <param name="sourceMap">The value of the <c>"sourceMap"</c> property.</param>
                 /// <param name="usePredefineCalls">The value of the <c>"usePredefineCalls"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.AddTryCatchRestartWrapperEntity.Source addTryCatchRestartWrapper = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.DecorateBootstrapModuleEntity.Source decorateBootstrapModule = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.NumberOfPartsEntity.Source numberOfParts = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.OptimizeEntity.Source optimize = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.SourceMapEntity.Source sourceMap = default, in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.UsePredefineCallsEntity.Source usePredefineCalls = default)
+                public static Source Build(scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.AddTryCatchRestartWrapperEntity.Source addTryCatchRestartWrapper = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.DecorateBootstrapModuleEntity.Source decorateBootstrapModule = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.NumberOfPartsEntity.Source numberOfParts = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.OptimizeEntity.Source optimize = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.SourceMapEntity.Source sourceMap = default, scoped in Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.RequiredSpecVersionAndType.BuilderBundlesBundleOptions30Entity.UsePredefineCallsEntity.Source usePredefineCalls = default)
                 {
                     return new Source(addTryCatchRestartWrapper, decorateBootstrapModule, numberOfParts, optimize, sourceMap, usePredefineCalls);
                 }

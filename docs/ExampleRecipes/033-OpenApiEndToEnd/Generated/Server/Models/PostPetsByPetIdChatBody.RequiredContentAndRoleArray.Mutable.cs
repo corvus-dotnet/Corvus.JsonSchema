@@ -376,7 +376,7 @@ public readonly partial struct PostPetsByPetIdChatBody
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Source value)
+            public void InsertItem(int itemIndex, scoped in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Source value)
             {
                 CheckValidInstance();
 
@@ -402,7 +402,7 @@ public readonly partial struct PostPetsByPetIdChatBody
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Source value)
+            public void AddItem(scoped in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.RequiredContentAndRole.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }

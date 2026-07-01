@@ -476,7 +476,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>disable_count_per_buckets</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetDisableCountPerBucketsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.DisableCountPerBuckets.Source value)
+                    public void SetDisableCountPerBucketsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.DisableCountPerBuckets.Source value)
                     {
                         CheckValidInstance();
 
@@ -507,7 +507,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>global_tags</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetGlobalTags(in Corvus.KrakendBenchmark.Current.JsonObject.Source value)
+                    public void SetGlobalTags(scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source value)
                     {
                         CheckValidInstance();
 
@@ -572,7 +572,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>namespace</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetNamespace(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                    public void SetNamespace(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                     {
                         CheckValidInstance();
 
@@ -603,7 +603,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>service</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetService(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                    public void SetService(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                     {
                         CheckValidInstance();
 
@@ -634,7 +634,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>stats_address</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetStatsAddressValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.StatsAddress.Source value)
+                    public void SetStatsAddressValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.StatsAddress.Source value)
                     {
                         CheckValidInstance();
 
@@ -665,7 +665,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>tags</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetTags(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
+                    public void SetTags(scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
                     {
                         CheckValidInstance();
 
@@ -730,7 +730,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>trace_address</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetTraceAddressValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.TraceAddress.Source value)
+                    public void SetTraceAddressValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.TraceAddress.Source value)
                     {
                         CheckValidInstance();
 
@@ -862,7 +862,7 @@ public readonly partial struct KrakendSchema
                     ///   </para>
                     /// </remarks>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         SetProperty(propertyName.AsSpan(), value);
                     }
@@ -885,7 +885,7 @@ public readonly partial struct KrakendSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -932,7 +932,7 @@ public readonly partial struct KrakendSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -1108,7 +1108,7 @@ public readonly partial struct KrakendSchema
 
                     internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.DisableCountPerBuckets.Source arg1, in Corvus.KrakendBenchmark.Current.JsonObject.Source arg2, in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.StatsAddress.Source arg5, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.TraceAddress.Source arg7)
+                    internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.DisableCountPerBuckets.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.StatsAddress.Source arg5, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.TraceAddress.Source arg7)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -1284,7 +1284,7 @@ public readonly partial struct KrakendSchema
 
                     internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.DisableCountPerBuckets.Source arg1, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.StatsAddress.Source arg5, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.TraceAddress.Source arg7)
+                    internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.DisableCountPerBuckets.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.StatsAddress.Source arg5, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.TraceAddress.Source arg7)
                     {
                         _context = context;
                         _createArg1 = arg1;
@@ -1626,7 +1626,7 @@ public readonly partial struct KrakendSchema
                     /// <param name="arg6">The value of the property.</param>
                     /// <param name="arg7">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.DisableCountPerBuckets.Source arg1, in Corvus.KrakendBenchmark.Current.JsonObject.Source arg2, in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.StatsAddress.Source arg5, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.TraceAddress.Source arg7, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.DisableCountPerBuckets.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.StatsAddress.Source arg5, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.TraceAddress.Source arg7, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
@@ -1646,7 +1646,7 @@ public readonly partial struct KrakendSchema
                     /// <param name="arg6">The value of the property.</param>
                     /// <param name="arg7">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.DisableCountPerBuckets.Source arg1, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.StatsAddress.Source arg5, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.TraceAddress.Source arg7, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.DisableCountPerBuckets.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.StatsAddress.Source arg5, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.TraceAddress.Source arg7, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -1697,7 +1697,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="tags">The value of the <c>"tags"</c> property.</param>
                 /// <param name="traceAddress">The value of the <c>"trace_address"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.DisableCountPerBuckets.Source disableCountPerBuckets, in Corvus.KrakendBenchmark.Current.JsonObject.Source globalTags, in Corvus.KrakendBenchmark.Current.JsonString.Source namespaceValue, in Corvus.KrakendBenchmark.Current.JsonString.Source service, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.StatsAddress.Source statsAddress, in Corvus.KrakendBenchmark.Current.JsonArray.Source tags, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.TraceAddress.Source traceAddress)
+                public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.DisableCountPerBuckets.Source disableCountPerBuckets, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source globalTags, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source namespaceValue, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source service, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.StatsAddress.Source statsAddress, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source tags, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.TraceAddress.Source traceAddress)
                 {
                     return new Source(disableCountPerBuckets, globalTags, namespaceValue, service, statsAddress, tags, traceAddress);
                 }
@@ -1715,7 +1715,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="tags">The value of the <c>"tags"</c> property.</param>
                 /// <param name="traceAddress">The value of the <c>"trace_address"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.DisableCountPerBuckets.Source disableCountPerBuckets, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> globalTags, in Corvus.KrakendBenchmark.Current.JsonString.Source namespaceValue, in Corvus.KrakendBenchmark.Current.JsonString.Source service, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.StatsAddress.Source statsAddress, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> tags, in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.TraceAddress.Source traceAddress)
+                public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.DisableCountPerBuckets.Source disableCountPerBuckets, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> globalTags, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source namespaceValue, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source service, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.StatsAddress.Source statsAddress, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> tags, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.Datadog.TraceAddress.Source traceAddress)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif

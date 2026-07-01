@@ -613,7 +613,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>application_id</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetApplicationId(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetApplicationId(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -644,7 +644,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>batch_size</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBatchSizeValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.BatchSize.Source value)
+            public void SetBatchSizeValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.BatchSize.Source value)
             {
                 CheckValidInstance();
 
@@ -689,7 +689,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>debug</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDebugValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EnableDebug.Source value)
+            public void SetDebugValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EnableDebug.Source value)
             {
                 CheckValidInstance();
 
@@ -734,7 +734,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>event_queue_size</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEventQueueSizeValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EventQueueSize.Source value)
+            public void SetEventQueueSizeValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EventQueueSize.Source value)
             {
                 CheckValidInstance();
 
@@ -779,7 +779,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>identify_company</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIdentifyCompanyValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.IdentifyCompany.Source value)
+            public void SetIdentifyCompanyValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.IdentifyCompany.Source value)
             {
                 CheckValidInstance();
 
@@ -860,7 +860,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>log_body</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLogBody(in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.SendTheBody.Source value)
+            public void SetLogBody(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.SendTheBody.Source value)
             {
                 CheckValidInstance();
 
@@ -905,7 +905,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>request_body_masks</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRequestBodyMasks(in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.JsonStringArray.Source value)
+            public void SetRequestBodyMasks(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -986,7 +986,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>request_header_masks</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRequestHeaderMasks(in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.RequestHeaArray.Source value)
+            public void SetRequestHeaderMasks(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.RequestHeaArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1067,7 +1067,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>response_body_masks</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetResponseBodyMasks(in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseBoArray.Source value)
+            public void SetResponseBodyMasks(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseBoArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1148,7 +1148,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>response_header_masks</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetResponseHeaderMasks(in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseHeArray.Source value)
+            public void SetResponseHeaderMasks(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseHeArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1229,7 +1229,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>should_skip</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetShouldSkipValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ShouldSkip.Source value)
+            public void SetShouldSkipValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ShouldSkip.Source value)
             {
                 CheckValidInstance();
 
@@ -1310,7 +1310,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>timer_wake_up_seconds</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTimerWakeUpSeconds(in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.TimerWakeUp.Source value)
+            public void SetTimerWakeUpSeconds(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.TimerWakeUp.Source value)
             {
                 CheckValidInstance();
 
@@ -1355,7 +1355,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>user_id_headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUserIdHeaders(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
+            public void SetUserIdHeaders(scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1420,7 +1420,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>user_id_jwt_claim</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUserIdJwtClaimValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.UserIdJwtClaim.Source value)
+            public void SetUserIdJwtClaimValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.UserIdJwtClaim.Source value)
             {
                 CheckValidInstance();
 
@@ -1566,7 +1566,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1589,7 +1589,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1636,7 +1636,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1819,7 +1819,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.BatchSize.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EnableDebug.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EventQueueSize.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.IdentifyCompany.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.SendTheBody.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.JsonStringArray.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.RequestHeaArray.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseBoArray.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseHeArray.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ShouldSkip.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.TimerWakeUp.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.UserIdJwtClaim.Source arg14)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.BatchSize.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EnableDebug.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EventQueueSize.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.IdentifyCompany.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.SendTheBody.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.JsonStringArray.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.RequestHeaArray.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseBoArray.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseHeArray.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ShouldSkip.Source arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.TimerWakeUp.Source arg13, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.UserIdJwtClaim.Source arg14)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -2009,7 +2009,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.BatchSize.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EnableDebug.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EventQueueSize.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.IdentifyCompany.Source<TContext> arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.SendTheBody.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.JsonStringArray.Source<TContext> arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.RequestHeaArray.Source<TContext> arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseBoArray.Source<TContext> arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseHeArray.Source<TContext> arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ShouldSkip.Source<TContext> arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.TimerWakeUp.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.UserIdJwtClaim.Source arg14)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.BatchSize.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EnableDebug.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EventQueueSize.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.IdentifyCompany.Source<TContext> arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.SendTheBody.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.JsonStringArray.Source<TContext> arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.RequestHeaArray.Source<TContext> arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseBoArray.Source<TContext> arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseHeArray.Source<TContext> arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ShouldSkip.Source<TContext> arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.TimerWakeUp.Source arg13, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.UserIdJwtClaim.Source arg14)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2407,7 +2407,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg13">The value of the property.</param>
             /// <param name="arg14">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.BatchSize.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EnableDebug.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EventQueueSize.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.IdentifyCompany.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.SendTheBody.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.JsonStringArray.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.RequestHeaArray.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseBoArray.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseHeArray.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ShouldSkip.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.TimerWakeUp.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.UserIdJwtClaim.Source arg14, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.BatchSize.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EnableDebug.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EventQueueSize.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.IdentifyCompany.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.SendTheBody.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.JsonStringArray.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.RequestHeaArray.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseBoArray.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseHeArray.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ShouldSkip.Source arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.TimerWakeUp.Source arg13, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.UserIdJwtClaim.Source arg14, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14);
@@ -2434,7 +2434,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg13">The value of the property.</param>
             /// <param name="arg14">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.BatchSize.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EnableDebug.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EventQueueSize.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.IdentifyCompany.Source<TContext> arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.SendTheBody.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.JsonStringArray.Source<TContext> arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.RequestHeaArray.Source<TContext> arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseBoArray.Source<TContext> arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseHeArray.Source<TContext> arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ShouldSkip.Source<TContext> arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.TimerWakeUp.Source arg13, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.UserIdJwtClaim.Source arg14, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.BatchSize.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EnableDebug.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EventQueueSize.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.IdentifyCompany.Source<TContext> arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.SendTheBody.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.JsonStringArray.Source<TContext> arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.RequestHeaArray.Source<TContext> arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseBoArray.Source<TContext> arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseHeArray.Source<TContext> arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ShouldSkip.Source<TContext> arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.TimerWakeUp.Source arg13, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.UserIdJwtClaim.Source arg14, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2492,7 +2492,7 @@ public readonly partial struct KrakendSchema
         /// <param name="timerWakeUpSeconds">The value of the <c>"timer_wake_up_seconds"</c> property.</param>
         /// <param name="userIdJwtClaim">The value of the <c>"user_id_jwt_claim"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.JsonString.Source applicationId, in Corvus.KrakendBenchmark.Current.JsonArray.Source userIdHeaders, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.BatchSize.Source batchSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EnableDebug.Source debug = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EventQueueSize.Source eventQueueSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.IdentifyCompany.Source identifyCompany = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.SendTheBody.Source logBody = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.JsonStringArray.Source requestBodyMasks = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.RequestHeaArray.Source requestHeaderMasks = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseBoArray.Source responseBodyMasks = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseHeArray.Source responseHeaderMasks = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ShouldSkip.Source shouldSkip = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.TimerWakeUp.Source timerWakeUpSeconds = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.UserIdJwtClaim.Source userIdJwtClaim = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source applicationId, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source userIdHeaders, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.BatchSize.Source batchSize = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EnableDebug.Source debug = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EventQueueSize.Source eventQueueSize = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.IdentifyCompany.Source identifyCompany = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.SendTheBody.Source logBody = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.JsonStringArray.Source requestBodyMasks = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.RequestHeaArray.Source requestHeaderMasks = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseBoArray.Source responseBodyMasks = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseHeArray.Source responseHeaderMasks = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ShouldSkip.Source shouldSkip = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.TimerWakeUp.Source timerWakeUpSeconds = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.UserIdJwtClaim.Source userIdJwtClaim = default)
         {
             return new Source(applicationId, userIdHeaders, batchSize, debug, eventQueueSize, identifyCompany, logBody, requestBodyMasks, requestHeaderMasks, responseBodyMasks, responseHeaderMasks, shouldSkip, timerWakeUpSeconds, userIdJwtClaim);
         }
@@ -2517,7 +2517,7 @@ public readonly partial struct KrakendSchema
         /// <param name="timerWakeUpSeconds">The value of the <c>"timer_wake_up_seconds"</c> property.</param>
         /// <param name="userIdJwtClaim">The value of the <c>"user_id_jwt_claim"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source applicationId, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> userIdHeaders, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.BatchSize.Source batchSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EnableDebug.Source debug = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EventQueueSize.Source eventQueueSize = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.IdentifyCompany.Source<TContext> identifyCompany = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.SendTheBody.Source logBody = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.JsonStringArray.Source<TContext> requestBodyMasks = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.RequestHeaArray.Source<TContext> requestHeaderMasks = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseBoArray.Source<TContext> responseBodyMasks = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseHeArray.Source<TContext> responseHeaderMasks = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ShouldSkip.Source<TContext> shouldSkip = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.TimerWakeUp.Source timerWakeUpSeconds = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.UserIdJwtClaim.Source userIdJwtClaim = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source applicationId, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> userIdHeaders, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.BatchSize.Source batchSize = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EnableDebug.Source debug = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.EventQueueSize.Source eventQueueSize = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.IdentifyCompany.Source<TContext> identifyCompany = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.SendTheBody.Source logBody = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.JsonStringArray.Source<TContext> requestBodyMasks = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.RequestHeaArray.Source<TContext> requestHeaderMasks = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseBoArray.Source<TContext> responseBodyMasks = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ResponseHeArray.Source<TContext> responseHeaderMasks = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.ShouldSkip.Source<TContext> shouldSkip = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.TimerWakeUp.Source timerWakeUpSeconds = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Moesif.UserIdJwtClaim.Source userIdJwtClaim = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

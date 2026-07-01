@@ -226,7 +226,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>ibnTarget</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIbnTarget(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetIbnTarget(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -456,7 +456,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Text.Json.JsonElement.Source arg1)
+            internal Source(scoped in Corvus.Text.Json.JsonElement.Source arg1)
             {
                 _createArg1 = arg1;
                 _kind = Kind.Create;
@@ -620,7 +620,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.IbnActionParameters.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1)
+            internal Source(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -840,7 +840,7 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             /// <param name="arg1">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Text.Json.JsonElement.Source arg1, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Text.Json.JsonElement.Source arg1, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1);
@@ -854,7 +854,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="arg1">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -899,7 +899,7 @@ public readonly partial struct Ui5ManifestSchema
         /// </summary>
         /// <param name="ibnTarget">The value of the <c>"ibnTarget"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Text.Json.JsonElement.Source ibnTarget)
+        public static Source Build(scoped in Corvus.Text.Json.JsonElement.Source ibnTarget)
         {
             return new Source(ibnTarget);
         }
@@ -911,7 +911,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="ibnTarget">The value of the <c>"ibnTarget"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> ibnTarget)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> ibnTarget)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

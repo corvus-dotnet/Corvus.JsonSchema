@@ -440,7 +440,7 @@ public readonly partial struct FabricModSchema
             /// Set the <c>client</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetClient(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ClientEntrArray.Source value)
+            public void SetClient(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ClientEntrArray.Source value)
             {
                 CheckValidInstance();
 
@@ -521,7 +521,7 @@ public readonly partial struct FabricModSchema
             /// Set the <c>fabric-datagen</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFabricDatagen(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricDataArray.Source value)
+            public void SetFabricDatagen(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricDataArray.Source value)
             {
                 CheckValidInstance();
 
@@ -602,7 +602,7 @@ public readonly partial struct FabricModSchema
             /// Set the <c>fabric-gametest</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFabricGametest(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricGameArray.Source value)
+            public void SetFabricGametest(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricGameArray.Source value)
             {
                 CheckValidInstance();
 
@@ -683,7 +683,7 @@ public readonly partial struct FabricModSchema
             /// Set the <c>main</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMain(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.MainEntrypArray.Source value)
+            public void SetMain(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.MainEntrypArray.Source value)
             {
                 CheckValidInstance();
 
@@ -764,7 +764,7 @@ public readonly partial struct FabricModSchema
             /// Set the <c>preLaunch</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPreLaunch(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source value)
+            public void SetPreLaunch(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source value)
             {
                 CheckValidInstance();
 
@@ -845,7 +845,7 @@ public readonly partial struct FabricModSchema
             /// Set the <c>server</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetServer(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source value)
+            public void SetServer(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1027,7 +1027,7 @@ public readonly partial struct FabricModSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.EntrypointArray.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.EntrypointArray.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1050,7 +1050,7 @@ public readonly partial struct FabricModSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.EntrypointArray.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.EntrypointArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1097,7 +1097,7 @@ public readonly partial struct FabricModSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.EntrypointArray.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.EntrypointArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1272,7 +1272,7 @@ public readonly partial struct FabricModSchema
 
             internal Source(Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ClientEntrArray.Source arg1, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricDataArray.Source arg2, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricGameArray.Source arg3, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.MainEntrypArray.Source arg4, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source arg5, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source arg6)
+            internal Source(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ClientEntrArray.Source arg1, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricDataArray.Source arg2, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricGameArray.Source arg3, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.MainEntrypArray.Source arg4, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source arg5, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source arg6)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1446,7 +1446,7 @@ public readonly partial struct FabricModSchema
 
             internal Source(scoped in TContext context, Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ClientEntrArray.Source<TContext> arg1, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricDataArray.Source<TContext> arg2, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricGameArray.Source<TContext> arg3, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.MainEntrypArray.Source<TContext> arg4, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source<TContext> arg5, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source<TContext> arg6)
+            internal Source(scoped in TContext context, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ClientEntrArray.Source<TContext> arg1, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricDataArray.Source<TContext> arg2, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricGameArray.Source<TContext> arg3, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.MainEntrypArray.Source<TContext> arg4, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source<TContext> arg5, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source<TContext> arg6)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1780,7 +1780,7 @@ public readonly partial struct FabricModSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ClientEntrArray.Source arg1, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricDataArray.Source arg2, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricGameArray.Source arg3, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.MainEntrypArray.Source arg4, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source arg5, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ClientEntrArray.Source arg1, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricDataArray.Source arg2, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricGameArray.Source arg3, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.MainEntrypArray.Source arg4, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source arg5, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source arg6, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1799,7 +1799,7 @@ public readonly partial struct FabricModSchema
             /// <param name="arg5">The value of the property.</param>
             /// <param name="arg6">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ClientEntrArray.Source<TContext> arg1, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricDataArray.Source<TContext> arg2, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricGameArray.Source<TContext> arg3, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.MainEntrypArray.Source<TContext> arg4, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source<TContext> arg5, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source<TContext> arg6, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ClientEntrArray.Source<TContext> arg1, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricDataArray.Source<TContext> arg2, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricGameArray.Source<TContext> arg3, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.MainEntrypArray.Source<TContext> arg4, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source<TContext> arg5, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source<TContext> arg6, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1849,7 +1849,7 @@ public readonly partial struct FabricModSchema
         /// <param name="preLaunch">The value of the <c>"preLaunch"</c> property.</param>
         /// <param name="server">The value of the <c>"server"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ClientEntrArray.Source client = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricDataArray.Source fabricDatagen = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricGameArray.Source fabricGametest = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.MainEntrypArray.Source main = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source preLaunch = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source server = default)
+        public static Source Build(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ClientEntrArray.Source client = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricDataArray.Source fabricDatagen = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricGameArray.Source fabricGametest = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.MainEntrypArray.Source main = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source preLaunch = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source server = default)
         {
             return new Source(client, fabricDatagen, fabricGametest, main, preLaunch, server);
         }
@@ -1866,7 +1866,7 @@ public readonly partial struct FabricModSchema
         /// <param name="preLaunch">The value of the <c>"preLaunch"</c> property.</param>
         /// <param name="server">The value of the <c>"server"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ClientEntrArray.Source<TContext> client = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricDataArray.Source<TContext> fabricDatagen = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricGameArray.Source<TContext> fabricGametest = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.MainEntrypArray.Source<TContext> main = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source<TContext> preLaunch = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source<TContext> server = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ClientEntrArray.Source<TContext> client = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricDataArray.Source<TContext> fabricDatagen = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.FabricGameArray.Source<TContext> fabricGametest = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.MainEntrypArray.Source<TContext> main = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source<TContext> preLaunch = default, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source<TContext> server = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

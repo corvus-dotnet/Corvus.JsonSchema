@@ -356,7 +356,7 @@ public readonly partial struct OpenapiSchema
                     /// Set the <c>allowReserved</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetAllowReserved(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source value)
+                    public void SetAllowReserved(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -401,7 +401,7 @@ public readonly partial struct OpenapiSchema
                     /// Set the <c>style</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetStyle(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.StyleEntity.Source value)
+                    public void SetStyle(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.StyleEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -547,7 +547,7 @@ public readonly partial struct OpenapiSchema
                     ///   </para>
                     /// </remarks>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void SetProperty(string propertyName, in JsonElement.Source value)
+                    public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                     {
                         SetProperty(propertyName.AsSpan(), value);
                     }
@@ -570,7 +570,7 @@ public readonly partial struct OpenapiSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -617,7 +617,7 @@ public readonly partial struct OpenapiSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -868,7 +868,7 @@ public readonly partial struct OpenapiSchema
 
                     internal Source(Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.StyleEntity.Source arg2)
+                    internal Source(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.StyleEntity.Source arg2)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -1258,7 +1258,7 @@ public readonly partial struct OpenapiSchema
                     /// <param name="arg1">The value of the property.</param>
                     /// <param name="arg2">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source arg1, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.StyleEntity.Source arg2, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source arg1, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.StyleEntity.Source arg2, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2);
@@ -1301,7 +1301,7 @@ public readonly partial struct OpenapiSchema
                 /// <param name="allowReserved">The value of the <c>"allowReserved"</c> property.</param>
                 /// <param name="style">The value of the <c>"style"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source allowReserved = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.StyleEntity.Source style = default)
+                public static Source Build(scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity.Source allowReserved = default, scoped in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.StyleEntity.Source style = default)
                 {
                     return new Source(allowReserved, style);
                 }

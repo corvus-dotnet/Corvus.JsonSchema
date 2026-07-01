@@ -307,7 +307,7 @@ public readonly partial struct Authentication
         /// Set the <c>buttons</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetButtons(in Corvus.Ui5ManifestBenchmark.Current.Authentication.AuthCardButtonArray.Source value)
+        public void SetButtons(scoped in Corvus.Ui5ManifestBenchmark.Current.Authentication.AuthCardButtonArray.Source value)
         {
             CheckValidInstance();
 
@@ -388,7 +388,7 @@ public readonly partial struct Authentication
         /// Set the <c>connectionName</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetConnectionName(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetConnectionName(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -433,7 +433,7 @@ public readonly partial struct Authentication
         /// Set the <c>text</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetText(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetText(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -478,7 +478,7 @@ public readonly partial struct Authentication
         /// Set the <c>tokenExchangeResource</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTokenExchangeResource(in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.Source value)
+        public void SetTokenExchangeResource(scoped in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.Source value)
         {
             CheckValidInstance();
 
@@ -559,7 +559,7 @@ public readonly partial struct Authentication
         /// Set the <c>type</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetType(in Corvus.Ui5ManifestBenchmark.Current.Authentication.MustBeAuthentication.Source value)
+        public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.Authentication.MustBeAuthentication.Source value)
         {
             CheckValidInstance();
 
@@ -773,7 +773,7 @@ public readonly partial struct Authentication
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.Authentication.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Ui5ManifestBenchmark.Current.Authentication.AuthCardButtonArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Authentication.MustBeAuthentication.Source arg5)
+        internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Authentication.AuthCardButtonArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Authentication.MustBeAuthentication.Source arg5)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -945,7 +945,7 @@ public readonly partial struct Authentication
 
         internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Authentication.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Authentication.AuthCardButtonArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Authentication.MustBeAuthentication.Source arg5)
+        internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Authentication.AuthCardButtonArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Authentication.MustBeAuthentication.Source arg5)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1202,7 +1202,7 @@ public readonly partial struct Authentication
         /// <param name="arg4">The value of the property.</param>
         /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Authentication.AuthCardButtonArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Authentication.MustBeAuthentication.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Authentication.AuthCardButtonArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Authentication.MustBeAuthentication.Source arg5, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1220,7 +1220,7 @@ public readonly partial struct Authentication
         /// <param name="arg4">The value of the property.</param>
         /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Authentication.AuthCardButtonArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Authentication.MustBeAuthentication.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Authentication.AuthCardButtonArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Authentication.MustBeAuthentication.Source arg5, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1269,7 +1269,7 @@ public readonly partial struct Authentication
     /// <param name="tokenExchangeResource">The value of the <c>"tokenExchangeResource"</c> property.</param>
     /// <param name="type">The value of the <c>"type"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Authentication.AuthCardButtonArray.Source buttons = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source connectionName = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text = default, in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.Source tokenExchangeResource = default, in Corvus.Ui5ManifestBenchmark.Current.Authentication.MustBeAuthentication.Source type = default)
+    public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Authentication.AuthCardButtonArray.Source buttons = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source connectionName = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.Source tokenExchangeResource = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Authentication.MustBeAuthentication.Source type = default)
     {
         return new Source(buttons, connectionName, text, tokenExchangeResource, type);
     }
@@ -1285,7 +1285,7 @@ public readonly partial struct Authentication
     /// <param name="tokenExchangeResource">The value of the <c>"tokenExchangeResource"</c> property.</param>
     /// <param name="type">The value of the <c>"type"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Authentication.AuthCardButtonArray.Source<TContext> buttons = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source connectionName = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text = default, in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.Source<TContext> tokenExchangeResource = default, in Corvus.Ui5ManifestBenchmark.Current.Authentication.MustBeAuthentication.Source type = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Authentication.AuthCardButtonArray.Source<TContext> buttons = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source connectionName = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.Source<TContext> tokenExchangeResource = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Authentication.MustBeAuthentication.Source type = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

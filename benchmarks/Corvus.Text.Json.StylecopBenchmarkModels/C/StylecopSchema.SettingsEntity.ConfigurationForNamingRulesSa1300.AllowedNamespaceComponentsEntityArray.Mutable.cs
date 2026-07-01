@@ -424,7 +424,7 @@ public readonly partial struct StylecopSchema
                     ///   </para>
                     /// </remarks>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void InsertItem(int itemIndex, in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.AllowedNamespaceComponentsEntity.Source value)
+                    public void InsertItem(int itemIndex, scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.AllowedNamespaceComponentsEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -450,7 +450,7 @@ public readonly partial struct StylecopSchema
                     ///   The parent <see cref="JsonDocument"/> has been disposed.
                     /// </exception>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void AddItem(in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.AllowedNamespaceComponentsEntity.Source value)
+                    public void AddItem(scoped in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.AllowedNamespaceComponentsEntityArray.AllowedNamespaceComponentsEntity.Source value)
                     {
                         InsertItem(GetArrayLength(), in value);
                     }

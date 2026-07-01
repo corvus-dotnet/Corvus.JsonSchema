@@ -414,7 +414,7 @@ public readonly partial struct FabricModSchema
             /// Set the <c>email</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEmail(in Corvus.FabricModBenchmark.Current.JsonString.Source value)
+            public void SetEmail(scoped in Corvus.FabricModBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -459,7 +459,7 @@ public readonly partial struct FabricModSchema
             /// Set the <c>homepage</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHomepage(in Corvus.FabricModBenchmark.Current.JsonString.Source value)
+            public void SetHomepage(scoped in Corvus.FabricModBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -504,7 +504,7 @@ public readonly partial struct FabricModSchema
             /// Set the <c>irc</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIrc(in Corvus.FabricModBenchmark.Current.JsonString.Source value)
+            public void SetIrc(scoped in Corvus.FabricModBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -549,7 +549,7 @@ public readonly partial struct FabricModSchema
             /// Set the <c>issues</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIssues(in Corvus.FabricModBenchmark.Current.JsonString.Source value)
+            public void SetIssues(scoped in Corvus.FabricModBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -594,7 +594,7 @@ public readonly partial struct FabricModSchema
             /// Set the <c>sources</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSources(in Corvus.FabricModBenchmark.Current.JsonString.Source value)
+            public void SetSources(scoped in Corvus.FabricModBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -740,7 +740,7 @@ public readonly partial struct FabricModSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.FabricModBenchmark.Current.JsonString.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -763,7 +763,7 @@ public readonly partial struct FabricModSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.FabricModBenchmark.Current.JsonString.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -810,7 +810,7 @@ public readonly partial struct FabricModSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.FabricModBenchmark.Current.JsonString.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -984,7 +984,7 @@ public readonly partial struct FabricModSchema
 
             internal Source(Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.FabricModBenchmark.Current.JsonString.Source arg1, in Corvus.FabricModBenchmark.Current.JsonString.Source arg2, in Corvus.FabricModBenchmark.Current.JsonString.Source arg3, in Corvus.FabricModBenchmark.Current.JsonString.Source arg4, in Corvus.FabricModBenchmark.Current.JsonString.Source arg5)
+            internal Source(scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg1, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg2, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg3, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg4, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg5)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1352,7 +1352,7 @@ public readonly partial struct FabricModSchema
             /// <param name="arg4">The value of the property.</param>
             /// <param name="arg5">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.FabricModBenchmark.Current.JsonString.Source arg1, in Corvus.FabricModBenchmark.Current.JsonString.Source arg2, in Corvus.FabricModBenchmark.Current.JsonString.Source arg3, in Corvus.FabricModBenchmark.Current.JsonString.Source arg4, in Corvus.FabricModBenchmark.Current.JsonString.Source arg5, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg1, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg2, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg3, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg4, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg5, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1398,7 +1398,7 @@ public readonly partial struct FabricModSchema
         /// <param name="issues">The value of the <c>"issues"</c> property.</param>
         /// <param name="sources">The value of the <c>"sources"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.FabricModBenchmark.Current.JsonString.Source email = default, in Corvus.FabricModBenchmark.Current.JsonString.Source homepage = default, in Corvus.FabricModBenchmark.Current.JsonString.Source irc = default, in Corvus.FabricModBenchmark.Current.JsonString.Source issues = default, in Corvus.FabricModBenchmark.Current.JsonString.Source sources = default)
+        public static Source Build(scoped in Corvus.FabricModBenchmark.Current.JsonString.Source email = default, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source homepage = default, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source irc = default, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source issues = default, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source sources = default)
         {
             return new Source(email, homepage, irc, issues, sources);
         }

@@ -1,5 +1,13 @@
 # Version History
 
+## V5.2.2
+
+V5.2.2 lets the property-parameter `Build(...)` factory be used directly as an array element (or object-property value) inside a mutable builder callback.
+
+### Bug fixes
+
+- **The property-parameter `Build(...)` factory can now be passed straight to a builder's `AddItem`/`InsertItem`/`SetProperty`/`Set…` methods** — Generated mutable models expose a `T.Build(field: value, …)` factory that captures the `Create(...)` arguments into a lazy `T.Source`. Previously that `Source` could only be handed to a *direct* consumer (a `CreateBuilder(...)` call or a generated client/result factory); using it as an **array element** inside an array-builder callback — `b.AddItem(Item.Build(id: …, name: …))` — failed to compile with `CS8347`/`CS8350`/`CS8156`. The C# ref-safety analysis assumed the `Build` result (a `ref struct` constructed from `in` parameters) might escape into the wider-scoped builder, even though `AddItem`/`InsertItem` materialize it synchronously and never retain it. The generated property-parameter `Build(...)` factory parameters, the capturing `Source(...)` constructor parameters, and the array `AddItem`/`InsertItem` and object `Set…`/`SetProperty` consumers are now emitted as `scoped in`. This is both truthful (each copies or materializes its argument synchronously) and a **backward-compatible** relaxation — callers may pass narrower-scoped values, and nothing that compiled before stops compiling — so the compact factory form now works uniformly when building arrays of objects. The fix is in the shared V5 code-generation core, so it applies to models emitted by the source generator, the `corvusjson` CLI, and the OpenAPI/AsyncAPI generators alike; regenerate your models to pick it up. The delegate-form `Build(static (ref Builder b) => …)` was unaffected (it wraps a heap closure, not parameter refs).
+
 ## V5.2.1
 
 V5.2.1 fixes several validation defects — a runtime crash in evaluation tracking, a property-dispatch hash collision, detailed-results faults and corruption on complex schemas, an `unevaluatedProperties` over-rejection through `dependentSchemas`, and a struct-layout cycle in generated recursive discriminated unions — and lets you disable `format` assertion globally to produce annotation-only output.

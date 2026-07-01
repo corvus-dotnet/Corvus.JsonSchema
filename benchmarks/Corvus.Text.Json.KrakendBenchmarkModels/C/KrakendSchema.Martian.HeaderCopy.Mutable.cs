@@ -403,7 +403,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>from</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetFromValue(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetFromValue(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -434,7 +434,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>scope</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetScopeValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Scope.Source value)
+                public void SetScopeValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Scope.Source value)
                 {
                     CheckValidInstance();
 
@@ -499,7 +499,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>to</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTo(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                public void SetTo(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -631,7 +631,7 @@ public readonly partial struct KrakendSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -654,7 +654,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -701,7 +701,7 @@ public readonly partial struct KrakendSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -873,7 +873,7 @@ public readonly partial struct KrakendSchema
 
                 internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Scope.Source arg2, in Corvus.KrakendBenchmark.Current.JsonString.Source arg3)
+                internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Scope.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg3)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -1041,7 +1041,7 @@ public readonly partial struct KrakendSchema
 
                 internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Scope.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.JsonString.Source arg3)
+                internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Scope.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg3)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1351,7 +1351,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Scope.Source arg2, in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Scope.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2, arg3);
@@ -1367,7 +1367,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="arg3">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Scope.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Scope.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1414,7 +1414,7 @@ public readonly partial struct KrakendSchema
             /// <param name="scope">The value of the <c>"scope"</c> property.</param>
             /// <param name="to">The value of the <c>"to"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.KrakendBenchmark.Current.JsonString.Source from, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Scope.Source scope, in Corvus.KrakendBenchmark.Current.JsonString.Source to)
+            public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source from, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Scope.Source scope, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source to)
             {
                 return new Source(from, scope, to);
             }
@@ -1428,7 +1428,7 @@ public readonly partial struct KrakendSchema
             /// <param name="scope">The value of the <c>"scope"</c> property.</param>
             /// <param name="to">The value of the <c>"to"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source from, in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Scope.Source<TContext> scope, in Corvus.KrakendBenchmark.Current.JsonString.Source to)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source from, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Martian.HeaderCopy.Scope.Source<TContext> scope, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source to)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

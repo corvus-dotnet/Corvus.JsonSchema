@@ -382,7 +382,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>endpoint</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEndpoint(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetEndpoint(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -427,7 +427,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>function_name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFunctionName(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetFunctionName(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -472,7 +472,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>function_param_name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFunctionParamName(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetFunctionParamName(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -517,7 +517,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>max_retries</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxRetriesValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Lambda.MaxRetries.Source value)
+            public void SetMaxRetriesValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Lambda.MaxRetries.Source value)
             {
                 CheckValidInstance();
 
@@ -562,7 +562,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>region</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRegion(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetRegion(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -708,7 +708,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -731,7 +731,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -778,7 +778,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -952,7 +952,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Lambda.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lambda.MaxRetries.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Lambda.MaxRetries.Source arg4, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg5)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1359,7 +1359,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg4">The value of the property.</param>
             /// <param name="arg5">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lambda.MaxRetries.Source arg4, in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Lambda.MaxRetries.Source arg4, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg5, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1405,7 +1405,7 @@ public readonly partial struct KrakendSchema
         /// <param name="maxRetries">The value of the <c>"max_retries"</c> property.</param>
         /// <param name="region">The value of the <c>"region"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.JsonString.Source endpoint = default, in Corvus.KrakendBenchmark.Current.JsonString.Source functionName = default, in Corvus.KrakendBenchmark.Current.JsonString.Source functionParamName = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Lambda.MaxRetries.Source maxRetries = default, in Corvus.KrakendBenchmark.Current.JsonString.Source region = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source endpoint = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source functionName = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source functionParamName = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Lambda.MaxRetries.Source maxRetries = default, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source region = default)
         {
             return new Source(endpoint, functionName, functionParamName, maxRetries, region);
         }

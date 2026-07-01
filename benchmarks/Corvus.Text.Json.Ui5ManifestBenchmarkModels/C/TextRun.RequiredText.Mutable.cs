@@ -460,7 +460,7 @@ public readonly partial struct TextRun
             /// Set the <c>color</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetColor(in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheColorOfTheText.Source value)
+            public void SetColor(scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheColorOfTheText.Source value)
             {
                 CheckValidInstance();
 
@@ -505,7 +505,7 @@ public readonly partial struct TextRun
             /// Set the <c>fontType</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFontType(in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.TheTypeOfFontToUse.Source value)
+            public void SetFontType(scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.TheTypeOfFontToUse.Source value)
             {
                 CheckValidInstance();
 
@@ -550,7 +550,7 @@ public readonly partial struct TextRun
             /// Set the <c>highlight</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHighlight(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+            public void SetHighlight(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -595,7 +595,7 @@ public readonly partial struct TextRun
             /// Set the <c>isSubtle</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIsSubtle(in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.IsSubtleEntity.Source value)
+            public void SetIsSubtle(scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.IsSubtleEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -640,7 +640,7 @@ public readonly partial struct TextRun
             /// Set the <c>italic</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetItalic(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+            public void SetItalic(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -685,7 +685,7 @@ public readonly partial struct TextRun
             /// Set the <c>selectAction</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSelectAction(in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source value)
+            public void SetSelectAction(scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source value)
             {
                 CheckValidInstance();
 
@@ -766,7 +766,7 @@ public readonly partial struct TextRun
             /// Set the <c>size</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSize(in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsSizeOfText.Source value)
+            public void SetSize(scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsSizeOfText.Source value)
             {
                 CheckValidInstance();
 
@@ -811,7 +811,7 @@ public readonly partial struct TextRun
             /// Set the <c>strikethrough</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStrikethrough(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+            public void SetStrikethrough(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -856,7 +856,7 @@ public readonly partial struct TextRun
             /// Set the <c>text</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetText(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetText(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -887,7 +887,7 @@ public readonly partial struct TextRun
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.MustBeTextRun.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.MustBeTextRun.Source value)
             {
                 CheckValidInstance();
 
@@ -932,7 +932,7 @@ public readonly partial struct TextRun
             /// Set the <c>underline</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUnderline(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+            public void SetUnderline(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -977,7 +977,7 @@ public readonly partial struct TextRun
             /// Set the <c>weight</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetWeight(in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheWeightOfTheText.Source value)
+            public void SetWeight(scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheWeightOfTheText.Source value)
             {
                 CheckValidInstance();
 
@@ -1198,7 +1198,7 @@ public readonly partial struct TextRun
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheColorOfTheText.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.TheTypeOfFontToUse.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.IsSubtleEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsSizeOfText.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.MustBeTextRun.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheWeightOfTheText.Source arg12)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheColorOfTheText.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.TheTypeOfFontToUse.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.IsSubtleEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsSizeOfText.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.MustBeTextRun.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheWeightOfTheText.Source arg12)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1384,7 +1384,7 @@ public readonly partial struct TextRun
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheColorOfTheText.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.TheTypeOfFontToUse.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.IsSubtleEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsSizeOfText.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.MustBeTextRun.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheWeightOfTheText.Source arg12)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheColorOfTheText.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.TheTypeOfFontToUse.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.IsSubtleEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsSizeOfText.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.MustBeTextRun.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheWeightOfTheText.Source arg12)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1697,7 +1697,7 @@ public readonly partial struct TextRun
             /// <param name="arg11">The value of the property.</param>
             /// <param name="arg12">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheColorOfTheText.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.TheTypeOfFontToUse.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.IsSubtleEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsSizeOfText.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.MustBeTextRun.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheWeightOfTheText.Source arg12, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheColorOfTheText.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.TheTypeOfFontToUse.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.IsSubtleEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsSizeOfText.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.MustBeTextRun.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheWeightOfTheText.Source arg12, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
@@ -1722,7 +1722,7 @@ public readonly partial struct TextRun
             /// <param name="arg11">The value of the property.</param>
             /// <param name="arg12">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheColorOfTheText.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.TheTypeOfFontToUse.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.IsSubtleEntity.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsSizeOfText.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.MustBeTextRun.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheWeightOfTheText.Source arg12, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheColorOfTheText.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.TheTypeOfFontToUse.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.IsSubtleEntity.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsSizeOfText.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.MustBeTextRun.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheWeightOfTheText.Source arg12, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1778,7 +1778,7 @@ public readonly partial struct TextRun
         /// <param name="underline">The value of the <c>"underline"</c> property.</param>
         /// <param name="weight">The value of the <c>"weight"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheColorOfTheText.Source color = default, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.TheTypeOfFontToUse.Source fontType = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source highlight = default, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.IsSubtleEntity.Source isSubtle = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source italic = default, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source selectAction = default, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsSizeOfText.Source size = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source strikethrough = default, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.MustBeTextRun.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source underline = default, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheWeightOfTheText.Source weight = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheColorOfTheText.Source color = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.TheTypeOfFontToUse.Source fontType = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source highlight = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.IsSubtleEntity.Source isSubtle = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source italic = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source selectAction = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsSizeOfText.Source size = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source strikethrough = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.MustBeTextRun.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source underline = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheWeightOfTheText.Source weight = default)
         {
             return new Source(text, color, fontType, highlight, isSubtle, italic, selectAction, size, strikethrough, type, underline, weight);
         }
@@ -1801,7 +1801,7 @@ public readonly partial struct TextRun
         /// <param name="underline">The value of the <c>"underline"</c> property.</param>
         /// <param name="weight">The value of the <c>"weight"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheColorOfTheText.Source color = default, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.TheTypeOfFontToUse.Source fontType = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source highlight = default, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.IsSubtleEntity.Source isSubtle = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source italic = default, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> selectAction = default, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsSizeOfText.Source size = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source strikethrough = default, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.MustBeTextRun.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source underline = default, in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheWeightOfTheText.Source weight = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source text, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheColorOfTheText.Source color = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.TheTypeOfFontToUse.Source fontType = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source highlight = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.IsSubtleEntity.Source isSubtle = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source italic = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> selectAction = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsSizeOfText.Source size = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source strikethrough = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.MustBeTextRun.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source underline = default, scoped in Corvus.Ui5ManifestBenchmark.Current.TextRun.RequiredText.ControlsTheWeightOfTheText.Source weight = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

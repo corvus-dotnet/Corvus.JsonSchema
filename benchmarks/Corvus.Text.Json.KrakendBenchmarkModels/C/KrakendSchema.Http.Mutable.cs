@@ -676,7 +676,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>allowed_hosts</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAllowedHostsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.AllowedHosts.Source value)
+            public void SetAllowedHostsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.AllowedHosts.Source value)
             {
                 CheckValidInstance();
 
@@ -757,7 +757,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>allowed_hosts_are_regex</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAllowedHostsAreRegex(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HostsAreRegexps.Source value)
+            public void SetAllowedHostsAreRegex(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HostsAreRegexps.Source value)
             {
                 CheckValidInstance();
 
@@ -802,7 +802,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>browser_xss_filter</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBrowserXssFilter(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.BrowserXssFilterEntity.Source value)
+            public void SetBrowserXssFilter(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.BrowserXssFilterEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -847,7 +847,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>content_security_policy</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetContentSecurityPolicy(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ContentSecurityPolicyCsp.Source value)
+            public void SetContentSecurityPolicy(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ContentSecurityPolicyCsp.Source value)
             {
                 CheckValidInstance();
 
@@ -892,7 +892,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>content_type_nosniff</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetContentTypeNosniff(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Nosniff.Source value)
+            public void SetContentTypeNosniff(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Nosniff.Source value)
             {
                 CheckValidInstance();
 
@@ -937,7 +937,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>custom_frame_options_value</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCustomFrameOptionsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtectionFrameOptionsValue.Source value)
+            public void SetCustomFrameOptionsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtectionFrameOptionsValue.Source value)
             {
                 CheckValidInstance();
 
@@ -982,7 +982,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>force_sts_header</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetForceStsHeaderValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ForceStsHeader.Source value)
+            public void SetForceStsHeaderValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ForceStsHeader.Source value)
             {
                 CheckValidInstance();
 
@@ -1027,7 +1027,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>frame_deny</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFrameDeny(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtection.Source value)
+            public void SetFrameDeny(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtection.Source value)
             {
                 CheckValidInstance();
 
@@ -1072,7 +1072,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>host_proxy_headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHostProxyHeaders(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
+            public void SetHostProxyHeaders(scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1153,7 +1153,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>hpkp_public_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHpkpPublicKey(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpPublicKeyPinningHpkp.Source value)
+            public void SetHpkpPublicKey(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpPublicKeyPinningHpkp.Source value)
             {
                 CheckValidInstance();
 
@@ -1198,7 +1198,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>is_development</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIsDevelopment(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.DevelopmentFlag.Source value)
+            public void SetIsDevelopment(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.DevelopmentFlag.Source value)
             {
                 CheckValidInstance();
 
@@ -1243,7 +1243,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>referrer_policy</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetReferrerPolicyValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ReferrerPolicy.Source value)
+            public void SetReferrerPolicyValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ReferrerPolicy.Source value)
             {
                 CheckValidInstance();
 
@@ -1288,7 +1288,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>ssl_host</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSslHostValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslHost.Source value)
+            public void SetSslHostValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslHost.Source value)
             {
                 CheckValidInstance();
 
@@ -1333,7 +1333,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>ssl_proxy_headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSslProxyHeaders(in Corvus.KrakendBenchmark.Current.JsonObject.Source value)
+            public void SetSslProxyHeaders(scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source value)
             {
                 CheckValidInstance();
 
@@ -1414,7 +1414,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>ssl_redirect</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSslRedirectValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslRedirect.Source value)
+            public void SetSslRedirectValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslRedirect.Source value)
             {
                 CheckValidInstance();
 
@@ -1459,7 +1459,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>sts_include_subdomains</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStsIncludeSubdomains(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.StrictTransportSecurityIncludeSubdomains.Source value)
+            public void SetStsIncludeSubdomains(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.StrictTransportSecurityIncludeSubdomains.Source value)
             {
                 CheckValidInstance();
 
@@ -1504,7 +1504,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>sts_seconds</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStsSeconds(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpStrictTransportSecurityHstsSeconds.Source value)
+            public void SetStsSeconds(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpStrictTransportSecurityHstsSeconds.Source value)
             {
                 CheckValidInstance();
 
@@ -1650,7 +1650,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1673,7 +1673,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1720,7 +1720,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1906,7 +1906,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.AllowedHosts.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HostsAreRegexps.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.BrowserXssFilterEntity.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ContentSecurityPolicyCsp.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Nosniff.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtectionFrameOptionsValue.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ForceStsHeader.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtection.Source arg8, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpPublicKeyPinningHpkp.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.DevelopmentFlag.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ReferrerPolicy.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslHost.Source arg13, in Corvus.KrakendBenchmark.Current.JsonObject.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslRedirect.Source arg15, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.StrictTransportSecurityIncludeSubdomains.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpStrictTransportSecurityHstsSeconds.Source arg17)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.AllowedHosts.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HostsAreRegexps.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.BrowserXssFilterEntity.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ContentSecurityPolicyCsp.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Nosniff.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtectionFrameOptionsValue.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ForceStsHeader.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtection.Source arg8, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpPublicKeyPinningHpkp.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.DevelopmentFlag.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ReferrerPolicy.Source arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslHost.Source arg13, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslRedirect.Source arg15, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.StrictTransportSecurityIncludeSubdomains.Source arg16, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpStrictTransportSecurityHstsSeconds.Source arg17)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -2102,7 +2102,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.AllowedHosts.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HostsAreRegexps.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.BrowserXssFilterEntity.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ContentSecurityPolicyCsp.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Nosniff.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtectionFrameOptionsValue.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ForceStsHeader.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtection.Source arg8, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpPublicKeyPinningHpkp.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.DevelopmentFlag.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ReferrerPolicy.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslHost.Source arg13, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslRedirect.Source arg15, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.StrictTransportSecurityIncludeSubdomains.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpStrictTransportSecurityHstsSeconds.Source arg17)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.AllowedHosts.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HostsAreRegexps.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.BrowserXssFilterEntity.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ContentSecurityPolicyCsp.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Nosniff.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtectionFrameOptionsValue.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ForceStsHeader.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtection.Source arg8, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpPublicKeyPinningHpkp.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.DevelopmentFlag.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ReferrerPolicy.Source arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslHost.Source arg13, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslRedirect.Source arg15, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.StrictTransportSecurityIncludeSubdomains.Source arg16, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpStrictTransportSecurityHstsSeconds.Source arg17)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2524,7 +2524,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg16">The value of the property.</param>
             /// <param name="arg17">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.AllowedHosts.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HostsAreRegexps.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.BrowserXssFilterEntity.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ContentSecurityPolicyCsp.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Nosniff.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtectionFrameOptionsValue.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ForceStsHeader.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtection.Source arg8, in Corvus.KrakendBenchmark.Current.JsonArray.Source arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpPublicKeyPinningHpkp.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.DevelopmentFlag.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ReferrerPolicy.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslHost.Source arg13, in Corvus.KrakendBenchmark.Current.JsonObject.Source arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslRedirect.Source arg15, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.StrictTransportSecurityIncludeSubdomains.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpStrictTransportSecurityHstsSeconds.Source arg17, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.AllowedHosts.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HostsAreRegexps.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.BrowserXssFilterEntity.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ContentSecurityPolicyCsp.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Nosniff.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtectionFrameOptionsValue.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ForceStsHeader.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtection.Source arg8, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpPublicKeyPinningHpkp.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.DevelopmentFlag.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ReferrerPolicy.Source arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslHost.Source arg13, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslRedirect.Source arg15, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.StrictTransportSecurityIncludeSubdomains.Source arg16, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpStrictTransportSecurityHstsSeconds.Source arg17, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17);
@@ -2554,7 +2554,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg16">The value of the property.</param>
             /// <param name="arg17">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.AllowedHosts.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HostsAreRegexps.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.BrowserXssFilterEntity.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ContentSecurityPolicyCsp.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Nosniff.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtectionFrameOptionsValue.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ForceStsHeader.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtection.Source arg8, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg9, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpPublicKeyPinningHpkp.Source arg10, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.DevelopmentFlag.Source arg11, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ReferrerPolicy.Source arg12, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslHost.Source arg13, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> arg14, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslRedirect.Source arg15, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.StrictTransportSecurityIncludeSubdomains.Source arg16, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpStrictTransportSecurityHstsSeconds.Source arg17, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.AllowedHosts.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HostsAreRegexps.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.BrowserXssFilterEntity.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ContentSecurityPolicyCsp.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Nosniff.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtectionFrameOptionsValue.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ForceStsHeader.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtection.Source arg8, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> arg9, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpPublicKeyPinningHpkp.Source arg10, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.DevelopmentFlag.Source arg11, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ReferrerPolicy.Source arg12, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslHost.Source arg13, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> arg14, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslRedirect.Source arg15, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.StrictTransportSecurityIncludeSubdomains.Source arg16, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpStrictTransportSecurityHstsSeconds.Source arg17, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2615,7 +2615,7 @@ public readonly partial struct KrakendSchema
         /// <param name="stsIncludeSubdomains">The value of the <c>"sts_include_subdomains"</c> property.</param>
         /// <param name="stsSeconds">The value of the <c>"sts_seconds"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.AllowedHosts.Source allowedHosts = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HostsAreRegexps.Source allowedHostsAreRegex = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.BrowserXssFilterEntity.Source browserXssFilter = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ContentSecurityPolicyCsp.Source contentSecurityPolicy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Nosniff.Source contentTypeNosniff = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtectionFrameOptionsValue.Source customFrameOptionsValue = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ForceStsHeader.Source forceStsHeader = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtection.Source frameDeny = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source hostProxyHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpPublicKeyPinningHpkp.Source hpkpPublicKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.DevelopmentFlag.Source isDevelopment = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ReferrerPolicy.Source referrerPolicy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslHost.Source sslHost = default, in Corvus.KrakendBenchmark.Current.JsonObject.Source sslProxyHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslRedirect.Source sslRedirect = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.StrictTransportSecurityIncludeSubdomains.Source stsIncludeSubdomains = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpStrictTransportSecurityHstsSeconds.Source stsSeconds = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.AllowedHosts.Source allowedHosts = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HostsAreRegexps.Source allowedHostsAreRegex = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.BrowserXssFilterEntity.Source browserXssFilter = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ContentSecurityPolicyCsp.Source contentSecurityPolicy = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Nosniff.Source contentTypeNosniff = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtectionFrameOptionsValue.Source customFrameOptionsValue = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ForceStsHeader.Source forceStsHeader = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtection.Source frameDeny = default, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source hostProxyHeaders = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpPublicKeyPinningHpkp.Source hpkpPublicKey = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.DevelopmentFlag.Source isDevelopment = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ReferrerPolicy.Source referrerPolicy = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslHost.Source sslHost = default, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source sslProxyHeaders = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslRedirect.Source sslRedirect = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.StrictTransportSecurityIncludeSubdomains.Source stsIncludeSubdomains = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpStrictTransportSecurityHstsSeconds.Source stsSeconds = default)
         {
             return new Source(allowedHosts, allowedHostsAreRegex, browserXssFilter, contentSecurityPolicy, contentTypeNosniff, customFrameOptionsValue, forceStsHeader, frameDeny, hostProxyHeaders, hpkpPublicKey, isDevelopment, referrerPolicy, sslHost, sslProxyHeaders, sslRedirect, stsIncludeSubdomains, stsSeconds);
         }
@@ -2643,7 +2643,7 @@ public readonly partial struct KrakendSchema
         /// <param name="stsIncludeSubdomains">The value of the <c>"sts_include_subdomains"</c> property.</param>
         /// <param name="stsSeconds">The value of the <c>"sts_seconds"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.AllowedHosts.Source<TContext> allowedHosts = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HostsAreRegexps.Source allowedHostsAreRegex = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.BrowserXssFilterEntity.Source browserXssFilter = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ContentSecurityPolicyCsp.Source contentSecurityPolicy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Nosniff.Source contentTypeNosniff = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtectionFrameOptionsValue.Source customFrameOptionsValue = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ForceStsHeader.Source forceStsHeader = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtection.Source frameDeny = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> hostProxyHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpPublicKeyPinningHpkp.Source hpkpPublicKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.DevelopmentFlag.Source isDevelopment = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ReferrerPolicy.Source referrerPolicy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslHost.Source sslHost = default, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> sslProxyHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslRedirect.Source sslRedirect = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.StrictTransportSecurityIncludeSubdomains.Source stsIncludeSubdomains = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpStrictTransportSecurityHstsSeconds.Source stsSeconds = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.AllowedHosts.Source<TContext> allowedHosts = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HostsAreRegexps.Source allowedHostsAreRegex = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.BrowserXssFilterEntity.Source browserXssFilter = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ContentSecurityPolicyCsp.Source contentSecurityPolicy = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.Nosniff.Source contentTypeNosniff = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtectionFrameOptionsValue.Source customFrameOptionsValue = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ForceStsHeader.Source forceStsHeader = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ClickjackingProtection.Source frameDeny = default, scoped in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> hostProxyHeaders = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpPublicKeyPinningHpkp.Source hpkpPublicKey = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.DevelopmentFlag.Source isDevelopment = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.ReferrerPolicy.Source referrerPolicy = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslHost.Source sslHost = default, scoped in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> sslProxyHeaders = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.SslRedirect.Source sslRedirect = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.StrictTransportSecurityIncludeSubdomains.Source stsIncludeSubdomains = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Http.HttpStrictTransportSecurityHstsSeconds.Source stsSeconds = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

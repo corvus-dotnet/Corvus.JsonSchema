@@ -263,7 +263,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// Set the <c>enabled</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnabled(in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source value)
+            public void SetEnabled(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -308,7 +308,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// Set the <c>hardLimit</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHardLimit(in Corvus.GitpodConfigurationBenchmark.Current.JsonNumber.Source value)
+            public void SetHardLimit(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonNumber.Source value)
             {
                 CheckValidInstance();
 
@@ -353,7 +353,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// Set the <c>softLimit</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSoftLimit(in Corvus.GitpodConfigurationBenchmark.Current.JsonNumber.Source value)
+            public void SetSoftLimit(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonNumber.Source value)
             {
                 CheckValidInstance();
 
@@ -565,7 +565,7 @@ public readonly partial struct GitpodConfigurationSchema
 
             internal Source(Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonNumber.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.JsonNumber.Source arg3)
+            internal Source(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonNumber.Source arg2, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonNumber.Source arg3)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -893,7 +893,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// <param name="arg2">The value of the property.</param>
             /// <param name="arg3">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonNumber.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.JsonNumber.Source arg3, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonNumber.Source arg2, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonNumber.Source arg3, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3);
@@ -937,7 +937,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// <param name="hardLimit">The value of the <c>"hardLimit"</c> property.</param>
         /// <param name="softLimit">The value of the <c>"softLimit"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source enabled = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonNumber.Source hardLimit = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonNumber.Source softLimit = default)
+        public static Source Build(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source enabled = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonNumber.Source hardLimit = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonNumber.Source softLimit = default)
         {
             return new Source(enabled, hardLimit, softLimit);
         }

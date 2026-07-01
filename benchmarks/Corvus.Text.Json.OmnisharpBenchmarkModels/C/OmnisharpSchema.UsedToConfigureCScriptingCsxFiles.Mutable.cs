@@ -383,7 +383,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>defaultTargetFramework</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDefaultTargetFramework(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.DefaultTargetFrameworkEntity.Source value)
+            public void SetDefaultTargetFramework(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.DefaultTargetFrameworkEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -428,7 +428,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>enabled</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnabled(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnabledEntity.Source value)
+            public void SetEnabled(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnabledEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -473,7 +473,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>enableScriptNuGetReferences</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnableScriptNuGetReferences(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnableScriptNuGetReferencesEntity.Source value)
+            public void SetEnableScriptNuGetReferences(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnableScriptNuGetReferencesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -518,7 +518,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>rspFilePath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRspFilePath(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.RspFilePathEntity.Source value)
+            public void SetRspFilePath(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.RspFilePathEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -664,7 +664,7 @@ public readonly partial struct OmnisharpSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -687,7 +687,7 @@ public readonly partial struct OmnisharpSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -734,7 +734,7 @@ public readonly partial struct OmnisharpSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -907,7 +907,7 @@ public readonly partial struct OmnisharpSchema
 
             internal Source(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.DefaultTargetFrameworkEntity.Source arg1, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnabledEntity.Source arg2, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnableScriptNuGetReferencesEntity.Source arg3, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.RspFilePathEntity.Source arg4)
+            internal Source(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.DefaultTargetFrameworkEntity.Source arg1, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnabledEntity.Source arg2, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnableScriptNuGetReferencesEntity.Source arg3, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.RspFilePathEntity.Source arg4)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1309,7 +1309,7 @@ public readonly partial struct OmnisharpSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.DefaultTargetFrameworkEntity.Source arg1, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnabledEntity.Source arg2, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnableScriptNuGetReferencesEntity.Source arg3, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.RspFilePathEntity.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.DefaultTargetFrameworkEntity.Source arg1, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnabledEntity.Source arg2, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnableScriptNuGetReferencesEntity.Source arg3, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.RspFilePathEntity.Source arg4, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4);
@@ -1354,7 +1354,7 @@ public readonly partial struct OmnisharpSchema
         /// <param name="enableScriptNuGetReferences">The value of the <c>"enableScriptNuGetReferences"</c> property.</param>
         /// <param name="rspFilePath">The value of the <c>"rspFilePath"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.DefaultTargetFrameworkEntity.Source defaultTargetFramework = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnabledEntity.Source enabled = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnableScriptNuGetReferencesEntity.Source enableScriptNuGetReferences = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.RspFilePathEntity.Source rspFilePath = default)
+        public static Source Build(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.DefaultTargetFrameworkEntity.Source defaultTargetFramework = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnabledEntity.Source enabled = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.EnableScriptNuGetReferencesEntity.Source enableScriptNuGetReferences = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.RspFilePathEntity.Source rspFilePath = default)
         {
             return new Source(defaultTargetFramework, enabled, enableScriptNuGetReferences, rspFilePath);
         }

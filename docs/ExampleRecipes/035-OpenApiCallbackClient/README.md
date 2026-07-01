@@ -71,13 +71,10 @@ await using HttpClientTransport transport = new(httpClient, disposeClient: true)
 await using ApiWebhooksClient client = new(transport);
 
 await using SystemAlertWebhookResponse response = await client.SystemAlertWebhookAsync(
-    body: new Schema.Source(static (ref Schema.Builder b) =>
-    {
-        b.Create(
-            alertId: "alert-001"u8,
-            severity: "critical"u8,
-            message: "Disk usage exceeded 90%."u8);
-    }),
+    body: Schema.Build(
+        alertId: "alert-001"u8,
+        severity: "critical"u8,
+        message: "Disk usage exceeded 90%."u8),
     validationMode: ValidationMode.Basic);
 ```
 

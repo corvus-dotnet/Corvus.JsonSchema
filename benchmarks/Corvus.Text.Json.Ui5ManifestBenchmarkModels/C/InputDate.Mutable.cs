@@ -487,7 +487,7 @@ public readonly partial struct InputDate
         /// Set the <c>errorMessage</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetErrorMessage(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetErrorMessage(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -568,7 +568,7 @@ public readonly partial struct InputDate
         /// Set the <c>fallback</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFallback(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetFallback(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -649,7 +649,7 @@ public readonly partial struct InputDate
         /// Set the <c>height</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHeight(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetHeight(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -730,7 +730,7 @@ public readonly partial struct InputDate
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetId(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -795,7 +795,7 @@ public readonly partial struct InputDate
         /// Set the <c>isRequired</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIsRequired(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetIsRequired(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -876,7 +876,7 @@ public readonly partial struct InputDate
         /// Set the <c>isVisible</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIsVisible(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetIsVisible(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -957,7 +957,7 @@ public readonly partial struct InputDate
         /// Set the <c>label</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLabel(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetLabel(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1038,7 +1038,7 @@ public readonly partial struct InputDate
         /// Set the <c>max</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMax(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetMax(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1083,7 +1083,7 @@ public readonly partial struct InputDate
         /// Set the <c>min</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMin(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetMin(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1128,7 +1128,7 @@ public readonly partial struct InputDate
         /// Set the <c>placeholder</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPlaceholder(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetPlaceholder(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1173,7 +1173,7 @@ public readonly partial struct InputDate
         /// Set the <c>requires</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRequires(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetRequires(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1254,7 +1254,7 @@ public readonly partial struct InputDate
         /// Set the <c>separator</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSeparator(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetSeparator(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1335,7 +1335,7 @@ public readonly partial struct InputDate
         /// Set the <c>spacing</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSpacing(in Corvus.Text.Json.JsonElement.Source value)
+        public void SetSpacing(scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1416,7 +1416,7 @@ public readonly partial struct InputDate
         /// Set the <c>type</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetType(in Corvus.Ui5ManifestBenchmark.Current.InputDate.MustBeInputDate.Source value)
+        public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.InputDate.MustBeInputDate.Source value)
         {
             CheckValidInstance();
 
@@ -1461,7 +1461,7 @@ public readonly partial struct InputDate
         /// Set the <c>value</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+        public void SetValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1720,7 +1720,7 @@ public readonly partial struct InputDate
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.InputDate.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.Text.Json.JsonElement.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Text.Json.JsonElement.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, in Corvus.Text.Json.JsonElement.Source arg11, in Corvus.Text.Json.JsonElement.Source arg12, in Corvus.Text.Json.JsonElement.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.InputDate.MustBeInputDate.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg15)
+        internal Source(scoped in Corvus.Text.Json.JsonElement.Source arg1, scoped in Corvus.Text.Json.JsonElement.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, scoped in Corvus.Text.Json.JsonElement.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Text.Json.JsonElement.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, scoped in Corvus.Text.Json.JsonElement.Source arg11, scoped in Corvus.Text.Json.JsonElement.Source arg12, scoped in Corvus.Text.Json.JsonElement.Source arg13, scoped in Corvus.Ui5ManifestBenchmark.Current.InputDate.MustBeInputDate.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg15)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1912,7 +1912,7 @@ public readonly partial struct InputDate
 
         internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.InputDate.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.Text.Json.JsonElement.Source<TContext> arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Text.Json.JsonElement.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, in Corvus.Text.Json.JsonElement.Source<TContext> arg11, in Corvus.Text.Json.JsonElement.Source<TContext> arg12, in Corvus.Text.Json.JsonElement.Source<TContext> arg13, in Corvus.Ui5ManifestBenchmark.Current.InputDate.MustBeInputDate.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg15)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg11, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg12, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg13, scoped in Corvus.Ui5ManifestBenchmark.Current.InputDate.MustBeInputDate.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg15)
         {
             _context = context;
             _createArg1 = arg1;
@@ -2249,7 +2249,7 @@ public readonly partial struct InputDate
         /// <param name="arg14">The value of the property.</param>
         /// <param name="arg15">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.Text.Json.JsonElement.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, in Corvus.Text.Json.JsonElement.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Text.Json.JsonElement.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, in Corvus.Text.Json.JsonElement.Source arg11, in Corvus.Text.Json.JsonElement.Source arg12, in Corvus.Text.Json.JsonElement.Source arg13, in Corvus.Ui5ManifestBenchmark.Current.InputDate.MustBeInputDate.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg15, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.JsonElement.Source arg1, scoped in Corvus.Text.Json.JsonElement.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, scoped in Corvus.Text.Json.JsonElement.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Text.Json.JsonElement.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, scoped in Corvus.Text.Json.JsonElement.Source arg11, scoped in Corvus.Text.Json.JsonElement.Source arg12, scoped in Corvus.Text.Json.JsonElement.Source arg13, scoped in Corvus.Ui5ManifestBenchmark.Current.InputDate.MustBeInputDate.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg15, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
@@ -2277,7 +2277,7 @@ public readonly partial struct InputDate
         /// <param name="arg14">The value of the property.</param>
         /// <param name="arg15">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.Text.Json.JsonElement.Source<TContext> arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, in Corvus.Text.Json.JsonElement.Source<TContext> arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Text.Json.JsonElement.Source<TContext> arg7, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, in Corvus.Text.Json.JsonElement.Source<TContext> arg11, in Corvus.Text.Json.JsonElement.Source<TContext> arg12, in Corvus.Text.Json.JsonElement.Source<TContext> arg13, in Corvus.Ui5ManifestBenchmark.Current.InputDate.MustBeInputDate.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg15, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg11, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg12, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg13, scoped in Corvus.Ui5ManifestBenchmark.Current.InputDate.MustBeInputDate.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg15, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -2336,7 +2336,7 @@ public readonly partial struct InputDate
     /// <param name="type">The value of the <c>"type"</c> property.</param>
     /// <param name="value">The value of the <c>"value"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.JsonElement.Source id, in Corvus.Text.Json.JsonElement.Source errorMessage = default, in Corvus.Text.Json.JsonElement.Source fallback = default, in Corvus.Text.Json.JsonElement.Source height = default, in Corvus.Text.Json.JsonElement.Source isRequired = default, in Corvus.Text.Json.JsonElement.Source isVisible = default, in Corvus.Text.Json.JsonElement.Source label = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source max = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source min = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source placeholder = default, in Corvus.Text.Json.JsonElement.Source requires = default, in Corvus.Text.Json.JsonElement.Source separator = default, in Corvus.Text.Json.JsonElement.Source spacing = default, in Corvus.Ui5ManifestBenchmark.Current.InputDate.MustBeInputDate.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default)
+    public static Source Build(scoped in Corvus.Text.Json.JsonElement.Source id, scoped in Corvus.Text.Json.JsonElement.Source errorMessage = default, scoped in Corvus.Text.Json.JsonElement.Source fallback = default, scoped in Corvus.Text.Json.JsonElement.Source height = default, scoped in Corvus.Text.Json.JsonElement.Source isRequired = default, scoped in Corvus.Text.Json.JsonElement.Source isVisible = default, scoped in Corvus.Text.Json.JsonElement.Source label = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source max = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source min = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source placeholder = default, scoped in Corvus.Text.Json.JsonElement.Source requires = default, scoped in Corvus.Text.Json.JsonElement.Source separator = default, scoped in Corvus.Text.Json.JsonElement.Source spacing = default, scoped in Corvus.Ui5ManifestBenchmark.Current.InputDate.MustBeInputDate.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default)
     {
         return new Source(id, errorMessage, fallback, height, isRequired, isVisible, label, max, min, placeholder, requires, separator, spacing, type, value);
     }
@@ -2362,7 +2362,7 @@ public readonly partial struct InputDate
     /// <param name="type">The value of the <c>"type"</c> property.</param>
     /// <param name="value">The value of the <c>"value"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> id, in Corvus.Text.Json.JsonElement.Source<TContext> errorMessage = default, in Corvus.Text.Json.JsonElement.Source<TContext> fallback = default, in Corvus.Text.Json.JsonElement.Source<TContext> height = default, in Corvus.Text.Json.JsonElement.Source<TContext> isRequired = default, in Corvus.Text.Json.JsonElement.Source<TContext> isVisible = default, in Corvus.Text.Json.JsonElement.Source<TContext> label = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source max = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source min = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source placeholder = default, in Corvus.Text.Json.JsonElement.Source<TContext> requires = default, in Corvus.Text.Json.JsonElement.Source<TContext> separator = default, in Corvus.Text.Json.JsonElement.Source<TContext> spacing = default, in Corvus.Ui5ManifestBenchmark.Current.InputDate.MustBeInputDate.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> id, scoped in Corvus.Text.Json.JsonElement.Source<TContext> errorMessage = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> fallback = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> height = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> isRequired = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> isVisible = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> label = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source max = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source min = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source placeholder = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> requires = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> separator = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> spacing = default, scoped in Corvus.Ui5ManifestBenchmark.Current.InputDate.MustBeInputDate.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

@@ -330,7 +330,7 @@ public readonly partial struct NestCliSchema
             /// Set the <c>introspectComments</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIntrospectComments(in Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.IntrospectCommentsEntity.Source value)
+            public void SetIntrospectComments(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.IntrospectCommentsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -476,7 +476,7 @@ public readonly partial struct NestCliSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -499,7 +499,7 @@ public readonly partial struct NestCliSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -546,7 +546,7 @@ public readonly partial struct NestCliSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -716,7 +716,7 @@ public readonly partial struct NestCliSchema
 
             internal Source(Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.IntrospectCommentsEntity.Source arg1)
+            internal Source(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.IntrospectCommentsEntity.Source arg1)
             {
                 _createArg1 = arg1;
                 _kind = Kind.Create;
@@ -1100,7 +1100,7 @@ public readonly partial struct NestCliSchema
             /// </summary>
             /// <param name="arg1">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.IntrospectCommentsEntity.Source arg1, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.IntrospectCommentsEntity.Source arg1, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1);
@@ -1142,7 +1142,7 @@ public readonly partial struct NestCliSchema
         /// </summary>
         /// <param name="introspectComments">The value of the <c>"introspectComments"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.IntrospectCommentsEntity.Source introspectComments = default)
+        public static Source Build(scoped in Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.IntrospectCommentsEntity.Source introspectComments = default)
         {
             return new Source(introspectComments);
         }

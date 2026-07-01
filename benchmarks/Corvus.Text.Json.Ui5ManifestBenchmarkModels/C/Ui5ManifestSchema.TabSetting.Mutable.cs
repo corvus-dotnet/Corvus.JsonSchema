@@ -524,7 +524,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>annotationPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetAnnotationPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheAnnotationPath.Source value)
+            public void SetAnnotationPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheAnnotationPath.Source value)
             {
                 CheckValidInstance();
 
@@ -569,7 +569,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>chartAnnotationPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetChartAnnotationPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheChartAnnotationPath.Source value)
+            public void SetChartAnnotationPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheChartAnnotationPath.Source value)
             {
                 CheckValidInstance();
 
@@ -614,7 +614,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>chartProperties</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetChartProperties(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ChartPropertiesEntity.Source value)
+            public void SetChartProperties(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ChartPropertiesEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -695,7 +695,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>colorPalette</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetColorPalette(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ColorPaletteEntity.Source value)
+            public void SetColorPalette(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ColorPaletteEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -776,7 +776,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>dataPointAnnotationPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDataPointAnnotationPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDataPointAnnotationPath.Source value)
+            public void SetDataPointAnnotationPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDataPointAnnotationPath.Source value)
             {
                 CheckValidInstance();
 
@@ -821,7 +821,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>dynamicSubtitleAnnotationPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDynamicSubtitleAnnotationPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source value)
+            public void SetDynamicSubtitleAnnotationPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source value)
             {
                 CheckValidInstance();
 
@@ -866,7 +866,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>identificationAnnotationPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIdentificationAnnotationPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheIdentificationAnnotationPath.Source value)
+            public void SetIdentificationAnnotationPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheIdentificationAnnotationPath.Source value)
             {
                 CheckValidInstance();
 
@@ -911,7 +911,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>presentationAnnotationPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPresentationAnnotationPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsThePresentationAnnotationPath.Source value)
+            public void SetPresentationAnnotationPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsThePresentationAnnotationPath.Source value)
             {
                 CheckValidInstance();
 
@@ -956,7 +956,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>selectionAnnotationPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSelectionAnnotationPath(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheSelectionAnnotationPath.Source value)
+            public void SetSelectionAnnotationPath(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheSelectionAnnotationPath.Source value)
             {
                 CheckValidInstance();
 
@@ -1001,7 +1001,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>value</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1147,7 +1147,7 @@ public readonly partial struct Ui5ManifestSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1170,7 +1170,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1217,7 +1217,7 @@ public readonly partial struct Ui5ManifestSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1396,7 +1396,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheAnnotationPath.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheChartAnnotationPath.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ChartPropertiesEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ColorPaletteEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDataPointAnnotationPath.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheIdentificationAnnotationPath.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsThePresentationAnnotationPath.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheSelectionAnnotationPath.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheAnnotationPath.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheChartAnnotationPath.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ChartPropertiesEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ColorPaletteEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDataPointAnnotationPath.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheIdentificationAnnotationPath.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsThePresentationAnnotationPath.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheSelectionAnnotationPath.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1578,7 +1578,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheAnnotationPath.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheChartAnnotationPath.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ChartPropertiesEntity.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ColorPaletteEntity.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDataPointAnnotationPath.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheIdentificationAnnotationPath.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsThePresentationAnnotationPath.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheSelectionAnnotationPath.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheAnnotationPath.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheChartAnnotationPath.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ChartPropertiesEntity.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ColorPaletteEntity.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDataPointAnnotationPath.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheIdentificationAnnotationPath.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsThePresentationAnnotationPath.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheSelectionAnnotationPath.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1944,7 +1944,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheAnnotationPath.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheChartAnnotationPath.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ChartPropertiesEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ColorPaletteEntity.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDataPointAnnotationPath.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheIdentificationAnnotationPath.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsThePresentationAnnotationPath.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheSelectionAnnotationPath.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheAnnotationPath.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheChartAnnotationPath.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ChartPropertiesEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ColorPaletteEntity.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDataPointAnnotationPath.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheIdentificationAnnotationPath.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsThePresentationAnnotationPath.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheSelectionAnnotationPath.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
@@ -1967,7 +1967,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg9">The value of the property.</param>
             /// <param name="arg10">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheAnnotationPath.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheChartAnnotationPath.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ChartPropertiesEntity.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ColorPaletteEntity.Source<TContext> arg4, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDataPointAnnotationPath.Source arg5, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source arg6, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheIdentificationAnnotationPath.Source arg7, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsThePresentationAnnotationPath.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheSelectionAnnotationPath.Source arg9, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheAnnotationPath.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheChartAnnotationPath.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ChartPropertiesEntity.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ColorPaletteEntity.Source<TContext> arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDataPointAnnotationPath.Source arg5, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source arg6, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheIdentificationAnnotationPath.Source arg7, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsThePresentationAnnotationPath.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheSelectionAnnotationPath.Source arg9, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg10, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2021,7 +2021,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="selectionAnnotationPath">The value of the <c>"selectionAnnotationPath"</c> property.</param>
         /// <param name="value">The value of the <c>"value"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheAnnotationPath.Source annotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheChartAnnotationPath.Source chartAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ChartPropertiesEntity.Source chartProperties = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ColorPaletteEntity.Source colorPalette = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDataPointAnnotationPath.Source dataPointAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source dynamicSubtitleAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheIdentificationAnnotationPath.Source identificationAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsThePresentationAnnotationPath.Source presentationAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheSelectionAnnotationPath.Source selectionAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheAnnotationPath.Source annotationPath = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheChartAnnotationPath.Source chartAnnotationPath = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ChartPropertiesEntity.Source chartProperties = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ColorPaletteEntity.Source colorPalette = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDataPointAnnotationPath.Source dataPointAnnotationPath = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source dynamicSubtitleAnnotationPath = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheIdentificationAnnotationPath.Source identificationAnnotationPath = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsThePresentationAnnotationPath.Source presentationAnnotationPath = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheSelectionAnnotationPath.Source selectionAnnotationPath = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default)
         {
             return new Source(annotationPath, chartAnnotationPath, chartProperties, colorPalette, dataPointAnnotationPath, dynamicSubtitleAnnotationPath, identificationAnnotationPath, presentationAnnotationPath, selectionAnnotationPath, value);
         }
@@ -2042,7 +2042,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="selectionAnnotationPath">The value of the <c>"selectionAnnotationPath"</c> property.</param>
         /// <param name="value">The value of the <c>"value"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheAnnotationPath.Source annotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheChartAnnotationPath.Source chartAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ChartPropertiesEntity.Source<TContext> chartProperties = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ColorPaletteEntity.Source<TContext> colorPalette = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDataPointAnnotationPath.Source dataPointAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source dynamicSubtitleAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheIdentificationAnnotationPath.Source identificationAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsThePresentationAnnotationPath.Source presentationAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheSelectionAnnotationPath.Source selectionAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheAnnotationPath.Source annotationPath = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheChartAnnotationPath.Source chartAnnotationPath = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ChartPropertiesEntity.Source<TContext> chartProperties = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.ColorPaletteEntity.Source<TContext> colorPalette = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDataPointAnnotationPath.Source dataPointAnnotationPath = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source dynamicSubtitleAnnotationPath = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheIdentificationAnnotationPath.Source identificationAnnotationPath = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsThePresentationAnnotationPath.Source presentationAnnotationPath = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheSelectionAnnotationPath.Source selectionAnnotationPath = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

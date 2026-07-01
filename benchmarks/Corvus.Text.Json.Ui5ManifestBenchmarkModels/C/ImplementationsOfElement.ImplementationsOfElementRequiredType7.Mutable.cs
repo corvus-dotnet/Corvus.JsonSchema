@@ -688,7 +688,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>backgroundImage</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBackgroundImage(in Corvus.Ui5ManifestBenchmark.Current.Container.BackgroundImageEntity.Source value)
+            public void SetBackgroundImage(scoped in Corvus.Ui5ManifestBenchmark.Current.Container.BackgroundImageEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -769,7 +769,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>bleed</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBleed(in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
+            public void SetBleed(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source value)
             {
                 CheckValidInstance();
 
@@ -814,7 +814,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>fallback</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFallback(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetFallback(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -895,7 +895,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>height</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeight(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetHeight(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -976,7 +976,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>id</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetId(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetId(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1057,7 +1057,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>isVisible</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIsVisible(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetIsVisible(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1138,7 +1138,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>items</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetItems(in Corvus.Ui5ManifestBenchmark.Current.Container.ImplementationsOfElementArray.Source value)
+            public void SetItems(scoped in Corvus.Ui5ManifestBenchmark.Current.Container.ImplementationsOfElementArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1203,7 +1203,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>minHeight</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMinHeight(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetMinHeight(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -1248,7 +1248,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>requires</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRequires(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetRequires(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1329,7 +1329,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>rtl?</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRtl(in Corvus.Ui5ManifestBenchmark.Current.Container.RtlEntity.Source value)
+            public void SetRtl(scoped in Corvus.Ui5ManifestBenchmark.Current.Container.RtlEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1374,7 +1374,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>selectAction</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSelectAction(in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source value)
+            public void SetSelectAction(scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source value)
             {
                 CheckValidInstance();
 
@@ -1455,7 +1455,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>separator</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSeparator(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetSeparator(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1536,7 +1536,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>spacing</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSpacing(in Corvus.Text.Json.JsonElement.Source value)
+            public void SetSpacing(scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1617,7 +1617,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>style</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStyle(in Corvus.Ui5ManifestBenchmark.Current.Container.StyleHintForContainer.Source value)
+            public void SetStyle(scoped in Corvus.Ui5ManifestBenchmark.Current.Container.StyleHintForContainer.Source value)
             {
                 CheckValidInstance();
 
@@ -1662,7 +1662,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.Container.MustBeContainer.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.Container.MustBeContainer.Source value)
             {
                 CheckValidInstance();
 
@@ -1693,7 +1693,7 @@ public readonly partial struct ImplementationsOfElement
             /// Set the <c>verticalContentAlignment</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVerticalContentAlignment(in Corvus.Ui5ManifestBenchmark.Current.Container.VerticalContentAlignmentEntity.Source value)
+            public void SetVerticalContentAlignment(scoped in Corvus.Ui5ManifestBenchmark.Current.Container.VerticalContentAlignmentEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1839,7 +1839,7 @@ public readonly partial struct ImplementationsOfElement
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1862,7 +1862,7 @@ public readonly partial struct ImplementationsOfElement
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1909,7 +1909,7 @@ public readonly partial struct ImplementationsOfElement
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -2111,7 +2111,7 @@ public readonly partial struct ImplementationsOfElement
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Container.ImplementationsOfElementArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Container.MustBeContainer.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Container.BackgroundImageEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Text.Json.JsonElement.Source arg7, in Corvus.Text.Json.JsonElement.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, in Corvus.Text.Json.JsonElement.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Container.RtlEntity.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg12, in Corvus.Text.Json.JsonElement.Source arg13, in Corvus.Text.Json.JsonElement.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Container.StyleHintForContainer.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.Container.VerticalContentAlignmentEntity.Source arg16)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Container.ImplementationsOfElementArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.MustBeContainer.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.BackgroundImageEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Text.Json.JsonElement.Source arg7, scoped in Corvus.Text.Json.JsonElement.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, scoped in Corvus.Text.Json.JsonElement.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.RtlEntity.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg12, scoped in Corvus.Text.Json.JsonElement.Source arg13, scoped in Corvus.Text.Json.JsonElement.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.StyleHintForContainer.Source arg15, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.VerticalContentAlignmentEntity.Source arg16)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -2305,7 +2305,7 @@ public readonly partial struct ImplementationsOfElement
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Container.ImplementationsOfElementArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Container.MustBeContainer.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Container.BackgroundImageEntity.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Text.Json.JsonElement.Source<TContext> arg7, in Corvus.Text.Json.JsonElement.Source<TContext> arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, in Corvus.Text.Json.JsonElement.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Container.RtlEntity.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg12, in Corvus.Text.Json.JsonElement.Source<TContext> arg13, in Corvus.Text.Json.JsonElement.Source<TContext> arg14, in Corvus.Ui5ManifestBenchmark.Current.Container.StyleHintForContainer.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.Container.VerticalContentAlignmentEntity.Source arg16)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.ImplementationsOfElementArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.MustBeContainer.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.BackgroundImageEntity.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg7, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.RtlEntity.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg12, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg13, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.StyleHintForContainer.Source arg15, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.VerticalContentAlignmentEntity.Source arg16)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2719,7 +2719,7 @@ public readonly partial struct ImplementationsOfElement
             /// <param name="arg15">The value of the property.</param>
             /// <param name="arg16">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Container.ImplementationsOfElementArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.Container.MustBeContainer.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Container.BackgroundImageEntity.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Text.Json.JsonElement.Source arg5, in Corvus.Text.Json.JsonElement.Source arg6, in Corvus.Text.Json.JsonElement.Source arg7, in Corvus.Text.Json.JsonElement.Source arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, in Corvus.Text.Json.JsonElement.Source arg10, in Corvus.Ui5ManifestBenchmark.Current.Container.RtlEntity.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg12, in Corvus.Text.Json.JsonElement.Source arg13, in Corvus.Text.Json.JsonElement.Source arg14, in Corvus.Ui5ManifestBenchmark.Current.Container.StyleHintForContainer.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.Container.VerticalContentAlignmentEntity.Source arg16, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Container.ImplementationsOfElementArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.MustBeContainer.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.BackgroundImageEntity.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source arg5, scoped in Corvus.Text.Json.JsonElement.Source arg6, scoped in Corvus.Text.Json.JsonElement.Source arg7, scoped in Corvus.Text.Json.JsonElement.Source arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, scoped in Corvus.Text.Json.JsonElement.Source arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.RtlEntity.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source arg12, scoped in Corvus.Text.Json.JsonElement.Source arg13, scoped in Corvus.Text.Json.JsonElement.Source arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.StyleHintForContainer.Source arg15, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.VerticalContentAlignmentEntity.Source arg16, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16);
@@ -2748,7 +2748,7 @@ public readonly partial struct ImplementationsOfElement
             /// <param name="arg15">The value of the property.</param>
             /// <param name="arg16">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Container.ImplementationsOfElementArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.Container.MustBeContainer.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Container.BackgroundImageEntity.Source<TContext> arg3, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, in Corvus.Text.Json.JsonElement.Source<TContext> arg5, in Corvus.Text.Json.JsonElement.Source<TContext> arg6, in Corvus.Text.Json.JsonElement.Source<TContext> arg7, in Corvus.Text.Json.JsonElement.Source<TContext> arg8, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, in Corvus.Text.Json.JsonElement.Source<TContext> arg10, in Corvus.Ui5ManifestBenchmark.Current.Container.RtlEntity.Source arg11, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg12, in Corvus.Text.Json.JsonElement.Source<TContext> arg13, in Corvus.Text.Json.JsonElement.Source<TContext> arg14, in Corvus.Ui5ManifestBenchmark.Current.Container.StyleHintForContainer.Source arg15, in Corvus.Ui5ManifestBenchmark.Current.Container.VerticalContentAlignmentEntity.Source arg16, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.ImplementationsOfElementArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.MustBeContainer.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.BackgroundImageEntity.Source<TContext> arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg5, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg6, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg7, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg8, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg9, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg10, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.RtlEntity.Source arg11, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> arg12, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg13, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg14, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.StyleHintForContainer.Source arg15, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.VerticalContentAlignmentEntity.Source arg16, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2808,7 +2808,7 @@ public readonly partial struct ImplementationsOfElement
         /// <param name="style">The value of the <c>"style"</c> property.</param>
         /// <param name="verticalContentAlignment">The value of the <c>"verticalContentAlignment"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Container.ImplementationsOfElementArray.Source items, in Corvus.Ui5ManifestBenchmark.Current.Container.MustBeContainer.Source type, in Corvus.Ui5ManifestBenchmark.Current.Container.BackgroundImageEntity.Source backgroundImage = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source bleed = default, in Corvus.Text.Json.JsonElement.Source fallback = default, in Corvus.Text.Json.JsonElement.Source height = default, in Corvus.Text.Json.JsonElement.Source id = default, in Corvus.Text.Json.JsonElement.Source isVisible = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, in Corvus.Text.Json.JsonElement.Source requires = default, in Corvus.Ui5ManifestBenchmark.Current.Container.RtlEntity.Source rtl = default, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source selectAction = default, in Corvus.Text.Json.JsonElement.Source separator = default, in Corvus.Text.Json.JsonElement.Source spacing = default, in Corvus.Ui5ManifestBenchmark.Current.Container.StyleHintForContainer.Source style = default, in Corvus.Ui5ManifestBenchmark.Current.Container.VerticalContentAlignmentEntity.Source verticalContentAlignment = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Container.ImplementationsOfElementArray.Source items, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.MustBeContainer.Source type, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.BackgroundImageEntity.Source backgroundImage = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source bleed = default, scoped in Corvus.Text.Json.JsonElement.Source fallback = default, scoped in Corvus.Text.Json.JsonElement.Source height = default, scoped in Corvus.Text.Json.JsonElement.Source id = default, scoped in Corvus.Text.Json.JsonElement.Source isVisible = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, scoped in Corvus.Text.Json.JsonElement.Source requires = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.RtlEntity.Source rtl = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source selectAction = default, scoped in Corvus.Text.Json.JsonElement.Source separator = default, scoped in Corvus.Text.Json.JsonElement.Source spacing = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.StyleHintForContainer.Source style = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.VerticalContentAlignmentEntity.Source verticalContentAlignment = default)
         {
             return new Source(items, type, backgroundImage, bleed, fallback, height, id, isVisible, minHeight, requires, rtl, selectAction, separator, spacing, style, verticalContentAlignment);
         }
@@ -2835,7 +2835,7 @@ public readonly partial struct ImplementationsOfElement
         /// <param name="style">The value of the <c>"style"</c> property.</param>
         /// <param name="verticalContentAlignment">The value of the <c>"verticalContentAlignment"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Container.ImplementationsOfElementArray.Source<TContext> items, in Corvus.Ui5ManifestBenchmark.Current.Container.MustBeContainer.Source type, in Corvus.Ui5ManifestBenchmark.Current.Container.BackgroundImageEntity.Source<TContext> backgroundImage = default, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source bleed = default, in Corvus.Text.Json.JsonElement.Source<TContext> fallback = default, in Corvus.Text.Json.JsonElement.Source<TContext> height = default, in Corvus.Text.Json.JsonElement.Source<TContext> id = default, in Corvus.Text.Json.JsonElement.Source<TContext> isVisible = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, in Corvus.Text.Json.JsonElement.Source<TContext> requires = default, in Corvus.Ui5ManifestBenchmark.Current.Container.RtlEntity.Source rtl = default, in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> selectAction = default, in Corvus.Text.Json.JsonElement.Source<TContext> separator = default, in Corvus.Text.Json.JsonElement.Source<TContext> spacing = default, in Corvus.Ui5ManifestBenchmark.Current.Container.StyleHintForContainer.Source style = default, in Corvus.Ui5ManifestBenchmark.Current.Container.VerticalContentAlignmentEntity.Source verticalContentAlignment = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.ImplementationsOfElementArray.Source<TContext> items, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.MustBeContainer.Source type, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.BackgroundImageEntity.Source<TContext> backgroundImage = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source bleed = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> fallback = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> height = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> id = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> isVisible = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source minHeight = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> requires = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.RtlEntity.Source rtl = default, scoped in Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.Source<TContext> selectAction = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> separator = default, scoped in Corvus.Text.Json.JsonElement.Source<TContext> spacing = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.StyleHintForContainer.Source style = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Container.VerticalContentAlignmentEntity.Source verticalContentAlignment = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

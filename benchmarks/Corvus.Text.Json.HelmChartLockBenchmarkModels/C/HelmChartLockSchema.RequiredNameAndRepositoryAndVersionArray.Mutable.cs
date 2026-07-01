@@ -384,7 +384,7 @@ public readonly partial struct HelmChartLockSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.RequiredNameAndRepositoryAndVersion.Source value)
+            public void InsertItem(int itemIndex, scoped in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.RequiredNameAndRepositoryAndVersion.Source value)
             {
                 CheckValidInstance();
 
@@ -410,7 +410,7 @@ public readonly partial struct HelmChartLockSchema
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.RequiredNameAndRepositoryAndVersion.Source value)
+            public void AddItem(scoped in Corvus.HelmChartLockBenchmark.Current.HelmChartLockSchema.RequiredNameAndRepositoryAndVersionArray.RequiredNameAndRepositoryAndVersion.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }

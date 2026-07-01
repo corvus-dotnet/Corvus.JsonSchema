@@ -359,7 +359,7 @@ public readonly partial struct FabricModSchema
                 /// Set the <c>contact</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetContact(in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source value)
+                public void SetContact(scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source value)
                 {
                     CheckValidInstance();
 
@@ -440,7 +440,7 @@ public readonly partial struct FabricModSchema
                 /// Set the <c>name</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetName(in Corvus.FabricModBenchmark.Current.JsonString.Source value)
+                public void SetName(scoped in Corvus.FabricModBenchmark.Current.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -572,7 +572,7 @@ public readonly partial struct FabricModSchema
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -595,7 +595,7 @@ public readonly partial struct FabricModSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -642,7 +642,7 @@ public readonly partial struct FabricModSchema
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -813,7 +813,7 @@ public readonly partial struct FabricModSchema
 
                 internal Source(Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.FabricModBenchmark.Current.JsonString.Source arg1, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source arg2)
+                internal Source(scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg1, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source arg2)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -979,7 +979,7 @@ public readonly partial struct FabricModSchema
 
                 internal Source(scoped in TContext context, Corvus.FabricModBenchmark.Current.FabricModSchema.Person.RequiredName.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(scoped in TContext context, in Corvus.FabricModBenchmark.Current.JsonString.Source arg1, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> arg2)
+                internal Source(scoped in TContext context, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg1, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> arg2)
                 {
                     _context = context;
                     _createArg1 = arg1;
@@ -1279,7 +1279,7 @@ public readonly partial struct FabricModSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.FabricModBenchmark.Current.JsonString.Source arg1, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg1, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source arg2, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2);
@@ -1294,7 +1294,7 @@ public readonly partial struct FabricModSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.FabricModBenchmark.Current.JsonString.Source arg1, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source arg1, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -1340,7 +1340,7 @@ public readonly partial struct FabricModSchema
             /// <param name="name">The value of the <c>"name"</c> property.</param>
             /// <param name="contact">The value of the <c>"contact"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.FabricModBenchmark.Current.JsonString.Source name, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source contact = default)
+            public static Source Build(scoped in Corvus.FabricModBenchmark.Current.JsonString.Source name, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source contact = default)
             {
                 return new Source(name, contact);
             }
@@ -1353,7 +1353,7 @@ public readonly partial struct FabricModSchema
             /// <param name="name">The value of the <c>"name"</c> property.</param>
             /// <param name="contact">The value of the <c>"contact"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.FabricModBenchmark.Current.JsonString.Source name, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> contact = default)
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.FabricModBenchmark.Current.JsonString.Source name, scoped in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> contact = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

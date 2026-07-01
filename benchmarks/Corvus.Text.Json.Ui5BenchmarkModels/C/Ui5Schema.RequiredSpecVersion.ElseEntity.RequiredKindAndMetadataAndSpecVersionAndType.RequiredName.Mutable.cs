@@ -257,7 +257,7 @@ public readonly partial struct Ui5Schema
                         /// Set the <c>copyright</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetCopyright(in Corvus.Ui5Benchmark.Current.JsonString.Source value)
+                        public void SetCopyright(scoped in Corvus.Ui5Benchmark.Current.JsonString.Source value)
                         {
                             CheckValidInstance();
 
@@ -302,7 +302,7 @@ public readonly partial struct Ui5Schema
                         /// Set the <c>name</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetName(in Corvus.Ui5Benchmark.Current.JsonString.Source value)
+                        public void SetName(scoped in Corvus.Ui5Benchmark.Current.JsonString.Source value)
                         {
                             CheckValidInstance();
 
@@ -499,7 +499,7 @@ public readonly partial struct Ui5Schema
 
                         internal Source(Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.RequiredName.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                        internal Source(in Corvus.Ui5Benchmark.Current.JsonString.Source arg1, in Corvus.Ui5Benchmark.Current.JsonString.Source arg2)
+                        internal Source(scoped in Corvus.Ui5Benchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5Benchmark.Current.JsonString.Source arg2)
                         {
                             _createArg1 = arg1;
                             _createArg2 = arg2;
@@ -820,7 +820,7 @@ public readonly partial struct Ui5Schema
                         /// <param name="arg1">The value of the property.</param>
                         /// <param name="arg2">The value of the property.</param>
                         /// <param name="o">The complex value builder into which to write the object.</param>
-                        internal static void BuildCreateValue(in Corvus.Ui5Benchmark.Current.JsonString.Source arg1, in Corvus.Ui5Benchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
+                        internal static void BuildCreateValue(scoped in Corvus.Ui5Benchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5Benchmark.Current.JsonString.Source arg2, ref ComplexValueBuilder o)
                         {
                             o.StartObject();
                             Create(ref o, arg1, arg2);
@@ -863,7 +863,7 @@ public readonly partial struct Ui5Schema
                     /// <param name="name">The value of the <c>"name"</c> property.</param>
                     /// <param name="copyright">The value of the <c>"copyright"</c> property.</param>
                     /// <returns>The source from which to build the value.</returns>
-                    public static Source Build(in Corvus.Ui5Benchmark.Current.JsonString.Source name, in Corvus.Ui5Benchmark.Current.JsonString.Source copyright = default)
+                    public static Source Build(scoped in Corvus.Ui5Benchmark.Current.JsonString.Source name, scoped in Corvus.Ui5Benchmark.Current.JsonString.Source copyright = default)
                     {
                         return new Source(name, copyright);
                     }

@@ -753,7 +753,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>$schema</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSchema(in Corvus.VercelBenchmark.Current.JsonString.Source value)
+        public void SetSchema(scoped in Corvus.VercelBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -798,7 +798,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>alias</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAlias(in Corvus.VercelBenchmark.Current.VercelSchema.AliasEntity.Source value)
+        public void SetAlias(scoped in Corvus.VercelBenchmark.Current.VercelSchema.AliasEntity.Source value)
         {
             CheckValidInstance();
 
@@ -879,7 +879,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>build</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBuildValue(in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.Source value)
+        public void SetBuildValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.BuildEntity.Source value)
         {
             CheckValidInstance();
 
@@ -960,7 +960,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>buildCommand</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBuildCommand(in Corvus.VercelBenchmark.Current.VercelSchema.BuildCommandEntity.Source value)
+        public void SetBuildCommand(scoped in Corvus.VercelBenchmark.Current.VercelSchema.BuildCommandEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1005,7 +1005,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>builds</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBuilds(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.Source value)
+        public void SetBuilds(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.Source value)
         {
             CheckValidInstance();
 
@@ -1086,7 +1086,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>cleanUrls</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCleanUrls(in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
+        public void SetCleanUrls(scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -1131,7 +1131,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>crons</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCrons(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredPathAndScheduleArray.Source value)
+        public void SetCrons(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredPathAndScheduleArray.Source value)
         {
             CheckValidInstance();
 
@@ -1212,7 +1212,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>devCommand</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDevCommand(in Corvus.VercelBenchmark.Current.VercelSchema.DevCommandEntity.Source value)
+        public void SetDevCommand(scoped in Corvus.VercelBenchmark.Current.VercelSchema.DevCommandEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1257,7 +1257,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>env</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEnv(in Corvus.VercelBenchmark.Current.VercelSchema.EnvEntity.Source value)
+        public void SetEnv(scoped in Corvus.VercelBenchmark.Current.VercelSchema.EnvEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1338,7 +1338,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>framework</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFramework(in Corvus.VercelBenchmark.Current.VercelSchema.FrameworkEntity.Source value)
+        public void SetFramework(scoped in Corvus.VercelBenchmark.Current.VercelSchema.FrameworkEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1383,7 +1383,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>functions</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFunctions(in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Source value)
+        public void SetFunctions(scoped in Corvus.VercelBenchmark.Current.VercelSchema.FunctionsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1464,7 +1464,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>git</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetGit(in Corvus.VercelBenchmark.Current.VercelSchema.GitEntity.Source value)
+        public void SetGit(scoped in Corvus.VercelBenchmark.Current.VercelSchema.GitEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1545,7 +1545,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>github</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetGithub(in Corvus.VercelBenchmark.Current.VercelSchema.GithubEntity.Source value)
+        public void SetGithub(scoped in Corvus.VercelBenchmark.Current.VercelSchema.GithubEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1626,7 +1626,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>headers</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHeaders(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.Source value)
+        public void SetHeaders(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.Source value)
         {
             CheckValidInstance();
 
@@ -1707,7 +1707,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>ignoreCommand</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIgnoreCommand(in Corvus.VercelBenchmark.Current.VercelSchema.IgnoreCommandEntity.Source value)
+        public void SetIgnoreCommand(scoped in Corvus.VercelBenchmark.Current.VercelSchema.IgnoreCommandEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1752,7 +1752,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>images</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetImages(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.Source value)
+        public void SetImages(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredSizes.Source value)
         {
             CheckValidInstance();
 
@@ -1833,7 +1833,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>installCommand</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetInstallCommand(in Corvus.VercelBenchmark.Current.VercelSchema.InstallCommandEntity.Source value)
+        public void SetInstallCommand(scoped in Corvus.VercelBenchmark.Current.VercelSchema.InstallCommandEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1878,7 +1878,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetName(in Corvus.VercelBenchmark.Current.JsonString.Source value)
+        public void SetName(scoped in Corvus.VercelBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1923,7 +1923,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>outputDirectory</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOutputDirectory(in Corvus.VercelBenchmark.Current.VercelSchema.OutputDirectoryEntity.Source value)
+        public void SetOutputDirectory(scoped in Corvus.VercelBenchmark.Current.VercelSchema.OutputDirectoryEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1968,7 +1968,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>public</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPublic(in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
+        public void SetPublic(scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -2013,7 +2013,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>redirects</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRedirects(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.Source value)
+        public void SetRedirects(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDestinationAndSourceEntityArray.Source value)
         {
             CheckValidInstance();
 
@@ -2094,7 +2094,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>regions</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRegions(in Corvus.VercelBenchmark.Current.VercelSchema.RegionsEntityArray.Source value)
+        public void SetRegions(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RegionsEntityArray.Source value)
         {
             CheckValidInstance();
 
@@ -2175,7 +2175,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>rewrites</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRewrites(in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.Source value)
+        public void SetRewrites(scoped in Corvus.VercelBenchmark.Current.VercelSchema.AListOfRewriteDefiniRequiredDestinArray.Source value)
         {
             CheckValidInstance();
 
@@ -2256,7 +2256,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>routes</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRoutes(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.Source value)
+        public void SetRoutes(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.Source value)
         {
             CheckValidInstance();
 
@@ -2337,7 +2337,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>scope</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetScope(in Corvus.VercelBenchmark.Current.JsonString.Source value)
+        public void SetScope(scoped in Corvus.VercelBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -2382,7 +2382,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>trailingSlash</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTrailingSlash(in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
+        public void SetTrailingSlash(scoped in Corvus.VercelBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -2427,7 +2427,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>version</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVersion(in Corvus.VercelBenchmark.Current.VercelSchema.VersionEntity.Source value)
+        public void SetVersion(scoped in Corvus.VercelBenchmark.Current.VercelSchema.VersionEntity.Source value)
         {
             CheckValidInstance();
 
@@ -2472,7 +2472,7 @@ public readonly partial struct VercelSchema
         /// Set the <c>wildcard</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetWildcard(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDomainAndValueArray.Source value)
+        public void SetWildcard(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredDomainAndValueArray.Source value)
         {
             CheckValidInstance();
 

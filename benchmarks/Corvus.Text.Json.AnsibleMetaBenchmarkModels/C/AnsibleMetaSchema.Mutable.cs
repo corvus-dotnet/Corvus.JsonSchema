@@ -398,7 +398,7 @@ public readonly partial struct AnsibleMetaSchema
         /// Set the <c>allow_duplicates</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAllowDuplicates(in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source value)
+        public void SetAllowDuplicates(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -443,7 +443,7 @@ public readonly partial struct AnsibleMetaSchema
         /// Set the <c>collections</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCollectionsValue(in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Collections.Source value)
+        public void SetCollectionsValue(scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Collections.Source value)
         {
             CheckValidInstance();
 
@@ -524,7 +524,7 @@ public readonly partial struct AnsibleMetaSchema
         /// Set the <c>dependencies</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDependencies(in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModelArray.Source value)
+        public void SetDependencies(scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModelArray.Source value)
         {
             CheckValidInstance();
 
@@ -605,7 +605,7 @@ public readonly partial struct AnsibleMetaSchema
         /// Set the <c>galaxy_info</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetGalaxyInfo(in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Source value)
+        public void SetGalaxyInfo(scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Source value)
         {
             CheckValidInstance();
 
@@ -787,7 +787,7 @@ public readonly partial struct AnsibleMetaSchema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -810,7 +810,7 @@ public readonly partial struct AnsibleMetaSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -857,7 +857,7 @@ public readonly partial struct AnsibleMetaSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1033,7 +1033,7 @@ public readonly partial struct AnsibleMetaSchema
 
         internal Source(Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source arg1, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Collections.Source arg2, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModelArray.Source arg3, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Source arg4)
+        internal Source(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Collections.Source arg2, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModelArray.Source arg3, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Source arg4)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1221,7 +1221,7 @@ public readonly partial struct AnsibleMetaSchema
 
         internal Source(scoped in TContext context, Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source arg1, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Collections.Source<TContext> arg2, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModelArray.Source<TContext> arg3, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Source<TContext> arg4)
+        internal Source(scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Collections.Source<TContext> arg2, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModelArray.Source<TContext> arg3, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Source<TContext> arg4)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1539,7 +1539,7 @@ public readonly partial struct AnsibleMetaSchema
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source arg1, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Collections.Source arg2, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModelArray.Source arg3, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Collections.Source arg2, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModelArray.Source arg3, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4);
@@ -1556,7 +1556,7 @@ public readonly partial struct AnsibleMetaSchema
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source arg1, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Collections.Source<TContext> arg2, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModelArray.Source<TContext> arg3, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Source<TContext> arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source arg1, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Collections.Source<TContext> arg2, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModelArray.Source<TContext> arg3, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Source<TContext> arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1604,7 +1604,7 @@ public readonly partial struct AnsibleMetaSchema
     /// <param name="dependencies">The value of the <c>"dependencies"</c> property.</param>
     /// <param name="galaxyInfo">The value of the <c>"galaxy_info"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source allowDuplicates = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Collections.Source collections = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModelArray.Source dependencies = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Source galaxyInfo = default)
+    public static Source Build(scoped in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source allowDuplicates = default, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Collections.Source collections = default, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModelArray.Source dependencies = default, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Source galaxyInfo = default)
     {
         return new Source(allowDuplicates, collections, dependencies, galaxyInfo);
     }
@@ -1619,7 +1619,7 @@ public readonly partial struct AnsibleMetaSchema
     /// <param name="dependencies">The value of the <c>"dependencies"</c> property.</param>
     /// <param name="galaxyInfo">The value of the <c>"galaxy_info"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source allowDuplicates = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Collections.Source<TContext> collections = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModelArray.Source<TContext> dependencies = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Source<TContext> galaxyInfo = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source allowDuplicates = default, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Collections.Source<TContext> collections = default, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModelArray.Source<TContext> dependencies = default, scoped in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Source<TContext> galaxyInfo = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

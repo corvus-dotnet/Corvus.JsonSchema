@@ -405,7 +405,7 @@ public readonly partial struct Ui5ManifestSchema
                             /// Set the <c>viewId</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetViewId(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                            public void SetViewId(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                             {
                                 CheckValidInstance();
 
@@ -450,7 +450,7 @@ public readonly partial struct Ui5ManifestSchema
                             /// Set the <c>viewName</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetViewName(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                            public void SetViewName(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                             {
                                 CheckValidInstance();
 
@@ -481,7 +481,7 @@ public readonly partial struct Ui5ManifestSchema
                             /// Set the <c>viewPath</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetViewPath(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+                            public void SetViewPath(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
                             {
                                 CheckValidInstance();
 
@@ -627,7 +627,7 @@ public readonly partial struct Ui5ManifestSchema
                             ///   </para>
                             /// </remarks>
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                            public void SetProperty(string propertyName, in JsonElement.Source value)
+                            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                             {
                                 SetProperty(propertyName.AsSpan(), value);
                             }
@@ -650,7 +650,7 @@ public readonly partial struct Ui5ManifestSchema
                             ///     If the property doesn't exist, it will be added to the object.
                             ///   </para>
                             /// </remarks>
-                            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                             {
                                 CheckValidInstance();
 
@@ -697,7 +697,7 @@ public readonly partial struct Ui5ManifestSchema
                             ///     If the property doesn't exist, it will be added to the object.
                             ///   </para>
                             /// </remarks>
-                            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                             {
                                 CheckValidInstance();
 
@@ -869,7 +869,7 @@ public readonly partial struct Ui5ManifestSchema
 
                             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Routing.RepresentsTheDefinitionOfTargets.SSEntity.OneOf0Entity.RequiredViewName.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                            internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3)
+                            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3)
                             {
                                 _createArg1 = arg1;
                                 _createArg2 = arg2;
@@ -1266,7 +1266,7 @@ public readonly partial struct Ui5ManifestSchema
                             /// <param name="arg2">The value of the property.</param>
                             /// <param name="arg3">The value of the property.</param>
                             /// <param name="o">The complex value builder into which to write the object.</param>
-                            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, ref ComplexValueBuilder o)
+                            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg3, ref ComplexValueBuilder o)
                             {
                                 o.StartObject();
                                 Create(ref o, arg1, arg2, arg3);
@@ -1310,7 +1310,7 @@ public readonly partial struct Ui5ManifestSchema
                         /// <param name="viewId">The value of the <c>"viewId"</c> property.</param>
                         /// <param name="viewPath">The value of the <c>"viewPath"</c> property.</param>
                         /// <returns>The source from which to build the value.</returns>
-                        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewName, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewId = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewPath = default)
+                        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewName, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewId = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source viewPath = default)
                         {
                             return new Source(viewName, viewId, viewPath);
                         }

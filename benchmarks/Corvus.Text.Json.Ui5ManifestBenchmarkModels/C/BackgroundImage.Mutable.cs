@@ -310,7 +310,7 @@ public readonly partial struct BackgroundImage
         /// Set the <c>fillMode</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFillMode(in Corvus.Ui5ManifestBenchmark.Current.ImageFillMode.Source value)
+        public void SetFillMode(scoped in Corvus.Ui5ManifestBenchmark.Current.ImageFillMode.Source value)
         {
             CheckValidInstance();
 
@@ -355,7 +355,7 @@ public readonly partial struct BackgroundImage
         /// Set the <c>horizontalAlignment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetHorizontalAlignment(in Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.Source value)
+        public void SetHorizontalAlignment(scoped in Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.Source value)
         {
             CheckValidInstance();
 
@@ -400,7 +400,7 @@ public readonly partial struct BackgroundImage
         /// Set the <c>type</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetType(in Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.MustBeBackgroundImage.Source value)
+        public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.MustBeBackgroundImage.Source value)
         {
             CheckValidInstance();
 
@@ -445,7 +445,7 @@ public readonly partial struct BackgroundImage
         /// Set the <c>url</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUrl(in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source value)
+        public void SetUrl(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source value)
         {
             CheckValidInstance();
 
@@ -476,7 +476,7 @@ public readonly partial struct BackgroundImage
         /// Set the <c>verticalAlignment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVerticalAlignment(in Corvus.Ui5ManifestBenchmark.Current.VerticalAlignment.Source value)
+        public void SetVerticalAlignment(scoped in Corvus.Ui5ManifestBenchmark.Current.VerticalAlignment.Source value)
         {
             CheckValidInstance();
 
@@ -690,7 +690,7 @@ public readonly partial struct BackgroundImage
 
         internal Source(Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.ImageFillMode.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.MustBeBackgroundImage.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.VerticalAlignment.Source arg5)
+        internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.ImageFillMode.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.MustBeBackgroundImage.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.VerticalAlignment.Source arg5)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1028,7 +1028,7 @@ public readonly partial struct BackgroundImage
         /// <param name="arg4">The value of the property.</param>
         /// <param name="arg5">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.ImageFillMode.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.MustBeBackgroundImage.Source arg4, in Corvus.Ui5ManifestBenchmark.Current.VerticalAlignment.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.ImageFillMode.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.MustBeBackgroundImage.Source arg4, scoped in Corvus.Ui5ManifestBenchmark.Current.VerticalAlignment.Source arg5, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5);
@@ -1074,7 +1074,7 @@ public readonly partial struct BackgroundImage
     /// <param name="type">The value of the <c>"type"</c> property.</param>
     /// <param name="verticalAlignment">The value of the <c>"verticalAlignment"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source url, in Corvus.Ui5ManifestBenchmark.Current.ImageFillMode.Source fillMode = default, in Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.Source horizontalAlignment = default, in Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.MustBeBackgroundImage.Source type = default, in Corvus.Ui5ManifestBenchmark.Current.VerticalAlignment.Source verticalAlignment = default)
+    public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonUriReference.Source url, scoped in Corvus.Ui5ManifestBenchmark.Current.ImageFillMode.Source fillMode = default, scoped in Corvus.Ui5ManifestBenchmark.Current.HorizontalAlignment.Source horizontalAlignment = default, scoped in Corvus.Ui5ManifestBenchmark.Current.BackgroundImage.MustBeBackgroundImage.Source type = default, scoped in Corvus.Ui5ManifestBenchmark.Current.VerticalAlignment.Source verticalAlignment = default)
     {
         return new Source(url, fillMode, horizontalAlignment, type, verticalAlignment);
     }

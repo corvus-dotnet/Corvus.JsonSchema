@@ -391,7 +391,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>copyToClipboardCmd</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCopyToClipboardCmdValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.CopyToClipboardCmd.Source value)
+            public void SetCopyToClipboardCmdValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.CopyToClipboardCmd.Source value)
             {
                 CheckValidInstance();
 
@@ -436,7 +436,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>edit</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEditValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Edit.Source value)
+            public void SetEditValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Edit.Source value)
             {
                 CheckValidInstance();
 
@@ -481,7 +481,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>editAtLine</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEditAtLineValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLine.Source value)
+            public void SetEditAtLineValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLine.Source value)
             {
                 CheckValidInstance();
 
@@ -526,7 +526,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>editAtLineAndWait</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEditAtLineAndWaitValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLineAndWait.Source value)
+            public void SetEditAtLineAndWaitValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLineAndWait.Source value)
             {
                 CheckValidInstance();
 
@@ -571,7 +571,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>editPreset</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEditPresetValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditPreset.Source value)
+            public void SetEditPresetValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditPreset.Source value)
             {
                 CheckValidInstance();
 
@@ -616,7 +616,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>open</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOpenValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Open.Source value)
+            public void SetOpenValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Open.Source value)
             {
                 CheckValidInstance();
 
@@ -661,7 +661,7 @@ public readonly partial struct LazygitSchema
             /// Set the <c>openLink</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOpenLinkValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.OpenLink.Source value)
+            public void SetOpenLinkValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.OpenLink.Source value)
             {
                 CheckValidInstance();
 
@@ -877,7 +877,7 @@ public readonly partial struct LazygitSchema
 
             internal Source(Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.CopyToClipboardCmd.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Edit.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLine.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLineAndWait.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditPreset.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Open.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.OpenLink.Source arg7)
+            internal Source(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.CopyToClipboardCmd.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Edit.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLine.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLineAndWait.Source arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditPreset.Source arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Open.Source arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.OpenLink.Source arg7)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1225,7 +1225,7 @@ public readonly partial struct LazygitSchema
             /// <param name="arg6">The value of the property.</param>
             /// <param name="arg7">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.CopyToClipboardCmd.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Edit.Source arg2, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLine.Source arg3, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLineAndWait.Source arg4, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditPreset.Source arg5, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Open.Source arg6, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.OpenLink.Source arg7, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.CopyToClipboardCmd.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Edit.Source arg2, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLine.Source arg3, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLineAndWait.Source arg4, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditPreset.Source arg5, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Open.Source arg6, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.OpenLink.Source arg7, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
@@ -1273,7 +1273,7 @@ public readonly partial struct LazygitSchema
         /// <param name="open">The value of the <c>"open"</c> property.</param>
         /// <param name="openLink">The value of the <c>"openLink"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.CopyToClipboardCmd.Source copyToClipboardCmd = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Edit.Source edit = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLine.Source editAtLine = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLineAndWait.Source editAtLineAndWait = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditPreset.Source editPreset = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Open.Source open = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.OpenLink.Source openLink = default)
+        public static Source Build(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.CopyToClipboardCmd.Source copyToClipboardCmd = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Edit.Source edit = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLine.Source editAtLine = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditAtLineAndWait.Source editAtLineAndWait = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.EditPreset.Source editPreset = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.Open.Source open = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Os.OpenLink.Source openLink = default)
         {
             return new Source(copyToClipboardCmd, edit, editAtLine, editAtLineAndWait, editPreset, open, openLink);
         }

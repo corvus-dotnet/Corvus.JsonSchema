@@ -278,7 +278,7 @@ public readonly partial struct VercelSchema
                             /// Set the <c>type</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetType(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.TheTypeOfRequestElementToCheck.Source value)
+                            public void SetType(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.TheTypeOfRequestElementToCheck.Source value)
                             {
                                 CheckValidInstance();
 
@@ -309,7 +309,7 @@ public readonly partial struct VercelSchema
                             /// Set the <c>value</c> property.
                             /// </summary>
                             /// <param name="value">The value of the property to add.</param>
-                            public void SetValue(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.ValueEntity.Source value)
+                            public void SetValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.ValueEntity.Source value)
                             {
                                 CheckValidInstance();
 
@@ -505,7 +505,7 @@ public readonly partial struct VercelSchema
 
                             internal Source(Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                            internal Source(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.ValueEntity.Source arg1)
+                            internal Source(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.ValueEntity.Source arg1)
                             {
                                 _createArg1 = arg1;
                                 _kind = Kind.Create;
@@ -821,7 +821,7 @@ public readonly partial struct VercelSchema
                             /// </summary>
                             /// <param name="arg1">The value of the property.</param>
                             /// <param name="o">The complex value builder into which to write the object.</param>
-                            internal static void BuildCreateValue(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.ValueEntity.Source arg1, ref ComplexValueBuilder o)
+                            internal static void BuildCreateValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.ValueEntity.Source arg1, ref ComplexValueBuilder o)
                             {
                                 o.StartObject();
                                 Create(ref o, arg1);
@@ -863,7 +863,7 @@ public readonly partial struct VercelSchema
                         /// </summary>
                         /// <param name="value">The value of the <c>"value"</c> property.</param>
                         /// <returns>The source from which to build the value.</returns>
-                        public static Source Build(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.ValueEntity.Source value)
+                        public static Source Build(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RequiredHeadersAndSourceEntityArray.RequiredHeadersAndSourceEntity.HasEntityArray.HasEntity.RequiredTypeAndValue.ValueEntity.Source value)
                         {
                             return new Source(value);
                         }

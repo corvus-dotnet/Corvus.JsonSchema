@@ -586,7 +586,7 @@ public readonly partial struct PulumiSchema
         /// Set the <c>author</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAuthor(in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source value)
+        public void SetAuthor(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source value)
         {
             CheckValidInstance();
 
@@ -631,7 +631,7 @@ public readonly partial struct PulumiSchema
         /// Set the <c>backend</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBackend(in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source value)
+        public void SetBackend(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source value)
         {
             CheckValidInstance();
 
@@ -712,7 +712,7 @@ public readonly partial struct PulumiSchema
         /// Set the <c>config</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetConfig(in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source value)
+        public void SetConfig(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source value)
         {
             CheckValidInstance();
 
@@ -793,7 +793,7 @@ public readonly partial struct PulumiSchema
         /// Set the <c>description</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDescription(in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source value)
+        public void SetDescription(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source value)
         {
             CheckValidInstance();
 
@@ -838,7 +838,7 @@ public readonly partial struct PulumiSchema
         /// Set the <c>license</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLicense(in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseIsTheOptionalLicenseGoverningThisProjectSUsage.Source value)
+        public void SetLicense(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseIsTheOptionalLicenseGoverningThisProjectSUsage.Source value)
         {
             CheckValidInstance();
 
@@ -883,7 +883,7 @@ public readonly partial struct PulumiSchema
         /// Set the <c>main</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMain(in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source value)
+        public void SetMain(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source value)
         {
             CheckValidInstance();
 
@@ -928,7 +928,7 @@ public readonly partial struct PulumiSchema
         /// Set the <c>name</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetName(in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source value)
+        public void SetName(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source value)
         {
             CheckValidInstance();
 
@@ -959,7 +959,7 @@ public readonly partial struct PulumiSchema
         /// Set the <c>options</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOptions(in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source value)
+        public void SetOptions(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source value)
         {
             CheckValidInstance();
 
@@ -1040,7 +1040,7 @@ public readonly partial struct PulumiSchema
         /// Set the <c>plugins</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPlugins(in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source value)
+        public void SetPlugins(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1121,7 +1121,7 @@ public readonly partial struct PulumiSchema
         /// Set the <c>runtime</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRuntime(in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source value)
+        public void SetRuntime(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source value)
         {
             CheckValidInstance();
 
@@ -1186,7 +1186,7 @@ public readonly partial struct PulumiSchema
         /// Set the <c>stackConfigDir</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStackConfigDir(in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source value)
+        public void SetStackConfigDir(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1231,7 +1231,7 @@ public readonly partial struct PulumiSchema
         /// Set the <c>template</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTemplate(in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source value)
+        public void SetTemplate(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source value)
         {
             CheckValidInstance();
 
@@ -1312,7 +1312,7 @@ public readonly partial struct PulumiSchema
         /// Set the <c>website</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetWebsite(in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source value)
+        public void SetWebsite(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1458,7 +1458,7 @@ public readonly partial struct PulumiSchema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -1481,7 +1481,7 @@ public readonly partial struct PulumiSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1528,7 +1528,7 @@ public readonly partial struct PulumiSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1710,7 +1710,7 @@ public readonly partial struct PulumiSchema
 
         internal Source(Corvus.PulumiBenchmark.Current.PulumiSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source arg3, in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source arg4, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source arg5, in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source arg6, in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseIsTheOptionalLicenseGoverningThisProjectSUsage.Source arg7, in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source arg8, in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source arg9, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source arg10, in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source arg11, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source arg12, in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source arg13)
+        internal Source(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source arg1, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source arg2, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source arg3, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source arg4, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source arg5, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source arg6, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseIsTheOptionalLicenseGoverningThisProjectSUsage.Source arg7, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source arg8, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source arg9, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source arg10, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source arg11, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source arg12, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source arg13)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1898,7 +1898,7 @@ public readonly partial struct PulumiSchema
 
         internal Source(scoped in TContext context, Corvus.PulumiBenchmark.Current.PulumiSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source<TContext> arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source arg3, in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source<TContext> arg4, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source<TContext> arg5, in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source arg6, in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseIsTheOptionalLicenseGoverningThisProjectSUsage.Source arg7, in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source arg8, in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source<TContext> arg9, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source<TContext> arg10, in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source arg11, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source<TContext> arg12, in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source arg13)
+        internal Source(scoped in TContext context, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source arg1, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source<TContext> arg2, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source arg3, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source<TContext> arg4, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source<TContext> arg5, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source arg6, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseIsTheOptionalLicenseGoverningThisProjectSUsage.Source arg7, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source arg8, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source<TContext> arg9, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source<TContext> arg10, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source arg11, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source<TContext> arg12, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source arg13)
         {
             _context = context;
             _createArg1 = arg1;
@@ -2288,7 +2288,7 @@ public readonly partial struct PulumiSchema
         /// <param name="arg12">The value of the property.</param>
         /// <param name="arg13">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source arg3, in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source arg4, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source arg5, in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source arg6, in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseIsTheOptionalLicenseGoverningThisProjectSUsage.Source arg7, in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source arg8, in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source arg9, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source arg10, in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source arg11, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source arg12, in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source arg13, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source arg1, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source arg2, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source arg3, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source arg4, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source arg5, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source arg6, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseIsTheOptionalLicenseGoverningThisProjectSUsage.Source arg7, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source arg8, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source arg9, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source arg10, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source arg11, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source arg12, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source arg13, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
@@ -2314,7 +2314,7 @@ public readonly partial struct PulumiSchema
         /// <param name="arg12">The value of the property.</param>
         /// <param name="arg13">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source arg1, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source<TContext> arg2, in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source arg3, in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source<TContext> arg4, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source<TContext> arg5, in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source arg6, in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseIsTheOptionalLicenseGoverningThisProjectSUsage.Source arg7, in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source arg8, in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source<TContext> arg9, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source<TContext> arg10, in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source arg11, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source<TContext> arg12, in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source arg13, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source arg1, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source<TContext> arg2, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source arg3, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source<TContext> arg4, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source<TContext> arg5, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source arg6, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseIsTheOptionalLicenseGoverningThisProjectSUsage.Source arg7, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source arg8, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source<TContext> arg9, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source<TContext> arg10, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source arg11, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source<TContext> arg12, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source arg13, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -2371,7 +2371,7 @@ public readonly partial struct PulumiSchema
     /// <param name="template">The value of the <c>"template"</c> property.</param>
     /// <param name="website">The value of the <c>"website"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source name, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source runtime, in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source author = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source backend = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source config = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source description = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseIsTheOptionalLicenseGoverningThisProjectSUsage.Source license = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source main = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source options = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source plugins = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source stackConfigDir = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source template = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source website = default)
+    public static Source Build(scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source name, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source runtime, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source author = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source backend = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source config = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source description = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseIsTheOptionalLicenseGoverningThisProjectSUsage.Source license = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source main = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source options = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source plugins = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source stackConfigDir = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source template = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source website = default)
     {
         return new Source(name, runtime, author, backend, config, description, license, main, options, plugins, stackConfigDir, template, website);
     }
@@ -2395,7 +2395,7 @@ public readonly partial struct PulumiSchema
     /// <param name="template">The value of the <c>"template"</c> property.</param>
     /// <param name="website">The value of the <c>"website"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source name, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source<TContext> runtime, in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source author = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source<TContext> backend = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source<TContext> config = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source description = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseIsTheOptionalLicenseGoverningThisProjectSUsage.Source license = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source main = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source<TContext> options = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source<TContext> plugins = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source stackConfigDir = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source<TContext> template = default, in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source website = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.NameEntity.Source name, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectRuntimeInfo.Source<TContext> runtime, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.AuthorIsAnOptionalAuthorThatCreatedThisProject.Source author = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.BackendOfTheProject.Source<TContext> backend = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.Source<TContext> config = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.DescriptionOfTheProject.Source description = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.LicenseIsTheOptionalLicenseGoverningThisProjectSUsage.Source license = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.MainEntity.Source main = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.AdditionalProjectOptions.Source<TContext> options = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.PluginsEntity.Source<TContext> plugins = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.StackConfigDirEntity.Source stackConfigDir = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.ProjectTemplate.Source<TContext> template = default, scoped in Corvus.PulumiBenchmark.Current.PulumiSchema.WebsiteEntity.Source website = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

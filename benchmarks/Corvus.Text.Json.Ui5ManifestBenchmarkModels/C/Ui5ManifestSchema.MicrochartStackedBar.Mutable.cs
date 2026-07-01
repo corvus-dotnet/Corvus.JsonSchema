@@ -308,7 +308,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>bars</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBars(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.MicrochartStackedBarBarArray.Source value)
+            public void SetBars(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.MicrochartStackedBarBarArray.Source value)
             {
                 CheckValidInstance();
 
@@ -389,7 +389,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>displayValue</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDisplayValue(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
+            public void SetDisplayValue(scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -434,7 +434,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>maxValue</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMaxValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.TheMaximumScaleValueForTheBarChart.Source value)
+            public void SetMaxValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.TheMaximumScaleValueForTheBarChart.Source value)
             {
                 CheckValidInstance();
 
@@ -479,7 +479,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>type</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetType(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.RepresentsTheTypeOfTheMicrochart.Source value)
+            public void SetType(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.RepresentsTheTypeOfTheMicrochart.Source value)
             {
                 CheckValidInstance();
 
@@ -510,7 +510,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>visible</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVisible(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source value)
+            public void SetVisible(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source value)
             {
                 CheckValidInstance();
 
@@ -723,7 +723,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.MicrochartStackedBarBarArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.TheMaximumScaleValueForTheBarChart.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg4)
+            internal Source(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.MicrochartStackedBarBarArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.TheMaximumScaleValueForTheBarChart.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg4)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -893,7 +893,7 @@ public readonly partial struct Ui5ManifestSchema
 
             internal Source(scoped in TContext context, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.MicrochartStackedBarBarArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.TheMaximumScaleValueForTheBarChart.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg4)
+            internal Source(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.MicrochartStackedBarBarArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.TheMaximumScaleValueForTheBarChart.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg4)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1144,7 +1144,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.MicrochartStackedBarBarArray.Source arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.TheMaximumScaleValueForTheBarChart.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.MicrochartStackedBarBarArray.Source arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.TheMaximumScaleValueForTheBarChart.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg4, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4);
@@ -1161,7 +1161,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="arg3">The value of the property.</param>
             /// <param name="arg4">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.MicrochartStackedBarBarArray.Source<TContext> arg1, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.TheMaximumScaleValueForTheBarChart.Source arg3, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg4, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.MicrochartStackedBarBarArray.Source<TContext> arg1, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source arg2, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.TheMaximumScaleValueForTheBarChart.Source arg3, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1209,7 +1209,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="maxValue">The value of the <c>"maxValue"</c> property.</param>
         /// <param name="visible">The value of the <c>"visible"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.MicrochartStackedBarBarArray.Source bars = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source displayValue = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.TheMaximumScaleValueForTheBarChart.Source maxValue = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default)
+        public static Source Build(scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.MicrochartStackedBarBarArray.Source bars = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source displayValue = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.TheMaximumScaleValueForTheBarChart.Source maxValue = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default)
         {
             return new Source(bars, displayValue, maxValue, visible);
         }
@@ -1224,7 +1224,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="maxValue">The value of the <c>"maxValue"</c> property.</param>
         /// <param name="visible">The value of the <c>"visible"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.MicrochartStackedBarBarArray.Source<TContext> bars = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source displayValue = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.TheMaximumScaleValueForTheBarChart.Source maxValue = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.MicrochartStackedBarBarArray.Source<TContext> bars = default, scoped in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source displayValue = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartStackedBar.TheMaximumScaleValueForTheBarChart.Source maxValue = default, scoped in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

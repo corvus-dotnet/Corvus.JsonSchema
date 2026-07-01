@@ -279,7 +279,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>checkForUpdate</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetCheckForUpdate(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetCheckForUpdate(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -324,7 +324,7 @@ public readonly partial struct LazygitSchema
                 /// Set the <c>recentRepos</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRecentRepos(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
+                public void SetRecentRepos(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source value)
                 {
                     CheckValidInstance();
 
@@ -535,7 +535,7 @@ public readonly partial struct LazygitSchema
 
                 internal Source(Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Status.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                internal Source(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2)
+                internal Source(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2)
                 {
                     _createArg1 = arg1;
                     _createArg2 = arg2;
@@ -856,7 +856,7 @@ public readonly partial struct LazygitSchema
                 /// <param name="arg1">The value of the property.</param>
                 /// <param name="arg2">The value of the property.</param>
                 /// <param name="o">The complex value builder into which to write the object.</param>
-                internal static void BuildCreateValue(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, ref ComplexValueBuilder o)
+                internal static void BuildCreateValue(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg1, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source arg2, ref ComplexValueBuilder o)
                 {
                     o.StartObject();
                     Create(ref o, arg1, arg2);
@@ -899,7 +899,7 @@ public readonly partial struct LazygitSchema
             /// <param name="checkForUpdate">The value of the <c>"checkForUpdate"</c> property.</param>
             /// <param name="recentRepos">The value of the <c>"recentRepos"</c> property.</param>
             /// <returns>The source from which to build the value.</returns>
-            public static Source Build(in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source checkForUpdate = default, in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source recentRepos = default)
+            public static Source Build(scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source checkForUpdate = default, scoped in Corvus.LazygitBenchmark.Current.LazygitSchema.Keybinding.Source recentRepos = default)
             {
                 return new Source(checkForUpdate, recentRepos);
             }

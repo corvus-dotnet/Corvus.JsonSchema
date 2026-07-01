@@ -467,7 +467,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// Set the <c>additionalRepositories</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAdditionalRepositories(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source value)
+        public void SetAdditionalRepositories(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source value)
         {
             CheckValidInstance();
 
@@ -548,7 +548,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// Set the <c>checkoutLocation</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCheckoutLocation(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
+        public void SetCheckoutLocation(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -593,7 +593,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// Set the <c>coreDump</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCoreDump(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source value)
+        public void SetCoreDump(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source value)
         {
             CheckValidInstance();
 
@@ -674,7 +674,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// Set the <c>experimentalNetwork</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExperimentalNetwork(in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source value)
+        public void SetExperimentalNetwork(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -719,7 +719,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// Set the <c>gitConfig</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetGitConfig(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source value)
+        public void SetGitConfig(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source value)
         {
             CheckValidInstance();
 
@@ -800,7 +800,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// Set the <c>github</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetGithub(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source value)
+        public void SetGithub(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source value)
         {
             CheckValidInstance();
 
@@ -881,7 +881,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// Set the <c>image</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetImage(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source value)
+        public void SetImage(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source value)
         {
             CheckValidInstance();
 
@@ -962,7 +962,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// Set the <c>jetbrains</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetJetbrains(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source value)
+        public void SetJetbrains(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source value)
         {
             CheckValidInstance();
 
@@ -1043,7 +1043,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// Set the <c>mainConfiguration</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMainConfiguration(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
+        public void SetMainConfiguration(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1088,7 +1088,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// Set the <c>ports</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPorts(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source value)
+        public void SetPorts(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source value)
         {
             CheckValidInstance();
 
@@ -1169,7 +1169,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// Set the <c>tasks</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTasks(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source value)
+        public void SetTasks(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source value)
         {
             CheckValidInstance();
 
@@ -1250,7 +1250,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// Set the <c>vscode</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVscode(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source value)
+        public void SetVscode(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source value)
         {
             CheckValidInstance();
 
@@ -1331,7 +1331,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// Set the <c>workspaceLocation</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetWorkspaceLocation(in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
+        public void SetWorkspaceLocation(scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1553,7 +1553,7 @@ public readonly partial struct GitpodConfigurationSchema
 
         internal Source(Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source arg3, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg4, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source arg5, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source arg6, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source arg7, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source arg8, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg9, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source arg10, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source arg11, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source arg12, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg13)
+        internal Source(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source arg3, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source arg5, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source arg6, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source arg7, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source arg8, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg9, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source arg10, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source arg11, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source arg12, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg13)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1741,7 +1741,7 @@ public readonly partial struct GitpodConfigurationSchema
 
         internal Source(scoped in TContext context, Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source<TContext> arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source<TContext> arg3, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg4, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source<TContext> arg5, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source<TContext> arg6, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source<TContext> arg7, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source<TContext> arg8, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg9, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source<TContext> arg10, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source<TContext> arg11, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source<TContext> arg12, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg13)
+        internal Source(scoped in TContext context, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source<TContext> arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source<TContext> arg3, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source<TContext> arg5, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source<TContext> arg6, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source<TContext> arg7, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source<TContext> arg8, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg9, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source<TContext> arg10, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source<TContext> arg11, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source<TContext> arg12, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg13)
         {
             _context = context;
             _createArg1 = arg1;
@@ -2062,7 +2062,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// <param name="arg12">The value of the property.</param>
         /// <param name="arg13">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source arg3, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg4, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source arg5, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source arg6, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source arg7, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source arg8, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg9, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source arg10, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source arg11, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source arg12, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg13, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source arg3, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source arg5, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source arg6, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source arg7, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source arg8, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg9, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source arg10, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source arg11, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source arg12, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg13, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
@@ -2088,7 +2088,7 @@ public readonly partial struct GitpodConfigurationSchema
         /// <param name="arg12">The value of the property.</param>
         /// <param name="arg13">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source<TContext> arg1, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source<TContext> arg3, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg4, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source<TContext> arg5, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source<TContext> arg6, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source<TContext> arg7, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source<TContext> arg8, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg9, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source<TContext> arg10, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source<TContext> arg11, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source<TContext> arg12, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg13, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source<TContext> arg1, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg2, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source<TContext> arg3, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source arg4, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source<TContext> arg5, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source<TContext> arg6, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source<TContext> arg7, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source<TContext> arg8, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg9, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source<TContext> arg10, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source<TContext> arg11, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source<TContext> arg12, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source arg13, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -2145,7 +2145,7 @@ public readonly partial struct GitpodConfigurationSchema
     /// <param name="vscode">The value of the <c>"vscode"</c> property.</param>
     /// <param name="workspaceLocation">The value of the <c>"workspaceLocation"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source additionalRepositories = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source checkoutLocation = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source coreDump = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source experimentalNetwork = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source gitConfig = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source github = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source image = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source jetbrains = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source mainConfiguration = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source ports = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source tasks = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source vscode = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source workspaceLocation = default)
+    public static Source Build(scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source additionalRepositories = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source checkoutLocation = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source coreDump = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source experimentalNetwork = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source gitConfig = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source github = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source image = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source jetbrains = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source mainConfiguration = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source ports = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source tasks = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source vscode = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source workspaceLocation = default)
     {
         return new Source(additionalRepositories, checkoutLocation, coreDump, experimentalNetwork, gitConfig, github, image, jetbrains, mainConfiguration, ports, tasks, vscode, workspaceLocation);
     }
@@ -2169,7 +2169,7 @@ public readonly partial struct GitpodConfigurationSchema
     /// <param name="vscode">The value of the <c>"vscode"</c> property.</param>
     /// <param name="workspaceLocation">The value of the <c>"workspaceLocation"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source<TContext> additionalRepositories = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source checkoutLocation = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source<TContext> coreDump = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source experimentalNetwork = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source<TContext> gitConfig = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source<TContext> github = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source<TContext> image = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source<TContext> jetbrains = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source mainConfiguration = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source<TContext> ports = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source<TContext> tasks = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source<TContext> vscode = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source workspaceLocation = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredUrlArray.Source<TContext> additionalRepositories = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source checkoutLocation = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.CoreDumpEntity.Source<TContext> coreDump = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source experimentalNetwork = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.GitConfigEntity.Source<TContext> gitConfig = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfiguresGitpodSGitHubApp.Source<TContext> github = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TheDockerImageToRunYourWorkspaceIn.Source<TContext> image = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureJetBrainsIntegration.Source<TContext> jetbrains = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source mainConfiguration = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.RequiredPortArray.Source<TContext> ports = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.Source<TContext> tasks = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.ConfigureVsCodeIntegration.Source<TContext> vscode = default, scoped in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source workspaceLocation = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

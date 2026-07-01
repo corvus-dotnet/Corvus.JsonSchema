@@ -567,7 +567,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>Configuration</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetConfiguration(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.BuildConfigurationUsedForProjectEvaluation.Source value)
+            public void SetConfiguration(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.BuildConfigurationUsedForProjectEvaluation.Source value)
             {
                 CheckValidInstance();
 
@@ -612,7 +612,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>CscToolExe</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCscToolExe(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.FileNameOfCCompiler.Source value)
+            public void SetCscToolExe(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.FileNameOfCCompiler.Source value)
             {
                 CheckValidInstance();
 
@@ -657,7 +657,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>CscToolPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCscToolPath(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LocalRoslynPathEGMsBuildPathCurrentBinRoslyn.Source value)
+            public void SetCscToolPath(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LocalRoslynPathEGMsBuildPathCurrentBinRoslyn.Source value)
             {
                 CheckValidInstance();
 
@@ -702,7 +702,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>enabled</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnabled(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnabledEntity.Source value)
+            public void SetEnabled(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnabledEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -747,7 +747,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>EnablePackageAutoRestore</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEnablePackageAutoRestore(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnablePackageAutoRestoreEntity.Source value)
+            public void SetEnablePackageAutoRestore(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnablePackageAutoRestoreEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -792,7 +792,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>loadProjectsOnDemand</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLoadProjectsOnDemand(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LoadProjectsOnDemandEntity.Source value)
+            public void SetLoadProjectsOnDemand(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LoadProjectsOnDemandEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -837,7 +837,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>MSBuildExtensionsPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMsBuildExtensionsPath(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.MsBuildExtensionsPathEntity.Source value)
+            public void SetMsBuildExtensionsPath(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.MsBuildExtensionsPathEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -882,7 +882,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>MSBuildSDKsPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMsBuildSdKsPath(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PathToTheSdksFolderForThisMsBuildInstance.Source value)
+            public void SetMsBuildSdKsPath(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PathToTheSdksFolderForThisMsBuildInstance.Source value)
             {
                 CheckValidInstance();
 
@@ -927,7 +927,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>Platform</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPlatform(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PlatformEntity.Source value)
+            public void SetPlatform(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PlatformEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -972,7 +972,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>RoslynTargetsPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRoslynTargetsPath(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.RoslynTargetsPathEntity.Source value)
+            public void SetRoslynTargetsPath(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.RoslynTargetsPathEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1017,7 +1017,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>TargetFrameworkRootPath</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTargetFrameworkRootPath(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.TargetFrameworkRootPathEntity.Source value)
+            public void SetTargetFrameworkRootPath(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.TargetFrameworkRootPathEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1062,7 +1062,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>ToolsVersion</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetToolsVersion(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.ToolsVersionEntity.Source value)
+            public void SetToolsVersion(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.ToolsVersionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1107,7 +1107,7 @@ public readonly partial struct OmnisharpSchema
             /// Set the <c>VisualStudioVersion</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVisualStudioVersion(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.VisualStudioVersionEntity.Source value)
+            public void SetVisualStudioVersion(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.VisualStudioVersionEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1253,7 +1253,7 @@ public readonly partial struct OmnisharpSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1276,7 +1276,7 @@ public readonly partial struct OmnisharpSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1323,7 +1323,7 @@ public readonly partial struct OmnisharpSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1505,7 +1505,7 @@ public readonly partial struct OmnisharpSchema
 
             internal Source(Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.BuildConfigurationUsedForProjectEvaluation.Source arg1, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.FileNameOfCCompiler.Source arg2, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LocalRoslynPathEGMsBuildPathCurrentBinRoslyn.Source arg3, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnabledEntity.Source arg4, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnablePackageAutoRestoreEntity.Source arg5, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LoadProjectsOnDemandEntity.Source arg6, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.MsBuildExtensionsPathEntity.Source arg7, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PathToTheSdksFolderForThisMsBuildInstance.Source arg8, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PlatformEntity.Source arg9, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.RoslynTargetsPathEntity.Source arg10, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.TargetFrameworkRootPathEntity.Source arg11, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.ToolsVersionEntity.Source arg12, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.VisualStudioVersionEntity.Source arg13)
+            internal Source(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.BuildConfigurationUsedForProjectEvaluation.Source arg1, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.FileNameOfCCompiler.Source arg2, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LocalRoslynPathEGMsBuildPathCurrentBinRoslyn.Source arg3, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnabledEntity.Source arg4, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnablePackageAutoRestoreEntity.Source arg5, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LoadProjectsOnDemandEntity.Source arg6, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.MsBuildExtensionsPathEntity.Source arg7, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PathToTheSdksFolderForThisMsBuildInstance.Source arg8, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PlatformEntity.Source arg9, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.RoslynTargetsPathEntity.Source arg10, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.TargetFrameworkRootPathEntity.Source arg11, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.ToolsVersionEntity.Source arg12, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.VisualStudioVersionEntity.Source arg13)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1952,7 +1952,7 @@ public readonly partial struct OmnisharpSchema
             /// <param name="arg12">The value of the property.</param>
             /// <param name="arg13">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.BuildConfigurationUsedForProjectEvaluation.Source arg1, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.FileNameOfCCompiler.Source arg2, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LocalRoslynPathEGMsBuildPathCurrentBinRoslyn.Source arg3, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnabledEntity.Source arg4, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnablePackageAutoRestoreEntity.Source arg5, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LoadProjectsOnDemandEntity.Source arg6, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.MsBuildExtensionsPathEntity.Source arg7, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PathToTheSdksFolderForThisMsBuildInstance.Source arg8, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PlatformEntity.Source arg9, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.RoslynTargetsPathEntity.Source arg10, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.TargetFrameworkRootPathEntity.Source arg11, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.ToolsVersionEntity.Source arg12, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.VisualStudioVersionEntity.Source arg13, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.BuildConfigurationUsedForProjectEvaluation.Source arg1, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.FileNameOfCCompiler.Source arg2, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LocalRoslynPathEGMsBuildPathCurrentBinRoslyn.Source arg3, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnabledEntity.Source arg4, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnablePackageAutoRestoreEntity.Source arg5, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LoadProjectsOnDemandEntity.Source arg6, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.MsBuildExtensionsPathEntity.Source arg7, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PathToTheSdksFolderForThisMsBuildInstance.Source arg8, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PlatformEntity.Source arg9, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.RoslynTargetsPathEntity.Source arg10, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.TargetFrameworkRootPathEntity.Source arg11, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.ToolsVersionEntity.Source arg12, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.VisualStudioVersionEntity.Source arg13, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
@@ -2006,7 +2006,7 @@ public readonly partial struct OmnisharpSchema
         /// <param name="toolsVersion">The value of the <c>"ToolsVersion"</c> property.</param>
         /// <param name="visualStudioVersion">The value of the <c>"VisualStudioVersion"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.BuildConfigurationUsedForProjectEvaluation.Source configuration = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.FileNameOfCCompiler.Source cscToolExe = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LocalRoslynPathEGMsBuildPathCurrentBinRoslyn.Source cscToolPath = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnabledEntity.Source enabled = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnablePackageAutoRestoreEntity.Source enablePackageAutoRestore = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LoadProjectsOnDemandEntity.Source loadProjectsOnDemand = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.MsBuildExtensionsPathEntity.Source mSBuildExtensionsPath = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PathToTheSdksFolderForThisMsBuildInstance.Source mSBuildSdKsPath = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PlatformEntity.Source platform = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.RoslynTargetsPathEntity.Source roslynTargetsPath = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.TargetFrameworkRootPathEntity.Source targetFrameworkRootPath = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.ToolsVersionEntity.Source toolsVersion = default, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.VisualStudioVersionEntity.Source visualStudioVersion = default)
+        public static Source Build(scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.BuildConfigurationUsedForProjectEvaluation.Source configuration = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.FileNameOfCCompiler.Source cscToolExe = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LocalRoslynPathEGMsBuildPathCurrentBinRoslyn.Source cscToolPath = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnabledEntity.Source enabled = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.EnablePackageAutoRestoreEntity.Source enablePackageAutoRestore = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.LoadProjectsOnDemandEntity.Source loadProjectsOnDemand = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.MsBuildExtensionsPathEntity.Source mSBuildExtensionsPath = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PathToTheSdksFolderForThisMsBuildInstance.Source mSBuildSdKsPath = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.PlatformEntity.Source platform = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.RoslynTargetsPathEntity.Source roslynTargetsPath = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.TargetFrameworkRootPathEntity.Source targetFrameworkRootPath = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.ToolsVersionEntity.Source toolsVersion = default, scoped in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.VisualStudioVersionEntity.Source visualStudioVersion = default)
         {
             return new Source(configuration, cscToolExe, cscToolPath, enabled, enablePackageAutoRestore, loadProjectsOnDemand, mSBuildExtensionsPath, mSBuildSdKsPath, platform, roslynTargetsPath, targetFrameworkRootPath, toolsVersion, visualStudioVersion);
         }

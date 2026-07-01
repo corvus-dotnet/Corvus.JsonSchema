@@ -479,7 +479,7 @@ public readonly partial struct LernaSchema
         /// Set the <c>command</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCommand(in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.Source value)
+        public void SetCommand(scoped in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.Source value)
         {
             CheckValidInstance();
 
@@ -560,7 +560,7 @@ public readonly partial struct LernaSchema
         /// Set the <c>ignoreChanges</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIgnoreChanges(in Corvus.LernaBenchmark.Current.LernaSchema.JsonStringArray.Source value)
+        public void SetIgnoreChanges(scoped in Corvus.LernaBenchmark.Current.LernaSchema.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -641,7 +641,7 @@ public readonly partial struct LernaSchema
         /// Set the <c>npmClient</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetNpmClient(in Corvus.LernaBenchmark.Current.JsonString.Source value)
+        public void SetNpmClient(scoped in Corvus.LernaBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -686,7 +686,7 @@ public readonly partial struct LernaSchema
         /// Set the <c>npmClientArgs</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetNpmClientArgs(in Corvus.LernaBenchmark.Current.LernaSchema.NpmClientAArray.Source value)
+        public void SetNpmClientArgs(scoped in Corvus.LernaBenchmark.Current.LernaSchema.NpmClientAArray.Source value)
         {
             CheckValidInstance();
 
@@ -767,7 +767,7 @@ public readonly partial struct LernaSchema
         /// Set the <c>packages</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPackages(in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source value)
+        public void SetPackages(scoped in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source value)
         {
             CheckValidInstance();
 
@@ -848,7 +848,7 @@ public readonly partial struct LernaSchema
         /// Set the <c>useWorkspaces</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUseWorkspaces(in Corvus.LernaBenchmark.Current.JsonBoolean.Source value)
+        public void SetUseWorkspaces(scoped in Corvus.LernaBenchmark.Current.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -893,7 +893,7 @@ public readonly partial struct LernaSchema
         /// Set the <c>version</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetVersion(in Corvus.LernaBenchmark.Current.JsonString.Source value)
+        public void SetVersion(scoped in Corvus.LernaBenchmark.Current.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -938,7 +938,7 @@ public readonly partial struct LernaSchema
         /// Set the <c>workspaces</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetWorkspaces(in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source value)
+        public void SetWorkspaces(scoped in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source value)
         {
             CheckValidInstance();
 
@@ -1120,7 +1120,7 @@ public readonly partial struct LernaSchema
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -1143,7 +1143,7 @@ public readonly partial struct LernaSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1190,7 +1190,7 @@ public readonly partial struct LernaSchema
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1367,7 +1367,7 @@ public readonly partial struct LernaSchema
 
         internal Source(Corvus.LernaBenchmark.Current.LernaSchema.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.Source arg1, in Corvus.LernaBenchmark.Current.LernaSchema.JsonStringArray.Source arg2, in Corvus.LernaBenchmark.Current.JsonString.Source arg3, in Corvus.LernaBenchmark.Current.LernaSchema.NpmClientAArray.Source arg4, in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source arg5, in Corvus.LernaBenchmark.Current.JsonBoolean.Source arg6, in Corvus.LernaBenchmark.Current.JsonString.Source arg7, in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source arg8)
+        internal Source(scoped in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.Source arg1, scoped in Corvus.LernaBenchmark.Current.LernaSchema.JsonStringArray.Source arg2, scoped in Corvus.LernaBenchmark.Current.JsonString.Source arg3, scoped in Corvus.LernaBenchmark.Current.LernaSchema.NpmClientAArray.Source arg4, scoped in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source arg5, scoped in Corvus.LernaBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.LernaBenchmark.Current.JsonString.Source arg7, scoped in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source arg8)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1545,7 +1545,7 @@ public readonly partial struct LernaSchema
 
         internal Source(scoped in TContext context, Corvus.LernaBenchmark.Current.LernaSchema.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.Source<TContext> arg1, in Corvus.LernaBenchmark.Current.LernaSchema.JsonStringArray.Source<TContext> arg2, in Corvus.LernaBenchmark.Current.JsonString.Source arg3, in Corvus.LernaBenchmark.Current.LernaSchema.NpmClientAArray.Source<TContext> arg4, in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source<TContext> arg5, in Corvus.LernaBenchmark.Current.JsonBoolean.Source arg6, in Corvus.LernaBenchmark.Current.JsonString.Source arg7, in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source<TContext> arg8)
+        internal Source(scoped in TContext context, scoped in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.Source<TContext> arg1, scoped in Corvus.LernaBenchmark.Current.LernaSchema.JsonStringArray.Source<TContext> arg2, scoped in Corvus.LernaBenchmark.Current.JsonString.Source arg3, scoped in Corvus.LernaBenchmark.Current.LernaSchema.NpmClientAArray.Source<TContext> arg4, scoped in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source<TContext> arg5, scoped in Corvus.LernaBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.LernaBenchmark.Current.JsonString.Source arg7, scoped in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source<TContext> arg8)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1895,7 +1895,7 @@ public readonly partial struct LernaSchema
         /// <param name="arg7">The value of the property.</param>
         /// <param name="arg8">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.Source arg1, in Corvus.LernaBenchmark.Current.LernaSchema.JsonStringArray.Source arg2, in Corvus.LernaBenchmark.Current.JsonString.Source arg3, in Corvus.LernaBenchmark.Current.LernaSchema.NpmClientAArray.Source arg4, in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source arg5, in Corvus.LernaBenchmark.Current.JsonBoolean.Source arg6, in Corvus.LernaBenchmark.Current.JsonString.Source arg7, in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source arg8, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.Source arg1, scoped in Corvus.LernaBenchmark.Current.LernaSchema.JsonStringArray.Source arg2, scoped in Corvus.LernaBenchmark.Current.JsonString.Source arg3, scoped in Corvus.LernaBenchmark.Current.LernaSchema.NpmClientAArray.Source arg4, scoped in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source arg5, scoped in Corvus.LernaBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.LernaBenchmark.Current.JsonString.Source arg7, scoped in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source arg8, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
@@ -1916,7 +1916,7 @@ public readonly partial struct LernaSchema
         /// <param name="arg7">The value of the property.</param>
         /// <param name="arg8">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.Source<TContext> arg1, in Corvus.LernaBenchmark.Current.LernaSchema.JsonStringArray.Source<TContext> arg2, in Corvus.LernaBenchmark.Current.JsonString.Source arg3, in Corvus.LernaBenchmark.Current.LernaSchema.NpmClientAArray.Source<TContext> arg4, in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source<TContext> arg5, in Corvus.LernaBenchmark.Current.JsonBoolean.Source arg6, in Corvus.LernaBenchmark.Current.JsonString.Source arg7, in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source<TContext> arg8, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.Source<TContext> arg1, scoped in Corvus.LernaBenchmark.Current.LernaSchema.JsonStringArray.Source<TContext> arg2, scoped in Corvus.LernaBenchmark.Current.JsonString.Source arg3, scoped in Corvus.LernaBenchmark.Current.LernaSchema.NpmClientAArray.Source<TContext> arg4, scoped in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source<TContext> arg5, scoped in Corvus.LernaBenchmark.Current.JsonBoolean.Source arg6, scoped in Corvus.LernaBenchmark.Current.JsonString.Source arg7, scoped in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source<TContext> arg8, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1968,7 +1968,7 @@ public readonly partial struct LernaSchema
     /// <param name="version">The value of the <c>"version"</c> property.</param>
     /// <param name="workspaces">The value of the <c>"workspaces"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.Source command = default, in Corvus.LernaBenchmark.Current.LernaSchema.JsonStringArray.Source ignoreChanges = default, in Corvus.LernaBenchmark.Current.JsonString.Source npmClient = default, in Corvus.LernaBenchmark.Current.LernaSchema.NpmClientAArray.Source npmClientArgs = default, in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source packages = default, in Corvus.LernaBenchmark.Current.JsonBoolean.Source useWorkspaces = default, in Corvus.LernaBenchmark.Current.JsonString.Source version = default, in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source workspaces = default)
+    public static Source Build(scoped in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.Source command = default, scoped in Corvus.LernaBenchmark.Current.LernaSchema.JsonStringArray.Source ignoreChanges = default, scoped in Corvus.LernaBenchmark.Current.JsonString.Source npmClient = default, scoped in Corvus.LernaBenchmark.Current.LernaSchema.NpmClientAArray.Source npmClientArgs = default, scoped in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source packages = default, scoped in Corvus.LernaBenchmark.Current.JsonBoolean.Source useWorkspaces = default, scoped in Corvus.LernaBenchmark.Current.JsonString.Source version = default, scoped in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source workspaces = default)
     {
         return new Source(command, ignoreChanges, npmClient, npmClientArgs, packages, useWorkspaces, version, workspaces);
     }
@@ -1987,7 +1987,7 @@ public readonly partial struct LernaSchema
     /// <param name="version">The value of the <c>"version"</c> property.</param>
     /// <param name="workspaces">The value of the <c>"workspaces"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.Source<TContext> command = default, in Corvus.LernaBenchmark.Current.LernaSchema.JsonStringArray.Source<TContext> ignoreChanges = default, in Corvus.LernaBenchmark.Current.JsonString.Source npmClient = default, in Corvus.LernaBenchmark.Current.LernaSchema.NpmClientAArray.Source<TContext> npmClientArgs = default, in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source<TContext> packages = default, in Corvus.LernaBenchmark.Current.JsonBoolean.Source useWorkspaces = default, in Corvus.LernaBenchmark.Current.JsonString.Source version = default, in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source<TContext> workspaces = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.LernaBenchmark.Current.LernaSchema.OptionsForTheCliCommands.Source<TContext> command = default, scoped in Corvus.LernaBenchmark.Current.LernaSchema.JsonStringArray.Source<TContext> ignoreChanges = default, scoped in Corvus.LernaBenchmark.Current.JsonString.Source npmClient = default, scoped in Corvus.LernaBenchmark.Current.LernaSchema.NpmClientAArray.Source<TContext> npmClientArgs = default, scoped in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source<TContext> packages = default, scoped in Corvus.LernaBenchmark.Current.JsonBoolean.Source useWorkspaces = default, scoped in Corvus.LernaBenchmark.Current.JsonString.Source version = default, scoped in Corvus.LernaBenchmark.Current.LernaSchema.ArrayOfGloArray.Source<TContext> workspaces = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

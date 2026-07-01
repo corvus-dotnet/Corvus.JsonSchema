@@ -421,7 +421,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>backend</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBackend(in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.BackendArray.Source value)
+            public void SetBackend(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.BackendArray.Source value)
             {
                 CheckValidInstance();
 
@@ -486,7 +486,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>concurrent_calls</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetConcurrentCallsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.ConcurrentCalls.Source value)
+            public void SetConcurrentCallsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.ConcurrentCalls.Source value)
             {
                 CheckValidInstance();
 
@@ -531,7 +531,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>endpoint</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEndpoint(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+            public void SetEndpoint(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -562,7 +562,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>extra_config</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExtraConfig(in Corvus.KrakendBenchmark.Current.KrakendSchema.WorkflowExtraConfig.Source value)
+            public void SetExtraConfig(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.WorkflowExtraConfig.Source value)
             {
                 CheckValidInstance();
 
@@ -643,7 +643,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>ignore_errors</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIgnoreErrorsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.IgnoreErrors.Source value)
+            public void SetIgnoreErrorsValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.IgnoreErrors.Source value)
             {
                 CheckValidInstance();
 
@@ -688,7 +688,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>output_encoding</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOutputEncodingValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.OutputEncoding.Source value)
+            public void SetOutputEncodingValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.OutputEncoding.Source value)
             {
                 CheckValidInstance();
 
@@ -733,7 +733,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>timeout</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTimeout(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+            public void SetTimeout(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
             {
                 CheckValidInstance();
 
@@ -879,7 +879,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -902,7 +902,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -949,7 +949,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1125,7 +1125,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.BackendArray.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.ConcurrentCalls.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.WorkflowExtraConfig.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.IgnoreErrors.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.OutputEncoding.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg7)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.BackendArray.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.ConcurrentCalls.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.WorkflowExtraConfig.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.IgnoreErrors.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.OutputEncoding.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg7)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1301,7 +1301,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.BackendArray.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.ConcurrentCalls.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.WorkflowExtraConfig.Source<TContext> arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.IgnoreErrors.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.OutputEncoding.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg7)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.BackendArray.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.ConcurrentCalls.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.WorkflowExtraConfig.Source<TContext> arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.IgnoreErrors.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.OutputEncoding.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg7)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -1643,7 +1643,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg6">The value of the property.</param>
             /// <param name="arg7">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.BackendArray.Source arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.ConcurrentCalls.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.WorkflowExtraConfig.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.IgnoreErrors.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.OutputEncoding.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg7, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.BackendArray.Source arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.ConcurrentCalls.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.WorkflowExtraConfig.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.IgnoreErrors.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.OutputEncoding.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg7, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
@@ -1663,7 +1663,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg6">The value of the property.</param>
             /// <param name="arg7">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.BackendArray.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.ConcurrentCalls.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.WorkflowExtraConfig.Source<TContext> arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.IgnoreErrors.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.OutputEncoding.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg7, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.BackendArray.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.ConcurrentCalls.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.WorkflowExtraConfig.Source<TContext> arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.IgnoreErrors.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.OutputEncoding.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg7, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1714,7 +1714,7 @@ public readonly partial struct KrakendSchema
         /// <param name="outputEncoding">The value of the <c>"output_encoding"</c> property.</param>
         /// <param name="timeout">The value of the <c>"timeout"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.BackendArray.Source backend, in Corvus.KrakendBenchmark.Current.JsonString.Source endpoint, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.ConcurrentCalls.Source concurrentCalls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.WorkflowExtraConfig.Source extraConfig = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.IgnoreErrors.Source ignoreErrors = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.OutputEncoding.Source outputEncoding = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.BackendArray.Source backend, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source endpoint, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.ConcurrentCalls.Source concurrentCalls = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.WorkflowExtraConfig.Source extraConfig = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.IgnoreErrors.Source ignoreErrors = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.OutputEncoding.Source outputEncoding = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default)
         {
             return new Source(backend, endpoint, concurrentCalls, extraConfig, ignoreErrors, outputEncoding, timeout);
         }
@@ -1732,7 +1732,7 @@ public readonly partial struct KrakendSchema
         /// <param name="outputEncoding">The value of the <c>"output_encoding"</c> property.</param>
         /// <param name="timeout">The value of the <c>"timeout"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.BackendArray.Source<TContext> backend, in Corvus.KrakendBenchmark.Current.JsonString.Source endpoint, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.ConcurrentCalls.Source concurrentCalls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.WorkflowExtraConfig.Source<TContext> extraConfig = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.IgnoreErrors.Source ignoreErrors = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.OutputEncoding.Source outputEncoding = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.BackendArray.Source<TContext> backend, scoped in Corvus.KrakendBenchmark.Current.JsonString.Source endpoint, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.ConcurrentCalls.Source concurrentCalls = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.WorkflowExtraConfig.Source<TContext> extraConfig = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.IgnoreErrors.Source ignoreErrors = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Workflow.OutputEncoding.Source outputEncoding = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

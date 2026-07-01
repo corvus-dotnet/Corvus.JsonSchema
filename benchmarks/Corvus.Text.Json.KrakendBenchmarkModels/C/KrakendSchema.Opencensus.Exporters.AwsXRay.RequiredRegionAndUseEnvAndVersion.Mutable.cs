@@ -405,7 +405,7 @@ public readonly partial struct KrakendSchema
                         /// Set the <c>region</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetRegion(in Corvus.Text.Json.JsonElement.Source value)
+                        public void SetRegion(scoped in Corvus.Text.Json.JsonElement.Source value)
                         {
                             CheckValidInstance();
 
@@ -470,7 +470,7 @@ public readonly partial struct KrakendSchema
                         /// Set the <c>use_env</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetUseEnv(in Corvus.Text.Json.JsonElement.Source value)
+                        public void SetUseEnv(scoped in Corvus.Text.Json.JsonElement.Source value)
                         {
                             CheckValidInstance();
 
@@ -535,7 +535,7 @@ public readonly partial struct KrakendSchema
                         /// Set the <c>version</c> property.
                         /// </summary>
                         /// <param name="value">The value of the property to add.</param>
-                        public void SetVersion(in Corvus.Text.Json.JsonElement.Source value)
+                        public void SetVersion(scoped in Corvus.Text.Json.JsonElement.Source value)
                         {
                             CheckValidInstance();
 
@@ -701,7 +701,7 @@ public readonly partial struct KrakendSchema
                         ///   </para>
                         /// </remarks>
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                        public void SetProperty(string propertyName, in JsonElement.Source value)
+                        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                         {
                             SetProperty(propertyName.AsSpan(), value);
                         }
@@ -724,7 +724,7 @@ public readonly partial struct KrakendSchema
                         ///     If the property doesn't exist, it will be added to the object.
                         ///   </para>
                         /// </remarks>
-                        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                         {
                             CheckValidInstance();
 
@@ -771,7 +771,7 @@ public readonly partial struct KrakendSchema
                         ///     If the property doesn't exist, it will be added to the object.
                         ///   </para>
                         /// </remarks>
-                        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                         {
                             CheckValidInstance();
 
@@ -943,7 +943,7 @@ public readonly partial struct KrakendSchema
 
                         internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.AwsXRay.RequiredRegionAndUseEnvAndVersion.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                        internal Source(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.Text.Json.JsonElement.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3)
+                        internal Source(scoped in Corvus.Text.Json.JsonElement.Source arg1, scoped in Corvus.Text.Json.JsonElement.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3)
                         {
                             _createArg1 = arg1;
                             _createArg2 = arg2;
@@ -1111,7 +1111,7 @@ public readonly partial struct KrakendSchema
 
                         internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.Opencensus.Exporters.AwsXRay.RequiredRegionAndUseEnvAndVersion.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                        internal Source(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.Text.Json.JsonElement.Source<TContext> arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3)
+                        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3)
                         {
                             _context = context;
                             _createArg1 = arg1;
@@ -1421,7 +1421,7 @@ public readonly partial struct KrakendSchema
                         /// <param name="arg2">The value of the property.</param>
                         /// <param name="arg3">The value of the property.</param>
                         /// <param name="o">The complex value builder into which to write the object.</param>
-                        internal static void BuildCreateValue(in Corvus.Text.Json.JsonElement.Source arg1, in Corvus.Text.Json.JsonElement.Source arg2, in Corvus.Text.Json.JsonElement.Source arg3, ref ComplexValueBuilder o)
+                        internal static void BuildCreateValue(scoped in Corvus.Text.Json.JsonElement.Source arg1, scoped in Corvus.Text.Json.JsonElement.Source arg2, scoped in Corvus.Text.Json.JsonElement.Source arg3, ref ComplexValueBuilder o)
                         {
                             o.StartObject();
                             Create(ref o, arg1, arg2, arg3);
@@ -1437,7 +1437,7 @@ public readonly partial struct KrakendSchema
                         /// <param name="arg2">The value of the property.</param>
                         /// <param name="arg3">The value of the property.</param>
                         /// <param name="o">The complex value builder into which to write the object.</param>
-                        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> arg1, in Corvus.Text.Json.JsonElement.Source<TContext> arg2, in Corvus.Text.Json.JsonElement.Source<TContext> arg3, ref ComplexValueBuilder o)
+                        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg1, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg2, scoped in Corvus.Text.Json.JsonElement.Source<TContext> arg3, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                             where TContext : allows ref struct
 #endif
@@ -1484,7 +1484,7 @@ public readonly partial struct KrakendSchema
                     /// <param name="useEnv">The value of the <c>"use_env"</c> property.</param>
                     /// <param name="version">The value of the <c>"version"</c> property.</param>
                     /// <returns>The source from which to build the value.</returns>
-                    public static Source Build(in Corvus.Text.Json.JsonElement.Source region, in Corvus.Text.Json.JsonElement.Source useEnv, in Corvus.Text.Json.JsonElement.Source version)
+                    public static Source Build(scoped in Corvus.Text.Json.JsonElement.Source region, scoped in Corvus.Text.Json.JsonElement.Source useEnv, scoped in Corvus.Text.Json.JsonElement.Source version)
                     {
                         return new Source(region, useEnv, version);
                     }
@@ -1498,7 +1498,7 @@ public readonly partial struct KrakendSchema
                     /// <param name="useEnv">The value of the <c>"use_env"</c> property.</param>
                     /// <param name="version">The value of the <c>"version"</c> property.</param>
                     /// <returns>The source from which to build the value.</returns>
-                    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.JsonElement.Source<TContext> region, in Corvus.Text.Json.JsonElement.Source<TContext> useEnv, in Corvus.Text.Json.JsonElement.Source<TContext> version)
+                    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.JsonElement.Source<TContext> region, scoped in Corvus.Text.Json.JsonElement.Source<TContext> useEnv, scoped in Corvus.Text.Json.JsonElement.Source<TContext> version)
                         #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
                         #endif

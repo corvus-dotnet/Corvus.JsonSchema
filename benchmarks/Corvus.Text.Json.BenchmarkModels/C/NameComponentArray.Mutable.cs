@@ -370,7 +370,7 @@ public readonly partial struct NameComponentArray
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void InsertItem(int itemIndex, in Corvus.PersonBenchmark.Current.NameComponent.Source value)
+        public void InsertItem(int itemIndex, scoped in Corvus.PersonBenchmark.Current.NameComponent.Source value)
         {
             CheckValidInstance();
 
@@ -396,7 +396,7 @@ public readonly partial struct NameComponentArray
         ///   The parent <see cref="JsonDocument"/> has been disposed.
         /// </exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddItem(in Corvus.PersonBenchmark.Current.NameComponent.Source value)
+        public void AddItem(scoped in Corvus.PersonBenchmark.Current.NameComponent.Source value)
         {
             InsertItem(GetArrayLength(), in value);
         }

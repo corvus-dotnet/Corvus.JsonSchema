@@ -531,7 +531,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>geoip</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetGeoipValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Geoip.Source value)
+            public void SetGeoipValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Geoip.Source value)
             {
                 CheckValidInstance();
 
@@ -612,7 +612,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>ip-filter</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetIpFilterValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.Source value)
+            public void SetIpFilterValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.Source value)
             {
                 CheckValidInstance();
 
@@ -693,7 +693,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>jwk-aggregator</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetJwkAggregatorValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.JwkAggregator.Source value)
+            public void SetJwkAggregatorValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.JwkAggregator.Source value)
             {
                 CheckValidInstance();
 
@@ -774,7 +774,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>name</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetName(in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.PluginName.Source value)
+            public void SetName(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.PluginName.Source value)
             {
                 CheckValidInstance();
 
@@ -839,7 +839,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>redis-ratelimit</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRedisRatelimitValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Source value)
+            public void SetRedisRatelimitValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Source value)
             {
                 CheckValidInstance();
 
@@ -920,7 +920,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>static-filesystem</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStaticFilesystem(in Corvus.KrakendBenchmark.Current.KrakendSchema.PluginStaticFilesystem.Source value)
+            public void SetStaticFilesystem(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.PluginStaticFilesystem.Source value)
             {
                 CheckValidInstance();
 
@@ -1001,7 +1001,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>url-rewrite</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUrlRewriteValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.Source value)
+            public void SetUrlRewriteValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.Source value)
             {
                 CheckValidInstance();
 
@@ -1082,7 +1082,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>virtualhost</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVirtualhostValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Virtualhost.Source value)
+            public void SetVirtualhostValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Virtualhost.Source value)
             {
                 CheckValidInstance();
 
@@ -1163,7 +1163,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>wildcard</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetWildcardValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Wildcard.Source value)
+            public void SetWildcardValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Wildcard.Source value)
             {
                 CheckValidInstance();
 
@@ -1345,7 +1345,7 @@ public readonly partial struct KrakendSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1368,7 +1368,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1415,7 +1415,7 @@ public readonly partial struct KrakendSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.JsonElement.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -1593,7 +1593,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.PluginName.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Geoip.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.JwkAggregator.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.PluginStaticFilesystem.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Virtualhost.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Wildcard.Source arg9)
+            internal Source(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.PluginName.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Geoip.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.JwkAggregator.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.PluginStaticFilesystem.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Virtualhost.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Wildcard.Source arg9)
             {
                 _createArg1 = arg1;
                 _createArg2 = arg2;
@@ -1773,7 +1773,7 @@ public readonly partial struct KrakendSchema
 
             internal Source(scoped in TContext context, Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-            internal Source(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.PluginName.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Geoip.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.JwkAggregator.Source<TContext> arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Source<TContext> arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.PluginStaticFilesystem.Source<TContext> arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.Source<TContext> arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Virtualhost.Source<TContext> arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Wildcard.Source<TContext> arg9)
+            internal Source(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.PluginName.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Geoip.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.Source<TContext> arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.JwkAggregator.Source<TContext> arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Source<TContext> arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.PluginStaticFilesystem.Source<TContext> arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.Source<TContext> arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Virtualhost.Source<TContext> arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Wildcard.Source<TContext> arg9)
             {
                 _context = context;
                 _createArg1 = arg1;
@@ -2131,7 +2131,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg8">The value of the property.</param>
             /// <param name="arg9">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.PluginName.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Geoip.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.JwkAggregator.Source arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Source arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.PluginStaticFilesystem.Source arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.Source arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Virtualhost.Source arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Wildcard.Source arg9, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.PluginName.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Geoip.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.JwkAggregator.Source arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Source arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.PluginStaticFilesystem.Source arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.Source arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Virtualhost.Source arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Wildcard.Source arg9, ref ComplexValueBuilder o)
             {
                 o.StartObject();
                 Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
@@ -2153,7 +2153,7 @@ public readonly partial struct KrakendSchema
             /// <param name="arg8">The value of the property.</param>
             /// <param name="arg9">The value of the property.</param>
             /// <param name="o">The complex value builder into which to write the object.</param>
-            internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.PluginName.Source<TContext> arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.Geoip.Source<TContext> arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.Source<TContext> arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.JwkAggregator.Source<TContext> arg4, in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Source<TContext> arg5, in Corvus.KrakendBenchmark.Current.KrakendSchema.PluginStaticFilesystem.Source<TContext> arg6, in Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.Source<TContext> arg7, in Corvus.KrakendBenchmark.Current.KrakendSchema.Virtualhost.Source<TContext> arg8, in Corvus.KrakendBenchmark.Current.KrakendSchema.Wildcard.Source<TContext> arg9, ref ComplexValueBuilder o)
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.PluginName.Source<TContext> arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Geoip.Source<TContext> arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.Source<TContext> arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.JwkAggregator.Source<TContext> arg4, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Source<TContext> arg5, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.PluginStaticFilesystem.Source<TContext> arg6, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.Source<TContext> arg7, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Virtualhost.Source<TContext> arg8, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Wildcard.Source<TContext> arg9, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2206,7 +2206,7 @@ public readonly partial struct KrakendSchema
         /// <param name="virtualhost">The value of the <c>"virtualhost"</c> property.</param>
         /// <param name="wildcard">The value of the <c>"wildcard"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source Build(in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.PluginName.Source name, in Corvus.KrakendBenchmark.Current.KrakendSchema.Geoip.Source geoip = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.Source ipFilter = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.JwkAggregator.Source jwkAggregator = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Source redisRatelimit = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.PluginStaticFilesystem.Source staticFilesystem = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.Source urlRewrite = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Virtualhost.Source virtualhost = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Wildcard.Source wildcard = default)
+        public static Source Build(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.PluginName.Source name, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Geoip.Source geoip = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.Source ipFilter = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.JwkAggregator.Source jwkAggregator = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Source redisRatelimit = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.PluginStaticFilesystem.Source staticFilesystem = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.Source urlRewrite = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Virtualhost.Source virtualhost = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Wildcard.Source wildcard = default)
         {
             return new Source(name, geoip, ipFilter, jwkAggregator, redisRatelimit, staticFilesystem, urlRewrite, virtualhost, wildcard);
         }
@@ -2226,7 +2226,7 @@ public readonly partial struct KrakendSchema
         /// <param name="virtualhost">The value of the <c>"virtualhost"</c> property.</param>
         /// <param name="wildcard">The value of the <c>"wildcard"</c> property.</param>
         /// <returns>The source from which to build the value.</returns>
-        public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.PluginName.Source<TContext> name, in Corvus.KrakendBenchmark.Current.KrakendSchema.Geoip.Source<TContext> geoip = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.Source<TContext> ipFilter = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.JwkAggregator.Source<TContext> jwkAggregator = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Source<TContext> redisRatelimit = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.PluginStaticFilesystem.Source<TContext> staticFilesystem = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.Source<TContext> urlRewrite = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Virtualhost.Source<TContext> virtualhost = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Wildcard.Source<TContext> wildcard = default)
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.HttpServer.PluginName.Source<TContext> name, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Geoip.Source<TContext> geoip = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.IpFilter.Source<TContext> ipFilter = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.JwkAggregator.Source<TContext> jwkAggregator = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.RedisRatelimit.Source<TContext> redisRatelimit = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.PluginStaticFilesystem.Source<TContext> staticFilesystem = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.UrlRewrite.Source<TContext> urlRewrite = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Virtualhost.Source<TContext> virtualhost = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Wildcard.Source<TContext> wildcard = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

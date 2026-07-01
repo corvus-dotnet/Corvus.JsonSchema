@@ -236,7 +236,7 @@ public readonly partial struct VercelSchema
                     /// Set the <c>handle</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetHandle(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.HandleEntity.Source value)
+                    public void SetHandle(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.HandleEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -432,7 +432,7 @@ public readonly partial struct VercelSchema
 
                     internal Source(Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.HandleEntity.Source arg1)
+                    internal Source(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.HandleEntity.Source arg1)
                     {
                         _createArg1 = arg1;
                         _kind = Kind.Create;
@@ -747,7 +747,7 @@ public readonly partial struct VercelSchema
                     /// </summary>
                     /// <param name="arg1">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.HandleEntity.Source arg1, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.HandleEntity.Source arg1, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1);
@@ -789,7 +789,7 @@ public readonly partial struct VercelSchema
                 /// </summary>
                 /// <param name="handle">The value of the <c>"handle"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.HandleEntity.Source handle)
+                public static Source Build(scoped in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredHandle.HandleEntity.Source handle)
                 {
                     return new Source(handle);
                 }

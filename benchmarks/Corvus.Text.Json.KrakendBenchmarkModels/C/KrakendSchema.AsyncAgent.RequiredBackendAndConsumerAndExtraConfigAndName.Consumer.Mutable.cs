@@ -441,7 +441,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>max_rate</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetMaxRateValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.MaxRate.Source value)
+                    public void SetMaxRateValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.MaxRate.Source value)
                     {
                         CheckValidInstance();
 
@@ -486,7 +486,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>timeout</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetTimeout(in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
+                    public void SetTimeout(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source value)
                     {
                         CheckValidInstance();
 
@@ -531,7 +531,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>topic</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetTopic(in Corvus.KrakendBenchmark.Current.JsonString.Source value)
+                    public void SetTopic(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source value)
                     {
                         CheckValidInstance();
 
@@ -562,7 +562,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>workers</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetWorkersValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.Workers.Source value)
+                    public void SetWorkersValue(scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.Workers.Source value)
                     {
                         CheckValidInstance();
 
@@ -708,7 +708,7 @@ public readonly partial struct KrakendSchema
                     ///   </para>
                     /// </remarks>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void SetProperty(string propertyName, in JsonElement.Source value)
+                    public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                     {
                         SetProperty(propertyName.AsSpan(), value);
                     }
@@ -731,7 +731,7 @@ public readonly partial struct KrakendSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -778,7 +778,7 @@ public readonly partial struct KrakendSchema
                     ///     If the property doesn't exist, it will be added to the object.
                     ///   </para>
                     /// </remarks>
-                    public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                    public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -951,7 +951,7 @@ public readonly partial struct KrakendSchema
 
                     internal Source(Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.MaxRate.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.Workers.Source arg4)
+                    internal Source(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.MaxRate.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.Workers.Source arg4)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -1353,7 +1353,7 @@ public readonly partial struct KrakendSchema
                     /// <param name="arg3">The value of the property.</param>
                     /// <param name="arg4">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.MaxRate.Source arg2, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg3, in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.Workers.Source arg4, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source arg1, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.MaxRate.Source arg2, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source arg3, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.Workers.Source arg4, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3, arg4);
@@ -1398,7 +1398,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="timeout">The value of the <c>"timeout"</c> property.</param>
                 /// <param name="workers">The value of the <c>"workers"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.KrakendBenchmark.Current.JsonString.Source topic, in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.MaxRate.Source maxRate = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.Workers.Source workers = default)
+                public static Source Build(scoped in Corvus.KrakendBenchmark.Current.JsonString.Source topic, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.MaxRate.Source maxRate = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default, scoped in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.RequiredBackendAndConsumerAndExtraConfigAndName.Consumer.Workers.Source workers = default)
                 {
                     return new Source(topic, maxRate, timeout, workers);
                 }

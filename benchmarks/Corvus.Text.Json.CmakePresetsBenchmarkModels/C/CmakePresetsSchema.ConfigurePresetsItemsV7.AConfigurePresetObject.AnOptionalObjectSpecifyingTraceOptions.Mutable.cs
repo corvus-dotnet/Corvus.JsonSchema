@@ -309,7 +309,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>format</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetFormat(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceOutputFormat.Source value)
+                    public void SetFormat(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceOutputFormat.Source value)
                     {
                         CheckValidInstance();
 
@@ -354,7 +354,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>mode</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetMode(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceMode.Source value)
+                    public void SetMode(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceMode.Source value)
                     {
                         CheckValidInstance();
 
@@ -399,7 +399,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>redirect</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetRedirect(in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
+                    public void SetRedirect(scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source value)
                     {
                         CheckValidInstance();
 
@@ -444,7 +444,7 @@ public readonly partial struct CmakePresetsSchema
                     /// Set the <c>source</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetSourceValue(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Source value)
+                    public void SetSourceValue(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Source value)
                     {
                         CheckValidInstance();
 
@@ -693,7 +693,7 @@ public readonly partial struct CmakePresetsSchema
 
                     internal Source(Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceOutputFormat.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceMode.Source arg2, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg3, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Source arg4)
+                    internal Source(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceOutputFormat.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceMode.Source arg2, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Source arg4)
                     {
                         _createArg1 = arg1;
                         _createArg2 = arg2;
@@ -863,7 +863,7 @@ public readonly partial struct CmakePresetsSchema
 
                     internal Source(scoped in TContext context, Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-                    internal Source(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceOutputFormat.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceMode.Source arg2, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg3, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Source<TContext> arg4)
+                    internal Source(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceOutputFormat.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceMode.Source arg2, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Source<TContext> arg4)
                     {
                         _context = context;
                         _createArg1 = arg1;
@@ -1112,7 +1112,7 @@ public readonly partial struct CmakePresetsSchema
                     /// <param name="arg3">The value of the property.</param>
                     /// <param name="arg4">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceOutputFormat.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceMode.Source arg2, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg3, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Source arg4, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceOutputFormat.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceMode.Source arg2, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Source arg4, ref ComplexValueBuilder o)
                     {
                         o.StartObject();
                         Create(ref o, arg1, arg2, arg3, arg4);
@@ -1129,7 +1129,7 @@ public readonly partial struct CmakePresetsSchema
                     /// <param name="arg3">The value of the property.</param>
                     /// <param name="arg4">The value of the property.</param>
                     /// <param name="o">The complex value builder into which to write the object.</param>
-                    internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceOutputFormat.Source arg1, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceMode.Source arg2, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg3, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Source<TContext> arg4, ref ComplexValueBuilder o)
+                    internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceOutputFormat.Source arg1, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceMode.Source arg2, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source arg3, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Source<TContext> arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -1177,7 +1177,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="redirect">The value of the <c>"redirect"</c> property.</param>
                 /// <param name="source">The value of the <c>"source"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source Build(in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceOutputFormat.Source format = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceMode.Source mode = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source redirect = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Source source = default)
+                public static Source Build(scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceOutputFormat.Source format = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceMode.Source mode = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source redirect = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Source source = default)
                 {
                     return new Source(format, mode, redirect, source);
                 }
@@ -1192,7 +1192,7 @@ public readonly partial struct CmakePresetsSchema
                 /// <param name="redirect">The value of the <c>"redirect"</c> property.</param>
                 /// <param name="source">The value of the <c>"source"</c> property.</param>
                 /// <returns>The source from which to build the value.</returns>
-                public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceOutputFormat.Source format = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceMode.Source mode = default, in Corvus.CmakePresetsBenchmark.Current.JsonString.Source redirect = default, in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Source<TContext> source = default)
+                public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceOutputFormat.Source format = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.AnOptionalStringThatSpecifiesTheTraceMode.Source mode = default, scoped in Corvus.CmakePresetsBenchmark.Current.JsonString.Source redirect = default, scoped in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.ConfigurePresetsItemsV7.AConfigurePresetObject.AnOptionalObjectSpecifyingTraceOptions.SourceEntity.Source<TContext> source = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif
