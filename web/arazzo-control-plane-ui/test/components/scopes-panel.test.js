@@ -36,6 +36,39 @@ describe('<arazzo-scopes-panel>', () => {
     ok($(el, '.empty'), 'no-match empty state');
   });
 
+  it('pages the scopes list with Prev/Next over the keyset cursor', async () => {
+    // The mock seeds 5 security rules; a page-size of 2 gives 3 pages (2 / 2 / 1).
+    el = panelWithMock({ scopes: 'security:read', 'page-size': '2' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    equal(rows(el).length, 2, 'page 1 holds two scopes');
+    const next = $(el, '.next');
+    ok(next && !next.disabled, 'Next is enabled when a page follows');
+    ok($(el, '.prev').disabled, 'Prev is disabled on page 1');
+
+    const page2 = nextEvent(el, 'loaded');
+    next.click();
+    await page2;
+    equal(rows(el).length, 2, 'page 2 holds the next two scopes');
+    ok(!$(el, '.prev').disabled, 'Prev is enabled beyond page 1');
+    ok(!$(el, '.next').disabled, 'Next still enabled with a third page to come');
+
+    const page3 = nextEvent(el, 'loaded');
+    $(el, '.next').click();
+    await page3;
+    equal(rows(el).length, 1, 'page 3 holds the last scope');
+    ok($(el, '.next').disabled, 'Next disabled on the last page');
+
+    const back = nextEvent(el, 'loaded');
+    $(el, '.prev').click();
+    await back;
+    equal(rows(el).length, 2, 'Prev returns to page 2');
+    const home = nextEvent(el, 'loaded');
+    $(el, '.prev').click();
+    await home;
+    ok($(el, '.prev').disabled, 'Prev disabled again back on page 1');
+  });
+
   it('opens a modal editor, builds a label-equals expression, auto-suggests the name, and creates the scope', async () => {
     el = panelWithMock({ scopes: 'security:read security:write' });
     mount(el);

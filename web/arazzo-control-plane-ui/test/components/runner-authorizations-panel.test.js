@@ -83,6 +83,37 @@ describe('<arazzo-runner-authorizations>', () => {
     equal(e.detail.authorization.status, 'Revoked', 'the authorization is now Revoked');
   });
 
+  it('pages the inbox with Prev/Next over the keyset cursor', async () => {
+    // The seed has two pending authorizations (production/runner-us-1, staging/runner-eu-2). A page-size of 1 splits them
+    // across two keyset pages ordered by (environment, runnerId): production first, then staging.
+    el = panelWithMock({ 'page-size': '1' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    equal(rows(el).length, 1, 'one row per page at page-size 1');
+    ok(el.shadowRoot.textContent.includes('runner-us-1'), 'page 1 shows the production runner');
+
+    const prev = el.shadowRoot.querySelector('.pager .prev');
+    const next = el.shadowRoot.querySelector('.pager .next');
+    ok(prev && next, 'the pager offers Prev and Next');
+    ok(prev.disabled, 'Prev is disabled on page 1');
+    ok(!next.disabled, 'Next is enabled while a next page exists');
+
+    // Next → page 2 (staging queue).
+    next.click();
+    await nextEvent(el, 'loaded');
+    equal(rows(el).length, 1, 'one row on page 2');
+    ok(el.shadowRoot.textContent.includes('runner-eu-2'), 'page 2 shows the staging runner');
+    ok(!el.shadowRoot.textContent.includes('runner-us-1'), 'page 2 replaces the list (does not append page 1)');
+    ok(el.shadowRoot.querySelector('.pager .next').disabled, 'Next is disabled on the last page');
+    ok(!el.shadowRoot.querySelector('.pager .prev').disabled, 'Prev is enabled on page 2');
+
+    // Prev → back to page 1.
+    el.shadowRoot.querySelector('.pager .prev').click();
+    await nextEvent(el, 'loaded');
+    ok(el.shadowRoot.textContent.includes('runner-us-1'), 'Prev returns to page 1');
+    ok(el.shadowRoot.querySelector('.pager .prev').disabled, 'Prev is disabled back on page 1');
+  });
+
   it('surfaces a 403 from a non-administered queue as a banner', async () => {
     el = document.createElement('arazzo-runner-authorizations');
     el.setAttribute('environment', 'someone-elses-environment');

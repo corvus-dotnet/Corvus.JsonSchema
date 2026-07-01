@@ -2,7 +2,7 @@
 import { ArazzoControlPlaneClient } from '../../src/arazzo-client.js';
 import { createMockControlPlane } from '../../demo/mock-api.js';
 import '../../src/components/credentials-table.js';
-import { ok, equal, nextEvent, waitFor, mount } from './helpers.js';
+import { ok, equal, nextEvent, mount } from './helpers.js';
 
 function tableWithMock(attrs = {}) {
   const mock = createMockControlPlane({ latencyMs: 0 });
@@ -66,21 +66,28 @@ describe('<arazzo-credentials-table>', () => {
   // catalog's per-workflow Sources panel (where the source + its auth are known), not here (§7.5). The create flow is
   // covered there; this table covers view / select / duplicate / rotate.
 
-  it('keyset-pages with "Load more" when the store returns more than one page', async () => {
-    const many = Array.from({ length: 55 }, (_, i) => {
-      const k = String(i).padStart(3, '0');
-      return { id: `cred-src${k}`, sourceName: `src${k}`, environment: 'production', authKind: 'apiKey', secretRefs: [{ name: 'value', ref: `keyvault://kv/secret${k}` }], createdBy: 'demo', createdAt: new Date(0).toISOString(), etag: `"e${k}"` };
-    });
-    const mock = createMockControlPlane({ latencyMs: 0, credentialsSeed: many });
-    el = document.createElement('arazzo-credentials-table');
-    el.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+  it('pages bindings with Prev/Next over the keyset cursor', async () => {
+    // Four seeded bindings; a page-size of two makes two keyset pages (2 + 2).
+    el = tableWithMock({ 'page-size': '2' });
     mount(el);
     await nextEvent(el, 'loaded');
-    equal(rowCount(el), 50, 'first page is one keyset page of 50');
-    const more = el.shadowRoot.querySelector('.foot .more');
-    ok(more, 'a Load more control while more pages remain');
-    more.click();
-    await waitFor(() => rowCount(el) === 55);
-    ok(!el.shadowRoot.querySelector('.foot .more'), 'Load more disappears on the last page');
+    equal(rowCount(el), 2, 'page 1 holds two bindings');
+    const next = el.shadowRoot.querySelector('.next');
+    ok(!next.disabled, 'Next is enabled when a page follows');
+    ok(el.shadowRoot.querySelector('.prev').disabled, 'Prev is disabled on page 1');
+    ok(!el.shadowRoot.querySelector('.foot .more'), 'the old Load more control is gone');
+
+    const page2 = nextEvent(el, 'loaded');
+    next.click();
+    await page2;
+    equal(rowCount(el), 2, 'page 2 holds the remaining two bindings');
+    ok(el.shadowRoot.querySelector('.next').disabled, 'Next is disabled on the last page');
+    ok(!el.shadowRoot.querySelector('.prev').disabled, 'Prev is enabled off page 1');
+
+    const back = nextEvent(el, 'loaded');
+    el.shadowRoot.querySelector('.prev').click();
+    await back;
+    equal(rowCount(el), 2, 'Prev returns to page 1');
+    ok(el.shadowRoot.querySelector('.prev').disabled, 'Prev is disabled again on page 1');
   });
 });

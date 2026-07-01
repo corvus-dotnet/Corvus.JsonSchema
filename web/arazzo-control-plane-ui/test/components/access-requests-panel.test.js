@@ -90,6 +90,42 @@ describe('<arazzo-access-requests>', () => {
     ok(el.shadowRoot.querySelector('.error-banner'), 'shows an error banner');
   });
 
+  it('pages the approver inbox with Prev/Next (keyset, small page-size)', async () => {
+    // The queue seeds four requests total; with page-size=2 and the status filter cleared, that is two keyset pages.
+    el = panelWithMock({ view: 'queue', 'page-size': '2' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    // Clear the status filter (the Pending default is only two rows → a single page) to expose two pages of four.
+    const status = el.shadowRoot.querySelector('.status');
+    status.value = '';
+    status.dispatchEvent(new Event('change'));
+    await nextEvent(el, 'loaded');
+
+    // Page 1: two rows, Prev disabled (nothing before it), Next enabled (a second page exists).
+    equal(rows(el).length, 2, 'page 1 shows the page-size (2) rows');
+    const prev = el.shadowRoot.querySelector('.pager .prev');
+    const next = el.shadowRoot.querySelector('.pager .next');
+    ok(prev && next, 'the pager offers Prev and Next');
+    ok(prev.disabled, 'Prev is disabled on page 1');
+    ok(!next.disabled, 'Next is enabled while another page exists');
+    const page1Ids = [...rows(el)].map((r) => r.dataset.id).join(',');
+
+    // Next → page 2: a different set of rows, Prev now enabled, Next disabled (the last page of four).
+    next.click();
+    await nextEvent(el, 'loaded');
+    equal(rows(el).length, 2, 'page 2 shows the remaining two rows');
+    const page2Ids = [...rows(el)].map((r) => r.dataset.id).join(',');
+    ok(page1Ids !== page2Ids, 'page 2 shows a different keyset page than page 1');
+    ok(el.shadowRoot.querySelector('.pager .prev').disabled === false, 'Prev is enabled on page 2');
+    ok(el.shadowRoot.querySelector('.pager .next').disabled === true, 'Next is disabled on the last page');
+
+    // Prev → back to page 1's rows.
+    el.shadowRoot.querySelector('.pager .prev').click();
+    await nextEvent(el, 'loaded');
+    equal([...rows(el)].map((r) => r.dataset.id).join(','), page1Ids, 'Prev returns to page 1');
+    ok(el.shadowRoot.querySelector('.pager .prev').disabled, 'Prev is disabled again on page 1');
+  });
+
   it('switches between the two views via the tabs', async () => {
     el = panelWithMock();
     mount(el);
