@@ -260,8 +260,8 @@ class ArazzoEnvironments extends ArazzoElement {
       <style>
         ${SHARED_CSS}
         :host { display: block; }
-        .layout { display: grid; grid-template-columns: 1fr; gap: 14px; align-items: start; }
-        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: 1fr 1.1fr; } }
+        .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
+        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } }
 
         .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
         /* The list is a bordered table, matching the Runs/Catalog/Sources lists. */

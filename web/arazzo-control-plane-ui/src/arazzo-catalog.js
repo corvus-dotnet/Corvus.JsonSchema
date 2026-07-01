@@ -116,8 +116,8 @@ class ArazzoCatalog extends ArazzoElement {
         .search { flex: 1; min-width: 150px; }
         .search input { width: 100%; font: inherit; padding: 6px 10px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
         .grow { flex: 1; }
-        .layout { display: grid; grid-template-columns: 1fr; gap: 14px; }
-        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: 1.4fr 1fr; align-items: start; } }
+        .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; } }
       </style>
       <div class="toolbar" part="toolbar">
         <div class="chips" part="filters">

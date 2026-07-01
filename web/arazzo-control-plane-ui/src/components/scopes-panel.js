@@ -245,8 +245,8 @@ class ArazzoScopesPanel extends ArazzoElement {
         ${SHARED_CSS}
         ${PAGER_CSS}
         :host { display: block; }
-        .layout { display: grid; grid-template-columns: 1fr; gap: 14px; align-items: start; }
-        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: 1fr 1.1fr; } }
+        .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
+        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } }
         .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
         .toolbar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
         .toolbar .title { font-weight: 600; color: var(--_muted); font-size: 12px; }

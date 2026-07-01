@@ -87,8 +87,8 @@ class ArazzoCredentials extends ArazzoElement {
       <style>
         ${SHARED_CSS}
         :host { display: block; }
-        .layout { display: grid; grid-template-columns: 1fr; gap: 14px; }
-        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: 1.4fr 1fr; align-items: start; } }
+        .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; } }
       </style>
       <div class="layout" part="layout">
         <arazzo-credentials-table selectable part="table"></arazzo-credentials-table>
