@@ -7,6 +7,8 @@ using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.CodeGeneration;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Availability;
+using Corvus.Text.Json.Arazzo.Durability.Environments;
 using ValidatorSchema = Corvus.Text.Json.Validator.JsonSchema;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
@@ -34,6 +36,8 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     private readonly ISecuredWorkflowManagement management;
     private readonly IRunnerRegistry runners;
     private readonly ControlPlaneAccess access;
+    private readonly IEnvironmentStore? environmentStore;
+    private readonly IAvailabilityStore? availabilityStore;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneCatalogHandler"/> class (unscoped: full access).</summary>
     /// <param name="catalog">The catalog client the endpoints delegate to.</param>
@@ -49,7 +53,9 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     /// <param name="management">The management client used to create runs when a workflow version is triggered.</param>
     /// <param name="runners">The runner registry consulted to gate a trigger on a runner that hosts the version.</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request (§14.2).</param>
-    internal ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners, ControlPlaneAccess access)
+    /// <param name="environmentStore">The environment registry used to validate that a run's pinned environment exists and is in the caller's reach (design §5.5); <see langword="null"/> skips that check.</param>
+    /// <param name="availabilityStore">The availability registry used to validate that the version is available in the pinned environment (§7.8); <see langword="null"/> skips that check.</param>
+    internal ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners, ControlPlaneAccess access, IEnvironmentStore? environmentStore = null, IAvailabilityStore? availabilityStore = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(management);
@@ -59,6 +65,8 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         this.management = management;
         this.runners = runners;
         this.access = access;
+        this.environmentStore = environmentStore;
+        this.availabilityStore = availabilityStore;
     }
 
     /// <inheritdoc/>
@@ -377,6 +385,9 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         int versionNumber = (int)parameters.VersionNumber;
         AccessContext ctx = this.access.Current();
 
+        // The run is pinned to the required deployment environment (§5.5); it is validated below when the registries are wired.
+        string? environment = parameters.Environment.IsNotUndefined() ? (string)parameters.Environment : null;
+
         // Gated by read reach (§14.2): a version outside it reads back null → 404 (triggering is gated by it). The
         // pooled document is held (its fields — runnable/workflowId/securityTags — are owned copies) until the run is
         // started, then disposed at method exit; ParsedJsonDocument is not thread-affine, so holding it across awaits is safe.
@@ -384,6 +395,18 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         if (version is not { } catalogVersionDoc)
         {
             return StartCatalogWorkflowRunResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+        }
+
+        // The pinned environment must exist and be in the caller's reach (non-disclosing 404) when an environment
+        // registry is wired; without one the pin is recorded unvalidated. `var` avoids the Environment type-name clash.
+        if (environment is { } environmentName && this.environmentStore is { } envStore)
+        {
+            using var environmentDoc = await envStore.GetAsync(environmentName, ctx, cancellationToken).ConfigureAwait(false);
+            if (environmentDoc is null)
+            {
+                return StartCatalogWorkflowRunResult.NotFound(
+                    Problem("environment-not-found", "Environment not found", 404, $"Environment '{environmentName}' does not exist or is outside your reach."), workspace);
+            }
         }
 
         CatalogVersion catalogVersion = catalogVersionDoc.RootElement;
@@ -409,6 +432,17 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             }
         }
 
+        // The version must be available in the pinned environment (§7.8) when an availability registry is wired.
+        if (environment is { } availabilityEnvironment && this.availabilityStore is { } availStore)
+        {
+            using var availabilityEntry = await availStore.GetAsync(baseWorkflowId, versionNumber, availabilityEnvironment, cancellationToken).ConfigureAwait(false);
+            if (availabilityEntry is null)
+            {
+                return StartCatalogWorkflowRunResult.Conflict(
+                    Problem("not-available", "Version not available in environment", 409, $"Version {versionNumber} of '{baseWorkflowId}' is not available in environment '{availabilityEnvironment}' (§7.8); make it available and retry."), workspace);
+            }
+        }
+
         // Gate on a registered runner that hosts this version: a run accepted with no runner to execute it would
         // sit Pending indefinitely, so refuse it up front with a 409 the caller can act on.
         if (!await this.runners.IsVersionHostedAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
@@ -419,7 +453,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
         // A version with no inputs schema (SchemaMissing) accepts any inputs. The run inherits the version's
         // security tags (KVP labels) so row authorization (§14.2) sees the same labels the workflow carries.
-        WorkflowRunId runId = await this.management.StartAsync(workflowId, inputs, correlationId: null, tags: default, securityTags: catalogVersion.SecurityTagsValue, cancellationToken).ConfigureAwait(false);
+        WorkflowRunId runId = await this.management.StartAsync(workflowId, inputs, correlationId: null, tags: default, securityTags: catalogVersion.SecurityTagsValue, environment: environment, cancellationToken).ConfigureAwait(false);
 
         return StartCatalogWorkflowRunResult.Accepted(
             new Models.WorkflowRunAccepted.Source((ref Models.WorkflowRunAccepted.Builder b) => b.Create(
