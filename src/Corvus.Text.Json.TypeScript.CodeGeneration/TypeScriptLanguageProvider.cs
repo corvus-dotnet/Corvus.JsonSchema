@@ -29,6 +29,12 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 {
     private const string TsFinalKey = "Ts_FinalName";
 
+    // The TYPE reference used to annotate a value of a type: the final name for named types
+    // (objects/enums/unions/branded formats), but a structural type (number/string/...) for plain
+    // scalars. Consumers (the OpenAPI emitter) need this distinct from the final name, which doubles
+    // as the value companion carrying evaluate()/parse().
+    private const string TsTypeRefKey = "Ts_TypeRef";
+
     private readonly KeywordValidationHandlerRegistry validationHandlers = new();
 
     // Every top-level identifier emitted into the current module, so the root entry-point name can be
@@ -416,6 +422,13 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             }
 
             td.SetMetadata(TsFinalKey, name);
+        }
+
+        // Second pass: now that every final name is assigned, record each type's type reference
+        // (TsTypeRef reads the final names of this type and the types it references).
+        foreach (TypeDeclaration td in types)
+        {
+            td.SetMetadata(TsTypeRefKey, TsTypeRef(td));
         }
     }
 

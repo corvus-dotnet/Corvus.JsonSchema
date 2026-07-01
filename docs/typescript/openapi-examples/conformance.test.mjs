@@ -542,6 +542,8 @@ for (const version of VERSIONS) {
         "X-Rate-Limit": "100",
         "X-Request-Id": "req-7",
         "X-Tags": "a,b,c",
+        "X-Expires-At": "2026-01-02T03:04:05Z",
+        "X-Scope": "kind,read,region,eu",
       },
     });
     const client = new ApiStatusClient(transport);
@@ -554,7 +556,31 @@ for (const version of VERSIONS) {
     assert.equal(response.xRateLimitHeader, 100);
     assert.equal(response.xRequestIdHeader, "req-7");
     assert.deepEqual(response.xTagsHeader, ["a", "b", "c"]);
+    // A date-time header returns the schema's BRANDED model type (Brand<string,"date-time">, with a
+    // {Name}ToTemporal accessor available on the model), not a lossy plain string.
+    assert.equal(response.xExpiresAtHeader, "2026-01-02T03:04:05Z");
+    // An object header returns the schema's typed interface, not a loose Record<string,string>.
+    assert.deepEqual(response.xScopeHeader, { kind: "read", region: "eu" });
     // The body still decodes via the JSON model companion.
     assert.deepEqual(response.tryGetOk(), { id: "p-1", name: "Rex", tag: "dog" });
+  });
+
+  test(`${version}: limits header getter validates via the model and throws on a malformed value`, async () => {
+    const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+    const transport = new MockApiTransport(ApiStatusClient.serverUri().toString().replace(/\/$/, ""), {
+      status: 200,
+      bytes: new TextEncoder().encode(JSON.stringify({ id: "p-1", name: "Rex", tag: "dog" })),
+      contentType: "application/json",
+      // "3.5" is a valid number but not an integer; "nope" is not an RFC 3339 date-time. Both parse
+      // to their scalar value but fail the header schema's model validation.
+      headers: { "X-Rate-Limit": "3.5", "X-Expires-At": "nope" },
+    });
+    const client = new ApiStatusClient(transport);
+    const response = await client.limits();
+
+    // The getter validates the parsed value against the header schema's model (evaluate) and throws.
+    assert.throws(() => response.xRateLimitHeader, /X-Rate-Limit response header failed schema validation/);
+    assert.throws(() => response.xExpiresAtHeader, /X-Expires-At response header failed schema validation/);
   });
 }

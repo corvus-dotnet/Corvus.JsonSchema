@@ -560,6 +560,25 @@
                     "type": "string"
                   }
                 }
+              },
+              "X-Expires-At": {
+                "schema": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "X-Scope": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string"
+                    },
+                    "region": {
+                      "type": "string"
+                    }
+                  }
+                }
               }
             },
             "content": {

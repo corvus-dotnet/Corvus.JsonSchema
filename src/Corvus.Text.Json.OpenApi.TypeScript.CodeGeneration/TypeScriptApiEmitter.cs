@@ -1019,6 +1019,15 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         bool storeHeaders = hasHeaders || linkUsage.HeaderExpr;
         List<string> headerParseFns = ResponseHeaderParseFns(headers);
 
+        // Header schema model types are imported so the getters can validate the parsed value (evaluate).
+        foreach (HeaderInfo hdr in headers)
+        {
+            if (hdr.SchemaPointer is { } hsp)
+            {
+                modelTypes.Add(this.schemaTypeResolver.ResolveTypeName(hsp));
+            }
+        }
+
         EmitHeader(w);
         w.WriteLine(
             "import { ValidationMode } from " +
@@ -1232,7 +1241,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.WriteLine("}");
 
         // Typed per-header getters (lazy parse of the raw header string per the OpenAPI simple style).
-        EmitResponseHeaderGetters(w, headers);
+        this.EmitResponseHeaderGetters(w, headers);
 
         // Link followers (resolve runtime expressions and invoke the target operation via the transport).
         this.EmitLinksAccessor(w, links, allOperations, anyLinkBodyExpr);
@@ -1523,22 +1532,61 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         return [.. fns];
     }
 
-    private static void EmitResponseHeaderGetters(IndentedWriter w, List<HeaderInfo> headers)
+    private void EmitResponseHeaderGetters(IndentedWriter w, List<HeaderInfo> headers)
     {
         foreach (HeaderInfo header in headers)
         {
             string getter = HeaderGetterName(header);
-            string tsType = HeaderTsType(header);
             string parseExpr = HeaderParseExpr(header);
+
+            // Return the schema's MODEL type and validate the parsed value against it. The final name is
+            // the value companion carrying evaluate(); the type reference is the annotation - for objects
+            // and branded formats (uuid/date-time -> a `{Name}ToTemporal` accessor) they are the same
+            // named type; for a plain scalar the reference is structural (number/string) while the
+            // companion is a positional const. Schemaless headers fall back to the loose parsed type.
+            string constName = header.SchemaPointer is { } sp
+                ? this.schemaTypeResolver.ResolveTypeName(sp)
+                : "unknown";
+            bool typed = constName != "unknown";
+            string returnType = typed
+                ? this.schemaTypeResolver.ResolveTypeReference(header.SchemaPointer)
+                : HeaderTsType(header);
 
             w.WriteLine();
             w.WriteLine("/**");
             w.WriteLine($" * The `{header.HeaderName}` response header, parsed; undefined when absent.");
+            if (typed)
+            {
+                w.WriteLine(" * Throws when the value fails the header's schema validation.");
+            }
+
             w.WriteLine(" */");
-            w.WriteLine($"get {getter}(): {tsType} | undefined {{");
+            w.WriteLine($"get {getter}(): {returnType} | undefined {{");
             w.PushIndent();
             w.WriteLine($"const raw = this.headers.tryGet({StringLiteral(header.HeaderName)});");
-            w.WriteLine($"return raw === undefined ? undefined : {parseExpr};");
+            if (typed)
+            {
+                w.WriteLine("if (raw === undefined) {");
+                w.PushIndent();
+                w.WriteLine("return undefined;");
+                w.PopIndent();
+                w.WriteLine("}");
+                w.WriteLine();
+                w.WriteLine($"const value = {parseExpr};");
+                w.WriteLine($"if (!{constName}.evaluate(value)) {{");
+                w.PushIndent();
+                w.WriteLine(
+                    $"throw new Error({StringLiteral($"{header.HeaderName} response header failed schema validation.")});");
+                w.PopIndent();
+                w.WriteLine("}");
+                w.WriteLine();
+                w.WriteLine($"return value as {returnType};");
+            }
+            else
+            {
+                w.WriteLine($"return raw === undefined ? undefined : {parseExpr};");
+            }
+
             w.PopIndent();
             w.WriteLine("}");
         }

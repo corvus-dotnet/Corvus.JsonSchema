@@ -4,7 +4,7 @@
 import { OperationMethod, ValidationMode } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
 import type { ApiRequest, ByteWriter, HeaderSink } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
 import { writePathParam } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
-import { Schema7 } from "./models/generated.js";
+import { Schema9 } from "./models/generated.js";
 
 /**
  * Parameters for the GetPet operation.
@@ -49,7 +49,7 @@ export function getPetRequest(params: GetPetParams): ApiRequest {
       if (mode === ValidationMode.None) {
         return;
       }
-      if (!Schema7.evaluate(params.petId)) {
+      if (!Schema9.evaluate(params.petId)) {
         throw new Error("GetPet parameter 'petId' failed schema validation.");
       }
     },

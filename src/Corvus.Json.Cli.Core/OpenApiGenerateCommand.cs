@@ -138,9 +138,10 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
 
                 Dictionary<string, string>? schemaTypeMap = null;
+                Dictionary<string, string>? typeReferenceMap = null;
                 if (schemaRefs.Length > 0)
                 {
-                    (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, engine, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, settings, cancellationToken)
+                    (schemaTypeMap, typeReferenceMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, engine, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, settings, cancellationToken)
                         .ConfigureAwait(false);
                 }
 
@@ -156,7 +157,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                         new TypeScriptSchemaTypeResolver(schemaTypeMap ?? new Dictionary<string, string>()),
                         settings.ClientName,
                         settings.IgnoreEmptyFormUrlEncodedBody);
-                    files = generator.GenerateUsing(CreateTypeScriptEmitter(settings, schemaTypeMap), specRoot, filter, referenceResolver);
+                    files = generator.GenerateUsing(CreateTypeScriptEmitter(settings, schemaTypeMap, typeReferenceMap), specRoot, filter, referenceResolver);
                 }
                 else
                 {
@@ -177,9 +178,10 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
 
                 Dictionary<string, string>? schemaTypeMap = null;
+                Dictionary<string, string>? typeReferenceMap = null;
                 if (schemaRefs.Length > 0)
                 {
-                    (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, engine, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, settings, cancellationToken)
+                    (schemaTypeMap, typeReferenceMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, engine, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, settings, cancellationToken)
                         .ConfigureAwait(false);
                 }
 
@@ -195,7 +197,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                         new TypeScriptSchemaTypeResolver(schemaTypeMap ?? new Dictionary<string, string>()),
                         settings.ClientName,
                         settings.IgnoreEmptyFormUrlEncodedBody);
-                    files = generator.GenerateUsing(CreateTypeScriptEmitter(settings, schemaTypeMap), specRoot, filter, referenceResolver);
+                    files = generator.GenerateUsing(CreateTypeScriptEmitter(settings, schemaTypeMap, typeReferenceMap), specRoot, filter, referenceResolver);
                 }
                 else
                 {
@@ -216,9 +218,10 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
 
                 Dictionary<string, string>? schemaTypeMap = null;
+                Dictionary<string, string>? typeReferenceMap = null;
                 if (schemaRefs.Length > 0)
                 {
-                    (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, engine, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, settings, cancellationToken)
+                    (schemaTypeMap, typeReferenceMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, engine, rootNamespace, modelsPath, schemaRefs, parameterNames, useYaml, settings, cancellationToken)
                         .ConfigureAwait(false);
                 }
 
@@ -234,7 +237,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                         new TypeScriptSchemaTypeResolver(schemaTypeMap ?? new Dictionary<string, string>()),
                         settings.ClientName,
                         settings.IgnoreEmptyFormUrlEncodedBody);
-                    files = generator.GenerateUsing(CreateTypeScriptEmitter(settings, schemaTypeMap), specRoot, filter, referenceResolver);
+                    files = generator.GenerateUsing(CreateTypeScriptEmitter(settings, schemaTypeMap, typeReferenceMap), specRoot, filter, referenceResolver);
                 }
                 else
                 {
@@ -293,7 +296,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         }
     }
 
-    private static async Task<(Dictionary<string, string> SchemaTypeMap, IReadOnlyList<string> GeneratedFileNames)> GenerateSchemaTypesAsync(
+    private static async Task<(Dictionary<string, string> SchemaTypeMap, Dictionary<string, string> TypeReferenceMap, IReadOnlyList<string> GeneratedFileNames)> GenerateSchemaTypesAsync(
         string specFile,
         string specVersion,
         Engine engine,
@@ -440,6 +443,10 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         // TypeScript it is the type's Ts_FinalName metadata (assigned during code generation above).
         Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
 
+        // The TypeScript type-reference map (pointer -> Ts_TypeRef): the annotation used for a value of
+        // the type, distinct from the final name (which doubles as the value companion). Empty for C#.
+        Dictionary<string, string> typeReferenceMap = new(StringComparer.Ordinal);
+
         foreach ((string pointerStr, TypeDeclaration td) in pointerToType)
         {
             TypeDeclaration reduced = td.ReducedTypeDeclaration().ReducedType;
@@ -449,21 +456,30 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 schemaTypeMap[pointerStr] = typeName;
             }
 
+            if (isTypeScript
+                && reduced.TryGetMetadata(TypeScriptTypeRefMetadataKey, out string? typeRef)
+                && !string.IsNullOrEmpty(typeRef))
+            {
+                typeReferenceMap[pointerStr] = typeRef;
+            }
+
             // Also add child types (items, additionalProperties, etc.) so that
             // deeply nested header/parameter element types can be resolved.
-            AddChildTypesToMap(reduced, isTypeScript, schemaTypeMap);
+            AddChildTypesToMap(reduced, isTypeScript, schemaTypeMap, typeReferenceMap);
         }
 
-        return (schemaTypeMap, schemaFileNames);
+        return (schemaTypeMap, typeReferenceMap, schemaFileNames);
     }
 
     private const string TypeScriptFinalNameMetadataKey = "Ts_FinalName";
+
+    private const string TypeScriptTypeRefMetadataKey = "Ts_TypeRef";
 
     /// <summary>
     /// Creates the TypeScript client emitter, wiring the client runtime module specifier (the
     /// byte-native transport runtime) and the generated-model module path (<c>./models/...</c>).
     /// </summary>
-    private static TypeScriptApiEmitter CreateTypeScriptEmitter(OpenApiGenerateSettings settings, Dictionary<string, string>? schemaTypeMap)
+    private static TypeScriptApiEmitter CreateTypeScriptEmitter(OpenApiGenerateSettings settings, Dictionary<string, string>? schemaTypeMap, Dictionary<string, string>? typeReferenceMap)
     {
         string clientRuntimeModule =
             settings.TsClientRuntimeModule is { Length: > 0 } configured
@@ -477,7 +493,9 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
             : "./models/generated.js";
 
         return new TypeScriptApiEmitter(
-            new TypeScriptSchemaTypeResolver(schemaTypeMap ?? new Dictionary<string, string>()),
+            new TypeScriptSchemaTypeResolver(
+                schemaTypeMap ?? new Dictionary<string, string>(),
+                typeReferenceMap ?? new Dictionary<string, string>()),
             new TypeScriptApiEmitterOptions(clientRuntimeModule, modelsModule),
             settings.ClientName);
     }
@@ -516,13 +534,13 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
     /// Recursively walks child type declarations and adds their pointer mappings to the schema type map.
     /// This ensures sub-schema types (e.g., array items, additionalProperties) are resolvable by pointer.
     /// </summary>
-    private static void AddChildTypesToMap(TypeDeclaration parentType, bool isTypeScript, Dictionary<string, string> schemaTypeMap)
+    private static void AddChildTypesToMap(TypeDeclaration parentType, bool isTypeScript, Dictionary<string, string> schemaTypeMap, Dictionary<string, string> typeReferenceMap)
     {
         HashSet<TypeDeclaration> visited = [];
-        AddChildTypesToMapCore(parentType, isTypeScript, schemaTypeMap, visited);
+        AddChildTypesToMapCore(parentType, isTypeScript, schemaTypeMap, typeReferenceMap, visited);
     }
 
-    private static void AddChildTypesToMapCore(TypeDeclaration parentType, bool isTypeScript, Dictionary<string, string> schemaTypeMap, HashSet<TypeDeclaration> visited)
+    private static void AddChildTypesToMapCore(TypeDeclaration parentType, bool isTypeScript, Dictionary<string, string> schemaTypeMap, Dictionary<string, string> typeReferenceMap, HashSet<TypeDeclaration> visited)
     {
         foreach (TypeDeclaration child in parentType.Children())
         {
@@ -533,17 +551,26 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 continue;
             }
 
-            if (TryGetTargetTypeName(reducedChild, isTypeScript, out string? childTypeName)
-                && reducedChild.LocatedSchema.RootDocumentPointer is { Length: > 0 } rootPointer)
+            if (reducedChild.LocatedSchema.RootDocumentPointer is { Length: > 0 } rootPointer)
             {
                 string key = "#" + rootPointer;
 
-                // Don't overwrite existing entries (root pointers take precedence)
-                schemaTypeMap.TryAdd(key, childTypeName);
+                if (TryGetTargetTypeName(reducedChild, isTypeScript, out string? childTypeName))
+                {
+                    // Don't overwrite existing entries (root pointers take precedence)
+                    schemaTypeMap.TryAdd(key, childTypeName);
+                }
+
+                if (isTypeScript
+                    && reducedChild.TryGetMetadata(TypeScriptTypeRefMetadataKey, out string? childTypeRef)
+                    && !string.IsNullOrEmpty(childTypeRef))
+                {
+                    typeReferenceMap.TryAdd(key, childTypeRef);
+                }
             }
 
             // Recurse into grandchildren
-            AddChildTypesToMapCore(reducedChild, isTypeScript, schemaTypeMap, visited);
+            AddChildTypesToMapCore(reducedChild, isTypeScript, schemaTypeMap, typeReferenceMap, visited);
         }
     }
 
