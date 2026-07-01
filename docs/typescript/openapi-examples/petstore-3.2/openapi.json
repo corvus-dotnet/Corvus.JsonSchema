@@ -670,6 +670,30 @@
           }
         }
       }
+    },
+    "/pets": {
+      "get": {
+        "operationId": "listPets",
+        "summary": "Lists pets, returning an array response body.",
+        "tags": [
+          "status"
+        ],
+        "responses": {
+          "200": {
+            "description": "The pets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Pet"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

@@ -14,6 +14,23 @@ import { MockApiTransport, bytes, decoder } from "./mock-transport.mjs";
 const VERSIONS = ["petstore-3.0", "petstore-3.1", "petstore-3.2"];
 
 for (const version of VERSIONS) {
+  test(`${version}: listPets decodes an ARRAY response body`, async () => {
+    const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+    const transport = new MockApiTransport(ApiStatusClient.serverUri().toString().replace(/\/$/, ""), {
+      status: 200,
+      bytes: new TextEncoder().encode(JSON.stringify([{ id: "p-1", name: "Rex" }, { id: "p-2", name: "Milo" }])),
+      contentType: "application/json",
+    });
+    const response = await new ApiStatusClient(transport).listPets();
+
+    // The array-valued body decodes via the NAMED array type's model companion (Pets.parse) — a named
+    // array type now emits a `type` alias + `parse`, so `match`/`tryGet` return a readonly Pet[].
+    assert.equal(transport.captured.url, "https://api.example.com/v1/pets");
+    const names = response.match({ ok: (pets) => pets.map((p) => p.name), otherwise: () => [] });
+    assert.deepEqual(names, ["Rex", "Milo"]);
+  });
+
   test(`${version}: serverUri substitutes server variables (defaults + overrides)`, async () => {
     const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
 

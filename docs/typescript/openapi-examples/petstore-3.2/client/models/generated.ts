@@ -324,6 +324,7 @@ function evaluateId2(value: unknown, ev: Ev, il: string = "", kl: string = "", r
   return ok;
 }
 
+export type Tags = readonly string[];
 function evaluateTags(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1avatar/post/requestBody/content/multipart~1form-data/schema/properties/tags/type"); ok = false; }
@@ -337,6 +338,7 @@ function evaluateItems(value: unknown, ev: Ev, il: string = "", kl: string = "",
   return ok;
 }
 
+export type Schema2 = readonly PetUpdate[];
 function evaluateSchema2(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1batch/post/requestBody/content/multipart~1mixed/schema/type"); ok = false; }
@@ -410,6 +412,7 @@ function evaluateName3(value: unknown, ev: Ev, il: string = "", kl: string = "",
   return ok;
 }
 
+export type Tags2 = readonly string[];
 function evaluateTags2(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1form/post/requestBody/content/application~1x-www-form-urlencoded/schema/properties/tags/type"); ok = false; }
@@ -504,6 +507,7 @@ function evaluateRegion(value: unknown, ev: Ev, il: string = "", kl: string = ""
   return ok;
 }
 
+export type Schema8 = readonly string[];
 function evaluateSchema8(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1limits/get/responses/200/headers/X-Tags/schema/type"); ok = false; }
@@ -517,19 +521,28 @@ function evaluateItems3(value: unknown, ev: Ev, il: string = "", kl: string = ""
   return ok;
 }
 
+export type Schema9 = readonly Pet[];
 function evaluateSchema9(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
-  if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1pets~1{petId}/get/parameters/0/schema/type"); ok = false; }
+  if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1pets/get/responses/200/content/application~1json/schema/type"); ok = false; }
+  if (Array.isArray(value)) { for (let i = 0; i < value.length; i++) { if (!evaluatePet(value[i], NOEV, (r === null ? il : il + "/" + i), (r === null ? kl : kl + "/items/$ref"), r)) { if (r === null) return false; ok = false; } ev.markItem(i); } }
   return ok;
 }
 
 function evaluateSchema10(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
-  if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1pets~1{petId}/post/parameters/0/schema/type"); ok = false; }
+  if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1pets~1{petId}/get/parameters/0/schema/type"); ok = false; }
   return ok;
 }
 
 function evaluateSchema11(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+  let ok = true;
+  if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1pets~1{petId}/post/parameters/0/schema/type"); ok = false; }
+  return ok;
+}
+
+export type Schema12 = readonly string[];
+function evaluateSchema12(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1pets~1{petId}/post/parameters/1/schema/type"); ok = false; }
   if (Array.isArray(value)) { for (let i = 0; i < value.length; i++) { if (!evaluateItems4(value[i], NOEV, (r === null ? il : il + "/" + i), (r === null ? kl : kl + "/items"), r)) { if (r === null) return false; ok = false; } ev.markItem(i); } }
@@ -542,24 +555,24 @@ function evaluateItems4(value: unknown, ev: Ev, il: string = "", kl: string = ""
   return ok;
 }
 
-function evaluateSchema12(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateSchema13(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "boolean")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1pets~1{petId}/post/parameters/2/schema/type"); ok = false; }
   return ok;
 }
 
-function evaluateSchema13(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateSchema14(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1pets~1{petId}/post/parameters/3/schema/type"); ok = false; }
   return ok;
 }
 
-export interface Schema14 {
+export interface Schema15 {
   readonly kind?: string;
   readonly region?: string;
 }
 
-function patchSchema14(source: Uint8Array, changes: Partial<Schema14>, removals?: ReadonlyArray<"kind" | "region">): Uint8Array {
+function patchSchema15(source: Uint8Array, changes: Partial<Schema15>, removals?: ReadonlyArray<"kind" | "region">): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["kind"] !== undefined) { targets.push({ name: enc.encode("kind"), content: enc.encode(JSON.stringify(changes["kind"])), vbs: -1, vbe: -1 }); }
@@ -572,19 +585,19 @@ function patchSchema14(source: Uint8Array, changes: Partial<Schema14>, removals?
   return rmwUpsert(source, targets);
 }
 
-function buildSchema14(props: Schema14): Uint8Array {
+function buildSchema15(props: Schema15): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-function buildCanonicalSchema14(props: Schema14): Uint8Array {
+function buildCanonicalSchema15(props: Schema15): Uint8Array {
   return canonicalize(props);
 }
 
-function produceSchema14(source: Uint8Array, recipe: (draft: Draft<Schema14>) => void): Uint8Array {
-  return produce<Schema14>(source, recipe);
+function produceSchema15(source: Uint8Array, recipe: (draft: Draft<Schema15>) => void): Uint8Array {
+  return produce<Schema15>(source, recipe);
 }
 
-function evaluateSchema14(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateSchema15(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1search~1{scope}/get/parameters/0/schema/type"); ok = false; }
   if (__isObj(value)) {
@@ -611,7 +624,8 @@ function evaluateRegion2(value: unknown, ev: Ev, il: string = "", kl: string = "
   return ok;
 }
 
-function evaluateSchema15(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+export type Schema16 = readonly string[];
+function evaluateSchema16(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1search~1{scope}/get/parameters/1/schema/type"); ok = false; }
   if (Array.isArray(value)) { for (let i = 0; i < value.length; i++) { if (!evaluateItems5(value[i], NOEV, (r === null ? il : il + "/" + i), (r === null ? kl : kl + "/items"), r)) { if (r === null) return false; ok = false; } ev.markItem(i); } }
@@ -624,7 +638,8 @@ function evaluateItems5(value: unknown, ev: Ev, il: string = "", kl: string = ""
   return ok;
 }
 
-function evaluateSchema16(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+export type Schema17 = readonly string[];
+function evaluateSchema17(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1search~1{scope}/get/parameters/2/schema/type"); ok = false; }
   if (Array.isArray(value)) { for (let i = 0; i < value.length; i++) { if (!evaluateItems6(value[i], NOEV, (r === null ? il : il + "/" + i), (r === null ? kl : kl + "/items"), r)) { if (r === null) return false; ok = false; } ev.markItem(i); } }
@@ -637,12 +652,12 @@ function evaluateItems6(value: unknown, ev: Ev, il: string = "", kl: string = ""
   return ok;
 }
 
-export interface Schema17 {
+export interface Schema18 {
   readonly max?: string;
   readonly min?: string;
 }
 
-function patchSchema17(source: Uint8Array, changes: Partial<Schema17>, removals?: ReadonlyArray<"max" | "min">): Uint8Array {
+function patchSchema18(source: Uint8Array, changes: Partial<Schema18>, removals?: ReadonlyArray<"max" | "min">): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["max"] !== undefined) { targets.push({ name: enc.encode("max"), content: enc.encode(JSON.stringify(changes["max"])), vbs: -1, vbe: -1 }); }
@@ -655,19 +670,19 @@ function patchSchema17(source: Uint8Array, changes: Partial<Schema17>, removals?
   return rmwUpsert(source, targets);
 }
 
-function buildSchema17(props: Schema17): Uint8Array {
+function buildSchema18(props: Schema18): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-function buildCanonicalSchema17(props: Schema17): Uint8Array {
+function buildCanonicalSchema18(props: Schema18): Uint8Array {
   return canonicalize(props);
 }
 
-function produceSchema17(source: Uint8Array, recipe: (draft: Draft<Schema17>) => void): Uint8Array {
-  return produce<Schema17>(source, recipe);
+function produceSchema18(source: Uint8Array, recipe: (draft: Draft<Schema18>) => void): Uint8Array {
+  return produce<Schema18>(source, recipe);
 }
 
-function evaluateSchema17(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateSchema18(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1search~1{scope}/get/parameters/3/schema/type"); ok = false; }
   if (__isObj(value)) {
@@ -694,7 +709,8 @@ function evaluateMin(value: unknown, ev: Ev, il: string = "", kl: string = "", r
   return ok;
 }
 
-function evaluateSchema18(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+export type Schema19 = readonly string[];
+function evaluateSchema19(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1search~1{scope}/get/parameters/4/schema/type"); ok = false; }
   if (Array.isArray(value)) { for (let i = 0; i < value.length; i++) { if (!evaluateItems7(value[i], NOEV, (r === null ? il : il + "/" + i), (r === null ? kl : kl + "/items"), r)) { if (r === null) return false; ok = false; } ev.markItem(i); } }
@@ -707,12 +723,12 @@ function evaluateItems7(value: unknown, ev: Ev, il: string = "", kl: string = ""
   return ok;
 }
 
-export interface Schema19 {
+export interface Schema20 {
   readonly dir?: string;
   readonly sort?: string;
 }
 
-function patchSchema19(source: Uint8Array, changes: Partial<Schema19>, removals?: ReadonlyArray<"dir" | "sort">): Uint8Array {
+function patchSchema20(source: Uint8Array, changes: Partial<Schema20>, removals?: ReadonlyArray<"dir" | "sort">): Uint8Array {
   const enc = new TextEncoder();
   const targets: RmwTarget[] = [];
   if (changes["dir"] !== undefined) { targets.push({ name: enc.encode("dir"), content: enc.encode(JSON.stringify(changes["dir"])), vbs: -1, vbe: -1 }); }
@@ -725,19 +741,19 @@ function patchSchema19(source: Uint8Array, changes: Partial<Schema19>, removals?
   return rmwUpsert(source, targets);
 }
 
-function buildSchema19(props: Schema19): Uint8Array {
+function buildSchema20(props: Schema20): Uint8Array {
   return new TextEncoder().encode(JSON.stringify(props));
 }
 
-function buildCanonicalSchema19(props: Schema19): Uint8Array {
+function buildCanonicalSchema20(props: Schema20): Uint8Array {
   return canonicalize(props);
 }
 
-function produceSchema19(source: Uint8Array, recipe: (draft: Draft<Schema19>) => void): Uint8Array {
-  return produce<Schema19>(source, recipe);
+function produceSchema20(source: Uint8Array, recipe: (draft: Draft<Schema20>) => void): Uint8Array {
+  return produce<Schema20>(source, recipe);
 }
 
-function evaluateSchema19(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateSchema20(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1search~1{scope}/get/parameters/5/schema/type"); ok = false; }
   if (__isObj(value)) {
@@ -764,13 +780,14 @@ function evaluateSort(value: unknown, ev: Ev, il: string = "", kl: string = "", 
   return ok;
 }
 
-function evaluateSchema20(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+function evaluateSchema21(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(typeof value === "string")) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1search~1{scope}/get/parameters/6/schema/type"); ok = false; }
   return ok;
 }
 
-function evaluateSchema21(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
+export type Schema22 = readonly string[];
+function evaluateSchema22(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/openapi-examples/petstore-3.2/openapi.json#/paths/~1search~1{scope}/get/parameters/7/schema/type"); ok = false; }
   if (Array.isArray(value)) { for (let i = 0; i < value.length; i++) { if (!evaluateItems8(value[i], NOEV, (r === null ? il : il + "/" + i), (r === null ? kl : kl + "/items"), r)) { if (r === null) return false; ok = false; } ev.markItem(i); } }
@@ -880,12 +897,14 @@ export const Id2 = {
 };
 export const Tags = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateTags(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Tags => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Tags,
 };
 export const Items = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateItems(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Schema2 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateSchema2(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Schema2 => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Schema2,
 };
 export const Schema3 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateSchema3(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
@@ -907,6 +926,7 @@ export const Name3 = {
 };
 export const Tags2 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateTags2(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Tags2 => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Tags2,
 };
 export const Items2 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateItems2(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
@@ -943,12 +963,14 @@ export const Region = {
 };
 export const Schema8 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateSchema8(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Schema8 => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Schema8,
 };
 export const Items3 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateItems3(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Schema9 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateSchema9(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Schema9 => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Schema9,
 };
 export const Schema10 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateSchema10(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
@@ -956,26 +978,30 @@ export const Schema10 = {
 export const Schema11 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateSchema11(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
-export const Items4 = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateItems4(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
-};
 export const Schema12 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateSchema12(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Schema12 => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Schema12,
+};
+export const Items4 = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateItems4(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Schema13 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateSchema13(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
 export const Schema14 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateSchema14(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
-  parse: (v: Uint8Array | string): Schema14 => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Schema14,
-  build: buildSchema14,
-  buildCanonical: buildCanonicalSchema14,
-  patch: patchSchema14,
-  produce: produceSchema14,
-  applyPatch: (doc: Uint8Array | Schema14, patch: JsonPatch): Uint8Array => canonicalize(applyPatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, patch)),
-  applyMergePatch: (doc: Uint8Array | Schema14, mergePatch: unknown): Uint8Array => canonicalize(applyMergePatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, mergePatch)),
-  createPatch: (source: Uint8Array | Schema14, target: Uint8Array | Schema14): JsonPatchOp[] => createPatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
-  createMergePatch: (source: Uint8Array | Schema14, target: Uint8Array | Schema14): unknown => createMergePatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
+};
+export const Schema15 = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateSchema15(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Schema15 => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Schema15,
+  build: buildSchema15,
+  buildCanonical: buildCanonicalSchema15,
+  patch: patchSchema15,
+  produce: produceSchema15,
+  applyPatch: (doc: Uint8Array | Schema15, patch: JsonPatch): Uint8Array => canonicalize(applyPatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, patch)),
+  applyMergePatch: (doc: Uint8Array | Schema15, mergePatch: unknown): Uint8Array => canonicalize(applyMergePatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, mergePatch)),
+  createPatch: (source: Uint8Array | Schema15, target: Uint8Array | Schema15): JsonPatchOp[] => createPatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
+  createMergePatch: (source: Uint8Array | Schema15, target: Uint8Array | Schema15): unknown => createMergePatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
 };
 export const Kind2 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateKind2(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
@@ -983,29 +1009,31 @@ export const Kind2 = {
 export const Region2 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateRegion2(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
-export const Schema15 = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateSchema15(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+export const Schema16 = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateSchema16(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Schema16 => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Schema16,
 };
 export const Items5 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateItems5(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
-export const Schema16 = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateSchema16(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+export const Schema17 = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateSchema17(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Schema17 => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Schema17,
 };
 export const Items6 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateItems6(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
-export const Schema17 = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateSchema17(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
-  parse: (v: Uint8Array | string): Schema17 => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Schema17,
-  build: buildSchema17,
-  buildCanonical: buildCanonicalSchema17,
-  patch: patchSchema17,
-  produce: produceSchema17,
-  applyPatch: (doc: Uint8Array | Schema17, patch: JsonPatch): Uint8Array => canonicalize(applyPatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, patch)),
-  applyMergePatch: (doc: Uint8Array | Schema17, mergePatch: unknown): Uint8Array => canonicalize(applyMergePatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, mergePatch)),
-  createPatch: (source: Uint8Array | Schema17, target: Uint8Array | Schema17): JsonPatchOp[] => createPatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
-  createMergePatch: (source: Uint8Array | Schema17, target: Uint8Array | Schema17): unknown => createMergePatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
+export const Schema18 = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateSchema18(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Schema18 => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Schema18,
+  build: buildSchema18,
+  buildCanonical: buildCanonicalSchema18,
+  patch: patchSchema18,
+  produce: produceSchema18,
+  applyPatch: (doc: Uint8Array | Schema18, patch: JsonPatch): Uint8Array => canonicalize(applyPatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, patch)),
+  applyMergePatch: (doc: Uint8Array | Schema18, mergePatch: unknown): Uint8Array => canonicalize(applyMergePatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, mergePatch)),
+  createPatch: (source: Uint8Array | Schema18, target: Uint8Array | Schema18): JsonPatchOp[] => createPatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
+  createMergePatch: (source: Uint8Array | Schema18, target: Uint8Array | Schema18): unknown => createMergePatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
 };
 export const Max = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateMax(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
@@ -1013,23 +1041,24 @@ export const Max = {
 export const Min = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateMin(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
-export const Schema18 = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateSchema18(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+export const Schema19 = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateSchema19(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Schema19 => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Schema19,
 };
 export const Items7 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateItems7(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
-export const Schema19 = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateSchema19(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
-  parse: (v: Uint8Array | string): Schema19 => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Schema19,
-  build: buildSchema19,
-  buildCanonical: buildCanonicalSchema19,
-  patch: patchSchema19,
-  produce: produceSchema19,
-  applyPatch: (doc: Uint8Array | Schema19, patch: JsonPatch): Uint8Array => canonicalize(applyPatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, patch)),
-  applyMergePatch: (doc: Uint8Array | Schema19, mergePatch: unknown): Uint8Array => canonicalize(applyMergePatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, mergePatch)),
-  createPatch: (source: Uint8Array | Schema19, target: Uint8Array | Schema19): JsonPatchOp[] => createPatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
-  createMergePatch: (source: Uint8Array | Schema19, target: Uint8Array | Schema19): unknown => createMergePatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
+export const Schema20 = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateSchema20(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Schema20 => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Schema20,
+  build: buildSchema20,
+  buildCanonical: buildCanonicalSchema20,
+  patch: patchSchema20,
+  produce: produceSchema20,
+  applyPatch: (doc: Uint8Array | Schema20, patch: JsonPatch): Uint8Array => canonicalize(applyPatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, patch)),
+  applyMergePatch: (doc: Uint8Array | Schema20, mergePatch: unknown): Uint8Array => canonicalize(applyMergePatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, mergePatch)),
+  createPatch: (source: Uint8Array | Schema20, target: Uint8Array | Schema20): JsonPatchOp[] => createPatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
+  createMergePatch: (source: Uint8Array | Schema20, target: Uint8Array | Schema20): unknown => createMergePatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),
 };
 export const Dir = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateDir(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
@@ -1037,11 +1066,12 @@ export const Dir = {
 export const Sort = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateSort(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
 };
-export const Schema20 = {
-  evaluate: (v: unknown, results?: Results): boolean => evaluateSchema20(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
-};
 export const Schema21 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateSchema21(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+};
+export const Schema22 = {
+  evaluate: (v: unknown, results?: Results): boolean => evaluateSchema22(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Schema22 => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Schema22,
 };
 export const Items8 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateItems8(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),

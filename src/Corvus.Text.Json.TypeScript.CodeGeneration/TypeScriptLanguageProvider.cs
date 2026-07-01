@@ -549,6 +549,14 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
             {
                 EmitFloatBrandAlias(sb, td);
             }
+            else if (ArrayElementType(td) is not null)
+            {
+                // A named array type gets a type alias, so it is usable as a type AND gains a `parse`
+                // companion (parse is gated on a `type {name}` existing in the module) — this lets an
+                // array-valued response body decode via `{Name}.parse(bytes)`, matching objects / enums /
+                // unions / brands, which all emit a type surface.
+                sb.Append("export type ").Append(FinalName(td)).Append(" = ").Append(TsTypeRef(td)).Append(";\n");
+            }
         }
 
         EmitValidator(sb, td);

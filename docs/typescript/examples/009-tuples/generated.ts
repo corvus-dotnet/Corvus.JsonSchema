@@ -57,6 +57,7 @@ function evaluatePoint3D(value: unknown, ev: Ev, il: string = "", kl: string = "
   return ok;
 }
 
+export type Coord = readonly [number, number, number];
 function evaluateCoord(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/009-tuples/point3d.json#/properties/coord/type"); ok = false; }
@@ -107,6 +108,7 @@ export const Point3D = {
 };
 export const Coord = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateCoord(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Coord => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Coord,
 };
 export const PrefixItems = {
   evaluate: (v: unknown, results?: Results): boolean => evaluatePrefixItems(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),

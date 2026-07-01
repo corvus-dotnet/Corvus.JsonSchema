@@ -35,6 +35,8 @@ import { eventsRequest } from "./eventsRequest.js";
 import { EventsResponse, eventsResponseFactory } from "./EventsResponse.js";
 import { feedRequest } from "./feedRequest.js";
 import { FeedResponse, feedResponseFactory } from "./FeedResponse.js";
+import { listPetsRequest } from "./listPetsRequest.js";
+import { ListPetsResponse, listPetsResponseFactory } from "./ListPetsResponse.js";
 import { PetUpdate, Schema3 } from "./models/generated.js";
 
 /**
@@ -173,6 +175,14 @@ export class ApiStatusClient implements IApiStatusClient {
   feed(signal?: AbortSignal): Promise<FeedResponse> {
     const request = feedRequest;
     return this.transport.send(request, feedResponseFactory, undefined, signal);
+  }
+
+  /**
+   * Lists pets, returning an array response body.
+   */
+  listPets(signal?: AbortSignal): Promise<ListPetsResponse> {
+    const request = listPetsRequest;
+    return this.transport.send(request, listPetsResponseFactory, undefined, signal);
   }
 
   async [Symbol.asyncDispose](): Promise<void> {

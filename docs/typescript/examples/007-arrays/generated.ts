@@ -57,6 +57,7 @@ function evaluateCart(value: unknown, ev: Ev, il: string = "", kl: string = "", 
   return ok;
 }
 
+export type Items = readonly LineItem[];
 function evaluateItems(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/007-arrays/cart.json#/properties/items/type"); ok = false; }
@@ -141,6 +142,7 @@ export const Cart = {
 };
 export const Items = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateItems(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Items => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Items,
 };
 export const LineItem = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateLineItem(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),

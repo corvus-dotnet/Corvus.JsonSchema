@@ -16,6 +16,7 @@ import type { AvatarResponse } from "./AvatarResponse.js";
 import type { DownloadResponse } from "./DownloadResponse.js";
 import type { PingResponse } from "./PingResponse.js";
 import type { LimitsResponse } from "./LimitsResponse.js";
+import type { ListPetsResponse } from "./ListPetsResponse.js";
 import type { PetUpdate, Schema2 } from "./models/generated.js";
 
 /**
@@ -76,4 +77,9 @@ export interface IApiStatusClient extends AsyncDisposable {
    * Returns rate-limit metadata in response headers.
    */
   limits(signal?: AbortSignal): Promise<LimitsResponse>;
+
+  /**
+   * Lists pets, returning an array response body.
+   */
+  listPets(signal?: AbortSignal): Promise<ListPetsResponse>;
 }

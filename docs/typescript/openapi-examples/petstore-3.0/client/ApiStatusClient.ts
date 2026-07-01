@@ -29,6 +29,8 @@ import { pingRequest } from "./pingRequest.js";
 import { PingResponse, pingResponseFactory } from "./PingResponse.js";
 import { limitsRequest } from "./limitsRequest.js";
 import { LimitsResponse, limitsResponseFactory } from "./LimitsResponse.js";
+import { listPetsRequest } from "./listPetsRequest.js";
+import { ListPetsResponse, listPetsResponseFactory } from "./ListPetsResponse.js";
 import { PetUpdate, Schema2 } from "./models/generated.js";
 
 /**
@@ -142,6 +144,14 @@ export class ApiStatusClient implements IApiStatusClient {
   limits(signal?: AbortSignal): Promise<LimitsResponse> {
     const request = limitsRequest;
     return this.transport.send(request, limitsResponseFactory, undefined, signal);
+  }
+
+  /**
+   * Lists pets, returning an array response body.
+   */
+  listPets(signal?: AbortSignal): Promise<ListPetsResponse> {
+    const request = listPetsRequest;
+    return this.transport.send(request, listPetsResponseFactory, undefined, signal);
   }
 
   async [Symbol.asyncDispose](): Promise<void> {

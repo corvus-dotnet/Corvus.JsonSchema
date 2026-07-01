@@ -19,6 +19,7 @@ import type { PingResponse } from "./PingResponse.js";
 import type { LimitsResponse } from "./LimitsResponse.js";
 import type { EventsResponse } from "./EventsResponse.js";
 import type { FeedResponse } from "./FeedResponse.js";
+import type { ListPetsResponse } from "./ListPetsResponse.js";
 import type { PetUpdate, Schema3 } from "./models/generated.js";
 
 /**
@@ -94,4 +95,9 @@ export interface IApiStatusClient extends AsyncDisposable {
    * Streams pets as newline-delimited JSON (application/x-ndjson).
    */
   feed(signal?: AbortSignal): Promise<FeedResponse>;
+
+  /**
+   * Lists pets, returning an array response body.
+   */
+  listPets(signal?: AbortSignal): Promise<ListPetsResponse>;
 }

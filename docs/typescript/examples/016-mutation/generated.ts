@@ -131,6 +131,7 @@ function evaluateName(value: unknown, ev: Ev, il: string = "", kl: string = "", 
   return ok;
 }
 
+export type Tags = readonly string[];
 function evaluateTags(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/016-mutation/document.json#/properties/tags/type"); ok = false; }
@@ -189,6 +190,7 @@ export const Name = {
 };
 export const Tags = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateTags(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Tags => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Tags,
 };
 export const Items = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateItems(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),

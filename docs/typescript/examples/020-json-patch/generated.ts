@@ -148,6 +148,7 @@ function evaluateName(value: unknown, ev: Ev, il: string = "", kl: string = "", 
   return ok;
 }
 
+export type Phones = readonly string[];
 function evaluatePhones(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/020-json-patch/contact.json#/properties/phones/type"); ok = false; }
@@ -209,6 +210,7 @@ export const Name = {
 };
 export const Phones = {
   evaluate: (v: unknown, results?: Results): boolean => evaluatePhones(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Phones => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Phones,
 };
 export const Items = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateItems(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),

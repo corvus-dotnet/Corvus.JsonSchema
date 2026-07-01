@@ -57,6 +57,7 @@ function evaluateGrid(value: unknown, ev: Ev, il: string = "", kl: string = "", 
   return ok;
 }
 
+export type Cells = readonly (readonly number[])[];
 function evaluateCells(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/008-nested-arrays/grid.json#/properties/cells/type"); ok = false; }
@@ -64,6 +65,7 @@ function evaluateCells(value: unknown, ev: Ev, il: string = "", kl: string = "",
   return ok;
 }
 
+export type Items = readonly number[];
 function evaluateItems(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(Array.isArray(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/008-nested-arrays/grid.json#/properties/cells/items/type"); ok = false; }
@@ -92,9 +94,11 @@ export const Grid = {
 };
 export const Cells = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateCells(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Cells => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Cells,
 };
 export const Items = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateItems(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
+  parse: (v: Uint8Array | string): Items => (v instanceof Uint8Array ? decodeAndParse(v) : JSON.parse(v)) as Items,
 };
 export const Items2 = {
   evaluate: (v: unknown, results?: Results): boolean => evaluateItems2(v instanceof Uint8Array ? decodeAndParse(v) : v, fresh(), "", "", results ?? null),
