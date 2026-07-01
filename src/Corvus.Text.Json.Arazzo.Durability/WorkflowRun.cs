@@ -30,6 +30,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     private readonly string? correlationId;
     private readonly TagSet tags;
     private readonly SecurityTagSet securityTags;
+    private readonly string? environment;
     private readonly WorkflowCheckpointState? resumedState;
     private readonly JsonElement inputs;
     private WorkflowEtag etag;
@@ -54,6 +55,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         string? correlationId,
         TagSet tags,
         SecurityTagSet securityTags,
+        string? environment,
         WorkflowWait? wait,
         WorkflowFault? fault,
         WorkflowCheckpointState? resumedState)
@@ -73,6 +75,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         this.correlationId = correlationId;
         this.tags = tags;
         this.securityTags = securityTags;
+        this.environment = environment;
         this.wait = wait;
         this.fault = fault;
         this.resumedState = resumedState;
@@ -108,6 +111,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <summary>Gets the run-wide telemetry correlation id (the W3C trace id captured at creation), if any.</summary>
     public string? CorrelationId => this.correlationId;
 
+    /// <summary>Gets the deployment environment the run is pinned to (design §5.5), if any — its credential set and the
+    /// runners it can be dispatched to. Absent on a run created before run→environment pinning.</summary>
+    public string? Environment => this.environment;
+
     /// <summary>Gets the free-form tags applied to the run at creation, if any.</summary>
     public TagSet Tags => this.tags;
 
@@ -133,7 +140,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         TimeProvider? timeProvider = null,
         string? correlationId = null,
         TagSet tags = default,
-        SecurityTagSet securityTags = default)
+        SecurityTagSet securityTags = default,
+        string? environment = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(workflowId);
@@ -155,6 +163,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             correlationId: correlationId ?? Activity.Current?.TraceId.ToString(),
             tags: tags,
             securityTags: securityTags,
+            environment: environment,
             wait: null,
             fault: null,
             resumedState: null);
@@ -191,6 +200,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             correlationId: state.CorrelationId,
             tags: state.Tags,
             securityTags: state.SecurityTags,
+            environment: state.Environment,
             wait: state.Wait,
             fault: state.Fault,
             resumedState: state);
@@ -379,7 +389,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             this.fault,
             this.correlationId,
             this.tags,
-            this.securityTags);
+            this.securityTags,
+            this.environment);
 
         var index = new WorkflowRunIndexEntry(
             this.WorkflowId,
@@ -392,7 +403,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             ErrorType: this.fault?.Error,
             CorrelationId: this.correlationId,
             Tags: this.tags,
-            SecurityTags: this.securityTags);
+            SecurityTags: this.securityTags,
+            Environment: this.environment);
 
         long startedAt = Stopwatch.GetTimestamp();
         this.etag = await this.store.SaveAsync(this.Id, checkpoint, index, this.etag, cancellationToken).ConfigureAwait(false);
