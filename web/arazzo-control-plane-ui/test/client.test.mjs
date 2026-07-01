@@ -398,9 +398,9 @@ test('deleteCredential removes the binding (then 404)', async () => {
 test('listAdministrators returns resolved-identity grants, and an empty set for an unknown base id', async () => {
   const c = makeClient();
   const { administrators } = await c.listAdministrators('nightly-reconcile');
-  assert.equal(administrators.length, 1);
-  assert.deepEqual(administrators[0].identity, [{ dimension: 'tenant', value: 'platform' }]);
-  assert.equal(administrators[0].kind, 'team');
+  assert.equal(administrators.length, 2); // the Platform team + alice@ops (the admin persona, seeded on every workflow)
+  assert.ok(administrators.some((a) => a.kind === 'team' && a.identity[0].value === 'platform'));
+  assert.ok(administrators.some((a) => a.identity.some((t) => t.dimension === 'sys:sub' && t.value === 'alice@ops')));
   assert.match(administrators[0].digest, /^[0-9a-f]{64}$/);
   assert.deepEqual((await c.listAdministrators('ghost')).administrators, []);
 });
@@ -408,9 +408,9 @@ test('listAdministrators returns resolved-identity grants, and an empty set for 
 test('addAdministrator is idempotent and transferAdministration replaces the whole set', async () => {
   const c = makeClient();
   const added = await c.addAdministrator('nightly-reconcile', { dimension: 'tenant', value: 'growth' });
-  assert.equal(added.administrators.length, 2);
+  assert.equal(added.administrators.length, 3); // Platform + alice@ops (seeded) + the newly-added Growth
   const again = await c.addAdministrator('nightly-reconcile', { dimension: 'tenant', value: 'growth' });
-  assert.equal(again.administrators.length, 2, 'idempotent');
+  assert.equal(again.administrators.length, 3, 'idempotent');
   const transferred = await c.transferAdministration('nightly-reconcile', { administrators: [{ dimension: 'tenant', value: 'acme' }] });
   assert.equal(transferred.administrators.length, 1);
   assert.deepEqual(transferred.administrators[0].identity, [{ dimension: 'tenant', value: 'acme' }]);
@@ -431,13 +431,15 @@ test('addAdministrator accepts a resolved grantee (kind + value + identity)', as
 
 test('removeAdministrator (by identity digest) refuses to remove the last administrator (409)', async () => {
   const c = makeClient();
-  const [sole] = (await c.listAdministrators('nightly-reconcile')).administrators;
+  // adopt-pet has a single administrator (alice@ops) — removing it is refused.
+  const [sole] = (await c.listAdministrators('adopt-pet')).administrators;
   await assert.rejects(
-    () => c.removeAdministrator('nightly-reconcile', sole.digest),
+    () => c.removeAdministrator('adopt-pet', sole.digest),
     (e) => e instanceof ProblemError && e.status === 409);
-  const { administrators: pair } = await c.listAdministrators('onboard-customer');
-  const after = await c.removeAdministrator('onboard-customer', pair[1].digest);
-  assert.equal(after.administrators.length, 1);
+  // onboard-customer has several — removing one succeeds.
+  const { administrators: onboard } = await c.listAdministrators('onboard-customer');
+  const after = await c.removeAdministrator('onboard-customer', onboard[onboard.length - 1].digest);
+  assert.equal(after.administrators.length, onboard.length - 1);
 });
 
 test('addAdministrator / transferAdministration validate before calling the server', async () => {
@@ -601,15 +603,19 @@ test('deleteEnvironment removes an environment (and its dependent state) and 404
 
 test('environment administrators: add a resolved grantee, then refuse removing the last one (409)', async () => {
   const c = makeClient();
+  const before = (await c.listEnvironmentAdministrators('staging')).administrators.length; // seeded: alice@ops + omar@ops
   const added = await c.addEnvironmentAdministrator('staging', {
     kind: 'team', value: 'payments', identity: [{ dimension: 'team', value: 'payments' }], label: 'Payments',
   });
-  assert.equal(added.administrators.length, 2, 'the seeded admin plus the added team');
+  assert.equal(added.administrators.length, before + 1, 'the seeded admins plus the added team');
   const payments = added.administrators.find((a) => a.label === 'Payments');
   const removed = await c.removeEnvironmentAdministrator('staging', payments.digest);
-  assert.equal(removed.administrators.length, 1, 'back to the sole seeded administrator');
+  assert.equal(removed.administrators.length, before, 'back to the seeded administrators');
+  // Reduce to a single administrator, then the last removal is refused.
+  const single = await c.transferEnvironmentAdministration('staging', { administrators: [{ dimension: 'sys:sub', value: 'alice@ops' }] });
+  assert.equal(single.administrators.length, 1);
   await assert.rejects(
-    () => c.removeEnvironmentAdministrator('staging', removed.administrators[0].digest),
+    () => c.removeEnvironmentAdministrator('staging', single.administrators[0].digest),
     (err) => err.status === 409, 'the set may never be left empty');
 });
 
@@ -664,11 +670,12 @@ test('persona enforcement: an operator must request promotion and an administrat
   const mock = createMockControlPlane({ latencyMs: 0 });
   const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
 
-  // Operator lacks availability:write → a direct make-available is refused (403, insufficient scope); and because the
-  // operator administers nothing, their approver inbox is empty.
+  // omar@ops administers staging but NOT production. His promotion inbox is per-environment — staging requests only,
+  // never production — and a direct make-available in production is refused (not an administrator of it).
   mock.setPersona('operator');
+  const opInbox = (await c.listAvailabilityRequests({ scope: 'queue' })).availabilityRequests;
+  assert.ok(opInbox.length > 0 && opInbox.every((r) => r.environment === 'staging'), 'operator sees only staging promotion requests');
   await assert.rejects(() => c.makeVersionAvailable('nightly-reconcile', 1, 'production'), (e) => e.status === 403);
-  assert.equal((await c.listAvailabilityRequests({ scope: 'queue' })).availabilityRequests.length, 0);
 
   // The operator CAN request promotion (auth-only) but cannot approve it (not an administrator → 403).
   const req = await c.submitAvailabilityRequest({ baseWorkflowId: 'nightly-reconcile', versionNumber: 1, environment: 'production' });
@@ -691,6 +698,40 @@ test('persona enforcement: a viewer cannot perform run or governance writes but 
   await assert.rejects(() => c.makeVersionAvailable('adopt-pet', 1, 'production'), (e) => e.status === 403); // availability:write
   await assert.rejects(() => c.cancelRun('run-1'), (e) => e.status === 403);                            // runs:write
   assert.ok((await c.listEnvironments()).environments.length >= 1, 'reads still work');
+});
+
+test('per-resource administration: the access-request inbox is scoped to the workflows the persona administers', async () => {
+  const mock = createMockControlPlane({ latencyMs: 0 });
+  const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+
+  // omar@ops administers onboard-customer but not nightly-reconcile: his inbox shows only onboard-customer requests, and
+  // approving one stamps him as the decider — but he is refused a nightly-reconcile request he does not administer.
+  mock.setPersona('operator');
+  const inbox = (await c.listAccessRequests({ scope: 'queue' })).accessRequests;
+  assert.ok(inbox.length > 0 && inbox.every((r) => r.baseWorkflowId === 'onboard-customer'), 'only onboard-customer requests');
+  const mine = inbox.find((r) => r.status === 'Pending');
+  const approved = await c.approveAccessRequest(mine.id);
+  assert.equal(approved.status, 'Approved');
+  assert.equal(approved.decidedBy, 'omar@ops', 'the decision is attributed to the acting identity');
+
+  // A nightly-reconcile request (visible to the admin) is refused to omar — he does not administer that workflow.
+  mock.setPersona('administrator');
+  const nr = (await c.listAccessRequests({ scope: 'queue' })).accessRequests.find((r) => r.baseWorkflowId === 'nightly-reconcile' && r.status === 'Pending');
+  mock.setPersona('operator');
+  await assert.rejects(() => c.approveAccessRequest(nr.id), (e) => e.status === 403);
+});
+
+test('audit attribution: a submitted request is stamped with the acting identity and appears in "my requests"', async () => {
+  const mock = createMockControlPlane({ latencyMs: 0 });
+  const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+  mock.setPersona('team-reader'); // pat@payments
+  const before = (await c.listAccessRequests({ scope: 'mine' })).accessRequests.length;
+  const req = await c.submitAccessRequest({ baseWorkflowId: 'nightly-reconcile', requestedScopes: ['runs:write'] });
+  assert.equal(req.createdBy, 'pat@payments', 'createdBy is the active identity');
+  assert.equal(req.subjectClaimValue, 'pat@payments', 'and the subject is the active identity');
+  const after = (await c.listAccessRequests({ scope: 'mine' })).accessRequests;
+  assert.equal(after.length, before + 1);
+  assert.ok(after.some((r) => r.id === req.id), 'the request appears in the requester’s own view');
 });
 
 // ---- runner registry (§5.4) ---------------------------------------------------------------------
@@ -792,7 +833,8 @@ test('runner-authorization client methods validate their arguments before callin
 test('persona enforcement: a non-administrator has an empty runner-authorization inbox and cannot authorize', async () => {
   const mock = createMockControlPlane({ latencyMs: 0 });
   const c = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
-  mock.setPersona('operator');
+  // vera@audit administers no environment → her runner-authorization inbox is empty and she cannot authorize.
+  mock.setPersona('viewer');
   assert.equal((await c.listRunnerAuthorizations()).authorizations.length, 0);
   await assert.rejects(() => c.authorizeRunner('production', 'runner-us-1'), (e) => e.status === 403);
 
