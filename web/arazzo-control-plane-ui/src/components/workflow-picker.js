@@ -108,8 +108,9 @@ class ArazzoWorkflowPicker extends ArazzoElement {
     if (!client) return;
     const seq = ++this._seq;
     try {
-      // Wider fetch + client-side dedupe to distinct base ids (the catalog returns versions), like the old input did.
-      const { versions } = await client.searchCatalog({ workflowIdPrefix: q || undefined, limit: SEARCH_LIMIT * 3 });
+      // Free-text find over title/description/id (substring), not an anchored id prefix — so "pet" finds "adopt-pet".
+      // Wider fetch + client-side dedupe to distinct base ids (the catalog returns versions).
+      const { versions } = await client.searchCatalog({ q: q || undefined, limit: SEARCH_LIMIT * 3 });
       if (seq !== this._seq) return;
       const seen = new Set();
       const out = [];

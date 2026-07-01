@@ -1320,8 +1320,14 @@ export function createMockControlPlane(options = {}) {
     if (prefix && !(v.workflowId || '').toLowerCase().startsWith(prefix)) return false;
     const status = params.get('status');
     if (status && v.status !== status) return false;
+    // Free-text find: a substring over the title, description, and the workflow id (base + versioned) — so "pet" finds
+    // "adopt-pet" and a pasted id like "adopt-pet" matches too, not just an anchored id prefix (workflowIdPrefix).
     const q = (params.get('q') || '').toLowerCase();
-    if (q && !v.title.toLowerCase().includes(q) && !(v.description || '').toLowerCase().includes(q)) return false;
+    if (q
+      && !v.title.toLowerCase().includes(q)
+      && !(v.description || '').toLowerCase().includes(q)
+      && !(v.workflowId || '').toLowerCase().includes(q)
+      && !(v.baseWorkflowId || '').toLowerCase().includes(q)) return false;
     const owner = (params.get('owner') || '').toLowerCase();
     if (owner && !v.owner.name.toLowerCase().includes(owner) && !v.owner.email.toLowerCase().includes(owner)) return false;
     const wantTags = params.getAll('tag').filter(Boolean);

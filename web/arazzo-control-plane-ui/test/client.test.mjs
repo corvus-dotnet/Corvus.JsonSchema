@@ -129,6 +129,9 @@ test('searchCatalog filters by status, tag, owner and free-text q', async () => 
   assert.equal((await c.searchCatalog({ tags: ['prod', 'billing'] })).versions.length, 3);
   assert.equal((await c.searchCatalog({ owner: 'onboarding' })).versions.length, 2);
   assert.equal((await c.searchCatalog({ q: 'adopt' })).versions.length, 1);
+  // Free-text q is a substring over title/description AND the workflow id — so "pet" finds adopt-pet (id contains it),
+  // not just an anchored id prefix. This is what the workflow picker relies on.
+  assert.equal((await c.searchCatalog({ q: 'pet' })).versions.length, 1, 'q matches the id substring (adopt-pet)');
 });
 
 test('searchCatalog filters by workflowIdPrefix (case-insensitive, anchored)', async () => {
