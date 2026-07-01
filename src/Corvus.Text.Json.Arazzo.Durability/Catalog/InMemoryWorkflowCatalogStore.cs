@@ -133,6 +133,11 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
 
         int limit = query.Limit <= 0 ? 100 : query.Limit;
 
+        if (query.DistinctWorkflows)
+        {
+            return ValueTask.FromResult(this.QueryDistinctWorkflows(query, after, limit));
+        }
+
         // The page is a pooled batch of disposable version documents (the caller disposes the page). Each candidate is
         // parsed once; matches are kept in the batch, non-matches and the look-ahead row are disposed immediately.
         var matches = new PooledDocumentList<CatalogVersion>(limit);
@@ -175,6 +180,63 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
         }
 
         return ValueTask.FromResult(nextSortKey is not null ? CatalogPage.Create(matches, nextSortKey) : CatalogPage.Create(matches));
+    }
+
+    // The distinct-workflow (collapse-by-base) query: one representative version per base workflow, keyset-paged by base id.
+    // A base is included if any of its versions matches the filter; the representative is the best-matching version — the
+    // newest Active, else the newest Obsolete, else the newest (matching the UI's client-side collapse it replaces). The scan
+    // parses each version once (under the lock) to filter + rank, retaining only the winning per-base document bytes; the page
+    // window is re-parsed into the pooled batch after the lock (the stored bytes are immutable, so this is safe).
+    private CatalogPage QueryDistinctWorkflows(CatalogQuery query, string? after, int limit)
+    {
+        var reps = new SortedDictionary<string, RepCandidate>(StringComparer.Ordinal);
+        lock (this.gate)
+        {
+            foreach (Stored stored in this.versions.Values)
+            {
+                using ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse(stored.VersionDoc);
+                if (!Matches(candidate.RootElement, query))
+                {
+                    continue;
+                }
+
+                CatalogVersionRef reference = candidate.RootElement.Ref;
+                var incoming = new RepCandidate(stored.VersionDoc, StatusRank(candidate.RootElement.StatusValue), reference.VersionNumber);
+                if (!reps.TryGetValue(reference.BaseWorkflowId, out RepCandidate existing) || incoming.IsBetterThan(existing))
+                {
+                    reps[reference.BaseWorkflowId] = incoming;
+                }
+            }
+        }
+
+        var matches = new PooledDocumentList<CatalogVersion>(limit);
+        string? nextBaseId = null;
+        try
+        {
+            foreach (KeyValuePair<string, RepCandidate> entry in reps)
+            {
+                if (after is not null && string.CompareOrdinal(entry.Key, after) <= 0)
+                {
+                    continue;
+                }
+
+                if (matches.Count == limit)
+                {
+                    // There is at least one more matching base workflow beyond this page.
+                    nextBaseId = matches[matches.Count - 1].Ref.BaseWorkflowId;
+                    break;
+                }
+
+                matches.Add(ParsedJsonDocument<CatalogVersion>.Parse(entry.Value.Doc));
+            }
+        }
+        catch
+        {
+            matches.Dispose();
+            throw;
+        }
+
+        return nextBaseId is not null ? CatalogPage.Create(matches, nextBaseId) : CatalogPage.Create(matches);
     }
 
     /// <inheritdoc/>
@@ -254,6 +316,14 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
 
+    // The representative-precedence rank: newest Active wins over newest Obsolete wins over newest of any other status.
+    private static int StatusRank(CatalogStatus status) => status switch
+    {
+        CatalogStatus.Active => 0,
+        CatalogStatus.Obsolete => 1,
+        _ => 2,
+    };
+
     private static bool Matches(in CatalogVersion version, CatalogQuery query)
     {
         if (query.BaseWorkflowId is { } baseId && !((JsonElement)version.BaseWorkflowId).EqualsString(baseId))
@@ -328,4 +398,12 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
     // The persisted version document bytes (the durable form) + the canonical package bytes. The typed CatalogVersion is
     // realized from VersionDoc only at the leaf (read/return), as a pooled, disposable document — never stored standalone.
     private readonly record struct Stored(byte[] VersionDoc, byte[] Package);
+
+    // A base workflow's best-matching representative during a distinct-workflow scan: the winning version document bytes plus
+    // the fields the precedence compares (lower status rank wins; ties break to the higher version number).
+    private readonly record struct RepCandidate(byte[] Doc, int Rank, int VersionNumber)
+    {
+        public bool IsBetterThan(RepCandidate other)
+            => this.Rank != other.Rank ? this.Rank < other.Rank : this.VersionNumber > other.VersionNumber;
+    }
 }
