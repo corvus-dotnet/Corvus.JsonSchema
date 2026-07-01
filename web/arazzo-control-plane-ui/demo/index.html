@@ -40,10 +40,10 @@
       </label>
       <label>Persona
         <select id="persona">
-          <option value="administrator" selected>Administrator — alice@ops</option>
-          <option value="operator">Operator — omar@ops</option>
-          <option value="viewer">Auditor — vera@audit (full reach)</option>
-          <option value="team-reader">Payments read-only — pat@payments (reach-scoped)</option>
+          <option value="administrator" selected>Administrator — alice@ops (administers all)</option>
+          <option value="operator">Operator — omar@ops (admin: onboard-customer + staging)</option>
+          <option value="viewer">Auditor — vera@audit (read-only, administers nothing)</option>
+          <option value="team-reader">Payments read-only — pat@payments (reach: payments)</option>
         </select>
       </label>
       <span class="sub">Switch to <strong>Operator</strong> to see the gated-elevation model: promoting a version is no longer a direct
