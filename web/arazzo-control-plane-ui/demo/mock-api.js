@@ -105,6 +105,13 @@ export function seedRuns() {
   ];
 }
 
+// Reach demo (§14.2): each workflow sits in a security "domain" (a KVP security tag). A run/version inherits its
+// workflow's domain, and a reach-scoped persona (e.g. the payments team) reads only rows whose domain its reach admits.
+const WORKFLOW_DOMAIN = { 'adopt-pet': 'pets', 'nightly-reconcile': 'payments', 'onboard-customer': 'identity' };
+const baseWorkflowOf = (workflowId) => (workflowId || '').replace(/-v\d+$/, '');
+const domainOf = (baseWorkflowId) => WORKFLOW_DOMAIN[baseWorkflowId] ?? 'other';
+const domainSecurityTags = (baseWorkflowId) => [{ dimension: 'domain', value: domainOf(baseWorkflowId) }];
+
 function toSummary(run) {
   return {
     id: run.id,
@@ -118,6 +125,7 @@ function toSummary(run) {
     errorType: run.status === 'Faulted' ? (run._errorType ?? 'Error') : null,
     correlationId: run.correlationId ?? null,
     environment: run.environment ?? null,
+    securityTags: domainSecurityTags(baseWorkflowOf(run.workflowId)),
     tags: run.tags ?? [],
   };
 }
@@ -134,6 +142,7 @@ function toDetail(run) {
     etag: run.etag,
     correlationId: run.correlationId ?? null,
     environment: run.environment ?? null,
+    securityTags: domainSecurityTags(baseWorkflowOf(run.workflowId)),
     tags: run.tags ?? [],
   };
 }
@@ -530,6 +539,7 @@ function toCatalogSummary(v) {
     lastUpdatedAt: v.lastUpdatedAt ?? undefined,
     obsoletedBy: v.obsoletedBy ?? undefined,
     obsoletedAt: v.obsoletedAt ?? undefined,
+    securityTags: domainSecurityTags(v.baseWorkflowId),
   };
 }
 
@@ -861,27 +871,45 @@ function seedRunnerAuthorizations() {
   ];
 }
 
-// Demo personas — the same user under different privilege, so the **gated-elevation** model is demonstrable end-to-end
-// against the real UI components. The mock is otherwise identity-less; a persona supplies the caller's capability
-// `scopes` (what the components gate their write controls on, and what the mock enforces server-side) and whether the
-// caller `administers` the workflow/environment a governance action targets (so a non-administrator must REQUEST
-// promotion / access and an administrator approves it). A real deployment derives both from the principal's token; here
-// the demo selects a persona. `administrator` is the default so existing tests (which never set a persona) are unchanged.
+// Demo personas — distinct identities, so BOTH axes of the model are demonstrable against the real UI: capability
+// `scopes` (what the components gate their write controls on, and what the mock enforces server-side with 403s),
+// `administers` (whether a governance action's target is one the caller administers — else they must REQUEST it and an
+// administrator approves), and `reach` — the row-security window (§14.2). `reach: 'all'` sees every row; a
+// `{ readDomain }` reach reads only rows whose workflow domain matches (mirroring the seeded team→reach binding), so a
+// reach-scoped reader sees a strict, NON-DISCLOSING subset (out-of-reach rows are simply absent, not a 403 — unlike a
+// missing scope). A real deployment derives all three from the principal's token; here the demo selects an identity.
+// `administrator` is the default so existing tests (which never set a persona) are unchanged.
+const READ_ALL_SCOPES = 'runs:read catalog:read credentials:read sources:read environments:read availability:read administrators:read security:read';
 export const DEMO_PERSONAS = {
   administrator: {
-    label: 'Administrator',
+    label: 'Administrator — alice@ops (full reach)',
+    subject: 'alice@ops',
     scopes: 'runs:read runs:write runs:purge catalog:read catalog:write catalog:purge credentials:read credentials:write sources:read sources:write environments:read environments:write availability:read availability:write administrators:read administrators:write security:read security:write',
     administers: true,
+    reach: 'all',
   },
   operator: {
-    label: 'Operator',
+    label: 'Operator — omar@ops (full reach)',
+    subject: 'omar@ops',
     scopes: 'runs:read runs:write catalog:read credentials:read sources:read environments:read availability:read administrators:read security:read',
     administers: false,
+    reach: 'all',
   },
   viewer: {
-    label: 'Read-only viewer',
-    scopes: 'runs:read catalog:read credentials:read sources:read environments:read availability:read administrators:read security:read',
+    label: 'Auditor — vera@audit (read-only, full reach)',
+    subject: 'vera@audit',
+    scopes: READ_ALL_SCOPES,
     administers: false,
+    reach: 'all',
+  },
+  'team-reader': {
+    // A read-only member of the payments team: same read scopes as the auditor, but reach-scoped to the payments domain
+    // (the seeded `team=payments → reach-payments` binding, §14.2). The contrast auditor-vs-team-reader isolates reach.
+    label: 'Payments read-only — pat@payments (reach: domain=payments)',
+    subject: 'pat@payments',
+    scopes: READ_ALL_SCOPES,
+    administers: false,
+    reach: { readDomain: 'payments' },
   },
 };
 
@@ -918,7 +946,18 @@ export function createMockControlPlane(options = {}) {
   // The current persona (default administrator → all scopes + administers everything, so existing callers are unchanged).
   function personaState(name) {
     const p = DEMO_PERSONAS[name] || DEMO_PERSONAS.administrator;
-    return { name: DEMO_PERSONAS[name] ? name : 'administrator', scopes: new Set(p.scopes.split(/\s+/).filter(Boolean)), administers: p.administers };
+    return { name: DEMO_PERSONAS[name] ? name : 'administrator', subject: p.subject, scopes: new Set(p.scopes.split(/\s+/).filter(Boolean)), administers: p.administers, reach: p.reach ?? 'all' };
+  }
+
+  // The caller's read reach (§14.2) over a row's security domain: 'all' admits everything; a { readDomain } reach admits
+  // only rows in that domain. Out-of-reach rows are omitted from lists and 404 on direct GET (non-disclosing).
+  function reachAdmitsDomain(domain) {
+    const reach = persona.reach;
+    if (!reach || reach === 'all') {
+      return true;
+    }
+
+    return reach.readDomain === undefined || domain === reach.readDomain;
   }
 
   let persona = personaState(options.persona || 'administrator');
@@ -1084,7 +1123,11 @@ export function createMockControlPlane(options = {}) {
       const run = find(id);
       if (!run) return problem(404, 'Run not found', `No run with id '${id}'.`);
 
-      if (!action && method === 'GET') return json(toDetail(run));
+      if (!action && method === 'GET') {
+        // Reach (§14.2): a run outside the caller's reach reads back as not found (non-disclosing).
+        if (!reachAdmitsDomain(domainOf(baseWorkflowOf(run.workflowId)))) return problem(404, 'Run not found', `No run with id '${id}'.`);
+        return json(toDetail(run));
+      }
       if (!action && method === 'DELETE') return deleteRun(run);
       if (action === 'resume' && method === 'POST') return resumeRun(run, body);
       if (action === 'cancel' && method === 'POST') return cancelRun(run, body);
@@ -1119,6 +1162,9 @@ export function createMockControlPlane(options = {}) {
     if (wantTags.length > 0) filtered = filtered.filter((r) => wantTags.every((t) => (r.tags ?? []).includes(t)));
     const correlationId = params.get('correlationId');
     if (correlationId) filtered = filtered.filter((r) => r.correlationId === correlationId);
+
+    // Reach (§14.2): the caller sees only runs whose workflow domain their read reach admits (non-disclosing).
+    filtered = filtered.filter((r) => reachAdmitsDomain(domainOf(baseWorkflowOf(r.workflowId))));
 
     const slice = filtered.slice(offset, offset + limit);
     const hasMore = offset + limit < filtered.length;
@@ -1197,7 +1243,11 @@ export function createMockControlPlane(options = {}) {
       const sub = versionMatch[3];
       const v = findVersion(base, n);
       if (!v) return problem(404, 'Version not found', `No version ${n} of workflow '${base}'.`);
-      if (!sub && method === 'GET') return json(toCatalogSummary(v));
+      if (!sub && method === 'GET') {
+        // Reach (§14.2): a version whose workflow domain the caller cannot read reads back as not found.
+        if (!reachAdmitsDomain(domainOf(v.baseWorkflowId))) return problem(404, 'Version not found', `No version ${n} of workflow '${base}'.`);
+        return json(toCatalogSummary(v));
+      }
       if (!sub && method === 'PATCH') return updateVersion(v, body);
       if (!sub && method === 'DELETE') return deleteVersion(v);
       if (sub === 'package' && method === 'GET') return packageResponse(v);
@@ -1234,6 +1284,8 @@ export function createMockControlPlane(options = {}) {
     if (owner && !v.owner.name.toLowerCase().includes(owner) && !v.owner.email.toLowerCase().includes(owner)) return false;
     const wantTags = params.getAll('tag').filter(Boolean);
     if (wantTags.length > 0 && !wantTags.every((t) => (v.tags ?? []).includes(t))) return false;
+    // Reach (§14.2): a version whose workflow domain the caller cannot read is invisible.
+    if (!reachAdmitsDomain(domainOf(v.baseWorkflowId))) return false;
     return true;
   }
 
@@ -1272,6 +1324,8 @@ export function createMockControlPlane(options = {}) {
   }
 
   function listCatalogVersions(base, params) {
+    // Reach (§14.2): a workflow whose domain the caller cannot read has no visible versions (non-disclosing).
+    if (!reachAdmitsDomain(domainOf(base))) return pageCatalog([], params);
     return pageCatalog(catalog.filter((v) => v.baseWorkflowId === base), params);
   }
 
