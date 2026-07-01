@@ -65,11 +65,23 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// Mirrors the C# emitter's version behaviour: only the OpenAPI 3.2 target extracts the document
+    /// security schemes into the <see cref="ClientEmitContext"/> (the 3.0/3.1 C# emitters leave
+    /// <see cref="ClientEmitContext.SecuritySchemes"/> <see langword="null"/>, and the shared
+    /// <c>SecurityRequirements</c> emit is gated on a non-null array). The 3.2 walker is the only one
+    /// whose typed model carries the flow/scope detail this metadata surfaces, so we gate the
+    /// extraction on the <c>openapi</c> version string the same way.
+    /// </remarks>
     public ClientEmitContext PrepareContext(
         JsonElement specRoot,
         IOpenApiReferenceResolver referenceResolver,
         ServerInfo? rootServer)
-        => new(specRoot, referenceResolver, rootServer);
+        => new(
+            specRoot,
+            referenceResolver,
+            rootServer,
+            SecuritySchemes: IsOpenApi32(specRoot) ? ExtractSecuritySchemes(specRoot) : null);
 
     /// <inheritdoc/>
     public GeneratedFile EmitRequestModule(OperationInfo op)
@@ -91,7 +103,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         string tag,
         IReadOnlyList<OperationInfo> tagOperations,
         ClientEmitContext context)
-        => this.EmitImplementation(this.GetClientName(tag), tagOperations, context.RootServer);
+        => this.EmitImplementation(this.GetClientName(tag), tagOperations, context.RootServer, context.SecuritySchemes);
 
     // The server-side IClientEmitter members default to null (client-only target); no override needed.
 
@@ -2356,7 +2368,8 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
     private GeneratedFile EmitImplementation(
         string clientName,
         IReadOnlyList<OperationInfo> operations,
-        ServerInfo? serverInfo)
+        ServerInfo? serverInfo,
+        SecuritySchemeInfo[]? securitySchemes)
     {
         string className = $"{clientName}Client";
         string interfaceName = $"I{clientName}Client";
@@ -2459,6 +2472,19 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.PopIndent();
         w.WriteLine("}");
 
+        // Spec-derived security constants, mirroring the C# client's SecuritySchemes /
+        // SecurityRequirements nested classes as camelCased `as const` object literals. Emitted only for
+        // the versions whose context carries the schemes (3.2), matching the C# gate.
+        if (securitySchemes is { Length: > 0 })
+        {
+            EmitSecuritySchemeMetadata(w, securitySchemes);
+        }
+
+        if (securitySchemes is not null)
+        {
+            EmitSecurityRequirements(w, operations);
+        }
+
         if (serverInfo is { } si)
         {
             w.WriteLine();
@@ -2481,6 +2507,323 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.WriteLine("}");
 
         return new GeneratedFile($"{className}.ts", w.ToString());
+    }
+
+    // ── Security metadata ───────────────────────────────────────────────
+    // Whether the spec declares OpenAPI 3.2 (the only version whose C# emitter populates the context's
+    // security schemes; 3.0/3.1 leave them null and emit neither block).
+    private static bool IsOpenApi32(JsonElement specRoot)
+        => specRoot.TryGetProperty("openapi"u8, out JsonElement version)
+            && version.ValueKind == JsonValueKind.String
+            && version.GetString() is { } v
+            && v.StartsWith("3.2", StringComparison.Ordinal);
+
+    // Extracts the document security schemes from the raw spec, mirroring the 3.2 C# emitter's
+    // PrepareSecuritySchemes (same field selection per scheme type; oauth2 aggregates tokenUrl /
+    // authorizationUrl / deviceAuthorizationUrl and the deduped, ordinal-sorted scope union across
+    // every flow).
+    private static SecuritySchemeInfo[] ExtractSecuritySchemes(JsonElement specRoot)
+    {
+        if (!specRoot.TryGetProperty("components"u8, out JsonElement components)
+            || components.ValueKind != JsonValueKind.Object
+            || !components.TryGetProperty("securitySchemes"u8, out JsonElement schemes)
+            || schemes.ValueKind != JsonValueKind.Object)
+        {
+            return [];
+        }
+
+        List<SecuritySchemeInfo> result = [];
+
+        foreach (JsonProperty<JsonElement> schemeProp in schemes.EnumerateObject())
+        {
+            JsonElement scheme = schemeProp.Value;
+            string schemeName = schemeProp.Name;
+            string schemeType = StringProperty(scheme, "type"u8) ?? "unknown";
+            bool isDeprecated = scheme.TryGetProperty("deprecated"u8, out JsonElement dep)
+                && dep.ValueKind == JsonValueKind.True;
+            string? description = StringProperty(scheme, "description"u8);
+
+            string? apiKeyName = null;
+            string? apiKeyIn = null;
+            string? httpScheme = null;
+            string? bearerFormat = null;
+            string? openIdConnectUrl = null;
+            string? oauth2MetadataUrl = null;
+            string? deviceAuthorizationUrl = null;
+
+            if (string.Equals(schemeType, "apiKey", StringComparison.Ordinal))
+            {
+                apiKeyName = StringProperty(scheme, "name"u8);
+                apiKeyIn = StringProperty(scheme, "in"u8);
+            }
+            else if (string.Equals(schemeType, "http", StringComparison.Ordinal))
+            {
+                httpScheme = StringProperty(scheme, "scheme"u8);
+                bearerFormat = StringProperty(scheme, "bearerFormat"u8);
+            }
+            else if (string.Equals(schemeType, "openIdConnect", StringComparison.Ordinal))
+            {
+                openIdConnectUrl = StringProperty(scheme, "openIdConnectUrl"u8);
+            }
+            else if (string.Equals(schemeType, "oauth2", StringComparison.Ordinal))
+            {
+                oauth2MetadataUrl = StringProperty(scheme, "oauth2MetadataUrl"u8);
+
+                string? tokenUrl = null;
+                string? authorizationUrl = null;
+                HashSet<string> allScopes = new(StringComparer.Ordinal);
+
+                if (scheme.TryGetProperty("flows"u8, out JsonElement flows)
+                    && flows.ValueKind == JsonValueKind.Object)
+                {
+                    if (flows.TryGetProperty("deviceAuthorization"u8, out JsonElement deviceFlow)
+                        && deviceFlow.ValueKind == JsonValueKind.Object)
+                    {
+                        deviceAuthorizationUrl = StringProperty(deviceFlow, "deviceAuthorizationUrl"u8);
+                    }
+
+                    ExtractOAuth2FlowDetails(flows, ref tokenUrl, ref authorizationUrl, allScopes);
+                }
+
+                string[]? orderedScopes = allScopes.Count > 0
+                    ? [.. allScopes.OrderBy(s => s, StringComparer.Ordinal)]
+                    : null;
+
+                result.Add(new SecuritySchemeInfo(
+                    schemeName,
+                    schemeType,
+                    isDeprecated,
+                    description,
+                    apiKeyName,
+                    apiKeyIn,
+                    httpScheme,
+                    bearerFormat,
+                    openIdConnectUrl,
+                    oauth2MetadataUrl,
+                    deviceAuthorizationUrl,
+                    tokenUrl,
+                    authorizationUrl,
+                    orderedScopes));
+                continue;
+            }
+
+            result.Add(new SecuritySchemeInfo(
+                schemeName,
+                schemeType,
+                isDeprecated,
+                description,
+                apiKeyName,
+                apiKeyIn,
+                httpScheme,
+                bearerFormat,
+                openIdConnectUrl,
+                oauth2MetadataUrl,
+                deviceAuthorizationUrl));
+        }
+
+        return [.. result];
+    }
+
+    // Aggregates tokenUrl / authorizationUrl (first flow that defines each) and the scope union across
+    // every OAuth2 flow, mirroring the 3.2 C# emitter's ExtractOAuth2FlowDetails.
+    private static void ExtractOAuth2FlowDetails(
+        JsonElement flows,
+        ref string? tokenUrl,
+        ref string? authorizationUrl,
+        HashSet<string> allScopes)
+    {
+        if (flows.TryGetProperty("authorizationCode"u8, out JsonElement authCode) && authCode.ValueKind == JsonValueKind.Object)
+        {
+            tokenUrl ??= StringProperty(authCode, "tokenUrl"u8);
+            authorizationUrl ??= StringProperty(authCode, "authorizationUrl"u8);
+            CollectScopes(authCode, allScopes);
+        }
+
+        if (flows.TryGetProperty("clientCredentials"u8, out JsonElement clientCreds) && clientCreds.ValueKind == JsonValueKind.Object)
+        {
+            tokenUrl ??= StringProperty(clientCreds, "tokenUrl"u8);
+            CollectScopes(clientCreds, allScopes);
+        }
+
+        if (flows.TryGetProperty("implicit"u8, out JsonElement implicitFlow) && implicitFlow.ValueKind == JsonValueKind.Object)
+        {
+            authorizationUrl ??= StringProperty(implicitFlow, "authorizationUrl"u8);
+            CollectScopes(implicitFlow, allScopes);
+        }
+
+        if (flows.TryGetProperty("password"u8, out JsonElement password) && password.ValueKind == JsonValueKind.Object)
+        {
+            tokenUrl ??= StringProperty(password, "tokenUrl"u8);
+            CollectScopes(password, allScopes);
+        }
+
+        if (flows.TryGetProperty("deviceAuthorization"u8, out JsonElement device) && device.ValueKind == JsonValueKind.Object)
+        {
+            tokenUrl ??= StringProperty(device, "tokenUrl"u8);
+            CollectScopes(device, allScopes);
+        }
+    }
+
+    private static void CollectScopes(JsonElement flow, HashSet<string> allScopes)
+    {
+        if (flow.TryGetProperty("scopes"u8, out JsonElement scopes) && scopes.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty<JsonElement> scopeProp in scopes.EnumerateObject())
+            {
+                allScopes.Add(scopeProp.Name);
+            }
+        }
+    }
+
+    private static string? StringProperty(JsonElement element, System.ReadOnlySpan<byte> name)
+        => element.TryGetProperty(name, out JsonElement value) && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
+
+    // Emits `static readonly securitySchemes = { … } as const;` — the camelCased flat mirror of the C#
+    // SecuritySchemes nested class (one member per present field, same conditionals per scheme type).
+    private static void EmitSecuritySchemeMetadata(IndentedWriter w, SecuritySchemeInfo[] schemes)
+    {
+        w.WriteLine();
+        w.WriteLine("/**");
+        w.WriteLine(" * Security scheme metadata from the specification.");
+        w.WriteLine(" */");
+        w.WriteLine("static readonly securitySchemes = {");
+        w.PushIndent();
+
+        foreach (SecuritySchemeInfo scheme in schemes)
+        {
+            string prop = CamelCase(CodeEmitHelpers.SanitizeIdentifier(scheme.SchemeName));
+
+            w.WriteLine($"{prop}Name: {StringLiteral(scheme.SchemeName)},");
+            w.WriteLine($"{prop}Type: {StringLiteral(scheme.SchemeType)},");
+
+            if (scheme.HttpScheme is { } httpScheme)
+            {
+                w.WriteLine($"{prop}Scheme: {StringLiteral(httpScheme)},");
+            }
+
+            if (scheme.ApiKeyName is { } apiKeyName)
+            {
+                w.WriteLine($"{prop}KeyName: {StringLiteral(apiKeyName)},");
+            }
+
+            if (scheme.ApiKeyIn is { } apiKeyIn)
+            {
+                w.WriteLine($"{prop}KeyLocation: {StringLiteral(apiKeyIn)},");
+            }
+
+            if (scheme.OpenIdConnectUrl is { } openIdConnectUrl)
+            {
+                w.WriteLine($"{prop}OpenIdConnectUrl: {StringLiteral(openIdConnectUrl)},");
+            }
+
+            if (scheme.Oauth2MetadataUrl is { } oauth2MetadataUrl)
+            {
+                w.WriteLine($"{prop}Oauth2MetadataUrl: {StringLiteral(oauth2MetadataUrl)},");
+            }
+
+            if (scheme.DeviceAuthorizationUrl is { } deviceAuthorizationUrl)
+            {
+                w.WriteLine($"{prop}DeviceAuthorizationUrl: {StringLiteral(deviceAuthorizationUrl)},");
+            }
+
+            if (scheme.TokenUrl is { } tokenUrl)
+            {
+                w.WriteLine($"{prop}TokenUrl: {StringLiteral(tokenUrl)},");
+            }
+
+            if (scheme.AuthorizationUrl is { } authorizationUrl)
+            {
+                w.WriteLine($"{prop}AuthorizationUrl: {StringLiteral(authorizationUrl)},");
+            }
+
+            if (scheme.AvailableScopes is { Length: > 0 } availableScopes)
+            {
+                string scopeArray = string.Join(", ", availableScopes.Select(StringLiteral));
+                w.WriteLine($"{prop}AvailableScopes: [{scopeArray}],");
+            }
+        }
+
+        w.PopIndent();
+        w.WriteLine("} as const;");
+    }
+
+    // Emits `static readonly securityRequirements = { … } as const;` — per-operation `{method}{Scheme}Scopes`
+    // plus a deduped, ordinal-sorted `all{Scheme}Scopes` union per scheme, the camelCased mirror of the C#
+    // SecurityRequirements nested class. Only emitted when at least one per-operation scope entry exists.
+    private static void EmitSecurityRequirements(IndentedWriter w, IReadOnlyList<OperationInfo> operations)
+    {
+        List<(string MethodName, string SchemeProp, string[] Scopes)> perOperationEntries = [];
+
+        foreach (OperationInfo op in operations)
+        {
+            if (op.SecurityRequirements is not { Length: > 0 } sets)
+            {
+                continue;
+            }
+
+            foreach (OperationSecurityRequirementSet set in sets)
+            {
+                foreach (OperationSecurityRequirement req in set.Requirements)
+                {
+                    if (req.Scopes.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    string schemeProp = CodeEmitHelpers.SanitizeIdentifier(req.SchemeName);
+                    perOperationEntries.Add((op.MethodName, schemeProp, req.Scopes));
+                }
+            }
+        }
+
+        if (perOperationEntries.Count == 0)
+        {
+            return;
+        }
+
+        w.WriteLine();
+        w.WriteLine("/**");
+        w.WriteLine(" * Per-operation security requirements from the specification.");
+        w.WriteLine(" */");
+        w.WriteLine("static readonly securityRequirements = {");
+        w.PushIndent();
+
+        foreach ((string methodName, string schemeProp, string[] scopes) in perOperationEntries)
+        {
+            string member = $"{CamelCase(methodName)}{schemeProp}Scopes";
+            string scopeArray = string.Join(", ", scopes.Select(StringLiteral));
+            w.WriteLine($"{member}: [{scopeArray}],");
+        }
+
+        // Deduped, ordinal-sorted scope union per scheme (insertion order of first appearance for the
+        // scheme keys, matching the C# Dictionary enumeration over the per-operation entries).
+        Dictionary<string, SortedSet<string>> unionByScheme = new(StringComparer.Ordinal);
+        List<string> schemeOrder = [];
+        foreach ((_, string schemeProp, string[] scopes) in perOperationEntries)
+        {
+            if (!unionByScheme.TryGetValue(schemeProp, out SortedSet<string>? unionScopes))
+            {
+                unionScopes = new SortedSet<string>(StringComparer.Ordinal);
+                unionByScheme[schemeProp] = unionScopes;
+                schemeOrder.Add(schemeProp);
+            }
+
+            foreach (string scope in scopes)
+            {
+                unionScopes.Add(scope);
+            }
+        }
+
+        foreach (string schemeProp in schemeOrder)
+        {
+            string allScopeArray = string.Join(", ", unionByScheme[schemeProp].Select(StringLiteral));
+            w.WriteLine($"all{schemeProp}Scopes: [{allScopeArray}],");
+        }
+
+        w.PopIndent();
+        w.WriteLine("} as const;");
     }
 
     private void EmitClientMethod(IndentedWriter w, OperationInfo op)

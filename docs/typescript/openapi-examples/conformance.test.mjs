@@ -305,6 +305,34 @@ for (const version of VERSIONS) {
       );
     });
 
+    test(`${version}: exposes spec-derived security constants (securitySchemes / securityRequirements)`, async () => {
+      const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+      // securitySchemes mirrors the C# SecuritySchemes nested class as a camelCased flat `as const`
+      // object: one member per present field per scheme (same conditionals as C#).
+      assert.equal(ApiStatusClient.securitySchemes.oauth2Name, "oauth2");
+      assert.equal(ApiStatusClient.securitySchemes.oauth2Type, "oauth2");
+      assert.equal(ApiStatusClient.securitySchemes.oauth2TokenUrl, "https://auth.example.com/token");
+      assert.equal(
+        ApiStatusClient.securitySchemes.oauth2AuthorizationUrl,
+        "https://auth.example.com/authorize",
+      );
+      // The available-scope union is deduped and ordinal-sorted across every flow.
+      assert.deepEqual(ApiStatusClient.securitySchemes.oauth2AvailableScopes, ["read:pets", "write:pets"]);
+      // The apiKey scheme surfaces its name + location.
+      assert.equal(ApiStatusClient.securitySchemes.apiKeyName, "apiKey");
+      assert.equal(ApiStatusClient.securitySchemes.apiKeyType, "apiKey");
+      assert.equal(ApiStatusClient.securitySchemes.apiKeyKeyName, "X-API-Key");
+      assert.equal(ApiStatusClient.securitySchemes.apiKeyKeyLocation, "header");
+
+      // securityRequirements mirrors the C# SecurityRequirements nested class: per-operation
+      // `{method}{Scheme}Scopes` plus a deduped, ordinal-sorted `all{Scheme}Scopes` union.
+      assert.deepEqual(ApiStatusClient.securityRequirements.getStatusOauth2Scopes, ["read:pets"]);
+      assert.deepEqual(ApiStatusClient.securityRequirements.getPetOauth2Scopes, ["read:pets"]);
+      assert.deepEqual(ApiStatusClient.securityRequirements.updatePetOauth2Scopes, ["write:pets"]);
+      assert.deepEqual(ApiStatusClient.securityRequirements.allOauth2Scopes, ["read:pets", "write:pets"]);
+    });
+
     test(`${version}: events streams Server-Sent Events as parsed items`, async () => {
       const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
 
