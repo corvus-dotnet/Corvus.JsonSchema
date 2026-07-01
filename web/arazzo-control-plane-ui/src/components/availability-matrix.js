@@ -29,7 +29,7 @@ function usableByWorkflow(binding, baseWorkflowId) {
 
 class ArazzoAvailabilityMatrix extends ArazzoElement {
   static get observedAttributes() {
-    return ['base-url', 'base-workflow-id', 'selected-version', 'scopes'];
+    return ['base-url', 'base-workflow-id', 'selected-version', 'single-version', 'scopes'];
   }
 
   constructor() {
@@ -50,7 +50,7 @@ class ArazzoAvailabilityMatrix extends ArazzoElement {
 
   attributeChangedCallback(name) {
     if (!this.isConnected) return;
-    if (name === 'selected-version' || name === 'scopes') this.renderBody();
+    if (name === 'selected-version' || name === 'single-version' || name === 'scopes') this.renderBody();
     else { this._client = undefined; this.load(); }
   }
 
@@ -258,8 +258,17 @@ class ArazzoAvailabilityMatrix extends ArazzoElement {
     }
 
     const selected = this.selectedVersion;
+    // In single-version mode (embedded in the catalog detail) the matrix is scoped to the selected version's row only —
+    // the (version × environment) grid for just that version, like the source/credential section it sits beside.
+    const shown = (this.hasAttribute('single-version') && selected != null)
+      ? this._versions.filter((v) => v.versionNumber === selected)
+      : this._versions;
+    if (shown.length === 0) {
+      body.innerHTML = '<div class="empty">This version is not shown in the matrix.</div>';
+      return;
+    }
     const head = `<thead><tr><th>Version</th>${this._environments.map((e) => `<th class="env">${escapeHtml(e.displayName || e.name)}</th>`).join('')}</tr></thead>`;
-    const rows = this._versions.map((v) => {
+    const rows = shown.map((v) => {
       const cells = this._environments.map((e) => `<td>${this.cellHtml(v, e.name)}</td>`).join('');
       const status = v.status && v.status !== 'Active' ? `<span class="vstatus">${escapeHtml(v.status)}</span>` : '';
       return `<tr part="row"${selected === v.versionNumber ? ' class="selected"' : ''}><td class="ver">v${escapeHtml(v.versionNumber)}${status}</td>${cells}</tr>`;

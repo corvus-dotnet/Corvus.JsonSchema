@@ -64,8 +64,14 @@ class ArazzoCatalogDetail extends ArazzoElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (!this.isConnected || oldValue === newValue) return;
-    if (name === 'base-workflow-id' || name === 'version-number') this.load();
-    else this.renderBody();
+    if (name === 'base-workflow-id' || name === 'version-number') {
+      // A new selection: drop the cached credential list so the source strip reflects the current credentials for the
+      // version now shown (e.g. a Staging binding added since this detail last loaded), not a stale earlier snapshot.
+      this._creds = null;
+      this.load();
+    } else {
+      this.renderBody();
+    }
   }
 
   /** The current version summary. Set it to render without a fetch (then it loads authoritative detail). */
@@ -445,6 +451,8 @@ class ArazzoCatalogDetail extends ArazzoElement {
     if (!m) return;
     const scopes = this.getAttribute('scopes') || '';
     if (m.getAttribute('scopes') !== scopes) m.setAttribute('scopes', scopes);
+    // Scope the embedded matrix to just this version's row (like the source/credential section), not every version.
+    if (!m.hasAttribute('single-version')) m.setAttribute('single-version', '');
     m.setAttribute('selected-version', String(v.versionNumber));
     // Only (re)load when the base workflow changes; switching versions within a base just re-highlights the row.
     if (m.getAttribute('base-workflow-id') !== v.baseWorkflowId) {

@@ -34,6 +34,16 @@ describe('<arazzo-availability-matrix>', () => {
     ok(q(el, '.badge.notready').length > 0, 'the credential-less qa column is not ready');
   });
 
+  it('shows only the selected version row in single-version mode (embedded in the detail)', async () => {
+    // nightly-reconcile has 3 versions; single-version scopes the grid to just the selected one's row.
+    el = await matrix({ 'base-workflow-id': 'nightly-reconcile', 'selected-version': '2', 'single-version': '', scopes: FULL });
+    await nextEvent(el, 'loaded');
+    equal(q(el, 'tbody tr').length, 1, 'only the selected version row is shown');
+    ok(el.shadowRoot.querySelector('td.ver').textContent.includes('v2'), 'and it is the selected version');
+    // The environment columns are still all present (it is a single-version × all-environments row).
+    equal(q(el, 'thead th').length, 3, 'Version + production + staging');
+  });
+
   it('makes a version available in a cell and emits availability-changed', async () => {
     el = await matrix({ 'base-workflow-id': 'nightly-reconcile', scopes: FULL });
     await nextEvent(el, 'loaded');
