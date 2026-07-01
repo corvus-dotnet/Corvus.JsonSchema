@@ -1,5 +1,6 @@
-// <arazzo-scopes-panel> — manage reusable access scopes (design §14.2): named row-filter expressions a grant binds
-// per action. "Scope" is the user-facing term for what the API calls a security rule.
+// <arazzo-scopes-panel> — manage reusable reach RULES (design §14.2): named row-filter expressions a grant binds per
+// verb. "Rule" is the user-facing term (it matches the API's security rule); the tag stays `arazzo-scopes-panel` for
+// compatibility. A rule is reach (which rows), never capability (which operations) — that lives in the token (§14.1).
 //
 //   <arazzo-scopes-panel base-url="/arazzo/v1" scopes="security:read security:write"></arazzo-scopes-panel>
 //
@@ -22,13 +23,13 @@ const SEARCH_DEBOUNCE_MS = 250;
 
 // The template-first goals. `build` writes the expression; `suggest` proposes a name from the fields.
 const TEMPLATES = [
-  { id: 'label-eq', label: 'Records with a label value', build: (f) => `${dim(f, 'domain')} == ${lit(f.value)}`, suggest: (f) => `scope-${slug(f.value) || 'label'}` },
-  { id: 'in', label: 'Records whose label is one of…', build: (f) => `${dim(f, 'tenant')} in (${values(f).map(lit).join(', ')})`, suggest: (f) => `scope-${slug(f.dim) || 'set'}` },
+  { id: 'label-eq', label: 'Records with a label value', build: (f) => `${dim(f, 'domain')} == ${lit(f.value)}`, suggest: (f) => `rule-${slug(f.value) || 'label'}` },
+  { id: 'in', label: 'Records whose label is one of…', build: (f) => `${dim(f, 'tenant')} in (${values(f).map(lit).join(', ')})`, suggest: (f) => `rule-${slug(f.dim) || 'set'}` },
   { id: 'claim', label: "Records matching the caller's claim", build: (f) => `${dim(f, 'tenant')} == $claim.${(f.claimDim || '').trim() || dim(f, 'tenant')}`, suggest: (f) => `${slug(f.dim) || 'tenant'}-scoped` },
   { id: 'intersects', label: 'Records sharing any label with the caller', build: () => '$claims.intersects', suggest: () => 'shares-a-label' },
   { id: 'superset', label: 'Caller cleared for every label (ABAC)', build: () => '$claims.superset', suggest: () => 'abac-superset' },
-  { id: 'ordered', label: 'Records at a classification level', build: (f) => `${(f.dim || '').trim()} ${f.comparator || '<='} ${lit(f.value)}`, suggest: (f) => `scope-${slug(f.value) || 'level'}` },
-  { id: 'advanced', label: 'Advanced — write an expression', build: (f) => (f.expression || '').trim(), suggest: (f) => f.name || 'scope' },
+  { id: 'ordered', label: 'Records at a classification level', build: (f) => `${(f.dim || '').trim()} ${f.comparator || '<='} ${lit(f.value)}`, suggest: (f) => `rule-${slug(f.value) || 'level'}` },
+  { id: 'advanced', label: 'Advanced — write an expression', build: (f) => (f.expression || '').trim(), suggest: (f) => f.name || 'rule' },
 ];
 
 const COMPARATORS = [
@@ -213,8 +214,8 @@ class ArazzoScopesPanel extends ArazzoElement {
 
   async deleteScope(name) {
     const confirmed = await confirmDialog(this, {
-      title: 'Delete scope',
-      message: `Delete the scope '${name}'? Grants that reference it will lose that reach.`,
+      title: 'Delete rule',
+      message: `Delete the rule '${name}'? Grants that reference it will lose that reach.`,
       confirmLabel: 'Delete', danger: true,
     });
     if (!confirmed) return;
@@ -289,15 +290,15 @@ class ArazzoScopesPanel extends ArazzoElement {
       <div class="layout" part="layout">
         <div class="wrap" part="panel">
           <div class="toolbar" part="toolbar">
-            <span class="title">Scopes</span>
+            <span class="title">Rules</span>
             <span class="grow"></span>
-            <input class="search" type="search" placeholder="Search scopes…" aria-label="Search scopes">
+            <input class="search" type="search" placeholder="Search rules…" aria-label="Search rules">
             <button class="refresh ghost" type="button" title="Refresh">↻</button>
-            <button class="new primary" type="button" hidden>New scope</button>
+            <button class="new primary" type="button" hidden>New rule</button>
           </div>
           <div class="err"></div>
           <table>
-            <thead><tr><th>Scope</th><th>Expression</th></tr></thead>
+            <thead><tr><th>Rule</th><th>Expression</th></tr></thead>
             <tbody class="list" part="rows"></tbody>
           </table>
           <arazzo-pager class="pager" part="pager"></arazzo-pager>
@@ -331,7 +332,7 @@ class ArazzoScopesPanel extends ArazzoElement {
     if (this._loading && this._scopes.length === 0) {
       list.innerHTML = `<tr><td colspan="2"><div class="skl"></div><div class="skl"></div></td></tr>`;
     } else if (this._scopes.length === 0) {
-      list.innerHTML = `<tr><td colspan="2"><div class="empty">${this._query.trim() ? `No scopes match “${escapeHtml(this._query.trim())}”.` : 'No scopes defined.'}</div></td></tr>`;
+      list.innerHTML = `<tr><td colspan="2"><div class="empty">${this._query.trim() ? `No rules match “${escapeHtml(this._query.trim())}”.` : 'No rules defined.'}</div></td></tr>`;
     } else {
       list.innerHTML = this._scopes.map((s) => `
         <tr class="srow selectable" part="row" data-name="${escapeHtml(s.name)}" aria-selected="${String(s.name === this._selectedName)}">
@@ -345,7 +346,7 @@ class ArazzoScopesPanel extends ArazzoElement {
       hasPrev: this._history.length > 0,
       hasNext: !!this._nextPageToken,
       loading: this._loading,
-      info: this._loading ? 'Loading…' : `${this._scopes.length} scope${this._scopes.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`,
+      info: this._loading ? 'Loading…' : `${this._scopes.length} rule${this._scopes.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`,
     });
   }
 
@@ -396,7 +397,7 @@ class ArazzoScopesPanel extends ArazzoElement {
     pane.innerHTML = `
       <div class="detail" part="detail">
         <div class="dhead">
-          <span class="dtitle">${isEdit ? `Edit scope '${escapeHtml(f.editName)}'` : 'New scope'}</span>
+          <span class="dtitle">${isEdit ? `Edit rule '${escapeHtml(f.editName)}'` : 'New rule'}</span>
           <span class="grow"></span>
           <button class="close ghost" type="button" title="Close" aria-label="Close">✕</button>
         </div>

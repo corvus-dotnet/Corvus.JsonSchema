@@ -15,7 +15,7 @@
 // (§16.5.2), so the form offers exactly the run verbs.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
-import './workflow-id-input.js';
+import './workflow-picker.js';
 
 // The three grant surfaces (§17.3): View (catalog:read — see the workflow's catalog entry; the least-privilege
 // default), Read runs (runs:read), and Operate (runs:write). runs:write *requires* runs:read — the grant maps the
@@ -78,7 +78,7 @@ class ArazzoAccessRequestDialog extends ArazzoElement {
   render() {
     const wfRow = this._lock
       ? `<div><div class="sub" style="margin-bottom:4px">Workflow</div><div class="locked-wf">${escapeHtml(this._baseWorkflowId)}</div></div>`
-      : `<label>Workflow<arazzo-workflow-id-input class="sub-wf" placeholder="Workflow id…"></arazzo-workflow-id-input></label>`;
+      : `<label>Workflow<arazzo-workflow-picker class="sub-wf" placeholder="Find a workflow…"></arazzo-workflow-picker></label>`;
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}

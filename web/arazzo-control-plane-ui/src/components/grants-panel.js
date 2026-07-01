@@ -1,6 +1,7 @@
-// <arazzo-grants-panel> — author access grants (design §14.2/§16.5): WHO (a claim) → WHAT/WHERE (per-action
-// read/write/purge access, scoped by reusable scopes). "Grant" is the user-facing term for what the API calls a
-// security binding; "scope" for a security rule.
+// <arazzo-grants-panel> — author access grants (design §14.2/§16.5): WHO (a claim) → WHERE (per-verb REACH — which
+// rows read/write/purge may touch, narrowed by reusable rules). "Grant" is the user-facing term for what the API calls
+// a security binding; "rule" for a security rule. NB: reach is NOT capability — which operations a caller may perform
+// (e.g. write runs vs. environments) comes from their role's token scopes (§14.1), not from a grant.
 //
 //   <arazzo-grants-panel base-url="/arazzo/v1" scopes="security:read security:write"></arazzo-grants-panel>
 //
@@ -20,7 +21,7 @@
 //           stays usable at hundreds — server-paged search). The claim is the immutable key, so it is read-only on edit.
 // The list is searched + paged server-side; "New grant" opens a blank pane; editing/deleting happen in the pane.
 
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, confirmDialog, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, PAGER_CSS, PICKER_CSS, escapeHtml, confirmDialog, define } from './base.js';
 import './grantee-picker.js';
 import './pager.js';
 
@@ -136,23 +137,50 @@ class ArazzoGrantsPanel extends ArazzoElement {
     this.load();
   }
 
-  /** Fetch a page of scopes matching `q` for the authoring typeahead, and refresh the datalist in place. Best-effort. */
+  /** Fetch a page of rules matching `q` for the authoring picker, and refresh the open dropdown in place. Best-effort. */
   async loadScopeOptions(q) {
     const client = this.client;
     if (!client) return;
     try {
       const page = await client.listSecurityRules({ q: q || undefined });
       this._scopes = page.rules;
-      this.updateScopeOptions();
+      this.renderRuleDropdown();
     } catch {
-      /* the typeahead is a convenience; a failed lookup just leaves the previous options */
+      /* the picker is a convenience; a failed lookup just leaves the previous options */
     }
   }
 
-  /** Refresh the shared scope datalist from the latest typeahead result (without re-rendering the editor / losing focus). */
-  updateScopeOptions() {
-    const dl = this.$('#scope-options');
-    if (dl) dl.innerHTML = this._scopes.map((s) => `<option value="${escapeHtml(s.name)}"></option>`).join('');
+  /** Render the open rule dropdown (the one for `_activeRuleVerb`) from the latest results, excluding already-added rules. */
+  renderRuleDropdown() {
+    const verb = this._activeRuleVerb;
+    if (!verb) return;
+    const list = this._pane?.querySelector(`.results[data-verb="${verb}"]`);
+    if (!list) return;
+    const added = new Set(this._form?.verbs[verb]?.scopes || []);
+    const options = this._scopes.filter((s) => !added.has(s.name));
+    if (!options.length) {
+      list.innerHTML = `<li role="option" aria-disabled="true">No matching rules</li>`;
+    } else {
+      list.innerHTML = options.map((s) => `<li role="option" data-name="${escapeHtml(s.name)}"><span><span class="label">${escapeHtml(s.name)}</span>${s.description ? `<div class="ident">${escapeHtml(s.description)}</div>` : ''}</span></li>`).join('');
+      list.querySelectorAll('li[data-name]').forEach((li) => li.addEventListener('click', () => this.addRule(verb, li.dataset.name)));
+    }
+    list.hidden = false;
+  }
+
+  /** Add a rule to a verb's reach (from a dropdown click), then re-render the editor with the new chip. */
+  addRule(verb, name) {
+    const f = this._form;
+    if (!f || !name || f.verbs[verb].scopes.includes(name)) return;
+    f.verbs[verb].scopes.push(name);
+    this._activeRuleVerb = null;
+    this.renderDetail();
+    this._pane?.querySelector(`.scope-input[data-verb="${verb}"]`)?.focus();
+  }
+
+  /** Hide any open rule dropdown. */
+  hideRuleDropdowns() {
+    this._activeRuleVerb = null;
+    this._pane?.querySelectorAll('.results').forEach((el) => { el.hidden = true; });
   }
 
   // ---- detail-pane authoring --------------------------------------------------------------------
@@ -293,6 +321,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
       <style>
         ${SHARED_CSS}
         ${PAGER_CSS}
+        ${PICKER_CSS}
         :host { display: block; }
         .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
         @media (min-width: 880px) { .layout.has-selection { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } }
@@ -338,6 +367,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
         .chip button { border: none; background: none; cursor: pointer; color: var(--_muted); font-size: 13px; line-height: 1; padding: 0; }
         .scope-empty { font-size: 12px; color: var(--_muted); }
         .verb-mode { font: inherit; padding: 7px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
+        .rule-search { position: relative; }
         .scope-input { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); box-sizing: border-box; }
         .dfoot { display: flex; gap: 8px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--_border); }
         .dfoot .grow { flex: 1; }
@@ -361,7 +391,6 @@ class ArazzoGrantsPanel extends ArazzoElement {
         </div>
         <div class="detail-pane"></div>
       </div>
-      <datalist id="scope-options"></datalist>
     `;
     this.$('.new').addEventListener('click', () => this.openCreate());
     this.$('.refresh').addEventListener('click', () => this.reload());
@@ -373,8 +402,16 @@ class ArazzoGrantsPanel extends ArazzoElement {
     });
     this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
     this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
+    // A pointerdown outside the open rule dropdown closes it (the dropdown lives in the rebuilt detail pane).
+    document.addEventListener('pointerdown', this._onDocDown ??= (e) => {
+      if (!this.shadowRoot.contains(e.composedPath()[0])) this.hideRuleDropdowns();
+    });
     this._pane = this.$('.detail-pane');
     this._layout = this.$('.layout');
+  }
+
+  disconnectedCallback() {
+    if (this._onDocDown) document.removeEventListener('pointerdown', this._onDocDown);
   }
 
   renderBody() {
@@ -410,14 +447,17 @@ class ArazzoGrantsPanel extends ArazzoElement {
 
   verbRowHtml(verb) {
     const v = this._form.verbs[verb];
-    const modes = [['denied', 'Denied'], ['unrestricted', 'Unrestricted'], ['scopes', 'Scoped']];
+    const modes = [['denied', 'Denied'], ['unrestricted', 'Unrestricted'], ['scopes', 'Limited to rules']];
     let picker = '';
     if (v.mode === 'scopes') {
       const chips = v.scopes.map((name) => `<span class="chip">${escapeHtml(name)}<button type="button" class="chip-rm" data-verb="${verb}" data-scope="${escapeHtml(name)}" aria-label="remove ${escapeHtml(name)}">×</button></span>`).join('');
       picker = `
         <div class="scope-pick">
-          <div class="chips">${chips || '<span class="scope-empty">No scopes yet — search to add.</span>'}</div>
-          <input class="scope-input" data-verb="${verb}" list="scope-options" placeholder="Search scopes to add…" aria-label="add a scope to ${verb}">
+          <div class="chips">${chips || '<span class="scope-empty">No rules yet — search to add.</span>'}</div>
+          <div class="rule-search">
+            <input class="scope-input" data-verb="${verb}" type="search" autocomplete="off" placeholder="Search rules to add…" aria-label="add a rule to ${verb}">
+            <ul class="results" data-verb="${verb}" role="listbox" hidden></ul>
+          </div>
         </div>`;
     }
     return `
@@ -452,11 +492,14 @@ class ArazzoGrantsPanel extends ArazzoElement {
               <div class="field"><span>Grantee</span><arazzo-grantee-picker class="who-picker" placeholder="a team or role…"></arazzo-grantee-picker></div>
               ${f.personBlocked ? `<div class="error-banner steer"><span>Per-person elevation for <strong>${escapeHtml(f.granteeLabel)}</strong> goes through the <strong>access-request flow</strong>, not a direct grant — request and have it approved instead.</span></div>` : ''}`}
             <div class="field"><span>Claim type</span><input class="f-claimType" placeholder="team" value="${escapeHtml(f.claimType)}" ${isEdit ? 'readonly' : ''}></div>
-            <div class="field"><span>Claim value</span><input class="f-claimValue" placeholder="(any value of the type)" value="${escapeHtml(f.claimValue)}"></div>
-            <div class="caveat">A claim is only as trustworthy as the issuer asserting it. With multiple semi-trusted identity providers, prefer an issuer-qualified claim over a bare one.</div>
+            <div class="field"><span>Claim value</span><input class="f-claimValue" placeholder="(any value of the type)" value="${escapeHtml(f.claimValue)}" ${isEdit ? 'readonly' : ''}></div>
+            ${isEdit
+              ? `<div class="caveat">The claim identifies <strong>who</strong> this grant applies to and is fixed after creation — to change who, delete this grant and create a new one via the picker.</div>`
+              : `<div class="caveat">A claim is only as trustworthy as the issuer asserting it. With multiple semi-trusted identity providers, prefer an issuer-qualified claim over a bare one.</div>`}
           </div>
           <div class="section">
-            <span class="slabel">WHERE — per-action access</span>
+            <span class="slabel">WHERE — reach, per action</span>
+            <div class="caveat">This grants <strong>reach</strong> — which <strong>rows</strong> this claim may read / write / purge, narrowed by the rules you attach. It does <em>not</em> grant capability: <em>which operations</em> a caller may perform (e.g. write runs vs. environments) comes from their role's token scopes, not here.</div>
             ${VERBS.map((v) => this.verbRowHtml(v)).join('')}
           </div>
           <div class="field"><span>Description</span><input class="f-description" placeholder="(optional)" value="${escapeHtml(f.description)}"></div>
@@ -470,7 +513,6 @@ class ArazzoGrantsPanel extends ArazzoElement {
         </div>
       </div>
     `;
-    this.$('#scope-options').innerHTML = this._scopes.map((s) => `<option value="${escapeHtml(s.name)}"></option>`).join('');
 
     const picker = pane.querySelector('.who-picker');
     if (picker) {
@@ -488,25 +530,22 @@ class ArazzoGrantsPanel extends ArazzoElement {
       this.renderDetail();
     }));
 
-    // Scope typeahead: as the user types, fetch matching scopes from the server (debounced) into the shared datalist, so
-    // the vocabulary scales without loading it all up front.
-    pane.querySelectorAll('.scope-input').forEach((input) => input.addEventListener('input', () => {
-      clearTimeout(this._scopeTimer);
-      const q = input.value.trim();
-      this._scopeTimer = setTimeout(() => this.loadScopeOptions(q), SEARCH_DEBOUNCE_MS);
-    }));
-    // Selecting a known scope name (from the datalist) adds a removable chip.
-    pane.querySelectorAll('.scope-input').forEach((input) => input.addEventListener('change', () => {
-      const name = input.value.trim();
+    // Rule picker: focus pops an initial suggestions dropdown; typing narrows it (server-paged); clicking a result
+    // (renderRuleDropdown → addRule) adds a chip. `change` (exact-typed name + Enter/blur) is a keyboard fallback.
+    pane.querySelectorAll('.scope-input').forEach((input) => {
       const verb = input.dataset.verb;
-      if (name && this._scopes.some((s) => s.name === name) && !f.verbs[verb].scopes.includes(name)) {
-        f.verbs[verb].scopes.push(name);
-        this.renderDetail();
-        pane.querySelector(`.scope-input[data-verb="${verb}"]`)?.focus();
-      } else {
-        input.value = '';
-      }
-    }));
+      input.addEventListener('focus', () => { this.hideRuleDropdowns(); this._activeRuleVerb = verb; this.loadScopeOptions(input.value.trim()); });
+      input.addEventListener('input', () => {
+        this._activeRuleVerb = verb;
+        clearTimeout(this._scopeTimer);
+        this._scopeTimer = setTimeout(() => this.loadScopeOptions(input.value.trim()), SEARCH_DEBOUNCE_MS);
+      });
+      input.addEventListener('change', () => {
+        const name = input.value.trim();
+        if (name && this._scopes.some((s) => s.name === name)) this.addRule(verb, name);
+        else input.value = '';
+      });
+    });
     pane.querySelectorAll('.chip-rm').forEach((btn) => btn.addEventListener('click', () => {
       const list = f.verbs[btn.dataset.verb].scopes;
       const i = list.indexOf(btn.dataset.scope);
