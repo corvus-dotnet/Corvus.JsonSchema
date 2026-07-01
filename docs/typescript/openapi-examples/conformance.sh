@@ -46,6 +46,6 @@ done
 echo "compiling conformance clients..."
 (cd "$HERE" && npx tsc -p tsconfig.conformance.json)
 
-echo "running node:test conformance suite..."
-(cd "$HERE" && node --test conformance.test.mjs)
-echo "OK — conformance suite passed."
+echo "running node:test conformance + parity suites..."
+(cd "$HERE" && node --test conformance.test.mjs parity.test.mjs)
+echo "OK — conformance + parity suites passed."
