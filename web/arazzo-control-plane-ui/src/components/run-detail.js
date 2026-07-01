@@ -204,6 +204,7 @@ class ArazzoRunDetail extends ArazzoElement {
         <dt>Run id</dt><dd class="mono" part="cursor">${escapeHtml(run.id)}</dd>
         <dt>Cursor</dt><dd part="cursor">${run.cursor == null ? '<span class="muted">…</span>' : escapeHtml(String(run.cursor)) + ' <span class="muted">(next step index)</span>'}</dd>
         <dt>Created</dt><dd class="muted" title="${escapeHtml(absoluteTime(run.createdAt))}">${escapeHtml(relativeTime(run.createdAt))}</dd>
+        ${run.environment ? `<dt>Environment</dt><dd part="environment"><div class="tags"><span class="tag">${escapeHtml(run.environment)}</span></div></dd>` : ''}
         ${run.correlationId ? `<dt>Correlation</dt><dd class="mono" part="correlation" title="telemetry trace id">${escapeHtml(run.correlationId)}<button class="copy ghost" type="button" part="copy-correlation" title="Copy correlation id" aria-label="Copy correlation id">⧉</button></dd>` : ''}
         ${Array.isArray(run.tags) && run.tags.length > 0 ? `<dt>Tags</dt><dd part="tags"><div class="tags">${run.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div></dd>` : ''}
         <dt>ETag</dt><dd class="mono muted">${escapeHtml(run.etag || '—')}</dd>
