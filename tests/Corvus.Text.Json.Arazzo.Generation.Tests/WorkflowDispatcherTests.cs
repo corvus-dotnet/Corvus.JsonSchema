@@ -187,6 +187,52 @@ public class WorkflowDispatcherTests
     }
 
     [TestMethod]
+    public async Task Claims_only_runs_pinned_to_the_runners_environment_and_environment_round_trips()
+    {
+        var clock = new MutableClock(T0);
+        IWorkflowCatalogStore catalog = await RunnableCatalogAsync();
+        var runStore = new InMemoryWorkflowStateStore(clock);
+
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+        using (WorkflowRun prod = WorkflowRun.CreateNew(runStore, "run-prod", "adopt-v1", inputs.RootElement, clock, environment: "production"))
+        {
+            await prod.EnqueueAsync(default);
+        }
+
+        using (WorkflowRun staging = WorkflowRun.CreateNew(runStore, "run-staging", "adopt-v1", inputs.RootElement, clock, environment: "staging"))
+        {
+            await staging.EnqueueAsync(default);
+        }
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+        using var loader = new WorkflowExecutorLoader();
+        var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), null));
+
+        // §5.5: a runner serving production claims only the production-pinned run; the staging run is left for a staging runner.
+        var dispatcher = new WorkflowDispatcher(runStore, "runner-prod", clock, runnerEnvironment: "production");
+        (await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(1);
+
+        using (WorkflowRun? prodRun = await WorkflowRun.ResumeAsync(runStore, "run-prod", clock, default))
+        {
+            prodRun!.Status.ShouldBe(WorkflowRunStatus.Completed);
+            prodRun.Environment.ShouldBe("production"); // the pinned environment round-trips through the checkpoint
+        }
+
+        using (WorkflowRun? stagingRun = await WorkflowRun.ResumeAsync(runStore, "run-staging", clock, default))
+        {
+            stagingRun!.Status.ShouldBe(WorkflowRunStatus.Pending); // not claimed by the production runner
+            stagingRun.Environment.ShouldBe("staging");
+        }
+
+        // A staging runner then claims the staging run.
+        var stagingDispatcher = new WorkflowDispatcher(runStore, "runner-staging", clock, runnerEnvironment: "staging");
+        (await stagingDispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(1);
+        using WorkflowRun? nowDone = await WorkflowRun.ResumeAsync(runStore, "run-staging", clock, default);
+        nowDone!.Status.ShouldBe(WorkflowRunStatus.Completed);
+    }
+
+    [TestMethod]
     public async Task Ignores_runs_for_versions_it_does_not_host()
     {
         var clock = new MutableClock(T0);

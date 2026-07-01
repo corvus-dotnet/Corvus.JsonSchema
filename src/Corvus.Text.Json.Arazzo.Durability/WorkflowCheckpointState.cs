@@ -31,7 +31,8 @@ public sealed class WorkflowCheckpointState : IDisposable
         WorkflowFault? fault,
         string? correlationId = null,
         TagSet tags = default,
-        SecurityTagSet securityTags = default)
+        SecurityTagSet securityTags = default,
+        string? environment = null)
     {
         this.document = document;
         this.RunId = runId;
@@ -49,6 +50,7 @@ public sealed class WorkflowCheckpointState : IDisposable
         this.CorrelationId = correlationId;
         this.Tags = tags;
         this.SecurityTags = securityTags;
+        this.Environment = environment;
     }
 
     /// <summary>Gets the run id.</summary>
@@ -95,6 +97,10 @@ public sealed class WorkflowCheckpointState : IDisposable
 
     /// <summary>Gets the security tags (KVP labels) applied to the run at creation, if any (design §14.2).</summary>
     public SecurityTagSet SecurityTags { get; }
+
+    /// <summary>Gets the deployment environment the run is pinned to (design §5.5), if any — its credential set and the
+    /// runners it can be dispatched to. Absent on a run created before run→environment pinning.</summary>
+    public string? Environment { get; }
 
     /// <inheritdoc/>
     public void Dispose()

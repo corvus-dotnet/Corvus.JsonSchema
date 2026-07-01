@@ -36,9 +36,10 @@ public sealed class WorkflowDispatchService(
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // §5.5 authorization gate: the dispatcher claims new + orphaned runs only while an administrator of this runner's
-        // environment has authorized it. Revoke takes effect within a poll cycle (no new claims); in-flight runs drain.
-        var dispatcher = new WorkflowDispatcher(store, options.RunnerId, dispatchGate: this.IsAuthorizedAsync);
+        // §5.5 dispatch: the runner claims new + orphaned runs only while an administrator of its environment has authorized
+        // it (the gate; revoke takes effect within a poll cycle, in-flight runs drain), AND only runs pinned to the single
+        // environment it serves (runnerEnvironment) — a production run never lands on a staging runner.
+        var dispatcher = new WorkflowDispatcher(store, options.RunnerId, dispatchGate: this.IsAuthorizedAsync, runnerEnvironment: options.Environment);
         var worker = new WorkflowWorker(store, options.RunnerId);
 
         using var timer = new PeriodicTimer(PollInterval);

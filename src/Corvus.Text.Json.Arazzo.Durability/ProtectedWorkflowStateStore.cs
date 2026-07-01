@@ -104,6 +104,10 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
         => (this.innerDispatch ?? throw new NotSupportedException("The wrapped store does not implement IWorkflowDispatchIndex.")).QueryClaimableAsync(hostedWorkflowIds, now, cancellationToken);
 
     /// <inheritdoc/>
+    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, CancellationToken cancellationToken)
+        => (this.innerDispatch ?? throw new NotSupportedException("The wrapped store does not implement IWorkflowDispatchIndex.")).QueryClaimableAsync(hostedWorkflowIds, runnerEnvironment, now, cancellationToken);
+
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
         if (this.protector is IDisposable disposableProtector)
