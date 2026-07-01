@@ -20,6 +20,7 @@ public sealed class WorkflowDispatcher
     private readonly string owner;
     private readonly TimeSpan leaseTtl;
     private readonly Func<CancellationToken, ValueTask<bool>>? dispatchGate;
+    private readonly string? runnerEnvironment;
 
     /// <summary>Initializes a new instance of the <see cref="WorkflowDispatcher"/> class.</summary>
     /// <param name="store">The state store; must also implement <see cref="IWorkflowDispatchIndex"/>.</param>
@@ -33,8 +34,13 @@ public sealed class WorkflowDispatcher
     /// pending or revoked is removed from dispatch (no new or orphaned claims) while it stays registered and heartbeats;
     /// in-flight runs it already leased drain normally. Default (<see langword="null"/>) is "always dispatch".
     /// </param>
+    /// <param name="runnerEnvironment">
+    /// The single deployment environment this runner serves (design §5.5): claims are constrained to runs pinned to it (an
+    /// unpinned/legacy run still matches). <see langword="null"/> (the default) claims regardless of a run's environment —
+    /// the pre-pinning behaviour.
+    /// </param>
     /// <exception cref="ArgumentException">The store does not implement <see cref="IWorkflowDispatchIndex"/>.</exception>
-    public WorkflowDispatcher(IWorkflowStateStore store, string owner, TimeProvider? timeProvider = null, TimeSpan? leaseTtl = null, Func<CancellationToken, ValueTask<bool>>? dispatchGate = null)
+    public WorkflowDispatcher(IWorkflowStateStore store, string owner, TimeProvider? timeProvider = null, TimeSpan? leaseTtl = null, Func<CancellationToken, ValueTask<bool>>? dispatchGate = null, string? runnerEnvironment = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(owner);
@@ -45,6 +51,7 @@ public sealed class WorkflowDispatcher
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.leaseTtl = leaseTtl ?? TimeSpan.FromMinutes(1);
         this.dispatchGate = dispatchGate;
+        this.runnerEnvironment = runnerEnvironment;
     }
 
     /// <summary>
@@ -70,7 +77,7 @@ public sealed class WorkflowDispatcher
 
         int dispatched = 0;
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        await foreach (WorkflowRunId id in this.index.QueryClaimableAsync(hostedWorkflowIds, now, cancellationToken).ConfigureAwait(false))
+        await foreach (WorkflowRunId id in this.index.QueryClaimableAsync(hostedWorkflowIds, this.runnerEnvironment, now, cancellationToken).ConfigureAwait(false))
         {
             if (await this.TryDispatchAsync(id, resume, cancellationToken).ConfigureAwait(false))
             {

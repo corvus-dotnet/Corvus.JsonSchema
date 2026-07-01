@@ -58,7 +58,8 @@ public static class WorkflowCheckpointSerializer
         WorkflowFault? fault = null,
         string? correlationId = null,
         TagSet tags = default,
-        SecurityTagSet securityTags = default)
+        SecurityTagSet securityTags = default,
+        string? environment = null)
     {
         ArgumentNullException.ThrowIfNull(workflowId);
         ArgumentNullException.ThrowIfNull(retryCounters);
@@ -80,10 +81,15 @@ public static class WorkflowCheckpointSerializer
             writer.WriteNumber("cursor"u8, cursor);
             writer.WriteString("createdAt"u8, createdAt);
 
-            // Run-creation metadata (immutable): the telemetry correlation id and free-form tags.
+            // Run-creation metadata (immutable): the telemetry correlation id, the pinned environment, and free-form tags.
             if (correlationId is { } cid)
             {
                 writer.WriteString("correlationId"u8, cid);
+            }
+
+            if (environment is { } env)
+            {
+                writer.WriteString("environment"u8, env);
             }
 
             if (!tags.IsEmpty)
@@ -209,6 +215,7 @@ public static class WorkflowCheckpointSerializer
                 : default;
 
             string? correlationId = root.TryGetProperty("correlationId"u8, out JsonElement correlationIdMeta) ? correlationIdMeta.GetString() : null;
+            string? environment = root.TryGetProperty("environment"u8, out JsonElement environmentMeta) ? environmentMeta.GetString() : null;
 
             TagSet tags = default;
             if (root.TryGetProperty("tags"u8, out JsonElement tagsElement) && tagsElement.ValueKind == JsonValueKind.Array)
@@ -292,7 +299,7 @@ public static class WorkflowCheckpointSerializer
                     faultElement.GetProperty("at"u8).GetDateTimeOffset());
             }
 
-            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags);
+            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags, environment);
         }
         catch
         {

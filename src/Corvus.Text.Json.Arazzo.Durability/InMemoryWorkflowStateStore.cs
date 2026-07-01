@@ -217,7 +217,11 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+        => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         await Task.CompletedTask.ConfigureAwait(false);
@@ -227,6 +231,7 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         {
             claimable = this.entries
                 .Where(kvp => hostedWorkflowIds.Contains(kvp.Value.Index.WorkflowId)
+                    && MatchesEnvironment(kvp.Value.Index.Environment, runnerEnvironment)
                     && (kvp.Value.Index.Status == WorkflowRunStatus.Pending
                         || (kvp.Value.Index.Status == WorkflowRunStatus.Running && !this.HasLiveLease(kvp.Key, now))))
                 .Select(kvp => new WorkflowRunId(kvp.Key))
@@ -239,6 +244,11 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
             yield return id;
         }
     }
+
+    // §5.5 dispatch env-match: a run pinned to an environment is claimable only by a runner serving it; an unpinned run
+    // (null environment) or an unscoped/legacy dispatcher (null runnerEnvironment) matches anything (backward-compatible).
+    private static bool MatchesEnvironment(string? runEnvironment, string? runnerEnvironment)
+        => runnerEnvironment is null || runEnvironment is null || string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal);
 
     // Must be called while holding the gate.
     private bool HasLiveLease(string id, DateTimeOffset now)
