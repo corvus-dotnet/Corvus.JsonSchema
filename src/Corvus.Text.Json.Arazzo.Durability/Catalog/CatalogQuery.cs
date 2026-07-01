@@ -21,6 +21,12 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// JSON value, or undefined for the first page. Carried bytes-native: the backend decodes it straight from the request
 /// UTF-8 (no managed token string).</param>
 /// <param name="Security">A row-authorization filter restricting results to versions whose security tags satisfy the principal's rule(s) (§14.2); <see langword="null"/> is unrestricted.</param>
+/// <param name="DistinctWorkflows">When <see langword="true"/>, collapse the result to one representative version per base
+/// workflow id (the newest Active version, else the newest Obsolete, else the newest) rather than one row per version, and
+/// keyset-page by base workflow id alone (the <see cref="ContinuationToken"/> cursor is the last page's base id). A base
+/// workflow is included if any of its versions satisfies the other filters, and the representative returned is the
+/// best-matching version. When <see langword="false"/> (the default), every matching version is returned, keyset-paged by
+/// (base workflow id, version number).</param>
 public readonly record struct CatalogQuery(
     string? Text = null,
     string? BaseWorkflowId = null,
@@ -30,4 +36,5 @@ public readonly record struct CatalogQuery(
     string? Owner = null,
     int Limit = 100,
     JsonString ContinuationToken = default,
-    SecurityFilter? Security = null);
+    SecurityFilter? Security = null,
+    bool DistinctWorkflows = false);

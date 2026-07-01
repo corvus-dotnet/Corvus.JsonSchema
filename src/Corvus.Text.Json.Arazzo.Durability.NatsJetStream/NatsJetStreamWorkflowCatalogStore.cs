@@ -185,6 +185,11 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
 
         int limit = query.Limit <= 0 ? 100 : query.Limit;
 
+        if (query.DistinctWorkflows)
+        {
+            return await this.QueryDistinctWorkflowsAsync(query, after, limit, cancellationToken).ConfigureAwait(false);
+        }
+
         // The KV bucket has no server-side ordering or filtering, so collect the matching header bytes, sort them by
         // the composite sort key, then realize and page the result here — mirroring how the run store answers
         // visibility queries. Only the matching rows are parsed (each inspected once for filtering, with the inspection
@@ -232,6 +237,63 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         }
 
         return nextSortKey is not null ? CatalogPage.Create(versions, nextSortKey) : CatalogPage.Create(versions);
+    }
+
+    // The distinct-workflow (collapse-by-base) query: one representative version per base workflow, keyset-paged by base id.
+    // A base is included if any of its versions matches the filter; the representative is the best-matching version — the
+    // newest Active, else the newest Obsolete, else the newest (mirroring InMemoryWorkflowCatalogStore.QueryDistinctWorkflows,
+    // the reference the client-side UI collapse replaced). The KV bucket has no server-side grouping/ordering, so scan the
+    // same filtered set as the version-mode query, group by base id retaining only the winning per-base header bytes, order
+    // the bases ordinally, seek strictly past the cursor base id, then re-parse the page window into the pooled batch.
+    private async ValueTask<CatalogPage> QueryDistinctWorkflowsAsync(CatalogQuery query, string? after, int limit, CancellationToken cancellationToken)
+    {
+        var reps = new SortedDictionary<string, RepCandidate>(StringComparer.Ordinal);
+        await foreach (byte[] header in this.ScanHeadersAsync(cancellationToken).ConfigureAwait(false))
+        {
+            using ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse(header);
+            if (!Matches(candidate.RootElement, query))
+            {
+                continue;
+            }
+
+            CatalogVersionRef reference = candidate.RootElement.Ref;
+            var incoming = new RepCandidate(header, StatusRank(candidate.RootElement.StatusValue), reference.VersionNumber);
+            if (!reps.TryGetValue(reference.BaseWorkflowId, out RepCandidate existing) || incoming.IsBetterThan(existing))
+            {
+                reps[reference.BaseWorkflowId] = incoming;
+            }
+        }
+
+        // The page is a pooled batch of disposable version documents (the caller disposes the page); the cursor is the base
+        // id alone (ordinal), and the +1 lookahead beyond the limit tells us whether a next page exists.
+        var versions = new PooledDocumentList<CatalogVersion>(limit);
+        string? nextBaseId = null;
+        try
+        {
+            foreach (KeyValuePair<string, RepCandidate> entry in reps)
+            {
+                if (after is not null && string.CompareOrdinal(entry.Key, after) <= 0)
+                {
+                    continue;
+                }
+
+                if (versions.Count == limit)
+                {
+                    // There is at least one more matching base workflow beyond this page.
+                    nextBaseId = versions[versions.Count - 1].Ref.BaseWorkflowId;
+                    break;
+                }
+
+                versions.Add(ParsedJsonDocument<CatalogVersion>.Parse(entry.Value.Header));
+            }
+        }
+        catch
+        {
+            versions.Dispose();
+            throw;
+        }
+
+        return nextBaseId is not null ? CatalogPage.Create(versions, nextBaseId) : CatalogPage.Create(versions);
     }
 
     /// <inheritdoc/>
@@ -321,6 +383,14 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
 
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
+
+    // The representative-precedence rank: newest Active wins over newest Obsolete wins over newest of any other status.
+    private static int StatusRank(CatalogStatus status) => status switch
+    {
+        CatalogStatus.Active => 0,
+        CatalogStatus.Obsolete => 1,
+        _ => 2,
+    };
 
     private static bool Matches(in CatalogVersion version, CatalogQuery query)
     {
@@ -480,6 +550,15 @@ public sealed class NatsJetStreamWorkflowCatalogStore : IWorkflowCatalogStore, I
         catch (NatsKVKeyDeletedException)
         {
         }
+    }
+
+    // A base workflow's best-matching representative during a distinct-workflow scan: the winning version's header bytes (the
+    // version document JSON) plus the fields the precedence compares (lower status rank wins; ties break to the higher version
+    // number). The header bytes are a freshly-decoded copy from the scan, so re-parsing them into the page later is safe.
+    private readonly record struct RepCandidate(byte[] Header, int Rank, int VersionNumber)
+    {
+        public bool IsBetterThan(RepCandidate other)
+            => this.Rank != other.Rank ? this.Rank < other.Rank : this.VersionNumber > other.VersionNumber;
     }
 
     private static class Envelope
