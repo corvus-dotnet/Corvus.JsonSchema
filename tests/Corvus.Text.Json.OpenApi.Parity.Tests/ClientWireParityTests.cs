@@ -5,6 +5,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 using PetstoreParity.Client;
 using PetstoreParity.Client.Models;
@@ -46,6 +47,8 @@ public class ClientWireParityTests
             await CaptureAsync("note-text-plain-body", NoteTextPlainBody),
             await CaptureAsync("form-urlencoded-body", FormUrlencodedBody),
             await CaptureAsync("upload-octet-stream-body", UploadOctetStreamBody),
+            await CaptureAsync("search-cookie-param", SearchCookieParam),
+            await CaptureAsync("avatar-multipart-body", AvatarMultipartBody),
         ];
 
         string fixturePath = ResolveFixturePath();
@@ -178,6 +181,42 @@ public class ClientWireParityTests
         await using UploadResponse response = await client.UploadAsync(body, CancellationToken.None);
     }
 
+    private static async Task SearchCookieParam(HttpClientTransport transport)
+    {
+        // W8: search with only the matrix scope path param and the `session` cookie param set.
+        // Exercises cookie-param composition (the Cookie request header).
+        var request = new SearchRequest(
+            GetSearchByScopeScope.ParseValue("""{"kind":"k1","region":"r1"}"""u8))
+        {
+            Session = JsonString.ParseValue("\"sess-1\""u8),
+        };
+
+        await using SearchResponse response = await transport
+            .SendAsync<SearchRequest, SearchResponse>(in request, CancellationToken.None);
+    }
+
+    private static async Task AvatarMultipartBody(HttpClientTransport transport)
+    {
+        // W9: avatar with a multipart/form-data body — two text fields (id, tags array) plus a
+        // binary "file" part. The client composes the multipart body with a random boundary; the
+        // capture step normalizes that boundary to a fixed placeholder for parity.
+        var client = new ApiStatusClient(transport);
+
+        PostAvatarBody body = PostAvatarBody.ParseValue("""{"id":"a1","tags":["t1","t2"]}"""u8);
+
+        byte[] fileBytes = Encoding.ASCII.GetBytes("filedata");
+        var file = new BinaryPartData(
+            (stream, ct) =>
+            {
+                stream.Write(fileBytes);
+                return default;
+            },
+            ContentType: "application/octet-stream",
+            FileName: "f.bin");
+
+        await using AvatarResponse response = await client.AvatarAsync(body, file, CancellationToken.None);
+    }
+
     private static async Task<WireCase> CaptureAsync(
         string name,
         Func<HttpClientTransport, Task> send)
@@ -192,10 +231,13 @@ public class ClientWireParityTests
         string method = captured.Method.Method;
         string target = captured.RequestUri!.PathAndQuery;
 
-        // Only the op-declared X-* headers, name -> first value, sorted by name ascending.
-        // This isolates spec-declared headers from framework/default headers (e.g. Accept).
+        // Op-declared headers only: X-* (any op-declared header) or Cookie (cookie params),
+        // name -> first value, sorted by name ascending. This isolates spec-declared headers
+        // from framework/default headers (e.g. Accept).
         KeyValuePair<string, string>[] headers = captured.Headers
-            .Where(static h => h.Key.StartsWith("X-", StringComparison.OrdinalIgnoreCase))
+            .Where(static h =>
+                h.Key.StartsWith("X-", StringComparison.OrdinalIgnoreCase)
+                || h.Key.Equals("Cookie", StringComparison.OrdinalIgnoreCase))
             .Select(static h => new KeyValuePair<string, string>(h.Key, h.Value.First()))
             .OrderBy(static h => h.Key, StringComparer.Ordinal)
             .ToArray();
@@ -204,6 +246,25 @@ public class ClientWireParityTests
         string? contentType = harness.CapturedRequestContentType;
         byte[]? bodyBytes = harness.CapturedRequestBody;
         string? bodyUtf8 = bodyBytes is null ? null : Encoding.UTF8.GetString(bodyBytes);
+
+        // For multipart/form-data the boundary is randomly generated, so the framing bytes are
+        // only comparable modulo the boundary. Replace the actual boundary token with a fixed
+        // placeholder so the multipart framing (CRLFs, Content-Disposition, part order) can be
+        // asserted for parity. The TypeScript half normalizes its own boundary the same way.
+        if (bodyUtf8 is not null
+            && string.Equals(contentType, "multipart/form-data", StringComparison.OrdinalIgnoreCase)
+            && captured.Content?.Headers.ContentType is { } fullContentType)
+        {
+            string? boundary = fullContentType.Parameters
+                .FirstOrDefault(p => string.Equals(p.Name, "boundary", StringComparison.OrdinalIgnoreCase))
+                ?.Value?
+                .Trim('"');
+
+            if (!string.IsNullOrEmpty(boundary))
+            {
+                bodyUtf8 = bodyUtf8.Replace(boundary, "PARITY-BOUNDARY", StringComparison.Ordinal);
+            }
+        }
 
         return new WireCase(name, method, target, headers, contentType, bodyUtf8);
     }

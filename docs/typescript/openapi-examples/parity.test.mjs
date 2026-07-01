@@ -52,18 +52,37 @@ const INVOCATIONS = {
   "note-text-plain-body": (client) => client.note("hello note"),
   "form-urlencoded-body": (client) => client.form({ name: "gadget", count: 3, tags: ["a", "b"] }),
   "upload-octet-stream-body": (client) => client.upload(new TextEncoder().encode("binary-data")),
+  "search-cookie-param": (client) => client.search({ scope: { kind: "k1", region: "r1" }, session: "sess-1" }),
+  "avatar-multipart-body": (client) =>
+    client.avatar(
+      { id: "a1", tags: ["t1", "t2"] },
+      { content: new TextEncoder().encode("filedata"), filename: "f.bin", contentType: "application/octet-stream" },
+    ),
 };
 
-// The X-* request headers the TS transport captured, as a lower-cased name->value map.
-function capturedXHeaders(headers) {
+// The comparable request headers the TS transport captured (X-* op headers + the composed Cookie),
+// as a lower-cased name->value map. Framework/transport defaults are excluded.
+function capturedAppHeaders(headers) {
   const out = {};
   for (const [name, value] of headers) {
-    if (name.toLowerCase().startsWith("x-")) {
-      out[name.toLowerCase()] = value;
+    const lower = name.toLowerCase();
+    if (lower.startsWith("x-") || lower === "cookie") {
+      out[lower] = value;
     }
   }
 
   return out;
+}
+
+// The media type of a Content-Type, dropping parameters (e.g. multipart's `; boundary=...`).
+function mediaType(contentType) {
+  return contentType.split(";")[0].trim();
+}
+
+// The multipart boundary token from a Content-Type, unquoted (empty when absent).
+function boundaryOf(contentType) {
+  const match = /boundary=([^;]+)/.exec(contentType);
+  return match ? match[1].trim().replace(/^"|"$/g, "") : "";
 }
 
 function lowerKeys(obj) {
@@ -91,15 +110,24 @@ for (const version of VERSIONS) {
 
       // Operation-relative path + query (strip the server base the C# fixture omits).
       const target = wire.url.startsWith(base) ? wire.url.slice(base.length) : wire.url;
-      // Request body + content type (the JSON body is emitted as a "bytes" RequestBody; none otherwise).
-      const isBytes = wire.body !== undefined && wire.body.kind === "bytes";
-      const contentType = isBytes ? wire.body.contentType : null;
-      const bodyUtf8 = isBytes ? decoder.decode(wire.body.content) : null;
+
+      // Request body + content type. A JSON / text / form / octet body is a "bytes" RequestBody; a
+      // multipart body is a "writer" whose framing is compared modulo its non-deterministic boundary
+      // (normalised to PARITY-BOUNDARY on both sides); no body otherwise.
+      let contentType = null;
+      let bodyUtf8 = null;
+      if (wire.body?.kind === "bytes") {
+        contentType = mediaType(wire.body.contentType);
+        bodyUtf8 = decoder.decode(wire.body.content);
+      } else if (wire.body?.kind === "writer") {
+        contentType = mediaType(wire.body.contentType);
+        bodyUtf8 = decoder.decode(wire.body.content).replaceAll(boundaryOf(wire.body.contentType), "PARITY-BOUNDARY");
+      }
 
       const label = `${version}/${expected.name}`;
       assert.equal(wire.method, expected.method, `${label}: HTTP method`);
       assert.equal(target, expected.target, `${label}: wire target (C# fixture vs TS)`);
-      assert.deepEqual(capturedXHeaders(wire.headers), lowerKeys(expected.headers), `${label}: X-* headers`);
+      assert.deepEqual(capturedAppHeaders(wire.headers), lowerKeys(expected.headers), `${label}: request headers`);
       assert.equal(contentType, expected.contentType, `${label}: request content-type`);
       assert.equal(bodyUtf8, expected.bodyUtf8, `${label}: request body bytes`);
     }
