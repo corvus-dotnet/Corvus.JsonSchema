@@ -14,7 +14,8 @@
 // `stale-after`), uptime, advertised concurrency, transports, and the workflow versions it hosts (loaded / loading).
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, define } from './base.js';
+import './pager.js';
 
 const DEFAULT_STALE_AFTER_SECONDS = 90;
 
@@ -181,22 +182,24 @@ class ArazzoRunners extends ArazzoElement {
         .hv .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--_muted); }
         .hv .lstate { font-size: 11px; padding: 0 6px; border-radius: 999px; border: 1px solid var(--_border); color: var(--_muted); }
         .hv .lstate.loading { color: #b45309; border-color: currentColor; }
-        .pager { display: flex; gap: 8px; justify-content: center; padding: 10px; border-top: 1px solid var(--_border); }
+        ${PAGER_CSS}
         .skl { height: 16px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 11px 12px; }
         @keyframes pulse { 50% { opacity: 0.45; } }
       </style>
       <div class="panel" part="panel">
         <div class="head">
           <span class="title">Runners</span>
-          <span class="count"></span>
           <span class="grow"></span>
           <button class="refresh ghost" type="button" title="Refresh">↻</button>
         </div>
         <div class="err"></div>
         <div class="list" part="list"></div>
+        <arazzo-pager class="pager" part="pager"></arazzo-pager>
       </div>
     `;
     this.$('.refresh').addEventListener('click', () => this.reload());
+    this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
+    this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
   }
 
   renderBody() {
@@ -209,32 +212,23 @@ class ArazzoRunners extends ArazzoElement {
       : '';
 
     if (this._loading && this._runners.length === 0) {
-      this.$('.count').textContent = '';
       list.innerHTML = '<div class="skl"></div><div class="skl"></div>';
+      this.$('arazzo-pager')?.update({ loading: true, info: 'Loading…' });
       return;
     }
     if (this._runners.length === 0) {
-      this.$('.count').textContent = '';
       list.innerHTML = '<div class="empty">No runners are registered.</div>';
+      this.$('arazzo-pager')?.update({ info: '' });
       return;
     }
 
     const now = Date.now();
     const stale = this._runners.filter((r) => this.isStale(r, now)).length;
-    this.$('.count').textContent = stale > 0 ? `${this._runners.length} registered · ${stale} stale` : `${this._runners.length} registered`;
+    list.innerHTML = this._runners.map((r) => this.runnerHtml(r, now)).join('');
 
-    const rows = this._runners.map((r) => this.runnerHtml(r, now)).join('');
-    const pager = (this._history.length > 0 || this._nextPageToken)
-      ? `<div class="pager">
-           <button class="prev ghost" type="button"${this._history.length === 0 || this._loading ? ' disabled' : ''}>‹ Prev</button>
-           <button class="next ghost" type="button"${!this._nextPageToken || this._loading ? ' disabled' : ''}>Next ›</button>
-         </div>`
-      : '';
-    list.innerHTML = rows + pager;
-    const prevBtn = this.$('.prev');
-    if (prevBtn) prevBtn.addEventListener('click', () => this.prevPage());
-    const nextBtn = this.$('.next');
-    if (nextBtn) nextBtn.addEventListener('click', () => this.nextPage());
+    const parts = [stale > 0 ? `${this._runners.length} registered · ${stale} stale` : `${this._runners.length} registered`];
+    if (this._history.length) parts.push(`page ${this._history.length + 1}`);
+    this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextPageToken, loading: this._loading, info: parts.join(' · ') });
   }
 
   runnerHtml(r, now) {
