@@ -148,7 +148,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             return null;
         }
 
-        return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags, state.SecurityTags);
+        return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags, state.SecurityTags, state.Environment);
     }
 
     // Whether a run is within the caller's write reach (§14.2): unrestricted writers and a missing run pass (the
