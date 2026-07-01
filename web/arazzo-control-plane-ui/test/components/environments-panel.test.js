@@ -30,6 +30,27 @@ describe('<arazzo-environments>', () => {
     ok(el.shadowRoot.textContent.includes('production'), 'shows the name');
   });
 
+  it('pages the environment list with Prev/Next over the keyset cursor', async () => {
+    el = panelWithMock({ scopes: FULL, 'page-size': '1' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    equal(rows(el).length, 1, 'page 1 holds one environment');
+    const next = el.shadowRoot.querySelector('.next');
+    ok(next && !next.disabled, 'Next is enabled when a page follows');
+    ok(el.shadowRoot.querySelector('.prev').disabled, 'Prev is disabled on page 1');
+
+    const page2 = nextEvent(el, 'loaded');
+    next.click();
+    await page2;
+    equal(rows(el).length, 1, 'page 2 holds the next environment');
+    ok(el.shadowRoot.querySelector('.next').disabled, 'Next disabled on the last page');
+
+    const back = nextEvent(el, 'loaded');
+    el.shadowRoot.querySelector('.prev').click();
+    await back;
+    ok(el.shadowRoot.querySelector('.prev').disabled, 'Prev disabled again back on page 1');
+  });
+
   it('selecting an environment shows its detail, administrators sub-panel, and availability', async () => {
     el = panelWithMock();
     mount(el);
