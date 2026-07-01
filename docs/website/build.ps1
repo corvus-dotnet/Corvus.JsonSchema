@@ -899,7 +899,7 @@ $tsRecipeDirs = @(Get-ChildItem (Join-Path $tsSourceDir "examples") -Directory -
     Where-Object { $_.Name -match '^\d+-(.+)$' } | Sort-Object Name)
 foreach ($rd in $tsRecipeDirs) { if ($rd.Name -match '^\d+-(.+)$') { $tsRecipeSlugMap[$rd.Name] = $Matches[1] } }
 
-$tsGuideFiles = @('code-generation', 'the-type-surface', 'reading-and-validating', 'value-types', 'mutation', 'json-patch', 'runtime')
+$tsGuideFiles = @('code-generation', 'the-type-surface', 'reading-and-validating', 'value-types', 'mutation', 'json-patch', 'runtime', 'openapi')
 $tsPageCount = 0
 
 # --- Guides (getting-started IS the /typescript/ landing, so it is not regenerated here) ---

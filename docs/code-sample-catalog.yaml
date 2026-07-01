@@ -1612,6 +1612,25 @@ typescript-docs:
       - {index: 1, language: typescript, lines: [19, 23]}
       - {index: 2, language: typescript, lines: [31, 34]}
       - {index: 3, language: typescript, lines: [44, 50]}
+  - path: "docs/typescript/openapi.md"
+    blocks:
+      - {index: 0, language: bash, lines: [28, 30]}
+      - {index: 1, language: bash, lines: [35, 37]}
+      - {index: 2, language: bash, lines: [47, 51]}
+      - {index: 3, language: typescript, lines: [55, 75]}
+      - {index: 4, language: , lines: [101, 107]}
+      - {index: 5, language: typescript, lines: [130, 137]}
+      - {index: 6, language: typescript, lines: [147, 153]}
+      - {index: 7, language: typescript, lines: [157, 162]}
+      - {index: 8, language: typescript, lines: [171, 174]}
+      - {index: 9, language: typescript, lines: [182, 200]}
+      - {index: 10, language: typescript, lines: [210, 220]}
+      - {index: 11, language: typescript, lines: [229, 233]}
+      - {index: 12, language: typescript, lines: [243, 255]}
+      - {index: 13, language: typescript, lines: [263, 274]}
+      - {index: 14, language: typescript, lines: [287, 290]}
+      - {index: 15, language: typescript, lines: [299, 303]}
+      - {index: 16, language: bash, lines: [307, 309]}
   - path: "docs/typescript/reading-and-validating.md"
     blocks:
       - {index: 0, language: typescript, lines: [9, 13]}
