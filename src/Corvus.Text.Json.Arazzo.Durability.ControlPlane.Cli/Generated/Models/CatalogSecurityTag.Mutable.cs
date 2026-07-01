@@ -17,12 +17,17 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// A non-internal security tag (KVP label, &#167;14.2) on a catalog version — a reach label the row-security rules match on (e.g. domain=payments, classification=restricted). Distinct from free-form display `tags`. The deployment owns internal/reserved-prefix tags (e.g. tenant, sys:*) separately: those are stamped by the deployment, immutable, and stripped from reads — they can never be set here.
+/// </para>
+/// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct PostCatalogBody
+public readonly partial struct CatalogSecurityTag
 {
     public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -127,7 +132,7 @@ public readonly partial struct PostCatalogBody
         /// <param name="value">The instance of this type.</param>
         /// <returns>A mutable instance.</returns>
         /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-        public static explicit operator Mutable(PostCatalogBody instance)
+        public static explicit operator Mutable(CatalogSecurityTag instance)
         {
             if (instance._parent is not IMutableJsonDocument doc)
             {
@@ -142,9 +147,9 @@ public readonly partial struct PostCatalogBody
         /// Converts to an immutable instance of the <see cref="Mutable"/> type.
         /// </summary>
         /// <param name="value">The <see cref="Mutable"/> instance.</param>
-        /// <returns>An immutable instance of a <see cref="PostCatalogBody"/>, initialized from the <see cref="Mutable"/> value.</returns>
+        /// <returns>An immutable instance of a <see cref="CatalogSecurityTag"/>, initialized from the <see cref="Mutable"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator PostCatalogBody(Mutable instance)
+        public static implicit operator CatalogSecurityTag(Mutable instance)
         {
             return new(instance._parent, instance._idx);
         }
@@ -261,21 +266,21 @@ public readonly partial struct PostCatalogBody
         }
 
         /// <summary>
-        /// Gets the <c>owner</c> property.
+        /// Gets the <c>key</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// <para>
-        /// The accountable governance owner of a workflow, for integration with governance tooling.
+        /// The label key (e.g. domain).
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Mutable Owner
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable Key
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OwnerUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -285,63 +290,21 @@ public readonly partial struct PostCatalogBody
         }
 
         /// <summary>
-        /// Gets the <c>package</c> property.
+        /// Gets the <c>value</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// <para>
-        /// The workflow document package envelope (its shape is the `CatalogPackage` schema), uploaded as a file.
+        /// The label value (e.g. payments).
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Mutable Package
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable Value
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PackageUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Mutable value))
-                {
-                    return value;
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
-        /// Gets the (optional) <c>securityTags</c> property.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// Non-internal security tags (&#167;14.2 reach labels) to stamp on the version at add, alongside the deployment&#39;s internal tenant tag. The reserved internal-tag prefix is rejected (400).
-        /// </para>
-        /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Mutable SecurityTags
-        {
-            get
-            {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecurityTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Mutable value))
-                {
-                    return value;
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
-        /// Gets the (optional) <c>tags</c> property.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// Free-form tags for display and filtering.
-        /// </para>
-        /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Mutable Tags
-        {
-            get
-            {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValueUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -374,7 +337,7 @@ public readonly partial struct PostCatalogBody
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new PostCatalogBody(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new CatalogSecurityTag(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -390,20 +353,20 @@ public readonly partial struct PostCatalogBody
         }
 
         /// <summary>
-        /// Set the <c>owner</c> property.
+        /// Set the <c>key</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOwner(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source value)
+        public void SetKey(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
             if (value.IsUndefined)
             {
-                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("owner");
+                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("key");
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OwnerUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -412,7 +375,7 @@ public readonly partial struct PostCatalogBody
             else
             {
                 // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Owner, ref cvb);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Key, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -421,23 +384,20 @@ public readonly partial struct PostCatalogBody
         }
 
         /// <summary>
-        /// Set the <c>owner</c> property.
+        /// Set the <c>value</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOwner<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
+        public void SetValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
             if (value.IsUndefined)
             {
-                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("owner");
+                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("value");
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OwnerUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -446,205 +406,12 @@ public readonly partial struct PostCatalogBody
             else
             {
                 // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Owner, ref cvb);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
 
             _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Set the <c>package</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetPackage(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("package");
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PackageUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Package, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Set the <c>securityTags</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetSecurityTags(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SecurityTagsUtf8);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecurityTagsUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityTags, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Set the <c>securityTags</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetSecurityTags<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SecurityTagsUtf8);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecurityTagsUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityTags, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Remove the <c>securityTags</c> property, if present.
-        /// </summary>
-        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveSecurityTags()
-        {
-            CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SecurityTagsUtf8);
-            _documentVersion = _parent.Version;
-            return result;
-        }
-
-        /// <summary>
-        /// Set the <c>tags</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetTags(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TagsUtf8);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tags, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Set the <c>tags</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetTags<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TagsUtf8);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tags, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Remove the <c>tags</c> property, if present.
-        /// </summary>
-        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveTags()
-        {
-            CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TagsUtf8);
-            _documentVersion = _parent.Version;
-            return result;
         }
 
         /// <inheritdoc/>
@@ -731,7 +498,7 @@ public readonly partial struct PostCatalogBody
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"PostCatalogBody.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"CatalogSecurityTag.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         /// <summary>
         ///   Sets a property on this JSON object element.
@@ -922,11 +689,11 @@ public readonly partial struct PostCatalogBody
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <summary>
-        /// Gets a <see cref="PostCatalogBody"/> which can be safely stored beyond the lifetime of the
+        /// Gets a <see cref="CatalogSecurityTag"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </summary>
         /// <returns>
-        /// A <see cref="PostCatalogBody"/> which can be safely stored beyond the lifetime of the
+        /// A <see cref="CatalogSecurityTag"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </returns>
         /// <remarks>
@@ -935,10 +702,10 @@ public readonly partial struct PostCatalogBody
         /// document. The result is independent of the workspace.
         /// </para>
         /// </remarks>
-        public readonly PostCatalogBody Clone()
+        public readonly CatalogSecurityTag Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<PostCatalogBody>(_idx);
+            return _parent.CloneElement<CatalogSecurityTag>(_idx);
         }
 
         /// <summary>
@@ -946,7 +713,7 @@ public readonly partial struct PostCatalogBody
         /// document builder registered in the same workspace.
         /// </summary>
         /// <returns>
-        /// An immutable <see cref="PostCatalogBody"/> that lives for the lifetime of its
+        /// An immutable <see cref="CatalogSecurityTag"/> that lives for the lifetime of its
         /// workspace and its associated documents.
         /// </returns>
         /// <remarks>
@@ -957,10 +724,10 @@ public readonly partial struct PostCatalogBody
         /// immutable but is only valid for the lifetime of the workspace.
         /// </para>
         /// </remarks>
-        public readonly PostCatalogBody Freeze()
+        public readonly CatalogSecurityTag Freeze()
         {
             CheckValidInstance();
-            return _parent.FreezeElement<PostCatalogBody>(_idx);
+            return _parent.FreezeElement<CatalogSecurityTag>(_idx);
         }
     }
 
@@ -977,10 +744,8 @@ public readonly partial struct PostCatalogBody
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Source _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source _createArg2;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -993,18 +758,16 @@ public readonly partial struct PostCatalogBody
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Source arg4)
+        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
-            _createArg3 = arg3;
-            _createArg4 = arg4;
             _kind = Kind.Create;
         }
 
-        public static implicit operator Source(PostCatalogBody instance) => new(JsonElement.From(instance));
+        public static implicit operator Source(CatalogSecurityTag instance) => new(JsonElement.From(instance));
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1021,7 +784,7 @@ public readonly partial struct PostCatalogBody
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1046,7 +809,7 @@ public readonly partial struct PostCatalogBody
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1071,7 +834,7 @@ public readonly partial struct PostCatalogBody
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1096,7 +859,7 @@ public readonly partial struct PostCatalogBody
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -1121,7 +884,7 @@ public readonly partial struct PostCatalogBody
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1142,17 +905,12 @@ public readonly partial struct PostCatalogBody
             Unknown,
             Source,
             Builder,
-            Create,
         }
 
         private readonly Kind _kind;
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Source _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Source<TContext> _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Source<TContext> _createArg4;
 
         /// <summary>
         /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1163,17 +921,7 @@ public readonly partial struct PostCatalogBody
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
-
-        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Source<TContext> arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Source<TContext> arg4)
-        {
-            _context = context;
-            _createArg1 = arg1;
-            _createArg2 = arg2;
-            _createArg3 = arg3;
-            _createArg4 = arg4;
-            _kind = Kind.Create;
-        }
+        internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1187,13 +935,6 @@ public readonly partial struct PostCatalogBody
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
-                        valueBuilder.EndProperty(handle);
-                        break;
-                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1212,13 +953,6 @@ public readonly partial struct PostCatalogBody
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
-                        valueBuilder.EndProperty(handle);
-                        break;
-                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1237,13 +971,6 @@ public readonly partial struct PostCatalogBody
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
-                        valueBuilder.EndProperty(handle);
-                        break;
-                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1262,13 +989,6 @@ public readonly partial struct PostCatalogBody
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
-                        valueBuilder.EndProperty(handle);
-                        break;
-                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1287,13 +1007,6 @@ public readonly partial struct PostCatalogBody
                 case Kind.Builder:
                     valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
-                        valueBuilder.EndItem(handle);
-                        break;
-                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1320,67 +1033,23 @@ public readonly partial struct PostCatalogBody
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref="PostCatalogBody"/>.
+        /// Creates an instance of a <see cref="CatalogSecurityTag"/>.
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Source package,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Source securityTags = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Source tags = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source key,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
-            owner.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Owner, ref builder);
-            package.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Package, ref builder);
-            securityTags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityTags, ref builder);
-            tags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tags, ref builder);
+            key.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Key, ref builder);
+            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref builder);
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref="PostCatalogBody"/>.
+        /// Creates an instance of a <see cref="CatalogSecurityTag"/>.
         /// </summary>
-        public void Create(
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Source package,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Source securityTags = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Source tags = default)
+        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source key, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
-            Create(ref _builder, owner, package, securityTags, tags);
-        }
-
-        /// <summary>
-        /// Creates an instance of a <see cref="PostCatalogBody"/>.
-        /// </summary>
-        internal static void Create<TContext>(
-            in TContext context,
-            ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Source package,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Source<TContext> securityTags = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Source<TContext> tags = default)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
-        {
-            owner.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Owner, ref builder);
-            package.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Package, ref builder);
-            securityTags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityTags, ref builder);
-            tags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tags, ref builder);
-        }
-
-        /// <summary>
-        /// Creates an instance of a <see cref="PostCatalogBody"/>.
-        /// </summary>
-        public void Create<TContext>(
-            in TContext context,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Source package,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Source<TContext> securityTags = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Source<TContext> tags = default)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
-        {
-            Create(context, ref _builder, owner, package, securityTags, tags);
+            Create(ref _builder, key, value);
         }
 
         /// <summary>
@@ -1480,33 +1149,11 @@ public readonly partial struct PostCatalogBody
         /// </summary>
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
-        /// <param name="arg3">The value of the property.</param>
-        /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2, arg3, arg4);
-            o.EndObject();
-        }
-
-        /// <summary>
-        /// Builds the object value directly from its captured property values into the given complex value builder.
-        /// </summary>
-        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
-        /// <param name="context">The context to pass to the builder.</param>
-        /// <param name="arg1">The value of the property.</param>
-        /// <param name="arg2">The value of the property.</param>
-        /// <param name="arg3">The value of the property.</param>
-        /// <param name="arg4">The value of the property.</param>
-        /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Source<TContext> arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Source<TContext> arg4, ref ComplexValueBuilder o)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            o.StartObject();
-            Create(context, ref o, arg1, arg2, arg3, arg4);
+            Create(ref o, arg1, arg2);
             o.EndObject();
         }
     }
@@ -1543,32 +1190,12 @@ public readonly partial struct PostCatalogBody
     /// <summary>
     /// Build an instance of the value directly from its property values.
     /// </summary>
-    /// <param name="owner">The value of the <c>"owner"</c> property.</param>
-    /// <param name="package">The value of the <c>"package"</c> property.</param>
-    /// <param name="securityTags">The value of the <c>"securityTags"</c> property.</param>
-    /// <param name="tags">The value of the <c>"tags"</c> property.</param>
+    /// <param name="key">The value of the <c>"key"</c> property.</param>
+    /// <param name="value">The value of the <c>"value"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Source package, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Source securityTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Source tags = default)
+    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source key, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
     {
-        return new Source(owner, package, securityTags, tags);
-    }
-
-    /// <summary>
-    /// Build an instance of the value directly from its property values.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
-    /// <param name="context">The context to pass to the builder.</param>
-    /// <param name="owner">The value of the <c>"owner"</c> property.</param>
-    /// <param name="package">The value of the <c>"package"</c> property.</param>
-    /// <param name="securityTags">The value of the <c>"securityTags"</c> property.</param>
-    /// <param name="tags">The value of the <c>"tags"</c> property.</param>
-    /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Source package, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Source<TContext> securityTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Source<TContext> tags = default)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
-    {
-        return new Source<TContext>(context, owner, package, securityTags, tags);
+        return new Source(key, value);
     }
 
     /// <summary>
@@ -1664,47 +1291,17 @@ public readonly partial struct PostCatalogBody
     /// Creates and initializes a mutable document from the given property values.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="owner">The value of the property.</param>
-    /// <param name="package">The value of the property.</param>
-    /// <param name="securityTags">The value of the property.</param>
-    /// <param name="tags">The value of the property.</param>
+    /// <param name="key">The value of the property.</param>
+    /// <param name="value">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source owner, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Source package, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Source securityTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Source tags = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source key, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(owner, package, securityTags, tags);
-        cvb = ovb._builder;
-        cvb.EndObject();
-        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-        return documentBuilder;
-    }
-
-    /// <summary>
-    /// Creates and initializes a mutable document from the given property values.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
-    /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="context">The value of the property.</param>
-    /// <param name="owner">The value of the property.</param>
-    /// <param name="package">The value of the property.</param>
-    /// <param name="securityTags">The value of the property.</param>
-    /// <param name="tags">The value of the property.</param>
-    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-    /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner.Source<TContext> owner, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBinary.Source package, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.CatalogSecurityTagArray.Source<TContext> securityTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody.JsonStringArray.Source<TContext> tags = default, int initialCapacity = 30)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
-    {
-        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
-        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-        cvb.StartObject();
-        Builder ovb = new(cvb);
-        ovb.Create(context, owner, package, securityTags, tags);
+        ovb.Create(key, value);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1718,6 +1315,6 @@ public readonly partial struct PostCatalogBody
     /// <returns>An instance of a mutable document initialized with this instance.</returns>
     public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
     {
-        return workspace.CreateBuilder<PostCatalogBody, Mutable>(this);
+        return workspace.CreateBuilder<CatalogSecurityTag, Mutable>(this);
     }
 }

@@ -17,19 +17,24 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// A non-internal security tag (KVP label, &#167;14.2) on a catalog version — a reach label the row-security rules match on (e.g. domain=payments, classification=restricted). Distinct from free-form display `tags`. The deployment owns internal/reserved-prefix tags (e.g. tenant, sys:*) separately: those are stamped by the deployment, immutable, and stripped from reads — they can never be set here.
+/// </para>
+/// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct PostCatalogBody
+public readonly partial struct CatalogSecurityTag
 #if NET8_0_OR_GREATER
-    : IJsonElement<PostCatalogBody>,
+    : IJsonElement<CatalogSecurityTag>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<PostCatalogBody>,
+    : IJsonElement<CatalogSecurityTag>,
       IFormattable
 #endif
 {
@@ -39,10 +44,10 @@ public readonly partial struct PostCatalogBody
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="PostCatalogBody"/> struct.
+    /// Initializes a new instance of the <see cref="CatalogSecurityTag"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal PostCatalogBody(IJsonDocument parent, int idx)
+    internal CatalogSecurityTag(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -52,7 +57,7 @@ public readonly partial struct PostCatalogBody
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static PostCatalogBody DefaultInstance { get; }
+    public static CatalogSecurityTag DefaultInstance { get; }
 
     /// <summary>
     /// Gets the value of the property with the given name.
@@ -154,21 +159,21 @@ public readonly partial struct PostCatalogBody
     }
 
     /// <summary>
-    /// Gets the <c>owner</c> property.
+    /// Gets the <c>key</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The accountable governance owner of a workflow, for integration with governance tooling.
+    /// The label key (e.g. domain).
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogOwner Owner
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Key
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OwnerUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogOwner value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -178,63 +183,21 @@ public readonly partial struct PostCatalogBody
     }
 
     /// <summary>
-    /// Gets the <c>package</c> property.
+    /// Gets the <c>value</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// <para>
-    /// The workflow document package envelope (its shape is the `CatalogPackage` schema), uploaded as a file.
+    /// The label value (e.g. payments).
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBinary Package
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Value
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PackageUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBinary value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>securityTags</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Non-internal security tags (&#167;14.2 reach labels) to stamp on the version at add, alongside the deployment&#39;s internal tenant tag. The reserved internal-tag prefix is rejected (400).
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray SecurityTags
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecurityTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>tags</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Free-form tags for display and filtering.
-    /// </para>
-    /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.JsonStringArray Tags
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.JsonStringArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValueUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
             {
                 return value;
             }
@@ -277,7 +240,7 @@ public readonly partial struct PostCatalogBody
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in PostCatalogBody left, in PostCatalogBody right)
+    public static bool operator ==(in CatalogSecurityTag left, in CatalogSecurityTag right)
     {
         return left.Equals(right);
     }
@@ -290,7 +253,7 @@ public readonly partial struct PostCatalogBody
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in PostCatalogBody left, in PostCatalogBody right)
+    public static bool operator !=(in CatalogSecurityTag left, in CatalogSecurityTag right)
     {
         return !left.Equals(right);
     }
@@ -303,7 +266,7 @@ public readonly partial struct PostCatalogBody
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in PostCatalogBody left, in JsonElement right)
+    public static bool operator ==(in CatalogSecurityTag left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -316,7 +279,7 @@ public readonly partial struct PostCatalogBody
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in PostCatalogBody left, in JsonElement right)
+    public static bool operator !=(in CatalogSecurityTag left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -327,7 +290,7 @@ public readonly partial struct PostCatalogBody
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(PostCatalogBody instance)
+    public static implicit operator JsonElement(CatalogSecurityTag instance)
     {
         return JsonElement.From(instance);
     }
@@ -338,9 +301,9 @@ public readonly partial struct PostCatalogBody
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator PostCatalogBody(JsonElement instance)
+    public static implicit operator CatalogSecurityTag(JsonElement instance)
     {
-        return PostCatalogBody.From(instance);
+        return CatalogSecurityTag.From(instance);
     }
 
     /// <summary>
@@ -349,7 +312,7 @@ public readonly partial struct PostCatalogBody
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PostCatalogBody From<T>(in T instance)
+    public static CatalogSecurityTag From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -374,10 +337,10 @@ public readonly partial struct PostCatalogBody
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PostCatalogBody ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static CatalogSecurityTag ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<PostCatalogBody>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<CatalogSecurityTag>(utf8Json, options);
         #pragma warning restore CS0618
     }
 
@@ -400,10 +363,10 @@ public readonly partial struct PostCatalogBody
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PostCatalogBody ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static CatalogSecurityTag ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<PostCatalogBody>(json, options);
+        return JsonElementHelpers.ParseValue<CatalogSecurityTag>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -426,10 +389,10 @@ public readonly partial struct PostCatalogBody
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static PostCatalogBody ParseValue(string json, JsonDocumentOptions options = default)
+    public static CatalogSecurityTag ParseValue(string json, JsonDocumentOptions options = default)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<PostCatalogBody>(json, options);
+        return JsonElementHelpers.ParseValue<CatalogSecurityTag>(json, options);
         #pragma warning restore CS0618
     }
 
@@ -469,10 +432,10 @@ public readonly partial struct PostCatalogBody
     ///   A value could not be read from the reader.
     /// </exception>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-    public static PostCatalogBody ParseValue(ref Utf8JsonReader reader)
+    public static CatalogSecurityTag ParseValue(ref Utf8JsonReader reader)
     {
         #pragma warning disable CS0618 // Type or member is obsolete
-        return JsonElementHelpers.ParseValue<PostCatalogBody>(ref reader);
+        return JsonElementHelpers.ParseValue<CatalogSecurityTag>(ref reader);
         #pragma warning restore CS0618
     }
 
@@ -514,16 +477,16 @@ public readonly partial struct PostCatalogBody
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out PostCatalogBody? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out CatalogSecurityTag? result)
     {
-        return JsonElementHelpers.TryParseValue<PostCatalogBody>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<CatalogSecurityTag>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new PostCatalogBody(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new CatalogSecurityTag(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -613,11 +576,11 @@ public readonly partial struct PostCatalogBody
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static PostCatalogBody IJsonElement<PostCatalogBody>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static CatalogSecurityTag IJsonElement<CatalogSecurityTag>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"PostCatalogBody: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"CatalogSecurityTag: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -632,11 +595,11 @@ public readonly partial struct PostCatalogBody
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="PostCatalogBody"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="CatalogSecurityTag"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="PostCatalogBody"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="CatalogSecurityTag"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -645,10 +608,10 @@ public readonly partial struct PostCatalogBody
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public PostCatalogBody Clone()
+    public CatalogSecurityTag Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<PostCatalogBody>(_idx);
+        return _parent.CloneElement<CatalogSecurityTag>(_idx);
     }
 
     /// <summary>
@@ -656,7 +619,7 @@ public readonly partial struct PostCatalogBody
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="PostCatalogBody"/> that lives for the lifetime of its
+    /// An immutable <see cref="CatalogSecurityTag"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -670,12 +633,12 @@ public readonly partial struct PostCatalogBody
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public PostCatalogBody Freeze()
+    public CatalogSecurityTag Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<PostCatalogBody>(_idx);
+            return mutable.FreezeElement<CatalogSecurityTag>(_idx);
         }
 
         return this;
@@ -687,44 +650,24 @@ public readonly partial struct PostCatalogBody
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="Owner"/>.
+        /// Gets the JSON property name for <see cref="Key"/>.
         /// </summary>
-        public const string Owner = "owner";
+        public const string Key = "key";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Package"/>.
+        /// Gets the JSON property name for <see cref="Value"/>.
         /// </summary>
-        public const string Package = "package";
+        public const string Value = "value";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="SecurityTags"/>.
+        /// Gets the JSON property name for <see cref="Key"/>.
         /// </summary>
-        public const string SecurityTags = "securityTags";
+        public static ReadOnlySpan<byte> KeyUtf8 => "key"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Tags"/>.
+        /// Gets the JSON property name for <see cref="Value"/>.
         /// </summary>
-        public const string Tags = "tags";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Owner"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> OwnerUtf8 => "owner"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Package"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> PackageUtf8 => "package"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="SecurityTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecurityTagsUtf8 => "securityTags"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Tags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> TagsUtf8 => "tags"u8;
+        public static ReadOnlySpan<byte> ValueUtf8 => "value"u8;
     }
 
     /// <summary>
@@ -733,24 +676,14 @@ public readonly partial struct PostCatalogBody
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Owner"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Key"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Owner => "owner"u8;
+        public static ReadOnlySpan<byte> Key => "key"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Package"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Value"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Package => "package"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="SecurityTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecurityTags => "securityTags"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Tags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Tags => "tags"u8;
+        public static ReadOnlySpan<byte> Value => "value"u8;
     }
 
     /// <summary>
@@ -760,23 +693,13 @@ public readonly partial struct PostCatalogBody
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Owner"/>.
+        /// Gets the pre-baked property name blob for <see cref="Key"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Owner => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x77, 0x6E, 0x65, 0x72, 0x22];
+        public static ReadOnlySpan<byte> Key => [0x55, 0x00, 0x00, 0x00, 0x22, 0x6B, 0x65, 0x79, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Package"/>.
+        /// Gets the pre-baked property name blob for <see cref="Value"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Package => [0x95, 0x00, 0x00, 0x00, 0x22, 0x70, 0x61, 0x63, 0x6B, 0x61, 0x67, 0x65, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="SecurityTags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> SecurityTags => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x63, 0x75, 0x72, 0x69, 0x74, 0x79, 0x54, 0x61, 0x67, 0x73, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Tags"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Tags => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x61, 0x67, 0x73, 0x22];
+        public static ReadOnlySpan<byte> Value => [0x75, 0x00, 0x00, 0x00, 0x22, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x22];
     }
 }

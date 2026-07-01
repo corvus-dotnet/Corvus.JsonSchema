@@ -17,23 +17,28 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 /// <remarks>
 /// <para>
-/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field is rejected with 400 rather than silently ignored. `securityTags` sets the version&#39;s NON-internal reach labels (&#167;14.2) — a governed edit for a workflow administrator; the reserved internal-tag prefix is rejected (400), since internal tags (e.g. the deployment tenant) stay deployment-stamped and immutable.
+/// A catalog version as projected into the searchable index (one entry in a page).
 /// </para>
 /// </remarks>
-public readonly partial struct CatalogMetadataPatch
+public readonly partial struct CatalogVersionSummary
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The version&#39;s non-internal security tags (&#167;14.2) — the reach labels row-security rules match on. Internal/reserved-prefix tags are deployment-owned and stripped from this view. A run inherits its version&#39;s security tags.
+    /// </para>
+    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct JsonStringArray
+    public readonly partial struct CatalogSecurityTagArray
     {
         public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -138,7 +143,7 @@ public readonly partial struct CatalogMetadataPatch
             /// <param name="value">The instance of this type.</param>
             /// <returns>A mutable instance.</returns>
             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-            public static explicit operator Mutable(JsonStringArray instance)
+            public static explicit operator Mutable(CatalogSecurityTagArray instance)
             {
                 if (instance._parent is not IMutableJsonDocument doc)
                 {
@@ -153,9 +158,9 @@ public readonly partial struct CatalogMetadataPatch
             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
             /// </summary>
             /// <param name="value">The <see cref="Mutable"/> instance.</param>
-            /// <returns>An immutable instance of a <see cref="JsonStringArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
+            /// <returns>An immutable instance of a <see cref="CatalogSecurityTagArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static implicit operator JsonStringArray(Mutable instance)
+            public static implicit operator CatalogSecurityTagArray(Mutable instance)
             {
                 return new(instance._parent, instance._idx);
             }
@@ -179,12 +184,12 @@ public readonly partial struct CatalogMetadataPatch
             /// <returns>The item at the given index.</returns>
             /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable this[int index]
+            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag.Mutable this[int index]
             {
                 get
                 {
                     CheckValidInstance();
-                    return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable>(_idx, index);
+                    return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag.Mutable>(_idx, index);
                 }
             }
 
@@ -202,17 +207,17 @@ public readonly partial struct CatalogMetadataPatch
             /// Enumerates the array.
             /// </summary>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable> EnumerateArray()
+            public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag.Mutable> EnumerateArray()
             {
                 CheckValidInstance();
-                return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable>(_parent, _idx);
+                return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonElement value && Equals(new JsonStringArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                    (obj is IJsonElement value && Equals(new CatalogSecurityTagArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                     (obj is null && this.IsNull());
             }
 
@@ -311,7 +316,7 @@ public readonly partial struct CatalogMetadataPatch
 #endif
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private string DebuggerDisplay => $"JsonStringArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+            private string DebuggerDisplay => $"CatalogSecurityTagArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
             /// <summary>
             ///   Sets the value of an array element at the specified index.
             /// </summary>
@@ -334,7 +339,7 @@ public readonly partial struct CatalogMetadataPatch
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+            public void SetItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag.Source value)
             {
                 CheckValidInstance();
 
@@ -381,7 +386,7 @@ public readonly partial struct CatalogMetadataPatch
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+            public void InsertItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag.Source value)
             {
                 CheckValidInstance();
 
@@ -407,7 +412,7 @@ public readonly partial struct CatalogMetadataPatch
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }
@@ -577,10 +582,10 @@ public readonly partial struct CatalogMetadataPatch
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Remove(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString item)
+            public bool Remove(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag item)
             {
                 CheckValidInstance();
-                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(this, in item))
+                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag>(this, in item))
                 {
                     return false;
                 }
@@ -614,10 +619,10 @@ public readonly partial struct CatalogMetadataPatch
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RemoveWhere(JsonPredicate<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString> predicate)
+            public void RemoveWhere(JsonPredicate<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag> predicate)
             {
                 CheckValidInstance();
-                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(this, predicate);
+                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag>(this, predicate);
                 _documentVersion = _parent.Version;
             }
 
@@ -634,7 +639,7 @@ public readonly partial struct CatalogMetadataPatch
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Replace(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString oldItem, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source newItem)
+            public bool Replace(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag oldItem, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag.Source newItem)
             {
                 CheckValidInstance();
 
@@ -643,11 +648,11 @@ public readonly partial struct CatalogMetadataPatch
                     return Remove(in oldItem);
                 }
 
-                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(_parent, _idx);
+                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag>(_parent, _idx);
 
                 while (enumerator.MoveNext())
                 {
-                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString current = enumerator.Current;
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag current = enumerator.Current;
                     if (JsonElementHelpers.DeepEquals(in current, in oldItem))
                     {
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
@@ -678,11 +683,11 @@ public readonly partial struct CatalogMetadataPatch
             JsonValueKind IJsonElement.ValueKind => ValueKind;
 
             /// <summary>
-            /// Gets a <see cref="JsonStringArray"/> which can be safely stored beyond the lifetime of the
+            /// Gets a <see cref="CatalogSecurityTagArray"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </summary>
             /// <returns>
-            /// A <see cref="JsonStringArray"/> which can be safely stored beyond the lifetime of the
+            /// A <see cref="CatalogSecurityTagArray"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </returns>
             /// <remarks>
@@ -691,10 +696,10 @@ public readonly partial struct CatalogMetadataPatch
             /// document. The result is independent of the workspace.
             /// </para>
             /// </remarks>
-            public readonly JsonStringArray Clone()
+            public readonly CatalogSecurityTagArray Clone()
             {
                 CheckValidInstance();
-                return _parent.CloneElement<JsonStringArray>(_idx);
+                return _parent.CloneElement<CatalogSecurityTagArray>(_idx);
             }
 
             /// <summary>
@@ -702,7 +707,7 @@ public readonly partial struct CatalogMetadataPatch
             /// document builder registered in the same workspace.
             /// </summary>
             /// <returns>
-            /// An immutable <see cref="JsonStringArray"/> that lives for the lifetime of its
+            /// An immutable <see cref="CatalogSecurityTagArray"/> that lives for the lifetime of its
             /// workspace and its associated documents.
             /// </returns>
             /// <remarks>
@@ -713,10 +718,10 @@ public readonly partial struct CatalogMetadataPatch
             /// immutable but is only valid for the lifetime of the workspace.
             /// </para>
             /// </remarks>
-            public readonly JsonStringArray Freeze()
+            public readonly CatalogSecurityTagArray Freeze()
             {
                 CheckValidInstance();
-                return _parent.FreezeElement<JsonStringArray>(_idx);
+                return _parent.FreezeElement<CatalogSecurityTagArray>(_idx);
             }
         }
 
@@ -744,9 +749,9 @@ public readonly partial struct CatalogMetadataPatch
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogVersionSummary.CatalogSecurityTagArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
-            public static implicit operator Source(JsonStringArray instance) => new(JsonElement.From(instance));
+            public static implicit operator Source(CatalogSecurityTagArray instance) => new(JsonElement.From(instance));
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -865,7 +870,7 @@ public readonly partial struct CatalogMetadataPatch
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.JsonStringArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogVersionSummary.CatalogSecurityTagArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -979,7 +984,18 @@ public readonly partial struct CatalogMetadataPatch
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag.Source value)
+            {
+                value.AddAsItem(ref _builder);
+            }
+
+            /// <summary>
+            /// Add an item to the array.
+            /// </summary>
+            public void AddItem<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogSecurityTag.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsItem(ref _builder);
             }
@@ -1151,7 +1167,7 @@ public readonly partial struct CatalogMetadataPatch
         /// <returns>An instance of a mutable document initialized with this instance.</returns>
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
-            return workspace.CreateBuilder<JsonStringArray, Mutable>(this);
+            return workspace.CreateBuilder<CatalogSecurityTagArray, Mutable>(this);
         }
     }
 }
