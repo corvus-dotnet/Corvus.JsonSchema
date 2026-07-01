@@ -208,6 +208,9 @@
         tabs[key].setAttribute('aria-selected', String(key === name));
         views[key].hidden = key !== name;
       }
+      // Re-fetch the activated view's panels so a change made under another tab (e.g. a credential set up in the
+      // Catalog tab's Sources section) is reflected here — the tabs share one backend but each panel caches its data.
+      for (const el of views[name].querySelectorAll('*')) el.refresh?.();
     };
     for (const name of tabNames) tabs[name].addEventListener('click', () => selectTab(name));
 
