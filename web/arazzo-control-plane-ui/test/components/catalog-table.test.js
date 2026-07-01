@@ -72,6 +72,17 @@ describe('<arazzo-catalog-table>', () => {
     equal(rowCount(el), 0, 'no rows');
   });
 
+  it('reach-scopes the catalog to the caller (§14.2) — a payments-team reader sees only payments workflows', async () => {
+    const mock = createMockControlPlane({ latencyMs: 0, persona: 'team-reader' });
+    el = document.createElement('arazzo-catalog-table');
+    el.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const keys = el.$$('tbody tr[data-key]').map((tr) => tr.dataset.key);
+    equal(keys.length, 1, 'only the payments-domain workflow is visible (of the three seeded)');
+    equal(keys[0], 'nightly-reconcile', 'and it is nightly-reconcile');
+  });
+
   it('pages base workflows with Prev/Next over the keyset cursor', async () => {
     el = tableWithMock({ 'page-size': '2' });
     mount(el);
