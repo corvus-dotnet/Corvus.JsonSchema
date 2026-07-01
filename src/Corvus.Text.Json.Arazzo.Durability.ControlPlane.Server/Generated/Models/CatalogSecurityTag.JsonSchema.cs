@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A non-internal security tag (KVP label, &#167;14.2) on a catalog version — a reach label the row-security rules match on (e.g. domain=payments, classification=restricted). Distinct from free-form display `tags`. The deployment owns internal/reserved-prefix tags (e.g. tenant, sys:*) separately: those are stamped by the deployment, immutable, and stripped from reads — they can never be set here.
+/// A non-internal security label (KVP) on a catalog version for row authorization (&#167;14.2) — a reach label rules match on, e.g. domain=payments; a run inherits its version&#39;s labels. Distinct from free-form display `tags`, and from environment/source/credential `managementTags` (which scope who may MANAGE a row). Internal/reserved-prefix tags (e.g. tenant) are deployment-owned and never set here — see the operation descriptions.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]

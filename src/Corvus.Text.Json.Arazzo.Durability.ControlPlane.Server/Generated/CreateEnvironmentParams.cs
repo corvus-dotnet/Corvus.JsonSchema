@@ -24,5 +24,5 @@ public readonly struct CreateEnvironmentParams
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentWrite Body { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCreate Body { get; init; }
 }

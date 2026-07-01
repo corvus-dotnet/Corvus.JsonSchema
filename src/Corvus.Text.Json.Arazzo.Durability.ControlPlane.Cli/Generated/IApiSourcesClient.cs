@@ -108,14 +108,14 @@ public interface IApiSourcesClient : IAsyncDisposable
         public static readonly string[] ListSourcesOpenIdConnectScopes = ["sources:read"];
 
         /// <summary>
-        /// Gets the scopes required by <c>RegisterSource</c> for the <c>Oauth2</c> scheme.
+        /// Gets the scopes required by <c>CreateSource</c> for the <c>Oauth2</c> scheme.
         /// </summary>
-        public static readonly string[] RegisterSourceOauth2Scopes = ["sources:write"];
+        public static readonly string[] CreateSourceOauth2Scopes = ["sources:write"];
 
         /// <summary>
-        /// Gets the scopes required by <c>RegisterSource</c> for the <c>OpenIdConnect</c> scheme.
+        /// Gets the scopes required by <c>CreateSource</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
-        public static readonly string[] RegisterSourceOpenIdConnectScopes = ["sources:write"];
+        public static readonly string[] CreateSourceOpenIdConnectScopes = ["sources:write"];
 
         /// <summary>
         /// Gets the scopes required by <c>GetSource</c> for the <c>Oauth2</c> scheme.
@@ -177,7 +177,7 @@ public interface IApiSourcesClient : IAsyncDisposable
     /// </remarks>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<RegisterSourceResponse> RegisterSourceAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<CreateSourceResponse> CreateSourceAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceCreate.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Get a source

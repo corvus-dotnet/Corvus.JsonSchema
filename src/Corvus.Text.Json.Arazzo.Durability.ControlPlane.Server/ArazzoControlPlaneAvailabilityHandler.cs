@@ -182,7 +182,7 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WithdrawVersionAvailabilityResult> HandleWithdrawVersionAvailabilityAsync(WithdrawVersionAvailabilityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    public async ValueTask<DeleteVersionAvailabilityResult> HandleDeleteVersionAvailabilityAsync(DeleteVersionAvailabilityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
@@ -191,18 +191,18 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
         GovernanceGate gate = await this.AuthorizeEnvironmentAdminAsync(environment, cancellationToken).ConfigureAwait(false);
         if (gate == GovernanceGate.NotFound)
         {
-            return WithdrawVersionAvailabilityResult.NotFound(EnvironmentNotFoundProblem(environment), workspace);
+            return DeleteVersionAvailabilityResult.NotFound(EnvironmentNotFoundProblem(environment), workspace);
         }
 
         if (gate == GovernanceGate.Forbidden)
         {
-            return WithdrawVersionAvailabilityResult.Forbidden(NotAdministratorProblem(environment), workspace);
+            return DeleteVersionAvailabilityResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
         bool withdrawn = await this.availability.WithdrawAsync(baseWorkflowId, versionNumber, environment, cancellationToken).ConfigureAwait(false);
         return withdrawn
-            ? WithdrawVersionAvailabilityResult.NoContent()
-            : WithdrawVersionAvailabilityResult.NotFound(AvailabilityNotFoundProblem(baseWorkflowId, versionNumber, environment), workspace);
+            ? DeleteVersionAvailabilityResult.NoContent()
+            : DeleteVersionAvailabilityResult.NotFound(AvailabilityNotFoundProblem(baseWorkflowId, versionNumber, environment), workspace);
     }
 
     // Each availability row is congruent with the persisted entry — a free whole-document re-wrap

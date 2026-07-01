@@ -707,7 +707,7 @@
         "parameters": [
           { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
           { "$ref": "#/components/parameters/VersionNumberPath" },
-          { "name": "limit", "in": "query", "required": false, "description": "The maximum number of entries to return.", "schema": { "$ref": "#/components/schemas/PageLimit" } },
+          { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
         ],
         "responses": {
@@ -741,7 +741,7 @@
         }
       },
       "delete": {
-        "operationId": "withdrawVersionAvailability",
+        "operationId": "deleteVersionAvailability",
         "security": [
           { "oauth2": ["availability:write"] },
           { "openIdConnect": ["availability:write"] },
@@ -801,7 +801,7 @@
     },
     "/security/rules": {
       "get": {
-        "operationId": "listSecurityRules",
+        "operationId": "searchSecurityRules",
         "security": [
           {
             "oauth2": [
@@ -1059,7 +1059,7 @@
     },
     "/security/bindings": {
       "get": {
-        "operationId": "listSecurityBindings",
+        "operationId": "searchSecurityBindings",
         "security": [
           {
             "oauth2": [
@@ -1329,13 +1329,7 @@
         "summary": "List source credential bindings",
         "description": "Returns a page of source credential bindings (references and non-secret metadata only), ordered by sourceName then environment. Page with `limit` and the opaque `pageToken` from a previous page's `nextPageToken`.",
         "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "description": "The maximum number of bindings to return in the page.",
-            "schema": { "$ref": "#/components/schemas/PageLimit" }
-          },
+          { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
         ],
         "responses": {
@@ -1363,7 +1357,7 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/CredentialBindingWrite" }
+              "schema": { "$ref": "#/components/schemas/CredentialBindingCreate" }
             }
           }
         },
@@ -1473,13 +1467,7 @@
         "summary": "List deployment environments",
         "description": "Returns a page of deployment environments the caller's reach admits (§14.2), ordered by name. Page with `limit` and the opaque `pageToken` from a previous page's `nextPageToken`.",
         "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "description": "The maximum number of environments to return in the page.",
-            "schema": { "$ref": "#/components/schemas/PageLimit" }
-          },
+          { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
         ],
         "responses": {
@@ -1501,7 +1489,7 @@
         "description": "Creates a governed, reach-scoped environment and grants the calling principal administration of it (design §7.7). The deployment stamps the creator's internal tenant tag onto managementTags and rejects a set the creator's own reach does not admit (no privilege escalation). Conflicts if an environment with that name already exists in the caller's reach.",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentWrite" } } }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentCreate" } } }
         },
         "responses": {
           "201": {
@@ -1703,7 +1691,7 @@
         "description": "Returns a page of availability entries for this environment — the (workflow, version) pairs made available in it (design §7.8), ordered by base workflow id then version. Visible to a caller whose reach admits the environment.",
         "parameters": [
           { "$ref": "#/components/parameters/EnvironmentNamePath" },
-          { "name": "limit", "in": "query", "required": false, "description": "The maximum number of entries to return.", "schema": { "$ref": "#/components/schemas/PageLimit" } },
+          { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
         ],
         "responses": {
@@ -1726,7 +1714,7 @@
         "parameters": [
           { "$ref": "#/components/parameters/EnvironmentNamePath" },
           { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["Pending", "Authorized", "Revoked"] }, "description": "Only authorizations in this state." },
-          { "name": "limit", "in": "query", "required": false, "description": "The maximum number of authorizations to return.", "schema": { "$ref": "#/components/schemas/PageLimit" } },
+          { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
         ],
         "responses": {
@@ -1799,13 +1787,7 @@
         "summary": "List registered sources",
         "description": "Returns a page of registered sources the caller's reach admits (§14.2), ordered by name. Each entry is a SourceSummary — the registered document is NOT included; fetch a single source to read it. Page with `limit` and the opaque `pageToken` from a previous page's `nextPageToken`.",
         "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "description": "The maximum number of sources to return in the page.",
-            "schema": { "$ref": "#/components/schemas/PageLimit" }
-          },
+          { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
         ],
         "responses": {
@@ -1816,7 +1798,7 @@
         }
       },
       "post": {
-        "operationId": "registerSource",
+        "operationId": "createSource",
         "security": [
           { "oauth2": ["sources:write"] },
           { "openIdConnect": ["sources:write"] },
@@ -1827,7 +1809,7 @@
         "description": "Registers a reach-scoped source (design §7.6): its name, type, and OpenAPI/AsyncAPI document, plus the managementTags scoping who may see and manage it. The deployment stamps the creator's internal tenant tag onto managementTags and rejects a set the creator's own reach does not admit (no privilege escalation). Conflicts if a source with that name already exists in the caller's reach.",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SourceWrite" } } }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SourceCreate" } } }
         },
         "responses": {
           "201": {
@@ -2393,13 +2375,7 @@
             "description": "Where to resolve from: the store-indexed observed-identity typeahead (default) or the external directory.",
             "schema": { "type": "string", "enum": ["observed", "directory"] }
           },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "description": "The maximum number of grantees to return in the page.",
-            "schema": { "$ref": "#/components/schemas/PageLimit" }
-          },
+          { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
         ],
         "responses": {
@@ -2517,7 +2493,7 @@
         "name": "limit",
         "in": "query",
         "required": false,
-        "description": "The maximum number of runs to return (or delete, for purge).",
+        "description": "The maximum number of entries to return in this page (also the maximum to delete, for purge).",
         "schema": { "$ref": "#/components/schemas/PageLimit" }
       },
       "PageTokenQuery": {
@@ -3138,7 +3114,7 @@
       },
       "CatalogSecurityTag": {
         "type": "object",
-        "description": "A non-internal security tag (KVP label, §14.2) on a catalog version — a reach label the row-security rules match on (e.g. domain=payments, classification=restricted). Distinct from free-form display `tags`. The deployment owns internal/reserved-prefix tags (e.g. tenant, sys:*) separately: those are stamped by the deployment, immutable, and stripped from reads — they can never be set here.",
+        "description": "A non-internal security label (KVP) on a catalog version for row authorization (§14.2) — a reach label rules match on, e.g. domain=payments; a run inherits its version's labels. Distinct from free-form display `tags`, and from environment/source/credential `managementTags` (which scope who may MANAGE a row). Internal/reserved-prefix tags (e.g. tenant) are deployment-owned and never set here — see the operation descriptions.",
         "properties": {
           "key": { "type": "string", "description": "The label key (e.g. domain)." },
           "value": { "type": "string", "description": "The label value (e.g. payments)." }
@@ -3617,7 +3593,7 @@
         },
         "required": ["identity"]
       },
-      "CredentialBindingWrite": {
+      "CredentialBindingCreate": {
         "type": "object",
         "description": "A source credential binding to create — references and non-secret metadata only. Secret material must never appear here; each secretRefs entry is a SecretRef pointer the runner dereferences.",
         "properties": {
@@ -3643,7 +3619,7 @@
           },
           "managementTags": {
             "type": "array",
-            "description": "Security tags scoping who may MANAGE this binding (§14.2), independent of usageTags. The deployment additionally stamps the creating principal's internal tenant tag, and rejects a set the creator's own reach does not admit (no privilege escalation). The reserved internal-tag prefix is not allowed here.",
+            "description": "Security tags scoping who may MANAGE this binding (§14.2), independent of the usage grant (usageGrantee). The deployment additionally stamps the creating principal's internal tenant tag, and rejects a set the creator's own reach does not admit (no privilege escalation). The reserved internal-tag prefix is not allowed here.",
             "items": { "$ref": "#/components/schemas/CredentialSecurityTag" }
           },
           "usageGrantee": {
@@ -3713,7 +3689,7 @@
           },
           "managementTags": {
             "type": "array",
-            "description": "Security tags scoping who may MANAGE this binding (§14.2), independent of usageTags.",
+            "description": "Security tags scoping who may MANAGE this binding (§14.2), independent of the usage grant (usageGrantee).",
             "items": { "$ref": "#/components/schemas/CredentialSecurityTag" }
           },
           "usageGrantee": {
@@ -3827,7 +3803,7 @@
         },
         "required": ["key", "value"]
       },
-      "EnvironmentWrite": {
+      "EnvironmentCreate": {
         "type": "object",
         "description": "A deployment environment to create (design §7.7). Creating it grants the calling principal administration of it. The name is the stable identity; managementTags scope who may manage and see it (the deployment additionally stamps the creator's internal tenant tag and rejects a set the creator's reach does not admit).",
         "properties": {
@@ -3901,7 +3877,7 @@
         "description": "The registered OpenAPI/AsyncAPI document for the source, stored and returned verbatim. The control plane does not interpret it beyond reach scoping; clients read components.securitySchemes from it to derive credential auth (§7.5). Returned only on single-source reads, never in the list.",
         "additionalProperties": true
       },
-      "SourceWrite": {
+      "SourceCreate": {
         "type": "object",
         "description": "A source to register (design §7.6). The name is the stable identity workflows reference in sourceDescriptions; managementTags scope who may see and manage it (the deployment additionally stamps the creator's internal tenant tag and rejects a set the creator's reach does not admit).",
         "properties": {

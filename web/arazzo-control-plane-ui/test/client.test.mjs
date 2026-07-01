@@ -454,20 +454,20 @@ test('addAdministrator / transferAdministration validate before calling the serv
 
 test('security rules: list, create, update and delete round-trip through the store', async () => {
   const c = makeClient();
-  const { rules } = await c.listSecurityRules();
+  const { rules } = await c.searchSecurityRules();
   assert.ok(rules.some((r) => r.name === 'tenant-scoped' && r.expression === 'tenant == $claim.tenant'));
   assert.ok(rules.some((r) => r.name === 'reach-core-tenants' && r.expression === "tenant in ('acme', 'globex')"));
 
   const created = await c.createSecurityRule({ name: 'reach-eu', expression: "region == 'eu'", description: 'EU rows.' });
   assert.equal(created.name, 'reach-eu');
   assert.equal(created.expression, "region == 'eu'");
-  assert.ok((await c.listSecurityRules()).rules.some((r) => r.name === 'reach-eu'));
+  assert.ok((await c.searchSecurityRules()).rules.some((r) => r.name === 'reach-eu'));
 
   const updated = await c.updateSecurityRule('reach-eu', { expression: "region in ('eu', 'uk')" });
   assert.equal(updated.expression, "region in ('eu', 'uk')");
 
   await c.deleteSecurityRule('reach-eu');
-  assert.ok(!(await c.listSecurityRules()).rules.some((r) => r.name === 'reach-eu'));
+  assert.ok(!(await c.searchSecurityRules()).rules.some((r) => r.name === 'reach-eu'));
 });
 
 test('createSecurityRule rejects a malformed expression (400) and a duplicate name (409)', async () => {
@@ -497,7 +497,7 @@ test('listSecurityOrderings returns the configured ordered dimensions with their
 
 test('security bindings: list, create, update and delete round-trip through the store', async () => {
   const c = makeClient();
-  const { bindings } = await c.listSecurityBindings();
+  const { bindings } = await c.searchSecurityBindings();
   assert.ok(bindings.some((b) => b.claimType === 'team' && b.claimValue === 'payments'));
 
   const created = await c.createSecurityBinding({ claimType: 'role', claimValue: 'sre', read: { unrestricted: true }, write: { ruleNames: ['reach-payments'] } });
@@ -510,7 +510,7 @@ test('security bindings: list, create, update and delete round-trip through the 
   assert.deepEqual(updated.read.ruleNames, ['reach-core-tenants']);
 
   await c.deleteSecurityBinding(created.id);
-  assert.ok(!(await c.listSecurityBindings()).bindings.some((b) => b.id === created.id));
+  assert.ok(!(await c.searchSecurityBindings()).bindings.some((b) => b.id === created.id));
 });
 
 test('security-binding client methods validate their arguments before calling the server', async () => {
@@ -640,10 +640,10 @@ test('listEnvironmentAvailability lists the versions made available in an enviro
   assert.deepEqual(keys, [...keys].sort(), 'ordered by base workflow id then version');
 });
 
-test('makeVersionAvailable promotes a ready version (idempotent); withdrawVersionAvailability removes it', async () => {
+test('makeVersionAvailable promotes a ready version (idempotent); deleteVersionAvailability removes it', async () => {
   const c = makeClient();
   // adopt-pet v1 is seeded available in production; withdraw then re-make it to exercise both verbs.
-  await c.withdrawVersionAvailability('adopt-pet', 1, 'production');
+  await c.deleteVersionAvailability('adopt-pet', 1, 'production');
   assert.equal((await c.listVersionAvailability('adopt-pet', 1)).availability.length, 0, 'withdrawn');
   const made = await c.makeVersionAvailable('adopt-pet', 1, 'production');
   assert.equal(made.environment, 'production');
@@ -662,9 +662,9 @@ test('makeVersionAvailable is readiness-gated (409) and 404s for an unknown envi
   await assert.rejects(() => c.makeVersionAvailable('adopt-pet', 1, 'no-such-env'), (e) => e.status === 404);
 });
 
-test('withdrawVersionAvailability 404s when the version is not available in that environment', async () => {
+test('deleteVersionAvailability 404s when the version is not available in that environment', async () => {
   const c = makeClient();
-  await assert.rejects(() => c.withdrawVersionAvailability('adopt-pet', 1, 'staging'), (e) => e.status === 404);
+  await assert.rejects(() => c.deleteVersionAvailability('adopt-pet', 1, 'staging'), (e) => e.status === 404);
 });
 
 // ---- persona enforcement (the gated-elevation model) --------------------------------------------

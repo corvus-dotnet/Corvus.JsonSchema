@@ -24,5 +24,5 @@ public readonly struct CreateCredentialParams
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingWrite Body { get; init; }
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate Body { get; init; }
 }

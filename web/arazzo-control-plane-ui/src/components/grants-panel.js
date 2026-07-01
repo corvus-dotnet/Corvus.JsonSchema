@@ -108,7 +108,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
       // One keyset page of grants, filtered server-side by q. Replaces the list (Prev/Next paging), not appended. The
       // scope vocabulary for the authoring typeahead is fetched on demand when the editor opens / as the user types
       // (loadScopeOptions), not loaded in full here.
-      const page = await client.listSecurityBindings({ q: this._query.trim() || undefined, pageToken: this._currentToken, limit: this.pageSize });
+      const page = await client.searchSecurityBindings({ q: this._query.trim() || undefined, pageToken: this._currentToken, limit: this.pageSize });
       if (seq !== this._reqSeq) return;
       this._grants = page.bindings;
       this._nextPageToken = page.nextPageToken;
@@ -142,7 +142,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
     const client = this.client;
     if (!client) return;
     try {
-      const page = await client.listSecurityRules({ q: q || undefined });
+      const page = await client.searchSecurityRules({ q: q || undefined });
       this._scopes = page.rules;
       this.renderRuleDropdown();
     } catch {

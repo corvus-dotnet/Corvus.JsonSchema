@@ -112,7 +112,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     /// <inheritdoc/>
     public async ValueTask<CreateEnvironmentResult> HandleCreateEnvironmentAsync(CreateEnvironmentParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        Models.EnvironmentWrite body = parameters.Body;
+        Models.EnvironmentCreate body = parameters.Body;
         SecurityTagSet managementTags;
         try
         {

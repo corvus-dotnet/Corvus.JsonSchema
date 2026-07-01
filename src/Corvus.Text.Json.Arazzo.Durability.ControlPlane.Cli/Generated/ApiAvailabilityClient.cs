@@ -91,17 +91,17 @@ public sealed class ApiAvailabilityClient : IApiAvailabilityClient
     /// <param name="versionNumber">The versionNumber parameter.</param>
     /// <param name="environment">The environment parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<WithdrawVersionAvailabilityResponse> WithdrawVersionAvailabilityAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<DeleteVersionAvailabilityResponse> DeleteVersionAvailabilityAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString BaseWorkflowIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, baseWorkflowId, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber VersionNumberValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.CreateBuilder(workspace, versionNumber, 30).RootElement;
         Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString EnvironmentValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, environment, 30).RootElement;
-        WithdrawVersionAvailabilityRequest request = new(BaseWorkflowIdValue, VersionNumberValue, EnvironmentValue);
+        DeleteVersionAvailabilityRequest request = new(BaseWorkflowIdValue, VersionNumberValue, EnvironmentValue);
 
         request.Validate(validationMode);
 
-        return SendAsyncCore<WithdrawVersionAvailabilityRequest, WithdrawVersionAvailabilityResponse>(workspace, request, responseValidationMode, cancellationToken);
+        return SendAsyncCore<DeleteVersionAvailabilityRequest, DeleteVersionAvailabilityResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
     /// <summary>
