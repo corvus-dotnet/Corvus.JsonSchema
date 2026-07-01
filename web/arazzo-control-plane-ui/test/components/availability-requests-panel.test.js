@@ -4,8 +4,8 @@ import { createMockControlPlane } from '../../demo/mock-api.js';
 import '../../src/components/availability-requests-panel.js';
 import { ok, equal, nextEvent, waitFor, mount } from './helpers.js';
 
-function panelWithMock(attrs = {}) {
-  const mock = createMockControlPlane({ latencyMs: 0 });
+function panelWithMock(attrs = {}, persona) {
+  const mock = createMockControlPlane({ latencyMs: 0, persona });
   const el = document.createElement('arazzo-availability-requests');
   for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
   el.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
@@ -19,10 +19,9 @@ describe('<arazzo-availability-requests>', () => {
   afterEach(() => el?.remove());
 
   it('lists the caller’s own requests in the "My requests" view', async () => {
-    el = panelWithMock();
+    el = panelWithMock({}, 'operator'); // omar@ops owns the seeded request (a denied roll-back of nightly-reconcile v2)
     mount(el);
     await nextEvent(el, 'loaded');
-    // The seed has one request created by the demo user (a denied roll-back of nightly-reconcile v2).
     equal(rows(el).length, 1, 'one own request');
     ok(el.shadowRoot.textContent.includes('nightly-reconcile'), 'shows the target workflow');
     ok(el.shadowRoot.textContent.includes('production'), 'shows the target environment');
@@ -103,7 +102,8 @@ describe('<arazzo-availability-requests>', () => {
     const e = await submitted;
     equal(e.detail.request.baseWorkflowId, 'onboard-customer', 'the new request targets the chosen workflow');
     equal(e.detail.request.environment, 'staging', 'targets the ready environment');
-    await waitFor(() => rows(el).length === 2);
+    // The submitter's "my requests" view now shows the request they just raised (attributed to the acting identity).
+    await waitFor(() => rows(el).length === 1);
   });
 
   it('offers the environment a version is actually ready in (adopt-pet → production)', async () => {
