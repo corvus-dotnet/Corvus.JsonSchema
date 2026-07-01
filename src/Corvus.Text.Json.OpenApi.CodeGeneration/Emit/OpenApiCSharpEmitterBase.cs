@@ -75,15 +75,18 @@ public abstract class OpenApiCSharpEmitterBase : IClientEmitter
 
     /// <inheritdoc/>
     /// <remarks>
-    /// The default implementation carries no document-level metadata beyond the spec root, resolver
-    /// and root server. A version whose document-identity or security-scheme metadata is not present
-    /// in the intermediate representation overrides this hook to extract it from its typed model.
+    /// The default implementation extracts the document security schemes from the raw spec root (the
+    /// <c>components.securitySchemes</c> structure is identical across OpenAPI 3.0/3.1/3.2, so a single
+    /// version-agnostic raw pass serves every version) into the <see cref="ClientEmitContext"/>. A
+    /// version whose additional document-identity metadata is not present in the intermediate
+    /// representation (OpenAPI 3.2's <c>$self</c>) overrides this hook to extract that from its typed
+    /// model, reusing the shared <see cref="PrepareSecuritySchemes"/> pass for the schemes.
     /// </remarks>
     public virtual ClientEmitContext PrepareContext(
         JsonElement specRoot,
         IOpenApiReferenceResolver referenceResolver,
         ServerInfo? rootServer)
-        => new(specRoot, referenceResolver, rootServer);
+        => new(specRoot, referenceResolver, rootServer, SecuritySchemes: PrepareSecuritySchemes(specRoot));
 
     /// <inheritdoc/>
     public GeneratedFile EmitRequestModule(OperationInfo op)
@@ -2431,6 +2434,172 @@ public abstract class OpenApiCSharpEmitterBase : IClientEmitter
 
         w.WriteLine();
     }
+
+    /// <summary>
+    /// Extracts the document security schemes from the raw spec root. The
+    /// <c>components.securitySchemes</c> structure (oauth2 flows, apiKey, http, openIdConnect, and the
+    /// 3.1/3.2 <c>mutualTLS</c> type) is identical across OpenAPI 3.0/3.1/3.2, so this single
+    /// version-agnostic pass serves every version. It selects the per-scheme fields by scheme type,
+    /// aggregates each OAuth2 scheme's <c>tokenUrl</c>/<c>authorizationUrl</c> (from the first flow that
+    /// defines each) and its <c>deviceAuthorization</c> URL, and unions the scope names across every flow
+    /// (deduped, ordinal-sorted). The result matches the shape the 3.2 emitter previously produced from
+    /// the strongly-typed <c>OpenApiDocument</c> model.
+    /// </summary>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <returns>The extracted security schemes (an empty array when none are declared).</returns>
+    protected static SecuritySchemeInfo[] PrepareSecuritySchemes(JsonElement specRoot)
+    {
+        if (!specRoot.TryGetProperty("components"u8, out JsonElement components)
+            || components.ValueKind != JsonValueKind.Object
+            || !components.TryGetProperty("securitySchemes"u8, out JsonElement schemes)
+            || schemes.ValueKind != JsonValueKind.Object)
+        {
+            return [];
+        }
+
+        List<SecuritySchemeInfo> result = [];
+
+        foreach (JsonProperty<JsonElement> schemeProp in schemes.EnumerateObject())
+        {
+            JsonElement scheme = schemeProp.Value;
+            string schemeName = schemeProp.Name;
+            string schemeType = SecuritySchemeStringProperty(scheme, "type"u8) ?? "unknown";
+            bool isDeprecated = scheme.TryGetProperty("deprecated"u8, out JsonElement dep)
+                && dep.ValueKind == JsonValueKind.True;
+            string? description = SecuritySchemeStringProperty(scheme, "description"u8);
+
+            string? apiKeyName = null;
+            string? apiKeyIn = null;
+            string? httpScheme = null;
+            string? bearerFormat = null;
+            string? openIdConnectUrl = null;
+            string? oauth2MetadataUrl = null;
+            string? deviceAuthorizationUrl = null;
+
+            if (string.Equals(schemeType, "apiKey", StringComparison.Ordinal))
+            {
+                apiKeyName = SecuritySchemeStringProperty(scheme, "name"u8);
+                apiKeyIn = SecuritySchemeStringProperty(scheme, "in"u8);
+            }
+            else if (string.Equals(schemeType, "http", StringComparison.Ordinal))
+            {
+                httpScheme = SecuritySchemeStringProperty(scheme, "scheme"u8);
+                bearerFormat = SecuritySchemeStringProperty(scheme, "bearerFormat"u8);
+            }
+            else if (string.Equals(schemeType, "openIdConnect", StringComparison.Ordinal))
+            {
+                openIdConnectUrl = SecuritySchemeStringProperty(scheme, "openIdConnectUrl"u8);
+            }
+            else if (string.Equals(schemeType, "oauth2", StringComparison.Ordinal))
+            {
+                oauth2MetadataUrl = SecuritySchemeStringProperty(scheme, "oauth2MetadataUrl"u8);
+
+                string? tokenUrl = null;
+                string? authorizationUrl = null;
+                HashSet<string> allScopes = new(StringComparer.Ordinal);
+
+                if (scheme.TryGetProperty("flows"u8, out JsonElement flows)
+                    && flows.ValueKind == JsonValueKind.Object)
+                {
+                    if (flows.TryGetProperty("deviceAuthorization"u8, out JsonElement deviceFlow)
+                        && deviceFlow.ValueKind == JsonValueKind.Object)
+                    {
+                        deviceAuthorizationUrl = SecuritySchemeStringProperty(deviceFlow, "deviceAuthorizationUrl"u8);
+                    }
+
+                    ExtractOAuth2FlowDetails(flows, ref tokenUrl, ref authorizationUrl, allScopes);
+                }
+
+                result.Add(new SecuritySchemeInfo(
+                    schemeName,
+                    schemeType,
+                    isDeprecated,
+                    description,
+                    apiKeyName,
+                    apiKeyIn,
+                    httpScheme,
+                    bearerFormat,
+                    openIdConnectUrl,
+                    oauth2MetadataUrl,
+                    deviceAuthorizationUrl,
+                    tokenUrl,
+                    authorizationUrl,
+                    allScopes.Count > 0 ? [.. allScopes.OrderBy(s => s, StringComparer.Ordinal)] : null));
+                continue;
+            }
+
+            result.Add(new SecuritySchemeInfo(
+                schemeName,
+                schemeType,
+                isDeprecated,
+                description,
+                apiKeyName,
+                apiKeyIn,
+                httpScheme,
+                bearerFormat,
+                openIdConnectUrl,
+                oauth2MetadataUrl,
+                deviceAuthorizationUrl));
+        }
+
+        return [.. result];
+    }
+
+    // Aggregates tokenUrl / authorizationUrl (the first flow that defines each) and the deduped scope
+    // union across every OAuth2 flow. Mirrors the field-selection the 3.2 typed model previously drove.
+    private static void ExtractOAuth2FlowDetails(
+        JsonElement flows,
+        ref string? tokenUrl,
+        ref string? authorizationUrl,
+        HashSet<string> allScopes)
+    {
+        if (flows.TryGetProperty("authorizationCode"u8, out JsonElement authCode) && authCode.ValueKind == JsonValueKind.Object)
+        {
+            tokenUrl ??= SecuritySchemeStringProperty(authCode, "tokenUrl"u8);
+            authorizationUrl ??= SecuritySchemeStringProperty(authCode, "authorizationUrl"u8);
+            CollectScopes(authCode, allScopes);
+        }
+
+        if (flows.TryGetProperty("clientCredentials"u8, out JsonElement clientCreds) && clientCreds.ValueKind == JsonValueKind.Object)
+        {
+            tokenUrl ??= SecuritySchemeStringProperty(clientCreds, "tokenUrl"u8);
+            CollectScopes(clientCreds, allScopes);
+        }
+
+        if (flows.TryGetProperty("implicit"u8, out JsonElement implicitFlow) && implicitFlow.ValueKind == JsonValueKind.Object)
+        {
+            authorizationUrl ??= SecuritySchemeStringProperty(implicitFlow, "authorizationUrl"u8);
+            CollectScopes(implicitFlow, allScopes);
+        }
+
+        if (flows.TryGetProperty("password"u8, out JsonElement password) && password.ValueKind == JsonValueKind.Object)
+        {
+            tokenUrl ??= SecuritySchemeStringProperty(password, "tokenUrl"u8);
+            CollectScopes(password, allScopes);
+        }
+
+        if (flows.TryGetProperty("deviceAuthorization"u8, out JsonElement device) && device.ValueKind == JsonValueKind.Object)
+        {
+            tokenUrl ??= SecuritySchemeStringProperty(device, "tokenUrl"u8);
+            CollectScopes(device, allScopes);
+        }
+    }
+
+    private static void CollectScopes(JsonElement flow, HashSet<string> allScopes)
+    {
+        if (flow.TryGetProperty("scopes"u8, out JsonElement scopes) && scopes.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty<JsonElement> scopeProp in scopes.EnumerateObject())
+            {
+                allScopes.Add(scopeProp.Name);
+            }
+        }
+    }
+
+    private static string? SecuritySchemeStringProperty(JsonElement element, ReadOnlySpan<byte> name)
+        => element.TryGetProperty(name, out JsonElement value) && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
 
     private static void EmitSecuritySchemeMetadata(IndentedWriter w, SecuritySchemeInfo[] schemes)
     {

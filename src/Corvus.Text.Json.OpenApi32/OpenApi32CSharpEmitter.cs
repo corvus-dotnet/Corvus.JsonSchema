@@ -16,9 +16,10 @@ namespace Corvus.Text.Json.OpenApi32;
 /// <para>
 /// OpenAPI 3.2 is the superset the shared emitter is shaped around, so this subclass adds only the
 /// one piece of emit that needs the strongly-typed model: <see cref="PrepareContext"/> dereferences
-/// the typed <see cref="OpenApiDocument"/> to extract the document identity (<c>$self</c>) and the
-/// security schemes into the <see cref="ClientEmitContext"/>. Everything else is inherited from
-/// <see cref="OpenApiCSharpEmitterBase"/>.
+/// the typed <see cref="OpenApiDocument"/> to extract the document identity (<c>$self</c>) into the
+/// <see cref="ClientEmitContext"/>. The security schemes are extracted by the shared, version-agnostic
+/// <see cref="OpenApiCSharpEmitterBase.PrepareSecuritySchemes"/> raw pass inherited from the base.
+/// Everything else is inherited from <see cref="OpenApiCSharpEmitterBase"/>.
 /// </para>
 /// </remarks>
 internal sealed class OpenApi32CSharpEmitter : OpenApiCSharpEmitterBase
@@ -47,8 +48,11 @@ internal sealed class OpenApi32CSharpEmitter : OpenApiCSharpEmitterBase
     /// <inheritdoc/>
     /// <remarks>
     /// The 3.2 implementation additionally dereferences the strongly-typed
-    /// <see cref="OpenApiDocument"/> to extract the document identity (<c>$self</c>) and the
-    /// security schemes that the shared intermediate representation does not carry.
+    /// <see cref="OpenApiDocument"/> to extract the document identity (<c>$self</c>) that the shared
+    /// intermediate representation does not carry. The security schemes are extracted by the shared,
+    /// version-agnostic <see cref="OpenApiCSharpEmitterBase.PrepareSecuritySchemes"/> raw pass (the
+    /// same one that populates the 3.0/3.1 context), so the emitted security constants are byte-identical
+    /// across every version.
     /// </remarks>
     public override ClientEmitContext PrepareContext(
         JsonElement specRoot,
@@ -65,164 +69,5 @@ internal sealed class OpenApi32CSharpEmitter : OpenApiCSharpEmitterBase
     {
         OpenApiDocument doc = specRoot;
         return doc.Self.IsNotUndefined() ? doc.Self.GetString() : null;
-    }
-
-    private static SecuritySchemeInfo[] PrepareSecuritySchemes(JsonElement specRoot)
-    {
-        OpenApiDocument doc = specRoot;
-        if (doc.ComponentsValue.IsUndefined() || doc.ComponentsValue.SecuritySchemes.IsUndefined())
-        {
-            return [];
-        }
-
-        List<SecuritySchemeInfo> result = [];
-
-        foreach (var schemeProp in doc.ComponentsValue.SecuritySchemes.EnumerateObject())
-        {
-            OpenApiDocument.SecuritySchemeOrReference schemeOrRef = schemeProp.Value;
-            OpenApiDocument.SecurityScheme scheme = OpenApiDocument.SecurityScheme.From(schemeOrRef);
-
-            string schemeName = schemeProp.Name;
-            string schemeType = scheme.Type.IsNotUndefined() ? scheme.Type.GetString()! : "unknown";
-            bool isDeprecated = scheme.Deprecated.IsNotUndefined() && (bool)scheme.Deprecated;
-            string? description = scheme.Description.IsNotUndefined() ? scheme.Description.GetString() : null;
-
-            string? apiKeyName = null;
-            string? apiKeyIn = null;
-            string? httpScheme = null;
-            string? bearerFormat = null;
-            string? openIdConnectUrl = null;
-            string? oauth2MetadataUrl = null;
-            string? deviceAuthorizationUrl = null;
-
-            if (string.Equals(schemeType, "apiKey", StringComparison.Ordinal))
-            {
-                apiKeyName = scheme.Name.IsNotUndefined() ? scheme.Name.GetString() : null;
-                apiKeyIn = scheme.In.IsNotUndefined() ? scheme.In.GetString() : null;
-            }
-            else if (string.Equals(schemeType, "http", StringComparison.Ordinal))
-            {
-                httpScheme = scheme.Scheme.IsNotUndefined() ? scheme.Scheme.GetString() : null;
-                bearerFormat = scheme.BearerFormat.IsNotUndefined() ? scheme.BearerFormat.GetString() : null;
-            }
-            else if (string.Equals(schemeType, "openIdConnect", StringComparison.Ordinal))
-            {
-                openIdConnectUrl = scheme.OpenIdConnectUrl.IsNotUndefined() ? scheme.OpenIdConnectUrl.GetString() : null;
-            }
-            else if (string.Equals(schemeType, "oauth2", StringComparison.Ordinal))
-            {
-                oauth2MetadataUrl = scheme.Oauth2MetadataUrl.IsNotUndefined() ? scheme.Oauth2MetadataUrl.GetString() : null;
-
-                if (scheme.Flows.IsNotUndefined() && scheme.Flows.DeviceAuthorization.IsNotUndefined())
-                {
-                    var deviceFlow = scheme.Flows.DeviceAuthorization;
-                    if (deviceFlow.DeviceAuthorizationUrl.IsNotUndefined())
-                    {
-                        deviceAuthorizationUrl = deviceFlow.DeviceAuthorizationUrl.GetString();
-                    }
-                }
-
-                // Extract tokenUrl and authorizationUrl from the first flow that has them
-                string? tokenUrl = null;
-                string? authorizationUrl = null;
-                HashSet<string> allScopes = [];
-
-                if (scheme.Flows.IsNotUndefined())
-                {
-                    ExtractOAuth2FlowDetails(scheme.Flows, ref tokenUrl, ref authorizationUrl, allScopes);
-                }
-
-                result.Add(new SecuritySchemeInfo(
-                    schemeName,
-                    schemeType,
-                    isDeprecated,
-                    description,
-                    apiKeyName,
-                    apiKeyIn,
-                    httpScheme,
-                    bearerFormat,
-                    openIdConnectUrl,
-                    oauth2MetadataUrl,
-                    deviceAuthorizationUrl,
-                    tokenUrl,
-                    authorizationUrl,
-                    allScopes.Count > 0 ? [.. allScopes.Order(StringComparer.Ordinal)] : null));
-                continue;
-            }
-
-            result.Add(new SecuritySchemeInfo(
-                schemeName,
-                schemeType,
-                isDeprecated,
-                description,
-                apiKeyName,
-                apiKeyIn,
-                httpScheme,
-                bearerFormat,
-                openIdConnectUrl,
-                oauth2MetadataUrl,
-                deviceAuthorizationUrl));
-        }
-
-        return [.. result];
-    }
-
-    private static void ExtractOAuth2FlowDetails(
-        OpenApiDocument.OauthFlows flows,
-        ref string? tokenUrl,
-        ref string? authorizationUrl,
-        HashSet<string> allScopes)
-    {
-        // AuthorizationCode flow
-        if (flows.AuthorizationCode.IsNotUndefined())
-        {
-            var flow = flows.AuthorizationCode;
-            tokenUrl ??= flow.TokenUrl.IsNotUndefined() ? flow.TokenUrl.GetString() : null;
-            authorizationUrl ??= flow.AuthorizationUrl.IsNotUndefined() ? flow.AuthorizationUrl.GetString() : null;
-            CollectScopes(flow.Scopes, allScopes);
-        }
-
-        // ClientCredentials flow
-        if (flows.ClientCredentials.IsNotUndefined())
-        {
-            var flow = flows.ClientCredentials;
-            tokenUrl ??= flow.TokenUrl.IsNotUndefined() ? flow.TokenUrl.GetString() : null;
-            CollectScopes(flow.Scopes, allScopes);
-        }
-
-        // Implicit flow
-        if (flows.Implicit.IsNotUndefined())
-        {
-            var flow = flows.Implicit;
-            authorizationUrl ??= flow.AuthorizationUrl.IsNotUndefined() ? flow.AuthorizationUrl.GetString() : null;
-            CollectScopes(flow.Scopes, allScopes);
-        }
-
-        // Password flow
-        if (flows.Password.IsNotUndefined())
-        {
-            var flow = flows.Password;
-            tokenUrl ??= flow.TokenUrl.IsNotUndefined() ? flow.TokenUrl.GetString() : null;
-            CollectScopes(flow.Scopes, allScopes);
-        }
-
-        // DeviceAuthorization flow
-        if (flows.DeviceAuthorization.IsNotUndefined())
-        {
-            var flow = flows.DeviceAuthorization;
-            tokenUrl ??= flow.TokenUrl.IsNotUndefined() ? flow.TokenUrl.GetString() : null;
-            CollectScopes(flow.Scopes, allScopes);
-        }
-    }
-
-    private static void CollectScopes(OpenApiDocument.MapOfStrings scopes, HashSet<string> allScopes)
-    {
-        if (scopes.IsNotUndefined())
-        {
-            foreach (var scopeProp in scopes.EnumerateObject())
-            {
-                allScopes.Add(scopeProp.Name);
-            }
-        }
     }
 }

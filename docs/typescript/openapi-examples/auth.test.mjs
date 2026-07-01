@@ -10,8 +10,9 @@ import assert from "node:assert/strict";
 import { bearerToken } from "@endjin/corvus-json-client-runtime";
 import { MockApiTransport } from "./mock-transport.mjs";
 
-// The 3.2 recipe is the one that declares `securitySchemes`, so it is the one that emits the scope
-// constants (the 3.0/3.1 specs in this suite declare no security schemes).
+// Every recipe (3.0/3.1/3.2) declares `securitySchemes` and emits the scope constants; this auth
+// suite exercises one representative recipe (3.2). The cross-version equality of the emitted constants
+// is covered by the conformance suite.
 const CLIENT = "./conformance/dist/petstore-3.2/client/ApiStatusClient.js";
 
 test("bearerToken(async factory) sets Authorization: Bearer on the outgoing request", async () => {

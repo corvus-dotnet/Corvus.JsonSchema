@@ -66,12 +66,11 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
     /// <inheritdoc/>
     /// <remarks>
-    /// Mirrors the C# emitter's version behaviour: only the OpenAPI 3.2 target extracts the document
-    /// security schemes into the <see cref="ClientEmitContext"/> (the 3.0/3.1 C# emitters leave
-    /// <see cref="ClientEmitContext.SecuritySchemes"/> <see langword="null"/>, and the shared
-    /// <c>SecurityRequirements</c> emit is gated on a non-null array). The 3.2 walker is the only one
-    /// whose typed model carries the flow/scope detail this metadata surfaces, so we gate the
-    /// extraction on the <c>openapi</c> version string the same way.
+    /// Mirrors the C# emitter's version behaviour: the document security schemes are extracted into the
+    /// <see cref="ClientEmitContext"/> for every OpenAPI version (3.0/3.1/3.2). The
+    /// <c>components.securitySchemes</c> structure is identical across those versions, so the raw
+    /// extraction below is version-agnostic; the two <c>static readonly</c> security constant blocks are
+    /// then emitted for each version whose context carries a non-null array.
     /// </remarks>
     public ClientEmitContext PrepareContext(
         JsonElement specRoot,
@@ -81,7 +80,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             specRoot,
             referenceResolver,
             rootServer,
-            SecuritySchemes: IsOpenApi32(specRoot) ? ExtractSecuritySchemes(specRoot) : null);
+            SecuritySchemes: ExtractSecuritySchemes(specRoot));
 
     /// <inheritdoc/>
     public GeneratedFile EmitRequestModule(OperationInfo op)
@@ -2510,14 +2509,6 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
     }
 
     // ── Security metadata ───────────────────────────────────────────────
-    // Whether the spec declares OpenAPI 3.2 (the only version whose C# emitter populates the context's
-    // security schemes; 3.0/3.1 leave them null and emit neither block).
-    private static bool IsOpenApi32(JsonElement specRoot)
-        => specRoot.TryGetProperty("openapi"u8, out JsonElement version)
-            && version.ValueKind == JsonValueKind.String
-            && version.GetString() is { } v
-            && v.StartsWith("3.2", StringComparison.Ordinal);
-
     // Extracts the document security schemes from the raw spec, mirroring the 3.2 C# emitter's
     // PrepareSecuritySchemes (same field selection per scheme type; oauth2 aggregates tokenUrl /
     // authorizationUrl / deviceAuthorizationUrl and the deduped, ordinal-sorted scope union across

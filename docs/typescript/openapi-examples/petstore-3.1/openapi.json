@@ -26,6 +26,13 @@
         "tags": [
           "status"
         ],
+        "security": [
+          {
+            "oauth2": [
+              "read:pets"
+            ]
+          }
+        ],
         "responses": {
           "200": {
             "description": "The current service status.",
@@ -57,6 +64,13 @@
         "tags": [
           "status"
         ],
+        "security": [
+          {
+            "oauth2": [
+              "read:pets"
+            ]
+          }
+        ],
         "parameters": [
           {
             "name": "petId",
@@ -85,6 +99,14 @@
         "summary": "Updates a pet by id, exercising path/query/header params and a JSON body.",
         "tags": [
           "status"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "write:pets"
+            ],
+            "apiKey": []
+          }
         ],
         "parameters": [
           {
@@ -683,6 +705,26 @@
             "type": "string"
           }
         }
+      }
+    },
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://auth.example.com/authorize",
+            "tokenUrl": "https://auth.example.com/token",
+            "scopes": {
+              "read:pets": "Read access to pets",
+              "write:pets": "Write access to pets"
+            }
+          }
+        }
+      },
+      "apiKey": {
+        "type": "apiKey",
+        "name": "X-API-Key",
+        "in": "header"
       }
     }
   }

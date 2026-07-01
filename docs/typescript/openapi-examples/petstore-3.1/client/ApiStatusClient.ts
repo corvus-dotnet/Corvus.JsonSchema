@@ -43,6 +43,31 @@ export class ApiStatusClient implements IApiStatusClient {
     this.transport = transport;
   }
 
+  /**
+   * Security scheme metadata from the specification.
+   */
+  static readonly securitySchemes = {
+    oauth2Name: "oauth2",
+    oauth2Type: "oauth2",
+    oauth2TokenUrl: "https://auth.example.com/token",
+    oauth2AuthorizationUrl: "https://auth.example.com/authorize",
+    oauth2AvailableScopes: ["read:pets", "write:pets"],
+    apiKeyName: "apiKey",
+    apiKeyType: "apiKey",
+    apiKeyKeyName: "X-API-Key",
+    apiKeyKeyLocation: "header",
+  } as const;
+
+  /**
+   * Per-operation security requirements from the specification.
+   */
+  static readonly securityRequirements = {
+    getStatusOauth2Scopes: ["read:pets"],
+    getPetOauth2Scopes: ["read:pets"],
+    updatePetOauth2Scopes: ["write:pets"],
+    allOauth2Scopes: ["read:pets", "write:pets"],
+  } as const;
+
   /** Creates the base URL for the server, substituting any server variables. */
   static serverUri(host: string = "api.example.com", basePath: string = "v1"): URL {
     let url = "https://{host}/{basePath}";
