@@ -19,7 +19,7 @@
 // (the "Request promotion…" button) and by a catalog-version entry (locked to that workflow + version).
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, define } from './base.js';
-import './workflow-id-input.js';
+import './workflow-picker.js';
 
 /**
  * Whether a credential binding is usable by a workflow's runs — a client-side approximation of the backend's §13
@@ -212,7 +212,7 @@ class ArazzoAvailabilityRequestDialog extends ArazzoElement {
   render() {
     const wfRow = this._lock
       ? `<div><div class="sub" style="margin-bottom:4px">Version</div><div class="locked-wf">${escapeHtml(this._baseWorkflowId)} v${escapeHtml(this._versionNumber)}</div></div>`
-      : `<label>Workflow<arazzo-workflow-id-input class="sub-wf" placeholder="Workflow id…"></arazzo-workflow-id-input></label>
+      : `<label>Workflow<arazzo-workflow-picker class="sub-wf" placeholder="Find a workflow…"></arazzo-workflow-picker></label>
          <label>Version<select class="ver-in" disabled><option value="">Choose a workflow first</option></select></label>`;
     this.shadowRoot.innerHTML = `
       <style>
@@ -252,9 +252,8 @@ class ArazzoAvailabilityRequestDialog extends ArazzoElement {
     if (wf) {
       wf.client = this._client;
       if (this._baseWorkflowId) wf.value = this._baseWorkflowId;
-      let t;
-      wf.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => this.loadVersions(wf.value.trim()), 250); });
-      wf.addEventListener('change', () => { clearTimeout(t); this.loadVersions(wf.value.trim()); });
+      // The picker fires `change` on pick/clear (not per keystroke), so load the chosen workflow's versions then.
+      wf.addEventListener('change', () => this.loadVersions(wf.value.trim()));
     }
     this.$('.ver-in')?.addEventListener('change', () => this.onVersionChange());
     this.$('.env-in')?.addEventListener('change', () => this.updateSubmitState());

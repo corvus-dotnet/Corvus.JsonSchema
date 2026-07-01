@@ -78,12 +78,12 @@ describe('<arazzo-scopes-panel>', () => {
     ok(editorOpen(el), 'the authoring pane opens on the RHS (not a modal)');
     setField(el, '.f-value', 'marketing');
     equal(preview(el), "domain == 'marketing'", 'template wrote the expression');
-    equal($(el, '.f-name').value, 'scope-marketing', 'name auto-suggested');
+    equal($(el, '.f-name').value, 'rule-marketing', 'name auto-suggested');
 
     const changed = nextEvent(el, 'scopes-changed');
     $(el, '.confirm').click();
     const e = await changed;
-    ok(e.detail.scopes.some((s) => s.name === 'scope-marketing' && s.expression === "domain == 'marketing'"), 'scope created');
+    ok(e.detail.scopes.some((s) => s.name === 'rule-marketing' && s.expression === "domain == 'marketing'"), 'rule created');
     ok(!editorOpen(el), 'the pane clears after create');
   });
 

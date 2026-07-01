@@ -142,7 +142,8 @@ describe('<arazzo-grants-panel>', () => {
     $(el, '.grow-row[data-id="bind-1"]').click();
     ok(editorOpen(el), 'selecting a row opens its record in the pane');
     equal($(el, '.f-claimType').value, 'team', 'prefilled claim');
-    equal($(el, '.f-claimType').readOnly, true, 'claim is the key on edit');
+    equal($(el, '.f-claimType').readOnly, true, 'claim type is the key on edit');
+    equal($(el, '.f-claimValue').readOnly, true, 'claim value is fixed too — the whole WHO is locked on edit');
     setVerbMode(el, 'read', 'unrestricted');
     const changed = nextEvent(el, 'grants-changed');
     $(el, '.confirm').click();
