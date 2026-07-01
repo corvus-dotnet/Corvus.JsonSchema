@@ -325,9 +325,10 @@ export class ArazzoControlPlaneClient {
 
   /**
    * `searchCatalog` — one page of catalog version summaries.
-   * @param {{ q?: string, baseWorkflowId?: string, workflowIdPrefix?: string, tags?: string[], status?: string, owner?: string, limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
+   * @param {{ q?: string, baseWorkflowId?: string, workflowIdPrefix?: string, tags?: string[], status?: string, owner?: string, distinctWorkflows?: boolean, limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
    *   `tags` are AND-matched; `q` is free-text over title/description; `owner` matches owner name/email;
    *   `workflowIdPrefix` is an anchored, case-insensitive prefix over the versioned workflow id (for type-ahead).
+   *   `distinctWorkflows` collapses the result to one representative version per base workflow, keyset-paged by base id.
    * @returns {Promise<{ versions: object[], nextPageToken: (string|null) }>} A {@link CatalogPage}.
    */
   async searchCatalog(query = {}) {
@@ -340,6 +341,7 @@ export class ArazzoControlPlaneClient {
     }
     if (query.status) search.set('status', query.status);
     if (query.owner) search.set('owner', query.owner);
+    if (query.distinctWorkflows) search.set('distinctWorkflows', 'true');
     if (query.limit != null) search.set('limit', String(query.limit));
     if (query.pageToken) search.set('pageToken', query.pageToken);
     const page = await this._request('GET', `/catalog${qs(search)}`, { signal: query.signal });

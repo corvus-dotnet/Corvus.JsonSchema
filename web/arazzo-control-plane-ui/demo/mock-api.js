@@ -1244,8 +1244,29 @@ export function createMockControlPlane(options = {}) {
     return json({ versions: slice.map(toCatalogSummary), nextPageToken: hasMore ? btoaSafe(String(offset + limit)) : null });
   }
 
+  // Representative precedence for distinct-workflow collapse: newest Active, else newest Obsolete, else newest.
+  function catalogStatusRank(status) {
+    return status === 'Active' ? 0 : status === 'Obsolete' ? 1 : 2;
+  }
+
+  function collapseToRepresentatives(filtered) {
+    const byBase = new Map();
+    for (const v of filtered) {
+      const cur = byBase.get(v.baseWorkflowId);
+      const better = !cur
+        || catalogStatusRank(v.status) < catalogStatusRank(cur.status)
+        || (catalogStatusRank(v.status) === catalogStatusRank(cur.status) && v.versionNumber > cur.versionNumber);
+      if (better) byBase.set(v.baseWorkflowId, v);
+    }
+    return [...byBase.values()];
+  }
+
   function searchCatalog(params) {
-    return pageCatalog(catalog.filter((v) => matchesCatalog(v, params)), params);
+    const filtered = catalog.filter((v) => matchesCatalog(v, params));
+    // distinctWorkflows collapses to one representative version per base workflow (a base appears if any of its
+    // versions matched), keyset-paged by base id — the server-side equivalent of the old client-side grouping.
+    const rows = params.get('distinctWorkflows') === 'true' ? collapseToRepresentatives(filtered) : filtered;
+    return pageCatalog(rows, params);
   }
 
   function listCatalogVersions(base, params) {
