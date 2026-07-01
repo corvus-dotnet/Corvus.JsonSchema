@@ -110,6 +110,22 @@ export const SHARED_CSS = `
   [hidden] { display: none !important; }
 `;
 
+/**
+ * Styles for the shared {@link ArazzoPager} (`<arazzo-pager>`), which renders into LIGHT DOM so its `.prev`/`.next`/
+ * `.count` remain queryable from the host's shadow root and inherit the host's theme. Include alongside {@link SHARED_CSS}
+ * in every list component that embeds a pager, so the footer looks identical everywhere.
+ */
+export const PAGER_CSS = `
+  arazzo-pager.pager, .pager { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--_surface); border-top: 1px solid var(--_border); }
+  .pager .grow { flex: 1; }
+  .pager .count { font-size: 12px; color: var(--_muted); }
+  .pager .info { font-size: 12px; color: var(--_muted); }
+  .pager .pill { font-weight: 600; }
+  .pager .pill.amber { color: var(--arazzo-status-suspended, #b07d18); }
+  .pager .pill.red { color: var(--arazzo-status-faulted, #d4351c); }
+  .pager button { font-size: 12px; padding: 4px 10px; }
+`;
+
 /** Maps a {@link WorkflowRunStatus} to its themeable colour token (with a fallback). */
 export function statusColor(status) {
   const map = {

@@ -17,7 +17,8 @@ const $ = (el, sel) => el.shadowRoot.querySelector(sel);
 const setInput = (el, sel, value) => { const i = $(el, sel); i.value = value; i.dispatchEvent(new Event('input')); };
 const verbSelect = (el, verb) => [...el.shadowRoot.querySelectorAll('.verb-mode')].find((s) => s.dataset.verb === verb);
 const setVerbMode = (el, verb, mode) => { const s = verbSelect(el, verb); s.value = mode; s.dispatchEvent(new Event('change')); };
-const dialogOpen = (el) => $(el, 'dialog').open;
+// The editor is a RHS detail pane (master-detail), not a modal — "open" means the pane holds an authoring form.
+const editorOpen = (el) => !!$(el, '.detail-pane .content');
 
 async function pickGrantee(el, query) {
   const picker = $(el, '.who-picker');
@@ -76,12 +77,12 @@ describe('<arazzo-grants-panel>', () => {
     ok($(el, '.prev').disabled, 'Prev disabled again on page 1');
   });
 
-  it('opens a modal editor and creates a grant from a raw claim + an unrestricted action', async () => {
+  it('opens the detail-pane editor and creates a grant from a raw claim + an unrestricted action', async () => {
     el = panelWithMock({ scopes: 'security:read security:write' });
     mount(el);
     await nextEvent(el, 'loaded');
     $(el, '.new').click();
-    ok(dialogOpen(el), 'modal editor opens');
+    ok(editorOpen(el), 'the authoring pane opens on the RHS (not a modal)');
     setInput(el, '.f-claimType', 'region');
     setInput(el, '.f-claimValue', 'eu');
     setVerbMode(el, 'read', 'unrestricted');
@@ -89,7 +90,7 @@ describe('<arazzo-grants-panel>', () => {
     $(el, '.confirm').click();
     const e = await changed;
     ok(e.detail.grants.some((g) => g.claimType === 'region' && g.claimValue === 'eu' && g.read.unrestricted === true), 'grant created');
-    ok(!dialogOpen(el), 'dialog closes after create');
+    ok(!editorOpen(el), 'the pane clears after create');
   });
 
   it('scopes an action by picking scopes with the typeahead (not a checkbox list)', async () => {
@@ -134,11 +135,12 @@ describe('<arazzo-grants-panel>', () => {
     ok($(el, '.form-err .error-banner'), 'create blocked for a person');
   });
 
-  it('edits a grant (claim is the immutable key) and saves the new access', async () => {
+  it('selects a grant row into the pane (claim is the immutable key) and saves the new access', async () => {
     el = panelWithMock({ scopes: 'security:read security:write' });
     mount(el);
     await nextEvent(el, 'loaded');
-    [...el.shadowRoot.querySelectorAll('.edit')].find((b) => b.dataset.id === 'bind-1').click();
+    $(el, '.grow-row[data-id="bind-1"]').click();
+    ok(editorOpen(el), 'selecting a row opens its record in the pane');
     equal($(el, '.f-claimType').value, 'team', 'prefilled claim');
     equal($(el, '.f-claimType').readOnly, true, 'claim is the key on edit');
     setVerbMode(el, 'read', 'unrestricted');
@@ -146,6 +148,19 @@ describe('<arazzo-grants-panel>', () => {
     $(el, '.confirm').click();
     const e = await changed;
     equal(e.detail.grants.find((g) => g.id === 'bind-1').read.unrestricted, true, 'read access updated');
+  });
+
+  it('deletes a grant from the detail pane and emits grants-changed', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    $(el, '.grow-row[data-id="bind-2"]').click();
+    const changed = nextEvent(el, 'grants-changed');
+    $(el, '.del').click();
+    const okBtn = await waitFor(() => $(el, 'dialog.arazzo-confirm .ok'));
+    okBtn.click();
+    const e = await changed;
+    ok(!e.detail.grants.some((g) => g.id === 'bind-2'), 'grant removed');
   });
 
   it('deletes a grant (via the client + reload) and emits grants-changed', async () => {
@@ -159,11 +174,16 @@ describe('<arazzo-grants-panel>', () => {
     ok(!e.detail.grants.some((g) => g.id === 'bind-2'), 'grant removed');
   });
 
-  it('hides the mutating controls without security:write', async () => {
+  it('hides the mutating controls without security:write (read-only detail pane)', async () => {
     el = panelWithMock({ scopes: 'security:read' });
     mount(el);
     await nextEvent(el, 'loaded');
     ok($(el, '.new').hidden, 'New grant button hidden');
-    ok(!$(el, '.edit'), 'no edit buttons');
+    // Selecting a row opens a read-only view of the grant: no Save/Delete, fields disabled (the 403 is the backstop).
+    $(el, '.grow-row').click();
+    ok(editorOpen(el), 'the pane shows the selected grant');
+    ok(!$(el, '.confirm'), 'no Save without security:write');
+    ok(!$(el, '.del'), 'no Delete without security:write');
+    ok($(el, '.f-claimType').disabled, 'fields are read-only');
   });
 });

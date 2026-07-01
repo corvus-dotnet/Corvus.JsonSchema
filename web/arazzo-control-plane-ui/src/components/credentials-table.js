@@ -2,21 +2,22 @@
 //
 //   <arazzo-credentials-table base-url="/arazzo/v1" status="expiring" selectable></arazzo-credentials-table>
 //
-// Attributes : base-url, status (valid|expiring|expired), source, page-size (default 50), selectable, scopes (gates the Duplicate action)
+// Attributes : base-url, status (valid|expiring|expired), source, page-size (default 50), selectable, scopes
 // Properties : .client, .filters = { status, source }
-// Events     : credential-selected {binding}, credential-duplicate {binding}, loaded {count, expiring, expired}, error {problem}
+// Events     : credential-selected {binding}, loaded {count, expiring, expired}, error {problem}
 // Parts      : table, row, cell, status, toolbar, foot, pager
 //
-// This is a MANAGEMENT surface, not a creation one: rows are rotated/inspected (credential-selected), duplicated to
-// another environment (credential-duplicate — clone source + auth, re-point the secret), and revoked. Creating a
-// credential is rooted where the source and its auth are known — the catalog's per-workflow Sources panel (§7.5) —
-// not free-typed here.
+// This is the MASTER of a master-detail surface (<arazzo-credentials>): a status-first list whose rows SELECT into a
+// detail pane (credential-selected) where the binding is viewed/rotated/duplicated/revoked. It is a management surface,
+// not a creation one — creating a credential is rooted where the source and its auth are known (the catalog's
+// per-workflow Sources panel, §7.5), not free-typed here.
 //
 // A binding manages a REFERENCE and non-secret metadata only — never secret material — so the table renders a
 // `secretRef` and a derived `credentialStatus`, never a secret. The operator's question is "what's about to
 // break?", so status is the headline column (colour-coded) with an "N expiring / M expired" footer.
 
-import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, absoluteTime, countdown, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, PAGER_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, absoluteTime, countdown, define } from './base.js';
+import './pager.js';
 
 const STATUS = {
   valid: { label: 'valid', color: 'var(--arazzo-status-completed, #2a8a4a)' },
@@ -163,21 +164,13 @@ class ArazzoCredentialsTable extends ArazzoElement {
         tbody tr.selectable:hover { background: var(--_surface); }
         tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
         .src-name { font-weight: 600; }
-        .actions-cell { white-space: nowrap; text-align: right; }
-        .dup { font-size: 12px; padding: 3px 8px; }
         .ref { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--_muted); }
         .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; white-space: nowrap; }
         .grants { display: flex; gap: 4px; flex-wrap: wrap; }
         .grant { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); white-space: nowrap; }
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
-        .foot { display: flex; align-items: center; gap: 12px; padding: 9px 12px; background: var(--_surface); border-top: 1px solid var(--_border); font-size: 12px; color: var(--_muted); }
-        .pill { font-weight: 600; }
-        .pill.amber { color: var(--arazzo-status-suspended, #b07d18); }
-        .pill.red { color: var(--arazzo-status-faulted, #d4351c); }
-        .pager { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-top: 1px solid var(--_border); }
-        .pager .grow { flex: 1; }
-        .pager .count { font-size: 12px; color: var(--_muted); }
+        ${PAGER_CSS}
       </style>
       <div class="wrap" part="table">
         <div class="toolbar" part="toolbar">
@@ -191,20 +184,15 @@ class ArazzoCredentialsTable extends ArazzoElement {
           </label>
           <input class="src" type="text" placeholder="source…" aria-label="Filter by source">
           <span class="grow"></span>
+          <button class="refresh ghost" type="button" title="Refresh">↻</button>
         </div>
         <table>
           <thead>
-            <tr><th>Source</th><th>Environment</th><th>Auth</th><th>Status</th><th>Expires</th><th>Grants</th><th></th></tr>
+            <tr><th>Source</th><th>Environment</th><th>Auth</th><th>Status</th><th>Expires</th><th>Grants</th></tr>
           </thead>
           <tbody part="rows"></tbody>
         </table>
-        <div class="foot" part="foot"></div>
-        <div class="pager" part="pager" hidden>
-          <button class="prev ghost" type="button">‹ Prev</button>
-          <button class="next ghost" type="button">Next ›</button>
-          <span class="grow"></span>
-          <span class="count"></span>
-        </div>
+        <arazzo-pager class="pager" part="pager"></arazzo-pager>
       </div>
     `;
     const status = this.$('.status');
@@ -213,8 +201,9 @@ class ArazzoCredentialsTable extends ArazzoElement {
     const src = this.$('.src');
     src.value = this.getAttribute('source') || '';
     src.addEventListener('input', () => this.filters = { ...this.filters, source: src.value.trim() || undefined });
-    this.$('.prev').addEventListener('click', () => this.prevPage());
-    this.$('.next').addEventListener('click', () => this.nextPage());
+    this.$('.refresh').addEventListener('click', () => this.reload());
+    this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
+    this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
   }
 
   visibleBindings() {
@@ -229,13 +218,9 @@ class ArazzoCredentialsTable extends ArazzoElement {
     const tbody = this.$('tbody');
     if (!tbody) return;
     const selectable = this.hasAttribute('selectable');
-    const canWrite = (() => {
-      const scopes = (this.getAttribute('scopes') || '').split(/\s+/).filter(Boolean);
-      return scopes.length === 0 || scopes.includes('credentials:write');
-    })();
 
     if (this._error) {
-      tbody.innerHTML = `<tr><td colspan="7">
+      tbody.innerHTML = `<tr><td colspan="6">
         <div class="error-banner">
           <span><strong>${escapeHtml(this._error.title || 'Request failed')}</strong>${this._error.detail ? ' — ' + escapeHtml(this._error.detail) : ''}</span>
           <button class="retry" type="button">Retry</button>
@@ -246,30 +231,23 @@ class ArazzoCredentialsTable extends ArazzoElement {
     }
 
     if (this._loading && this._bindings.length === 0) {
-      tbody.innerHTML = Array.from({ length: 3 }, () => `<tr>${'<td><div class="skl"></div></td>'.repeat(7)}</tr>`).join('');
+      tbody.innerHTML = Array.from({ length: 3 }, () => `<tr>${'<td><div class="skl"></div></td>'.repeat(6)}</tr>`).join('');
       this.renderFoot(0, 0);
       return;
     }
 
     const rows = this.visibleBindings();
     if (rows.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7"><div class="empty">No credential bindings match the current filters.</div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty">No credential bindings match the current filters.</div></td></tr>`;
       this.renderFoot(0, 0);
       return;
     }
 
-    tbody.innerHTML = rows.map((b) => this.renderRow(b, selectable, canWrite)).join('');
+    tbody.innerHTML = rows.map((b) => this.renderRow(b, selectable)).join('');
     if (selectable) {
       this.$$('tbody tr.selectable').forEach((tr) => tr.addEventListener('click', () => this.select(tr.dataset.key)));
     }
-    // Duplicate-to-environment: clone this binding's source + auth into a new environment (the one legitimate
-    // "create" on the Sources tab — rooted in an existing source, not free-typed). Stops the row's select click.
-    this.$$('tbody .dup').forEach((btn) => btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const key = btn.closest('tr')?.dataset.key;
-      const binding = this._bindings.find((b) => `${b.sourceName}@${b.environment}` === key);
-      if (binding) this.emit('credential-duplicate', { binding });
-    }));
+    // View / rotate / duplicate / revoke are actions on the selected row's detail pane (master-detail), not row buttons.
 
     const expiring = rows.filter((b) => b.credentialStatus === 'expiringSoon').length;
     const expired = rows.filter((b) => b.credentialStatus === 'expired').length;
@@ -277,7 +255,7 @@ class ArazzoCredentialsTable extends ArazzoElement {
     this.emit('loaded', { count: rows.length, expiring, expired });
   }
 
-  renderRow(b, selectable, canWrite = true) {
+  renderRow(b, selectable) {
     const key = `${b.sourceName}@${b.environment}`;
     const status = STATUS[b.credentialStatus] || { label: b.credentialStatus, color: 'var(--_muted)' };
     const ref = b.secretRefs?.[0]?.ref;
@@ -296,33 +274,22 @@ class ArazzoCredentialsTable extends ArazzoElement {
         <td part="cell"><span class="badge" part="status" style="background:${status.color}">${escapeHtml(status.label)}</span></td>
         <td part="cell">${expires}</td>
         <td part="cell">${grants}</td>
-        <td part="cell" class="actions-cell">${canWrite ? '<button class="dup ghost" type="button" title="Duplicate to another environment">Duplicate</button>' : ''}</td>
       </tr>`;
   }
 
   renderFoot(expiring, expired) {
-    this.updatePager();
-    const foot = this.$('.foot');
-    if (!foot) return;
-    if (this._loading) { foot.textContent = 'Loading…'; return; }
-    const total = this.visibleBindings().length;
-    const parts = [`${total} binding${total === 1 ? '' : 's'}`];
-    if (expiring > 0) parts.push(`<span class="pill amber">${expiring} expiring soon</span>`);
-    if (expired > 0) parts.push(`<span class="pill red">${expired} expired</span>`);
-    foot.innerHTML = parts.join(' · ');
-  }
-
-  updatePager() {
-    const pager = this.$('.pager');
-    if (!pager) return;
-    const hasPages = this._history.length > 0 || !!this._nextPageToken;
-    pager.hidden = !hasPages;
-    const prev = this.$('.prev');
-    const next = this.$('.next');
-    if (prev) prev.disabled = this._history.length === 0 || this._loading;
-    if (next) next.disabled = !this._nextPageToken || this._loading;
-    const count = this.$('.pager .count');
-    if (count) count.textContent = this._loading ? 'Loading…' : (this._history.length ? `page ${this._history.length + 1}` : '');
+    let info;
+    if (this._loading) {
+      info = 'Loading…';
+    } else {
+      const total = this.visibleBindings().length;
+      const parts = [`${total} binding${total === 1 ? '' : 's'}`];
+      if (expiring > 0) parts.push(`<span class="pill amber">${expiring} expiring soon</span>`);
+      if (expired > 0) parts.push(`<span class="pill red">${expired} expired</span>`);
+      if (this._history.length) parts.push(`page ${this._history.length + 1}`);
+      info = parts.join(' · ');
+    }
+    this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextPageToken, loading: this._loading, info });
   }
 
   /** Select a binding by `source@environment` (highlights the row and emits `credential-selected`). */
