@@ -26,6 +26,16 @@ describe('<arazzo-runs-table>', () => {
     ok(el.shadowRoot.querySelector('arazzo-status-badge'), 'status badge present');
   });
 
+  it('shows each run’s pinned environment (and a placeholder when unpinned)', async () => {
+    el = tableWithMock();
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const pinned = el.shadowRoot.querySelector('tbody tr[data-id="run-7f3a9c21"] td.env');
+    ok(pinned && pinned.textContent.includes('production'), 'a pinned run shows its environment (§5.5)');
+    const unpinned = el.shadowRoot.querySelector('tbody tr[data-id="run-1b88de40"] td.env');
+    ok(unpinned && unpinned.textContent.trim() === '—', 'a run created before pinning shows the — placeholder');
+  });
+
   it('emits run-selected when a selectable row is clicked', async () => {
     el = tableWithMock({ selectable: '' });
     mount(el);

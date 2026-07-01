@@ -31,7 +31,7 @@ export function seedRuns() {
       createdAt: iso(-3 * hr), updatedAt: iso(-2 * min), etag: nextEtag(),
       fault: { stepId: 'reservePayment', attempt: 3, error: 'HttpRequestException: 502 from payments (upstream)', at: iso(-2 * min) },
       _errorType: 'HttpRequestException',
-      correlationId: '7f3a9c21d4e54a1b9c0d1e2f3a4b5c6d', tags: ['tenant-42', 'priority'],
+      correlationId: '7f3a9c21d4e54a1b9c0d1e2f3a4b5c6d', environment: 'production', tags: ['tenant-42', 'priority'],
     },
     {
       // Faulted at submitAdoption — skip/state-patch outputs include nested 'fee' & 'adopter' objects and a 'documents' array.
@@ -47,7 +47,7 @@ export function seedRuns() {
       createdAt: iso(-6 * hr), updatedAt: iso(-12 * min), etag: nextEtag(),
       fault: { stepId: 'flagDiscrepancies', attempt: 1, error: 'TimeoutException: ledger service did not respond within 30s', at: iso(-12 * min) },
       _errorType: 'TimeoutException',
-      correlationId: 'c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4', tags: ['prod', 'billing'],
+      correlationId: 'c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4', environment: 'production', tags: ['prod', 'billing'],
     },
     {
       // Faulted at verifyIdentity — outputs include a nested 'applicant' object, an enum 'method', and a 'flags' enum array.
@@ -55,7 +55,7 @@ export function seedRuns() {
       createdAt: iso(-100 * min), updatedAt: iso(-15 * min), etag: nextEtag(),
       fault: { stepId: 'verifyIdentity', attempt: 4, error: 'KycProviderException: document image unreadable', at: iso(-15 * min) },
       _errorType: 'KycProviderException',
-      correlationId: 'aa11bb22cc33dd44ee55ff6677889900', tags: ['tenant-7', 'kyc'],
+      correlationId: 'aa11bb22cc33dd44ee55ff6677889900', environment: 'staging', tags: ['tenant-7', 'kyc'],
     },
     {
       // Faulted at provisionResources — outputs are an array of resource objects (kind/region/endpoint enums + uri).
@@ -117,6 +117,7 @@ function toSummary(run) {
     awaitingCorrelationId: run.wait?.kind === 'Message' ? (run.wait.correlationId ?? null) : null,
     errorType: run.status === 'Faulted' ? (run._errorType ?? 'Error') : null,
     correlationId: run.correlationId ?? null,
+    environment: run.environment ?? null,
     tags: run.tags ?? [],
   };
 }
@@ -132,6 +133,7 @@ function toDetail(run) {
     fault: run.fault ?? null,
     etag: run.etag,
     correlationId: run.correlationId ?? null,
+    environment: run.environment ?? null,
     tags: run.tags ?? [],
   };
 }

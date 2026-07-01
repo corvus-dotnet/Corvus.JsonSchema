@@ -183,7 +183,7 @@ class ArazzoRunsTable extends ArazzoElement {
         <table>
           <thead>
             <tr>
-              <th>Status</th><th>Workflow</th><th>Run</th><th>Age</th><th>Waiting on</th><th>Error</th><th>Tags</th>
+              <th>Status</th><th>Workflow</th><th>Environment</th><th>Run</th><th>Age</th><th>Waiting on</th><th>Error</th><th>Tags</th>
             </tr>
           </thead>
           <tbody part="rows"></tbody>
@@ -206,7 +206,7 @@ class ArazzoRunsTable extends ArazzoElement {
     const selectable = this.hasAttribute('selectable');
 
     if (this._error) {
-      tbody.innerHTML = `<tr><td colspan="7">
+      tbody.innerHTML = `<tr><td colspan="8">
         <div class="error-banner">
           <span><strong>${escapeHtml(this._error.title || 'Request failed')}</strong>${this._error.detail ? ' — ' + escapeHtml(this._error.detail) : ''}</span>
           <button class="retry" type="button">Retry</button>
@@ -218,13 +218,13 @@ class ArazzoRunsTable extends ArazzoElement {
 
     if (this._loading && this._runs.length === 0) {
       tbody.innerHTML = Array.from({ length: 4 }, () =>
-        `<tr>${'<td><div class="skl"></div></td>'.repeat(6)}</tr>`).join('');
+        `<tr>${'<td><div class="skl"></div></td>'.repeat(8)}</tr>`).join('');
       this.updatePager();
       return;
     }
 
     if (this._runs.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7"><div class="empty">No runs match the current filters.</div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty">No runs match the current filters.</div></td></tr>`;
       this.updatePager();
       return;
     }
@@ -264,6 +264,7 @@ class ArazzoRunsTable extends ArazzoElement {
       <tr part="row" class="${selectable ? 'selectable' : ''}" data-id="${escapeHtml(run.id)}"${sel}>
         <td part="cell"><arazzo-status-badge part="status" status="${escapeHtml(run.status)}"></arazzo-status-badge></td>
         <td part="cell" class="wf">${escapeHtml(run.workflowId)}</td>
+        <td part="cell" class="env">${run.environment ? `<span class="tag">${escapeHtml(run.environment)}</span>` : '<span class="muted">—</span>'}</td>
         <td part="cell" class="id"><span title="${escapeHtml(run.id)}">${escapeHtml(shortId(run.id))}</span><button class="copy ghost" type="button" data-id="${escapeHtml(run.id)}" title="Copy run id" aria-label="Copy run id">⧉</button></td>
         <td part="cell" class="muted" title="${escapeHtml(absoluteTime(run.createdAt))}">${escapeHtml(relativeTime(run.createdAt))}</td>
         <td part="cell">${waiting}</td>
