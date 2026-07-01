@@ -1,18 +1,20 @@
 // <arazzo-scopes-panel> — manage reusable access scopes (design §14.2): named row-filter expressions a grant binds
 // per action. "Scope" is the user-facing term for what the API calls a security rule.
 //
-//   <arazzo-scopes-panel base-url="/arazzo/v1" scopes-write="security:write"></arazzo-scopes-panel>
+//   <arazzo-scopes-panel base-url="/arazzo/v1" scopes="security:read security:write"></arazzo-scopes-panel>
 //
 // Attributes : base-url, scopes (gates the mutating controls)
 // Properties : .client
 // Events     : scopes-changed {scopes}, loaded {count}, error {problem}
-// Parts      : panel, list, row
+// Parts      : panel, list, row, detail
 //
-// A scope is { name, expression } over the row-filter grammar. Authoring is template-first in a modal editor (the
-// dialog pattern the credential editor uses): pick a goal and the template writes the expression with a live preview;
-// "Advanced" reveals the raw grammar. The list is searchable so it stays usable at hundreds of scopes.
+// A master-detail over the scope list (the same shape as the Grants / Catalog / Sources surfaces): a selectable list on
+// the left, a detail pane on the right that AUTHORS the selected scope in place — no modal. A scope is
+// { name, expression } over the row-filter grammar. Authoring is template-first: pick a goal and the template writes the
+// expression with a live preview; "Advanced" reveals the raw grammar. The name is the immutable key (read-only on edit).
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, confirmDialog, define } from './base.js';
+import './pager.js';
 
 // How long to wait after the last keystroke before issuing a server-side search (so typing doesn't fire a request per
 // character). The list is paged + searched on the server, so search scales to any number of scopes.
@@ -59,7 +61,8 @@ class ArazzoScopesPanel extends ArazzoElement {
     /** @private */ this._nextPageToken = null;
     /** @private */ this._reqSeq = 0;
     /** @private */ this._query = '';
-    /** @private */ this._form = null;
+    /** @private */ this._form = null;           // the detail-pane form state (null = nothing selected)
+    /** @private */ this._selectedName = null;   // the selected scope name (null when creating / nothing selected)
   }
 
   connectedCallback() {
@@ -69,7 +72,7 @@ class ArazzoScopesPanel extends ArazzoElement {
 
   attributeChangedCallback(name) {
     if (!this.isConnected) return;
-    if (name === 'scopes') this.renderBody();
+    if (name === 'scopes') { this.renderBody(); this.renderDetail(); }
     else this.reload();
   }
 
@@ -142,7 +145,7 @@ class ArazzoScopesPanel extends ArazzoElement {
     this.load();
   }
 
-  // ---- editor (modal dialog) --------------------------------------------------------------------
+  // ---- detail-pane authoring --------------------------------------------------------------------
 
   availableTemplates() {
     return this._orderings.length > 0 ? TEMPLATES : TEMPLATES.filter((t) => t.id !== 'ordered');
@@ -152,27 +155,33 @@ class ArazzoScopesPanel extends ArazzoElement {
     return this._orderings.find((o) => o.dimension === dimension)?.labels ?? [];
   }
 
+  /** Open a blank detail pane to author a new scope. */
   openCreate() {
+    this._selectedName = null;
     this._form = { mode: 'create', editName: null, template: 'label-eq', name: '', nameEdited: false, formError: null, fields: {} };
     this._form.name = templateById('label-eq').suggest(this._form.fields);
-    this.renderEditor();
-    this.$('dialog').showModal();
+    this.renderBody();
+    this.renderDetail();
   }
 
-  openEdit(name) {
+  /** Select a scope row: open it in the detail pane for editing (the name is the immutable key). */
+  select(name) {
     const scope = this._scopes.find((s) => s.name === name);
     if (!scope) return;
+    this._selectedName = name;
     this._form = {
       mode: 'edit', editName: scope.name, template: 'advanced', name: scope.name, nameEdited: true, formError: null,
       fields: { expression: scope.expression, description: scope.description || '' },
     };
-    this.renderEditor();
-    this.$('dialog').showModal();
+    this.renderBody();
+    this.renderDetail();
   }
 
-  closeEditor() {
-    this.$('dialog')?.close();
+  clearDetail() {
     this._form = null;
+    this._selectedName = null;
+    this.renderBody();
+    this.renderDetail();
   }
 
   previewExpression() {
@@ -184,20 +193,20 @@ class ArazzoScopesPanel extends ArazzoElement {
     const form = this._form;
     const expression = this.previewExpression();
     const description = (form.fields.description || '').trim();
-    if (!expression) { form.formError = { title: 'The scope expression is empty.' }; this.renderEditor(); return; }
+    if (!expression) { form.formError = { title: 'The scope expression is empty.' }; this.renderDetail(); return; }
     try {
       if (form.mode === 'edit') {
         await this.client.updateSecurityRule(form.editName, { expression, description: description || undefined });
       } else {
         const name = (form.name || '').trim();
-        if (!name) { form.formError = { title: 'A scope name is required.' }; this.renderEditor(); return; }
+        if (!name) { form.formError = { title: 'A scope name is required.' }; this.renderDetail(); return; }
         await this.client.createSecurityRule({ name, expression, description: description || undefined });
       }
-      this.closeEditor();
+      this.clearDetail();
       await this.reloadAndEmit();
     } catch (err) {
       form.formError = err.problem || { title: err.message };
-      this.renderEditor();
+      this.renderDetail();
       this.emit('error', { problem: form.formError, error: err });
     }
   }
@@ -211,6 +220,7 @@ class ArazzoScopesPanel extends ArazzoElement {
     if (!confirmed) return;
     try {
       await this.client.deleteSecurityRule(name);
+      this.clearDetail();
       await this.reloadAndEmit();
     } catch (err) {
       this._error = err.problem || { title: err.message };
@@ -220,8 +230,7 @@ class ArazzoScopesPanel extends ArazzoElement {
   }
 
   async reloadAndEmit() {
-    // Reload from page 1 under the current search term (a mutation may have added/removed a matching scope). Reset the
-    // keyset cursor + history like reload(), then await the page so the emitted scopes reflect the reloaded first page.
+    // Reload from page 1 under the current search term (a mutation may have added/removed a matching scope).
     this._history = [];
     this._currentToken = undefined;
     await this.load();
@@ -234,27 +243,36 @@ class ArazzoScopesPanel extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
-        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
-        .head { padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: center; gap: 8px; }
-        .head .title { font-weight: 700; }
-        .head .grow { flex: 1; }
-        .search { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: inherit; width: 180px; }
-        .list { display: grid; }
-        .srow { display: flex; align-items: baseline; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--_border); }
-        .srow:last-child { border-bottom: none; }
-        .pager { display: flex; gap: 8px; justify-content: center; padding: 10px; border-top: 1px solid var(--_border); }
-        .smeta { flex: 1; min-width: 0; }
-        .sname { font-weight: 600; }
-        .sexpr { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); display: block; margin-top: 2px; overflow-wrap: anywhere; }
-        .sdesc { color: var(--_muted); font-size: 12px; margin-top: 2px; }
+        ${PAGER_CSS}
+        :host { display: block; }
+        .layout { display: grid; grid-template-columns: 1fr; gap: 14px; align-items: start; }
+        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: 1fr 1.1fr; } }
+        .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+        .toolbar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+        .toolbar .title { font-weight: 600; color: var(--_muted); font-size: 12px; }
+        .toolbar .grow { flex: 1; }
+        .search { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: inherit; width: 160px; }
         .err { margin: 10px 12px; }
+        .err:empty { display: none; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; }
+        tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: top; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr.selectable { cursor: pointer; }
+        tbody tr.selectable:hover { background: var(--_surface); }
+        tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
+        .sname { font-weight: 600; }
+        .sexpr { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); overflow-wrap: anywhere; }
+        .sdesc { color: var(--_muted); font-size: 12px; margin-top: 2px; }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
         @keyframes pulse { 50% { opacity: 0.45; } }
 
-        dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(560px, 94vw); }
-        dialog::backdrop { background: rgba(0,0,0,0.4); }
-        .dhead { padding: 14px 16px; border-bottom: 1px solid var(--_border); font-weight: 700; font-size: 15px; }
-        .content { padding: 16px; display: grid; gap: 14px; max-height: 64vh; overflow: auto; }
+        /* detail pane */
+        .detail { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
+        .dhead { padding: 12px 14px; border-bottom: 1px solid var(--_border); background: var(--_surface); font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .dhead .grow { flex: 1; }
+        .dhead .close { font-size: 16px; line-height: 1; }
+        .content { padding: 14px; display: grid; gap: 14px; }
         .goal { display: grid; gap: 4px; }
         .goal label { display: flex; align-items: center; gap: 8px; font-size: 13px; }
         .fields { display: grid; gap: 8px; }
@@ -265,36 +283,39 @@ class ArazzoScopesPanel extends ArazzoElement {
         .field textarea { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; min-height: 56px; }
         .preview { font-size: 13px; color: var(--_muted); }
         .preview code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--_text); background: var(--_surface); padding: 2px 6px; border-radius: 5px; border: 1px solid var(--_border); }
-        .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
+        .dfoot { display: flex; gap: 8px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--_border); }
+        .dfoot .grow { flex: 1; }
       </style>
-      <div class="panel" part="panel">
-        <div class="head">
-          <span class="title">Scopes</span>
-          <span class="grow"></span>
-          <input class="search" type="search" placeholder="Search scopes…" aria-label="Search scopes">
-          <button class="new primary" type="button" hidden>New scope</button>
+      <div class="layout" part="layout">
+        <div class="wrap" part="panel">
+          <div class="toolbar" part="toolbar">
+            <span class="title">Scopes</span>
+            <span class="grow"></span>
+            <input class="search" type="search" placeholder="Search scopes…" aria-label="Search scopes">
+            <button class="refresh ghost" type="button" title="Refresh">↻</button>
+            <button class="new primary" type="button" hidden>New scope</button>
+          </div>
+          <div class="err"></div>
+          <table>
+            <thead><tr><th>Scope</th><th>Expression</th></tr></thead>
+            <tbody class="list" part="rows"></tbody>
+          </table>
+          <arazzo-pager class="pager" part="pager"></arazzo-pager>
         </div>
-        <div class="err"></div>
-        <div class="list" part="list"></div>
+        <div class="detail-pane"></div>
       </div>
-      <dialog part="dialog">
-        <div class="dhead"></div>
-        <div class="content"></div>
-        <div class="foot">
-          <button class="cancel ghost" type="button">Cancel</button>
-          <button class="confirm primary" type="button">Create</button>
-        </div>
-      </dialog>
     `;
     this.$('.new').addEventListener('click', () => this.openCreate());
+    this.$('.refresh').addEventListener('click', () => this.reload());
     this.$('.search').addEventListener('input', (e) => {
       this._query = e.target.value;
       clearTimeout(this._searchTimer);
       this._searchTimer = setTimeout(() => this.reload(), SEARCH_DEBOUNCE_MS);
     });
-    this.$('.cancel').addEventListener('click', () => this.closeEditor());
-    this.$('.confirm').addEventListener('click', () => this.submitForm());
-    this.$('dialog').addEventListener('close', () => { this._form = null; });
+    this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
+    this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
+    this._pane = this.$('.detail-pane');
+    this._layout = this.$('.layout');
   }
 
   renderBody() {
@@ -308,38 +329,24 @@ class ArazzoScopesPanel extends ArazzoElement {
       : '';
 
     if (this._loading && this._scopes.length === 0) {
-      list.innerHTML = '<div class="skl"></div><div class="skl"></div>';
-      return;
-    }
-    if (this._scopes.length === 0) {
-      list.innerHTML = `<div class="empty">${this._query.trim() ? `No scopes match “${escapeHtml(this._query.trim())}”.` : 'No scopes defined.'}</div>`;
-      return;
+      list.innerHTML = `<tr><td colspan="2"><div class="skl"></div><div class="skl"></div></td></tr>`;
+    } else if (this._scopes.length === 0) {
+      list.innerHTML = `<tr><td colspan="2"><div class="empty">${this._query.trim() ? `No scopes match “${escapeHtml(this._query.trim())}”.` : 'No scopes defined.'}</div></td></tr>`;
+    } else {
+      list.innerHTML = this._scopes.map((s) => `
+        <tr class="srow selectable" part="row" data-name="${escapeHtml(s.name)}" aria-selected="${String(s.name === this._selectedName)}">
+          <td part="cell"><span class="sname">${escapeHtml(s.name)}</span>${s.description ? `<div class="sdesc">${escapeHtml(s.description)}</div>` : ''}</td>
+          <td part="cell"><code class="sexpr">${escapeHtml(s.expression)}</code></td>
+        </tr>`).join('');
+      this.$$('.srow').forEach((tr) => tr.addEventListener('click', () => this.select(tr.dataset.name)));
     }
 
-    const rows = this._scopes.map((s) => `
-      <div class="srow" part="row">
-        <div class="smeta">
-          <span class="sname">${escapeHtml(s.name)}</span>
-          <code class="sexpr">${escapeHtml(s.expression)}</code>
-          ${s.description ? `<div class="sdesc">${escapeHtml(s.description)}</div>` : ''}
-        </div>
-        ${this.canWrite ? `
-          <button class="edit ghost" type="button" data-name="${escapeHtml(s.name)}">Edit</button>
-          <button class="del ghost" type="button" data-name="${escapeHtml(s.name)}">Delete</button>` : ''}
-      </div>`).join('');
-    const pager = (this._history.length > 0 || this._nextPageToken)
-      ? `<div class="pager">
-           <button class="prev ghost" type="button"${this._history.length === 0 || this._loading ? ' disabled' : ''}>‹ Prev</button>
-           <button class="next ghost" type="button"${!this._nextPageToken || this._loading ? ' disabled' : ''}>Next ›</button>
-         </div>`
-      : '';
-    list.innerHTML = rows + pager;
-    this.$$('.edit').forEach((b) => b.addEventListener('click', () => this.openEdit(b.dataset.name)));
-    this.$$('.del').forEach((b) => b.addEventListener('click', () => this.deleteScope(b.dataset.name)));
-    const prevBtn = this.$('.prev');
-    if (prevBtn) prevBtn.addEventListener('click', () => this.prevPage());
-    const nextBtn = this.$('.next');
-    if (nextBtn) nextBtn.addEventListener('click', () => this.nextPage());
+    this.$('arazzo-pager')?.update({
+      hasPrev: this._history.length > 0,
+      hasNext: !!this._nextPageToken,
+      loading: this._loading,
+      info: this._loading ? 'Loading…' : `${this._scopes.length} scope${this._scopes.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`,
+    });
   }
 
   fieldsHtml(form) {
@@ -378,32 +385,48 @@ class ArazzoScopesPanel extends ArazzoElement {
     }
   }
 
-  renderEditor() {
-    const content = this.$('.content');
+  renderDetail() {
+    const pane = this._pane;
+    if (!pane) return;
     const f = this._form;
-    if (!content || !f) return;
+    this._layout.classList.toggle('has-selection', !!f);
+    if (!f) { pane.replaceChildren(); return; }
+
     const isEdit = f.mode === 'edit';
-    this.$('.dhead').textContent = isEdit ? `Edit scope '${f.editName}'` : 'New scope';
-    this.$('.confirm').textContent = isEdit ? 'Save' : 'Create';
-    content.innerHTML = `
-      ${isEdit ? '' : `
-        <div class="goal">
-          ${this.availableTemplates().map((t) => `<label><input type="radio" name="tmpl" value="${t.id}" ${t.id === f.template ? 'checked' : ''}> ${escapeHtml(t.label)}</label>`).join('')}
-        </div>`}
-      <div class="fields">${this.fieldsHtml(f)}</div>
-      <div class="field"><span>Name</span><input class="f-name" value="${escapeHtml(f.name)}" ${isEdit ? 'readonly' : ''}></div>
-      <div class="field"><span>Description</span><input class="f-description" placeholder="(optional)" value="${escapeHtml(f.fields.description || '')}"></div>
-      <div class="preview">Preview: <code class="preview-expr">${escapeHtml(this.previewExpression() || '—')}</code></div>
-      <div class="form-err">${f.formError ? `<div class="error-banner"><span><strong>${escapeHtml(f.formError.title || 'Request failed')}</strong>${f.formError.detail ? ' — ' + escapeHtml(f.formError.detail) : ''}</span></div>` : ''}</div>
+    pane.innerHTML = `
+      <div class="detail" part="detail">
+        <div class="dhead">
+          <span class="dtitle">${isEdit ? `Edit scope '${escapeHtml(f.editName)}'` : 'New scope'}</span>
+          <span class="grow"></span>
+          <button class="close ghost" type="button" title="Close" aria-label="Close">✕</button>
+        </div>
+        <div class="content">
+          ${isEdit ? '' : `
+            <div class="goal">
+              ${this.availableTemplates().map((t) => `<label><input type="radio" name="tmpl" value="${t.id}" ${t.id === f.template ? 'checked' : ''}> ${escapeHtml(t.label)}</label>`).join('')}
+            </div>`}
+          <div class="fields">${this.fieldsHtml(f)}</div>
+          <div class="field"><span>Name</span><input class="f-name" value="${escapeHtml(f.name)}" ${isEdit ? 'readonly' : ''}></div>
+          <div class="field"><span>Description</span><input class="f-description" placeholder="(optional)" value="${escapeHtml(f.fields.description || '')}"></div>
+          <div class="preview">Preview: <code class="preview-expr">${escapeHtml(this.previewExpression() || '—')}</code></div>
+          <div class="form-err">${f.formError ? `<div class="error-banner"><span><strong>${escapeHtml(f.formError.title || 'Request failed')}</strong>${f.formError.detail ? ' — ' + escapeHtml(f.formError.detail) : ''}</span></div>` : ''}</div>
+        </div>
+        <div class="dfoot">
+          ${isEdit ? '<button class="del danger" type="button">Delete…</button>' : ''}
+          <span class="grow"></span>
+          <button class="cancel ghost" type="button">Cancel</button>
+          <button class="confirm primary" type="button">${isEdit ? 'Save' : 'Create'}</button>
+        </div>
+      </div>
     `;
 
-    content.querySelectorAll('input[name="tmpl"]').forEach((r) => r.addEventListener('change', () => {
+    pane.querySelectorAll('input[name="tmpl"]').forEach((r) => r.addEventListener('change', () => {
       f.template = r.value;
       if (!f.nameEdited) f.name = templateById(f.template).suggest(f.fields);
-      this.renderEditor();
+      this.renderDetail();
     }));
 
-    content.querySelectorAll('.fields input, .fields textarea, .fields select').forEach((input) => {
+    pane.querySelectorAll('.fields input, .fields textarea, .fields select').forEach((input) => {
       const key = [...input.classList].find((c) => c.startsWith('f-'))?.slice(2);
       if (!key) return;
       input.addEventListener('input', () => {
@@ -411,20 +434,33 @@ class ArazzoScopesPanel extends ArazzoElement {
         if (f.template === 'ordered' && key === 'dim') {
           f.fields.value = '';
           if (!f.nameEdited) f.name = templateById(f.template).suggest(f.fields);
-          this.renderEditor();
+          this.renderDetail();
           return;
         }
-        const expr = content.querySelector('.preview-expr');
+        const expr = pane.querySelector('.preview-expr');
         if (expr) expr.textContent = this.previewExpression() || '—';
-        const nameInput = content.querySelector('.f-name');
+        const nameInput = pane.querySelector('.f-name');
         if (nameInput && !f.nameEdited && !isEdit) { f.name = templateById(f.template).suggest(f.fields); nameInput.value = f.name; }
       });
     });
 
-    const nameInput = content.querySelector('.f-name');
+    const nameInput = pane.querySelector('.f-name');
     if (nameInput && !isEdit) nameInput.addEventListener('input', () => { f.nameEdited = true; f.name = nameInput.value; });
-    const descInput = content.querySelector('.f-description');
+    const descInput = pane.querySelector('.f-description');
     if (descInput) descInput.addEventListener('input', () => { f.fields.description = descInput.value; });
+
+    pane.querySelector('.close').addEventListener('click', () => this.clearDetail());
+    pane.querySelector('.cancel').addEventListener('click', () => this.clearDetail());
+    pane.querySelector('.confirm').addEventListener('click', () => this.submitForm());
+    pane.querySelector('.del')?.addEventListener('click', () => this.deleteScope(f.editName));
+
+    // Scope honesty: a caller without security:write views the scope read-only — inputs disabled, no Save/Delete.
+    if (!this.canWrite) {
+      pane.querySelectorAll('input, select, textarea').forEach((c) => { c.disabled = true; });
+      pane.querySelector('.confirm')?.remove();
+      pane.querySelector('.del')?.remove();
+      pane.querySelector('.cancel').textContent = 'Close';
+    }
   }
 }
 

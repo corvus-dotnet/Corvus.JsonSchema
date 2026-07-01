@@ -7,8 +7,9 @@
 // Events     : run-selected {run}, loaded {count, hasMore}, error {problem}
 // Parts      : table, row, cell, status, pager, filters
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, countdown, copyToClipboard, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, countdown, copyToClipboard, define } from './base.js';
 import './status-badge.js';
+import './pager.js';
 
 class ArazzoRunsTable extends ArazzoElement {
   static get observedAttributes() {
@@ -175,9 +176,7 @@ class ArazzoRunsTable extends ArazzoElement {
         .tag { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--_surface); border: 1px solid var(--_border); color: var(--_muted); white-space: nowrap; }
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
-        .pager { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--_surface); border-top: 1px solid var(--_border); }
-        .pager .grow { flex: 1; }
-        .pager .count { font-size: 12px; color: var(--_muted); }
+        ${PAGER_CSS}
       </style>
       <div class="wrap" part="table">
         <table>
@@ -188,16 +187,11 @@ class ArazzoRunsTable extends ArazzoElement {
           </thead>
           <tbody part="rows"></tbody>
         </table>
-        <div class="pager" part="pager">
-          <button class="prev ghost" type="button">‹ Prev</button>
-          <button class="next ghost" type="button">Next ›</button>
-          <span class="grow"></span>
-          <span class="count"></span>
-        </div>
+        <arazzo-pager class="pager" part="pager"></arazzo-pager>
       </div>
     `;
-    this.$('.prev').addEventListener('click', () => this.prevPage());
-    this.$('.next').addEventListener('click', () => this.nextPage());
+    this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
+    this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
   }
 
   renderBody() {
@@ -274,16 +268,10 @@ class ArazzoRunsTable extends ArazzoElement {
   }
 
   updatePager() {
-    const prev = this.$('.prev');
-    const next = this.$('.next');
-    if (prev) prev.disabled = this._history.length === 0 || this._loading;
-    if (next) next.disabled = !this._nextToken || this._loading;
-    const count = this.$('.count');
-    if (count) {
-      count.textContent = this._loading
-        ? 'Loading…'
-        : `${this._runs.length} run${this._runs.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
-    }
+    const info = this._loading
+      ? 'Loading…'
+      : `${this._runs.length} run${this._runs.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
+    this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextToken, loading: this._loading, info });
   }
 
   /** Select a run by id (highlights the row and emits `run-selected`). */

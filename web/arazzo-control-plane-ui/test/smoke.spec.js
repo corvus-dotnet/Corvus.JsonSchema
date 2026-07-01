@@ -117,8 +117,9 @@ test('the Catalog detail shows the promotion matrix and makes a version availabl
   await page.goto('/demo/index.html');
   await page.getByRole('tab', { name: 'Catalog' }).click();
 
-  // Open nightly-reconcile (3 versions) → the detail hosts the (version × environment) promotion matrix.
-  await page.locator('arazzo-catalog-table tbody tr[data-key="nightly-reconcile"]').click();
+  // Open onboard-customer → the detail hosts the (version × environment) promotion matrix. Its 'events' source is
+  // credentialed in staging only, so its representative version is READY + not-yet-available there — i.e. promotable.
+  await page.locator('arazzo-catalog-table tbody tr[data-key="onboard-customer"]').click();
   const matrix = page.locator('arazzo-availability-matrix');
   await expect(matrix).toBeVisible();
   await expect(matrix.locator('thead th', { hasText: 'Production' })).toHaveCount(1);
@@ -144,21 +145,23 @@ test('the persona toggle gates promotion: Operator must request, Administrator m
   await page.locator('#persona').selectOption('operator');
   await page.getByRole('tab', { name: 'Catalog' }).click();
   await expect(page.locator('arazzo-catalog .add-btn')).toBeHidden();
-  await page.locator('arazzo-catalog-table tbody tr[data-key="nightly-reconcile"]').click();
+  await page.locator('arazzo-catalog-table tbody tr[data-key="onboard-customer"]').click();
   const matrix = page.locator('arazzo-availability-matrix');
   await expect(matrix).toBeVisible();
   await expect(matrix.locator('button[data-action="request"]').first()).toBeVisible();
   await expect(matrix.locator('button[data-action="make"]')).toHaveCount(0);
 
-  // As Operator the promotions approver inbox is empty (they administer nothing).
+  // As Operator the promotions approver inbox is scoped to the environments he administers (staging only) — the one
+  // pending staging request (onboard-customer → staging), never the production ones.
   await page.getByRole('tab', { name: 'Promotions' }).click();
   await page.locator('arazzo-availability-requests .tab-queue').click();
-  await expect(page.locator('arazzo-availability-requests tbody tr[data-id]')).toHaveCount(0);
+  await expect(page.locator('arazzo-availability-requests tbody tr[data-id]')).toHaveCount(1);
+  await expect(page.locator('arazzo-availability-requests .act[data-action="approve"]').first()).toBeVisible();
 
-  // Switch to Administrator → the matrix now offers a direct "Make available", and the approver inbox is populated.
+  // Switch to Administrator → the matrix now offers a direct "Make available", and the approver inbox spans every environment.
   await page.locator('#persona').selectOption('administrator');
   await page.getByRole('tab', { name: 'Catalog' }).click();
-  await page.locator('arazzo-catalog-table tbody tr[data-key="nightly-reconcile"]').click();
+  await page.locator('arazzo-catalog-table tbody tr[data-key="onboard-customer"]').click();
   await expect(matrix.locator('button[data-action="make"]').first()).toBeVisible();
   await page.getByRole('tab', { name: 'Promotions' }).click();
   await page.locator('arazzo-availability-requests .tab-queue').click();
@@ -175,9 +178,10 @@ test('the Catalog Add wizard reuses a registered source and versions the workflo
   await page.goto('/demo/index.html');
   await page.getByRole('tab', { name: 'Catalog' }).click();
 
-  // nightly-reconcile starts with three versions collapsed into one row.
+  // The catalog collapses a workflow's versions into ONE row (server-side distinct), showing its representative
+  // (newest Active) version — v3 for nightly-reconcile.
   const ncRow = page.locator('arazzo-catalog-table tbody tr[data-key="nightly-reconcile"]');
-  await expect(ncRow).toContainText('3 versions');
+  await expect(ncRow).toContainText('v3');
 
   await page.locator('arazzo-catalog .add-btn').click();
   const dlg = page.locator('arazzo-catalog-add-dialog');
@@ -204,10 +208,10 @@ test('the Catalog Add wizard reuses a registered source and versions the workflo
   await expect(dlg.locator('.next')).toHaveText('Add workflow');
   await dlg.locator('.next').click(); // commit
 
-  // The catalog assigned v4; the detail opens on it.
+  // The catalog assigned v4; the detail opens on it, and the collapsed row now shows v4 as the representative version.
   const detail = page.locator('arazzo-catalog-detail');
   await expect(detail).toContainText('nightly-reconcile · v4');
-  await expect(ncRow).toContainText('4 versions');
+  await expect(ncRow).toContainText('v4');
 
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });

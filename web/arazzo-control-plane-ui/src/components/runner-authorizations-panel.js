@@ -16,7 +16,8 @@
 // an empty queue). The view pages with Prev/Next over the store's keyset cursor (server-side status filter).
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, escapeHtml, absoluteTime, relativeTime, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, absoluteTime, relativeTime, define } from './base.js';
+import './pager.js';
 
 const STATUS_COLOR = {
   Pending: 'var(--arazzo-status-suspended, #b07d18)',
@@ -214,8 +215,7 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
         .skl { height: 12px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; }
         @keyframes pulse { 50% { opacity: 0.45; } }
         .err { margin: 10px 12px; }
-        .foot { display: flex; align-items: center; gap: 12px; padding: 9px 12px; background: var(--_surface); border-top: 1px solid var(--_border); font-size: 12px; color: var(--_muted); }
-        .pager { display: flex; gap: 8px; margin-left: auto; }
+        ${PAGER_CSS}
         dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(480px, 94vw); }
         dialog::backdrop { background: rgba(0,0,0,0.4); }
         dialog .dhead { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid var(--_border); }
@@ -232,10 +232,12 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
             <thead></thead>
             <tbody part="rows"></tbody>
           </table>
-          <div class="foot" part="foot"></div>
+          <arazzo-pager class="pager" part="foot"></arazzo-pager>
         </div>
       </div>
     `;
+    this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
+    this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
     this.renderToolbar();
     this.renderHead();
   }
@@ -354,27 +356,17 @@ class ArazzoRunnerAuthorizations extends ArazzoElement {
   }
 
   renderFoot() {
-    const foot = this.$('.foot');
-    if (!foot) return;
-    if (this._loading) { foot.textContent = 'Loading…'; return; }
-    const total = this._auths.length;
-    const page = this._history.length + 1;
-    const label = `${total} authorization${total === 1 ? '' : 's'}${this._history.length ? ` · page ${page}` : ''}`;
-    const pending = this.effectiveStatus() !== 'Pending' ? this._auths.filter((a) => a.status === 'Pending').length : 0;
-    const parts = [label];
-    if (pending > 0) parts.push(`${pending} pending`);
-    // Prev/Next keyset paging over the store cursor. The pager only appears when there is somewhere to page to.
-    const pager = (this._history.length > 0 || this._nextPageToken)
-      ? `<div class="pager">
-           <button class="prev ghost" type="button"${this._history.length === 0 || this._loading ? ' disabled' : ''}>‹ Prev</button>
-           <button class="next ghost" type="button"${!this._nextPageToken || this._loading ? ' disabled' : ''}>Next ›</button>
-         </div>`
-      : '';
-    foot.innerHTML = `<span>${escapeHtml(parts.join(' · '))}</span>${pager}`;
-    const prevBtn = this.$('.prev');
-    if (prevBtn) prevBtn.addEventListener('click', () => this.prevPage());
-    const nextBtn = this.$('.next');
-    if (nextBtn) nextBtn.addEventListener('click', () => this.nextPage());
+    let info;
+    if (this._loading) {
+      info = 'Loading…';
+    } else {
+      const total = this._auths.length;
+      const parts = [`${total} authorization${total === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`];
+      const pending = this.effectiveStatus() !== 'Pending' ? this._auths.filter((a) => a.status === 'Pending').length : 0;
+      if (pending > 0) parts.push(`${pending} pending`);
+      info = escapeHtml(parts.join(' · '));
+    }
+    this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextPageToken, loading: this._loading, info });
   }
 
   // ---- dialogs ----------------------------------------------------------------------------------

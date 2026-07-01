@@ -2,7 +2,7 @@
 import { ArazzoControlPlaneClient } from '../../src/arazzo-client.js';
 import { createMockControlPlane } from '../../demo/mock-api.js';
 import '../../src/components/scopes-panel.js';
-import { ok, equal, nextEvent, mount } from './helpers.js';
+import { ok, equal, nextEvent, waitFor, mount } from './helpers.js';
 
 function panelWithMock(attrs = {}, mockOptions = {}) {
   const mock = createMockControlPlane({ latencyMs: 0, ...mockOptions });
@@ -16,7 +16,8 @@ const rows = (el) => el.shadowRoot.querySelectorAll('.srow');
 const $ = (el, sel) => el.shadowRoot.querySelector(sel);
 const setField = (el, sel, value) => { const i = $(el, sel); i.value = value; i.dispatchEvent(new Event('input')); };
 const preview = (el) => $(el, '.preview-expr').textContent;
-const dialogOpen = (el) => $(el, 'dialog').open;
+// The editor is a RHS detail pane (master-detail), not a modal — "open" means the pane holds an authoring form.
+const editorOpen = (el) => !!$(el, '.detail-pane .content');
 
 describe('<arazzo-scopes-panel>', () => {
   let el;
@@ -69,12 +70,12 @@ describe('<arazzo-scopes-panel>', () => {
     ok($(el, '.prev').disabled, 'Prev disabled again back on page 1');
   });
 
-  it('opens a modal editor, builds a label-equals expression, auto-suggests the name, and creates the scope', async () => {
+  it('opens the detail-pane editor, builds a label-equals expression, auto-suggests the name, and creates the scope', async () => {
     el = panelWithMock({ scopes: 'security:read security:write' });
     mount(el);
     await nextEvent(el, 'loaded');
     $(el, '.new').click();
-    ok(dialogOpen(el), 'the editor opens as a modal dialog');
+    ok(editorOpen(el), 'the authoring pane opens on the RHS (not a modal)');
     setField(el, '.f-value', 'marketing');
     equal(preview(el), "domain == 'marketing'", 'template wrote the expression');
     equal($(el, '.f-name').value, 'scope-marketing', 'name auto-suggested');
@@ -83,7 +84,7 @@ describe('<arazzo-scopes-panel>', () => {
     $(el, '.confirm').click();
     const e = await changed;
     ok(e.detail.scopes.some((s) => s.name === 'scope-marketing' && s.expression === "domain == 'marketing'"), 'scope created');
-    ok(!dialogOpen(el), 'the dialog closes after create');
+    ok(!editorOpen(el), 'the pane clears after create');
   });
 
   it('builds a set-membership expression and escapes a single quote', async () => {
@@ -131,8 +132,8 @@ describe('<arazzo-scopes-panel>', () => {
     $(el, '.confirm').click();
     const e = await errored;
     equal(e.detail.problem.status, 400, 'malformed expression rejected');
-    ok($(el, '.content .error-banner'), 'the dialog shows the error and stays open');
-    ok(dialogOpen(el), 'dialog stays open on error');
+    ok($(el, '.content .error-banner'), 'the pane shows the error and stays open');
+    ok(editorOpen(el), 'the pane stays open on error');
   });
 
   it('surfaces the 409 for a duplicate scope name', async () => {
@@ -151,17 +152,31 @@ describe('<arazzo-scopes-panel>', () => {
     equal(e.detail.problem.status, 409, 'duplicate name conflicts');
   });
 
-  it('edits a scope (name is the immutable key) and saves the new expression', async () => {
+  it('selects a scope row into the pane (name is the immutable key) and saves the new expression', async () => {
     el = panelWithMock({ scopes: 'security:read security:write' });
     mount(el);
     await nextEvent(el, 'loaded');
-    [...el.shadowRoot.querySelectorAll('.edit')].find((b) => b.dataset.name === 'reach-payments').click();
+    $(el, '.srow[data-name="reach-payments"]').click();
+    ok(editorOpen(el), 'selecting a row opens its record in the pane');
     equal($(el, '.f-name').readOnly, true, 'name is the key on edit');
     setField(el, '.f-expression', "domain == 'billing'");
     const changed = nextEvent(el, 'scopes-changed');
     $(el, '.confirm').click();
     const e = await changed;
     equal(e.detail.scopes.find((s) => s.name === 'reach-payments').expression, "domain == 'billing'", 'expression updated');
+  });
+
+  it('deletes a scope from the detail pane and emits scopes-changed', async () => {
+    el = panelWithMock({ scopes: 'security:read security:write' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    $(el, '.srow[data-name="reach-payments"]').click();
+    const changed = nextEvent(el, 'scopes-changed');
+    $(el, '.del').click();
+    const okBtn = await waitFor(() => $(el, 'dialog.arazzo-confirm .ok'));
+    okBtn.click();
+    const e = await changed;
+    ok(!e.detail.scopes.some((s) => s.name === 'reach-payments'), 'scope removed');
   });
 
   it('deletes a scope (via the client + reload) and emits scopes-changed', async () => {
@@ -175,11 +190,16 @@ describe('<arazzo-scopes-panel>', () => {
     ok(!e.detail.scopes.some((s) => s.name === 'reach-payments'), 'scope removed');
   });
 
-  it('hides the mutating controls without security:write', async () => {
+  it('hides the mutating controls without security:write (read-only detail pane)', async () => {
     el = panelWithMock({ scopes: 'security:read' });
     mount(el);
     await nextEvent(el, 'loaded');
     ok($(el, '.new').hidden, 'New scope button hidden');
-    ok(!$(el, '.edit'), 'no edit buttons');
+    // Selecting a row opens a read-only view of the scope: no Save/Delete, fields disabled (the 403 is the backstop).
+    $(el, '.srow').click();
+    ok(editorOpen(el), 'the pane shows the selected scope');
+    ok(!$(el, '.confirm'), 'no Save without security:write');
+    ok(!$(el, '.del'), 'no Delete without security:write');
+    ok($(el, '.f-name').disabled, 'fields are read-only');
   });
 });
