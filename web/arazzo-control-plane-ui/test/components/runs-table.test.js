@@ -36,6 +36,19 @@ describe('<arazzo-runs-table>', () => {
     ok(unpinned && unpinned.textContent.trim() === '—', 'a run created before pinning shows the — placeholder');
   });
 
+  it('reach-scopes the runs to the caller (§14.2) — a payments-team reader sees only payments-domain runs', async () => {
+    // Same read scopes as the auditor; the only difference is reach — so this isolates the row-security axis.
+    const mock = createMockControlPlane({ latencyMs: 0, persona: 'team-reader' });
+    el = document.createElement('arazzo-runs-table');
+    el.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const n = rowCount(el);
+    ok(n > 0 && n < 12, `sees a strict subset of the 12 seeded runs (${n})`);
+    const workflows = [...el.shadowRoot.querySelectorAll('tbody tr[data-id] td.wf')].map((c) => c.textContent);
+    ok(workflows.every((w) => w.includes('nightly-reconcile')), 'every visible run is a payments-domain (nightly-reconcile) run');
+  });
+
   it('emits run-selected when a selectable row is clicked', async () => {
     el = tableWithMock({ selectable: '' });
     mount(el);
