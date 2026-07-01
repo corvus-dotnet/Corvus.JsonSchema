@@ -97,8 +97,8 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
             await using SqlCommand insert = connection.CreateCommand();
             insert.CommandText =
                 """
-                INSERT INTO workflow_runs (run_id, [checkpoint], version, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags)
-                VALUES (@id, @checkpoint, 1, @status, @workflow_id, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type, @correlation_id, @tags);
+                INSERT INTO workflow_runs (run_id, [checkpoint], version, status, workflow_id, environment, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags)
+                VALUES (@id, @checkpoint, 1, @status, @workflow_id, @environment, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type, @correlation_id, @tags);
                 """;
             BindRun(insert, id, checkpointStream, index);
             try
@@ -120,7 +120,7 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
             """
             UPDATE workflow_runs
             SET [checkpoint] = @checkpoint, version = version + 1, status = @status, workflow_id = @workflow_id,
-                created_at = @created_at, updated_at = @updated_at, due_at = @due_at,
+                environment = @environment, created_at = @created_at, updated_at = @updated_at, due_at = @due_at,
                 awaiting_channel = @awaiting_channel, awaiting_correlation_id = @awaiting_correlation_id, error_type = @error_type,
                 correlation_id = @correlation_id, tags = @tags
             WHERE run_id = @id AND version = @expected_version;
@@ -270,7 +270,11 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+        => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         if (hostedWorkflowIds.Count == 0)
@@ -287,16 +291,21 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
 
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand select = connection.CreateCommand();
+
+        // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it; an
+        // unpinned run (environment IS NULL) or an unscoped dispatcher (@runner_environment IS NULL) matches anything.
         select.CommandText =
             $"""
             SELECT r.run_id FROM workflow_runs r
             LEFT JOIN workflow_leases l ON l.run_id = r.run_id
             WHERE r.workflow_id IN ({string.Join(", ", placeholders)})
+              AND (@runner_environment IS NULL OR r.environment IS NULL OR r.environment = @runner_environment)
               AND (r.status = @pending OR (r.status = @running AND (l.run_id IS NULL OR l.expires_at <= @now)));
             """;
         select.Parameters.AddWithValue("@pending", PendingStatus);
         select.Parameters.AddWithValue("@running", RunningStatus);
         select.Parameters.AddWithValue("@now", now.ToUnixTimeMilliseconds());
+        select.Parameters.Add(NullableText("@runner_environment", runnerEnvironment));
         for (int i = 0; i < ids.Count; i++)
         {
             select.Parameters.AddWithValue(placeholders[i], ids[i]);
@@ -324,7 +333,7 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         await using SqlCommand select = connection.CreateCommand();
         select.CommandText =
             """
-            SELECT TOP (@limit) run_id, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags
+            SELECT TOP (@limit) run_id, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags, environment
             FROM workflow_runs
             WHERE (@status IS NULL OR status = @status) AND (@workflow_id IS NULL OR workflow_id = @workflow_id)
               AND (@created_after IS NULL OR created_at >= @created_after)
@@ -402,7 +411,8 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
                 reader.IsDBNull(7) ? null : reader.GetString(7),
                 reader.IsDBNull(8) ? null : reader.GetString(8),
                 CorrelationId: reader.IsDBNull(9) ? null : reader.GetString(9),
-                Tags: TagSet.FromDelimited(reader.IsDBNull(10) ? null : reader.GetString(10), '\u001F'));
+                Tags: TagSet.FromDelimited(reader.IsDBNull(10) ? null : reader.GetString(10), '\u001F'),
+                Environment: reader.IsDBNull(11) ? null : reader.GetString(11));
             runs.Add(new WorkflowRunListing(new WorkflowRunId(reader.GetString(0)), entry));
         }
 
@@ -415,6 +425,7 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         command.Parameters.Add(new SqlParameter("@checkpoint", SqlDbType.VarBinary, -1) { Value = checkpoint });
         command.Parameters.AddWithValue("@status", index.Status.ToString());
         command.Parameters.AddWithValue("@workflow_id", index.WorkflowId);
+        command.Parameters.Add(NullableText("@environment", index.Environment));
         command.Parameters.AddWithValue("@created_at", index.CreatedAt.ToUnixTimeMilliseconds());
         command.Parameters.AddWithValue("@updated_at", index.UpdatedAt.ToUnixTimeMilliseconds());
         command.Parameters.Add(NullableBigint("@due_at", index.DueAt?.ToUnixTimeMilliseconds()));
@@ -459,6 +470,7 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
                 version BIGINT NOT NULL,
                 status NVARCHAR(255) NOT NULL,
                 workflow_id NVARCHAR(255) NOT NULL,
+                environment NVARCHAR(255) NULL,
                 created_at BIGINT NOT NULL,
                 updated_at BIGINT NOT NULL,
                 due_at BIGINT NULL,

@@ -279,7 +279,11 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+        => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
 
@@ -291,7 +295,9 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         var hosted = new HashSet<string>(hostedWorkflowIds);
 
         // Azure Tables $filter cannot express an IN list cheaply, so the server-side filter narrows to the two
-        // claimable statuses and the small candidate set is filtered by hosted workflow id client-side.
+        // claimable statuses and the small candidate set is filtered by hosted workflow id client-side. The §5.5
+        // environment predicate ("IS NULL OR eq") likewise cannot be expressed over a possibly-absent property in
+        // OData, so it too is applied in process — matching how the hosted-workflow and tag predicates filter.
         string filter = TableClient.CreateQueryFilter($"PartitionKey eq {IndexPartition} and (Status eq {PendingStatus} or Status eq {RunningStatus})");
         var candidates = new List<(string RowKey, string Status)>();
         bool anyRunning = false;
@@ -299,6 +305,11 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         {
             string? workflowId = entity.GetString("WorkflowId");
             if (workflowId is null || !hosted.Contains(workflowId))
+            {
+                continue;
+            }
+
+            if (!MatchesEnvironment(entity.GetString("Environment"), runnerEnvironment))
             {
                 continue;
             }
@@ -416,6 +427,11 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         return WorkflowContinuationToken.Paginate(runs, query.Limit);
     }
 
+    // §5.5: an unscoped dispatcher (null runnerEnvironment) or an unpinned run (null run environment) matches
+    // anything; otherwise the run's pinned environment must equal the runner's.
+    private static bool MatchesEnvironment(string? runEnvironment, string? runnerEnvironment)
+        => runnerEnvironment is null || runEnvironment is null || string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal);
+
     private static TableEntity BuildIndexEntity(WorkflowRunId id, in WorkflowRunIndexEntry index)
     {
         var entity = new TableEntity(IndexPartition, id.Value)
@@ -451,6 +467,11 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             entity["CorrelationId"] = cid;
         }
 
+        if (index.Environment is { } environment)
+        {
+            entity["Environment"] = environment;
+        }
+
         if (index.Tags.ToJsonStringOrNull() is { } tagsJson)
         {
             entity["TagsJson"] = tagsJson;
@@ -478,6 +499,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             entity.GetString("ErrorType"),
             CorrelationId: entity.GetString("CorrelationId"),
             Tags: TagSet.FromJsonStringOrEmpty(entity.GetString("TagsJson")),
-            SecurityTags: SecurityTagSet.FromJsonStringOrEmpty(entity.GetString("SecurityTagsJson")));
+            SecurityTags: SecurityTagSet.FromJsonStringOrEmpty(entity.GetString("SecurityTagsJson")),
+            Environment: entity.GetString("Environment"));
     }
 }

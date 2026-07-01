@@ -28,7 +28,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
     // Create-or-update under optimistic concurrency, maintaining the all/due/awaiting indexes. Returns the new
     // version, or -1 on an etag conflict. KEYS: run hash, all-set, due-zset. ARGV: id, expected ("" = create),
-    // checkpoint, status, workflowId, createdAt, updatedAt, dueAt|"", awaitingChannel|"", awaitingCorrelationId|"", errorType|"", correlationId|"", tagsJson|"".
+    // checkpoint, status, workflowId, createdAt, updatedAt, dueAt|"", awaitingChannel|"", awaitingCorrelationId|"", errorType|"", correlationId|"", tagsJson|"", securityTagsJson|"", environment|"".
     private const string SaveScript =
         """
         local cur = redis.call('HGET', KEYS[1], 'version')
@@ -49,6 +49,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         if ARGV[12] ~= '' then redis.call('HSET', KEYS[1], 'correlation_id', ARGV[12]) else redis.call('HDEL', KEYS[1], 'correlation_id') end
         if ARGV[13] ~= '' then redis.call('HSET', KEYS[1], 'tags_json', ARGV[13]) else redis.call('HDEL', KEYS[1], 'tags_json') end
         if ARGV[14] ~= '' then redis.call('HSET', KEYS[1], 'security_tags_json', ARGV[14]) else redis.call('HDEL', KEYS[1], 'security_tags_json') end
+        if ARGV[15] ~= '' then redis.call('HSET', KEYS[1], 'environment', ARGV[15]) else redis.call('HDEL', KEYS[1], 'environment') end
         redis.call('SADD', KEYS[2], ARGV[1])
         if ARGV[4] == 'Suspended' and ARGV[8] ~= '' then redis.call('ZADD', KEYS[3], ARGV[8], ARGV[1]) else redis.call('ZREM', KEYS[3], ARGV[1]) end
         if oldChannel then redis.call('SREM', 'arazzo:awaiting:' .. oldChannel, ARGV[1]) end
@@ -166,6 +167,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             index.CorrelationId ?? string.Empty,
             index.Tags.ToJsonStringOrNull() ?? string.Empty,
             index.SecurityTags.ToJsonStringOrNull() ?? string.Empty,
+            index.Environment ?? string.Empty,
         ];
 
         RedisResult result = await this.database.ScriptEvaluateAsync(SaveScript, [RunKey(id.Value), AllKey, DueKey], argv).ConfigureAwait(false);
@@ -266,7 +268,11 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+        => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         if (hostedWorkflowIds.Count == 0)
@@ -283,10 +289,18 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         {
             string id = ((string)key!)[RunKeyPrefix.Length..];
 
-            RedisValue[] fields = await this.database.HashGetAsync(RunKey(id), ["status", "workflow_id"]).ConfigureAwait(false);
+            RedisValue[] fields = await this.database.HashGetAsync(RunKey(id), ["status", "workflow_id", "environment"]).ConfigureAwait(false);
             RedisValue status = fields[0];
             RedisValue workflowId = fields[1];
             if (workflowId.IsNull || !hosted.Contains((string)workflowId!))
+            {
+                continue;
+            }
+
+            // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it;
+            // an unpinned run or an unscoped dispatcher (runnerEnvironment is null) matches anything.
+            string? environment = fields[2].IsNull ? null : (string)fields[2]!;
+            if (!MatchesEnvironment(environment, runnerEnvironment))
             {
                 continue;
             }
@@ -406,7 +420,8 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 fields.TryGetValue("error_type", out RedisValue err) ? (string)err! : null,
                 CorrelationId: correlationId,
                 Tags: tags,
-                SecurityTags: securityTags);
+                SecurityTags: securityTags,
+                Environment: fields.TryGetValue("environment", out RedisValue env) && !env.IsNull ? (string)env! : null);
             runs.Add(new WorkflowRunListing(new WorkflowRunId(id), entry));
             if (runs.Count > query.Limit)
             {
@@ -431,4 +446,8 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     private static RedisKey LeaseKey(string id) => Prefix + "lease:" + id;
 
     private static RedisKey AwaitingKey(string channel) => Prefix + "awaiting:" + channel;
+
+    // §5.5 null-matches-anything: an unpinned run or an unscoped dispatcher matches any environment.
+    private static bool MatchesEnvironment(string? entryEnvironment, string? runnerEnvironment)
+        => runnerEnvironment is null || entryEnvironment is null || string.Equals(entryEnvironment, runnerEnvironment, StringComparison.Ordinal);
 }

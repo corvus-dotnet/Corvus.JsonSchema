@@ -114,8 +114,8 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 using SqliteCommand insert = this.connection.CreateCommand();
                 insert.CommandText =
                     """
-                    INSERT INTO WorkflowRuns (RunId, Checkpoint, Version, Status, WorkflowId, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType, CorrelationId, Tags)
-                    VALUES (@id, @checkpoint, 1, @status, @workflowId, @createdAt, @updatedAt, @dueAt, @awaitingChannel, @awaitingCorrelationId, @errorType, @correlationId, @tags)
+                    INSERT INTO WorkflowRuns (RunId, Checkpoint, Version, Status, WorkflowId, Environment, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType, CorrelationId, Tags)
+                    VALUES (@id, @checkpoint, 1, @status, @workflowId, @environment, @createdAt, @updatedAt, @dueAt, @awaitingChannel, @awaitingCorrelationId, @errorType, @correlationId, @tags)
                     ON CONFLICT(RunId) DO NOTHING;
                     """;
                 BindRun(insert, id, checkpoint, indexCopy);
@@ -135,7 +135,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 """
                 UPDATE WorkflowRuns
                 SET Checkpoint = @checkpoint, Version = Version + 1, Status = @status, WorkflowId = @workflowId,
-                    CreatedAt = @createdAt, UpdatedAt = @updatedAt, DueAt = @dueAt,
+                    Environment = @environment, CreatedAt = @createdAt, UpdatedAt = @updatedAt, DueAt = @dueAt,
                     AwaitingChannel = @awaitingChannel, AwaitingCorrelationId = @awaitingCorrelationId, ErrorType = @errorType,
                     CorrelationId = @correlationId, Tags = @tags
                 WHERE RunId = @id AND Version = @expectedVersion;
@@ -313,7 +313,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             using SqliteCommand select = this.connection.CreateCommand();
             select.CommandText =
                 """
-                SELECT RunId, Status, WorkflowId, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType, CorrelationId, Tags
+                SELECT RunId, Status, WorkflowId, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType, CorrelationId, Tags, Environment
                 FROM WorkflowRuns
                 WHERE (@status IS NULL OR Status = @status) AND (@workflowId IS NULL OR WorkflowId = @workflowId)
                   AND (@createdAfter IS NULL OR CreatedAt >= @createdAfter)
@@ -395,7 +395,8 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                     reader.IsDBNull(7) ? null : reader.GetString(7),
                     reader.IsDBNull(8) ? null : reader.GetString(8),
                     CorrelationId: reader.IsDBNull(9) ? null : reader.GetString(9),
-                    Tags: TagSet.FromDelimited(reader.IsDBNull(10) ? null : reader.GetString(10), '\u001F'));
+                    Tags: TagSet.FromDelimited(reader.IsDBNull(10) ? null : reader.GetString(10), '\u001F'),
+                    Environment: reader.IsDBNull(11) ? null : reader.GetString(11));
                 runs.Add(new WorkflowRunListing(new WorkflowRunId(reader.GetString(0)), entry));
             }
 
@@ -420,6 +421,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         command.Parameters.AddWithValue("@checkpoint", checkpoint);
         command.Parameters.AddWithValue("@status", index.Status.ToString());
         command.Parameters.AddWithValue("@workflowId", index.WorkflowId);
+        command.Parameters.AddWithValue("@environment", (object?)index.Environment ?? DBNull.Value);
         command.Parameters.AddWithValue("@createdAt", index.CreatedAt.ToUnixTimeMilliseconds());
         command.Parameters.AddWithValue("@updatedAt", index.UpdatedAt.ToUnixTimeMilliseconds());
         command.Parameters.AddWithValue("@dueAt", (object?)index.DueAt?.ToUnixTimeMilliseconds() ?? DBNull.Value);
@@ -465,7 +467,11 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     private static DateTimeOffset FromUnixMilliseconds(long milliseconds) => DateTimeOffset.FromUnixTimeMilliseconds(milliseconds);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+        => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         if (hostedWorkflowIds.Count == 0)
@@ -480,11 +486,14 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             placeholders[i] = "@w" + i.ToString(CultureInfo.InvariantCulture);
         }
 
+        // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it; an
+        // unpinned run (Environment IS NULL) or an unscoped dispatcher (@runnerEnvironment IS NULL) matches anything.
         string sql =
             $"""
             SELECT r.RunId FROM WorkflowRuns r
             LEFT JOIN WorkflowLeases l ON l.RunId = r.RunId
             WHERE r.WorkflowId IN ({string.Join(", ", placeholders)})
+              AND (@runnerEnvironment IS NULL OR r.Environment IS NULL OR r.Environment = @runnerEnvironment)
               AND (r.Status = @pending OR (r.Status = @running AND (l.RunId IS NULL OR l.ExpiresAt <= @now)));
             """;
 
@@ -495,6 +504,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 cmd.Parameters.AddWithValue("@pending", PendingStatus);
                 cmd.Parameters.AddWithValue("@running", RunningStatus);
                 cmd.Parameters.AddWithValue("@now", now.ToUnixTimeMilliseconds());
+                cmd.Parameters.AddWithValue("@runnerEnvironment", (object?)runnerEnvironment ?? DBNull.Value);
                 for (int i = 0; i < ids.Count; i++)
                 {
                     cmd.Parameters.AddWithValue(placeholders[i], ids[i]);
@@ -541,6 +551,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             Version INTEGER NOT NULL,
             Status TEXT NOT NULL,
             WorkflowId TEXT NOT NULL,
+            Environment TEXT NULL,
             CreatedAt INTEGER NOT NULL,
             UpdatedAt INTEGER NOT NULL,
             DueAt INTEGER NULL,

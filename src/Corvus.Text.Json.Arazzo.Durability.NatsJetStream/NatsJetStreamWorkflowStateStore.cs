@@ -245,7 +245,11 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+        => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
+
+    /// <inheritdoc/>
+    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         if (hostedWorkflowIds.Count == 0)
@@ -257,6 +261,13 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry entry) in this.ScanAsync(cancellationToken).ConfigureAwait(false))
         {
             if (!hosted.Contains(entry.WorkflowId))
+            {
+                continue;
+            }
+
+            // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner
+            // serving it; an unpinned run or an unscoped dispatcher matches anything.
+            if (!MatchesEnvironment(entry.Environment, runnerEnvironment))
             {
                 continue;
             }
@@ -375,6 +386,11 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         }
     }
 
+    // §5.5: an unscoped dispatcher (null runnerEnvironment) or an unpinned run (null entry environment) matches
+    // anything; otherwise the run's pinned environment must equal the runner's.
+    private static bool MatchesEnvironment(string? runEnvironment, string? runnerEnvironment)
+        => runnerEnvironment is null || runEnvironment is null || string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal);
+
     private static class Envelope
     {
         private const int HeaderBufferSize = 512;
@@ -416,6 +432,11 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 if (index.CorrelationId is { } runCorrelationId)
                 {
                     writer.WriteString("correlationId", runCorrelationId);
+                }
+
+                if (index.Environment is { } environment)
+                {
+                    writer.WriteString("environment", environment);
                 }
 
                 if (!index.Tags.IsEmpty)
@@ -468,7 +489,8 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 root.TryGetProperty("errorType"u8, out JsonElement errorType) ? errorType.GetString() : null,
                 root.TryGetProperty("correlationId"u8, out JsonElement queryCorrelationId) ? queryCorrelationId.GetString() : null,
                 DecodeTags(root),
-                DecodeSecurityTags(root));
+                DecodeSecurityTags(root),
+                root.TryGetProperty("environment"u8, out JsonElement environment) ? environment.GetString() : null);
         }
 
         private static TagSet DecodeTags(JsonElement root)
