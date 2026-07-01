@@ -65,7 +65,37 @@ public readonly struct GetPetsBatchRequest : IApiRequest<GetPetsBatchRequest>
                 writer.Write(","u8);
             }
 
-            writer.Write(System.Text.Encoding.UTF8.GetBytes(itemIds.ToString()));
+            switch (((JsonElement)itemIds).ValueKind)
+            {
+                case JsonValueKind.String:
+                {
+                    using UnescapedUtf8JsonString utf8Ids = ((JsonElement)itemIds).GetUtf8String();
+                    Span<byte> escIds = writer.GetSpan(utf8Ids.Span.Length * 3);
+                    if (Utf8Uri.TryEscapeDataString(utf8Ids.Span, escIds, out int ewIds))
+                    {
+                        writer.Advance(ewIds);
+                    }
+                    break;
+                }
+
+                case JsonValueKind.Number:
+                {
+                    using RawUtf8JsonString rawIds = JsonMarshal.GetRawUtf8Value(itemIds);
+                    writer.Write(rawIds.Span);
+                    break;
+                }
+
+                case JsonValueKind.True:
+                writer.Write("true"u8);
+                break;
+
+                case JsonValueKind.False:
+                writer.Write("false"u8);
+                break;
+
+                default:
+                break;
+            }
             firstItemIds = false;
         }
     }

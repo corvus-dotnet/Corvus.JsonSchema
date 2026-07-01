@@ -90,9 +90,9 @@ public readonly struct ListPetsRequest : IApiRequest<ListPetsRequest>
 
             writer.Write("limit="u8);
             totalWritten += 6;
-            Span<byte> bufLimit = stackalloc byte[11];
+            Span<byte> bufLimit = writer.GetSpan(11);
             this.Limit.TryFormat(bufLimit, out int bwLimit, default, default);
-            writer.Write(bufLimit[..bwLimit]);
+            writer.Advance(bwLimit);
             totalWritten += bwLimit;
 
             first = false;
@@ -110,9 +110,41 @@ public readonly struct ListPetsRequest : IApiRequest<ListPetsRequest>
 
                 writer.Write("tags="u8);
                 totalWritten += 5;
-                byte[] elBytesTags = System.Text.Encoding.UTF8.GetBytes(itemTags.ToString());
-                writer.Write(elBytesTags);
-                totalWritten += elBytesTags.Length;
+                switch (((JsonElement)itemTags).ValueKind)
+                {
+                    case JsonValueKind.String:
+                    {
+                        using UnescapedUtf8JsonString utf8Tags = ((JsonElement)itemTags).GetUtf8String();
+                        Span<byte> escTags = writer.GetSpan(utf8Tags.Span.Length * 3);
+                        if (Utf8Uri.TryEscapeDataString(utf8Tags.Span, escTags, out int ewTags))
+                        {
+                            writer.Advance(ewTags);
+                            totalWritten += ewTags;
+                        }
+                        break;
+                    }
+
+                    case JsonValueKind.Number:
+                    {
+                        using RawUtf8JsonString rawTags = JsonMarshal.GetRawUtf8Value(itemTags);
+                        writer.Write(rawTags.Span);
+                        totalWritten += rawTags.Span.Length;
+                        break;
+                    }
+
+                    case JsonValueKind.True:
+                    writer.Write("true"u8);
+                    totalWritten += 4;
+                    break;
+
+                    case JsonValueKind.False:
+                    writer.Write("false"u8);
+                    totalWritten += 5;
+                    break;
+
+                    default:
+                    break;
+                }
                 first = false;
             }
         }
@@ -129,14 +161,50 @@ public readonly struct ListPetsRequest : IApiRequest<ListPetsRequest>
 
                 writer.Write("filter%5B"u8);
                 totalWritten += 9;
-                byte[] keyBytesFilter = System.Text.Encoding.UTF8.GetBytes(propFilter.Name);
-                writer.Write(keyBytesFilter);
-                totalWritten += keyBytesFilter.Length;
+                using UnescapedUtf8JsonString keyFilter = propFilter.Utf8NameSpan;
+                Span<byte> escFilterk = writer.GetSpan(keyFilter.Span.Length * 3);
+                if (Utf8Uri.TryEscapeDataString(keyFilter.Span, escFilterk, out int ewFilterk))
+                {
+                    writer.Advance(ewFilterk);
+                    totalWritten += ewFilterk;
+                }
                 writer.Write("%5D="u8);
                 totalWritten += 4;
-                byte[] elBytesFilter = System.Text.Encoding.UTF8.GetBytes(propFilter.Value.ToString());
-                writer.Write(elBytesFilter);
-                totalWritten += elBytesFilter.Length;
+                switch (((JsonElement)propFilter.Value).ValueKind)
+                {
+                    case JsonValueKind.String:
+                    {
+                        using UnescapedUtf8JsonString utf8Filter = ((JsonElement)propFilter.Value).GetUtf8String();
+                        Span<byte> escFilter = writer.GetSpan(utf8Filter.Span.Length * 3);
+                        if (Utf8Uri.TryEscapeDataString(utf8Filter.Span, escFilter, out int ewFilter))
+                        {
+                            writer.Advance(ewFilter);
+                            totalWritten += ewFilter;
+                        }
+                        break;
+                    }
+
+                    case JsonValueKind.Number:
+                    {
+                        using RawUtf8JsonString rawFilter = JsonMarshal.GetRawUtf8Value(propFilter.Value);
+                        writer.Write(rawFilter.Span);
+                        totalWritten += rawFilter.Span.Length;
+                        break;
+                    }
+
+                    case JsonValueKind.True:
+                    writer.Write("true"u8);
+                    totalWritten += 4;
+                    break;
+
+                    case JsonValueKind.False:
+                    writer.Write("false"u8);
+                    totalWritten += 5;
+                    break;
+
+                    default:
+                    break;
+                }
                 first = false;
             }
         }
