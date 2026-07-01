@@ -39,6 +39,19 @@ const INVOCATIONS = {
       tags: ["a b", "c/d"],
       filter: { min: "1", max: "2" },
     }),
+  "search-full-style-matrix": (client) =>
+    client.search({
+      scope: { kind: "k1", region: "r1" },
+      tags: ["a b", "c"],
+      codes: ["c1", "c2"],
+      filter: { min: "1", max: "2" },
+      fields: ["f1", "f2"],
+      opts: { sort: "asc", dir: "up" },
+      xTags: ["t1", "t2"],
+    }),
+  "note-text-plain-body": (client) => client.note("hello note"),
+  "form-urlencoded-body": (client) => client.form({ name: "gadget", count: 3, tags: ["a", "b"] }),
+  "upload-octet-stream-body": (client) => client.upload(new TextEncoder().encode("binary-data")),
 };
 
 // The X-* request headers the TS transport captured, as a lower-cased name->value map.

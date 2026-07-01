@@ -26,6 +26,40 @@
       "headers": {},
       "contentType": null,
       "bodyUtf8": null
+    },
+    {
+      "name": "search-full-style-matrix",
+      "method": "GET",
+      "target": "/search/;scope=kind,k1,region,r1?tags=a%20b%20c&codes=c1%7Cc2&filter%5Bmin%5D=1&filter%5Bmax%5D=2&fields=f1&fields=f2&sort=asc&dir=up",
+      "headers": {
+        "X-Tags": "t1,t2"
+      },
+      "contentType": null,
+      "bodyUtf8": null
+    },
+    {
+      "name": "note-text-plain-body",
+      "method": "POST",
+      "target": "/note",
+      "headers": {},
+      "contentType": "text/plain",
+      "bodyUtf8": "hello note"
+    },
+    {
+      "name": "form-urlencoded-body",
+      "method": "POST",
+      "target": "/form",
+      "headers": {},
+      "contentType": "application/x-www-form-urlencoded",
+      "bodyUtf8": "name=gadget&count=3&tags=a&tags=b"
+    },
+    {
+      "name": "upload-octet-stream-body",
+      "method": "POST",
+      "target": "/upload",
+      "headers": {},
+      "contentType": "application/octet-stream",
+      "bodyUtf8": "binary-data"
     }
   ]
 }

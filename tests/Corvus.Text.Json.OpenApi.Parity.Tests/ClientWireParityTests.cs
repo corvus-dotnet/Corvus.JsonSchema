@@ -42,6 +42,10 @@ public class ClientWireParityTests
             await CaptureAsync("getPet-reserved-path", GetPetReservedPath),
             await CaptureAsync("updatePet-compound-query-boolean", UpdatePetCompoundQueryBoolean),
             await CaptureAsync("search-spacedelimited-deepobject", SearchSpaceDelimitedDeepObject),
+            await CaptureAsync("search-full-style-matrix", SearchFullStyleMatrix),
+            await CaptureAsync("note-text-plain-body", NoteTextPlainBody),
+            await CaptureAsync("form-urlencoded-body", FormUrlencodedBody),
+            await CaptureAsync("upload-octet-stream-body", UploadOctetStreamBody),
         ];
 
         string fixturePath = ResolveFixturePath();
@@ -119,6 +123,59 @@ public class ClientWireParityTests
 
         await using SearchResponse response = await transport
             .SendAsync<SearchRequest, SearchResponse>(in request, CancellationToken.None);
+    }
+
+    private static async Task SearchFullStyleMatrix(HttpClientTransport transport)
+    {
+        // W4: search with EVERY query param set (session cookie left unset) — exercises the full
+        // style matrix: matrix path object, spaceDelimited array, pipeDelimited array, deepObject,
+        // form-explode array, form-explode object, and a simple header array.
+        var request = new SearchRequest(
+            GetSearchByScopeScope.ParseValue("""{"kind":"k1","region":"r1"}"""u8))
+        {
+            Tags = GetSearchByScopeTags.ParseValue("""["a b","c"]"""u8),
+            Codes = GetSearchByScopeCodes.ParseValue("""["c1","c2"]"""u8),
+            Filter = GetSearchByScopeFilter.ParseValue("""{"min":"1","max":"2"}"""u8),
+            Fields = GetSearchByScopeFields.ParseValue("""["f1","f2"]"""u8),
+            Opts = GetSearchByScopeOpts.ParseValue("""{"sort":"asc","dir":"up"}"""u8),
+            XTags = GetSearchByScopeXTags.ParseValue("""["t1","t2"]"""u8),
+        };
+
+        await using SearchResponse response = await transport
+            .SendAsync<SearchRequest, SearchResponse>(in request, CancellationToken.None);
+    }
+
+    private static async Task NoteTextPlainBody(HttpClientTransport transport)
+    {
+        // W5: note with a text/plain body. The generated client sends the raw bytes with
+        // content type "text/plain" via the transport's stream-body overload.
+        var client = new ApiStatusClient(transport);
+
+        using var body = new MemoryStream(Encoding.UTF8.GetBytes("hello note"));
+
+        await using NoteResponse response = await client.NoteAsync(body, CancellationToken.None);
+    }
+
+    private static async Task FormUrlencodedBody(HttpClientTransport transport)
+    {
+        // W6: form with an application/x-www-form-urlencoded body. The generated client serializes
+        // the typed body via FormUrlEncodedSerializer; the exact encoding it produces is the reference.
+        var client = new ApiStatusClient(transport);
+
+        PostFormBody body = PostFormBody.ParseValue("""{"name":"gadget","count":3,"tags":["a","b"]}"""u8);
+
+        await using FormResponse response = await client.FormAsync(body, CancellationToken.None);
+    }
+
+    private static async Task UploadOctetStreamBody(HttpClientTransport transport)
+    {
+        // W7: upload with an application/octet-stream body. The generated client sends the raw bytes
+        // with content type "application/octet-stream" via the transport's stream-body overload.
+        var client = new ApiStatusClient(transport);
+
+        using var body = new MemoryStream(Encoding.ASCII.GetBytes("binary-data"));
+
+        await using UploadResponse response = await client.UploadAsync(body, CancellationToken.None);
     }
 
     private static async Task<WireCase> CaptureAsync(
