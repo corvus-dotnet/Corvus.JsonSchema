@@ -176,6 +176,11 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         RedisValue[] sortKeys = await this.database.SortedSetRangeByRankAsync(IndexKey).ConfigureAwait(false);
         Array.Sort(sortKeys, static (a, b) => string.CompareOrdinal((string)a!, (string)b!));
 
+        if (query.DistinctWorkflows)
+        {
+            return await this.QueryDistinctWorkflowsAsync(query, sortKeys, after, limit, cancellationToken).ConfigureAwait(false);
+        }
+
         // The page is a pooled batch of disposable version documents (the caller disposes the page). Each candidate is
         // parsed once; matches are kept in the batch, non-matches and the look-ahead row are disposed immediately.
         var matches = new PooledDocumentList<CatalogVersion>(limit);
@@ -223,6 +228,70 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         }
 
         return nextSortKey is not null ? CatalogPage.Create(matches, nextSortKey) : CatalogPage.Create(matches);
+    }
+
+    // The distinct-workflow (collapse-by-base) query: one representative version per base workflow, keyset-paged by base id.
+    // A base is included if any of its versions matches the filter (base/status/text/owner/prefix + tags + row-security reach);
+    // the representative is the best-matching version — the newest Active, else the newest Obsolete, else the newest. Redis has
+    // no server-side ordering over the metadata, so this scans the SAME lexicographically-ordered index the version-mode branch
+    // uses, fetches + parses each version's doc once to filter + rank, and retains only the winning per-base document bytes. The
+    // page window (bases strictly past the cursor) is then re-parsed into the pooled batch (the stored bytes are immutable, so a
+    // second Parse over them is safe), mirroring the in-memory reference.
+    private async ValueTask<CatalogPage> QueryDistinctWorkflowsAsync(CatalogQuery query, RedisValue[] sortKeys, string? after, int limit, CancellationToken cancellationToken)
+    {
+        var reps = new SortedDictionary<string, RepCandidate>(StringComparer.Ordinal);
+        foreach (RedisValue member in sortKeys)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            RedisValue value = await this.database.HashGetAsync(VersionKey((string)member!), DocField).ConfigureAwait(false);
+            if (value.IsNull)
+            {
+                continue;
+            }
+
+            byte[] docBytes = (byte[])value!;
+            using ParsedJsonDocument<CatalogVersion> candidate = ParsedJsonDocument<CatalogVersion>.Parse(docBytes);
+            if (!Matches(candidate.RootElement, query))
+            {
+                continue;
+            }
+
+            CatalogVersionRef reference = candidate.RootElement.Ref;
+            var incoming = new RepCandidate(docBytes, StatusRank(candidate.RootElement.StatusValue), reference.VersionNumber);
+            if (!reps.TryGetValue(reference.BaseWorkflowId, out RepCandidate existing) || incoming.IsBetterThan(existing))
+            {
+                reps[reference.BaseWorkflowId] = incoming;
+            }
+        }
+
+        var matches = new PooledDocumentList<CatalogVersion>(limit);
+        string? nextBaseId = null;
+        try
+        {
+            foreach (KeyValuePair<string, RepCandidate> entry in reps)
+            {
+                if (after is not null && string.CompareOrdinal(entry.Key, after) <= 0)
+                {
+                    continue;
+                }
+
+                if (matches.Count == limit)
+                {
+                    // There is at least one more matching base workflow beyond this page.
+                    nextBaseId = matches[matches.Count - 1].Ref.BaseWorkflowId;
+                    break;
+                }
+
+                matches.Add(ParsedJsonDocument<CatalogVersion>.Parse(entry.Value.Doc));
+            }
+        }
+        catch
+        {
+            matches.Dispose();
+            throw;
+        }
+
+        return nextBaseId is not null ? CatalogPage.Create(matches, nextBaseId) : CatalogPage.Create(matches);
     }
 
     /// <inheritdoc/>
@@ -319,6 +388,14 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
 
+    // The representative-precedence rank: newest Active wins over newest Obsolete wins over newest of any other status.
+    private static int StatusRank(CatalogStatus status) => status switch
+    {
+        CatalogStatus.Active => 0,
+        CatalogStatus.Obsolete => 1,
+        _ => 2,
+    };
+
     private static bool Matches(in CatalogVersion version, CatalogQuery query)
     {
         if (query.BaseWorkflowId is { } baseId && version.Ref.BaseWorkflowId != baseId)
@@ -413,5 +490,14 @@ public sealed class RedisWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
 
         await this.database.ScriptEvaluateAsync(StoreScript, [VersionKey(sortKey: SortKey(baseWorkflowId, versionNumber)), IndexKey], argv).ConfigureAwait(false);
         return ParsedJsonDocument<CatalogVersion>.Parse(versionDoc);
+    }
+
+    // A base workflow's best-matching representative during a distinct-workflow scan: the winning version document bytes (as
+    // fetched from the version hash) plus the fields the precedence compares (lower status rank wins; ties break to the higher
+    // version number). The bytes are re-parsed into the pooled batch only for the page window.
+    private readonly record struct RepCandidate(byte[] Doc, int Rank, int VersionNumber)
+    {
+        public bool IsBetterThan(RepCandidate other)
+            => this.Rank != other.Rank ? this.Rank < other.Rank : this.VersionNumber > other.VersionNumber;
     }
 }

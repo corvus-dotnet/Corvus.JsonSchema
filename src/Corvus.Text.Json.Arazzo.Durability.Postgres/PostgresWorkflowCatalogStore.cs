@@ -182,22 +182,31 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
 
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand select = connection.CreateCommand();
-        select.CommandText =
-            "SELECT " + ColumnList +
-            """
 
-            FROM CatalogVersions
-            WHERE (@baseWorkflowId IS NULL OR BaseWorkflowId = @baseWorkflowId)
+        // The shared filter body (base/status/text/owner/prefix/tags/security); both query modes embed it verbatim,
+        // and the {{tagPredicates}}/{{securityPredicate}} placeholders are filled below.
+        const string filterWhere = """
+            (@baseWorkflowId IS NULL OR BaseWorkflowId = @baseWorkflowId)
               AND (@status IS NULL OR Status = @status)
               AND (@text IS NULL OR Title ILIKE @textLike ESCAPE '\' OR (Description IS NOT NULL AND Description ILIKE @textLike ESCAPE '\'))
               AND (@owner IS NULL OR OwnerName ILIKE @ownerLike ESCAPE '\' OR OwnerEmail ILIKE @ownerLike ESCAPE '\')
               AND (@workflowIdPrefix IS NULL OR lower(WorkflowId) LIKE @workflowIdPrefixLike ESCAPE '\')
               {{tagPredicates}}
               {{securityPredicate}}
-              AND (@after IS NULL OR (BaseWorkflowId || lpad(VersionNumber::text, 10, '0')) > @after)
-            ORDER BY BaseWorkflowId, VersionNumber
-            LIMIT @limit;
             """;
+
+        // distinctWorkflows: among the filtered versions of each base, rank by (Active < Obsolete < other, then newest)
+        // and keep the representative (RepRank = 1); keyset-page by base workflow id alone. The base compare/order are
+        // forced COLLATE "C" so they are byte-ordinal (matching the in-memory pager's StringComparer.Ordinal) — the
+        // BaseWorkflowId column is not C-collated in this schema, so its default-collation order would not match.
+        // Otherwise page every matching version by (base, version).
+        select.CommandText = query.DistinctWorkflows
+            ? "WITH ranked AS (\n  SELECT " + ColumnList +
+              ",\n    ROW_NUMBER() OVER (PARTITION BY BaseWorkflowId ORDER BY CASE Status WHEN 'Active' THEN 0 WHEN 'Obsolete' THEN 1 ELSE 2 END, VersionNumber DESC) AS RepRank\n" +
+              "  FROM CatalogVersions\n  WHERE " + filterWhere + "\n)\n" +
+              "SELECT " + ColumnList + " FROM ranked\nWHERE RepRank = 1 AND (@after IS NULL OR BaseWorkflowId COLLATE \"C\" > @after COLLATE \"C\")\nORDER BY BaseWorkflowId COLLATE \"C\"\nLIMIT @limit;"
+            : "SELECT " + ColumnList + "\nFROM CatalogVersions\nWHERE " + filterWhere +
+              "\n  AND (@after IS NULL OR (BaseWorkflowId || lpad(VersionNumber::text, 10, '0')) > @after)\nORDER BY BaseWorkflowId, VersionNumber\nLIMIT @limit;";
         select.Parameters.Add(NullableText("baseWorkflowId", query.BaseWorkflowId));
         select.Parameters.Add(NullableText("status", query.Status?.ToString()));
         select.Parameters.Add(NullableText("text", query.Text));
@@ -262,8 +271,9 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
                 if (versions.Count == limit)
                 {
                     // There is at least one more matching row beyond this page; the last kept row is the cursor.
+                    // In distinct mode the cursor is the base workflow id alone (the page is one row per base).
                     CatalogVersionRef last = versions[versions.Count - 1].Ref;
-                    nextSortKey = SortKey(last.BaseWorkflowId, last.VersionNumber);
+                    nextSortKey = query.DistinctWorkflows ? last.BaseWorkflowId : SortKey(last.BaseWorkflowId, last.VersionNumber);
                     break;
                 }
 

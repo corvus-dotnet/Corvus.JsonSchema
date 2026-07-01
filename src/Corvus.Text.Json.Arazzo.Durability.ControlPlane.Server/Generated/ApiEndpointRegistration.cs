@@ -879,6 +879,12 @@ public static class ApiEndpointRegistration
                     string OwnerRaw = OwnerQueryVal[0]!;
                     OwnerValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString>(OwnerRaw, workspace);
                 }
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean DistinctWorkflowsValue = default;
+                if (context.Request.Query.TryGetValue("distinctWorkflows", out var DistinctWorkflowsQueryVal) && DistinctWorkflowsQueryVal.Count > 0)
+                {
+                    string DistinctWorkflowsRaw = DistinctWorkflowsQueryVal[0]!;
+                    DistinctWorkflowsValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseBoolean<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean>(DistinctWorkflowsRaw, workspace);
+                }
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit LimitValue = default;
                 if (context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0)
                 {
@@ -940,6 +946,14 @@ public static class ApiEndpointRegistration
                     return;
                 }
 
+                if (!DistinctWorkflowsValue.IsUndefined() && !DistinctWorkflowsValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'distinctWorkflows' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
                 if (!LimitValue.IsUndefined() && !LimitValue.EvaluateSchema())
                 {
                     context.Response.StatusCode = 400;
@@ -965,6 +979,7 @@ public static class ApiEndpointRegistration
                     Tag = TagValue,
                     Status = StatusValue,
                     Owner = OwnerValue,
+                    DistinctWorkflows = DistinctWorkflowsValue,
                     Limit = LimitValue,
                     PageToken = PageTokenValue,
                 }

@@ -210,6 +210,77 @@ public abstract class WorkflowCatalogStoreConformance
     }
 
     [TestMethod]
+    public async Task Query_distinct_workflows_returns_one_representative_per_base_keyset_paged()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        (await store.AddAsync("alpha", Package("alpha"), Meta(), default)).Dispose(); // alpha-v1
+        (await store.AddAsync("alpha", Package("alpha"), Meta(), default)).Dispose(); // alpha-v2
+        (await store.AddAsync("beta", Package("beta"), Meta(), default)).Dispose();   // beta-v1
+        (await store.AddAsync("gamma", Package("gamma"), Meta(), default)).Dispose(); // gamma-v1
+        (await store.AddAsync("gamma", Package("gamma"), Meta(), default)).Dispose(); // gamma-v2
+        (await store.AddAsync("gamma", Package("gamma"), Meta(), default)).Dispose(); // gamma-v3
+
+        // Unpaged distinct: one row per base (3, not 6 versions), representative = newest version, ordered by base id.
+        using (CatalogPage all = await store.QueryAsync(new CatalogQuery(DistinctWorkflows: true, Limit: 100), default))
+        {
+            all.Versions.Select(v => (v.Ref.BaseWorkflowId, v.Ref.VersionNumber)).ToList()
+                .ShouldBe([("alpha", 2), ("beta", 1), ("gamma", 3)]);
+        }
+
+        // Keyset-paged distinct: the cursor is the base id alone; no gaps/duplicates across the page boundary.
+        using CatalogPage first = await store.QueryAsync(new CatalogQuery(DistinctWorkflows: true, Limit: 2), default);
+        first.Versions.Count.ShouldBe(2);
+        first.NextPageToken.IsEmpty.ShouldBeFalse();
+
+        using ParsedJsonDocument<JsonString> tokenDoc = AsPageToken(first.NextPageToken.Span);
+        using CatalogPage second = await store.QueryAsync(new CatalogQuery(DistinctWorkflows: true, Limit: 2, ContinuationToken: tokenDoc.RootElement), default);
+        second.Versions.Count.ShouldBe(1);
+        second.NextPageToken.IsEmpty.ShouldBeTrue();
+
+        first.Versions.Select(v => v.Ref.BaseWorkflowId)
+            .Concat(second.Versions.Select(v => v.Ref.BaseWorkflowId))
+            .ToList()
+            .ShouldBe(["alpha", "beta", "gamma"]);
+    }
+
+    [TestMethod]
+    public async Task Query_distinct_workflows_representative_prefers_newest_active_then_newest_obsolete()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+
+        // svc: v1/v2/v3 all Active, then v3 obsoleted — representative is the newest Active (v2), not the newest overall (v3).
+        (await store.AddAsync("svc", Package("svc"), Meta(), default)).Dispose();
+        (await store.AddAsync("svc", Package("svc"), Meta(), default)).Dispose();
+        (await store.AddAsync("svc", Package("svc"), Meta(), default)).Dispose();
+        (await store.UpdateMetadataAsync("svc", 3, new CatalogMetadataPatch("bob", Status: CatalogStatus.Obsolete), default))?.Dispose();
+
+        // old: v1/v2 both Obsolete — no Active version, so the representative falls back to the newest Obsolete (v2).
+        (await store.AddAsync("old", Package("old"), Meta(), default)).Dispose();
+        (await store.AddAsync("old", Package("old"), Meta(), default)).Dispose();
+        (await store.UpdateMetadataAsync("old", 1, new CatalogMetadataPatch("bob", Status: CatalogStatus.Obsolete), default))?.Dispose();
+        (await store.UpdateMetadataAsync("old", 2, new CatalogMetadataPatch("bob", Status: CatalogStatus.Obsolete), default))?.Dispose();
+
+        using CatalogPage page = await store.QueryAsync(new CatalogQuery(DistinctWorkflows: true, Limit: 100), default);
+        page.Versions.Select(v => (v.Ref.BaseWorkflowId, v.Ref.VersionNumber, v.StatusValue)).ToList()
+            .ShouldBe([("old", 2, CatalogStatus.Obsolete), ("svc", 2, CatalogStatus.Active)]);
+    }
+
+    [TestMethod]
+    public async Task Query_distinct_workflows_includes_a_base_when_any_version_matches_and_represents_it_by_the_match()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+
+        // svc-v1 carries the "billing" tag; svc-v2 does not. A tag filter must still surface svc (any version matches),
+        // and the representative must be the matching version (v1), not the newest (v2).
+        (await store.AddAsync("svc", Package("svc"), Meta(tags: ["billing"]), default)).Dispose();
+        (await store.AddAsync("svc", Package("svc"), Meta(), default)).Dispose();
+
+        using CatalogPage page = await store.QueryAsync(new CatalogQuery(DistinctWorkflows: true, Tags: TagSet.FromTags(["billing"]), Limit: 100), default);
+        page.Versions.Select(v => (v.Ref.BaseWorkflowId, v.Ref.VersionNumber)).ToList()
+            .ShouldBe([("svc", 1)]);
+    }
+
+    [TestMethod]
     public async Task Update_changes_governance_and_stamps_audit()
     {
         var clock = new TestClock(T0);

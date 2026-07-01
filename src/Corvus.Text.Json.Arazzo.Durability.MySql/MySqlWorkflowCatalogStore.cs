@@ -186,22 +186,33 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         int limit = query.Limit <= 0 ? 100 : query.Limit;
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand select = connection.CreateCommand();
-        select.CommandText =
-            "SELECT " + ColumnList +
-            """
 
-            FROM CatalogVersions
-            WHERE (@baseWorkflowId IS NULL OR BaseWorkflowId = @baseWorkflowId)
+        // The shared filter body (base/status/text/owner/prefix/tags/security); both query modes embed it verbatim,
+        // and the {{tagPredicates}}/{{securityPredicate}} placeholders are filled below.
+        const string filterWhere = """
+            (@baseWorkflowId IS NULL OR BaseWorkflowId = @baseWorkflowId)
               AND (@status IS NULL OR Status = @status)
               AND (@text IS NULL OR Title LIKE @textLike ESCAPE '\\' OR (Description IS NOT NULL AND Description LIKE @textLike ESCAPE '\\'))
               AND (@owner IS NULL OR OwnerName LIKE @ownerLike ESCAPE '\\' OR OwnerEmail LIKE @ownerLike ESCAPE '\\')
               AND (@workflowIdPrefix IS NULL OR WorkflowId LIKE @workflowIdPrefixLike ESCAPE '\\')
               {{tagPredicates}}
               {{securityPredicate}}
-              AND (@after IS NULL OR CONCAT(BaseWorkflowId, LPAD(VersionNumber, 10, '0')) > @after)
-            ORDER BY BaseWorkflowId, VersionNumber
-            LIMIT @limit;
             """;
+
+        // distinctWorkflows: among the filtered versions of each base, rank by (Active < Obsolete < other, then newest)
+        // and keep the representative (RepRank = 1); keyset-page by base workflow id alone. Otherwise page every matching
+        // version by (base, version). MySQL 8 supports both the ROW_NUMBER() window function and the CTE.
+        //
+        // The base-id keyset compare (> @after) and ORDER BY are pinned COLLATE utf8mb4_bin so the distinct paging order
+        // is byte-ordinal — equal to the in-memory reference's StringComparer.Ordinal — regardless of the CatalogVersions
+        // column/table default collation (which the version-mode query, kept as-is, inherits for its own keyset).
+        select.CommandText = query.DistinctWorkflows
+            ? "WITH ranked AS (\n  SELECT " + ColumnList +
+              ",\n    ROW_NUMBER() OVER (PARTITION BY BaseWorkflowId ORDER BY CASE Status WHEN 'Active' THEN 0 WHEN 'Obsolete' THEN 1 ELSE 2 END, VersionNumber DESC) AS RepRank\n" +
+              "  FROM CatalogVersions\n  WHERE " + filterWhere + "\n)\n" +
+              "SELECT " + ColumnList + " FROM ranked\nWHERE RepRank = 1 AND (@after IS NULL OR BaseWorkflowId COLLATE utf8mb4_bin > @after)\nORDER BY BaseWorkflowId COLLATE utf8mb4_bin\nLIMIT @limit;"
+            : "SELECT " + ColumnList + "\nFROM CatalogVersions\nWHERE " + filterWhere +
+              "\n  AND (@after IS NULL OR CONCAT(BaseWorkflowId, LPAD(VersionNumber, 10, '0')) > @after)\nORDER BY BaseWorkflowId, VersionNumber\nLIMIT @limit;";
         select.Parameters.AddWithValue("@baseWorkflowId", (object?)query.BaseWorkflowId ?? DBNull.Value);
         select.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
         select.Parameters.AddWithValue("@text", (object?)query.Text ?? DBNull.Value);
@@ -266,8 +277,9 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
                 if (versions.Count == limit)
                 {
                     // There is at least one more matching row beyond this page; the last kept row is the cursor.
+                    // In distinct mode the cursor is the base workflow id alone (the page is one row per base).
                     CatalogVersionRef last = versions[versions.Count - 1].Ref;
-                    nextSortKey = SortKey(last.BaseWorkflowId, last.VersionNumber);
+                    nextSortKey = query.DistinctWorkflows ? last.BaseWorkflowId : SortKey(last.BaseWorkflowId, last.VersionNumber);
                     break;
                 }
 

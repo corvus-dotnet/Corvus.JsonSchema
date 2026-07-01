@@ -52,6 +52,11 @@ public readonly struct SearchCatalogParams
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString Owner { get; init; }
 
     /// <summary>
+    /// Gets the 'distinctWorkflows' query parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean DistinctWorkflows { get; init; }
+
+    /// <summary>
     /// Gets the 'limit' query parameter.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PageLimit Limit { get; init; }

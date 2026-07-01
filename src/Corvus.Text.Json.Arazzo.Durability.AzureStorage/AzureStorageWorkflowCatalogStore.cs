@@ -192,16 +192,25 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         // Server-side filtering covers the exact base-id and status predicates; the text/owner/tag predicates
         // (case-insensitive contains, contains-ALL) are applied client-side because Table OData cannot express
         // them, then the keyset "take limit (+1 to detect a further page)" cut is applied to the filtered stream.
+        //
+        // In DISTINCT mode the server-side status filter must NOT be applied: a base is included if ANY of its
+        // versions matches, and the representative is chosen by status precedence across all its versions, so the
+        // full partition span must be scanned (the status predicate is instead applied client-side in Matches).
         string? filter = null;
         if (query.BaseWorkflowId is { } baseId)
         {
             filter = TableClient.CreateQueryFilter($"PartitionKey eq {baseId}");
         }
 
-        if (query.Status is { } status)
+        if (query.Status is { } status && !query.DistinctWorkflows)
         {
             string clause = TableClient.CreateQueryFilter($"Status eq {status.ToString()}");
             filter = filter is null ? clause : filter + " and " + clause;
+        }
+
+        if (query.DistinctWorkflows)
+        {
+            return await this.QueryDistinctWorkflowsAsync(query, filter, after, limit, cancellationToken).ConfigureAwait(false);
         }
 
         // The page is a pooled batch of disposable version documents (the caller disposes the page). Each candidate is
@@ -244,6 +253,68 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         }
 
         return nextSortKey is not null ? CatalogPage.Create(matches, nextSortKey) : CatalogPage.Create(matches);
+    }
+
+    // The distinct-workflow (collapse-by-base) query: one representative version per base workflow, keyset-paged by base
+    // id. A base is included if any of its versions matches the filter; the representative is the best-matching version —
+    // the newest Active, else the newest Obsolete, else the newest (matching the UI's client-side collapse it replaces).
+    // Table storage has no group-by/window functions, so the collapse is done in process over the SAME server-filtered
+    // stream the version-mode branch uses (base-id predicate only; the status predicate and the text/owner/tag/reach
+    // predicates are re-applied here via Matches, because a base is selected by ANY matching version). Each candidate is
+    // parsed once to filter + rank, retaining only the winning per-base TableEntity; the page window's winners are
+    // re-parsed into the pooled batch. Table (PartitionKey, RowKey) order is byte-ordinal, so the bases arrive already in
+    // StringComparer.Ordinal order — the same order the keyset cursor (the last emitted base id alone) advances through.
+    private async ValueTask<CatalogPage> QueryDistinctWorkflowsAsync(CatalogQuery query, string? filter, string? after, int limit, CancellationToken cancellationToken)
+    {
+        // Collect the best-matching representative entity per base id. The dictionary is ordinal-ordered so the emit
+        // loop below walks bases in byte-ordinal (== StringComparer.Ordinal) order, matching the keyset cursor.
+        var reps = new SortedDictionary<string, RepCandidate>(StringComparer.Ordinal);
+        await foreach (TableEntity entity in this.catalog.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            using ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(entity);
+            if (!Matches(candidate.RootElement, query))
+            {
+                continue;
+            }
+
+            CatalogVersionRef reference = candidate.RootElement.Ref;
+            var incoming = new RepCandidate(entity, StatusRank(candidate.RootElement.StatusValue), reference.VersionNumber);
+            if (!reps.TryGetValue(reference.BaseWorkflowId, out RepCandidate existing) || incoming.IsBetterThan(existing))
+            {
+                reps[reference.BaseWorkflowId] = incoming;
+            }
+        }
+
+        // The page is a pooled batch of disposable representative documents (the caller disposes the page). Seek strictly
+        // past the cursor base id, take limit, and stop on the (+1) look-ahead base to signal a further page.
+        var matches = new PooledDocumentList<CatalogVersion>(limit);
+        string? nextBaseId = null;
+        try
+        {
+            foreach (KeyValuePair<string, RepCandidate> entry in reps)
+            {
+                if (after is not null && string.CompareOrdinal(entry.Key, after) <= 0)
+                {
+                    continue;
+                }
+
+                if (matches.Count == limit)
+                {
+                    // There is at least one more matching base workflow beyond this page.
+                    nextBaseId = matches[matches.Count - 1].Ref.BaseWorkflowId;
+                    break;
+                }
+
+                matches.Add(ReadVersion(entry.Value.Entity));
+            }
+        }
+        catch
+        {
+            matches.Dispose();
+            throw;
+        }
+
+        return nextBaseId is not null ? CatalogPage.Create(matches, nextBaseId) : CatalogPage.Create(matches);
     }
 
     /// <inheritdoc/>
@@ -337,6 +408,14 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
 
     private static string SortKey(string baseWorkflowId, int versionNumber)
         => string.Create(CultureInfo.InvariantCulture, $"{baseWorkflowId}{versionNumber:D10}");
+
+    // The representative-precedence rank: newest Active wins over newest Obsolete wins over newest of any other status.
+    private static int StatusRank(CatalogStatus status) => status switch
+    {
+        CatalogStatus.Active => 0,
+        CatalogStatus.Obsolete => 1,
+        _ => 2,
+    };
 
     private static bool Matches(in CatalogVersion version, CatalogQuery query)
     {
@@ -572,5 +651,15 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         {
             return null;
         }
+    }
+
+    // A base workflow's best-matching representative during a distinct-workflow scan: the winning version's Table entity
+    // (re-parsed into the pooled batch for the emitted page) plus the fields the precedence compares (lower status rank
+    // wins; ties break to the higher version number). Each queried TableEntity is a distinct object, so holding the
+    // winner and reading it after the scan is safe.
+    private readonly record struct RepCandidate(TableEntity Entity, int Rank, int VersionNumber)
+    {
+        public bool IsBetterThan(RepCandidate other)
+            => this.Rank != other.Rank ? this.Rank < other.Rank : this.VersionNumber > other.VersionNumber;
     }
 }
