@@ -747,8 +747,14 @@ public sealed class ControlPlaneServerTests
         using (Stj.JsonDocument doc = await ReadJsonAsync(accepted))
         {
             string runId = doc.RootElement.GetProperty("runId").GetString()!;
-            using WorkflowRun? run = await WorkflowRun.ResumeAsync(runStore, runId, clock, default);
-            run!.Environment.ShouldBe("production");
+            using (WorkflowRun? run = await WorkflowRun.ResumeAsync(runStore, runId, clock, default))
+            {
+                run!.Environment.ShouldBe("production"); // pinned in the store (§5.5)
+            }
+
+            // …and surfaced in the run's detail response projection.
+            using Stj.JsonDocument detail = await ReadJsonAsync(await client.GetAsync($"/runs/{runId}"));
+            detail.RootElement.GetProperty("environment").GetString().ShouldBe("production");
         }
 
         await app.StopAsync();
