@@ -7,20 +7,22 @@
 // Attributes : base-url, scopes (gates the mutating controls)
 // Properties : .client
 // Events     : grants-changed {grants}, loaded {count}, error {problem}
-// Parts      : panel, list, row
+// Parts      : panel, list, row, detail
 //
-// A grant keys a principal claim to per-action access. Authoring is WHO→WHAT→WHERE in a modal editor (the dialog
-// pattern the credential editor uses):
+// A master-detail over the grant list (the same shape as the Catalog / Sources / Environments surfaces): a selectable
+// list on the left, a detail pane on the right that AUTHORS the selected grant in place — no modal. A grant keys a
+// principal claim to per-action access:
 //   WHO   — name a group/role grantee with the picker (its resolved identity derives the canonical claim), or enter a
 //           raw claim. A *person* grantee is NOT granted here: per-person elevation goes through the access-request
 //           flow, so the picker steers it there. The claim→identity mapping is issuer-sensitive, so the multi-IdP
 //           caveat is surfaced; the server also rejects self-elevation (403).
 //   WHERE — each of read/write/purge is Denied | Unrestricted | scoped (one or more scopes, chosen by typeahead so it
-//           stays usable at hundreds — client-side filter for now, server-paged search in the paging campaign).
-// The list is searchable. Pre-paging interim: the scope typeahead and the list filter the full loaded set.
+//           stays usable at hundreds — server-paged search). The claim is the immutable key, so it is read-only on edit.
+// The list is searched + paged server-side; "New grant" opens a blank pane; editing/deleting happen in the pane.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, confirmDialog, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, confirmDialog, define } from './base.js';
 import './grantee-picker.js';
+import './pager.js';
 
 // How long to wait after the last keystroke before issuing a server-side search (the grant list and the scope typeahead
 // are both paged + searched on the server, so they scale to any number of grants/scopes).
@@ -53,7 +55,8 @@ class ArazzoGrantsPanel extends ArazzoElement {
     /** @private */ this._nextPageToken = null;
     /** @private */ this._reqSeq = 0;
     /** @private */ this._query = '';
-    /** @private */ this._form = null;
+    /** @private */ this._form = null;           // the detail-pane form state (null = nothing selected)
+    /** @private */ this._selectedId = null;     // the selected grant id (null when creating / nothing selected)
   }
 
   connectedCallback() {
@@ -63,7 +66,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
 
   attributeChangedCallback(name) {
     if (!this.isConnected) return;
-    if (name === 'scopes') this.renderBody();
+    if (name === 'scopes') { this.renderBody(); this.renderDetail(); }
     else this.reload();
   }
 
@@ -152,7 +155,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
     if (dl) dl.innerHTML = this._scopes.map((s) => `<option value="${escapeHtml(s.name)}"></option>`).join('');
   }
 
-  // ---- editor (modal dialog) --------------------------------------------------------------------
+  // ---- detail-pane authoring --------------------------------------------------------------------
 
   blankForm(mode, editId) {
     return {
@@ -162,16 +165,20 @@ class ArazzoGrantsPanel extends ArazzoElement {
     };
   }
 
+  /** Open a blank detail pane to author a new grant. */
   openCreate() {
+    this._selectedId = null;
     this._form = this.blankForm('create', null);
-    this.renderEditor();
-    this.$('dialog').showModal();
+    this.renderBody(); // clear any selected-row highlight
+    this.renderDetail();
     this.loadScopeOptions(''); // seed the scope typeahead with a first page of the vocabulary
   }
 
-  openEdit(id) {
+  /** Select a grant row: open it in the detail pane for editing (the claim is the immutable key). */
+  select(id) {
     const g = this._grants.find((x) => x.id === id);
     if (!g) return;
+    this._selectedId = id;
     const f = this.blankForm('edit', id);
     f.claimType = g.claimType || '';
     f.claimValue = g.claimValue || '';
@@ -180,14 +187,16 @@ class ArazzoGrantsPanel extends ArazzoElement {
     }
     f.description = g.description || '';
     this._form = f;
-    this.renderEditor();
-    this.$('dialog').showModal();
-    this.loadScopeOptions(''); // seed the scope typeahead with a first page of the vocabulary
+    this.renderBody(); // refresh row highlight
+    this.renderDetail();
+    this.loadScopeOptions('');
   }
 
-  closeEditor() {
-    this.$('dialog')?.close();
+  clearDetail() {
     this._form = null;
+    this._selectedId = null;
+    this.renderBody();
+    this.renderDetail();
   }
 
   onGranteeSelected(grantee) {
@@ -205,7 +214,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
       f.claimValue = primary?.value || grantee.value || '';
       f.granteeLabel = grantee.label || grantee.value || '';
     }
-    this.renderEditor();
+    this.renderDetail();
   }
 
   buildBody() {
@@ -227,12 +236,12 @@ class ArazzoGrantsPanel extends ArazzoElement {
     if (!f) return;
     if (f.personBlocked) {
       f.formError = { title: 'Use the access-request flow for a person', detail: `Per-person elevation for ${f.granteeLabel} is requested and approved, not granted directly.` };
-      this.renderEditor();
+      this.renderDetail();
       return;
     }
     if (!f.claimType.trim()) {
       f.formError = { title: 'A claim is required (pick a group/role grantee or enter a raw claim).' };
-      this.renderEditor();
+      this.renderDetail();
       return;
     }
     const body = this.buildBody();
@@ -242,11 +251,11 @@ class ArazzoGrantsPanel extends ArazzoElement {
       } else {
         await this.client.createSecurityBinding(body);
       }
-      this.closeEditor();
+      this.clearDetail();
       await this.reloadAndEmit();
     } catch (err) {
       f.formError = err.problem || { title: err.message };
-      this.renderEditor();
+      this.renderDetail();
       this.emit('error', { problem: f.formError, error: err });
     }
   }
@@ -262,6 +271,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
     if (!confirmed) return;
     try {
       await this.client.deleteSecurityBinding(id);
+      this.clearDetail();
       await this.reloadAndEmit();
     } catch (err) {
       this._error = err.problem || { title: err.message };
@@ -282,28 +292,37 @@ class ArazzoGrantsPanel extends ArazzoElement {
     this.shadowRoot.innerHTML = `
       <style>
         ${SHARED_CSS}
-        .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
-        .head { padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: center; gap: 8px; }
-        .head .title { font-weight: 700; }
-        .head .grow { flex: 1; }
-        .search { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: inherit; width: 180px; }
-        .list { display: grid; }
-        .grow-row { display: flex; align-items: baseline; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--_border); }
-        .grow-row:last-child { border-bottom: none; }
-        .pager { display: flex; gap: 8px; justify-content: center; padding: 10px; border-top: 1px solid var(--_border); }
-        .gmeta { flex: 1; min-width: 0; }
+        ${PAGER_CSS}
+        :host { display: block; }
+        .layout { display: grid; grid-template-columns: 1fr; gap: 14px; align-items: start; }
+        @media (min-width: 880px) { .layout.has-selection { grid-template-columns: 1fr 1.1fr; } }
+        .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+        .toolbar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+        .toolbar .title { font-weight: 600; color: var(--_muted); font-size: 12px; }
+        .toolbar .grow { flex: 1; }
+        .search { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid var(--_border); border-radius: 6px; background: var(--_bg); color: inherit; width: 160px; }
+        .err { margin: 10px 12px; }
+        .err:empty { display: none; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; }
+        tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: top; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr.selectable { cursor: pointer; }
+        tbody tr.selectable:hover { background: var(--_surface); }
+        tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
         .claim { font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
         .verbs { color: var(--_muted); font-size: 12px; margin-top: 3px; display: flex; gap: 12px; flex-wrap: wrap; }
         .verbs b { color: var(--_text); font-weight: 600; text-transform: capitalize; }
         .gdesc { color: var(--_muted); font-size: 12px; margin-top: 2px; }
-        .err { margin: 10px 12px; }
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
         @keyframes pulse { 50% { opacity: 0.45; } }
 
-        dialog { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); padding: 0; width: min(560px, 94vw); }
-        dialog::backdrop { background: rgba(0,0,0,0.4); }
-        .dhead { padding: 14px 16px; border-bottom: 1px solid var(--_border); font-weight: 700; font-size: 15px; }
-        .content { padding: 16px; display: grid; gap: 14px; max-height: 64vh; overflow: auto; }
+        /* detail pane */
+        .detail { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
+        .dhead { padding: 12px 14px; border-bottom: 1px solid var(--_border); background: var(--_surface); font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .dhead .grow { flex: 1; }
+        .dhead .close { font-size: 16px; line-height: 1; }
+        .content { padding: 14px; display: grid; gap: 14px; }
         .section { display: grid; gap: 8px; }
         .section > .slabel { font-weight: 600; font-size: 13px; }
         .caveat { font-size: 12px; color: var(--_muted); border-left: 3px solid var(--_border); padding: 4px 0 4px 8px; }
@@ -320,38 +339,42 @@ class ArazzoGrantsPanel extends ArazzoElement {
         .scope-empty { font-size: 12px; color: var(--_muted); }
         .verb-mode { font: inherit; padding: 7px 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); }
         .scope-input { width: 100%; font: inherit; padding: 8px; border: 1px solid var(--_border); border-radius: var(--_radius); background-color: var(--_bg); color: var(--_text); box-sizing: border-box; }
-        .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
+        .dfoot { display: flex; gap: 8px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--_border); }
+        .dfoot .grow { flex: 1; }
+        .placeholder { color: var(--_muted); padding: 24px 14px; text-align: center; }
       </style>
-      <div class="panel" part="panel">
-        <div class="head">
-          <span class="title">Grants</span>
-          <span class="grow"></span>
-          <input class="search" type="search" placeholder="Search grants…" aria-label="Search grants">
-          <button class="new primary" type="button" hidden>New grant</button>
+      <div class="layout" part="layout">
+        <div class="wrap" part="panel">
+          <div class="toolbar" part="toolbar">
+            <span class="title">Grants</span>
+            <span class="grow"></span>
+            <input class="search" type="search" placeholder="Search grants…" aria-label="Search grants">
+            <button class="refresh ghost" type="button" title="Refresh">↻</button>
+            <button class="new primary" type="button" hidden>New grant</button>
+          </div>
+          <div class="err"></div>
+          <table>
+            <thead><tr><th>Claim</th><th>Per-action access</th></tr></thead>
+            <tbody class="list" part="rows"></tbody>
+          </table>
+          <arazzo-pager class="pager" part="pager"></arazzo-pager>
         </div>
-        <div class="err"></div>
-        <div class="list" part="list"></div>
+        <div class="detail-pane"></div>
       </div>
-      <dialog part="dialog">
-        <div class="dhead"></div>
-        <div class="content"></div>
-        <div class="foot">
-          <button class="cancel ghost" type="button">Cancel</button>
-          <button class="confirm primary" type="button">Create</button>
-        </div>
-      </dialog>
       <datalist id="scope-options"></datalist>
     `;
     this.$('.new').addEventListener('click', () => this.openCreate());
+    this.$('.refresh').addEventListener('click', () => this.reload());
     this.$('.search').addEventListener('input', (e) => {
       this._query = e.target.value;
       clearTimeout(this._searchTimer);
       // A search-term change must reset to page 1 — reload(), not load().
       this._searchTimer = setTimeout(() => this.reload(), SEARCH_DEBOUNCE_MS);
     });
-    this.$('.cancel').addEventListener('click', () => this.closeEditor());
-    this.$('.confirm').addEventListener('click', () => this.submitForm());
-    this.$('dialog').addEventListener('close', () => { this._form = null; });
+    this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
+    this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
+    this._pane = this.$('.detail-pane');
+    this._layout = this.$('.layout');
   }
 
   renderBody() {
@@ -365,38 +388,24 @@ class ArazzoGrantsPanel extends ArazzoElement {
       : '';
 
     if (this._loading && this._grants.length === 0) {
-      list.innerHTML = '<div class="skl"></div><div class="skl"></div>';
-      return;
-    }
-    if (this._grants.length === 0) {
-      list.innerHTML = `<div class="empty">${this._query.trim() ? `No grants match “${escapeHtml(this._query.trim())}”.` : 'No grants defined.'}</div>`;
-      return;
+      list.innerHTML = `<tr><td colspan="2"><div class="skl"></div><div class="skl"></div></td></tr>`;
+    } else if (this._grants.length === 0) {
+      list.innerHTML = `<tr><td colspan="2"><div class="empty">${this._query.trim() ? `No grants match “${escapeHtml(this._query.trim())}”.` : 'No grants defined.'}</div></td></tr>`;
+    } else {
+      list.innerHTML = this._grants.map((g) => `
+        <tr class="grow-row selectable" part="row" data-id="${escapeHtml(g.id)}" aria-selected="${String(g.id === this._selectedId)}">
+          <td part="cell"><span class="claim">${escapeHtml(g.claimType)}${g.claimValue ? '=' + escapeHtml(g.claimValue) : ''}</span>${g.description ? `<div class="gdesc">${escapeHtml(g.description)}</div>` : ''}</td>
+          <td part="cell"><div class="verbs">${VERBS.map((v) => `<span><b>${v}</b> ${escapeHtml(grantSummary(g[v]))}</span>`).join('')}</div></td>
+        </tr>`).join('');
+      this.$$('.grow-row').forEach((tr) => tr.addEventListener('click', () => this.select(tr.dataset.id)));
     }
 
-    const rows = this._grants.map((g) => `
-      <div class="grow-row" part="row">
-        <div class="gmeta">
-          <span class="claim">${escapeHtml(g.claimType)}${g.claimValue ? '=' + escapeHtml(g.claimValue) : ''}</span>
-          <div class="verbs">${VERBS.map((v) => `<span><b>${v}</b> ${escapeHtml(grantSummary(g[v]))}</span>`).join('')}</div>
-          ${g.description ? `<div class="gdesc">${escapeHtml(g.description)}</div>` : ''}
-        </div>
-        ${this.canWrite ? `
-          <button class="edit ghost" type="button" data-id="${escapeHtml(g.id)}">Edit</button>
-          <button class="del ghost" type="button" data-id="${escapeHtml(g.id)}">Delete</button>` : ''}
-      </div>`).join('');
-    const pager = (this._history.length > 0 || this._nextPageToken)
-      ? `<div class="pager">
-           <button class="prev ghost" type="button"${this._history.length === 0 || this._loading ? ' disabled' : ''}>‹ Prev</button>
-           <button class="next ghost" type="button"${!this._nextPageToken || this._loading ? ' disabled' : ''}>Next ›</button>
-         </div>`
-      : '';
-    list.innerHTML = rows + pager;
-    this.$$('.edit').forEach((b) => b.addEventListener('click', () => this.openEdit(b.dataset.id)));
-    this.$$('.del').forEach((b) => b.addEventListener('click', () => this.deleteGrant(b.dataset.id)));
-    const prevBtn = this.$('.prev');
-    if (prevBtn) prevBtn.addEventListener('click', () => this.prevPage());
-    const nextBtn = this.$('.next');
-    if (nextBtn) nextBtn.addEventListener('click', () => this.nextPage());
+    this.$('arazzo-pager')?.update({
+      hasPrev: this._history.length > 0,
+      hasNext: !!this._nextPageToken,
+      loading: this._loading,
+      info: this._loading ? 'Loading…' : `${this._grants.length} grant${this._grants.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`,
+    });
   }
 
   verbRowHtml(verb) {
@@ -421,74 +430,103 @@ class ArazzoGrantsPanel extends ArazzoElement {
       </div>`;
   }
 
-  renderEditor() {
-    const content = this.$('.content');
+  renderDetail() {
+    const pane = this._pane;
+    if (!pane) return;
     const f = this._form;
-    if (!content || !f) return;
+    this._layout.classList.toggle('has-selection', !!f);
+    if (!f) { pane.replaceChildren(); return; }
+
     const isEdit = f.mode === 'edit';
-    this.$('.dhead').textContent = isEdit ? `Edit grant '${f.claimType}${f.claimValue ? '=' + f.claimValue : ''}'` : 'New grant';
-    this.$('.confirm').textContent = isEdit ? 'Save' : 'Create';
+    pane.innerHTML = `
+      <div class="detail" part="detail">
+        <div class="dhead">
+          <span class="dtitle">${isEdit ? `Edit grant '${escapeHtml(f.claimType)}${f.claimValue ? '=' + escapeHtml(f.claimValue) : ''}'` : 'New grant'}</span>
+          <span class="grow"></span>
+          <button class="close ghost" type="button" title="Close" aria-label="Close">✕</button>
+        </div>
+        <div class="content">
+          <div class="section">
+            <span class="slabel">WHO — the claim this grant keys on</span>
+            ${isEdit ? '' : `
+              <div class="field"><span>Grantee</span><arazzo-grantee-picker class="who-picker" placeholder="a team or role…"></arazzo-grantee-picker></div>
+              ${f.personBlocked ? `<div class="error-banner steer"><span>Per-person elevation for <strong>${escapeHtml(f.granteeLabel)}</strong> goes through the <strong>access-request flow</strong>, not a direct grant — request and have it approved instead.</span></div>` : ''}`}
+            <div class="field"><span>Claim type</span><input class="f-claimType" placeholder="team" value="${escapeHtml(f.claimType)}" ${isEdit ? 'readonly' : ''}></div>
+            <div class="field"><span>Claim value</span><input class="f-claimValue" placeholder="(any value of the type)" value="${escapeHtml(f.claimValue)}"></div>
+            <div class="caveat">A claim is only as trustworthy as the issuer asserting it. With multiple semi-trusted identity providers, prefer an issuer-qualified claim over a bare one.</div>
+          </div>
+          <div class="section">
+            <span class="slabel">WHERE — per-action access</span>
+            ${VERBS.map((v) => this.verbRowHtml(v)).join('')}
+          </div>
+          <div class="field"><span>Description</span><input class="f-description" placeholder="(optional)" value="${escapeHtml(f.description)}"></div>
+          <div class="form-err">${f.formError ? `<div class="error-banner"><span><strong>${escapeHtml(f.formError.title || 'Request failed')}</strong>${f.formError.detail ? ' — ' + escapeHtml(f.formError.detail) : ''}</span></div>` : ''}</div>
+        </div>
+        <div class="dfoot">
+          ${isEdit ? '<button class="del danger" type="button">Delete…</button>' : ''}
+          <span class="grow"></span>
+          <button class="cancel ghost" type="button">Cancel</button>
+          <button class="confirm primary" type="button">${isEdit ? 'Save' : 'Create'}</button>
+        </div>
+      </div>
+    `;
     this.$('#scope-options').innerHTML = this._scopes.map((s) => `<option value="${escapeHtml(s.name)}"></option>`).join('');
 
-    content.innerHTML = `
-      <div class="section">
-        <span class="slabel">WHO — the claim this grant keys on</span>
-        ${isEdit ? '' : `
-          <div class="field"><span>Grantee</span><arazzo-grantee-picker class="who-picker" placeholder="a team or role…"></arazzo-grantee-picker></div>
-          ${f.personBlocked ? `<div class="error-banner steer"><span>Per-person elevation for <strong>${escapeHtml(f.granteeLabel)}</strong> goes through the <strong>access-request flow</strong>, not a direct grant — request and have it approved instead.</span></div>` : ''}`}
-        <div class="field"><span>Claim type</span><input class="f-claimType" placeholder="team" value="${escapeHtml(f.claimType)}" ${isEdit ? 'readonly' : ''}></div>
-        <div class="field"><span>Claim value</span><input class="f-claimValue" placeholder="(any value of the type)" value="${escapeHtml(f.claimValue)}"></div>
-        <div class="caveat">A claim is only as trustworthy as the issuer asserting it. With multiple semi-trusted identity providers, prefer an issuer-qualified claim over a bare one.</div>
-      </div>
-      <div class="section">
-        <span class="slabel">WHERE — per-action access</span>
-        ${VERBS.map((v) => this.verbRowHtml(v)).join('')}
-      </div>
-      <div class="field"><span>Description</span><input class="f-description" placeholder="(optional)" value="${escapeHtml(f.description)}"></div>
-      <div class="form-err">${f.formError ? `<div class="error-banner"><span><strong>${escapeHtml(f.formError.title || 'Request failed')}</strong>${f.formError.detail ? ' — ' + escapeHtml(f.formError.detail) : ''}</span></div>` : ''}</div>
-    `;
-
-    const picker = content.querySelector('.who-picker');
+    const picker = pane.querySelector('.who-picker');
     if (picker) {
       picker.client = this.client;
       picker.addEventListener('grantee-selected', (e) => this.onGranteeSelected(e.detail.grantee));
-      picker.addEventListener('grantee-cleared', () => { f.personBlocked = false; this.renderEditor(); });
+      picker.addEventListener('grantee-cleared', () => { f.personBlocked = false; this.renderDetail(); });
     }
 
-    content.querySelector('.f-claimType')?.addEventListener('input', (e) => { f.claimType = e.target.value; });
-    content.querySelector('.f-claimValue')?.addEventListener('input', (e) => { f.claimValue = e.target.value; });
-    content.querySelector('.f-description')?.addEventListener('input', (e) => { f.description = e.target.value; });
+    pane.querySelector('.f-claimType')?.addEventListener('input', (e) => { f.claimType = e.target.value; });
+    pane.querySelector('.f-claimValue')?.addEventListener('input', (e) => { f.claimValue = e.target.value; });
+    pane.querySelector('.f-description')?.addEventListener('input', (e) => { f.description = e.target.value; });
 
-    content.querySelectorAll('.verb-mode').forEach((sel) => sel.addEventListener('change', () => {
+    pane.querySelectorAll('.verb-mode').forEach((sel) => sel.addEventListener('change', () => {
       f.verbs[sel.dataset.verb].mode = sel.value;
-      this.renderEditor();
+      this.renderDetail();
     }));
 
     // Scope typeahead: as the user types, fetch matching scopes from the server (debounced) into the shared datalist, so
     // the vocabulary scales without loading it all up front.
-    content.querySelectorAll('.scope-input').forEach((input) => input.addEventListener('input', () => {
+    pane.querySelectorAll('.scope-input').forEach((input) => input.addEventListener('input', () => {
       clearTimeout(this._scopeTimer);
       const q = input.value.trim();
       this._scopeTimer = setTimeout(() => this.loadScopeOptions(q), SEARCH_DEBOUNCE_MS);
     }));
     // Selecting a known scope name (from the datalist) adds a removable chip.
-    content.querySelectorAll('.scope-input').forEach((input) => input.addEventListener('change', () => {
+    pane.querySelectorAll('.scope-input').forEach((input) => input.addEventListener('change', () => {
       const name = input.value.trim();
       const verb = input.dataset.verb;
       if (name && this._scopes.some((s) => s.name === name) && !f.verbs[verb].scopes.includes(name)) {
         f.verbs[verb].scopes.push(name);
-        this.renderEditor();
-        content.querySelector(`.scope-input[data-verb="${verb}"]`)?.focus();
+        this.renderDetail();
+        pane.querySelector(`.scope-input[data-verb="${verb}"]`)?.focus();
       } else {
         input.value = '';
       }
     }));
-    content.querySelectorAll('.chip-rm').forEach((btn) => btn.addEventListener('click', () => {
+    pane.querySelectorAll('.chip-rm').forEach((btn) => btn.addEventListener('click', () => {
       const list = f.verbs[btn.dataset.verb].scopes;
       const i = list.indexOf(btn.dataset.scope);
       if (i >= 0) list.splice(i, 1);
-      this.renderEditor();
+      this.renderDetail();
     }));
+
+    pane.querySelector('.close').addEventListener('click', () => this.clearDetail());
+    pane.querySelector('.cancel').addEventListener('click', () => this.clearDetail());
+    pane.querySelector('.confirm').addEventListener('click', () => this.submitForm());
+    pane.querySelector('.del')?.addEventListener('click', () => this.deleteGrant(f.editId));
+
+    // Scope honesty: a caller without security:write views the grant read-only — inputs disabled, no Save/Delete (the
+    // server's 403 remains the backstop). A read-only caller never reaches create (New is hidden), so this is view/edit.
+    if (!this.canWrite) {
+      pane.querySelectorAll('input, select').forEach((c) => { c.disabled = true; });
+      pane.querySelector('.confirm')?.remove();
+      pane.querySelector('.del')?.remove();
+      pane.querySelector('.cancel').textContent = 'Close';
+    }
   }
 }
 

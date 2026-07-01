@@ -325,4 +325,29 @@ describe('<arazzo-credential-dialog>', () => {
     equal(e.detail.binding.sourceName, 'petstore', 'created for the locked source');
     equal(e.detail.binding.secretRefs[0].ref, 'keyvault://petstore-kv/api-key', 'with the composed reference');
   });
+
+  it('opens read-only when it lacks credentials:write — a view, not an editable form that fails on Save', async () => {
+    const client = clientWithMock();
+    el = dialogWith(client);
+    el.setAttribute('scopes', 'credentials:read'); // no credentials:write
+    mount(el);
+    el.open(await client.getCredential('petstore', 'production'));
+    await waitFor(() => $(el, 'dialog').open);
+    ok($(el, '.confirm').hidden, 'Save is hidden (no write path)');
+    ok($$(el, 'fieldset').every((fs) => fs.disabled), 'every field is disabled');
+    equal($(el, '.cancel').textContent, 'Close', 'Cancel is relabelled Close');
+    ok($(el, '.title').textContent.startsWith('View'), 'the title reads as a view');
+  });
+
+  it('re-opening for a write-capable caller restores the editable form', async () => {
+    const client = clientWithMock();
+    el = dialogWith(client);
+    el.setAttribute('scopes', 'credentials:read credentials:write');
+    mount(el);
+    el.open(await client.getCredential('petstore', 'production'));
+    await waitFor(() => $(el, 'dialog').open);
+    ok(!$(el, '.confirm').hidden, 'Save is shown');
+    ok($$(el, 'fieldset').every((fs) => !fs.disabled), 'fields are editable');
+    equal($(el, '.cancel').textContent, 'Cancel', 'Cancel keeps its label');
+  });
 });

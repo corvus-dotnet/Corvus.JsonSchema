@@ -787,6 +787,15 @@ function seedAvailabilityRequests() {
       createdBy: 'omar@ops', createdAt: iso(-50 * hr), decidedBy: 'alice@ops', decidedAt: iso(-49 * hr),
       decisionReason: 'v3 supersedes v2; promote v3 instead.', etag: nextEtag(),
     },
+    {
+      // A resolved (Approved) request OWNED BY the default administrator persona (alice@ops), so her "My requests" view is
+      // non-empty. It is not Pending, so it never appears in the approver inbox (which defaults to Pending) — the seeded
+      // inbox stays at three pending requests.
+      id: 'areq-3005', baseWorkflowId: 'nightly-reconcile', versionNumber: 3, environment: 'production',
+      reason: 'Promote the new reconcile to production.',
+      status: 'Approved', subjectClaimType: 'preferred_username', subjectClaimValue: 'alice@ops', requesterLabel: 'alice@ops',
+      createdBy: 'alice@ops', createdAt: iso(-30 * hr), decidedBy: 'alice@ops', decidedAt: iso(-29 * hr), etag: nextEtag(),
+    },
   ];
 }
 
@@ -899,9 +908,13 @@ export const DEMO_PERSONAS = {
     reach: 'all',
   },
   operator: {
+    // The gated-elevation persona: NO availability:write, so promoting a version is never a direct "Make available" — the
+    // matrix offers "Request promotion" instead, and an administrator (or an environment administrator like omar for
+    // staging) approves it. omar@ops administers onboard-customer (workflow) + staging (environment), so he can approve
+    // the requests in the environments he administers, but cannot promote directly.
     label: 'Operator — omar@ops (administers onboard-customer + staging)',
     subject: 'omar@ops',
-    scopes: 'runs:read runs:write catalog:read credentials:read sources:read environments:read availability:read availability:write administrators:read security:read',
+    scopes: 'runs:read runs:write catalog:read credentials:read sources:read environments:read availability:read administrators:read security:read',
     reach: 'all',
   },
   viewer: {
@@ -911,11 +924,16 @@ export const DEMO_PERSONAS = {
     reach: 'all',
   },
   'team-reader': {
-    // A read-only member of the payments team: same read scopes as the auditor, but reach-scoped to the payments domain
-    // (the seeded `team=payments → reach-payments` binding, §14.2). The contrast auditor-vs-team-reader isolates reach.
+    // A read-only member of the payments team, reach-scoped to the payments domain (the seeded `team=payments →
+    // reach-payments` binding, §14.2). Its read scopes are deliberately NARROWER than the auditor's: it can read the
+    // resources it operates (runs/catalog/credentials/sources/environments/availability) but NOT the org-wide security
+    // policy (security:read) or the administrator roster (administrators:read) — a team member is not a security auditor.
+    // reach then narrows the DOMAIN-TAGGED subset (runs + catalog) to payments; the scope set is what gates whole
+    // surfaces (e.g. the Permissions tab). The auditor-vs-team-reader contrast isolates reach; auditor-vs-team-reader on
+    // scopes isolates capability. See the demo's tab gating (index.html) for how a missing read scope hides a surface.
     label: 'Payments read-only — pat@payments (reach: domain=payments)',
     subject: 'pat@payments',
-    scopes: READ_ALL_SCOPES,
+    scopes: 'runs:read catalog:read credentials:read sources:read environments:read availability:read',
     reach: { readDomain: 'payments' },
   },
 };

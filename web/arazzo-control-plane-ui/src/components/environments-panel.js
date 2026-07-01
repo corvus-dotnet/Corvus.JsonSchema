@@ -15,8 +15,9 @@
 // never be left without an administrator. Mutating controls are gated by environments:write.
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, define } from './base.js';
 import './administrators-panel.js';
+import './pager.js';
 
 class ArazzoEnvironments extends ArazzoElement {
   static get observedAttributes() {
@@ -263,21 +264,25 @@ class ArazzoEnvironments extends ArazzoElement {
         @media (min-width: 880px) { .layout.has-selection { grid-template-columns: 1fr 1.1fr; } }
 
         .panel { border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); overflow: hidden; }
-        .head { padding: 10px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); display: flex; align-items: center; gap: 8px; }
-        .head .title { font-weight: 700; }
-        .head .grow { flex: 1; }
+        /* The list is a bordered table, matching the Runs/Catalog/Sources lists. */
+        .wrap { border: 1px solid var(--_border); border-radius: var(--_radius); overflow: hidden; background: var(--_bg); }
+        .toolbar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); }
+        .toolbar .title { font-weight: 600; color: var(--_muted); font-size: 12px; }
+        .toolbar .grow { flex: 1; }
         .err { margin: 10px 12px; }
-        .list { display: grid; }
-        .erow { display: flex; align-items: baseline; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--_border); cursor: pointer; background: none; border-left: 3px solid transparent; text-align: left; width: 100%; }
-        .erow:last-child { border-bottom: none; }
-        .erow:hover { background: var(--_surface); }
-        .erow[aria-selected="true"] { border-left-color: var(--_accent); background: color-mix(in srgb, var(--_accent) 7%, transparent); }
-        .emeta { flex: 1; min-width: 0; }
+        .err:empty { display: none; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th { text-align: left; font-size: 12px; font-weight: 600; color: var(--_muted); padding: 9px 12px; background: var(--_surface); border-bottom: 1px solid var(--_border); white-space: nowrap; }
+        tbody td { padding: 9px 12px; border-bottom: 1px solid var(--_border); vertical-align: middle; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr.selectable { cursor: pointer; }
+        tbody tr.selectable:hover { background: var(--_surface); }
+        tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
         .ename { font-weight: 600; }
         .ecode { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--_muted); }
-        .edesc { color: var(--_muted); font-size: 12px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .etime { flex: none; color: var(--_muted); font-size: 12px; }
-        .pager { display: flex; gap: 8px; justify-content: center; padding: 10px; border-top: 1px solid var(--_border); }
+        .edesc { color: var(--_muted); overflow: hidden; text-overflow: ellipsis; }
+        .etime { color: var(--_muted); font-size: 12px; white-space: nowrap; }
+        ${PAGER_CSS}
         .skl { height: 14px; border-radius: 4px; background: var(--_surface); animation: pulse 1.2s ease-in-out infinite; margin: 10px 12px; }
         @keyframes pulse { 50% { opacity: 0.45; } }
 
@@ -307,15 +312,19 @@ class ArazzoEnvironments extends ArazzoElement {
         .foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--_border); }
       </style>
       <div class="layout" part="layout">
-        <div class="panel" part="panel">
-          <div class="head">
+        <div class="wrap" part="panel">
+          <div class="toolbar" part="toolbar">
             <span class="title">Environments</span>
             <span class="grow"></span>
             <button class="refresh ghost" type="button" title="Refresh">↻</button>
             <button class="new primary" type="button" hidden>New environment</button>
           </div>
           <div class="err"></div>
-          <div class="list" part="list"></div>
+          <table>
+            <thead><tr><th>Environment</th><th>Description</th><th>Created</th></tr></thead>
+            <tbody class="list" part="rows"></tbody>
+          </table>
+          <arazzo-pager class="pager" part="pager"></arazzo-pager>
         </div>
         <div class="detail-pane"></div>
       </div>
@@ -330,6 +339,8 @@ class ArazzoEnvironments extends ArazzoElement {
     `;
     this.$('.refresh').addEventListener('click', () => this.reload());
     this.$('.new').addEventListener('click', () => this.openCreate());
+    this.$('arazzo-pager').addEventListener('prev', () => this.prevPage());
+    this.$('arazzo-pager').addEventListener('next', () => this.nextPage());
     this.$('.cancel').addEventListener('click', () => this.closeEditor());
     this.$('.confirm').addEventListener('click', () => this.submitForm());
     this.$('dialog').addEventListener('close', () => { this._form = null; });
@@ -348,33 +359,28 @@ class ArazzoEnvironments extends ArazzoElement {
       : '';
 
     if (this._loading && this._envs.length === 0) {
-      list.innerHTML = '<div class="skl"></div><div class="skl"></div>';
+      list.innerHTML = `<tr><td colspan="3"><div class="skl"></div><div class="skl"></div></td></tr>`;
     } else if (this._envs.length === 0) {
-      list.innerHTML = '<div class="empty">No environments defined.</div>';
+      list.innerHTML = `<tr><td colspan="3"><div class="empty">No environments defined.</div></td></tr>`;
     } else {
-      const rows = this._envs.map((e) => `
-        <button class="erow" type="button" part="row" data-name="${escapeHtml(e.name)}" aria-selected="${String(e.name === this._selected)}">
-          <span class="emeta">
-            <span class="ename">${escapeHtml(e.displayName || e.name)}</span> <span class="ecode">${escapeHtml(e.name)}</span>
-            ${e.description ? `<div class="edesc">${escapeHtml(e.description)}</div>` : ''}
-          </span>
-          <span class="etime" title="${escapeHtml(absoluteTime(e.createdAt))}">${escapeHtml(relativeTime(e.createdAt))}</span>
-        </button>`).join('');
-      const pager = (this._history.length > 0 || this._nextPageToken)
-        ? `<div class="pager">
-             <button class="prev ghost" type="button"${this._history.length === 0 || this._loading ? ' disabled' : ''}>‹ Prev</button>
-             <button class="next ghost" type="button"${!this._nextPageToken || this._loading ? ' disabled' : ''}>Next ›</button>
-           </div>`
-        : '';
-      list.innerHTML = rows + pager;
+      list.innerHTML = this._envs.map((e) => `
+        <tr class="erow selectable" part="row" data-name="${escapeHtml(e.name)}" aria-selected="${String(e.name === this._selected)}">
+          <td part="cell"><span class="ename">${escapeHtml(e.displayName || e.name)}</span> <span class="ecode">${escapeHtml(e.name)}</span></td>
+          <td part="cell" class="edesc">${e.description ? escapeHtml(e.description) : '<span class="muted">—</span>'}</td>
+          <td part="cell" class="etime" title="${escapeHtml(absoluteTime(e.createdAt))}">${escapeHtml(relativeTime(e.createdAt))}</td>
+        </tr>`).join('');
       this.$$('.erow').forEach((b) => b.addEventListener('click', () => this.select(b.dataset.name)));
-      const prevBtn = this.$('.prev');
-      if (prevBtn) prevBtn.addEventListener('click', () => this.prevPage());
-      const nextBtn = this.$('.next');
-      if (nextBtn) nextBtn.addEventListener('click', () => this.nextPage());
     }
 
+    this.renderFoot();
     this.renderDetail();
+  }
+
+  renderFoot() {
+    const info = this._loading
+      ? 'Loading…'
+      : `${this._envs.length} environment${this._envs.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
+    this.$('arazzo-pager')?.update({ hasPrev: this._history.length > 0, hasNext: !!this._nextPageToken, loading: this._loading, info });
   }
 
   renderDetail() {

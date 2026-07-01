@@ -271,11 +271,38 @@ class ArazzoCredentialDialog extends ArazzoElement {
       : dup ? `Duplicate ${binding.sourceName} to another environment`
       : (this._prefillSource ? `New credential for ${this._prefillSource}` : 'New credential binding');
     this.$('.confirm').textContent = this._editing ? 'Save' : 'Create';
+    this.applyWriteMode();
     this.$('dialog').showModal();
   }
 
   close() {
     this.$('dialog')?.close();
+  }
+
+  /** Whether the caller may write credentials. An absent `scopes` attribute means "unknown → allow" (the server is the
+   *  backstop); an explicit scope set that lacks `credentials:write` puts the dialog into a read-only inspection view. */
+  get canWrite() {
+    const scopes = (this.getAttribute('scopes') || '').split(/\s+/).filter(Boolean);
+    return scopes.length === 0 || scopes.includes('credentials:write');
+  }
+
+  /**
+   * Reflect write capability into the form: a read-only caller (no `credentials:write`) gets a view — every field
+   * disabled (a native `fieldset[disabled]` disables all its controls), the add/save controls hidden, Cancel relabelled
+   * "Close", and a "View …" title. So a read-only caller never sees an editable-looking form that only fails on Save
+   * (the poor UX this replaces); the server's 403 remains the backstop.
+   */
+  applyWriteMode() {
+    const ro = !this.canWrite;
+    this.$$('fieldset').forEach((fs) => { fs.disabled = ro; });
+    this.$$('.add').forEach((b) => { b.hidden = ro; });
+    this.$('.confirm').hidden = ro;
+    this.$('.cancel').textContent = ro ? 'Close' : 'Cancel';
+    if (ro) {
+      this.$('.title').textContent = this._editing
+        ? `View ${this._editing.sourceName}@${this._editing.environment}`
+        : 'View credential binding';
+    }
   }
 
   get authKind() {
@@ -783,7 +810,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
             <div class="error-banner" hidden></div>
           </div>
           <div class="foot">
-            <button value="dismiss" class="ghost" type="submit">Cancel</button>
+            <button value="dismiss" class="cancel ghost" type="submit">Cancel</button>
             <button value="confirm" class="primary confirm" type="submit">Create</button>
           </div>
         </form>

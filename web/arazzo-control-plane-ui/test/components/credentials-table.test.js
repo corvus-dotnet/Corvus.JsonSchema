@@ -26,7 +26,7 @@ describe('<arazzo-credentials-table>', () => {
     equal(e.detail.expiring, 1, 'one expiring soon');
     equal(e.detail.expired, 1, 'one expired');
     ok(el.shadowRoot.querySelector('[part="status"]'), 'status badge present');
-    ok(el.shadowRoot.querySelector('.foot').textContent.includes('expiring'), 'footer counts expiring');
+    ok(el.shadowRoot.querySelector('.pager .count').textContent.includes('expiring'), 'footer counts expiring');
   });
 
   it('never renders secret material — only references', async () => {

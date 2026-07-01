@@ -76,8 +76,7 @@
     </div>
 
     <div id="view-credentials" role="tabpanel" hidden>
-      <arazzo-credentials-table base-url="https://mock/arazzo/v1" scopes="credentials:read credentials:write" selectable></arazzo-credentials-table>
-      <arazzo-credential-dialog></arazzo-credential-dialog>
+      <arazzo-credentials base-url="https://mock/arazzo/v1" scopes="credentials:read credentials:write"></arazzo-credentials>
     </div>
 
     <div id="view-environments" role="tabpanel" hidden>
@@ -114,8 +113,7 @@
     import { ArazzoControlPlaneClient } from '../src/arazzo-client.js';
     import '../src/arazzo-control-plane.js';
     import '../src/arazzo-catalog.js';
-    import '../src/components/credentials-table.js';
-    import '../src/components/credential-dialog.js';
+    import '../src/components/credentials.js';
     import '../src/components/access-requests-panel.js';
     import '../src/components/availability-requests-panel.js';
     import '../src/components/scopes-panel.js';
@@ -133,8 +131,7 @@
     // The Layer-1 credential/administrator components take a Layer-0 client (not a fetch hook); share one
     // built over the mock. A real host builds the client with its own auth (getAuthHeader/fetch).
     const client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
-    const credTable = document.querySelector('arazzo-credentials-table');
-    const credDialog = document.querySelector('arazzo-credential-dialog');
+    const credentialsPanel = document.querySelector('arazzo-credentials');
     const access = document.querySelector('arazzo-access-requests');
     const promotions = document.querySelector('arazzo-availability-requests');
     const reach = document.querySelector('arazzo-scopes-panel');
@@ -142,8 +139,7 @@
     const environments = document.querySelector('arazzo-environments');
     const runnersPanel = document.querySelector('arazzo-runners');
     const runnerAuth = document.querySelector('arazzo-runner-authorizations');
-    credTable.client = client;
-    credDialog.client = client;
+    credentialsPanel.client = client;
     access.client = client;
     promotions.client = client;
     reach.client = client;
@@ -152,12 +148,9 @@
     runnersPanel.client = client;
     runnerAuth.client = client;
 
-    // Credentials: the Sources tab is a MANAGEMENT surface — select a row to view/rotate, or Duplicate to another
-    // environment (clone source + auth, re-point the secret). Creating a credential is rooted in the catalog's
+    // Credentials: the Sources tab is a MANAGEMENT master-detail surface — select a row to open its record on the RHS and
+    // view/rotate/edit/duplicate/revoke there (no dialog on select). Creating a credential is rooted in the catalog's
     // per-workflow Sources panel (where the source + its auth are known), not here. (§7.5)
-    credTable.addEventListener('credential-selected', (e) => credDialog.open(e.detail.binding));
-    credTable.addEventListener('credential-duplicate', (e) => credDialog.open(e.detail.binding, { duplicate: true }));
-    credDialog.addEventListener('credential-saved', () => credTable.refresh());
 
     // The §15 administrator set now lives on each workflow's detail page (the catalog's Security section), not a
     // standalone tab — pick a workflow in the Catalog tab and open it to administer it.
@@ -182,26 +175,43 @@
     // administration the caller has (so it returns the same 401/403/elevation-required responses a real control plane
     // would). Switch to Operator to watch direct actions become request-then-approve.
     const prefixed = (value, prefix) => value.split(/\s+/).filter((s) => s.startsWith(prefix)).join(' ');
+    // The capability READ scope each tab requires to be shown at all. Reach (§14.2) narrows the domain-tagged ROWS a
+    // caller sees (runs + catalog); whole SURFACES are gated by capability scope instead — so a payments read-only
+    // caller (no security:read) has no Permissions tab, not just an empty one. Tabs governed by administration
+    // membership rather than a capability scope (access / promotions / runner-auth) carry no entry here and are always
+    // shown — their inbox is simply empty for a caller who administers nothing (non-disclosing, like an out-of-reach row).
+    const TAB_READ_SCOPE = {
+      runs: 'runs:read', runners: 'runs:read', catalog: 'catalog:read', credentials: 'credentials:read',
+      environments: 'environments:read', permissions: 'security:read',
+    };
     const applyPersona = (name) => {
       const scopes = DEMO_PERSONAS[name].scopes;
       mock.setPersona(name);
       panel.setAttribute('scopes', prefixed(scopes, 'runs:'));
       // The catalog detail hosts the Security (administrators §15) section and the §7.8 promotion matrix.
       catalog.setAttribute('scopes', `${prefixed(scopes, 'catalog:')} ${prefixed(scopes, 'administrators:')} ${prefixed(scopes, 'availability:')}`.trim());
-      credTable.setAttribute('scopes', prefixed(scopes, 'credentials:'));
+      credentialsPanel.setAttribute('scopes', prefixed(scopes, 'credentials:')); // gates the detail-pane actions + the guided editor (read-only view when it lacks credentials:write)
       environments.setAttribute('scopes', `${prefixed(scopes, 'environments:')} ${prefixed(scopes, 'availability:')}`.trim());
       reach.setAttribute('scopes', prefixed(scopes, 'security:'));
       bindings.setAttribute('scopes', prefixed(scopes, 'security:'));
       runnersPanel.setAttribute('scopes', prefixed(scopes, 'runs:')); // runs:read; read-only observability
       // A persona change swaps the caller's scopes AND reach, so reset every surface to page 1 (a stale page/cursor from
       // the previous caller's data must not carry over, and an open detail may now be out of reach). Prefer reload().
-      for (const c of [panel, catalog, credTable, environments, access, promotions, reach, bindings, runnersPanel, runnerAuth]) {
+      for (const c of [panel, catalog, credentialsPanel, environments, access, promotions, reach, bindings, runnersPanel, runnerAuth]) {
         (c.reload || c.refresh || c.requestRender)?.call(c);
       }
+      // Nav honesty: hide any tab whose required read scope this persona lacks, so a surface the caller can't read is
+      // absent rather than present-but-empty. If the change hid the active tab, fall back to the first still-visible one.
+      const held = new Set(scopes.split(/\s+/).filter(Boolean));
+      for (const key of tabNames) {
+        const need = TAB_READ_SCOPE[key];
+        tabs[key].hidden = need ? !held.has(need) : false;
+      }
+      const active = tabNames.find((n) => tabs[n].getAttribute('aria-selected') === 'true');
+      if (active && tabs[active].hidden) selectTab(tabNames.find((n) => !tabs[n].hidden) || 'runs');
     };
     const personaSel = document.getElementById('persona');
     personaSel.addEventListener('change', (e) => applyPersona(e.target.value));
-    applyPersona(personaSel.value);
 
     // Tabs.
     const tabNames = ['runs', 'runners', 'catalog', 'credentials', 'environments', 'access', 'permissions', 'promotions', 'runner-auth'];
@@ -218,6 +228,9 @@
     };
     for (const name of tabNames) tabs[name].addEventListener('click', () => selectTab(name));
 
+    // Apply the initial persona now that the tabs exist (applyPersona gates them by the caller's read scopes).
+    applyPersona(personaSel.value);
+
     // Surface kit events in the console so you can see the composition contract at work.
     for (const type of ['run-selected', 'run-changed', 'run-deleted', 'purge-completed', 'error']) {
       panel.addEventListener(type, (e) => console.log(`[arazzo] ${type}`, e.detail));
@@ -225,8 +238,8 @@
     for (const type of ['version-selected', 'workflow-added', 'version-changed', 'version-deleted', 'purge-completed', 'error']) {
       catalog.addEventListener(type, (e) => console.log(`[arazzo:catalog] ${type}`, e.detail));
     }
-    for (const type of ['credential-selected', 'credential-duplicate', 'credential-saved', 'loaded', 'error']) {
-      credTable.addEventListener(type, (e) => console.log(`[arazzo:credentials] ${type}`, e.detail));
+    for (const type of ['credential-selected', 'credential-saved', 'credential-deleted', 'error']) {
+      credentialsPanel.addEventListener(type, (e) => console.log(`[arazzo:credentials] ${type}`, e.detail));
     }
     for (const type of ['access-request-submitted', 'access-request-decided', 'loaded', 'error']) {
       access.addEventListener(type, (e) => console.log(`[arazzo:access] ${type}`, e.detail));
