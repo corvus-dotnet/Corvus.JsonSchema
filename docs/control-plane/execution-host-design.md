@@ -935,7 +935,11 @@ Row authorization decides **which** workflows (catalog versions) and runs a prin
 
 - **Security tags** are **key/value pairs** (labels) on a row — e.g. `tenant=acme`, `team=payments`,
   `classification=restricted`. They are set when the row is created (a run **inherits** its workflow version's
-  security tags; a catalog version is labelled when added) and are distinct from user tags.
+  security tags; a catalog version is labelled when added) and are distinct from user tags. The **non-internal**
+  (unprefixed) tags on a **catalog version** are user-owned: supplied on the add request (`addCatalogVersion`'s
+  `securityTags` part) and re-tagged later by a workflow administrator via the metadata patch
+  (`CatalogMetadataPatch.securityTags`) — a governed, audited edit, not immutable. **Internal** (reserved-prefix)
+  tags remain deployment-owned and never user-settable (see below). A run inherits its version's tags at trigger.
 - **Tag rules** are boolean expressions over those labels, written in (a reuse of) the **Arazzo `simple`
   criterion grammar** — the same `==`/`!=`/`<`/`<=`/`>`/`>=`, `&&`/`||`/`!`/grouping engine already inlined for
   step criteria (`SimpleConditionEvaluator` runtime + `SimpleCriterionInliner` codegen, over `Comparand`).

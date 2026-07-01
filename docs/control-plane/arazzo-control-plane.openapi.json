@@ -311,7 +311,8 @@
                 "properties": {
                   "package": { "type": "string", "format": "binary", "description": "The workflow document package envelope (its shape is the `CatalogPackage` schema), uploaded as a file." },
                   "owner": { "$ref": "#/components/schemas/CatalogOwner" },
-                  "tags": { "type": "array", "items": { "type": "string" }, "description": "Free-form tags for display and filtering." }
+                  "tags": { "type": "array", "items": { "type": "string" }, "description": "Free-form tags for display and filtering." },
+                  "securityTags": { "type": "array", "items": { "$ref": "#/components/schemas/CatalogSecurityTag" }, "description": "Non-internal security tags (§14.2 reach labels) to stamp on the version at add, alongside the deployment's internal tenant tag. The reserved internal-tag prefix is rejected (400)." }
                 },
                 "required": ["package", "owner"]
               }
@@ -3135,14 +3136,24 @@
         },
         "required": ["name"]
       },
+      "CatalogSecurityTag": {
+        "type": "object",
+        "description": "A non-internal security tag (KVP label, §14.2) on a catalog version — a reach label the row-security rules match on (e.g. domain=payments, classification=restricted). Distinct from free-form display `tags`. The deployment owns internal/reserved-prefix tags (e.g. tenant, sys:*) separately: those are stamped by the deployment, immutable, and stripped from reads — they can never be set here.",
+        "properties": {
+          "key": { "type": "string", "description": "The label key (e.g. domain)." },
+          "value": { "type": "string", "description": "The label value (e.g. payments)." }
+        },
+        "required": ["key", "value"]
+      },
       "CatalogMetadataPatch": {
         "type": "object",
-        "description": "A partial update of a version's mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field — e.g. an attempt to set the server-stamped, immutable securityTags — is rejected with 400 rather than silently ignored.",
+        "description": "A partial update of a version's mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field is rejected with 400 rather than silently ignored. `securityTags` sets the version's NON-internal reach labels (§14.2) — a governed edit for a workflow administrator; the reserved internal-tag prefix is rejected (400), since internal tags (e.g. the deployment tenant) stay deployment-stamped and immutable.",
         "additionalProperties": false,
         "properties": {
           "owner": { "$ref": "#/components/schemas/CatalogOwner" },
           "tags": { "type": "array", "items": { "type": "string" } },
-          "status": { "$ref": "#/components/schemas/CatalogStatus" }
+          "status": { "$ref": "#/components/schemas/CatalogStatus" },
+          "securityTags": { "type": "array", "items": { "$ref": "#/components/schemas/CatalogSecurityTag" }, "description": "Replace the version's non-internal security tags (§14.2 reach labels). The reserved internal-tag prefix is rejected (400); internal tags remain deployment-owned." }
         }
       },
       "CatalogVersionSummary": {
@@ -3156,6 +3167,7 @@
           "description": { "type": "string" },
           "status": { "$ref": "#/components/schemas/CatalogStatus" },
           "tags": { "type": "array", "items": { "type": "string" } },
+          "securityTags": { "type": "array", "items": { "$ref": "#/components/schemas/CatalogSecurityTag" }, "description": "The version's non-internal security tags (§14.2) — the reach labels row-security rules match on. Internal/reserved-prefix tags are deployment-owned and stripped from this view. A run inherits its version's security tags." },
           "owner": { "$ref": "#/components/schemas/CatalogOwner" },
           "sources": { "type": "array", "items": { "$ref": "#/components/schemas/CatalogSourceRef" }, "description": "The source documents in this version's package, addressable individually via the source endpoint." },
           "runnable": { "type": "boolean", "description": "Whether this version carries a compiled workflow executor assembly (downloadable via the executor endpoint) that an execution host can run." },

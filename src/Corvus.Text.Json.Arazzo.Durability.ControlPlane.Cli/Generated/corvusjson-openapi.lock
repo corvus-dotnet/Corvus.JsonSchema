@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-06-30T21:42:09.5065728\u002B00:00",
+  "generatedAt": "2026-07-01T16:51:26.9962639\u002B00:00",
   "generatedFiles": [
     "ListRunsRequest.cs",
     "ListRunsResponse.cs",
@@ -322,6 +322,9 @@
     "Models/CatalogMetadataPatch.cs",
     "Models/CatalogMetadataPatch.Mutable.cs",
     "Models/CatalogMetadataPatch.JsonSchema.cs",
+    "Models/CatalogMetadataPatch.CatalogSecurityTagArray.cs",
+    "Models/CatalogMetadataPatch.CatalogSecurityTagArray.Mutable.cs",
+    "Models/CatalogMetadataPatch.CatalogSecurityTagArray.JsonSchema.cs",
     "Models/CatalogMetadataPatch.JsonStringArray.cs",
     "Models/CatalogMetadataPatch.JsonStringArray.Mutable.cs",
     "Models/CatalogMetadataPatch.JsonStringArray.JsonSchema.cs",
@@ -334,6 +337,9 @@
     "Models/CatalogPage.CatalogVersionSummaryArray.cs",
     "Models/CatalogPage.CatalogVersionSummaryArray.Mutable.cs",
     "Models/CatalogPage.CatalogVersionSummaryArray.JsonSchema.cs",
+    "Models/CatalogSecurityTag.cs",
+    "Models/CatalogSecurityTag.Mutable.cs",
+    "Models/CatalogSecurityTag.JsonSchema.cs",
     "Models/CatalogSourceRef.cs",
     "Models/CatalogSourceRef.Mutable.cs",
     "Models/CatalogSourceRef.JsonSchema.cs",
@@ -343,6 +349,9 @@
     "Models/CatalogVersionSummary.cs",
     "Models/CatalogVersionSummary.Mutable.cs",
     "Models/CatalogVersionSummary.JsonSchema.cs",
+    "Models/CatalogVersionSummary.CatalogSecurityTagArray.cs",
+    "Models/CatalogVersionSummary.CatalogSecurityTagArray.Mutable.cs",
+    "Models/CatalogVersionSummary.CatalogSecurityTagArray.JsonSchema.cs",
     "Models/CatalogVersionSummary.CatalogSourceRefArray.cs",
     "Models/CatalogVersionSummary.CatalogSourceRefArray.Mutable.cs",
     "Models/CatalogVersionSummary.CatalogSourceRefArray.JsonSchema.cs",
@@ -703,6 +712,9 @@
     "Models/PostCatalogBody.cs",
     "Models/PostCatalogBody.Mutable.cs",
     "Models/PostCatalogBody.JsonSchema.cs",
+    "Models/PostCatalogBody.CatalogSecurityTagArray.cs",
+    "Models/PostCatalogBody.CatalogSecurityTagArray.Mutable.cs",
+    "Models/PostCatalogBody.CatalogSecurityTagArray.JsonSchema.cs",
     "Models/PostCatalogBody.JsonStringArray.cs",
     "Models/PostCatalogBody.JsonStringArray.Mutable.cs",
     "Models/PostCatalogBody.JsonStringArray.JsonSchema.cs",
@@ -717,10 +729,9 @@
     "Models/GetRunnerAuthorizationsStatus.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002Bd7f38c2de957d20dc7a77477d54deaa56a5282a3",
+  "generatorVersion": "1.0.0\u002Bd8caabf3b4fe75166f77c0b3aabac605c0119d37",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "d38b20d30fabfc13b5fc186b810236c37218c0d3316376b7de0e67997e4264a5",
-  "specVersion": "3.2",
-  "clientName": "Api"
+  "specFileHash": "8b10c0354bbef2cfd30fb14241600416f5d920f57a010719f6f4e8a527855074",
+  "specVersion": "3.2"
 }

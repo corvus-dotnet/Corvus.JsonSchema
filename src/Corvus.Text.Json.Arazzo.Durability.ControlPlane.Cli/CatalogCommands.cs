@@ -486,7 +486,9 @@ internal sealed class CatalogAddCommand : AsyncCommand<CatalogAddSettings>
                 });
             }
 
-            Models.PostCatalogBody.Source body = Models.PostCatalogBody.Build(BuildOwner(settings.OwnerName!, settings.OwnerEmail!, settings.OwnerTeam, settings.OwnerUrl), default, tags);
+            // Named args: the generated Build takes (owner, package, securityTags, tags) — pass by name so adding a
+            // property never silently misaligns positions. The binary package is sent separately (below), not in the body.
+            Models.PostCatalogBody.Source body = Models.PostCatalogBody.Build(owner: BuildOwner(settings.OwnerName!, settings.OwnerEmail!, settings.OwnerTeam, settings.OwnerUrl), package: default, tags: tags);
             await using AddCatalogVersionResponse response = await client.AddCatalogVersionAsync(body, package, cancellationToken, validationMode: ValidationMode.None);
             return response.MatchResult(
                 summary => Output.Print(summary.ToString()),
@@ -880,7 +882,9 @@ internal sealed class CatalogUpdateCommand : AsyncCommand<CatalogUpdateSettings>
                 });
             }
 
-            Models.CatalogMetadataPatch.Source body = Models.CatalogMetadataPatch.Build(owner, status, tags);
+            // Named args: the generated Build takes (owner, securityTags, status, tags) — pass by name so adding a
+            // property never silently misaligns positions. (securityTags editing is a later CLI slice.)
+            Models.CatalogMetadataPatch.Source body = Models.CatalogMetadataPatch.Build(owner: owner, status: status, tags: tags);
             await using UpdateCatalogVersionResponse response = await client.UpdateCatalogVersionAsync(settings.BaseWorkflowId, settings.Version, body, cancellationToken);
             return response.MatchResult(
                 summary => Output.Print(summary.ToString()),

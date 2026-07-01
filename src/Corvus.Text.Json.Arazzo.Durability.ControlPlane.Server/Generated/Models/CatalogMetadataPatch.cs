@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field — e.g. an attempt to set the server-stamped, immutable securityTags — is rejected with 400 rather than silently ignored.
+/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field is rejected with 400 rather than silently ignored. `securityTags` sets the version&#39;s NON-internal reach labels (&#167;14.2) — a governed edit for a workflow administrator; the reserved internal-tag prefix is rejected (400), since internal tags (e.g. the deployment tenant) stay deployment-stamped and immutable.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -72,6 +72,27 @@ public readonly partial struct CatalogMetadataPatch
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OwnerUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogOwner value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>securityTags</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Replace the version&#39;s non-internal security tags (&#167;14.2 reach labels). The reserved internal-tag prefix is rejected (400); internal tags remain deployment-owned.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray SecurityTags
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SecurityTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch.CatalogSecurityTagArray value))
             {
                 return value;
             }
@@ -556,6 +577,11 @@ public readonly partial struct CatalogMetadataPatch
         public const string Owner = "owner";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="SecurityTags"/>.
+        /// </summary>
+        public const string SecurityTags = "securityTags";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Status"/>.
         /// </summary>
         public const string Status = "status";
@@ -569,6 +595,11 @@ public readonly partial struct CatalogMetadataPatch
         /// Gets the JSON property name for <see cref="Owner"/>.
         /// </summary>
         public static ReadOnlySpan<byte> OwnerUtf8 => "owner"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="SecurityTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SecurityTagsUtf8 => "securityTags"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Status"/>.
@@ -592,6 +623,11 @@ public readonly partial struct CatalogMetadataPatch
         public static ReadOnlySpan<byte> Owner => "owner"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="SecurityTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SecurityTags => "securityTags"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Status"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Status => "status"u8;
@@ -612,6 +648,11 @@ public readonly partial struct CatalogMetadataPatch
         /// Gets the pre-baked property name blob for <see cref="Owner"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Owner => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x77, 0x6E, 0x65, 0x72, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SecurityTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SecurityTags => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x63, 0x75, 0x72, 0x69, 0x74, 0x79, 0x54, 0x61, 0x67, 0x73, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Status"/>.
