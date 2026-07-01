@@ -170,7 +170,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
         header .grow { flex: 1; }
         header .close { font-size: 16px; line-height: 1; }
         .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; }
-        dl { margin: 0; padding: 14px; display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; }
+        dl { margin: 0; padding: 14px; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; }
         dt { color: var(--_muted); font-size: 12px; }
         dd { margin: 0; font-size: 13px; }
         .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
