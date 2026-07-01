@@ -625,26 +625,35 @@ function seedEnvironments() {
 function seedAdministrators() {
   // Keyed by baseWorkflowId; each administrator is a resolved identity grant
   // { digest, identity: [{dimension,value}], kind?, label? } — the digest is the stable removal key.
+  // alice@ops (the platform admin persona) administers every seeded workflow; omar@ops additionally administers
+  // onboard-customer — so the approver inbox differs per persona (§15). The team grants remain as extra admins.
   return {
-    'nightly-reconcile': [adminGrant([{ dimension: 'tenant', value: 'platform' }], 'team', 'Platform')],
+    'adopt-pet': [adminGrant([{ dimension: 'sys:sub', value: 'alice@ops' }], 'person', 'alice@ops')],
+    'nightly-reconcile': [
+      adminGrant([{ dimension: 'tenant', value: 'platform' }], 'team', 'Platform'),
+      adminGrant([{ dimension: 'sys:sub', value: 'alice@ops' }], 'person', 'alice@ops'),
+    ],
     'onboard-customer': [
       adminGrant([{ dimension: 'tenant', value: 'platform' }], 'team', 'Platform'),
       adminGrant([{ dimension: 'tenant', value: 'growth' }], 'team', 'Growth'),
+      adminGrant([{ dimension: 'sys:sub', value: 'alice@ops' }], 'person', 'alice@ops'),
+      adminGrant([{ dimension: 'sys:sub', value: 'omar@ops' }], 'person', 'omar@ops'),
     ],
   };
 }
 
 // Environment administration (§7.7) — the same resolved-identity set as the workflow administrator set (§15), keyed by
-// environment name. The demo user administers both seeded environments (so the env-admin panel and the self-management
-// round-trip have something to act on), alongside the platform team.
+// environment name. alice@ops administers both seeded environments; omar@ops additionally administers staging — so the
+// promotion/runner-authorization inboxes differ per persona, alongside the platform team.
 function seedEnvironmentAdministrators() {
   return {
     production: [
-      adminGrant([{ dimension: 'sys:sub', value: 'demo-user' }], 'person', 'You (creator)'),
+      adminGrant([{ dimension: 'sys:sub', value: 'alice@ops' }], 'person', 'alice@ops'),
       adminGrant([{ dimension: 'tenant', value: 'platform' }], 'team', 'Platform'),
     ],
     staging: [
-      adminGrant([{ dimension: 'sys:sub', value: 'demo-user' }], 'person', 'You (creator)'),
+      adminGrant([{ dimension: 'sys:sub', value: 'alice@ops' }], 'person', 'alice@ops'),
+      adminGrant([{ dimension: 'sys:sub', value: 'omar@ops' }], 'person', 'omar@ops'),
     ],
   };
 }
@@ -774,8 +783,8 @@ function seedAvailabilityRequests() {
     {
       id: 'areq-3004', baseWorkflowId: 'nightly-reconcile', versionNumber: 2, environment: 'production',
       reason: 'Roll back to v2 while we investigate.',
-      status: 'Denied', subjectClaimType: 'preferred_username', subjectClaimValue: 'demo-user', requesterLabel: 'demo-user',
-      createdBy: 'demo-user', createdAt: iso(-50 * hr), decidedBy: 'boss', decidedAt: iso(-49 * hr),
+      status: 'Denied', subjectClaimType: 'preferred_username', subjectClaimValue: 'omar@ops', requesterLabel: 'omar@ops',
+      createdBy: 'omar@ops', createdAt: iso(-50 * hr), decidedBy: 'alice@ops', decidedAt: iso(-49 * hr),
       decisionReason: 'v3 supersedes v2; promote v3 instead.', etag: nextEtag(),
     },
   ];
@@ -871,35 +880,34 @@ function seedRunnerAuthorizations() {
   ];
 }
 
-// Demo personas — distinct identities, so BOTH axes of the model are demonstrable against the real UI: capability
-// `scopes` (what the components gate their write controls on, and what the mock enforces server-side with 403s),
-// `administers` (whether a governance action's target is one the caller administers — else they must REQUEST it and an
-// administrator approves), and `reach` — the row-security window (§14.2). `reach: 'all'` sees every row; a
-// `{ readDomain }` reach reads only rows whose workflow domain matches (mirroring the seeded team→reach binding), so a
-// reach-scoped reader sees a strict, NON-DISCLOSING subset (out-of-reach rows are simply absent, not a 403 — unlike a
-// missing scope). A real deployment derives all three from the principal's token; here the demo selects an identity.
-// `administrator` is the default so existing tests (which never set a persona) are unchanged.
+// Demo personas — distinct identities, so every axis of the model is demonstrable against the real UI: a `subject`
+// identity (stamped as the actor on everything the persona writes, and matched by the "my requests" view); capability
+// `scopes` (what the components gate their write controls on, and what the mock enforces server-side with 403s); and
+// `reach` — the row-security window (§14.2). `reach: 'all'` sees every row; a `{ readDomain }` reach reads only rows
+// whose workflow domain matches (the seeded team→reach binding), so a reach-scoped reader sees a strict, NON-DISCLOSING
+// subset (out-of-reach rows are absent, not a 403 — unlike a missing scope). ADMINISTRATION is NOT on the persona: it is
+// per-resource membership — a persona administers a workflow/environment iff its subject is in that resource's admin set
+// (§15/§7.7), so alice@ops (seeded on every resource) administers everything, omar@ops (seeded on onboard-customer +
+// staging) administers only those, and vera/pat administer nothing. A real deployment derives all this from the
+// principal's token; here the demo selects an identity. `administrator` is the default so existing tests are unchanged.
 const READ_ALL_SCOPES = 'runs:read catalog:read credentials:read sources:read environments:read availability:read administrators:read security:read';
 export const DEMO_PERSONAS = {
   administrator: {
-    label: 'Administrator — alice@ops (full reach)',
+    label: 'Administrator — alice@ops (administers everything)',
     subject: 'alice@ops',
     scopes: 'runs:read runs:write runs:purge catalog:read catalog:write catalog:purge credentials:read credentials:write sources:read sources:write environments:read environments:write availability:read availability:write administrators:read administrators:write security:read security:write',
-    administers: true,
     reach: 'all',
   },
   operator: {
-    label: 'Operator — omar@ops (full reach)',
+    label: 'Operator — omar@ops (administers onboard-customer + staging)',
     subject: 'omar@ops',
-    scopes: 'runs:read runs:write catalog:read credentials:read sources:read environments:read availability:read administrators:read security:read',
-    administers: false,
+    scopes: 'runs:read runs:write catalog:read credentials:read sources:read environments:read availability:read availability:write administrators:read security:read',
     reach: 'all',
   },
   viewer: {
-    label: 'Auditor — vera@audit (read-only, full reach)',
+    label: 'Auditor — vera@audit (read-only, full reach, administers nothing)',
     subject: 'vera@audit',
     scopes: READ_ALL_SCOPES,
-    administers: false,
     reach: 'all',
   },
   'team-reader': {
@@ -908,7 +916,6 @@ export const DEMO_PERSONAS = {
     label: 'Payments read-only — pat@payments (reach: domain=payments)',
     subject: 'pat@payments',
     scopes: READ_ALL_SCOPES,
-    administers: false,
     reach: { readDomain: 'payments' },
   },
 };
@@ -946,8 +953,19 @@ export function createMockControlPlane(options = {}) {
   // The current persona (default administrator → all scopes + administers everything, so existing callers are unchanged).
   function personaState(name) {
     const p = DEMO_PERSONAS[name] || DEMO_PERSONAS.administrator;
-    return { name: DEMO_PERSONAS[name] ? name : 'administrator', subject: p.subject, scopes: new Set(p.scopes.split(/\s+/).filter(Boolean)), administers: p.administers, reach: p.reach ?? 'all' };
+    return { name: DEMO_PERSONAS[name] ? name : 'administrator', subject: p.subject, scopes: new Set(p.scopes.split(/\s+/).filter(Boolean)), reach: p.reach ?? 'all' };
   }
+
+  // The active caller's identity — stamped as the actor on everything this persona writes, and matched by "my requests".
+  const actingSubject = () => persona.subject;
+
+  // Administration is per-resource membership (§15/§7.7): the caller administers a workflow/environment iff its subject
+  // (sys:sub) is named in that resource's administrator set — the same set the admin panels display. So alice@ops (seeded
+  // on every resource) administers all, omar@ops (seeded on onboard-customer + staging) only those, others nothing.
+  const adminSetAdmits = (grants) => Array.isArray(grants)
+    && grants.some((g) => (g.identity || []).some((t) => t.dimension === 'sys:sub' && t.value === persona.subject));
+  const administersWorkflow = (base) => adminSetAdmits(administrators[base]);
+  const administersEnvironment = (env) => adminSetAdmits(environmentAdministrators[env]);
 
   // The caller's read reach (§14.2) over a row's security domain: 'all' admits everything; a { readDomain } reach admits
   // only rows in that domain. Out-of-reach rows are omitted from lists and 404 on direct GET (non-disclosing).
@@ -981,8 +999,14 @@ export function createMockControlPlane(options = {}) {
 
   // The administrator gate (§7.7/§15/§16.5): a governance decision — make a version available, approve/deny a promotion
   // or access request — requires that the caller administers the target. A non-administrator must raise a REQUEST.
-  const requireAdministrator = (what) => persona.administers ? null
-    : problem(403, 'Not an administrator', `Only an administrator can ${what}; request it instead and an administrator will decide.`);
+  const requireAdministrator = (what, target) => {
+    const admits = target && target.workflow !== undefined ? administersWorkflow(target.workflow)
+      : target && target.environment !== undefined ? administersEnvironment(target.environment)
+      : false;
+    const noun = target && target.workflow !== undefined ? 'workflow' : 'environment';
+    return admits ? null
+      : problem(403, 'Not an administrator', `Only an administrator of this ${noun} can ${what}; request it instead and an administrator will decide.`);
+  };
 
   // The runner registry read (§5.4): one keyset page of execution hosts, ordered by runnerId. Read-only.
   function handleRunners(fullPath, method, params) {
@@ -1012,11 +1036,11 @@ export function createMockControlPlane(options = {}) {
     const environment = params.get('environment');
     let rows = runnerAuthorizations.filter((r) => r.status === status);
     if (environment) {
-      // A single environment's queue — visible only to an administrator of it (a non-administrator sees an empty queue).
-      rows = persona.administers ? rows.filter((r) => r.environment === environment) : [];
-    } else if (!persona.administers) {
-      // The approver inbox: empty for a caller who administers nothing.
-      rows = [];
+      // A single environment's queue — visible only to an administrator of it (others see an empty queue).
+      rows = administersEnvironment(environment) ? rows.filter((r) => r.environment === environment) : [];
+    } else {
+      // The approver inbox: only authorizations for environments the caller administers (empty if they administer none).
+      rows = rows.filter((r) => administersEnvironment(r.environment));
     }
     return pageRunnerAuths(rows, params);
   }
@@ -1044,7 +1068,7 @@ export function createMockControlPlane(options = {}) {
     if (!r) return problem(404, 'Runner authorization not found', `No runner '${runnerId}' has registered for environment '${environment}'.`);
     if (r.status === target) return json(structuredClone(r));
     r.status = target;
-    r.decidedBy = 'boss';
+    r.decidedBy = actingSubject();
     r.decidedAt = iso(0);
     if (body?.reason) r.reason = body.reason;
     r.etag = nextEtag();
@@ -1335,10 +1359,10 @@ export function createMockControlPlane(options = {}) {
     if (patch?.status && patch.status !== v.status) {
       const newlyObsolete = patch.status === 'Obsolete';
       v.status = patch.status;
-      v.obsoletedBy = newlyObsolete ? 'demo' : null;
+      v.obsoletedBy = newlyObsolete ? actingSubject() : null;
       v.obsoletedAt = newlyObsolete ? iso(0) : null;
     }
-    v.lastUpdatedBy = 'demo';
+    v.lastUpdatedBy = actingSubject();
     v.lastUpdatedAt = iso(0);
     return json(toCatalogSummary(v));
   }
@@ -1414,7 +1438,7 @@ export function createMockControlPlane(options = {}) {
       baseWorkflowId: base, versionNumber, workflowId,
       title, description, status: 'Active',
       tags: form.getAll('tags'), owner, sources: sourceRefs, hash: `${base}${versionNumber}`.padEnd(64, '0'),
-      createdBy: 'demo', createdAt: iso(0),
+      createdBy: actingSubject(), createdAt: iso(0),
       _workflow: workflowDoc,
       _sources: sources,
     };
@@ -1423,7 +1447,7 @@ export function createMockControlPlane(options = {}) {
     // the creator administration", mirroring the backend's SecuredWorkflowCatalog). So a freshly-created workflow
     // always has a real administrator; the wizard adds further ones on top.
     if (versionNumber === 1 && !administrators[base]) {
-      administrators[base] = [adminGrant([{ dimension: 'sys:sub', value: demoUser }], 'person', 'You (creator)')];
+      administrators[base] = [adminGrant([{ dimension: 'sys:sub', value: actingSubject() }], 'person', 'You (creator)')];
     }
     return json(toCatalogSummary(v), 201);
   }
@@ -1508,7 +1532,7 @@ export function createMockControlPlane(options = {}) {
       secretRefs: body.secretRefs, config: body.config ?? [], managementTags: body.managementTags ?? [],
       usageGrantee: body.usageGrantee, description: body.description,
       expiresAt: body.expiresAt, rotatedAt: body.rotatedAt,
-      createdBy: 'demo', createdAt: iso(0), etag: nextEtag(),
+      createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag(),
     };
     credentials.push(b);
     return json(toCredentialSummary(b), 201);
@@ -1523,7 +1547,7 @@ export function createMockControlPlane(options = {}) {
     b.description = body.description;
     b.expiresAt = body.expiresAt;
     b.rotatedAt = body.rotatedAt;
-    b.lastUpdatedBy = 'demo';
+    b.lastUpdatedBy = actingSubject();
     b.lastUpdatedAt = iso(0);
     b.etag = nextEtag();
     return json(toCredentialSummary(b));
@@ -1667,7 +1691,7 @@ export function createMockControlPlane(options = {}) {
       if (method === 'PUT') {
         if (!binding) return problem(404, 'Binding not found', `No security binding '${id}'.`);
         if (!body?.claimType) return problem(400, 'Invalid binding', 'A claimType is required.');
-        Object.assign(binding, normalizeBinding(body), { id, lastUpdatedBy: 'demo-admin', lastUpdatedAt: iso(0), etag: nextEtag() });
+        Object.assign(binding, normalizeBinding(body), { id, lastUpdatedBy: actingSubject(), lastUpdatedAt: iso(0), etag: nextEtag() });
         return json(structuredClone(binding));
       }
       if (method === 'DELETE') {
@@ -1699,7 +1723,7 @@ export function createMockControlPlane(options = {}) {
 
   function createSecurityBinding(body) {
     if (!body?.claimType) return problem(400, 'Invalid binding', 'A claimType is required.');
-    const binding = { id: `bind-${++nextBindingId}`, ...normalizeBinding(body), createdBy: 'demo-admin', createdAt: iso(0), etag: nextEtag() };
+    const binding = { id: `bind-${++nextBindingId}`, ...normalizeBinding(body), createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag() };
     securityBindings.push(binding);
     return json(structuredClone(binding), 201);
   }
@@ -1770,7 +1794,7 @@ export function createMockControlPlane(options = {}) {
     const rule = {
       name: body.name, expression: body.expression.trim(),
       ...(body.description ? { description: body.description } : {}),
-      createdBy: 'demo-admin', createdAt: iso(0), etag: nextEtag(),
+      createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag(),
     };
     securityRules.push(rule);
     return json(structuredClone(rule), 201);
@@ -1784,7 +1808,7 @@ export function createMockControlPlane(options = {}) {
     rule.expression = body.expression.trim();
     if (body.description != null) rule.description = body.description;
     else delete rule.description;
-    rule.lastUpdatedBy = 'demo-admin';
+    rule.lastUpdatedBy = actingSubject();
     rule.lastUpdatedAt = iso(0);
     rule.etag = nextEtag();
     return json(structuredClone(rule));
@@ -1831,7 +1855,7 @@ export function createMockControlPlane(options = {}) {
     const version = findVersion(base, versionNumber);
     if (!version) return problem(404, 'Workflow version not found', `Version ${versionNumber} of '${base}' does not exist.`);
     if (!findEnvironment(environment)) return notFoundEnvironment(environment);
-    const denied = requireAdministrator(`make a version available in '${environment}'`);
+    const denied = requireAdministrator(`make a version available in '${environment}'`, { environment });
     if (denied) return denied;
     const existing = availabilityEntries.find((a) => a.baseWorkflowId === base && a.versionNumber === versionNumber && a.environment === environment);
     if (existing) return json(structuredClone(existing)); // already available (idempotent → 200)
@@ -1839,13 +1863,13 @@ export function createMockControlPlane(options = {}) {
     if (missing.length > 0) {
       return problem(409, 'Environment not ready', `Version ${versionNumber} of '${base}' cannot be made available in '${environment}': no usable credential for ${missing.join(', ')}.`);
     }
-    const entry = { baseWorkflowId: base, versionNumber, environment, createdBy: demoUser, createdAt: iso(0), etag: nextEtag() };
+    const entry = { baseWorkflowId: base, versionNumber, environment, createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag() };
     availabilityEntries.push(entry);
     return json(structuredClone(entry), 201);
   }
 
   function withdrawVersionAvailability(base, versionNumber, environment) {
-    const denied = requireAdministrator(`withdraw availability in '${environment}'`);
+    const denied = requireAdministrator(`withdraw availability in '${environment}'`, { environment });
     if (denied) return denied;
     const i = availabilityEntries.findIndex((a) => a.baseWorkflowId === base && a.versionNumber === versionNumber && a.environment === environment);
     if (i < 0) return problem(404, 'Availability entry not found', `Version ${versionNumber} of '${base}' is not available in '${environment}'.`);
@@ -1898,7 +1922,7 @@ export function createMockControlPlane(options = {}) {
       name: body.name, type: body.type, document: body.document,
       displayName: body.displayName || body.name, description: body.description,
       managementTags: body.managementTags ?? [],
-      createdBy: 'demo', createdAt: iso(0), etag: nextEtag(),
+      createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag(),
     };
     sourceRegistry.push(s);
     return json(structuredClone(s), 201);
@@ -1952,7 +1976,7 @@ export function createMockControlPlane(options = {}) {
       const name = decodeURIComponent(runnerAuthMatch[1]);
       const runnerId = decodeURIComponent(runnerAuthMatch[2]);
       if (!findEnvironment(name)) return notFoundEnvironment(name);
-      const denied = requireAdministrator(`${method === 'DELETE' ? 'revoke' : 'authorize'} a runner for an environment`);
+      const denied = requireAdministrator(`${method === 'DELETE' ? 'revoke' : 'authorize'} a runner for an environment`, { environment: name });
       if (denied) return denied;
       if (method === 'POST') return decideRunnerAuthorization(name, runnerId, 'Authorized', body);
       if (method === 'DELETE') return decideRunnerAuthorization(name, runnerId, 'Revoked', body);
@@ -1964,7 +1988,7 @@ export function createMockControlPlane(options = {}) {
       const name = decodeURIComponent(runnerRosterMatch[1]);
       if (method !== 'GET') return problem(405, 'Method not allowed');
       if (!findEnvironment(name)) return notFoundEnvironment(name);
-      const denied = requireAdministrator('list the runner authorizations of an environment');
+      const denied = requireAdministrator('list the runner authorizations of an environment', { environment: name });
       if (denied) return denied;
       const status = params.get('status');
       let rows = runnerAuthorizations.filter((r) => r.environment === name);
@@ -2017,11 +2041,11 @@ export function createMockControlPlane(options = {}) {
     const e = {
       name: body.name, displayName: body.displayName || body.name, description: body.description,
       managementTags: body.managementTags ?? [],
-      createdBy: demoUser, createdAt: iso(0), etag: nextEtag(),
+      createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag(),
     };
     environments.push(e);
     // Creating an environment grants the creator administration of it (§7.7), mirroring catalog version creation.
-    environmentAdministrators[e.name] = [adminGrant([{ dimension: 'sys:sub', value: demoUser }], 'person', 'You (creator)')];
+    environmentAdministrators[e.name] = [adminGrant([{ dimension: 'sys:sub', value: actingSubject() }], 'person', 'You (creator)')];
     return json(structuredClone(e), 201);
   }
 
@@ -2031,7 +2055,7 @@ export function createMockControlPlane(options = {}) {
     // Only display name and description are mutable; the name, reach scope, and created-* audit fields are immutable.
     if (body?.displayName !== undefined) e.displayName = body.displayName;
     if (body?.description !== undefined) e.description = body.description;
-    e.lastUpdatedBy = demoUser; e.lastUpdatedAt = iso(0); e.etag = nextEtag();
+    e.lastUpdatedBy = actingSubject(); e.lastUpdatedAt = iso(0); e.etag = nextEtag();
     return json(structuredClone(e));
   }
 
@@ -2091,14 +2115,12 @@ export function createMockControlPlane(options = {}) {
   }
 
   // ---- access requests (§16.5) ------------------------------------------------------------------
-  // The mock has a single fixed identity ('demo-user'), enough to make the panel's two views distinct:
-  //   • scope=mine (or absent, no baseWorkflowId) → the demo user's OWN requests (empty until they submit one).
-  //   • scope=queue → the approver INBOX: every request across all workflows (the mock treats the demo user as an
-  //     administrator of everything), so the seeded cross-workflow set stands in for "what you can act on".
-  //   • baseWorkflowId → that one workflow's queue.
+  // Keyed off the active identity (actingSubject) and per-workflow administration, so the panel's views differ per persona:
+  //   • scope=mine (or absent, no baseWorkflowId) → the caller's OWN requests (subjectClaimValue === actingSubject()).
+  //   • scope=queue → the approver INBOX: only requests for workflows the caller administers (empty if they administer none).
+  //   • baseWorkflowId → that one workflow's queue (visible only to an administrator of it).
   // The requester-only / administrator-only 403s are exercised by the server/CLI tests; state transitions ARE
   // modelled (a non-pending request conflicts, etc.) so the UI's optimistic flows and conflict banners are exercised.
-  const demoUser = 'demo-user';
 
   function handleAccessRequests(fullPath, method, params, body) {
     const idx = fullPath.indexOf('/accessRequests');
@@ -2131,14 +2153,14 @@ export function createMockControlPlane(options = {}) {
     const limit = Math.max(1, Number(params.get('limit')) || 50);
     let rows = [...accessRequests].sort((a, b) => (Date.parse(a.createdAt) - Date.parse(b.createdAt)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     if (base) {
-      // A single workflow's queue — visible only to an administrator of it (a non-administrator sees an empty queue).
-      rows = persona.administers ? rows.filter((r) => r.baseWorkflowId === base) : [];
+      // A single workflow's queue — visible only to an administrator of it (others see an empty queue).
+      rows = administersWorkflow(base) ? rows.filter((r) => r.baseWorkflowId === base) : [];
     } else if (scope === 'queue') {
-      // The approver inbox: every request across the workflows the caller administers (empty for a non-administrator).
-      if (!persona.administers) rows = [];
+      // The approver inbox: only the requests for workflows the caller administers (empty if they administer none).
+      rows = rows.filter((r) => administersWorkflow(r.baseWorkflowId));
     } else {
       // The caller's own requests (scope=mine / absent).
-      rows = rows.filter((r) => r.subjectClaimValue === demoUser);
+      rows = rows.filter((r) => r.subjectClaimValue === actingSubject());
     }
     if (status) rows = rows.filter((r) => r.status === status);
     const tok = params.get('pageToken') ? atobSafe(params.get('pageToken')).split(' ') : null;
@@ -2159,9 +2181,9 @@ export function createMockControlPlane(options = {}) {
     }
     const r = {
       id: `req-${++etagSeq}`, baseWorkflowId: body.baseWorkflowId, requestedScopes: body.requestedScopes,
-      subjectClaimType: 'preferred_username', subjectClaimValue: 'demo-user', requesterLabel: 'demo-user',
+      subjectClaimType: 'preferred_username', subjectClaimValue: actingSubject(), requesterLabel: actingSubject(),
       reason: body.reason, requestedDurationSeconds: body.requestedDurationSeconds,
-      status: 'Pending', createdBy: 'demo-user', createdAt: iso(0), etag: nextEtag(),
+      status: 'Pending', createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag(),
     };
     accessRequests.push(r);
     return json(r, 201);
@@ -2172,7 +2194,7 @@ export function createMockControlPlane(options = {}) {
     if (!r) return notFoundAccessRequest(id);
     // approve/approveAsEligible/deny/revoke are workflow-administrator decisions; withdraw is the requester's own.
     if (action !== 'withdraw') {
-      const denied = requireAdministrator(`${action} an access request`);
+      const denied = requireAdministrator(`${action} an access request`, { workflow: r.baseWorkflowId });
       if (denied) return denied;
     }
     const reason = body?.reason;
@@ -2184,14 +2206,14 @@ export function createMockControlPlane(options = {}) {
       if (conflict) return conflict;
       const eligible = action === 'approveAsEligible';
       r.status = eligible ? 'Eligible' : 'Approved';
-      r.decidedBy = 'boss'; r.decidedAt = iso(0); r.decisionReason = reason;
+      r.decidedBy = actingSubject(); r.decidedAt = iso(0); r.decisionReason = reason;
       r.grantedBindingId = `bind-${++etagSeq}`;
       const windowSeconds = eligible ? body?.eligibilityWindowSeconds : (r.requestedDurationSeconds ?? 8 * 3600);
       r.grantedUntil = windowSeconds ? iso(windowSeconds * 1000) : undefined;
     } else if (action === 'deny') {
       const conflict = requirePending('denied');
       if (conflict) return conflict;
-      r.status = 'Denied'; r.decidedBy = 'boss'; r.decidedAt = iso(0); r.decisionReason = reason;
+      r.status = 'Denied'; r.decidedBy = actingSubject(); r.decidedAt = iso(0); r.decisionReason = reason;
     } else if (action === 'withdraw') {
       const conflict = requirePending('withdrawn');
       if (conflict) return conflict;
@@ -2200,7 +2222,7 @@ export function createMockControlPlane(options = {}) {
       if (r.status !== 'Approved') {
         return problem(409, 'Invalid access-request state', `Request '${id}' is ${r.status}; only an approved grant can be revoked.`);
       }
-      r.status = 'Revoked'; r.decidedBy = 'boss'; r.decidedAt = iso(0); r.decisionReason = reason; r.grantedUntil = undefined;
+      r.status = 'Revoked'; r.decidedBy = actingSubject(); r.decidedAt = iso(0); r.decisionReason = reason; r.grantedUntil = undefined;
     }
     r.etag = nextEtag();
     return json(r);
@@ -2247,14 +2269,14 @@ export function createMockControlPlane(options = {}) {
     const limit = Math.max(1, Number(params.get('limit')) || 50);
     let rows = [...availabilityRequests].sort((a, b) => (Date.parse(a.createdAt) - Date.parse(b.createdAt)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     if (environment) {
-      // A single environment's queue — visible only to an administrator of it (a non-administrator sees an empty queue).
-      rows = persona.administers ? rows.filter((r) => r.environment === environment) : [];
+      // A single environment's queue — visible only to an administrator of it (others see an empty queue).
+      rows = administersEnvironment(environment) ? rows.filter((r) => r.environment === environment) : [];
     } else if (scope === 'queue') {
-      // The approver inbox: every request across the environments the caller administers (empty for a non-administrator).
-      if (!persona.administers) rows = [];
+      // The approver inbox: only the requests for environments the caller administers (empty if they administer none).
+      rows = rows.filter((r) => administersEnvironment(r.environment));
     } else {
       // The caller's own requests (scope=mine / absent).
-      rows = rows.filter((r) => r.createdBy === demoUser);
+      rows = rows.filter((r) => r.createdBy === actingSubject());
     }
     if (status) rows = rows.filter((r) => r.status === status);
     const tok = params.get('pageToken') ? atobSafe(params.get('pageToken')).split(' ') : null;
@@ -2276,8 +2298,8 @@ export function createMockControlPlane(options = {}) {
     const r = {
       id: `areq-${++etagSeq}`, baseWorkflowId: body.baseWorkflowId, versionNumber: Number(body.versionNumber), environment: body.environment,
       reason: body.reason, status: 'Pending',
-      subjectClaimType: 'preferred_username', subjectClaimValue: demoUser, requesterLabel: demoUser,
-      createdBy: demoUser, createdAt: iso(0), etag: nextEtag(),
+      subjectClaimType: 'preferred_username', subjectClaimValue: actingSubject(), requesterLabel: actingSubject(),
+      createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag(),
     };
     availabilityRequests.push(r);
     return json(r, 201);
@@ -2288,7 +2310,7 @@ export function createMockControlPlane(options = {}) {
     if (!r) return notFoundAvailabilityRequest(id);
     // approve/deny are environment-administrator decisions; withdraw is the requester's own.
     if (action !== 'withdraw') {
-      const denied = requireAdministrator(`${action} a promotion request`);
+      const denied = requireAdministrator(`${action} a promotion request`, { environment: r.environment });
       if (denied) return denied;
     }
     const reason = body?.reason;
@@ -2308,7 +2330,7 @@ export function createMockControlPlane(options = {}) {
       if (missing.length > 0) {
         return problem(409, 'Environment not ready', `Version ${r.versionNumber} of '${r.baseWorkflowId}' cannot be made available in '${r.environment}': no usable credential for ${missing.join(', ')}.`);
       }
-      r.status = 'Approved'; r.decidedBy = 'boss'; r.decidedAt = iso(0); r.decisionReason = reason;
+      r.status = 'Approved'; r.decidedBy = actingSubject(); r.decidedAt = iso(0); r.decisionReason = reason;
       // Approval makes the version available — record it in the matrix (idempotent).
       if (!availabilityEntries.some((a) => a.baseWorkflowId === r.baseWorkflowId && a.versionNumber === r.versionNumber && a.environment === r.environment)) {
         availabilityEntries.push({ baseWorkflowId: r.baseWorkflowId, versionNumber: r.versionNumber, environment: r.environment, createdBy: r.decidedBy, createdAt: iso(0), etag: nextEtag() });
@@ -2316,7 +2338,7 @@ export function createMockControlPlane(options = {}) {
     } else if (action === 'deny') {
       const conflict = requirePending('denied');
       if (conflict) return conflict;
-      r.status = 'Denied'; r.decidedBy = 'boss'; r.decidedAt = iso(0); r.decisionReason = reason;
+      r.status = 'Denied'; r.decidedBy = actingSubject(); r.decidedAt = iso(0); r.decisionReason = reason;
     } else if (action === 'withdraw') {
       const conflict = requirePending('withdrawn');
       if (conflict) return conflict;
