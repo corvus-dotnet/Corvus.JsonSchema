@@ -86,7 +86,7 @@ internal sealed class AvailabilityWithdrawCommand : AsyncCommand<AvailabilityTar
         using (http)
         await using (transport)
         {
-            await using WithdrawVersionAvailabilityResponse response = await client.WithdrawVersionAvailabilityAsync(settings.BaseWorkflowId, (Models.VersionNumber.Source)settings.VersionNumber, settings.Environment, cancellationToken);
+            await using DeleteVersionAvailabilityResponse response = await client.DeleteVersionAvailabilityAsync(settings.BaseWorkflowId, (Models.VersionNumber.Source)settings.VersionNumber, settings.Environment, cancellationToken);
             if (response.StatusCode == 204)
             {
                 Console.WriteLine($"Withdrew version {settings.VersionNumber} of '{settings.BaseWorkflowId}' from '{settings.Environment}'.");

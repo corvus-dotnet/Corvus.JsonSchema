@@ -36,7 +36,7 @@ public interface IApiSecurityHandler
     /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<ListSecurityRulesResult> HandleListSecurityRulesAsync(ListSecurityRulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+    ValueTask<SearchSecurityRulesResult> HandleSearchSecurityRulesAsync(SearchSecurityRulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles POST /security/rules — Create a security rule
@@ -81,7 +81,7 @@ public interface IApiSecurityHandler
     /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<ListSecurityBindingsResult> HandleListSecurityBindingsAsync(ListSecurityBindingsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+    ValueTask<SearchSecurityBindingsResult> HandleSearchSecurityBindingsAsync(SearchSecurityBindingsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles POST /security/bindings — Create a security binding

@@ -106,7 +106,7 @@ internal sealed class SecurityRuleListCommand : AsyncCommand<RunsSettings>
             do
             {
                 string? next = null;
-                await using ListSecurityRulesResponse response = await client.ListSecurityRulesAsync(
+                await using SearchSecurityRulesResponse response = await client.SearchSecurityRulesAsync(
                     pageToken: pageToken is { } token ? (Models.JsonString.Source)token : default,
                     cancellationToken: cancellationToken);
                 int rc = response.MatchResult(
@@ -222,7 +222,7 @@ internal sealed class SecurityBindingListCommand : AsyncCommand<RunsSettings>
             do
             {
                 string? next = null;
-                await using ListSecurityBindingsResponse response = await client.ListSecurityBindingsAsync(
+                await using SearchSecurityBindingsResponse response = await client.SearchSecurityBindingsAsync(
                     pageToken: pageToken is { } token ? (Models.JsonString.Source)token : default,
                     cancellationToken: cancellationToken);
                 int rc = response.MatchResult(

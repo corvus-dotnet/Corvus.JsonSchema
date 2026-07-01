@@ -96,7 +96,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     /// <inheritdoc/>
     public async ValueTask<CreateCredentialResult> HandleCreateCredentialAsync(CreateCredentialParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        Models.CredentialBindingWrite body = parameters.Body;
+        Models.CredentialBindingCreate body = parameters.Body;
         ManagementTagsState managementState;
         bool hasManagementTags;
         UsageTagsState usageState;

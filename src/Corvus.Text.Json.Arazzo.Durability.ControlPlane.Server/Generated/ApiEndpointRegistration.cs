@@ -2759,7 +2759,7 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "availability:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "availability:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __MakeVersionAvailableEndpoint);
 
-        IEndpointConventionBuilder __WithdrawVersionAvailabilityEndpoint = app.MapDelete("/catalog/{baseWorkflowId}/versions/{versionNumber}/availability/{environment}", async (HttpContext context) =>
+        IEndpointConventionBuilder __DeleteVersionAvailabilityEndpoint = app.MapDelete("/catalog/{baseWorkflowId}/versions/{versionNumber}/availability/{environment}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -2829,7 +2829,7 @@ public static class ApiEndpointRegistration
                 }
 
 
-                WithdrawVersionAvailabilityParams parameters = new()
+                DeleteVersionAvailabilityParams parameters = new()
                 {
                     BaseWorkflowId = BaseWorkflowIdValue,
                     VersionNumber = VersionNumberValue,
@@ -2837,7 +2837,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                WithdrawVersionAvailabilityResult result = await availabilityHandler.HandleWithdrawVersionAvailabilityAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+                DeleteVersionAvailabilityResult result = await availabilityHandler.HandleDeleteVersionAvailabilityAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 if (!result.ValidateBody())
                 {
@@ -2873,14 +2873,14 @@ public static class ApiEndpointRegistration
         );
         configureEndpoint?.Invoke(
             new EndpointDescriptor(
-                operationId: "withdrawVersionAvailability",
-                methodName: "WithdrawVersionAvailability",
+                operationId: "deleteVersionAvailability",
+                methodName: "DeleteVersionAvailability",
                 httpMethod: "DELETE",
                 routeTemplate: "/catalog/{baseWorkflowId}/versions/{versionNumber}/availability/{environment}",
                 tags: new[] { "availability" },
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "availability:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "availability:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
-            __WithdrawVersionAvailabilityEndpoint);
+            __DeleteVersionAvailabilityEndpoint);
 
         IEndpointConventionBuilder __ListEnvironmentAvailabilityEndpoint = app.MapGet("/environments/{name}/availability", async (HttpContext context) =>
         {
@@ -3044,7 +3044,7 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "security:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "security:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __ListSecurityOrderingsEndpoint);
 
-        IEndpointConventionBuilder __ListSecurityRulesEndpoint = app.MapGet("/security/rules", async (HttpContext context) =>
+        IEndpointConventionBuilder __SearchSecurityRulesEndpoint = app.MapGet("/security/rules", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -3093,7 +3093,7 @@ public static class ApiEndpointRegistration
                 }
 
 
-                ListSecurityRulesParams parameters = new()
+                SearchSecurityRulesParams parameters = new()
                 {
                     Q = QValue,
                     Limit = LimitValue,
@@ -3101,7 +3101,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                ListSecurityRulesResult result = await securityHandler.HandleListSecurityRulesAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+                SearchSecurityRulesResult result = await securityHandler.HandleSearchSecurityRulesAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 if (!result.ValidateBody())
                 {
@@ -3137,14 +3137,14 @@ public static class ApiEndpointRegistration
         );
         configureEndpoint?.Invoke(
             new EndpointDescriptor(
-                operationId: "listSecurityRules",
-                methodName: "ListSecurityRules",
+                operationId: "searchSecurityRules",
+                methodName: "SearchSecurityRules",
                 httpMethod: "GET",
                 routeTemplate: "/security/rules",
                 tags: new[] { "security" },
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "security:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "security:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
-            __ListSecurityRulesEndpoint);
+            __SearchSecurityRulesEndpoint);
 
         IEndpointConventionBuilder __CreateSecurityRuleEndpoint = app.MapPost("/security/rules", async (HttpContext context) =>
         {
@@ -3486,7 +3486,7 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "security:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "security:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __DeleteSecurityRuleEndpoint);
 
-        IEndpointConventionBuilder __ListSecurityBindingsEndpoint = app.MapGet("/security/bindings", async (HttpContext context) =>
+        IEndpointConventionBuilder __SearchSecurityBindingsEndpoint = app.MapGet("/security/bindings", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -3535,7 +3535,7 @@ public static class ApiEndpointRegistration
                 }
 
 
-                ListSecurityBindingsParams parameters = new()
+                SearchSecurityBindingsParams parameters = new()
                 {
                     Q = QValue,
                     Limit = LimitValue,
@@ -3543,7 +3543,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                ListSecurityBindingsResult result = await securityHandler.HandleListSecurityBindingsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+                SearchSecurityBindingsResult result = await securityHandler.HandleSearchSecurityBindingsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 if (!result.ValidateBody())
                 {
@@ -3579,14 +3579,14 @@ public static class ApiEndpointRegistration
         );
         configureEndpoint?.Invoke(
             new EndpointDescriptor(
-                operationId: "listSecurityBindings",
-                methodName: "ListSecurityBindings",
+                operationId: "searchSecurityBindings",
+                methodName: "SearchSecurityBindings",
                 httpMethod: "GET",
                 routeTemplate: "/security/bindings",
                 tags: new[] { "security" },
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "security:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "security:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
-            __ListSecurityBindingsEndpoint);
+            __SearchSecurityBindingsEndpoint);
 
         IEndpointConventionBuilder __CreateSecurityBindingEndpoint = app.MapPost("/security/bindings", async (HttpContext context) =>
         {
@@ -4018,12 +4018,12 @@ public static class ApiEndpointRegistration
         IEndpointConventionBuilder __CreateCredentialEndpoint = app.MapPost("/credentials", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingWrite>? bodyDoc = null;
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate>? bodyDoc = null;
             try
             {
                 try
                 {
-                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingWrite>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -4511,12 +4511,12 @@ public static class ApiEndpointRegistration
         IEndpointConventionBuilder __CreateEnvironmentEndpoint = app.MapPost("/environments", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentWrite>? bodyDoc = null;
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCreate>? bodyDoc = null;
             try
             {
                 try
                 {
-                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentWrite>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCreate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -5822,15 +5822,15 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "sources:read" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "sources:read" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __ListSourcesEndpoint);
 
-        IEndpointConventionBuilder __RegisterSourceEndpoint = app.MapPost("/sources", async (HttpContext context) =>
+        IEndpointConventionBuilder __CreateSourceEndpoint = app.MapPost("/sources", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceWrite>? bodyDoc = null;
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCreate>? bodyDoc = null;
             try
             {
                 try
                 {
-                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceWrite>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCreate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -5849,13 +5849,13 @@ public static class ApiEndpointRegistration
                 }
 
 
-                RegisterSourceParams parameters = new()
+                CreateSourceParams parameters = new()
                 {
                     Body = bodyDoc!.RootElement,
                 }
                 ;
 
-                RegisterSourceResult result = await sourcesHandler.HandleRegisterSourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+                CreateSourceResult result = await sourcesHandler.HandleCreateSourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 if (!result.ValidateBody())
                 {
@@ -5892,14 +5892,14 @@ public static class ApiEndpointRegistration
         );
         configureEndpoint?.Invoke(
             new EndpointDescriptor(
-                operationId: "registerSource",
-                methodName: "RegisterSource",
+                operationId: "createSource",
+                methodName: "CreateSource",
                 httpMethod: "POST",
                 routeTemplate: "/sources",
                 tags: new[] { "sources" },
                 isCallback: false,
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "sources:write" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "sources:write" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
-            __RegisterSourceEndpoint);
+            __CreateSourceEndpoint);
 
         IEndpointConventionBuilder __GetSourceEndpoint = app.MapGet("/sources/{name}", async (HttpContext context) =>
         {
@@ -8537,14 +8537,14 @@ public static class ApiEndpointRegistration
         public static readonly string[] MakeVersionAvailableOpenIdConnectScopes = ["availability:write"];
 
         /// <summary>
-        /// Gets the scopes required by <c>WithdrawVersionAvailability</c> for the <c>Oauth2</c> scheme.
+        /// Gets the scopes required by <c>DeleteVersionAvailability</c> for the <c>Oauth2</c> scheme.
         /// </summary>
-        public static readonly string[] WithdrawVersionAvailabilityOauth2Scopes = ["availability:write"];
+        public static readonly string[] DeleteVersionAvailabilityOauth2Scopes = ["availability:write"];
 
         /// <summary>
-        /// Gets the scopes required by <c>WithdrawVersionAvailability</c> for the <c>OpenIdConnect</c> scheme.
+        /// Gets the scopes required by <c>DeleteVersionAvailability</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
-        public static readonly string[] WithdrawVersionAvailabilityOpenIdConnectScopes = ["availability:write"];
+        public static readonly string[] DeleteVersionAvailabilityOpenIdConnectScopes = ["availability:write"];
 
         /// <summary>
         /// Gets the scopes required by <c>ListSecurityOrderings</c> for the <c>Oauth2</c> scheme.
@@ -8557,14 +8557,14 @@ public static class ApiEndpointRegistration
         public static readonly string[] ListSecurityOrderingsOpenIdConnectScopes = ["security:read"];
 
         /// <summary>
-        /// Gets the scopes required by <c>ListSecurityRules</c> for the <c>Oauth2</c> scheme.
+        /// Gets the scopes required by <c>SearchSecurityRules</c> for the <c>Oauth2</c> scheme.
         /// </summary>
-        public static readonly string[] ListSecurityRulesOauth2Scopes = ["security:read"];
+        public static readonly string[] SearchSecurityRulesOauth2Scopes = ["security:read"];
 
         /// <summary>
-        /// Gets the scopes required by <c>ListSecurityRules</c> for the <c>OpenIdConnect</c> scheme.
+        /// Gets the scopes required by <c>SearchSecurityRules</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
-        public static readonly string[] ListSecurityRulesOpenIdConnectScopes = ["security:read"];
+        public static readonly string[] SearchSecurityRulesOpenIdConnectScopes = ["security:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>CreateSecurityRule</c> for the <c>Oauth2</c> scheme.
@@ -8607,14 +8607,14 @@ public static class ApiEndpointRegistration
         public static readonly string[] DeleteSecurityRuleOpenIdConnectScopes = ["security:write"];
 
         /// <summary>
-        /// Gets the scopes required by <c>ListSecurityBindings</c> for the <c>Oauth2</c> scheme.
+        /// Gets the scopes required by <c>SearchSecurityBindings</c> for the <c>Oauth2</c> scheme.
         /// </summary>
-        public static readonly string[] ListSecurityBindingsOauth2Scopes = ["security:read"];
+        public static readonly string[] SearchSecurityBindingsOauth2Scopes = ["security:read"];
 
         /// <summary>
-        /// Gets the scopes required by <c>ListSecurityBindings</c> for the <c>OpenIdConnect</c> scheme.
+        /// Gets the scopes required by <c>SearchSecurityBindings</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
-        public static readonly string[] ListSecurityBindingsOpenIdConnectScopes = ["security:read"];
+        public static readonly string[] SearchSecurityBindingsOpenIdConnectScopes = ["security:read"];
 
         /// <summary>
         /// Gets the scopes required by <c>CreateSecurityBinding</c> for the <c>Oauth2</c> scheme.
@@ -8847,14 +8847,14 @@ public static class ApiEndpointRegistration
         public static readonly string[] ListSourcesOpenIdConnectScopes = ["sources:read"];
 
         /// <summary>
-        /// Gets the scopes required by <c>RegisterSource</c> for the <c>Oauth2</c> scheme.
+        /// Gets the scopes required by <c>CreateSource</c> for the <c>Oauth2</c> scheme.
         /// </summary>
-        public static readonly string[] RegisterSourceOauth2Scopes = ["sources:write"];
+        public static readonly string[] CreateSourceOauth2Scopes = ["sources:write"];
 
         /// <summary>
-        /// Gets the scopes required by <c>RegisterSource</c> for the <c>OpenIdConnect</c> scheme.
+        /// Gets the scopes required by <c>CreateSource</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
-        public static readonly string[] RegisterSourceOpenIdConnectScopes = ["sources:write"];
+        public static readonly string[] CreateSourceOpenIdConnectScopes = ["sources:write"];
 
         /// <summary>
         /// Gets the scopes required by <c>GetSource</c> for the <c>Oauth2</c> scheme.
