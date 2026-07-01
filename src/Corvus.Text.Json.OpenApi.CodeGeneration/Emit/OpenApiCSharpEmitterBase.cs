@@ -543,11 +543,13 @@ public abstract class OpenApiCSharpEmitterBase : IClientEmitter
 
             ParameterSerializationKind kind = matchingParam?.SerializationKind
                 ?? ParameterSerializationKind.String;
+            ParameterSerializationKind elementKind = matchingParam?.ElementSerializationKind
+                ?? ParameterSerializationKind.String;
             ParameterStyle style = matchingParam?.Style ?? ParameterStyle.Simple;
             bool explode = matchingParam?.Explode ?? false;
             bool allowReserved = matchingParam?.AllowReserved ?? false;
 
-            CodeEmitHelpers.EmitPathParamWrite(w, paramName, $"this.{fieldName}", fieldName, kind, style, explode, allowReserved);
+            CodeEmitHelpers.EmitPathParamWrite(w, paramName, $"this.{fieldName}", fieldName, kind, style, explode, elementKind, allowReserved);
             remaining = remaining[(openBrace + 1 + closeBrace + 1)..];
         }
     }
@@ -604,13 +606,13 @@ public abstract class OpenApiCSharpEmitterBase : IClientEmitter
             {
                 w.WriteLine($"if (this.{fieldName}.IsNotUndefined())");
                 w.OpenBrace();
-                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
+                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, param.ElementSerializationKind);
                 w.CloseBrace();
                 w.WriteLine();
             }
             else
             {
-                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
+                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, param.ElementSerializationKind);
                 w.WriteLine();
             }
         }
@@ -651,13 +653,13 @@ public abstract class OpenApiCSharpEmitterBase : IClientEmitter
             {
                 w.WriteLine($"if (this.{fieldName}.IsNotUndefined())");
                 w.OpenBrace();
-                CodeEmitHelpers.EmitHeaderParamWrite(w, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
+                CodeEmitHelpers.EmitHeaderParamWrite(w, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, param.ElementSerializationKind);
                 w.CloseBrace();
                 w.WriteLine();
             }
             else
             {
-                CodeEmitHelpers.EmitHeaderParamWrite(w, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
+                CodeEmitHelpers.EmitHeaderParamWrite(w, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, param.ElementSerializationKind);
                 w.WriteLine();
             }
         }
@@ -696,13 +698,13 @@ public abstract class OpenApiCSharpEmitterBase : IClientEmitter
             {
                 w.WriteLine($"if (this.{fieldName}.IsNotUndefined())");
                 w.OpenBrace();
-                CodeEmitHelpers.EmitCookieParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, effectiveAllowReserved);
+                CodeEmitHelpers.EmitCookieParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, param.ElementSerializationKind, effectiveAllowReserved);
                 w.CloseBrace();
                 w.WriteLine();
             }
             else
             {
-                CodeEmitHelpers.EmitCookieParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, effectiveAllowReserved);
+                CodeEmitHelpers.EmitCookieParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, param.ElementSerializationKind, effectiveAllowReserved);
                 w.WriteLine();
             }
         }
@@ -3852,7 +3854,7 @@ public abstract class OpenApiCSharpEmitterBase : IClientEmitter
                 w.WriteLine($"if (!this.{propertyName}.IsUndefined())");
                 w.OpenBrace();
                 w.WriteLine($"ReadOnlySpan<byte> nameUtf8{uid} = \"{header.HeaderName}\"u8;");
-                CodeEmitHelpers.EmitHeaderParamWrite(w, $"this.{propertyName}", uid, header.SerializationKind, ParameterStyle.Simple, header.Explode);
+                CodeEmitHelpers.EmitHeaderParamWrite(w, $"this.{propertyName}", uid, header.SerializationKind, ParameterStyle.Simple, header.Explode, header.ElementSerializationKind);
                 w.CloseBrace();
                 w.WriteLine();
             }

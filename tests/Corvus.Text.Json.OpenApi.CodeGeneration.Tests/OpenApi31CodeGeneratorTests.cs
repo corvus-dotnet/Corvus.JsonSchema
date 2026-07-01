@@ -625,8 +625,10 @@ public class OpenApi31CodeGeneratorTests
 
         GeneratedFile req = GetFile(files, "ListPetsRequest.cs");
 
+        // Bounded numbers now TryFormat straight into the buffer writer's own span
+        // (writer.GetSpan) instead of a scratch stackalloc, so the write is zero-alloc.
         Assert.IsTrue(
-            req.Content.Contains("stackalloc byte[11]", StringComparison.Ordinal));
+            req.Content.Contains("writer.GetSpan(11)", StringComparison.Ordinal));
         Assert.IsTrue(
             req.Content.Contains(".TryFormat(buf", StringComparison.Ordinal));
         Assert.IsTrue(
@@ -1781,8 +1783,8 @@ public class OpenApi31CodeGeneratorTests
 
         GeneratedFile req = GetFile(files, "TestKindsRequest.cs");
 
-        // Float/single format with stackalloc 32
-        Assert.IsTrue(req.Content.Contains("stackalloc byte[32]", StringComparison.Ordinal));
+        // Float/single format into the buffer writer's span (GetSpan 32), then TryFormat.
+        Assert.IsTrue(req.Content.Contains("writer.GetSpan(32)", StringComparison.Ordinal));
         Assert.IsTrue(req.Content.Contains("TryFormat", StringComparison.Ordinal));
     }
 
@@ -1809,7 +1811,7 @@ public class OpenApi31CodeGeneratorTests
         GeneratedFile req = GetFile(files, "TestKindsRequest.cs");
 
         // int64 buffer size is 20
-        Assert.IsTrue(req.Content.Contains("stackalloc byte[20]", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("writer.GetSpan(20)", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -1822,7 +1824,7 @@ public class OpenApi31CodeGeneratorTests
         GeneratedFile req = GetFile(files, "TestKindsRequest.cs");
 
         // int16 buffer size is 6
-        Assert.IsTrue(req.Content.Contains("stackalloc byte[6]", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("writer.GetSpan(6)", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -1835,7 +1837,7 @@ public class OpenApi31CodeGeneratorTests
         GeneratedFile req = GetFile(files, "TestKindsRequest.cs");
 
         // byte buffer size is 3
-        Assert.IsTrue(req.Content.Contains("stackalloc byte[3]", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("writer.GetSpan(3)", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -1848,7 +1850,7 @@ public class OpenApi31CodeGeneratorTests
         GeneratedFile req = GetFile(files, "TestKindsRequest.cs");
 
         // int32 buffer size is 11
-        Assert.IsTrue(req.Content.Contains("stackalloc byte[11]", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("writer.GetSpan(11)", StringComparison.Ordinal));
     }
 
     // ── Required parameter tests ────────────────────────────────────────

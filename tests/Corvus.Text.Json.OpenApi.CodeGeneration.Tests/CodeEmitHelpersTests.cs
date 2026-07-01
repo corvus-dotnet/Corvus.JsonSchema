@@ -215,7 +215,7 @@ public class CodeEmitHelpersTests
     public void EmitPathParamWrite_AllKindCategories_ProducesOutput(ParameterSerializationKind kind)
     {
         IndentedWriter w = new();
-        CodeEmitHelpers.EmitPathParamWrite(w, "color", "value", "p0", kind, ParameterStyle.Simple, false);
+        CodeEmitHelpers.EmitPathParamWrite(w, "color", "value", "p0", kind, ParameterStyle.Simple, false, ParameterSerializationKind.String);
         Assert.IsTrue(w.ToString().Length > 0, $"EmitPathParamWrite should produce output for {kind}");
     }
 
@@ -555,7 +555,7 @@ public class CodeEmitHelpersTests
     public void EmitPathParamWrite_AdditionalKinds_ProducesOutput(ParameterSerializationKind kind)
     {
         IndentedWriter w = new();
-        CodeEmitHelpers.EmitPathParamWrite(w, "color", "value", "p0", kind, ParameterStyle.Simple, false);
+        CodeEmitHelpers.EmitPathParamWrite(w, "color", "value", "p0", kind, ParameterStyle.Simple, false, ParameterSerializationKind.String);
         Assert.IsTrue(w.ToString().Length > 0, $"EmitPathParamWrite should produce output for {kind}");
     }
 
@@ -650,7 +650,7 @@ public class CodeEmitHelpersTests
         ParameterStyle style, bool explode)
     {
         IndentedWriter w = new();
-        CodeEmitHelpers.EmitPathArrayWrite(w, "colors", "value", "a0", style, explode);
+        CodeEmitHelpers.EmitPathArrayWrite(w, "colors", "value", "a0", style, explode, ParameterSerializationKind.String, false);
         Assert.IsTrue(w.ToString().Length > 0, $"EmitPathArrayWrite should produce output for {style}/{explode}");
     }
 
@@ -665,7 +665,7 @@ public class CodeEmitHelpersTests
         ParameterStyle style, bool explode)
     {
         IndentedWriter w = new();
-        CodeEmitHelpers.EmitPathObjectWrite(w, "color", "value", "o0", style, explode);
+        CodeEmitHelpers.EmitPathObjectWrite(w, "color", "value", "o0", style, explode, ParameterSerializationKind.String, false);
         Assert.IsTrue(w.ToString().Length > 0, $"EmitPathObjectWrite should produce output for {style}/{explode}");
     }
 

@@ -1630,6 +1630,76 @@
         }
       }
     },
+    "/complex/query-array-bool": {
+      "get": {
+        "operationId": "queryArrayBool",
+        "summary": "Query array of booleans, form+explode=false",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "flags",
+            "in": "query",
+            "required": true,
+            "explode": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "boolean"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/query-object-reserved": {
+      "get": {
+        "operationId": "queryObjectReserved",
+        "summary": "Query object with free-form string keys/values, form+explode",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "query",
+            "required": true,
+            "explode": true,
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/complex/header-array": {
       "get": {
         "operationId": "headerArray",

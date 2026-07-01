@@ -610,8 +610,10 @@ public class OpenApi30CodeGeneratorTests
 
         GeneratedFile req = GetFile(files, "ListPetsRequest.cs");
 
+        // Bounded numbers now TryFormat straight into the buffer writer's own span
+        // (writer.GetSpan) instead of a scratch stackalloc, so the write is zero-alloc.
         Assert.IsTrue(
-            req.Content.Contains("stackalloc byte[11]", StringComparison.Ordinal));
+            req.Content.Contains("writer.GetSpan(11)", StringComparison.Ordinal));
         Assert.IsTrue(
             req.Content.Contains(".TryFormat(buf", StringComparison.Ordinal));
         Assert.IsTrue(
@@ -1779,7 +1781,7 @@ public class OpenApi30CodeGeneratorTests
         IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
 
         GeneratedFile req = GetFile(files, "TestKindsRequest.cs");
-        Assert.IsTrue(req.Content.Contains("stackalloc byte[32]", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("writer.GetSpan(32)", StringComparison.Ordinal));
         Assert.IsTrue(req.Content.Contains("TryFormat", StringComparison.Ordinal));
     }
 
@@ -1802,7 +1804,7 @@ public class OpenApi30CodeGeneratorTests
         IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
 
         GeneratedFile req = GetFile(files, "TestKindsRequest.cs");
-        Assert.IsTrue(req.Content.Contains("stackalloc byte[20]", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("writer.GetSpan(20)", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -1813,7 +1815,7 @@ public class OpenApi30CodeGeneratorTests
         IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
 
         GeneratedFile req = GetFile(files, "TestKindsRequest.cs");
-        Assert.IsTrue(req.Content.Contains("stackalloc byte[6]", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("writer.GetSpan(6)", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -1824,7 +1826,7 @@ public class OpenApi30CodeGeneratorTests
         IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
 
         GeneratedFile req = GetFile(files, "TestKindsRequest.cs");
-        Assert.IsTrue(req.Content.Contains("stackalloc byte[3]", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("writer.GetSpan(3)", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -1835,7 +1837,7 @@ public class OpenApi30CodeGeneratorTests
         IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
 
         GeneratedFile req = GetFile(files, "TestKindsRequest.cs");
-        Assert.IsTrue(req.Content.Contains("stackalloc byte[11]", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("writer.GetSpan(11)", StringComparison.Ordinal));
     }
 
     // ── Required parameter tests ────────────────────────────────────────

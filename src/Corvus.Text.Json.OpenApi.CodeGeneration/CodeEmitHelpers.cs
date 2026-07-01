@@ -494,6 +494,150 @@ public static class CodeEmitHelpers
         w.WriteLine($"totalWritten += (int)jw{uid}.BytesCommitted;");
     }
 
+    /// <summary>
+    /// Emits percent-encoding of a UTF-8 span straight into the buffer writer's own memory
+    /// (<c>GetSpan</c>/<c>Advance</c>) — no scratch allocation, so it is safe inside a loop.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="spanExpr">The C# expression for the UTF-8 span to escape.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="counted">Whether to update the <c>totalWritten</c> counter.</param>
+    public static void EmitEscapeSpanToWriter(
+        IndentedWriter w,
+        string spanExpr,
+        string uid,
+        bool counted)
+    {
+        // GetSpan guarantees at least len*3 bytes (the max %XX expansion), so the escape always fits.
+        w.WriteLine($"Span<byte> esc{uid} = writer.GetSpan({spanExpr}.Length * 3);");
+        w.WriteLine($"if (Utf8Uri.TryEscapeDataString({spanExpr}, esc{uid}, out int ew{uid}))");
+        w.OpenBrace();
+        w.WriteLine($"writer.Advance(ew{uid});");
+        if (counted)
+        {
+            w.WriteLine($"totalWritten += ew{uid};");
+        }
+
+        w.CloseBrace();
+    }
+
+    /// <summary>
+    /// Emits a raw (unescaped) UTF-8 span write to the buffer writer.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="spanExpr">The C# expression for the UTF-8 span.</param>
+    /// <param name="counted">Whether to update the <c>totalWritten</c> counter.</param>
+    public static void EmitRawSpanToWriter(
+        IndentedWriter w,
+        string spanExpr,
+        bool counted)
+    {
+        w.WriteLine($"writer.Write({spanExpr});");
+        if (counted)
+        {
+            w.WriteLine($"totalWritten += {spanExpr}.Length;");
+        }
+    }
+
+    /// <summary>
+    /// Emits a UTF-8 string span, percent-encoded (when <paramref name="escape"/>) or raw, to the writer.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="spanExpr">The C# expression for the UTF-8 span.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="counted">Whether to update the <c>totalWritten</c> counter.</param>
+    /// <param name="escape">Whether to percent-encode the span.</param>
+    public static void EmitStringSpanValue(
+        IndentedWriter w,
+        string spanExpr,
+        string uid,
+        bool counted,
+        bool escape)
+    {
+        if (escape)
+        {
+            EmitEscapeSpanToWriter(w, spanExpr, uid, counted);
+        }
+        else
+        {
+            EmitRawSpanToWriter(w, spanExpr, counted);
+        }
+    }
+
+    /// <summary>
+    /// Emits a single scalar JSON value to the buffer writer, bytes-native and allocation-free, shared
+    /// by scalar and array/object-element serialization. Dispatches on the serialization
+    /// <paramref name="kind"/>: booleans as <c>"true"u8</c>/<c>"false"u8</c>, bounded numbers via
+    /// <c>TryFormat</c> into the writer's span, unbounded numbers via <c>GetRawUtf8Value</c>, strings via
+    /// <c>GetUtf8String</c> then percent-encoded (or raw). Object/array kinds are handled by the caller.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="valueExpr">The C# expression for the JSON value.</param>
+    /// <param name="kind">The serialization kind of the value.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="counted">Whether to update the <c>totalWritten</c> counter.</param>
+    /// <param name="escape">Whether to percent-encode string values.</param>
+    public static void EmitScalarValueBytesNative(
+        IndentedWriter w,
+        string valueExpr,
+        ParameterSerializationKind kind,
+        string uid,
+        bool counted,
+        bool escape)
+    {
+        switch (kind)
+        {
+            case ParameterSerializationKind.Boolean:
+                // ((JsonElement)value).GetBoolean() works for both typed scalar values and array elements.
+                w.WriteLine($"bool bv{uid} = ((JsonElement){valueExpr}).GetBoolean();");
+                w.WriteLine($"writer.Write(bv{uid} ? \"true\"u8 : \"false\"u8);");
+                if (counted)
+                {
+                    w.WriteLine($"totalWritten += bv{uid} ? 4 : 5;");
+                }
+
+                break;
+
+            case ParameterSerializationKind.Byte:
+            case ParameterSerializationKind.UInt16:
+            case ParameterSerializationKind.UInt32:
+            case ParameterSerializationKind.UInt64:
+            case ParameterSerializationKind.UInt128:
+            case ParameterSerializationKind.SByte:
+            case ParameterSerializationKind.Int16:
+            case ParameterSerializationKind.Int32:
+            case ParameterSerializationKind.Int64:
+            case ParameterSerializationKind.Int128:
+            case ParameterSerializationKind.Half:
+            case ParameterSerializationKind.Single:
+            case ParameterSerializationKind.Double:
+            case ParameterSerializationKind.Decimal:
+                // TryFormat straight into the writer's buffer — loop-safe, no scratch allocation.
+                w.WriteLine($"Span<byte> buf{uid} = writer.GetSpan({TryFormatBufferSize(kind)});");
+                w.WriteLine($"{valueExpr}.TryFormat(buf{uid}, out int bw{uid}, default, default);");
+                w.WriteLine($"writer.Advance(bw{uid});");
+                if (counted)
+                {
+                    w.WriteLine($"totalWritten += bw{uid};");
+                }
+
+                break;
+
+            case ParameterSerializationKind.UnboundedNumber:
+                EmitUnboundedNumberToLocal(w, valueExpr, uid);
+                EmitRawSpanToWriter(w, $"raw{uid}.Span", counted);
+                break;
+
+            case ParameterSerializationKind.String:
+                EmitStringWrite(w, valueExpr, uid);
+                EmitStringSpanValue(w, $"utf8{uid}.Span", uid, counted, escape);
+                break;
+
+            default:
+                break;
+        }
+    }
+
     // ── Compound parameter serialization per location ───────────────────
 
     /// <summary>
@@ -506,6 +650,7 @@ public static class CodeEmitHelpers
     /// <param name="kind">The serialization kind.</param>
     /// <param name="style">The parameter style.</param>
     /// <param name="explode">Whether to use exploded serialization.</param>
+    /// <param name="elementKind">The serialization kind of array/object elements.</param>
     public static void EmitPathParamWrite(
         IndentedWriter w,
         string paramName,
@@ -513,9 +658,10 @@ public static class CodeEmitHelpers
         string uid,
         ParameterSerializationKind kind,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind elementKind)
     {
-        EmitPathParamWrite(w, paramName, valueExpr, uid, kind, style, explode, allowReserved: false);
+        EmitPathParamWrite(w, paramName, valueExpr, uid, kind, style, explode, elementKind, allowReserved: false);
     }
 
     /// <summary>
@@ -528,6 +674,7 @@ public static class CodeEmitHelpers
     /// <param name="kind">The serialization kind.</param>
     /// <param name="style">The parameter style.</param>
     /// <param name="explode">Whether to use exploded serialization.</param>
+    /// <param name="elementKind">The serialization kind of array/object elements.</param>
     /// <param name="allowReserved">When <see langword="true"/>, reserved characters are not percent-encoded.</param>
     public static void EmitPathParamWrite(
         IndentedWriter w,
@@ -537,17 +684,18 @@ public static class CodeEmitHelpers
         ParameterSerializationKind kind,
         ParameterStyle style,
         bool explode,
+        ParameterSerializationKind elementKind,
         bool allowReserved)
     {
         if (kind == ParameterSerializationKind.Array)
         {
-            EmitPathArrayWrite(w, paramName, valueExpr, uid, style, explode);
+            EmitPathArrayWrite(w, paramName, valueExpr, uid, style, explode, elementKind, allowReserved);
             return;
         }
 
         if (kind == ParameterSerializationKind.Object)
         {
-            EmitPathObjectWrite(w, paramName, valueExpr, uid, style, explode);
+            EmitPathObjectWrite(w, paramName, valueExpr, uid, style, explode, elementKind, allowReserved);
             return;
         }
 
@@ -566,6 +714,7 @@ public static class CodeEmitHelpers
     /// <param name="kind">The serialization kind.</param>
     /// <param name="style">The parameter style.</param>
     /// <param name="explode">Whether to use exploded serialization.</param>
+    /// <param name="elementKind">The serialization kind of array/object elements.</param>
     public static void EmitQueryParamWrite(
         IndentedWriter w,
         string paramName,
@@ -573,17 +722,18 @@ public static class CodeEmitHelpers
         string uid,
         ParameterSerializationKind kind,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind elementKind)
     {
         if (kind == ParameterSerializationKind.Array)
         {
-            EmitQueryArrayWrite(w, paramName, valueExpr, uid, style, explode);
+            EmitQueryArrayWrite(w, paramName, valueExpr, uid, style, explode, elementKind);
             return;
         }
 
         if (kind == ParameterSerializationKind.Object)
         {
-            EmitQueryObjectWrite(w, paramName, valueExpr, uid, style, explode);
+            EmitQueryObjectWrite(w, paramName, valueExpr, uid, style, explode, elementKind);
             return;
         }
 
@@ -613,23 +763,25 @@ public static class CodeEmitHelpers
     /// <param name="kind">The serialization kind.</param>
     /// <param name="style">The parameter style (always Simple for headers).</param>
     /// <param name="explode">Whether to use exploded serialization.</param>
+    /// <param name="elementKind">The serialization kind of array/object elements.</param>
     public static void EmitHeaderParamWrite(
         IndentedWriter w,
         string valueExpr,
         string uid,
         ParameterSerializationKind kind,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind elementKind)
     {
         if (kind == ParameterSerializationKind.Array)
         {
-            EmitHeaderArrayWrite(w, valueExpr, uid, explode);
+            EmitHeaderArrayWrite(w, valueExpr, uid, explode, elementKind);
             return;
         }
 
         if (kind == ParameterSerializationKind.Object)
         {
-            EmitHeaderObjectWrite(w, valueExpr, uid, explode);
+            EmitHeaderObjectWrite(w, valueExpr, uid, explode, elementKind);
             return;
         }
 
@@ -647,6 +799,7 @@ public static class CodeEmitHelpers
     /// <param name="kind">The serialization kind.</param>
     /// <param name="style">The parameter style (always Form for cookies).</param>
     /// <param name="explode">Whether to use exploded serialization.</param>
+    /// <param name="elementKind">The serialization kind of array/object elements.</param>
     public static void EmitCookieParamWrite(
         IndentedWriter w,
         string paramName,
@@ -654,9 +807,10 @@ public static class CodeEmitHelpers
         string uid,
         ParameterSerializationKind kind,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind elementKind)
     {
-        EmitCookieParamWrite(w, paramName, valueExpr, uid, kind, style, explode, allowReserved: style == ParameterStyle.Cookie);
+        EmitCookieParamWrite(w, paramName, valueExpr, uid, kind, style, explode, elementKind, allowReserved: style == ParameterStyle.Cookie);
     }
 
     /// <summary>
@@ -669,6 +823,7 @@ public static class CodeEmitHelpers
     /// <param name="kind">The serialization kind.</param>
     /// <param name="style">The parameter style.</param>
     /// <param name="explode">Whether to use exploded serialization.</param>
+    /// <param name="elementKind">The serialization kind of array/object elements.</param>
     /// <param name="allowReserved">When <see langword="true"/>, reserved characters in strings are not percent-encoded.</param>
     public static void EmitCookieParamWrite(
         IndentedWriter w,
@@ -678,17 +833,18 @@ public static class CodeEmitHelpers
         ParameterSerializationKind kind,
         ParameterStyle style,
         bool explode,
+        ParameterSerializationKind elementKind,
         bool allowReserved)
     {
         if (kind == ParameterSerializationKind.Array)
         {
-            EmitCookieArrayWrite(w, paramName, valueExpr, uid, explode);
+            EmitCookieArrayWrite(w, paramName, valueExpr, uid, explode, elementKind);
             return;
         }
 
         if (kind == ParameterSerializationKind.Object)
         {
-            EmitCookieObjectWrite(w, paramName, valueExpr, uid, explode);
+            EmitCookieObjectWrite(w, paramName, valueExpr, uid, explode, elementKind);
             return;
         }
 
@@ -722,47 +878,13 @@ public static class CodeEmitHelpers
         string uid,
         ParameterSerializationKind kind)
     {
-        switch (kind)
+        if (kind is ParameterSerializationKind.Object or ParameterSerializationKind.Array)
         {
-            case ParameterSerializationKind.Boolean:
-                EmitBooleanWriteCounted(w, valueExpr);
-                break;
-
-            case ParameterSerializationKind.Byte:
-            case ParameterSerializationKind.UInt16:
-            case ParameterSerializationKind.UInt32:
-            case ParameterSerializationKind.UInt64:
-            case ParameterSerializationKind.UInt128:
-            case ParameterSerializationKind.SByte:
-            case ParameterSerializationKind.Int16:
-            case ParameterSerializationKind.Int32:
-            case ParameterSerializationKind.Int64:
-            case ParameterSerializationKind.Int128:
-            case ParameterSerializationKind.Half:
-            case ParameterSerializationKind.Single:
-            case ParameterSerializationKind.Double:
-            case ParameterSerializationKind.Decimal:
-                EmitTryFormatToLocal(w, valueExpr, uid, TryFormatBufferSize(kind));
-                w.WriteLine($"writer.Write(buf{uid}[..bw{uid}]);");
-                w.WriteLine($"totalWritten += bw{uid};");
-                break;
-
-            case ParameterSerializationKind.UnboundedNumber:
-                EmitUnboundedNumberToLocal(w, valueExpr, uid);
-                w.WriteLine($"writer.Write(raw{uid}.Span);");
-                w.WriteLine($"totalWritten += raw{uid}.Span.Length;");
-                break;
-
-            case ParameterSerializationKind.String:
-                EmitStringWrite(w, valueExpr, uid);
-                EmitUriEscapeAndWriteCounted(w, $"utf8{uid}.Span", uid);
-                break;
-
-            case ParameterSerializationKind.Object:
-            case ParameterSerializationKind.Array:
-                EmitJsonWriterFallbackCounted(w, valueExpr, uid);
-                break;
+            EmitJsonWriterFallbackCounted(w, valueExpr, uid);
+            return;
         }
+
+        EmitScalarValueBytesNative(w, valueExpr, kind, uid, counted: true, escape: true);
     }
 
     /// <summary>
@@ -853,56 +975,13 @@ public static class CodeEmitHelpers
         ParameterSerializationKind kind,
         bool allowReserved)
     {
-        switch (kind)
+        if (kind is ParameterSerializationKind.Object or ParameterSerializationKind.Array)
         {
-            case ParameterSerializationKind.Boolean:
-                EmitBooleanWriteCounted(w, valueExpr);
-                break;
-
-            case ParameterSerializationKind.Byte:
-            case ParameterSerializationKind.UInt16:
-            case ParameterSerializationKind.UInt32:
-            case ParameterSerializationKind.UInt64:
-            case ParameterSerializationKind.UInt128:
-            case ParameterSerializationKind.SByte:
-            case ParameterSerializationKind.Int16:
-            case ParameterSerializationKind.Int32:
-            case ParameterSerializationKind.Int64:
-            case ParameterSerializationKind.Int128:
-            case ParameterSerializationKind.Half:
-            case ParameterSerializationKind.Single:
-            case ParameterSerializationKind.Double:
-            case ParameterSerializationKind.Decimal:
-                EmitTryFormatToLocal(w, valueExpr, uid, TryFormatBufferSize(kind));
-                w.WriteLine($"writer.Write(buf{uid}[..bw{uid}]);");
-                w.WriteLine($"totalWritten += bw{uid};");
-                break;
-
-            case ParameterSerializationKind.UnboundedNumber:
-                EmitUnboundedNumberToLocal(w, valueExpr, uid);
-                w.WriteLine($"writer.Write(raw{uid}.Span);");
-                w.WriteLine($"totalWritten += raw{uid}.Span.Length;");
-                break;
-
-            case ParameterSerializationKind.String:
-                EmitStringWrite(w, valueExpr, uid);
-                if (allowReserved)
-                {
-                    w.WriteLine($"writer.Write(utf8{uid}.Span);");
-                    w.WriteLine($"totalWritten += utf8{uid}.Span.Length;");
-                }
-                else
-                {
-                    EmitUriEscapeAndWriteCounted(w, $"utf8{uid}.Span", uid);
-                }
-
-                break;
-
-            case ParameterSerializationKind.Object:
-            case ParameterSerializationKind.Array:
-                EmitJsonWriterFallbackCounted(w, valueExpr, uid);
-                break;
+            EmitJsonWriterFallbackCounted(w, valueExpr, uid);
+            return;
         }
+
+        EmitScalarValueBytesNative(w, valueExpr, kind, uid, counted: true, escape: !allowReserved);
     }
 
     // ── Style-aware path parameter helpers ───────────────────────────────
@@ -964,49 +1043,7 @@ public static class CodeEmitHelpers
         ParameterSerializationKind kind,
         bool allowReserved)
     {
-        switch (kind)
-        {
-            case ParameterSerializationKind.String:
-                EmitStringWrite(w, valueExpr, uid);
-                if (allowReserved)
-                {
-                    // When allowReserved is true, write the UTF-8 value directly without percent-encoding.
-                    w.WriteLine($"writer.Write(utf8{uid}.Span);");
-                }
-                else
-                {
-                    EmitUriEscapeAndWrite(w, $"utf8{uid}.Span", uid);
-                }
-
-                break;
-
-            case ParameterSerializationKind.Boolean:
-                EmitBooleanWrite(w, valueExpr);
-                break;
-
-            case ParameterSerializationKind.Byte:
-            case ParameterSerializationKind.UInt16:
-            case ParameterSerializationKind.UInt32:
-            case ParameterSerializationKind.UInt64:
-            case ParameterSerializationKind.UInt128:
-            case ParameterSerializationKind.SByte:
-            case ParameterSerializationKind.Int16:
-            case ParameterSerializationKind.Int32:
-            case ParameterSerializationKind.Int64:
-            case ParameterSerializationKind.Int128:
-            case ParameterSerializationKind.Half:
-            case ParameterSerializationKind.Single:
-            case ParameterSerializationKind.Double:
-            case ParameterSerializationKind.Decimal:
-                EmitTryFormatToLocal(w, valueExpr, uid, TryFormatBufferSize(kind));
-                w.WriteLine($"writer.Write(buf{uid}[..bw{uid}]);");
-                break;
-
-            case ParameterSerializationKind.UnboundedNumber:
-                EmitUnboundedNumberToLocal(w, valueExpr, uid);
-                w.WriteLine($"writer.Write(raw{uid}.Span);");
-                break;
-        }
+        EmitScalarValueBytesNative(w, valueExpr, kind, uid, counted: false, escape: !allowReserved);
     }
 
     /// <summary>
@@ -1018,13 +1055,17 @@ public static class CodeEmitHelpers
     /// <param name="uid">A unique identifier for variable naming.</param>
     /// <param name="style">The parameter style.</param>
     /// <param name="explode">Whether to use exploded serialization.</param>
+    /// <param name="elementKind">The serialization kind of array elements.</param>
+    /// <param name="allowReserved">When <see langword="true"/>, reserved characters are not percent-encoded.</param>
     public static void EmitPathArrayWrite(
         IndentedWriter w,
         string paramName,
         string valueExpr,
         string uid,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind elementKind,
+        bool allowReserved)
     {
         // Determine prefix and separator based on style + explode.
         // simple: prefix=none, sep=","
@@ -1067,7 +1108,7 @@ public static class CodeEmitHelpers
         w.WriteLine($"writer.Write(\"{separator}\"u8);");
         w.CloseBrace();
         w.WriteLine();
-        EmitElementScalarWrite(w, $"item{uid}", uid);
+        EmitElementScalarWrite(w, $"item{uid}", uid, elementKind, allowReserved);
         w.WriteLine($"firstItem{uid} = false;");
         w.CloseBrace();
     }
@@ -1081,13 +1122,17 @@ public static class CodeEmitHelpers
     /// <param name="uid">A unique identifier for variable naming.</param>
     /// <param name="style">The parameter style.</param>
     /// <param name="explode">Whether to use exploded serialization.</param>
+    /// <param name="elementKind">The serialization kind of object property values.</param>
+    /// <param name="allowReserved">When <see langword="true"/>, reserved characters are not percent-encoded.</param>
     public static void EmitPathObjectWrite(
         IndentedWriter w,
         string paramName,
         string valueExpr,
         string uid,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind elementKind,
+        bool allowReserved)
     {
         // For objects:
         // simple+!explode: key,value,key,value (sep=",", kvSep=",")
@@ -1126,9 +1171,10 @@ public static class CodeEmitHelpers
         w.WriteLine($"writer.Write(\"{separator}\"u8);");
         w.CloseBrace();
         w.WriteLine();
-        w.WriteLine($"writer.Write(System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name));");
+        w.WriteLine($"using UnescapedUtf8JsonString key{uid} = prop{uid}.Utf8NameSpan;");
+        EmitStringSpanValue(w, $"key{uid}.Span", $"{uid}k", counted: false, escape: !allowReserved);
         w.WriteLine($"writer.Write(\"{kvSeparator}\"u8);");
-        EmitElementScalarWrite(w, $"prop{uid}.Value", uid);
+        EmitElementScalarWrite(w, $"prop{uid}.Value", uid, elementKind, allowReserved);
         w.WriteLine($"firstProp{uid} = false;");
         w.CloseBrace();
     }
@@ -1144,13 +1190,15 @@ public static class CodeEmitHelpers
     /// <param name="uid">A unique identifier for variable naming.</param>
     /// <param name="style">The parameter style.</param>
     /// <param name="explode">Whether to use exploded serialization.</param>
+    /// <param name="elementKind">The serialization kind of array elements.</param>
     public static void EmitQueryArrayWrite(
         IndentedWriter w,
         string paramName,
         string valueExpr,
         string uid,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind elementKind)
     {
         // form+!explode: name=val1,val2,val3
         // form+explode: name=val1&name=val2&name=val3
@@ -1169,7 +1217,7 @@ public static class CodeEmitHelpers
             w.WriteLine();
             w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
             w.WriteLine($"totalWritten += {paramName.Length + 1};");
-            EmitElementScalarWriteCounted(w, $"item{uid}", uid);
+            EmitElementScalarWriteCounted(w, $"item{uid}", uid, elementKind, escape: true);
             w.WriteLine("first = false;");
             w.CloseBrace();
         }
@@ -1201,7 +1249,7 @@ public static class CodeEmitHelpers
             w.WriteLine($"totalWritten += {itemSep.Length};");
             w.CloseBrace();
             w.WriteLine();
-            EmitElementScalarWriteCounted(w, $"item{uid}", uid);
+            EmitElementScalarWriteCounted(w, $"item{uid}", uid, elementKind, escape: true);
             w.WriteLine($"firstItem{uid} = false;");
             w.CloseBrace();
 
@@ -1219,13 +1267,15 @@ public static class CodeEmitHelpers
     /// <param name="uid">A unique identifier for variable naming.</param>
     /// <param name="style">The parameter style.</param>
     /// <param name="explode">Whether to use exploded serialization.</param>
+    /// <param name="elementKind">The serialization kind of object property values.</param>
     public static void EmitQueryObjectWrite(
         IndentedWriter w,
         string paramName,
         string valueExpr,
         string uid,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind elementKind)
     {
         if (style == ParameterStyle.DeepObject)
         {
@@ -1241,12 +1291,11 @@ public static class CodeEmitHelpers
             w.WriteLine();
             w.WriteLine($"writer.Write(\"{paramName}%5B\"u8);");
             w.WriteLine($"totalWritten += {paramName.Length + 3};");
-            w.WriteLine($"byte[] keyBytes{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name);");
-            w.WriteLine($"writer.Write(keyBytes{uid});");
-            w.WriteLine($"totalWritten += keyBytes{uid}.Length;");
+            w.WriteLine($"using UnescapedUtf8JsonString key{uid} = prop{uid}.Utf8NameSpan;");
+            EmitStringSpanValue(w, $"key{uid}.Span", $"{uid}k", counted: true, escape: true);
             w.WriteLine("writer.Write(\"%5D=\"u8);");
             w.WriteLine("totalWritten += 4;");
-            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid);
+            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid, elementKind, escape: true);
             w.WriteLine("first = false;");
             w.CloseBrace();
         }
@@ -1262,12 +1311,11 @@ public static class CodeEmitHelpers
             w.WriteLine("totalWritten++;");
             w.CloseBrace();
             w.WriteLine();
-            w.WriteLine($"byte[] keyBytes{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name);");
-            w.WriteLine($"writer.Write(keyBytes{uid});");
-            w.WriteLine($"totalWritten += keyBytes{uid}.Length;");
+            w.WriteLine($"using UnescapedUtf8JsonString key{uid} = prop{uid}.Utf8NameSpan;");
+            EmitStringSpanValue(w, $"key{uid}.Span", $"{uid}k", counted: true, escape: true);
             w.WriteLine("writer.Write(\"=\"u8);");
             w.WriteLine("totalWritten++;");
-            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid);
+            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid, elementKind, escape: true);
             w.WriteLine("first = false;");
             w.CloseBrace();
         }
@@ -1301,12 +1349,11 @@ public static class CodeEmitHelpers
             w.WriteLine($"totalWritten += {kvSep.Length};");
             w.CloseBrace();
             w.WriteLine();
-            w.WriteLine($"byte[] keyBytes{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name);");
-            w.WriteLine($"writer.Write(keyBytes{uid});");
-            w.WriteLine($"totalWritten += keyBytes{uid}.Length;");
+            w.WriteLine($"using UnescapedUtf8JsonString key{uid} = prop{uid}.Utf8NameSpan;");
+            EmitStringSpanValue(w, $"key{uid}.Span", $"{uid}k", counted: true, escape: true);
             w.WriteLine($"writer.Write(\"{kvSep}\"u8);");
             w.WriteLine($"totalWritten += {kvSep.Length};");
-            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid);
+            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid, elementKind, escape: true);
             w.WriteLine($"firstProp{uid} = false;");
             w.CloseBrace();
 
@@ -1324,11 +1371,13 @@ public static class CodeEmitHelpers
     /// <param name="valueExpr">The C# expression for the array value.</param>
     /// <param name="uid">A unique identifier for variable naming.</param>
     /// <param name="explode">Whether to use exploded serialization.</param>
+    /// <param name="elementKind">The serialization kind of array elements.</param>
     public static void EmitHeaderArrayWrite(
         IndentedWriter w,
         string valueExpr,
         string uid,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind elementKind)
     {
         // Headers always use simple style. simple+!explode = comma-separated, simple+explode = same.
         w.WriteLine("Span<byte> headerBuf = stackalloc byte[512];");
@@ -1341,7 +1390,7 @@ public static class CodeEmitHelpers
         w.WriteLine("headerBuf[headerLen++] = (byte)',';");
         w.CloseBrace();
         w.WriteLine();
-        EmitElementToHeaderBuffer(w, $"item{uid}", uid);
+        EmitElementToHeaderBuffer(w, $"item{uid}", uid, elementKind);
         w.WriteLine($"firstItem{uid} = false;");
         w.CloseBrace();
         w.WriteLine($"callback(nameUtf8{uid}, headerBuf[..headerLen], state);");
@@ -1354,11 +1403,13 @@ public static class CodeEmitHelpers
     /// <param name="valueExpr">The C# expression for the object value.</param>
     /// <param name="uid">A unique identifier for variable naming.</param>
     /// <param name="explode">Whether to use exploded serialization.</param>
+    /// <param name="elementKind">The serialization kind of object property values.</param>
     public static void EmitHeaderObjectWrite(
         IndentedWriter w,
         string valueExpr,
         string uid,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind elementKind)
     {
         // simple+!explode: key,value,key,value
         // simple+explode: key=value,key=value
@@ -1374,10 +1425,11 @@ public static class CodeEmitHelpers
         w.WriteLine("headerBuf[headerLen++] = (byte)',';");
         w.CloseBrace();
         w.WriteLine();
-        w.WriteLine($"int keyLen{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name, headerBuf[headerLen..]);");
-        w.WriteLine($"headerLen += keyLen{uid};");
+        w.WriteLine($"using UnescapedUtf8JsonString key{uid} = prop{uid}.Utf8NameSpan;");
+        w.WriteLine($"key{uid}.Span.CopyTo(headerBuf[headerLen..]);");
+        w.WriteLine($"headerLen += key{uid}.Span.Length;");
         w.WriteLine($"headerBuf[headerLen++] = (byte)'{kvSep}';");
-        EmitElementToHeaderBuffer(w, $"prop{uid}.Value", uid);
+        EmitElementToHeaderBuffer(w, $"prop{uid}.Value", uid, elementKind);
         w.WriteLine($"firstProp{uid} = false;");
         w.CloseBrace();
         w.WriteLine($"callback(nameUtf8{uid}, headerBuf[..headerLen], state);");
@@ -1393,12 +1445,14 @@ public static class CodeEmitHelpers
     /// <param name="valueExpr">The C# expression for the array value.</param>
     /// <param name="uid">A unique identifier for variable naming.</param>
     /// <param name="explode">Whether to use exploded serialization.</param>
+    /// <param name="elementKind">The serialization kind of array elements.</param>
     public static void EmitCookieArrayWrite(
         IndentedWriter w,
         string paramName,
         string valueExpr,
         string uid,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind elementKind)
     {
         if (explode)
         {
@@ -1413,7 +1467,7 @@ public static class CodeEmitHelpers
             w.WriteLine();
             w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
             w.WriteLine($"totalWritten += {paramName.Length + 1};");
-            EmitElementScalarWriteCounted(w, $"item{uid}", uid);
+            EmitElementScalarWriteCounted(w, $"item{uid}", uid, elementKind, escape: false);
             w.WriteLine("first = false;");
             w.CloseBrace();
         }
@@ -1438,7 +1492,7 @@ public static class CodeEmitHelpers
             w.WriteLine("totalWritten++;");
             w.CloseBrace();
             w.WriteLine();
-            EmitElementScalarWriteCounted(w, $"item{uid}", uid);
+            EmitElementScalarWriteCounted(w, $"item{uid}", uid, elementKind, escape: false);
             w.WriteLine($"firstItem{uid} = false;");
             w.CloseBrace();
 
@@ -1455,12 +1509,14 @@ public static class CodeEmitHelpers
     /// <param name="valueExpr">The C# expression for the object value.</param>
     /// <param name="uid">A unique identifier for variable naming.</param>
     /// <param name="explode">Whether to use exploded serialization.</param>
+    /// <param name="elementKind">The serialization kind of object property values.</param>
     public static void EmitCookieObjectWrite(
         IndentedWriter w,
         string paramName,
         string valueExpr,
         string uid,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind elementKind)
     {
         if (explode)
         {
@@ -1473,12 +1529,11 @@ public static class CodeEmitHelpers
             w.WriteLine("totalWritten += 2;");
             w.CloseBrace();
             w.WriteLine();
-            w.WriteLine($"byte[] keyBytes{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name);");
-            w.WriteLine($"writer.Write(keyBytes{uid});");
-            w.WriteLine($"totalWritten += keyBytes{uid}.Length;");
+            w.WriteLine($"using UnescapedUtf8JsonString key{uid} = prop{uid}.Utf8NameSpan;");
+            EmitStringSpanValue(w, $"key{uid}.Span", $"{uid}k", counted: true, escape: false);
             w.WriteLine("writer.Write(\"=\"u8);");
             w.WriteLine("totalWritten++;");
-            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid);
+            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid, elementKind, escape: false);
             w.WriteLine("first = false;");
             w.CloseBrace();
         }
@@ -1503,12 +1558,11 @@ public static class CodeEmitHelpers
             w.WriteLine("totalWritten++;");
             w.CloseBrace();
             w.WriteLine();
-            w.WriteLine($"byte[] keyBytes{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name);");
-            w.WriteLine($"writer.Write(keyBytes{uid});");
-            w.WriteLine($"totalWritten += keyBytes{uid}.Length;");
+            w.WriteLine($"using UnescapedUtf8JsonString key{uid} = prop{uid}.Utf8NameSpan;");
+            EmitStringSpanValue(w, $"key{uid}.Span", $"{uid}k", counted: true, escape: false);
             w.WriteLine("writer.Write(\",\"u8);");
             w.WriteLine("totalWritten++;");
-            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid);
+            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid, elementKind, escape: false);
             w.WriteLine($"firstProp{uid} = false;");
             w.CloseBrace();
 
@@ -1520,49 +1574,165 @@ public static class CodeEmitHelpers
     // ── Element-level serialization helpers ──────────────────────────────
 
     /// <summary>
-    /// Emits code to write a JSON element's scalar value to a <c>writer</c> (path-style, no counting).
+    /// Emits code to write a JSON array/object element's scalar value to a <c>writer</c>
+    /// (path-style, no counting), bytes-native and percent-encoded unless
+    /// <paramref name="allowReserved"/> is set. Dispatches on the value's runtime
+    /// <see cref="JsonValueKind"/>, because array elements and object property values may be
+    /// heterogeneous (an object's declared properties can each have a different type), so a single
+    /// compile-time element kind cannot describe them.
     /// </summary>
     /// <param name="w">The writer.</param>
     /// <param name="itemExpr">The C# expression for the JSON element.</param>
     /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="elementKind">The declared serialization kind of the element (unused; kept for API symmetry).</param>
+    /// <param name="allowReserved">When <see langword="true"/>, reserved characters are not percent-encoded.</param>
     public static void EmitElementScalarWrite(
         IndentedWriter w,
         string itemExpr,
-        string uid)
+        string uid,
+        ParameterSerializationKind elementKind,
+        bool allowReserved)
     {
-        // Write the element's raw value as UTF-8 text.
-        w.WriteLine($"writer.Write(System.Text.Encoding.UTF8.GetBytes({itemExpr}.ToString()));");
+        EmitElementValueByRuntimeKind(w, itemExpr, uid, counted: false, escape: !allowReserved);
     }
 
     /// <summary>
-    /// Emits code to write a JSON element's scalar value to a <c>writer</c> with <c>totalWritten</c> tracking.
+    /// Emits code to write a JSON array/object element's scalar value to a <c>writer</c> with
+    /// <c>totalWritten</c> tracking, bytes-native and percent-encoded unless <paramref name="escape"/>
+    /// is <see langword="false"/>. Dispatches on the value's runtime <see cref="JsonValueKind"/>
+    /// (see <see cref="EmitElementScalarWrite"/> for why).
     /// </summary>
     /// <param name="w">The writer.</param>
     /// <param name="itemExpr">The C# expression for the JSON element.</param>
     /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="elementKind">The declared serialization kind of the element (unused; kept for API symmetry).</param>
+    /// <param name="escape">Whether to percent-encode string element values.</param>
     public static void EmitElementScalarWriteCounted(
         IndentedWriter w,
         string itemExpr,
-        string uid)
+        string uid,
+        ParameterSerializationKind elementKind,
+        bool escape)
     {
-        w.WriteLine($"byte[] elBytes{uid} = System.Text.Encoding.UTF8.GetBytes({itemExpr}.ToString());");
-        w.WriteLine($"writer.Write(elBytes{uid});");
-        w.WriteLine($"totalWritten += elBytes{uid}.Length;");
+        EmitElementValueByRuntimeKind(w, itemExpr, uid, counted: true, escape);
     }
 
     /// <summary>
-    /// Emits code to write a JSON element's scalar value to a header buffer span.
+    /// Emits a single array/object element value to the buffer <c>writer</c>, dispatching on the
+    /// value's runtime <see cref="JsonValueKind"/>: strings via <c>GetUtf8String</c> then
+    /// percent-encoded (or raw); numbers via their raw JSON text (<c>GetRawUtf8Value</c>, no
+    /// escaping); booleans as <c>"true"u8</c>/<c>"false"u8</c>; nulls and composites emit nothing.
     /// </summary>
     /// <param name="w">The writer.</param>
     /// <param name="itemExpr">The C# expression for the JSON element.</param>
     /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="counted">Whether to update the <c>totalWritten</c> counter.</param>
+    /// <param name="escape">Whether to percent-encode string values.</param>
+    public static void EmitElementValueByRuntimeKind(
+        IndentedWriter w,
+        string itemExpr,
+        string uid,
+        bool counted,
+        bool escape)
+    {
+        w.WriteLine($"switch (((JsonElement){itemExpr}).ValueKind)");
+        w.OpenBrace();
+
+        w.WriteLine("case JsonValueKind.String:");
+        w.OpenBrace();
+        w.WriteLine($"using UnescapedUtf8JsonString utf8{uid} = ((JsonElement){itemExpr}).GetUtf8String();");
+        EmitStringSpanValue(w, $"utf8{uid}.Span", uid, counted, escape);
+        w.WriteLine("break;");
+        w.CloseBrace();
+        w.WriteLine();
+
+        w.WriteLine("case JsonValueKind.Number:");
+        w.OpenBrace();
+        EmitUnboundedNumberToLocal(w, itemExpr, uid);
+        EmitRawSpanToWriter(w, $"raw{uid}.Span", counted);
+        w.WriteLine("break;");
+        w.CloseBrace();
+        w.WriteLine();
+
+        w.WriteLine("case JsonValueKind.True:");
+        w.WriteLine("writer.Write(\"true\"u8);");
+        if (counted)
+        {
+            w.WriteLine("totalWritten += 4;");
+        }
+
+        w.WriteLine("break;");
+        w.WriteLine();
+
+        w.WriteLine("case JsonValueKind.False:");
+        w.WriteLine("writer.Write(\"false\"u8);");
+        if (counted)
+        {
+            w.WriteLine("totalWritten += 5;");
+        }
+
+        w.WriteLine("break;");
+        w.WriteLine();
+
+        w.WriteLine("default:");
+        w.WriteLine("break;");
+
+        w.CloseBrace();
+    }
+
+    /// <summary>
+    /// Emits code to write a JSON array/object element's scalar value to a header buffer span,
+    /// bytes-native and with no percent-encoding (headers use simple style). Dispatches on the
+    /// value's runtime <see cref="JsonValueKind"/> (array elements and object values may be
+    /// heterogeneous).
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="itemExpr">The C# expression for the JSON element.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="elementKind">The declared serialization kind of the element (unused; kept for API symmetry).</param>
     public static void EmitElementToHeaderBuffer(
         IndentedWriter w,
         string itemExpr,
-        string uid)
+        string uid,
+        ParameterSerializationKind elementKind)
     {
-        w.WriteLine($"int elLen{uid} = System.Text.Encoding.UTF8.GetBytes({itemExpr}.ToString(), headerBuf[headerLen..]);");
-        w.WriteLine($"headerLen += elLen{uid};");
+        w.WriteLine($"switch (((JsonElement){itemExpr}).ValueKind)");
+        w.OpenBrace();
+
+        w.WriteLine("case JsonValueKind.String:");
+        w.OpenBrace();
+        w.WriteLine($"using UnescapedUtf8JsonString utf8{uid} = ((JsonElement){itemExpr}).GetUtf8String();");
+        w.WriteLine($"utf8{uid}.Span.CopyTo(headerBuf[headerLen..]);");
+        w.WriteLine($"headerLen += utf8{uid}.Span.Length;");
+        w.WriteLine("break;");
+        w.CloseBrace();
+        w.WriteLine();
+
+        w.WriteLine("case JsonValueKind.Number:");
+        w.OpenBrace();
+        w.WriteLine($"using RawUtf8JsonString raw{uid} = JsonMarshal.GetRawUtf8Value({itemExpr});");
+        w.WriteLine($"raw{uid}.Span.CopyTo(headerBuf[headerLen..]);");
+        w.WriteLine($"headerLen += raw{uid}.Span.Length;");
+        w.WriteLine("break;");
+        w.CloseBrace();
+        w.WriteLine();
+
+        w.WriteLine("case JsonValueKind.True:");
+        w.WriteLine("\"true\"u8.CopyTo(headerBuf[headerLen..]);");
+        w.WriteLine("headerLen += 4;");
+        w.WriteLine("break;");
+        w.WriteLine();
+
+        w.WriteLine("case JsonValueKind.False:");
+        w.WriteLine("\"false\"u8.CopyTo(headerBuf[headerLen..]);");
+        w.WriteLine("headerLen += 5;");
+        w.WriteLine("break;");
+        w.WriteLine();
+
+        w.WriteLine("default:");
+        w.WriteLine("break;");
+
+        w.CloseBrace();
     }
 
     /// <summary>
