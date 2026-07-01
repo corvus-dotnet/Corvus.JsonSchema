@@ -121,6 +121,17 @@ class ArazzoControlPlane extends ArazzoElement {
     }
   }
 
+  /**
+   * Reload from page 1 and clear any open detail — the public hook the demo calls on a persona change (the new caller's
+   * scopes + reach change the whole visible set, so a stale page/cursor and a now-out-of-reach detail must be discarded).
+   */
+  reload() {
+    this.$('arazzo-runs-table')?.reload();
+    this.clearDetail?.();
+  }
+
+  refresh() { this.reload(); }
+
   themeTokens() {
     const theme = this.getAttribute('theme') || 'auto';
     if (theme === 'dark') return `:host{${DARK}}`;

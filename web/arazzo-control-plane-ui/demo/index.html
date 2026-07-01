@@ -193,8 +193,11 @@
       reach.setAttribute('scopes', prefixed(scopes, 'security:'));
       bindings.setAttribute('scopes', prefixed(scopes, 'security:'));
       runnersPanel.setAttribute('scopes', prefixed(scopes, 'runs:')); // runs:read; read-only observability
-      // Re-fetch the data-bearing surfaces so the new persona's enforcement (e.g. an emptied approver inbox) shows.
-      for (const c of [panel, catalog, credTable, environments, access, promotions, reach, bindings, runnersPanel, runnerAuth]) c.refresh?.();
+      // A persona change swaps the caller's scopes AND reach, so reset every surface to page 1 (a stale page/cursor from
+      // the previous caller's data must not carry over, and an open detail may now be out of reach). Prefer reload().
+      for (const c of [panel, catalog, credTable, environments, access, promotions, reach, bindings, runnersPanel, runnerAuth]) {
+        (c.reload || c.refresh || c.requestRender)?.call(c);
+      }
     };
     const personaSel = document.getElementById('persona');
     personaSel.addEventListener('change', (e) => applyPersona(e.target.value));

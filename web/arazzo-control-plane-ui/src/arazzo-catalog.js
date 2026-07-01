@@ -224,6 +224,18 @@ class ArazzoCatalog extends ArazzoElement {
     this._pane.replaceChildren();
     this._layout.classList.remove('has-selection');
   }
+
+  /**
+   * Reload the catalog list from page 1 and clear any open detail — the public hook the demo calls on a persona change.
+   * The new caller's reach changes the visible workflows, so the previous list and any now-out-of-reach open detail (which
+   * would 404 in the detail view) must be discarded.
+   */
+  reload() {
+    this.$('arazzo-catalog-table')?.reload();
+    this.clearDetail();
+  }
+
+  refresh() { this.reload(); }
 }
 
 define('arazzo-catalog', ArazzoCatalog);
