@@ -25,9 +25,12 @@ export function bytes(...chunks) {
 // into a ByteWriter; writeHeaders streams header name/value pairs; the body is taken from the supplied
 // RequestBody. The base URL is the client's static serverUri().
 export class MockApiTransport {
-  constructor(baseUrl, canned) {
+  constructor(baseUrl, canned, authenticationProvider) {
     this.baseUrl = baseUrl;
     this.captured = undefined;
+    // An optional AuthenticationProvider, applied after the request is composed and before dispatch —
+    // exactly where the real AbstractApiTransport.send runs it (see transports/abstract-transport.ts).
+    this.authenticationProvider = authenticationProvider;
     // The canned response the factory decodes: { status, bytes, contentType }. Defaults to a 200 JSON Pet.
     this.canned = canned ?? {
       status: 200,
@@ -63,7 +66,17 @@ export class MockApiTransport {
       }
     }
 
-    const url = this.baseUrl + path + query;
+    let url = this.baseUrl + path + query;
+
+    // Apply auth exactly as AbstractApiTransport.send does: once per logical send, over the composed
+    // wire request, after build and before dispatch. The provider mutates headers (and may rewrite the
+    // URL, e.g. an apiKey in the query), so read `url` back from the wire object afterwards.
+    if (this.authenticationProvider !== undefined) {
+      const wire = { method: methodName(request.method), url, headers, body, signal: _signal };
+      await this.authenticationProvider.authenticate(wire, _signal ?? new AbortController().signal);
+      url = wire.url;
+    }
+
     this.captured = {
       method: methodName(request.method),
       url,

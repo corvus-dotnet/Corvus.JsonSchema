@@ -1340,42 +1340,50 @@ main-docs:
       - {index: 27, language: csharp, lines: [491, 503], category: fragment, verified: false}
       - {index: 28, language: csharp, lines: [558, 581], category: fragment, verified: false}
       - {index: 29, language: csharp, lines: [587, 607], category: fragment, verified: false}
-      - {index: 30, language: csharp, lines: [625, 635], category: fragment, verified: false}
-      - {index: 31, language: csharp, lines: [639, 661], category: fragment, verified: false}
-      - {index: 32, language: csharp, lines: [665, 695], category: fragment, verified: false}
-      - {index: 33, language: csharp, lines: [699, 709], category: fragment, verified: false}
-      - {index: 34, language: csharp, lines: [715, 740], category: fragment, verified: false}
-      - {index: 35, language: csharp, lines: [748, 768], category: fragment, verified: false}
-      - {index: 36, language: csharp, lines: [774, 779], category: fragment, verified: false}
-      - {index: 37, language: csharp, lines: [785, 803], category: fragment, verified: false}
-      - {index: 38, language: csharp, lines: [807, 814], category: fragment, verified: false}
-      - {index: 39, language: csharp, lines: [820, 826], category: fragment, verified: false}
-      - {index: 40, language: csharp, lines: [832, 840], category: fragment, verified: false}
-      - {index: 41, language: csharp, lines: [852, 858], category: fragment, verified: false}
-      - {index: 42, language: csharp, lines: [862, 871], category: compilable, verified: false}
-      - {index: 43, language: csharp, lines: [883, 912], category: compilable, verified: false}
-      - {index: 44, language: csharp, lines: [916, 942], category: compilable, verified: false}
-      - {index: 45, language: csharp, lines: [946, 959], category: compilable, verified: false}
-      - {index: 46, language: csharp, lines: [976, 991], category: compilable, verified: false}
-      - {index: 47, language: csharp, lines: [999, 1015], category: compilable, verified: false}
-      - {index: 48, language: csharp, lines: [1023, 1034], category: compilable, verified: false}
-      - {index: 49, language: , lines: [1044, 1052]}
-      - {index: 50, language: bash, lines: [1065, 1069]}
-      - {index: 51, language: csharp, lines: [1078, 1089], category: compilable, verified: false}
-      - {index: 52, language: bash, lines: [1095, 1099]}
-      - {index: 53, language: csharp, lines: [1107, 1118], category: compilable, verified: false}
-      - {index: 54, language: csharp, lines: [1134, 1144], category: compilable, verified: false}
-      - {index: 55, language: csharp, lines: [1154, 1168], category: compilable, verified: false}
-      - {index: 56, language: json, lines: [1174, 1218]}
-      - {index: 57, language: bash, lines: [1224, 1226]}
-      - {index: 58, language: bash, lines: [1242, 1244]}
-      - {index: 59, language: bash, lines: [1250, 1252]}
-      - {index: 60, language: bash, lines: [1260, 1262]}
-      - {index: 61, language: bash, lines: [1270, 1272]}
-      - {index: 62, language: bash, lines: [1300, 1317]}
-      - {index: 63, language: bash, lines: [1321, 1331]}
-      - {index: 64, language: bash, lines: [1339, 1351]}
-      - {index: 65, language: bash, lines: [1357, 1372]}
+      - {index: 30, language: csharp, lines: [627, 637], category: fragment, verified: false}
+      - {index: 31, language: csharp, lines: [641, 663], category: fragment, verified: false}
+      - {index: 32, language: csharp, lines: [667, 697], category: fragment, verified: false}
+      - {index: 33, language: csharp, lines: [701, 711], category: fragment, verified: false}
+      - {index: 34, language: csharp, lines: [717, 742], category: fragment, verified: false}
+      - {index: 35, language: csharp, lines: [750, 770], category: fragment, verified: false}
+      - {index: 36, language: csharp, lines: [776, 784], category: fragment, verified: false}
+      - {index: 37, language: csharp, lines: [792, 808], category: fragment, verified: false}
+      - {index: 38, language: csharp, lines: [816, 824], category: fragment, verified: false}
+      - {index: 39, language: csharp, lines: [828, 832], category: fragment, verified: false}
+      - {index: 40, language: csharp, lines: [849, 865], category: fragment, verified: false}
+      - {index: 41, language: csharp, lines: [873, 890], category: fragment, verified: false}
+      - {index: 42, language: csharp, lines: [898, 916], category: compilable, verified: false}
+      - {index: 43, language: csharp, lines: [924, 933], category: compilable, verified: false}
+      - {index: 44, language: csharp, lines: [941, 946], category: compilable, verified: false}
+      - {index: 45, language: csharp, lines: [952, 970], category: compilable, verified: false}
+      - {index: 46, language: csharp, lines: [974, 981], category: compilable, verified: false}
+      - {index: 47, language: csharp, lines: [987, 993], category: compilable, verified: false}
+      - {index: 48, language: csharp, lines: [999, 1007], category: compilable, verified: false}
+      - {index: 49, language: csharp, lines: [1019, 1025], category: compilable, verified: false}
+      - {index: 50, language: csharp, lines: [1029, 1038], category: compilable, verified: false}
+      - {index: 51, language: csharp, lines: [1050, 1079], category: compilable, verified: false}
+      - {index: 52, language: csharp, lines: [1083, 1109], category: compilable, verified: false}
+      - {index: 53, language: csharp, lines: [1113, 1126], category: compilable, verified: false}
+      - {index: 54, language: csharp, lines: [1143, 1158], category: compilable, verified: false}
+      - {index: 55, language: csharp, lines: [1166, 1182], category: compilable, verified: false}
+      - {index: 56, language: csharp, lines: [1190, 1201], category: compilable, verified: false}
+      - {index: 57, language: , lines: [1211, 1219]}
+      - {index: 58, language: bash, lines: [1232, 1236]}
+      - {index: 59, language: csharp, lines: [1245, 1256], category: compilable, verified: false}
+      - {index: 60, language: bash, lines: [1262, 1266]}
+      - {index: 61, language: csharp, lines: [1274, 1285], category: compilable, verified: false}
+      - {index: 62, language: csharp, lines: [1301, 1311], category: compilable, verified: false}
+      - {index: 63, language: csharp, lines: [1321, 1335], category: compilable, verified: false}
+      - {index: 64, language: json, lines: [1341, 1385]}
+      - {index: 65, language: bash, lines: [1391, 1393]}
+      - {index: 66, language: bash, lines: [1409, 1411]}
+      - {index: 67, language: bash, lines: [1417, 1419]}
+      - {index: 68, language: bash, lines: [1427, 1429]}
+      - {index: 69, language: bash, lines: [1437, 1439]}
+      - {index: 70, language: bash, lines: [1467, 1484]}
+      - {index: 71, language: bash, lines: [1488, 1498]}
+      - {index: 72, language: bash, lines: [1506, 1518]}
+      - {index: 73, language: bash, lines: [1524, 1539]}
   - path: "docs/ParsedJsonDocument.md"
     blocks:
       - {index: 0, language: csharp, lines: [40, 56], category: compilable, verified: false}
@@ -1612,6 +1620,32 @@ typescript-docs:
       - {index: 1, language: typescript, lines: [19, 23]}
       - {index: 2, language: typescript, lines: [31, 34]}
       - {index: 3, language: typescript, lines: [44, 50]}
+  - path: "docs/typescript/authentication.md"
+    blocks:
+      - {index: 0, language: typescript, lines: [18, 27]}
+      - {index: 1, language: typescript, lines: [31, 35]}
+      - {index: 2, language: typescript, lines: [49, 54]}
+      - {index: 3, language: typescript, lines: [64, 69]}
+      - {index: 4, language: typescript, lines: [75, 88]}
+      - {index: 5, language: typescript, lines: [93, 99]}
+      - {index: 6, language: typescript, lines: [106, 113]}
+      - {index: 7, language: typescript, lines: [129, 147]}
+      - {index: 8, language: typescript, lines: [157, 169]}
+      - {index: 9, language: typescript, lines: [180, 192]}
+      - {index: 10, language: typescript, lines: [202, 211]}
+      - {index: 11, language: typescript, lines: [222, 229]}
+      - {index: 12, language: typescript, lines: [241, 254]}
+      - {index: 13, language: typescript, lines: [265, 273]}
+      - {index: 14, language: typescript, lines: [284, 293]}
+      - {index: 15, language: typescript, lines: [304, 310]}
+      - {index: 16, language: typescript, lines: [327, 342]}
+      - {index: 17, language: typescript, lines: [353, 363]}
+      - {index: 18, language: typescript, lines: [368, 373]}
+      - {index: 19, language: typescript, lines: [384, 407]}
+      - {index: 20, language: typescript, lines: [420, 438]}
+      - {index: 21, language: typescript, lines: [442, 449]}
+      - {index: 22, language: typescript, lines: [468, 494]}
+      - {index: 23, language: typescript, lines: [508, 526]}
   - path: "docs/typescript/openapi.md"
     blocks:
       - {index: 0, language: bash, lines: [30, 32]}

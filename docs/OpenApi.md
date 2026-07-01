@@ -616,6 +616,8 @@ Kiota provides built-in `IAuthenticationProvider` implementations (`BaseBearerTo
 
 **Key advantage:** Corvus extracts OAuth2 scopes from the specification and emits them as generated constants — per-operation (`ListPetsOauth2Scopes`) and unioned (`AllOauth2Scopes`). This eliminates hardcoded scope strings and ensures your token requests stay in sync with the API contract. Kiota does not surface per-operation scopes in generated code.
 
+> **These `SecuritySchemes` / `SecurityRequirements` scope constants are emitted for OpenAPI 3.2 specs that declare `securitySchemes`.** A 3.0 or 3.1 spec generates the client but not the constants, so acquire the scopes another way when you target those versions. (This is distinct from the server-side `ApiEndpointRegistration.SecurityRequirements` endpoint metadata described under [Applying OpenAPI Security as Authorization](#applying-openapi-security-as-authorization), which is populated for all supported versions.) The same broad set of providers below applies to the TypeScript client — see the [TypeScript authentication guide](./typescript/authentication.md), whose scope constants have the same 3.2 constraint.
+
 ### Microsoft Entra ID (Azure AD / MSAL)
 
 Kiota provides a dedicated Azure Identity authentication provider that wraps MSAL. The Corvus equivalent uses `Azure.Identity` (which wraps MSAL internally) with a standard `DelegatingHandler`.
@@ -766,6 +768,171 @@ HttpClient httpClient = httpClientFactory.CreateClient("petstore");
 await using HttpClientTransport transport = new(httpClient, baseUri);
 PetstorePetsClient client = new(transport);
 ```
+
+#### The built-in `BearerTokenAuthenticationProvider` token factory
+
+For **pure token acquisition** (as opposed to signing, which needs the request's method/path/body) there is a simpler wiring than a `DelegatingHandler`: pass a token factory straight to `HttpClientTransport` via the built-in `BearerTokenAuthenticationProvider`. The factory is re-invoked once per request, so a refreshed token is always picked up, and there is no handler to register:
+
+```csharp
+using Corvus.Text.Json.OpenApi.HttpTransport;
+
+var http = new HttpClient { BaseAddress = new Uri("https://api.example.com") };
+var transport = new HttpClientTransport(
+    http,
+    new BearerTokenAuthenticationProvider(async ct => await tokenService.GetTokenAsync(ct)));
+var client = new ApiPetsClient(transport);
+```
+
+Prefer this for token acquisition; use a `DelegatingHandler` when the same handler is shared by other SDKs, when you need a 401 → refresh retry, or when you are **signing** the request (SigV4 / HMAC). Every snippet below is shown in whichever form fits — the token-acquisition providers use the built-in factory, the signing schemes use a handler. The runtime also ships `BasicAuthenticationProvider` and `ApiKeyAuthenticationProvider` for those schemes.
+
+### Microsoft Entra ID / Managed Identity — Azure Identity
+
+Beyond the interactive/device-code MSAL flows above, the same `Azure.Identity` credentials drive server-to-server auth. `DefaultAzureCredential` falls back through Managed Identity, environment, and CLI credentials; the SDK caches and refreshes, so calling `GetTokenAsync` per request is cheap. Feed it the generated scope union:
+
+```csharp
+using Azure.Core;
+using Azure.Identity;
+using Corvus.Text.Json.OpenApi.HttpTransport;
+
+var cred = new DefaultAzureCredential();   // or new ManagedIdentityCredential() / new ClientSecretCredential(tenantId, clientId, secret)
+string[] scopes = IApiPetsClient.SecurityRequirements.AllOauth2Scopes;   // or "api://<app-id>/.default"
+
+var http = new HttpClient { BaseAddress = new Uri("https://api.example.com") };
+var transport = new HttpClientTransport(
+    http,
+    new BearerTokenAuthenticationProvider(async ct =>
+    {
+        AccessToken t = await cred.GetTokenAsync(new TokenRequestContext(scopes), ct);
+        return t.Token;   // Azure.Identity caches + refreshes internally
+    }));
+```
+
+Managed Identity works only on Azure hosts that inject it (App Service, Functions, Container Apps, AKS with workload identity, VMs) — locally `DefaultAzureCredential` uses env / CLI / VS credentials. Use the resource's `/.default` scope for an app-only token; a bare resource scope throws `AADSTS70011`. Don't hand-cache the token — the SDK already does.
+
+### Google (access tokens + ID tokens for Cloud Run / IAP)
+
+`Google.Apis.Auth`. Application Default Credentials come from the environment or the GCP metadata server. For a Google **access token**:
+
+```csharp
+using Google.Apis.Auth.OAuth2;
+using Corvus.Text.Json.OpenApi.HttpTransport;
+
+GoogleCredential cred = (await GoogleCredential.GetApplicationDefaultAsync())
+    .CreateScoped("https://www.googleapis.com/auth/cloud-platform");
+var auth = new BearerTokenAuthenticationProvider(async ct =>
+    await ((ITokenAccess)cred).GetAccessTokenForRequestAsync(cancellationToken: ct));
+```
+
+For a private Cloud Run service or an IAP-protected resource you need an **ID token** whose `aud` is the service URL / IAP client ID:
+
+```csharp
+GoogleCredential adc = await GoogleCredential.GetApplicationDefaultAsync();
+OidcToken oidc = await adc.GetOidcTokenAsync(OidcTokenOptions.FromTargetAudience(audience));
+var auth = new BearerTokenAuthenticationProvider(ct => new(oidc.GetAccessTokenAsync(ct)));  // returns the ID token
+```
+
+Access token vs ID token is the trap: Google APIs want the access token; Cloud Run / IAP want the ID token. On GCP hosts ADC comes from the metadata server; locally set `GOOGLE_APPLICATION_CREDENTIALS` or run `gcloud auth application-default login`. Both libraries cache the token — don't re-create the credential per request.
+
+### Auth0 / Okta / Clerk / Supabase / Firebase / Cognito (SPA-issued tokens)
+
+Auth0, Okta, Clerk, Supabase, Firebase, and AWS Cognito are **browser SDKs** — a native .NET client acquires their tokens through the *server-side* equivalent flow, not a port of the browser SDK:
+
+- **Auth0 / Okta / generic OIDC** — a server-to-server **client-credentials** exchange against the provider's `/token` endpoint. Use the [generic OAuth2 client-credentials](#generic-oauth2-client-credentials-token-endpoint) pattern below (Auth0 requires the `audience` parameter to mint a real JWT access token, not an opaque `/userinfo` token).
+- **Clerk / Supabase / Firebase / Cognito** — these mint a token in the browser; a .NET service typically **verifies** the JWT rather than acquiring it. Validate with `AddJwtBearer` pointed at the provider's issuer/JWKS (Firebase: `FirebaseAdmin`'s `VerifyIdTokenAsync`; Cognito: the pool JWKS at `https://cognito-idp.<region>.amazonaws.com/<userPoolId>`). For a machine token, Cognito and Okta expose a client-credentials app grant — again the generic pattern below.
+
+In every case, whichever flow yields the JWT, attach it with the built-in `BearerTokenAuthenticationProvider(factory)` shown above. The TypeScript client is where these providers are wired *client-side* — see the [TypeScript authentication guide](./typescript/authentication.md) for the browser SDK snippets.
+
+### Generic OAuth2 client-credentials (token endpoint)
+
+For any non-Entra OAuth2 provider, exchange client credentials at the token endpoint and cache the token until shortly before it expires. `Duende.IdentityModel` (the renamed successor to `IdentityModel`) gives a typed helper; a plain `HttpClient` POST works too. Read the scopes from the generated union:
+
+```csharp
+using Duende.IdentityModel.Client;
+using Corvus.Text.Json.OpenApi.HttpTransport;
+
+var idp = new HttpClient();
+string scope = string.Join(' ', IApiPetsClient.SecurityRequirements.AllOauth2Scopes);   // space-separated
+var auth = new BearerTokenAuthenticationProvider(async ct =>
+{
+    TokenResponse r = await idp.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
+    {
+        Address = "https://idp.example.com/oauth/token",   // or IApiPetsClient.SecuritySchemes.Oauth2TokenUrl
+        ClientId = "id", ClientSecret = "secret", Scope = scope,
+    }, ct);
+    if (r.IsError) throw new InvalidOperationException(r.Error);
+    return r.AccessToken!;
+});
+```
+
+For production, cache the `TokenResponse` yourself keyed on `ExpiresIn` (subtract a 30–60 s skew buffer — a per-request POST to the IdP will rate-limit you), or use `Duende.AccessTokenManagement`, which caches and refreshes for you. Scopes are a **space-separated** string in the form body.
+
+### AWS SigV4 request signing
+
+SigV4 signs the method, host, path, query, and body, so it must run where those are known — a `DelegatingHandler`. There is **no supported public SigV4 signer in the AWS SDK for .NET** (the `AWS4Signer` class is internal), so use the third-party `AwsSignatureVersion4` NuGet package:
+
+```csharp
+using Amazon;
+using Amazon.Runtime;
+using AwsSignatureVersion4;   // NuGet: AwsSignatureVersion4
+
+sealed class SigV4Handler(ImmutableCredentials creds) : DelegatingHandler
+{
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage req, CancellationToken ct)
+    {
+        // Signs method + host + path + query + headers + body (the body is buffered to hash it).
+        await req.SignAsync(req.RequestUri!.Host, RegionEndpoint.EUWest1.SystemName, "execute-api", creds);
+        return await base.SendAsync(req, ct);
+    }
+}
+// var creds = await AWSCredentials.GetCredentialsAsync();   // or FallbackCredentialsFactory.GetCredentials()...
+// var http = new HttpClient(new SigV4Handler(creds) { InnerHandler = new HttpClientHandler() }) { BaseAddress = ... };
+// var transport = new HttpClientTransport(http);
+```
+
+The `host` header is mandatory (a missing one is a 403) and you must sign the query string, not just the path. Signatures are time-boxed (~5 min), so **clock skew** on the host causes `SignatureDoesNotMatch` — sync the clock (NTP). `service` is `execute-api` for API Gateway, `lambda` for Lambda function URLs. Temporary/role credentials carry a `sessionToken`, which `AWSCredentials` supplies automatically.
+
+### HMAC request signing (custom shared-secret scheme)
+
+For a bespoke HMAC scheme, sign the request in a `DelegatingHandler`. The **string-to-sign must match the server byte-for-byte** — canonicalize the path/query exactly as the server does:
+
+```csharp
+using System.Security.Cryptography;
+using System.Text;
+
+sealed class HmacHandler(string keyId, byte[] secret) : DelegatingHandler
+{
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage req, CancellationToken ct)
+    {
+        string ts = DateTimeOffset.UtcNow.ToString("O");
+        byte[] body = req.Content is null ? [] : await req.Content.ReadAsByteArrayAsync(ct);
+        string bodyHash = Convert.ToHexString(SHA256.HashData(body)).ToLowerInvariant();
+        string stringToSign = $"{req.Method}\n{req.RequestUri!.PathAndQuery}\n{ts}\n{bodyHash}";
+        string sig = Convert.ToBase64String(new HMACSHA256(secret).ComputeHash(Encoding.UTF8.GetBytes(stringToSign)));
+        req.Headers.Add("X-Date", ts);
+        req.Headers.TryAddWithoutValidation("Authorization", $"HMAC {keyId}:{sig}");
+        return await base.SendAsync(req, ct);
+    }
+}
+```
+
+Include the timestamp header **inside** the signature and validate a tight window server-side to defend against replay — that makes clock skew a live failure mode. Sign the body *hash* so the header stays small, and keep the secret out of source (env / secret store).
+
+### mTLS (client certificate)
+
+There is no header to set — attach the client certificate to the `HttpClientHandler` (reuse the handler / `HttpClient`; a new handler per request exhausts sockets):
+
+```csharp
+using System.Security.Cryptography.X509Certificates;
+using Corvus.Text.Json.OpenApi.HttpTransport;
+
+var cert = X509CertificateLoader.LoadPkcs12FromFile("client.pfx", "password");  // .NET 9+; else new X509Certificate2(...)
+var handler = new HttpClientHandler { ClientCertificateOptions = ClientCertificateOption.Manual };
+handler.ClientCertificates.Add(cert);
+var http = new HttpClient(handler) { BaseAddress = new Uri("https://mtls.example.com") };
+var transport = new HttpClientTransport(http, disposeClient: true);
+```
+
+Combine mTLS with any token/signing provider from above: pass the auth provider as `HttpClientTransport`'s second argument, or set the `HttpClientHandler` as the signing handler's `InnerHandler`. `X509CertificateLoader` is the .NET 9+ replacement for the obsolete `new X509Certificate2(bytes)` constructor; ensure the private key is present in the PFX, and on Linux the cert must have an accessible key.
 
 ### API Key (Header)
 
