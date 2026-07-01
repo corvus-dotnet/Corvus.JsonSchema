@@ -4,17 +4,28 @@
     {
       "name": "getPet-reserved-path",
       "method": "GET",
-      "target": "/pets/a%2Fb%20c"
+      "target": "/pets/a%2Fb%20c",
+      "headers": {},
+      "contentType": null,
+      "bodyUtf8": null
     },
     {
       "name": "updatePet-compound-query-boolean",
       "method": "POST",
-      "target": "/pets/p%201?tags=a%20b,a%2Fb&verbose=true"
+      "target": "/pets/p%201?tags=a%20b,a%2Fb&verbose=true",
+      "headers": {
+        "X-Request-ID": "req-1"
+      },
+      "contentType": "application/json",
+      "bodyUtf8": "{\"name\":\"Rex\",\"tag\":\"dog\"}"
     },
     {
       "name": "search-spacedelimited-deepobject",
       "method": "GET",
-      "target": "/search/;scope=kind,k%201,region,r%2F2?tags=a%20b%20c%2Fd&filter%5Bmin%5D=1&filter%5Bmax%5D=2"
+      "target": "/search/;scope=kind,k%201,region,r%2F2?tags=a%20b%20c%2Fd&filter%5Bmin%5D=1&filter%5Bmax%5D=2",
+      "headers": {},
+      "contentType": null,
+      "bodyUtf8": null
     }
   ]
 }

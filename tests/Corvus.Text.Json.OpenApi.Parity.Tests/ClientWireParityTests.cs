@@ -64,8 +64,20 @@ public class ClientWireParityTests
             Assert.AreEqual(want.Name, actual.Name, $"Case {i} name mismatch.");
             Assert.AreEqual(want.Method, actual.Method, $"Case '{actual.Name}' method mismatch.");
             Assert.AreEqual(want.Target, actual.Target, $"Case '{actual.Name}' target mismatch.");
+            Assert.AreEqual(want.ContentType, actual.ContentType, $"Case '{actual.Name}' contentType mismatch.");
+            Assert.AreEqual(want.BodyUtf8, actual.BodyUtf8, $"Case '{actual.Name}' bodyUtf8 mismatch.");
+
+            // Headers are captured sorted by name ascending, so a formatted-string comparison is a
+            // faithful, order-sensitive equality check with a readable failure message.
+            Assert.AreEqual(
+                FormatHeaders(want.Headers),
+                FormatHeaders(actual.Headers),
+                $"Case '{actual.Name}' headers mismatch.");
         }
     }
+
+    private static string FormatHeaders(IReadOnlyList<KeyValuePair<string, string>> headers)
+        => string.Join(", ", headers.Select(static h => $"{h.Key}={h.Value}"));
 
     private static async Task GetPetReservedPath(HttpClientTransport transport)
     {
@@ -123,7 +135,20 @@ public class ClientWireParityTests
         string method = captured.Method.Method;
         string target = captured.RequestUri!.PathAndQuery;
 
-        return new WireCase(name, method, target);
+        // Only the op-declared X-* headers, name -> first value, sorted by name ascending.
+        // This isolates spec-declared headers from framework/default headers (e.g. Accept).
+        KeyValuePair<string, string>[] headers = captured.Headers
+            .Where(static h => h.Key.StartsWith("X-", StringComparison.OrdinalIgnoreCase))
+            .Select(static h => new KeyValuePair<string, string>(h.Key, h.Value.First()))
+            .OrderBy(static h => h.Key, StringComparer.Ordinal)
+            .ToArray();
+
+        // Content type and body come from the captured request body (null when there is no body).
+        string? contentType = harness.CapturedRequestContentType;
+        byte[]? bodyBytes = harness.CapturedRequestBody;
+        string? bodyUtf8 = bodyBytes is null ? null : Encoding.UTF8.GetString(bodyBytes);
+
+        return new WireCase(name, method, target, headers, contentType, bodyUtf8);
     }
 
     private static string ResolveFixturePath()
@@ -169,6 +194,33 @@ public class ClientWireParityTests
                 writer.WriteString("name", wireCase.Name);
                 writer.WriteString("method", wireCase.Method);
                 writer.WriteString("target", wireCase.Target);
+
+                writer.WriteStartObject("headers");
+                foreach (KeyValuePair<string, string> header in wireCase.Headers)
+                {
+                    writer.WriteString(header.Key, header.Value);
+                }
+
+                writer.WriteEndObject();
+
+                if (wireCase.ContentType is null)
+                {
+                    writer.WriteNull("contentType");
+                }
+                else
+                {
+                    writer.WriteString("contentType", wireCase.ContentType);
+                }
+
+                if (wireCase.BodyUtf8 is null)
+                {
+                    writer.WriteNull("bodyUtf8");
+                }
+                else
+                {
+                    writer.WriteString("bodyUtf8", wireCase.BodyUtf8);
+                }
+
                 writer.WriteEndObject();
             }
 
@@ -195,16 +247,41 @@ public class ClientWireParityTests
         List<WireCase> result = [];
         foreach (System.Text.Json.JsonElement element in root.GetProperty("cases").EnumerateArray())
         {
+            List<KeyValuePair<string, string>> headers = [];
+            foreach (System.Text.Json.JsonProperty header in element.GetProperty("headers").EnumerateObject())
+            {
+                headers.Add(new KeyValuePair<string, string>(header.Name, header.Value.GetString()!));
+            }
+
+            System.Text.Json.JsonElement contentTypeElement = element.GetProperty("contentType");
+            string? contentType = contentTypeElement.ValueKind == System.Text.Json.JsonValueKind.Null
+                ? null
+                : contentTypeElement.GetString();
+
+            System.Text.Json.JsonElement bodyElement = element.GetProperty("bodyUtf8");
+            string? bodyUtf8 = bodyElement.ValueKind == System.Text.Json.JsonValueKind.Null
+                ? null
+                : bodyElement.GetString();
+
             result.Add(new WireCase(
                 element.GetProperty("name").GetString()!,
                 element.GetProperty("method").GetString()!,
-                element.GetProperty("target").GetString()!));
+                element.GetProperty("target").GetString()!,
+                [.. headers],
+                contentType,
+                bodyUtf8));
         }
 
         return [.. result];
     }
 
-    private readonly record struct WireCase(string Name, string Method, string Target);
+    private readonly record struct WireCase(
+        string Name,
+        string Method,
+        string Target,
+        IReadOnlyList<KeyValuePair<string, string>> Headers,
+        string? ContentType,
+        string? BodyUtf8);
 
     /// <summary>
     /// Encapsulates a mock HTTP handler, HttpClient, and HttpClientTransport for testing.
@@ -228,6 +305,10 @@ public class ClientWireParityTests
         public HttpClientTransport Transport { get; }
 
         public HttpRequestMessage? CapturedRequest => this.handler.CapturedRequest;
+
+        public byte[]? CapturedRequestBody => this.handler.CapturedRequestBody;
+
+        public string? CapturedRequestContentType => this.handler.CapturedRequestContentType;
 
         public void Dispose()
         {
@@ -255,6 +336,10 @@ public class ClientWireParityTests
 
         public HttpRequestMessage? CapturedRequest { get; private set; }
 
+        public byte[]? CapturedRequestBody { get; private set; }
+
+        public string? CapturedRequestContentType { get; private set; }
+
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
@@ -263,7 +348,12 @@ public class ClientWireParityTests
 
             if (request.Content is not null)
             {
-                await request.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+                this.CapturedRequestBody = await request.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+
+                // Capture the media type only (e.g. "application/json"), not the full header value
+                // which would include a transport-specific "; charset=utf-8". The media type is the
+                // cross-language-stable value the TypeScript half also produces.
+                this.CapturedRequestContentType = request.Content.Headers.ContentType?.MediaType;
             }
 
             HttpContent content = string.IsNullOrEmpty(this.responseBody)
