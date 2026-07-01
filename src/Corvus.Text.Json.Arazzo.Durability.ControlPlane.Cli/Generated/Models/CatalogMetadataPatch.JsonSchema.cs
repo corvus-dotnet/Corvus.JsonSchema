@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field — e.g. an attempt to set the server-stamped, immutable securityTags — is rejected with 400 rather than silently ignored.
+/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field is rejected with 400 rather than silently ignored. `securityTags` sets the version&#39;s NON-internal reach labels (&#167;14.2) — a governed edit for a workflow administrator; the reserved internal-tag prefix is rejected (400), since internal tags (e.g. the deployment tenant) stay deployment-stamped and immutable.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -33,6 +33,7 @@ public readonly partial struct CatalogMetadataPatch
     public static partial class JsonSchema
     {
         private static readonly JsonSchemaPathProvider OwnerSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/owner/$ref"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider SecurityTagsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/securityTags"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider StatusSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/status/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider TagsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/tags"u8, buffer, out written);
 
@@ -51,10 +52,25 @@ public readonly partial struct CatalogMetadataPatch
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
-        private static void MatchStatus(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchSecurityTags(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
+                Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogMetadataPatch.CatalogSecurityTagArray.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.SecurityTagsUtf8,
+                    evaluationPath: SecurityTagsSchemaEvaluationPath);
+
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogMetadataPatch.CatalogSecurityTagArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+        }
+
+        private static void MatchStatus(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext2 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogStatus.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -62,14 +78,14 @@ public readonly partial struct CatalogMetadataPatch
                     JsonPropertyNames.StatusUtf8,
                     evaluationPath: StatusSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogStatus.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
-            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogStatus.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
         private static void MatchTags(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
-            JsonSchemaContext childContext2 =
+            JsonSchemaContext childContext3 =
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogMetadataPatch.JsonStringArray.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -77,14 +93,15 @@ public readonly partial struct CatalogMetadataPatch
                     JsonPropertyNames.TagsUtf8,
                     evaluationPath: TagsSchemaEvaluationPath);
 
-            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogMetadataPatch.JsonStringArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
-            context.CommitChildContext(childContext2.IsMatch, ref childContext2);
+            Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogMetadataPatch.JsonStringArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
+            context.CommitChildContext(childContext3.IsMatch, ref childContext3);
         }
 
         private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
             return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PropertiesValidationHandler_NamedPropertyValidator>([
                 (static () => JsonPropertyNames.OwnerUtf8, MatchOwner),
+                (static () => JsonPropertyNames.SecurityTagsUtf8, MatchSecurityTags),
                 (static () => JsonPropertyNames.StatusUtf8, MatchStatus),
                 (static () => JsonPropertyNames.TagsUtf8, MatchTags),
             ]);

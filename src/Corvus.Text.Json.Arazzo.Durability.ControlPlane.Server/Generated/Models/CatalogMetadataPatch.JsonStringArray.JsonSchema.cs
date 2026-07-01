@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field — e.g. an attempt to set the server-stamped, immutable securityTags — is rejected with 400 rather than silently ignored.
+/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field is rejected with 400 rather than silently ignored. `securityTags` sets the version&#39;s NON-internal reach labels (&#167;14.2) — a governed edit for a workflow administrator; the reserved internal-tag prefix is rejected (400), since internal tags (e.g. the deployment tenant) stay deployment-stamped and immutable.
 /// </para>
 /// </remarks>
 public readonly partial struct CatalogMetadataPatch

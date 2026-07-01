@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
@@ -32,28 +32,33 @@ public readonly partial struct CatalogMetadataPatch
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Replace the version&#39;s non-internal security tags (&#167;14.2 reach labels). The reserved internal-tag prefix is rejected (400); internal tags remain deployment-owned.
+    /// </para>
+    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct JsonStringArray
-        : IJsonElement<JsonStringArray>
+    public readonly partial struct CatalogSecurityTagArray
+        : IJsonElement<CatalogSecurityTagArray>
     {
         public static partial class JsonSchema
         {
-            private static readonly JsonSchemaPathProvider ItemsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/items"u8, buffer, out written);
+            private static readonly JsonSchemaPathProvider ItemsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/items/$ref"u8, buffer, out written);
 
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/CatalogMetadataPatch/properties/tags"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/CatalogMetadataPatch/properties/securityTags"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "/components/schemas/CatalogMetadataPatch/properties/tags";
+            public const string SchemaLocation = "/components/schemas/CatalogMetadataPatch/properties/securityTags";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/CatalogMetadataPatch/properties/tags"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/CatalogMetadataPatch/properties/securityTags"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -91,14 +96,14 @@ public readonly partial struct CatalogMetadataPatch
                     {
                         int arrayValidation_currentIndex = arrayValidation_enumerator.CurrentIndex;
 
-                        JsonSchemaContext childContext = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.PushChildContext(
+                        JsonSchemaContext childContext = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogSecurityTag.JsonSchema.PushChildContext(
                             parentDocument,
                             arrayValidation_currentIndex,
                             ref context,
                             itemIndex: arrayValidation_itemCount,
                             evaluationPath: ItemsSchemaEvaluationPath);
 
-                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
+                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogSecurityTag.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
                         if (!childContext.IsMatch)
                         {
                             context.CommitChildContext(false, ref childContext);
