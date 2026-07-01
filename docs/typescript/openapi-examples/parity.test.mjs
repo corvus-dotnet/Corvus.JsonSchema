@@ -15,9 +15,14 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
+import { ValidationMode } from "@endjin/corvus-json-client-runtime";
+
 import { MockApiTransport, decoder } from "./mock-transport.mjs";
 
 const fixture = JSON.parse(readFileSync(new URL("./parity/wire-fixture.json", import.meta.url), "utf8"));
+const responseFixture = JSON.parse(
+  readFileSync(new URL("./parity/response-fixture.json", import.meta.url), "utf8"),
+);
 const VERSIONS = ["petstore-3.0", "petstore-3.1", "petstore-3.2"];
 
 // Each fixture case name maps to the TS client invocation using the SAME inputs the C# side used.
@@ -84,6 +89,79 @@ for (const version of VERSIONS) {
       assert.deepEqual(capturedXHeaders(wire.headers), lowerKeys(expected.headers), `${label}: X-* headers`);
       assert.equal(contentType, expected.contentType, `${label}: request content-type`);
       assert.equal(bodyUtf8, expected.bodyUtf8, `${label}: request body bytes`);
+    }
+  });
+}
+
+// ── Response-decomposition parity ────────────────────────────────────────────
+// Feed each client canned response bytes + headers and assert it decodes them into the SAME logical
+// values the C# client produced: the matched status branch, the validation result, and the typed
+// header values (proving divergence #3 is value-equivalent — C# returns model types, TS returns
+// branded/interface types, but the decoded VALUES are identical).
+
+// Each operation -> a client invocation; the response is driven entirely by the canned transport.
+const RESPONSE_INVOKE = {
+  getPet: (client) => client.getPet({ petId: "x" }),
+  getStatus: (client) => client.getStatus(),
+  limits: (client) => client.limits(),
+};
+
+// The status branch a response routes to. The generated match ignores handlers for branches it does
+// not declare, so passing all three is safe; `otherwise` is the fallback key.
+function matchedBranch(response) {
+  return response.match({
+    ok: () => "ok",
+    default: () => "default",
+    otherwise: () => "otherwise",
+  });
+}
+
+// Whether the active body validates against its schema (Basic = boolean evaluate, throws on failure).
+function validOf(response) {
+  try {
+    response.validate(ValidationMode.Basic);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// The typed header getter values, keyed exactly as the C# fixture recorded them (getter stem without
+// the "Header" suffix), so parity holds over whichever headers the C# generator types.
+function headerValuesOf(response, keys) {
+  const out = {};
+  for (const key of keys) {
+    const value = response[`${key}Header`];
+    // A readonly array header decodes to a normal array; normalise for a structural compare.
+    out[key] = Array.isArray(value) ? [...value] : value;
+  }
+
+  return out;
+}
+
+for (const version of VERSIONS) {
+  test(`parity: ${version} TS client decodes responses identically to the C# ${responseFixture.spec} fixture`, async () => {
+    const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+    const base = ApiStatusClient.serverUri().toString().replace(/\/$/, "");
+
+    for (const expected of responseFixture.cases) {
+      const invoke = RESPONSE_INVOKE[expected.operation];
+      assert.ok(invoke, `no TS invocation mapped for response op '${expected.operation}'`);
+
+      const transport = new MockApiTransport(base, {
+        status: expected.status,
+        bytes: new TextEncoder().encode(expected.bodyUtf8),
+        contentType: "application/json",
+        headers: expected.headers,
+      });
+      const response = await invoke(new ApiStatusClient(transport));
+
+      const decoded = { matched: matchedBranch(response), valid: validOf(response) };
+      if (expected.decoded.headerValues !== undefined) {
+        decoded.headerValues = headerValuesOf(response, Object.keys(expected.decoded.headerValues));
+      }
+
+      assert.deepEqual(decoded, expected.decoded, `${version}/${expected.name}: decoded response`);
     }
   });
 }
