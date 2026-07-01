@@ -96,12 +96,12 @@ class ArazzoCredentialDetail extends ArazzoElement {
         header .grow { flex: 1; }
         header .close { font-size: 16px; line-height: 1; }
         .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; white-space: nowrap; }
-        dl { margin: 0; padding: 14px; display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; }
+        dl { margin: 0; padding: 14px; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; }
         dt { color: var(--_muted); font-size: 12px; }
         dd { margin: 0; font-size: 13px; }
         .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
         .refs, .cfg { display: grid; gap: 4px; }
-        .refs .r { display: grid; grid-template-columns: max-content 1fr; gap: 8px; align-items: baseline; }
+        .refs .r { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px; align-items: baseline; }
         .refs .role { color: var(--_muted); font-size: 12px; }
         .copy { font-size: 12px; padding: 0 6px; margin-left: 6px; line-height: 1.4; vertical-align: baseline; }
         .tags { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -199,7 +199,7 @@ class ArazzoCredentialDetail extends ArazzoElement {
     if (!this.hasScope('credentials:write')) { host.innerHTML = '<span class="muted">Read-only — you don’t have <code>credentials:write</code> for this binding.</span>'; return; }
     host.innerHTML = `
       <button class="edit primary" type="button">Edit…</button>
-      <button class="duplicate ghost" type="button" title="Clone this source + auth into another environment">Duplicate to another environment…</button>
+      <button class="duplicate ghost" type="button" title="Duplicate to another environment — clone this source + auth, re-point the secret">Duplicate…</button>
       <button class="revoke danger" type="button">Revoke…</button>`;
     host.querySelector('.edit').addEventListener('click', () => this.emit('credential-edit', { binding: b }));
     host.querySelector('.duplicate').addEventListener('click', () => this.emit('credential-duplicate', { binding: b }));
