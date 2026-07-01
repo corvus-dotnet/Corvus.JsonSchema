@@ -75,6 +75,11 @@ public readonly partial struct RunDocument
             writer.WriteString(JsonPropertyNames.CorrelationIdUtf8, correlationId);
         }
 
+        if (index.Environment is { } environment)
+        {
+            writer.WriteString(JsonPropertyNames.EnvironmentUtf8, environment);
+        }
+
         if (!index.Tags.IsEmpty)
         {
             writer.WritePropertyName(JsonPropertyNames.TagsUtf8);
@@ -124,7 +129,8 @@ public readonly partial struct RunDocument
             this.ErrorType.IsNotUndefined() ? (string)this.ErrorType : null,
             CorrelationId: this.CorrelationId.IsNotUndefined() ? (string)this.CorrelationId : null,
             Tags: TagSet.CopyFrom(this.Tags),
-            SecurityTags: securityTags);
+            SecurityTags: securityTags,
+            Environment: this.Environment.IsNotUndefined() ? (string)this.Environment : null);
     }
 
     // Normalize the embedded { k, v } tags into the holder's canonical { key, value } bytes (Cosmos keeps the
