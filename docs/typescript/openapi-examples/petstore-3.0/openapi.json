@@ -146,6 +146,24 @@
                 "parameters": {
                   "petId": "$response.body#/id"
                 }
+              },
+              "getPetByPathId": {
+                "operationId": "getPet",
+                "parameters": {
+                  "petId": "$request.path.petId"
+                }
+              },
+              "getPetByBodyName": {
+                "operationId": "getPet",
+                "parameters": {
+                  "petId": "$request.body#/name"
+                }
+              },
+              "getPetByHeader": {
+                "operationId": "getPet",
+                "parameters": {
+                  "petId": "$response.header.X-Pet-Id"
+                }
               }
             },
             "content": {

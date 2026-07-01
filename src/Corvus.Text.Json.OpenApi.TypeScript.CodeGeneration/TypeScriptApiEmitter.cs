@@ -983,8 +983,14 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
         // Followable links (target resolvable; required target params all bound by a supported
         // response-side expression). hasLinks adds a stored transport + a `links` accessor.
-        List<LinkInfo> links = this.EmittableLinks(op, allOperations, out bool anyLinkBodyExpr);
+        List<LinkInfo> links = this.EmittableLinks(op, allOperations, out LinkExprUsage linkUsage);
         bool hasLinks = links.Count > 0;
+        bool anyLinkBodyExpr = linkUsage.BodyExpr;
+
+        // The originating request's params / body are captured onto the response (by the client method)
+        // when a link reads $request.*. Computed from op alone so the client method agrees without
+        // resolving link targets.
+        OpRequestLinkCapture(op, out bool captureParams, out bool captureBody);
 
         // Streaming responses (OpenAPI 3.2 itemSchema): kept as a raw stream + enumerate* accessors.
         List<ResponseInfo> streamingResponses = [.. responses.Where(IsStreamingResponse)];
@@ -1006,9 +1012,11 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             }
         }
 
-        // Distinct typed response headers (deduped by getter name across all responses).
+        // Distinct typed response headers (deduped by getter name across all responses). The headers
+        // field is also stored when a link reads $response.header (even if no header is declared).
         List<HeaderInfo> headers = DistinctResponseHeaders(responses);
         bool hasHeaders = headers.Count > 0;
+        bool storeHeaders = hasHeaders || linkUsage.HeaderExpr;
         List<string> headerParseFns = ResponseHeaderParseFns(headers);
 
         EmitHeader(w);
@@ -1016,9 +1024,10 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             "import { ValidationMode } from " +
             $"{StringLiteral(this.options.ClientRuntimeModuleSpecifier)};");
 
-        // Runtime value imports: header parsers + getByPointer (links) + streaming readers.
+        // Runtime value imports: header parsers + getByPointer ($response.body / $request.body links) +
+        // streaming readers.
         List<string> runtimeValues = [.. headerParseFns];
-        if (anyLinkBodyExpr)
+        if (anyLinkBodyExpr || linkUsage.RequestBodyExpr)
         {
             runtimeValues.Add("getByPointer");
         }
@@ -1033,7 +1042,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         }
 
         List<string> responseTypeImports = ["ApiResponse", "ResponseContext", "ResponseFactory"];
-        if (hasHeaders)
+        if (storeHeaders)
         {
             responseTypeImports.Add("ResponseHeaders");
         }
@@ -1079,7 +1088,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             w.WriteLine("private readonly stream: ReadableStream<Uint8Array> | null;");
         }
 
-        if (hasHeaders)
+        if (storeHeaders)
         {
             w.WriteLine("private readonly headers: ResponseHeaders;");
         }
@@ -1087,6 +1096,17 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         if (hasLinks)
         {
             w.WriteLine("private readonly transport: ApiTransport;");
+        }
+
+        if (captureParams)
+        {
+            // Assigned by captureLinkSource before any link follower reads it.
+            w.WriteLine("private sourceParams!: unknown;");
+        }
+
+        if (captureBody)
+        {
+            w.WriteLine("private sourceBody!: unknown;");
         }
 
         w.WriteLine();
@@ -1098,7 +1118,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             ctorParams.Add("stream: ReadableStream<Uint8Array> | null");
         }
 
-        if (hasHeaders)
+        if (storeHeaders)
         {
             ctorParams.Add("headers: ResponseHeaders");
         }
@@ -1117,7 +1137,7 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             w.WriteLine("this.stream = stream;");
         }
 
-        if (hasHeaders)
+        if (storeHeaders)
         {
             w.WriteLine("this.headers = headers;");
         }
@@ -1131,9 +1151,41 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.WriteLine("}");
         w.WriteLine();
 
+        // captureLinkSource stores the originating request's params/body for $request.* link expressions.
+        if (captureParams || captureBody)
+        {
+            List<string> captureSig = [];
+            if (captureParams)
+            {
+                captureSig.Add("params: unknown");
+            }
+
+            if (captureBody)
+            {
+                captureSig.Add("body: unknown");
+            }
+
+            w.WriteLine("/** Captures the originating request for $request.* link runtime expressions. */");
+            w.WriteLine($"captureLinkSource({string.Join(", ", captureSig)}): void {{");
+            w.PushIndent();
+            if (captureParams)
+            {
+                w.WriteLine("this.sourceParams = params;");
+            }
+
+            if (captureBody)
+            {
+                w.WriteLine("this.sourceBody = body;");
+            }
+
+            w.PopIndent();
+            w.WriteLine("}");
+            w.WriteLine();
+        }
+
         // The trailing constructor args (headers / transport) shared by every createFrom path.
         List<string> tailArgs = [];
-        if (hasHeaders)
+        if (storeHeaders)
         {
             tailArgs.Add("context.headers");
         }
@@ -1494,10 +1546,26 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
 
     // ── Response links (runtime expressions) ────────────────────────────
 
-    // Whether a runtime-expression kind is resolvable from the response alone (this slice supports
-    // $response.body and literals; $response.header / $request.* / $url / $method are deferred).
+    // Whether a runtime-expression kind is supported by the link followers. Matches the C# emitter's
+    // coverage: $response.body, $response.header, $request.path/query/header, $request.body, and literals.
+    // ($url / $method are unsupported in both emitters — parity means neither resolves them.)
     private static bool IsSupportedLinkExpr(RuntimeExpressionKind kind)
-        => kind is RuntimeExpressionKind.ResponseBody or RuntimeExpressionKind.Literal;
+        => kind is RuntimeExpressionKind.ResponseBody
+            or RuntimeExpressionKind.ResponseHeader
+            or RuntimeExpressionKind.RequestPath
+            or RuntimeExpressionKind.RequestQuery
+            or RuntimeExpressionKind.RequestHeader
+            or RuntimeExpressionKind.RequestBody
+            or RuntimeExpressionKind.Literal;
+
+    // Which response-resolution mechanisms the emittable links need: the parsed response body
+    // (linkBody + getByPointer), a response header (the headers field), the originating request's
+    // params ($request.path/query/header → sourceParams), and its body ($request.body → sourceBody).
+    private readonly record struct LinkExprUsage(
+        bool BodyExpr,
+        bool HeaderExpr,
+        bool RequestParamExpr,
+        bool RequestBodyExpr);
 
     // The operation a link targets (by operationId), or null when not present.
     private static OperationInfo? ResolveTargetOp(LinkInfo link, IReadOnlyList<OperationInfo> allOperations)
@@ -1527,14 +1595,17 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
     }
 
     // The followable links for an operation: target resolvable, and every required target parameter
-    // bound by a supported response-side expression. anyBodyExpr is set when any link reads
-    // $response.body (so the response emits linkBody() + imports getByPointer).
+    // bound by a supported response-side expression. `usage` reports which resolution mechanisms the
+    // resulting links need (body / header / request-params / request-body).
     private List<LinkInfo> EmittableLinks(
         OperationInfo op,
         IReadOnlyList<OperationInfo> allOperations,
-        out bool anyBodyExpr)
+        out LinkExprUsage usage)
     {
-        anyBodyExpr = false;
+        bool bodyExpr = false;
+        bool headerExpr = false;
+        bool requestParamExpr = false;
+        bool requestBodyExpr = false;
         List<LinkInfo> result = [];
         HashSet<string> seenNames = new(StringComparer.Ordinal);
 
@@ -1553,14 +1624,12 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
                 }
 
                 HashSet<string> supportedBound = new(StringComparer.OrdinalIgnoreCase);
-                bool bodyExpr = false;
                 foreach (LinkParameterBinding binding in link.ParameterBindings)
                 {
                     RuntimeExpression expr = RuntimeExpression.Parse(binding.Expression);
                     if (IsSupportedLinkExpr(expr.Kind))
                     {
                         supportedBound.Add(binding.ParameterName);
-                        bodyExpr |= expr.Kind == RuntimeExpressionKind.ResponseBody;
                     }
                 }
 
@@ -1573,10 +1642,27 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
                 }
 
                 result.Add(link);
-                anyBodyExpr |= bodyExpr;
+
+                // Only count the mechanisms of bindings whose target param exists (the ones we emit).
+                foreach (LinkParameterBinding binding in link.ParameterBindings)
+                {
+                    RuntimeExpression expr = RuntimeExpression.Parse(binding.Expression);
+                    if (!IsSupportedLinkExpr(expr.Kind) || FindLinkParam(target, binding.ParameterName) is null)
+                    {
+                        continue;
+                    }
+
+                    bodyExpr |= expr.Kind == RuntimeExpressionKind.ResponseBody;
+                    headerExpr |= expr.Kind == RuntimeExpressionKind.ResponseHeader;
+                    requestBodyExpr |= expr.Kind == RuntimeExpressionKind.RequestBody;
+                    requestParamExpr |= expr.Kind is RuntimeExpressionKind.RequestPath
+                        or RuntimeExpressionKind.RequestQuery
+                        or RuntimeExpressionKind.RequestHeader;
+                }
             }
         }
 
+        usage = new LinkExprUsage(bodyExpr, headerExpr, requestParamExpr, requestBodyExpr);
         return result;
     }
 
@@ -1692,10 +1778,41 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         {
             RuntimeExpressionKind.ResponseBody =>
                 $"getByPointer(this.linkBody(), {StringLiteral(expr.JsonPointer ?? string.Empty)}) as {type}",
+            RuntimeExpressionKind.ResponseHeader =>
+                $"this.headers.tryGet({StringLiteral(expr.Name ?? string.Empty)}) as unknown as {type}",
+            RuntimeExpressionKind.RequestPath
+                or RuntimeExpressionKind.RequestQuery
+                or RuntimeExpressionKind.RequestHeader =>
+                $"(this.sourceParams as Record<string, unknown> | undefined)?.[" +
+                $"{StringLiteral(CamelCase(CodeEmitHelpers.SanitizeIdentifier(expr.Name ?? string.Empty)))}] as {type}",
+            RuntimeExpressionKind.RequestBody =>
+                $"getByPointer(this.sourceBody, {StringLiteral(expr.JsonPointer ?? string.Empty)}) as {type}",
             RuntimeExpressionKind.Literal =>
                 $"{StringLiteral(expr.LiteralValue ?? string.Empty)} as unknown as {type}",
             _ => $"undefined as unknown as {type}",
         };
+    }
+
+    // Whether the operation's response links read $request.* (so the client method captures the
+    // originating request onto the response). Over-approximates on the op's own link bindings.
+    private static void OpRequestLinkCapture(OperationInfo op, out bool needsParams, out bool needsBody)
+    {
+        needsParams = false;
+        needsBody = false;
+        foreach (ResponseInfo response in op.Responses)
+        {
+            foreach (LinkInfo link in response.Links)
+            {
+                foreach (LinkParameterBinding binding in link.ParameterBindings)
+                {
+                    RuntimeExpressionKind kind = RuntimeExpression.Parse(binding.Expression).Kind;
+                    needsParams |= kind is RuntimeExpressionKind.RequestPath
+                        or RuntimeExpressionKind.RequestQuery
+                        or RuntimeExpressionKind.RequestHeader;
+                    needsBody |= kind == RuntimeExpressionKind.RequestBody;
+                }
+            }
+        }
     }
 
     // ── Streaming responses (OpenAPI 3.2 itemSchema) ────────────────────
@@ -2328,10 +2445,14 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         ContentInfo? bodyContent = PrimaryRequestBodyContent(op);
         bool bodyRequired = op.RequestBody is { } rb && rb.IsRequired;
 
+        // When a response link reads $request.*, the method awaits the send and captures the request.
+        OpRequestLinkCapture(op, out bool captureLinkParams, out bool captureLinkBody);
+        bool captureLink = captureLinkParams || captureLinkBody;
+
         w.WriteLine();
         EmitMethodDoc(w, op);
         string signature = this.BuildMethodSignature(op);
-        w.WriteLine($"{methodName}({signature}): Promise<{responseClass}> {{");
+        w.WriteLine($"{(captureLink ? "async " : string.Empty)}{methodName}({signature}): Promise<{responseClass}> {{");
         w.PushIndent();
 
         // The request: a factory call (params closure) when parameterised, else the const.
@@ -2363,13 +2484,27 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
             hasBody = false;
         }
 
-        if (hasBody)
+        string bodyArg = hasBody ? "requestBody" : "undefined";
+        if (captureLink)
         {
-            w.WriteLine($"return this.transport.send(request, {factoryName}, requestBody, signal);");
+            w.WriteLine($"const response = await this.transport.send(request, {factoryName}, {bodyArg}, signal);");
+            List<string> captureArgs = [];
+            if (captureLinkParams)
+            {
+                captureArgs.Add("params");
+            }
+
+            if (captureLinkBody)
+            {
+                captureArgs.Add("body");
+            }
+
+            w.WriteLine($"response.captureLinkSource({string.Join(", ", captureArgs)});");
+            w.WriteLine("return response;");
         }
         else
         {
-            w.WriteLine($"return this.transport.send(request, {factoryName}, undefined, signal);");
+            w.WriteLine($"return this.transport.send(request, {factoryName}, {bodyArg}, signal);");
         }
 
         w.PopIndent();

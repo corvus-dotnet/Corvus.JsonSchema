@@ -3,7 +3,7 @@
 // </auto-generated>
 import { ValidationMode } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
 import { getByPointer } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
-import type { ApiResponse, ResponseContext, ResponseFactory, ApiTransport } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
+import type { ApiResponse, ResponseContext, ResponseFactory, ResponseHeaders, ApiTransport } from "../../../../../packages/corvus-json-client-runtime/dist/index.js";
 import { ErrorEntity, Pet } from "./models/generated.js";
 import { getPetRequest } from "./getPetRequest.js";
 import { GetPetResponse, getPetResponseFactory } from "./GetPetResponse.js";
@@ -16,17 +16,27 @@ import { GetPetResponse, getPetResponseFactory } from "./GetPetResponse.js";
 export class UpdatePetResponse implements ApiResponse {
   readonly statusCode: number;
   private readonly bytes: Uint8Array | null;
+  private readonly headers: ResponseHeaders;
   private readonly transport: ApiTransport;
+  private sourceParams!: unknown;
+  private sourceBody!: unknown;
 
-  private constructor(statusCode: number, bytes: Uint8Array | null, transport: ApiTransport) {
+  private constructor(statusCode: number, bytes: Uint8Array | null, headers: ResponseHeaders, transport: ApiTransport) {
     this.statusCode = statusCode;
     this.bytes = bytes;
+    this.headers = headers;
     this.transport = transport;
+  }
+
+  /** Captures the originating request for $request.* link runtime expressions. */
+  captureLinkSource(params: unknown, body: unknown): void {
+    this.sourceParams = params;
+    this.sourceBody = body;
   }
 
   static async createFrom(context: ResponseContext): Promise<UpdatePetResponse> {
     const bytes = context.body === null ? null : await readAllBytes(context.body);
-    return new UpdatePetResponse(context.statusCode, bytes, context.transport);
+    return new UpdatePetResponse(context.statusCode, bytes, context.headers, context.transport);
   }
 
   get isSuccess(): boolean {
@@ -43,6 +53,15 @@ export class UpdatePetResponse implements ApiResponse {
     return {
       getPet: (signal?: AbortSignal): Promise<GetPetResponse> => {
         return this.transport.send(getPetRequest({ petId: getByPointer(this.linkBody(), "/id") as string }), getPetResponseFactory, undefined, signal);
+      },
+      getPetByPathId: (signal?: AbortSignal): Promise<GetPetResponse> => {
+        return this.transport.send(getPetRequest({ petId: (this.sourceParams as Record<string, unknown> | undefined)?.["petId"] as string }), getPetResponseFactory, undefined, signal);
+      },
+      getPetByBodyName: (signal?: AbortSignal): Promise<GetPetResponse> => {
+        return this.transport.send(getPetRequest({ petId: getByPointer(this.sourceBody, "/name") as string }), getPetResponseFactory, undefined, signal);
+      },
+      getPetByHeader: (signal?: AbortSignal): Promise<GetPetResponse> => {
+        return this.transport.send(getPetRequest({ petId: this.headers.tryGet("X-Pet-Id") as unknown as string }), getPetResponseFactory, undefined, signal);
       },
     };
   }

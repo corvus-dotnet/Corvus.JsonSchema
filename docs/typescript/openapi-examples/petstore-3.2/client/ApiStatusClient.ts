@@ -74,10 +74,12 @@ export class ApiStatusClient implements IApiStatusClient {
   /**
    * Updates a pet by id, exercising path/query/header params and a JSON body.
    */
-  updatePet(params: UpdatePetParams, body: PetUpdate, signal?: AbortSignal): Promise<UpdatePetResponse> {
+  async updatePet(params: UpdatePetParams, body: PetUpdate, signal?: AbortSignal): Promise<UpdatePetResponse> {
     const request = updatePetRequest(params);
     const requestBody: RequestBody = { kind: "bytes", content: PetUpdate.build(body), contentType: "application/json" };
-    return this.transport.send(request, updatePetResponseFactory, requestBody, signal);
+    const response = await this.transport.send(request, updatePetResponseFactory, requestBody, signal);
+    response.captureLinkSource(params, body);
+    return response;
   }
 
   /**

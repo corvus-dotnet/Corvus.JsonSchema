@@ -225,6 +225,36 @@ for (const version of VERSIONS) {
     assert.deepEqual(followed.tryGetOk(), { id: "p-1", name: "Rex", tag: "dog" });
   });
 
+  test(`${version}: updatePet link followers resolve $request.* and $response.header`, async () => {
+    const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
+
+    const transport = new MockApiTransport(ApiStatusClient.serverUri().toString().replace(/\/$/, ""), {
+      status: 200,
+      bytes: new TextEncoder().encode(JSON.stringify({ id: "p-1", name: "Rex", tag: "dog" })),
+      contentType: "application/json",
+      // X-Pet-Id is not a declared response header; the headers field exists because a link reads it.
+      headers: { "X-Pet-Id": "p-hdr" },
+    });
+    const client = new ApiStatusClient(transport);
+
+    const response = await client.updatePet(
+      { petId: "p 1", xRequestId: "req-42" },
+      { name: "Rex", tag: "dog" },
+    );
+
+    // $request.path.petId -> the ORIGINAL request's petId ("p 1", percent-encoded in the path).
+    await response.links.getPetByPathId();
+    assert.equal(transport.captured.url, "https://api.example.com/v1/pets/p%201");
+
+    // $request.body#/name -> the request body's name ("Rex").
+    await response.links.getPetByBodyName();
+    assert.equal(transport.captured.url, "https://api.example.com/v1/pets/Rex");
+
+    // $response.header.X-Pet-Id -> the response header value ("p-hdr").
+    await response.links.getPetByHeader();
+    assert.equal(transport.captured.url, "https://api.example.com/v1/pets/p-hdr");
+  });
+
   test(`${version}: search composes the full parameter-style matrix`, async () => {
     const { ApiStatusClient } = await import(`./conformance/dist/${version}/client/ApiStatusClient.js`);
 
