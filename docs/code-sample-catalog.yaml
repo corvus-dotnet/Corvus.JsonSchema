@@ -1614,23 +1614,23 @@ typescript-docs:
       - {index: 3, language: typescript, lines: [44, 50]}
   - path: "docs/typescript/openapi.md"
     blocks:
-      - {index: 0, language: bash, lines: [28, 30]}
-      - {index: 1, language: bash, lines: [35, 37]}
-      - {index: 2, language: bash, lines: [47, 51]}
-      - {index: 3, language: typescript, lines: [55, 75]}
-      - {index: 4, language: , lines: [101, 107]}
-      - {index: 5, language: typescript, lines: [130, 137]}
-      - {index: 6, language: typescript, lines: [147, 153]}
-      - {index: 7, language: typescript, lines: [157, 162]}
-      - {index: 8, language: typescript, lines: [171, 174]}
-      - {index: 9, language: typescript, lines: [182, 200]}
-      - {index: 10, language: typescript, lines: [210, 220]}
-      - {index: 11, language: typescript, lines: [229, 233]}
-      - {index: 12, language: typescript, lines: [243, 255]}
-      - {index: 13, language: typescript, lines: [263, 274]}
-      - {index: 14, language: typescript, lines: [287, 290]}
-      - {index: 15, language: typescript, lines: [299, 303]}
-      - {index: 16, language: bash, lines: [307, 309]}
+      - {index: 0, language: bash, lines: [30, 32]}
+      - {index: 1, language: bash, lines: [37, 39]}
+      - {index: 2, language: bash, lines: [49, 53]}
+      - {index: 3, language: typescript, lines: [57, 77]}
+      - {index: 4, language: , lines: [103, 109]}
+      - {index: 5, language: typescript, lines: [132, 139]}
+      - {index: 6, language: typescript, lines: [149, 155]}
+      - {index: 7, language: typescript, lines: [159, 164]}
+      - {index: 8, language: typescript, lines: [173, 176]}
+      - {index: 9, language: typescript, lines: [184, 202]}
+      - {index: 10, language: typescript, lines: [212, 222]}
+      - {index: 11, language: typescript, lines: [231, 235]}
+      - {index: 12, language: typescript, lines: [245, 257]}
+      - {index: 13, language: typescript, lines: [265, 276]}
+      - {index: 14, language: typescript, lines: [289, 292]}
+      - {index: 15, language: typescript, lines: [301, 305]}
+      - {index: 16, language: bash, lines: [309, 311]}
   - path: "docs/typescript/reading-and-validating.md"
     blocks:
       - {index: 0, language: typescript, lines: [9, 13]}

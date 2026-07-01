@@ -1,5 +1,7 @@
 # OpenAPI client generation
 
+> **[Try the OpenAPI playground](/playground-openapi-typescript/)** — generate a strongly-typed TypeScript client from a spec, inspect the request/response modules, and run it against a mock transport in your browser.
+
 This is the reference for generating a **TypeScript HTTP client** from an [OpenAPI](https://spec.openapis.org/oas/latest.html)
 specification: the `corvusjson openapi-client --engine TypeScript` command, the shape of the output, the
 byte-native transport runtime, and how you consume the generated client. For a first walkthrough of the
