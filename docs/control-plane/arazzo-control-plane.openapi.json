@@ -348,6 +348,7 @@
           { "$ref": "#/components/parameters/CatalogTagQuery" },
           { "$ref": "#/components/parameters/CatalogStatusQuery" },
           { "$ref": "#/components/parameters/CatalogOwnerQuery" },
+          { "$ref": "#/components/parameters/CatalogDistinctWorkflowsQuery" },
           { "$ref": "#/components/parameters/LimitQuery" },
           { "$ref": "#/components/parameters/PageTokenQuery" }
         ],
@@ -2668,6 +2669,13 @@
         "required": false,
         "description": "Restrict to versions whose owner name or email matches (case-insensitive contains).",
         "schema": { "type": "string" }
+      },
+      "CatalogDistinctWorkflowsQuery": {
+        "name": "distinctWorkflows",
+        "in": "query",
+        "required": false,
+        "description": "Collapse the result to one row per base workflow instead of one per version. When true, each page carries a single representative version per base workflow — the newest Active version, else the newest Obsolete, else the newest — and the page is keyset-ordered by base workflow id (the continuation cursor is the base id alone). A base workflow appears if any of its versions match the other filters, and its representative is the best-matching version. When omitted or false, one row per version is returned, keyset by base workflow id then version.",
+        "schema": { "type": "boolean" }
       }
     },
     "responses": {

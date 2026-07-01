@@ -52,6 +52,11 @@ public readonly struct SearchCatalogRequest : IApiRequest<SearchCatalogRequest>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString Owner { get; init; }
 
     /// <summary>
+    /// Gets the distinctWorkflows parameter.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean DistinctWorkflows { get; init; }
+
+    /// <summary>
     /// Gets the limit parameter.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PageLimit Limit { get; init; }
@@ -215,6 +220,23 @@ public readonly struct SearchCatalogRequest : IApiRequest<SearchCatalogRequest>
             first = false;
         }
 
+        if (this.DistinctWorkflows.IsNotUndefined())
+        {
+            if (!first)
+            {
+                writer.Write("&"u8);
+                totalWritten++;
+            }
+
+            writer.Write("distinctWorkflows="u8);
+            totalWritten += 18;
+            bool bv = (bool)this.DistinctWorkflows;
+            writer.Write(bv ? "true"u8 : "false"u8);
+            totalWritten += bv ? 4 : 5;
+
+            first = false;
+        }
+
         if (this.Limit.IsNotUndefined())
         {
             if (!first)
@@ -334,6 +356,15 @@ public readonly struct SearchCatalogRequest : IApiRequest<SearchCatalogRequest>
                 }
             }
 
+            if (this.DistinctWorkflows.IsNotUndefined())
+            {
+                using JsonSchemaResultsCollector collectorDistinctWorkflows = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!this.DistinctWorkflows.EvaluateSchema(collectorDistinctWorkflows))
+                {
+                    ThrowHelper.ThrowRequestParameterValidationFailed("distinctWorkflows", SchemaValidationDetail.FormatResults(collectorDistinctWorkflows));
+                }
+            }
+
             if (this.Limit.IsNotUndefined())
             {
                 using JsonSchemaResultsCollector collectorLimit = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
@@ -383,6 +414,11 @@ public readonly struct SearchCatalogRequest : IApiRequest<SearchCatalogRequest>
             if (this.Owner.IsNotUndefined() && !this.Owner.EvaluateSchema())
             {
                 ThrowHelper.ThrowRequestParameterValidationFailed("owner");
+            }
+
+            if (this.DistinctWorkflows.IsNotUndefined() && !this.DistinctWorkflows.EvaluateSchema())
+            {
+                ThrowHelper.ThrowRequestParameterValidationFailed("distinctWorkflows");
             }
 
             if (this.Limit.IsNotUndefined() && !this.Limit.EvaluateSchema())

@@ -251,11 +251,18 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
 
         if (after is not null)
         {
-            conditions.Add("c.sortKey > @after");
+            // In distinct mode the cursor is the base workflow id alone (one row per base); in version mode it is the
+            // full sort key (one row per version).
+            conditions.Add(query.DistinctWorkflows ? "c.baseWorkflowId > @after" : "c.sortKey > @after");
         }
 
         string where = conditions.Count == 0 ? string.Empty : " WHERE " + string.Join(" AND ", conditions);
-        var definition = new QueryDefinition("SELECT * FROM c" + where + " ORDER BY c.sortKey");
+
+        // Distinct mode collapses in-process (Cosmos SQL has no window functions), so the results must stream in base
+        // order — baseWorkflowId, then versionNumber — for the representative-per-base grouping to finalize a base when
+        // the base id changes. Version mode pages every matching version by its sort key.
+        var definition = new QueryDefinition(
+            "SELECT * FROM c" + where + (query.DistinctWorkflows ? " ORDER BY c.baseWorkflowId, c.versionNumber" : " ORDER BY c.sortKey"));
         if (query.BaseWorkflowId is { } baseId)
         {
             definition = definition.WithParameter("@baseWorkflowId", baseId);
@@ -296,6 +303,11 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             definition = definition.WithParameter("@after", after);
         }
 
+        if (query.DistinctWorkflows)
+        {
+            return await this.QueryDistinctWorkflowsAsync(definition, limit, cancellationToken).ConfigureAwait(false);
+        }
+
         // The page is a pooled batch of disposable version documents (the caller disposes the page). One extra row is
         // fetched as a look-ahead to detect a further page; it is not added to the batch.
         var versions = new PooledDocumentList<CatalogVersion>(limit);
@@ -323,6 +335,101 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
 
         return nextSortKey is not null ? CatalogPage.Create(versions, nextSortKey) : CatalogPage.Create(versions);
     }
+
+    // The distinct-workflow (collapse-by-base) page: one representative version per base workflow, keyset-paged by base
+    // id alone. Cosmos SQL has no window functions (no ROW_NUMBER/PARTITION BY), so the pushed-down query is the ordinary
+    // filtered query (same WHERE, incl. the reach predicate) ordered baseWorkflowId then versionNumber, and the collapse
+    // runs in-process over those base-ordered rows. A base is included when any of its versions matches (the WHERE has
+    // already filtered to matching versions); the representative is the best-matching version — the newest Active, else
+    // the newest Obsolete, else the newest (status rank Active=0/Obsolete=1/else=2, ties break to the higher version).
+    //
+    // Because the rows arrive in base order, a base's representative is final once the base id changes, so the read is
+    // bounded to a look-ahead: it stops after finalizing limit+1 representatives (the extra one only signals a further
+    // page and is not emitted). The winning document is cloned detached from the query page buffer (FromJson) as it is
+    // selected, since the raw element span is valid only within its page.
+    private async ValueTask<CatalogPage> QueryDistinctWorkflowsAsync(QueryDefinition definition, int limit, CancellationToken cancellationToken)
+    {
+        var reps = new PooledDocumentList<CatalogVersion>(limit);
+        string? nextBaseId = null;
+        try
+        {
+            string? currentBaseId = null;
+            CatalogDocument bestForCurrent = default;
+            int bestRank = int.MaxValue;
+            int bestVersion = int.MinValue;
+
+            await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.catalog, definition, cancellationToken).ConfigureAwait(false))
+            {
+                CatalogDocument document = CatalogDocument.FromJson(element);
+                string baseWorkflowId = (string)document.BaseWorkflowId;
+
+                if (currentBaseId is null)
+                {
+                    // First row: open the first base.
+                    currentBaseId = baseWorkflowId;
+                }
+                else if (!string.Equals(baseWorkflowId, currentBaseId, StringComparison.Ordinal))
+                {
+                    // The base id changed, so the previous base's representative is final (rows are base-ordered).
+                    if (TryFinalizeDistinctBase(reps, bestForCurrent, limit, out nextBaseId))
+                    {
+                        // limit+1 representatives finalized — a further page exists; stop the (bounded) read.
+                        return CatalogPage.Create(reps, nextBaseId!);
+                    }
+
+                    currentBaseId = baseWorkflowId;
+                    bestRank = int.MaxValue;
+                    bestVersion = int.MinValue;
+                }
+
+                int rank = StatusRank((JsonElement)document.Status);
+                int versionNumber = (int)document.VersionNumber;
+                if (rank < bestRank || (rank == bestRank && versionNumber > bestVersion))
+                {
+                    bestForCurrent = document;
+                    bestRank = rank;
+                    bestVersion = versionNumber;
+                }
+            }
+
+            // Emit the final open base (if any); its representative cannot signal a further page (the stream ended).
+            if (currentBaseId is not null && TryFinalizeDistinctBase(reps, bestForCurrent, limit, out nextBaseId))
+            {
+                return CatalogPage.Create(reps, nextBaseId!);
+            }
+        }
+        catch
+        {
+            reps.Dispose();
+            throw;
+        }
+
+        return nextBaseId is not null ? CatalogPage.Create(reps, nextBaseId) : CatalogPage.Create(reps);
+    }
+
+    // Adds a finalized base's representative to the page, or — if the page is already full (limit reached) — reports the
+    // look-ahead base id as the next cursor without emitting it. Returns true when the look-ahead fired (stop reading).
+    private static bool TryFinalizeDistinctBase(PooledDocumentList<CatalogVersion> reps, CatalogDocument representative, int limit, out string? nextBaseId)
+    {
+        if (reps.Count == limit)
+        {
+            // One base beyond the page — a next page exists; the last emitted base id is the cursor.
+            nextBaseId = reps[reps.Count - 1].Ref.BaseWorkflowId;
+            return true;
+        }
+
+        nextBaseId = null;
+        reps.Add(representative.ToVersion());
+        return false;
+    }
+
+    // The representative-precedence rank: newest Active wins over newest Obsolete wins over newest of any other status.
+    // The status is compared string-free (JsonElement.EqualsString over the persisted value) so ranking a page's worth of
+    // rows allocates no per-row status string.
+    private static int StatusRank(JsonElement status)
+        => status.EqualsString(nameof(CatalogStatus.Active)) ? 0
+            : status.EqualsString(nameof(CatalogStatus.Obsolete)) ? 1
+            : 2;
 
     /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<CatalogVersion>?> UpdateMetadataAsync(string baseWorkflowId, int versionNumber, CatalogMetadataPatch patch, CancellationToken cancellationToken)

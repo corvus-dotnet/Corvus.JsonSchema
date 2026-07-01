@@ -168,6 +168,250 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
     {
         int limit = query.Limit <= 0 ? 100 : query.Limit;
 
+        // The shared field filter (base/status/text/owner/prefix/tags) — identical for both query modes. The keyset
+        // cursor is NOT included here: in version mode it filters the composite sortKey, but in distinct mode it filters
+        // the collapsed base id after grouping, so each mode applies its own cursor below.
+        FilterDefinition<BsonDocument> filter = this.BuildFilter(query);
+
+        if (query.DistinctWorkflows)
+        {
+            return await this.QueryDistinctWorkflowsAsync(query, filter, limit, cancellationToken).ConfigureAwait(false);
+        }
+
+        FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
+
+        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
+        if (query.ContinuationToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
+            if (WorkflowContinuationToken.Decode(tokenUtf8.Span) is { } after)
+            {
+                filter = b.And(filter, b.Gt("sortKey", after));
+            }
+        }
+
+        // Row-security reach (§14.2) is applied in process over each version's persisted security tags (see the
+        // class remarks), so the server-side Limit is dropped when a reach filter is present: stream the
+        // sortKey-ordered cursor and take limit+1 *matching* versions, preserving keyset paging.
+        IFindFluent<BsonDocument, BsonDocument> find = this.versions.Find(filter).Sort(Builders<BsonDocument>.Sort.Ascending("sortKey"));
+        if (query.Security is null)
+        {
+            find = find.Limit(limit + 1);
+        }
+
+        // The page is a pooled batch of disposable version documents (the caller disposes the page). Each candidate is
+        // parsed once into a pooled, disposable document; the row-security reach (§14.2) is applied in process over the
+        // version's persisted security tags, so non-matches and the look-ahead row are disposed immediately rather than
+        // kept in the batch.
+        var matches = new PooledDocumentList<CatalogVersion>(limit);
+        string? nextSortKey = null;
+        try
+        {
+            using IAsyncCursor<BsonDocument> cursor = await find.ToCursorAsync(cancellationToken).ConfigureAwait(false);
+            bool full = false;
+            while (!full && await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
+            {
+                foreach (BsonDocument document in cursor.Current)
+                {
+                    ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(document);
+                    if (query.Security is { } security && !SatisfiesReach(candidate.RootElement, security))
+                    {
+                        candidate.Dispose();
+                        continue;
+                    }
+
+                    if (matches.Count == limit)
+                    {
+                        // There is at least one more matching row beyond this page; the last kept row is the cursor.
+                        CatalogVersionRef last = matches[matches.Count - 1].Ref;
+                        nextSortKey = SortKey(last.BaseWorkflowId, last.VersionNumber);
+                        candidate.Dispose();
+                        full = true;
+                        break;
+                    }
+
+                    matches.Add(candidate);
+                }
+            }
+        }
+        catch
+        {
+            matches.Dispose();
+            throw;
+        }
+
+        return nextSortKey is not null ? CatalogPage.Create(matches, nextSortKey) : CatalogPage.Create(matches);
+    }
+
+    // The distinct-workflow (collapse-by-base) query: one representative version per base workflow, keyset-paged by
+    // base id alone. A base is included if ANY of its versions matches the filter; the representative is the
+    // best-MATCHING version — the newest Active, else the newest Obsolete, else the newest (status rank Active=0,
+    // Obsolete=1, else=2; tie → higher version number). Base ordering is byte-ordinal: a non-collated Mongo
+    // collection compares strings by UTF-8 byte order, which matches the in-memory reference's StringComparer.Ordinal.
+    private async ValueTask<CatalogPage> QueryDistinctWorkflowsAsync(CatalogQuery query, FilterDefinition<BsonDocument> filter, int limit, CancellationToken cancellationToken)
+    {
+        // Decode the keyset cursor (the last returned base id); undefined = first page.
+        string? after = null;
+        if (query.ContinuationToken.IsNotUndefined())
+        {
+            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
+            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
+        }
+
+        // Compute the representative-precedence status rank (Active=0, Obsolete=1, else=2) so the sort below can order
+        // matching versions by (base id asc, status rank asc, version number desc) — the winning version per base is
+        // then the first document within each base-id group.
+        var addRankStage = new BsonDocument("$addFields", new BsonDocument("statusRank", new BsonDocument("$switch", new BsonDocument
+        {
+            ["branches"] = new BsonArray
+            {
+                new BsonDocument { ["case"] = new BsonDocument("$eq", new BsonArray { "$status", "Active" }), ["then"] = 0 },
+                new BsonDocument { ["case"] = new BsonDocument("$eq", new BsonArray { "$status", ObsoleteStatus }), ["then"] = 1 },
+            },
+            ["default"] = 2,
+        })));
+
+        var precedenceSortStage = new BsonDocument("$sort", new BsonDocument
+        {
+            ["baseWorkflowId"] = 1,
+            ["statusRank"] = 1,
+            ["versionNumber"] = -1,
+        });
+
+        // Build the pipeline via the fluent aggregate API so the shared FilterDefinition renders the $match stage
+        // (no hand-rolled Render); subsequent raw-BSON stages are appended verbatim.
+        IAggregateFluent<BsonDocument> ranked = this.versions.Aggregate()
+            .Match(filter)
+            .AppendStage<BsonDocument>(addRankStage)
+            .AppendStage<BsonDocument>(precedenceSortStage);
+
+        if (query.Security is { } security)
+        {
+            // Row-security reach (§14.2) is applied in process over each version's persisted security tags and cannot
+            // be expressed as a pipeline stage, so the winning version per base must be chosen AFTER reach — grouping
+            // server-side could otherwise pick a representative the principal cannot see. Stream the precedence-sorted
+            // versions and take the FIRST reach-passing version of each base as its representative (the stream is
+            // already in precedence order within each base), keyset-paged by base id with a +1 lookahead.
+            return await this.CollapseReachedRepresentativesAsync(ranked, security, after, limit, cancellationToken).ConfigureAwait(false);
+        }
+
+        // No reach filter: collapse server-side. $group by base id takes the $first document (the representative, given
+        // the precedence sort), then $match on base id > cursor, re-sort by base id, and $limit (limit + 1) for the
+        // lookahead. The representative document is projected back out of the group's $first.
+        var groupStage = new BsonDocument("$group", new BsonDocument
+        {
+            ["_id"] = "$baseWorkflowId",
+            ["rep"] = new BsonDocument("$first", "$$ROOT"),
+        });
+        var cursorMatchStage = new BsonDocument("$match", after is null ? [] : new BsonDocument("_id", new BsonDocument("$gt", after)));
+        var baseSortStage = new BsonDocument("$sort", new BsonDocument("_id", 1));
+        var limitStage = new BsonDocument("$limit", limit + 1);
+        var projectStage = new BsonDocument("$replaceRoot", new BsonDocument("newRoot", "$rep"));
+
+        IAggregateFluent<BsonDocument> collapsed = ranked
+            .AppendStage<BsonDocument>(groupStage)
+            .AppendStage<BsonDocument>(cursorMatchStage)
+            .AppendStage<BsonDocument>(baseSortStage)
+            .AppendStage<BsonDocument>(limitStage)
+            .AppendStage<BsonDocument>(projectStage);
+
+        var matches = new PooledDocumentList<CatalogVersion>(limit);
+        string? nextBaseId = null;
+        try
+        {
+            using IAsyncCursor<BsonDocument> cursor = await collapsed.ToCursorAsync(cancellationToken).ConfigureAwait(false);
+            bool full = false;
+            while (!full && await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
+            {
+                foreach (BsonDocument document in cursor.Current)
+                {
+                    if (matches.Count == limit)
+                    {
+                        // There is at least one more matching base workflow beyond this page; the cursor is the last
+                        // kept row's base id alone (the page is one row per base).
+                        nextBaseId = matches[matches.Count - 1].Ref.BaseWorkflowId;
+                        full = true;
+                        break;
+                    }
+
+                    matches.Add(ReadVersion(document));
+                }
+            }
+        }
+        catch
+        {
+            matches.Dispose();
+            throw;
+        }
+
+        return nextBaseId is not null ? CatalogPage.Create(matches, nextBaseId) : CatalogPage.Create(matches);
+    }
+
+    // The reach-filtered distinct collapse: the pipeline yields matching versions in (base asc, precedence) order; the
+    // first reach-passing version of each base is its representative. Keyset-paged by base id alone with a +1 lookahead.
+    private async ValueTask<CatalogPage> CollapseReachedRepresentativesAsync(IAggregateFluent<BsonDocument> ranked, SecurityFilter security, string? after, int limit, CancellationToken cancellationToken)
+    {
+        var matches = new PooledDocumentList<CatalogVersion>(limit);
+        string? nextBaseId = null;
+        string? currentBase = null;
+        try
+        {
+            using IAsyncCursor<BsonDocument> cursor = await ranked.ToCursorAsync(cancellationToken).ConfigureAwait(false);
+            bool full = false;
+            while (!full && await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
+            {
+                foreach (BsonDocument document in cursor.Current)
+                {
+                    string baseId = document["baseWorkflowId"].AsString;
+
+                    // Skip further versions of a base whose representative we've already taken (or that had none),
+                    // and skip bases at/before the keyset cursor.
+                    if (baseId == currentBase)
+                    {
+                        continue;
+                    }
+
+                    ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(document);
+                    if (!SatisfiesReach(candidate.RootElement, security))
+                    {
+                        candidate.Dispose();
+                        continue;
+                    }
+
+                    // This is the first reach-passing (best-precedence) version of a new base: it is the representative.
+                    currentBase = baseId;
+
+                    if (after is not null && string.CompareOrdinal(baseId, after) <= 0)
+                    {
+                        candidate.Dispose();
+                        continue;
+                    }
+
+                    if (matches.Count == limit)
+                    {
+                        // There is at least one more matching base workflow beyond this page; the cursor is the last
+                        // kept row's base id alone.
+                        nextBaseId = matches[matches.Count - 1].Ref.BaseWorkflowId;
+                        candidate.Dispose();
+                        full = true;
+                        break;
+                    }
+
+                    matches.Add(candidate);
+                }
+            }
+        }
+        catch
+        {
+            matches.Dispose();
+            throw;
+        }
+
+        return nextBaseId is not null ? CatalogPage.Create(matches, nextBaseId) : CatalogPage.Create(matches);
+    }
+
+    private FilterDefinition<BsonDocument> BuildFilter(CatalogQuery query)
+    {
         FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
         FilterDefinition<BsonDocument> filter = b.Empty;
 
@@ -210,73 +454,15 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             filter = b.And(filter, b.All("tags", query.Tags.ToList())); // $all = contains every queried tag
         }
 
-        // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
-        if (query.ContinuationToken.IsNotUndefined())
-        {
-            using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
-            if (WorkflowContinuationToken.Decode(tokenUtf8.Span) is { } after)
-            {
-                filter = b.And(filter, b.Gt("sortKey", after));
-            }
-        }
+        return filter;
+    }
 
-        // Row-security reach (§14.2) is applied in process over each version's persisted security tags (see the
-        // class remarks), so the server-side Limit is dropped when a reach filter is present: stream the
-        // sortKey-ordered cursor and take limit+1 *matching* versions, preserving keyset paging.
-        IFindFluent<BsonDocument, BsonDocument> find = this.versions.Find(filter).Sort(Builders<BsonDocument>.Sort.Ascending("sortKey"));
-        if (query.Security is null)
-        {
-            find = find.Limit(limit + 1);
-        }
-
-        // The page is a pooled batch of disposable version documents (the caller disposes the page). Each candidate is
-        // parsed once into a pooled, disposable document; the row-security reach (§14.2) is applied in process over the
-        // version's persisted security tags, so non-matches and the look-ahead row are disposed immediately rather than
-        // kept in the batch.
-        var matches = new PooledDocumentList<CatalogVersion>(limit);
-        string? nextSortKey = null;
-        try
-        {
-            using IAsyncCursor<BsonDocument> cursor = await find.ToCursorAsync(cancellationToken).ConfigureAwait(false);
-            bool full = false;
-            while (!full && await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
-            {
-                foreach (BsonDocument document in cursor.Current)
-                {
-                    ParsedJsonDocument<CatalogVersion> candidate = ReadVersion(document);
-                    if (query.Security is { } security)
-                    {
-                        SecurityTagSet securityTags = candidate.RootElement.SecurityTags.IsNotUndefined()
-                            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(candidate.RootElement.SecurityTags).Memory)
-                            : SecurityTagSet.Empty;
-                        if (!security.IsSatisfiedBy(securityTags))
-                        {
-                            candidate.Dispose();
-                            continue;
-                        }
-                    }
-
-                    if (matches.Count == limit)
-                    {
-                        // There is at least one more matching row beyond this page; the last kept row is the cursor.
-                        CatalogVersionRef last = matches[matches.Count - 1].Ref;
-                        nextSortKey = SortKey(last.BaseWorkflowId, last.VersionNumber);
-                        candidate.Dispose();
-                        full = true;
-                        break;
-                    }
-
-                    matches.Add(candidate);
-                }
-            }
-        }
-        catch
-        {
-            matches.Dispose();
-            throw;
-        }
-
-        return nextSortKey is not null ? CatalogPage.Create(matches, nextSortKey) : CatalogPage.Create(matches);
+    private static bool SatisfiesReach(in CatalogVersion version, SecurityFilter security)
+    {
+        SecurityTagSet securityTags = version.SecurityTags.IsNotUndefined()
+            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(version.SecurityTags).Memory)
+            : SecurityTagSet.Empty;
+        return security.IsSatisfiedBy(securityTags);
     }
 
     /// <inheritdoc/>

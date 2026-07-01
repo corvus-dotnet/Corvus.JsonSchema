@@ -130,21 +130,34 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
         int limit = query.Limit <= 0 ? 100 : query.Limit;
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand select = connection.CreateCommand();
-        select.CommandText =
-            "SELECT TOP (@limit) " + ColumnList +
-            """
 
-            FROM CatalogVersions
-            WHERE (@baseWorkflowId IS NULL OR BaseWorkflowId = @baseWorkflowId)
+        // The shared filter body (base/status/text/owner/prefix/tags/security); both query modes embed it verbatim,
+        // and the {{tagPredicates}}/{{securityPredicate}} placeholders are filled below.
+        const string filterWhere = """
+            (@baseWorkflowId IS NULL OR BaseWorkflowId = @baseWorkflowId)
               AND (@status IS NULL OR Status = @status)
               AND (@text IS NULL OR Title LIKE @textLike ESCAPE '\' OR (Description IS NOT NULL AND Description LIKE @textLike ESCAPE '\'))
               AND (@owner IS NULL OR OwnerName LIKE @ownerLike ESCAPE '\' OR OwnerEmail LIKE @ownerLike ESCAPE '\')
               AND (@workflowIdPrefix IS NULL OR WorkflowId LIKE @workflowIdPrefixLike ESCAPE '\')
               {{tagPredicates}}
               {{securityPredicate}}
-              AND (@after IS NULL OR (BaseWorkflowId + RIGHT('0000000000' + CAST(VersionNumber AS NVARCHAR(10)), 10)) > @after)
-            ORDER BY BaseWorkflowId, VersionNumber;
             """;
+
+        // distinctWorkflows: among the filtered versions of each base, rank by (Active < Obsolete < other, then newest)
+        // and keep the representative (RepRank = 1); keyset-page by base workflow id alone. The base-id keyset compare
+        // and ORDER BY apply COLLATE Latin1_General_BIN2 so the paging order is byte-ordinal — the same order the
+        // in-memory reference uses (StringComparer.Ordinal). With a CTE + ROW_NUMBER the row cap (TOP (@limit),
+        // pageSize + 1 for the look-ahead) is applied on the outer SELECT. Otherwise page every matching version by
+        // (base, version).
+        select.CommandText = query.DistinctWorkflows
+            ? "WITH ranked AS (\n  SELECT " + ColumnList +
+              ",\n    ROW_NUMBER() OVER (PARTITION BY BaseWorkflowId ORDER BY CASE Status WHEN 'Active' THEN 0 WHEN 'Obsolete' THEN 1 ELSE 2 END, VersionNumber DESC) AS RepRank\n" +
+              "  FROM CatalogVersions\n  WHERE " + filterWhere + "\n)\n" +
+              "SELECT TOP (@limit) " + ColumnList + " FROM ranked\n" +
+              "WHERE RepRank = 1 AND (@after IS NULL OR BaseWorkflowId COLLATE Latin1_General_BIN2 > @after)\n" +
+              "ORDER BY BaseWorkflowId COLLATE Latin1_General_BIN2;"
+            : "SELECT TOP (@limit) " + ColumnList + "\nFROM CatalogVersions\nWHERE " + filterWhere +
+              "\n  AND (@after IS NULL OR (BaseWorkflowId + RIGHT('0000000000' + CAST(VersionNumber AS NVARCHAR(10)), 10)) > @after)\nORDER BY BaseWorkflowId, VersionNumber;";
         select.Parameters.Add(NullableText("@baseWorkflowId", query.BaseWorkflowId));
         select.Parameters.Add(NullableText("@status", query.Status?.ToString()));
         select.Parameters.Add(NullableText("@text", query.Text));
@@ -209,8 +222,9 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
                 if (versions.Count == limit)
                 {
                     // There is at least one more matching row beyond this page; the last kept row is the cursor.
+                    // In distinct mode the cursor is the base workflow id alone (the page is one row per base).
                     CatalogVersionRef last = versions[versions.Count - 1].Ref;
-                    nextSortKey = SortKey(last.BaseWorkflowId, last.VersionNumber);
+                    nextSortKey = query.DistinctWorkflows ? last.BaseWorkflowId : SortKey(last.BaseWorkflowId, last.VersionNumber);
                     break;
                 }
 

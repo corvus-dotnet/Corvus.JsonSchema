@@ -119,12 +119,15 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         string? owner = parameters.Owner.IsNotUndefined() ? (string)parameters.Owner : null;
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 100;
 
+        // Absent = false: collapse to one representative version per base workflow (keyset by base id) only when explicitly asked.
+        bool distinctWorkflows = parameters.DistinctWorkflows.IsNotUndefined() && (bool)parameters.DistinctWorkflows;
+
         // The opaque page token flows to the store as its JSON value (From() rewraps parameters.PageToken — free, no
         // reify, no managed string; undefined → undefined = first page); the store decodes the cursor bytes-native.
         JsonString pageToken = JsonString.From(parameters.PageToken);
 
         using CatalogPage page = await this.catalog.SearchAsync(
-            new CatalogQuery(text, baseWorkflowId, workflowIdPrefix, tags, status, owner, limit, pageToken), this.access.Current(), cancellationToken).ConfigureAwait(false);
+            new CatalogQuery(text, baseWorkflowId, workflowIdPrefix, tags, status, owner, limit, pageToken, DistinctWorkflows: distinctWorkflows), this.access.Current(), cancellationToken).ConfigureAwait(false);
 
         // The page summaries are views over the pooled version documents, and the response body's Source is materialized
         // by Ok(...) here but re-read by the later (post-handler) body validation/serialization — so hand the documents
