@@ -1,5 +1,19 @@
 # Version History
 
+## V5.3.0
+
+V5.3.0 introduces a **TypeScript code-generation engine**: the same JSON Schema and OpenAPI inputs that drive the C# generators now also produce idiomatic, high-performance TypeScript — strongly-typed models with ahead-of-time validators, and full OpenAPI 3.0/3.1/3.2 HTTP clients — backed by two published npm runtime packages. This release is additive; no existing C# behaviour changes.
+
+### New features
+
+- **TypeScript model generation from JSON Schema** — `corvusjson jsonschema <schema.json> --engine TypeScript` (and the OpenAPI generators) emit idiomatic TypeScript from any JSON Schema. Each generated type is a plain TypeScript `interface`/`type` plus a companion object carrying an ahead-of-time `evaluate()` validator (drafts 4, 6, 7, 2019-09, and 2020-12, generated as code with no runtime schema interpretation), `parse()`, byte-level `build()`/`patch()`/`produce()` mutation, RFC 6902 / RFC 7396 patch, merge-patch, and diff, branded `format` types (for example `date-time`, `date`, `uuid`) with `Temporal` accessors, and exhaustive `match()` for `oneOf`/`anyOf` unions and enumerations. Named array types are first-class (their own `type` alias and `parse`). Output is a single module by default, or a module per type. The engine validates against the JSON-Schema-Test-Suite.
+
+- **TypeScript OpenAPI client generation** — `corvusjson openapi-client <spec> --engine TypeScript` generates a strongly-typed HTTP client from an OpenAPI 3.0, 3.1, or 3.2 specification, mirroring the C# client feature-for-feature: per-tag client classes over an injectable byte-native transport; typed request modules that serialize path, query, header, and cookie parameters in every `style` × `explode` combination (percent-encoding reserved characters per RFC 3986); JSON, form-urlencoded, multipart/form-data, multipart/mixed, and binary request bodies built from the model companions; response classes with per-status `tryGet{Status}()`, exhaustive `match({...})`, typed response-header getters, a `links` accessor that follows runtime expressions (`$response.*` / `$request.*`), and `AsyncIterable` streaming for Server-Sent Events and NDJSON; and per-operation `validate()`. The spec walk and intermediate representation are shared with the C# generator, and a parity harness verifies that both languages compose byte-identical wire requests and decompose responses identically.
+
+- **Two published npm runtime packages** — the generated TypeScript depends on [`@endjin/corvus-json-runtime`](https://www.npmjs.com/package/@endjin/corvus-json-runtime), the zero-network model runtime (validators, mutation, patch, and `Temporal` / `lossless-json` support), and, for OpenAPI clients, [`@endjin/corvus-json-client-runtime`](https://www.npmjs.com/package/@endjin/corvus-json-client-runtime), the byte-native transport layer: `FetchApiTransport` (browsers / edge) and `NodeApiTransport` (Node), composable `retry` / `redirect` / `timeout` middleware, and `bearerToken` / `apiKey` / `basicAuth` authentication providers. The two packages are independent — a generated client imports the model runtime for typed bodies and the client runtime for the wire — and the client runtime keeps Node-only code behind a `./node` export so browser bundles stay clean.
+
+- **TypeScript documentation, recipes, and playgrounds** — a full TypeScript documentation section (getting started, the type surface, reading and validating, mutation, JSON Patch, runtime, and OpenAPI client generation), worked example recipes with runnable demos, and two in-browser playgrounds — [TypeScript model generation](/playground-typescript/) and [TypeScript OpenAPI client generation](/playground-openapi-typescript/) — each generating and running code live in the browser.
+
 ## V5.2.2
 
 V5.2.2 lets the property-parameter `Build(...)` factory be used directly as an array element (or object-property value) inside a mutable builder callback.
