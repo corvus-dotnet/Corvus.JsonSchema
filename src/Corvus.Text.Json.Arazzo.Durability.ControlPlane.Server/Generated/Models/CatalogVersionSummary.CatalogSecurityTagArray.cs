@@ -17,30 +17,35 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 /// <remarks>
 /// <para>
-/// A partial update of a version&#39;s mutable governance metadata; omitted fields are left unchanged. Closed (additionalProperties: false) so an unknown field is rejected with 400 rather than silently ignored. `securityTags` sets the version&#39;s NON-internal reach labels (&#167;14.2) — a governed edit for a workflow administrator; the reserved internal-tag prefix is rejected (400), since internal tags (e.g. the deployment tenant) stay deployment-stamped and immutable.
+/// A catalog version as projected into the searchable index (one entry in a page).
 /// </para>
 /// </remarks>
-public readonly partial struct CatalogMetadataPatch
+public readonly partial struct CatalogVersionSummary
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The version&#39;s non-internal security tags (&#167;14.2) — the reach labels row-security rules match on. Internal/reserved-prefix tags are deployment-owned and stripped from this view. A run inherits its version&#39;s security tags.
+    /// </para>
+    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct JsonStringArray
+    public readonly partial struct CatalogSecurityTagArray
 #if NET8_0_OR_GREATER
-        : IJsonElement<JsonStringArray>,
+        : IJsonElement<CatalogSecurityTagArray>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
-        : IJsonElement<JsonStringArray>,
+        : IJsonElement<CatalogSecurityTagArray>,
           IFormattable
 #endif
     {
@@ -50,10 +55,10 @@ public readonly partial struct CatalogMetadataPatch
 
         #pragma warning restore CS8618 // JsonDocument nullability
         /// <summary>
-        /// Initializes a new instance of the <see cref="JsonStringArray"/> struct.
+        /// Initializes a new instance of the <see cref="CatalogSecurityTagArray"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        internal JsonStringArray(IJsonDocument parent, int idx)
+        internal CatalogSecurityTagArray(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);
             _parent = parent;
@@ -63,7 +68,7 @@ public readonly partial struct CatalogMetadataPatch
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static JsonStringArray DefaultInstance { get; }
+        public static CatalogSecurityTagArray DefaultInstance { get; }
 
         /// <summary>
         /// Gets the rank of the array.
@@ -77,12 +82,12 @@ public readonly partial struct CatalogMetadataPatch
         /// <returns>The item at the given index.</returns>
         /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString this[int index]
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogSecurityTag this[int index]
         {
             get
             {
                 CheckValidInstance();
-                return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString>(_idx, index);
+                return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogSecurityTag>(_idx, index);
             }
         }
 
@@ -100,10 +105,10 @@ public readonly partial struct CatalogMetadataPatch
         /// Enumerates the array.
         /// </summary>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString> EnumerateArray()
+        public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogSecurityTag> EnumerateArray()
         {
             CheckValidInstance();
-            return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString>(_parent, _idx);
+            return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogSecurityTag>(_parent, _idx);
         }
 
         /// <inheritdoc/>
@@ -120,7 +125,7 @@ public readonly partial struct CatalogMetadataPatch
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in JsonStringArray left, in JsonStringArray right)
+        public static bool operator ==(in CatalogSecurityTagArray left, in CatalogSecurityTagArray right)
         {
             return left.Equals(right);
         }
@@ -133,7 +138,7 @@ public readonly partial struct CatalogMetadataPatch
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in JsonStringArray left, in JsonStringArray right)
+        public static bool operator !=(in CatalogSecurityTagArray left, in CatalogSecurityTagArray right)
         {
             return !left.Equals(right);
         }
@@ -146,7 +151,7 @@ public readonly partial struct CatalogMetadataPatch
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in JsonStringArray left, in JsonElement right)
+        public static bool operator ==(in CatalogSecurityTagArray left, in JsonElement right)
         {
             return left.Equals(right);
         }
@@ -159,7 +164,7 @@ public readonly partial struct CatalogMetadataPatch
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in JsonStringArray left, in JsonElement right)
+        public static bool operator !=(in CatalogSecurityTagArray left, in JsonElement right)
         {
             return !left.Equals(right);
         }
@@ -170,7 +175,7 @@ public readonly partial struct CatalogMetadataPatch
         /// <param name="value">The instance of this type.</param>
         /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator JsonElement(JsonStringArray instance)
+        public static implicit operator JsonElement(CatalogSecurityTagArray instance)
         {
             return JsonElement.From(instance);
         }
@@ -181,9 +186,9 @@ public readonly partial struct CatalogMetadataPatch
         /// <param name="value">The instance of this type as a JsonElement.</param>
         /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator JsonStringArray(JsonElement instance)
+        public static implicit operator CatalogSecurityTagArray(JsonElement instance)
         {
-            return JsonStringArray.From(instance);
+            return CatalogSecurityTagArray.From(instance);
         }
 
         /// <summary>
@@ -192,7 +197,7 @@ public readonly partial struct CatalogMetadataPatch
         /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the JSON element.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static JsonStringArray From<T>(in T instance)
+        public static CatalogSecurityTagArray From<T>(in T instance)
             where T : struct, IJsonElement<T>
         {
             return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -217,10 +222,10 @@ public readonly partial struct CatalogMetadataPatch
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static JsonStringArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+        public static CatalogSecurityTagArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<JsonStringArray>(utf8Json, options);
+            return JsonElementHelpers.ParseValue<CatalogSecurityTagArray>(utf8Json, options);
             #pragma warning restore CS0618
         }
 
@@ -243,10 +248,10 @@ public readonly partial struct CatalogMetadataPatch
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static JsonStringArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+        public static CatalogSecurityTagArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<JsonStringArray>(json, options);
+            return JsonElementHelpers.ParseValue<CatalogSecurityTagArray>(json, options);
             #pragma warning restore CS0618
         }
 
@@ -269,10 +274,10 @@ public readonly partial struct CatalogMetadataPatch
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static JsonStringArray ParseValue(string json, JsonDocumentOptions options = default)
+        public static CatalogSecurityTagArray ParseValue(string json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<JsonStringArray>(json, options);
+            return JsonElementHelpers.ParseValue<CatalogSecurityTagArray>(json, options);
             #pragma warning restore CS0618
         }
 
@@ -312,10 +317,10 @@ public readonly partial struct CatalogMetadataPatch
         ///   A value could not be read from the reader.
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-        public static JsonStringArray ParseValue(ref Utf8JsonReader reader)
+        public static CatalogSecurityTagArray ParseValue(ref Utf8JsonReader reader)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<JsonStringArray>(ref reader);
+            return JsonElementHelpers.ParseValue<CatalogSecurityTagArray>(ref reader);
             #pragma warning restore CS0618
         }
 
@@ -357,16 +362,16 @@ public readonly partial struct CatalogMetadataPatch
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
-        public static bool TryParseValue(ref Utf8JsonReader reader, out JsonStringArray? result)
+        public static bool TryParseValue(ref Utf8JsonReader reader, out CatalogSecurityTagArray? result)
         {
-            return JsonElementHelpers.TryParseValue<JsonStringArray>(ref reader, out result);
+            return JsonElementHelpers.TryParseValue<CatalogSecurityTagArray>(ref reader, out result);
         }
 
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new JsonStringArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new CatalogSecurityTagArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -456,11 +461,11 @@ public readonly partial struct CatalogMetadataPatch
         void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-        static JsonStringArray IJsonElement<JsonStringArray>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+        static CatalogSecurityTagArray IJsonElement<CatalogSecurityTagArray>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"JsonStringArray: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"CatalogSecurityTagArray: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -475,11 +480,11 @@ public readonly partial struct CatalogMetadataPatch
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <summary>
-        /// Gets a <see cref="JsonStringArray"/> which can be safely stored beyond the lifetime of the
+        /// Gets a <see cref="CatalogSecurityTagArray"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </summary>
         /// <returns>
-        /// A <see cref="JsonStringArray"/> which can be safely stored beyond the lifetime of the
+        /// A <see cref="CatalogSecurityTagArray"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </returns>
         /// <remarks>
@@ -488,10 +493,10 @@ public readonly partial struct CatalogMetadataPatch
         /// this method returns the same instance without additional allocation.
         /// </para>
         /// </remarks>
-        public JsonStringArray Clone()
+        public CatalogSecurityTagArray Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<JsonStringArray>(_idx);
+            return _parent.CloneElement<CatalogSecurityTagArray>(_idx);
         }
 
         /// <summary>
@@ -499,7 +504,7 @@ public readonly partial struct CatalogMetadataPatch
         /// or returns this instance if it is already immutable.
         /// </summary>
         /// <returns>
-        /// An immutable <see cref="JsonStringArray"/> that lives for the lifetime of its
+        /// An immutable <see cref="CatalogSecurityTagArray"/> that lives for the lifetime of its
         /// workspace and its associated documents.
         /// </returns>
         /// <remarks>
@@ -513,12 +518,12 @@ public readonly partial struct CatalogMetadataPatch
         /// If this instance is already backed by an immutable document, it is returned as-is.
         /// </para>
         /// </remarks>
-        public JsonStringArray Freeze()
+        public CatalogSecurityTagArray Freeze()
         {
             CheckValidInstance();
             if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
             {
-                return mutable.FreezeElement<JsonStringArray>(_idx);
+                return mutable.FreezeElement<CatalogSecurityTagArray>(_idx);
             }
 
             return this;
