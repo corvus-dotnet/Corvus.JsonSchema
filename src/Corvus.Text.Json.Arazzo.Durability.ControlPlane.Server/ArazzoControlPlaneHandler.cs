@@ -241,6 +241,12 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 tags = Models.WorkflowRunDetail.JsonStringArray.ParseValue(d.Tags.RawJson);
             }
 
+            Models.JsonString.Source environment = default;
+            if (d.Environment is { } env)
+            {
+                environment = env;
+            }
+
             b.Create(
                 createdAt: d.CreatedAt,
                 cursor: d.Cursor,
@@ -249,6 +255,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 status: d.Status.ToString(),
                 workflowId: d.WorkflowId,
                 correlationId: correlationId,
+                environment: environment,
                 fault: fault,
                 tags: tags,
                 wait: wait);
@@ -313,6 +320,12 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 tags = Models.WorkflowRunSummary.JsonStringArray.ParseValue(e.Tags.RawJson);
             }
 
+            Models.JsonString.Source environment = default;
+            if (e.Environment is { } env)
+            {
+                environment = env;
+            }
+
             b.Create(
                 createdAt: e.CreatedAt,
                 id: listing.Id.Value,
@@ -323,6 +336,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 awaitingCorrelationId: awaitingCorrelationId,
                 correlationId: correlationId,
                 dueAt: dueAt,
+                environment: environment,
                 errorType: errorType,
                 tags: tags);
         });
