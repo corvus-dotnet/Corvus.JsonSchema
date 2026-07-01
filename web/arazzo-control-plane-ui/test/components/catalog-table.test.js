@@ -29,16 +29,15 @@ describe('<arazzo-catalog-table>', () => {
     ok(el.shadowRoot.querySelector('[part="status"]'), 'status badge present');
   });
 
-  it('shows the version count for a multi-version workflow', async () => {
+  it('represents a multi-version workflow by its latest version', async () => {
     el = tableWithMock();
     mount(el);
     await nextEvent(el, 'loaded');
     const row = el.shadowRoot.querySelector('tbody tr[data-key="nightly-reconcile"]');
-    ok(row.textContent.includes('3 versions'), 'nightly-reconcile shows its three versions');
-    ok(row.textContent.includes('v3'), 'represented by its latest version');
+    ok(row.textContent.includes('v3'), 'represented by its latest version (server-side distinct collapse)');
   });
 
-  it('emits version-selected with the latest version when a row is clicked', async () => {
+  it('emits version-selected with the representative version when a row is clicked', async () => {
     el = tableWithMock({ selectable: '' });
     mount(el);
     await nextEvent(el, 'loaded');
@@ -48,7 +47,7 @@ describe('<arazzo-catalog-table>', () => {
     const e = await selected;
     equal(e.detail.baseWorkflowId, 'nightly-reconcile', 'event carries the base id');
     equal(e.detail.version.versionNumber, 3, 'representative is the latest version');
-    equal(e.detail.versions.length, 3, 'event carries all sibling versions');
+    // Distinct mode carries only the representative; the detail loads the base's full version list itself.
   });
 
   it('filters by the status attribute', async () => {
@@ -71,5 +70,26 @@ describe('<arazzo-catalog-table>', () => {
     await nextEvent(el, 'loaded');
     await waitFor(() => el.shadowRoot.querySelector('.empty'));
     equal(rowCount(el), 0, 'no rows');
+  });
+
+  it('pages base workflows with Prev/Next over the keyset cursor', async () => {
+    el = tableWithMock({ 'page-size': '2' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    equal(rowCount(el), 2, 'page 1 holds two workflows');
+    const next = el.shadowRoot.querySelector('.next');
+    ok(!next.disabled, 'Next is enabled when a page follows');
+    ok(el.shadowRoot.querySelector('.prev').disabled, 'Prev is disabled on page 1');
+
+    const page2 = nextEvent(el, 'loaded');
+    next.click();
+    await page2;
+    equal(rowCount(el), 1, 'page 2 holds the remaining workflow');
+    ok(el.shadowRoot.querySelector('.next').disabled, 'Next is disabled on the last page');
+
+    const back = nextEvent(el, 'loaded');
+    el.shadowRoot.querySelector('.prev').click();
+    await back;
+    equal(rowCount(el), 2, 'Prev returns to page 1');
   });
 });

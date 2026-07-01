@@ -4,12 +4,14 @@
 //
 // Attributes : base-url, q, base-workflow-id, status, owner, tags, page-size (default 50), selectable
 // Properties : .client, .filters = { q, baseWorkflowId, status, owner, tags }
-// Events     : version-selected {version, baseWorkflowId, versions}, loaded {count, hasMore}, error {problem}
+// Events     : version-selected {version, baseWorkflowId}, loaded {count, hasMore}, error {problem}
 // Parts      : table, row, cell, status, pager
 //
 // The catalog counterpart of <arazzo-runs-table>. Because a base workflow has many immutable versions, the
-// list shows one row per base (its latest version is the representative); the detail view switches versions.
-// Grouping is client-side over every matching version, so paging is over the GROUPS.
+// list shows one row per base — its representative version (newest Active, else newest Obsolete, else newest).
+// The collapse is done SERVER-SIDE (searchCatalog distinctWorkflows=true), keyset-paged by base workflow id,
+// so this table pages with Prev/Next over the store cursor exactly like <arazzo-runs-table> — never loading the
+// whole catalog. Selecting a row opens the detail, which loads that base's full version list itself.
 
 import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, define } from './base.js';
 
@@ -25,8 +27,10 @@ class ArazzoCatalogTable extends ArazzoElement {
 
   constructor() {
     super();
-    /** @private */ this._groups = [];
-    /** @private */ this._offset = 0;
+    /** @private */ this._rows = [];
+    /** @private */ this._history = []; // pageTokens of pages before the current one
+    /** @private */ this._currentToken = undefined;
+    /** @private */ this._nextToken = null;
     /** @private */ this._loading = false;
     /** @private */ this._error = null;
     /** @private */ this._selectedKey = null;
@@ -41,7 +45,7 @@ class ArazzoCatalogTable extends ArazzoElement {
   attributeChangedCallback(name) {
     if (!this.isConnected) return;
     if (name === 'selectable') this.renderBody();
-    else this.reload();
+    else this.reload(); // a filter or target changed — back to page 1
   }
 
   /** Imperative filter set (equivalent to the attributes). */
@@ -74,9 +78,10 @@ class ArazzoCatalogTable extends ArazzoElement {
 
   // ---- loading ----------------------------------------------------------------------------------
 
-  /** Reload from the first page of groups. */
+  /** Reload from page 1 (resets the keyset cursor). */
   reload() {
-    this._offset = 0;
+    this._history = [];
+    this._currentToken = undefined;
     this.load();
   }
 
@@ -95,25 +100,22 @@ class ArazzoCatalogTable extends ArazzoElement {
 
     try {
       const f = this.filters;
-      // Collapse versions per base means we need every matching version, not just one keyset page.
-      const all = [];
-      for await (const page of client.searchCatalogPaged({
+      const { versions, nextPageToken } = await client.searchCatalog({
         q: f.q,
         baseWorkflowId: f.baseWorkflowId,
         status: f.status,
         owner: f.owner,
         tags: f.tags,
-        limit: Math.max(this.pageSize, 200),
-      })) {
-        if (seq !== this._reqSeq) return;
-        all.push(...page.versions);
-      }
+        distinctWorkflows: true,
+        limit: this.pageSize,
+        pageToken: this._currentToken,
+      });
       if (seq !== this._reqSeq) return;
-      this._groups = groupVersions(all);
-      if (this._offset >= this._groups.length) this._offset = 0;
+      this._rows = versions;
+      this._nextToken = nextPageToken;
       this._loading = false;
       this.renderBody();
-      this.emit('loaded', { count: this._groups.length, hasMore: this._offset + this.pageSize < this._groups.length });
+      this.emit('loaded', { count: versions.length, hasMore: !!nextPageToken });
     } catch (err) {
       if (seq !== this._reqSeq) return;
       this._loading = false;
@@ -124,18 +126,19 @@ class ArazzoCatalogTable extends ArazzoElement {
   }
 
   nextPage() {
-    if (this._offset + this.pageSize >= this._groups.length) return;
-    this._offset += this.pageSize;
-    this.renderBody();
+    if (!this._nextToken) return;
+    this._history.push(this._currentToken);
+    this._currentToken = this._nextToken;
+    this.load();
   }
 
   prevPage() {
-    if (this._offset === 0) return;
-    this._offset = Math.max(0, this._offset - this.pageSize);
-    this.renderBody();
+    if (this._history.length === 0) return;
+    this._currentToken = this._history.pop();
+    this.load();
   }
 
-  /** Re-fetch from the server without resetting the page (e.g. after a governance action). */
+  /** Re-fetch the current page without resetting the cursor (e.g. after a governance action). */
   refresh() {
     this.load(true);
   }
@@ -159,7 +162,6 @@ class ArazzoCatalogTable extends ArazzoElement {
         tbody tr[aria-selected="true"] { background: color-mix(in srgb, var(--_accent) 12%, transparent); }
         .wf { font-weight: 600; }
         .ver { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-        .count { font-size: 11px; color: var(--_muted); }
         .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; }
         .owner { font-size: 12px; }
         .owner .team { color: var(--_muted); }
@@ -208,22 +210,20 @@ class ArazzoCatalogTable extends ArazzoElement {
       return;
     }
 
-    if (this._loading && this._groups.length === 0) {
+    if (this._loading && this._rows.length === 0) {
       tbody.innerHTML = Array.from({ length: 4 }, () =>
         `<tr>${'<td><div class="skl"></div></td>'.repeat(6)}</tr>`).join('');
       this.updatePager();
       return;
     }
 
-    const slice = this._groups.slice(this._offset, this._offset + this.pageSize);
-
-    if (slice.length === 0) {
+    if (this._rows.length === 0) {
       tbody.innerHTML = `<tr><td colspan="6"><div class="empty">No catalog workflows match the current filters.</div></td></tr>`;
       this.updatePager();
       return;
     }
 
-    tbody.innerHTML = slice.map((g) => this.renderRow(g, selectable)).join('');
+    tbody.innerHTML = this._rows.map((v) => this.renderRow(v, selectable)).join('');
 
     if (selectable) {
       this.$$('tbody tr.selectable').forEach((tr) => {
@@ -233,9 +233,8 @@ class ArazzoCatalogTable extends ArazzoElement {
     this.updatePager();
   }
 
-  renderRow(group, selectable) {
-    const v = group.latest;
-    const key = group.baseWorkflowId;
+  renderRow(v, selectable) {
+    const key = v.baseWorkflowId;
     const updated = v.lastUpdatedAt || v.obsoletedAt || v.createdAt;
     const owner = v.owner
       ? `<span class="owner">${escapeHtml(v.owner.name || v.owner.email || '—')}${v.owner.team ? ` <span class="team">· ${escapeHtml(v.owner.team)}</span>` : ''}</span>`
@@ -243,12 +242,11 @@ class ArazzoCatalogTable extends ArazzoElement {
     const tags = Array.isArray(v.tags) && v.tags.length > 0
       ? `<div class="tags">${v.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>`
       : '';
-    const count = group.versions.length > 1 ? `<br><span class="count">${group.versions.length} versions</span>` : '';
     const sel = this._selectedKey === key ? ' aria-selected="true"' : '';
     return `
       <tr part="row" class="${selectable ? 'selectable' : ''}" data-key="${escapeHtml(key)}"${sel}>
-        <td part="cell" class="wf">${escapeHtml(v.title || group.baseWorkflowId)}<br><span class="muted ver">${escapeHtml(group.baseWorkflowId)}</span></td>
-        <td part="cell" class="ver">v${escapeHtml(String(v.versionNumber))}${count}</td>
+        <td part="cell" class="wf">${escapeHtml(v.title || v.baseWorkflowId)}<br><span class="muted ver">${escapeHtml(v.baseWorkflowId)}</span></td>
+        <td part="cell" class="ver">v${escapeHtml(String(v.versionNumber))}</td>
         <td part="cell"><span class="badge" part="status" style="background:${STATUS_COLOR[v.status] || 'var(--_muted)'}">${escapeHtml(v.status)}</span></td>
         <td part="cell">${owner}</td>
         <td part="cell" class="muted" title="${escapeHtml(absoluteTime(updated))}">${escapeHtml(relativeTime(updated))}</td>
@@ -259,53 +257,26 @@ class ArazzoCatalogTable extends ArazzoElement {
   updatePager() {
     const prev = this.$('.prev');
     const next = this.$('.next');
-    if (prev) prev.disabled = this._offset === 0 || this._loading;
-    if (next) next.disabled = this._offset + this.pageSize >= this._groups.length || this._loading;
+    if (prev) prev.disabled = this._history.length === 0 || this._loading;
+    if (next) next.disabled = !this._nextToken || this._loading;
     const count = this.$('.pager .count');
     if (count) {
-      const page = Math.floor(this._offset / this.pageSize) + 1;
       count.textContent = this._loading
         ? 'Loading…'
-        : `${this._groups.length} workflow${this._groups.length === 1 ? '' : 's'}${this._groups.length > this.pageSize ? ` · page ${page}` : ''}`;
+        : `${this._rows.length} workflow${this._rows.length === 1 ? '' : 's'}${this._history.length ? ` · page ${this._history.length + 1}` : ''}`;
     }
   }
 
-  /** Select a base workflow by id (highlights the row and emits `version-selected` for its latest version). */
+  /** Select a base workflow by id (highlights the row and emits `version-selected` for its representative version). */
   select(key) {
     this._selectedKey = key;
     this.$$('tbody tr').forEach((tr) => {
       tr.setAttribute('aria-selected', String(tr.dataset.key === key));
     });
-    const group = this._groups.find((g) => g.baseWorkflowId === key);
-    if (group) this.emit('version-selected', { version: group.latest, baseWorkflowId: key, versions: group.versions });
+    const row = this._rows.find((v) => v.baseWorkflowId === key);
+    // The detail loads the base's full version list itself (listCatalogVersions) — distinct mode has only the representative.
+    if (row) this.emit('version-selected', { version: row, baseWorkflowId: key });
   }
-}
-
-/** Collapse a flat version list into one group per base workflow, latest version first, groups sorted by id. */
-function groupVersions(versions) {
-  const map = new Map();
-  for (const v of versions) {
-    if (!map.has(v.baseWorkflowId)) map.set(v.baseWorkflowId, []);
-    map.get(v.baseWorkflowId).push(v);
-  }
-  const groups = [];
-  for (const [baseWorkflowId, list] of map) {
-    list.sort((a, b) => b.versionNumber - a.versionNumber);
-    groups.push({ baseWorkflowId, versions: list, latest: representativeVersion(list) });
-  }
-  groups.sort((a, b) => a.baseWorkflowId.localeCompare(b.baseWorkflowId));
-  return groups;
-}
-
-/**
- * The version that represents a base workflow in the list: the newest Active version, else the newest
- * Obsolete version, else the newest version whatever its status.
- * @param {object[]} descending Versions for one base, sorted newest-first.
- */
-function representativeVersion(descending) {
-  return descending.find((v) => v.status === 'Active')
-    || descending.find((v) => v.status === 'Obsolete')
-    || descending[0];
 }
 
 define('arazzo-catalog-table', ArazzoCatalogTable);
