@@ -132,7 +132,8 @@ class ArazzoGranteePicker extends ArazzoElement {
       this._timer = setTimeout(() => this.runSearch(input.value.trim()), DEBOUNCE_MS);
     });
     input.addEventListener('keydown', (e) => this.onKeyDown(e));
-    input.addEventListener('focus', () => { if (this._results.length) this.showResults(); });
+    // Pop an initial suggestions list the moment the field is focused — no need to type first (run an empty search once).
+    input.addEventListener('focus', () => { if (this._results.length) this.showResults(); else this.runSearch(this.$('.q')?.value.trim() ?? ''); });
     document.addEventListener('pointerdown', this._onDocDown ??= (e) => {
       if (!this.contains(e.target) && !this.shadowRoot.contains(e.composedPath()[0])) this.hideResults();
     });

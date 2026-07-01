@@ -130,6 +130,24 @@ export const PAGER_CSS = `
   .pager button { font-size: 12px; padding: 4px 10px; }
 `;
 
+/**
+ * Shared styling for the search-picker family (grantee / workflow / rule pickers) — the input (`.q`) and the anchored
+ * results dropdown (`.results`, `.results li`, and the item bits `.badge` / `.label` / `.ident` / `.sub`). Include
+ * alongside {@link SHARED_CSS} so every "type-to-search, pick from a dropdown" control looks identical. It deliberately
+ * does NOT style the selected `.chip` (that stays component-specific, so it can't collide with a host's own `.chip`).
+ */
+export const PICKER_CSS = `
+  .q { flex: 1; width: 100%; min-width: 0; box-sizing: border-box; font: inherit; padding: 6px 10px; border: 1px solid var(--_border); border-radius: var(--_radius); background: var(--_bg); color: var(--_text); }
+  .results { position: absolute; z-index: 30; left: 0; right: 0; margin-top: 4px; list-style: none; padding: 4px; max-height: 280px; overflow-y: auto; background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius); box-shadow: 0 6px 24px rgba(0,0,0,0.14); }
+  .results li { padding: 7px 9px; border-radius: var(--_radius); cursor: pointer; display: flex; gap: 8px; align-items: baseline; }
+  .results li:hover, .results li[aria-selected="true"] { background: var(--_surface); }
+  .results li[aria-disabled="true"] { cursor: default; color: var(--_muted); }
+  .results .badge { font-size: 11px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--_border); color: var(--_muted); flex: none; }
+  .results .label { font-weight: 600; }
+  .results .ident, .results .sub { color: var(--_muted); font-size: 12px; }
+  .results .src { color: var(--_muted); font-size: 11px; margin-left: auto; flex: none; }
+`;
+
 /** Maps a {@link WorkflowRunStatus} to its themeable colour token (with a fallback). */
 export function statusColor(status) {
   const map = {
