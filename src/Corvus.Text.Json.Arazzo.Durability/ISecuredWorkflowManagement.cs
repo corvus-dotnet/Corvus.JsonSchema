@@ -24,9 +24,10 @@ public interface ISecuredWorkflowManagement
     /// <param name="correlationId">An optional telemetry correlation id (a W3C trace id); a new one is captured when omitted.</param>
     /// <param name="tags">Optional free-form tags to attach to the run.</param>
     /// <param name="securityTags">Optional security tags (KVP labels) for row authorization (§14.2), typically inherited from the workflow version; distinct from <paramref name="tags"/>.</param>
+    /// <param name="environment">The deployment environment the run is pinned to (design §5.5) — it selects the credential set and constrains dispatch to runners serving it; <see langword="null"/> leaves the run unpinned (dispatchable by any runner).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The id of the newly created pending run.</returns>
-    ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, CancellationToken cancellationToken);
+    ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string? environment, CancellationToken cancellationToken);
 
     /// <summary>
     /// Starts a run idempotently: the run id is derived deterministically from
