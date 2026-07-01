@@ -118,14 +118,14 @@ public interface IApiAvailabilityClient : IAsyncDisposable
         public static readonly string[] MakeVersionAvailableOpenIdConnectScopes = ["availability:write"];
 
         /// <summary>
-        /// Gets the scopes required by <c>WithdrawVersionAvailability</c> for the <c>Oauth2</c> scheme.
+        /// Gets the scopes required by <c>DeleteVersionAvailability</c> for the <c>Oauth2</c> scheme.
         /// </summary>
-        public static readonly string[] WithdrawVersionAvailabilityOauth2Scopes = ["availability:write"];
+        public static readonly string[] DeleteVersionAvailabilityOauth2Scopes = ["availability:write"];
 
         /// <summary>
-        /// Gets the scopes required by <c>WithdrawVersionAvailability</c> for the <c>OpenIdConnect</c> scheme.
+        /// Gets the scopes required by <c>DeleteVersionAvailability</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
-        public static readonly string[] WithdrawVersionAvailabilityOpenIdConnectScopes = ["availability:write"];
+        public static readonly string[] DeleteVersionAvailabilityOpenIdConnectScopes = ["availability:write"];
 
         /// <summary>
         /// Gets the scopes required by <c>ListEnvironmentAvailability</c> for the <c>Oauth2</c> scheme.
@@ -183,7 +183,7 @@ public interface IApiAvailabilityClient : IAsyncDisposable
     /// <param name="versionNumber">The versionNumber parameter.</param>
     /// <param name="environment">The environment parameter.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<WithdrawVersionAvailabilityResponse> WithdrawVersionAvailabilityAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<DeleteVersionAvailabilityResponse> DeleteVersionAvailabilityAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source environment, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// List the workflow versions available in an environment

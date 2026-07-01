@@ -420,7 +420,7 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
-   * `withdrawVersionAvailability` — withdraw this version's availability in an environment (§7.8). The caller must
+   * `deleteVersionAvailability` — withdraw this version's availability in an environment (§7.8). The caller must
    * administer the environment (`403`).
    * @param {string} baseWorkflowId
    * @param {number} versionNumber
@@ -428,8 +428,8 @@ export class ArazzoControlPlaneClient {
    * @param {{ signal?: AbortSignal }} [opts]
    * @returns {Promise<void>} Resolves on `204`. Throws {@link ProblemError} `403`/`404`.
    */
-  async withdrawVersionAvailability(baseWorkflowId, versionNumber, environment, opts = {}) {
-    if (!environment) throw new TypeError('withdrawVersionAvailability requires an environment.');
+  async deleteVersionAvailability(baseWorkflowId, versionNumber, environment, opts = {}) {
+    if (!environment) throw new TypeError('deleteVersionAvailability requires an environment.');
     await this._request('DELETE', `${this._versionPath(baseWorkflowId, versionNumber)}/availability/${encodeURIComponent(environment)}`, { signal: opts.signal });
   }
 
@@ -800,14 +800,14 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
-   * `registerSource` — register a new source (§7.6): its `name` (matching a workflow `sourceDescriptions` entry),
+   * `createSource` — register a new source (§7.6): its `name` (matching a workflow `sourceDescriptions` entry),
    * `type`, and `document`. Conflicts (`409`) if a source with that name already exists in the caller's reach.
    * @param {{ name: string, type: string, document: object, displayName?: string, description?: string, managementTags?: Array<{key: string, value: string}>, signal?: AbortSignal }} source
    * @returns {Promise<object>} The created {@link Source}.
    */
-  registerSource(source) {
+  createSource(source) {
     if (!source || !source.name || !source.type || source.document == null) {
-      throw new TypeError('registerSource requires a name, type, and document.');
+      throw new TypeError('createSource requires a name, type, and document.');
     }
     const body = { name: source.name, type: source.type, document: source.document };
     if (source.displayName) body.displayName = source.displayName;
@@ -947,14 +947,14 @@ export class ArazzoControlPlaneClient {
   // ---- security rules (§14.2) — the reusable reach vocabulary -----------------------------------
 
   /**
-   * `listSecurityRules` — a keyset page of the deployment's row-security rules (`GET /security/rules`): the reusable
+   * `searchSecurityRules` — a keyset page of the deployment's row-security rules (`GET /security/rules`): the reusable
    * scope vocabulary a grant binds read/write/purge with, ordered by name. `q` filters by a case-insensitive substring
    * of the name or expression; `limit`/`pageToken` page. Requires `security:read`.
    * @param {{ q?: string, limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
    * @returns {Promise<{ rules: object[], nextPageToken: (string|null) }>} A {@link SecurityRuleList} — each rule is
    *   `{ name, expression, description?, createdBy, createdAt, lastUpdatedBy?, lastUpdatedAt?, etag }`.
    */
-  async listSecurityRules(query = {}) {
+  async searchSecurityRules(query = {}) {
     const search = new URLSearchParams();
     if (query.q) search.set('q', query.q);
     if (query.limit != null) search.set('limit', String(query.limit));
@@ -964,14 +964,14 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
-   * `listSecurityRules`, as an async iterator that walks every page via the keyset `nextPageToken`.
+   * `searchSecurityRules`, as an async iterator that walks every page via the keyset `nextPageToken`.
    * @param {{ q?: string, limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ rules: object[], nextPageToken: (string|null) }>}
    */
-  async *listSecurityRulesPaged(query = {}) {
+  async *searchSecurityRulesPaged(query = {}) {
     let pageToken;
     do {
-      const page = await this.listSecurityRules({ ...query, pageToken });
+      const page = await this.searchSecurityRules({ ...query, pageToken });
       yield page;
       pageToken = page.nextPageToken || undefined;
     } while (pageToken);
@@ -991,7 +991,7 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
-   * `listSecurityBindings` — a keyset page of the deployment's claim→rule bindings (`GET /security/bindings`): each maps
+   * `searchSecurityBindings` — a keyset page of the deployment's claim→rule bindings (`GET /security/bindings`): each maps
    * a principal claim to per-verb (read/write/purge) reach, ordered by `(order, id)`. `q` filters by a case-insensitive
    * substring of the claim type, claim value, or description; `limit`/`pageToken` page. Requires `security:read`.
    * @param {{ q?: string, limit?: number, pageToken?: string, signal?: AbortSignal }} [query]
@@ -999,7 +999,7 @@ export class ArazzoControlPlaneClient {
    *   is `{ id, claimType, claimValue?, read, write, purge, order, description?, createdBy, createdAt, etag }` where a verb
    *   grant is `{ unrestricted?: boolean, ruleNames?: string[] }`.
    */
-  async listSecurityBindings(query = {}) {
+  async searchSecurityBindings(query = {}) {
     const search = new URLSearchParams();
     if (query.q) search.set('q', query.q);
     if (query.limit != null) search.set('limit', String(query.limit));
@@ -1009,14 +1009,14 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
-   * `listSecurityBindings`, as an async iterator that walks every page via the keyset `nextPageToken`.
+   * `searchSecurityBindings`, as an async iterator that walks every page via the keyset `nextPageToken`.
    * @param {{ q?: string, limit?: number, signal?: AbortSignal }} [query]
    * @returns {AsyncGenerator<{ bindings: object[], nextPageToken: (string|null) }>}
    */
-  async *listSecurityBindingsPaged(query = {}) {
+  async *searchSecurityBindingsPaged(query = {}) {
     let pageToken;
     do {
-      const page = await this.listSecurityBindings({ ...query, pageToken });
+      const page = await this.searchSecurityBindings({ ...query, pageToken });
       yield page;
       pageToken = page.nextPageToken || undefined;
     } while (pageToken);

@@ -34,7 +34,7 @@ public readonly partial struct CredentialBindingSummary
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Security tags scoping who may MANAGE this binding (&#167;14.2), independent of usageTags.
+    /// Security tags scoping who may MANAGE this binding (&#167;14.2), independent of the usage grant (usageGrantee).
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]

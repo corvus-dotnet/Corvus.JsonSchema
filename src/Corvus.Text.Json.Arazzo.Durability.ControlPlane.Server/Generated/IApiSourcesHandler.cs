@@ -36,7 +36,7 @@ public interface IApiSourcesHandler
     /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<RegisterSourceResult> HandleRegisterSourceAsync(RegisterSourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+    ValueTask<CreateSourceResult> HandleCreateSourceAsync(CreateSourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /sources/{name} — Get a source

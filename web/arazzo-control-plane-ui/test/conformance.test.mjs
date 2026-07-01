@@ -164,7 +164,7 @@ test('the contract declares the credential and administration operations', () =>
 });
 
 test('the contract declares the security-rule operations', () => {
-  for (const id of ['listSecurityRules', 'getSecurityRule', 'createSecurityRule', 'updateSecurityRule', 'deleteSecurityRule', 'listSecurityOrderings']) {
+  for (const id of ['searchSecurityRules', 'getSecurityRule', 'createSecurityRule', 'updateSecurityRule', 'deleteSecurityRule', 'listSecurityOrderings']) {
     assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);
   }
 });
@@ -177,16 +177,16 @@ test('listSecurityOrderings emits the contract method + path', async () => {
 });
 
 test('the contract declares the security-binding operations', () => {
-  for (const id of ['listSecurityBindings', 'getSecurityBinding', 'createSecurityBinding', 'updateSecurityBinding', 'deleteSecurityBinding']) {
+  for (const id of ['searchSecurityBindings', 'getSecurityBinding', 'createSecurityBinding', 'updateSecurityBinding', 'deleteSecurityBinding']) {
     assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);
   }
 });
 
 test('security bindings: each client method emits the contract method + templated path + body', async () => {
   const { client, calls } = capturing();
-  await client.listSecurityBindings();
-  assert.equal(calls[0].method, OPS.listSecurityBindings.method);
-  assert.equal(calls[0].path, OPS.listSecurityBindings.path);
+  await client.searchSecurityBindings();
+  assert.equal(calls[0].method, OPS.searchSecurityBindings.method);
+  assert.equal(calls[0].path, OPS.searchSecurityBindings.path);
 
   await client.getSecurityBinding('bind-1');
   assert.equal(calls[1].method, OPS.getSecurityBinding.method);
@@ -208,9 +208,9 @@ test('security bindings: each client method emits the contract method + template
 
 test('security rules: each client method emits the contract method + templated path + body', async () => {
   const { client, calls } = capturing();
-  await client.listSecurityRules();
-  assert.equal(calls[0].method, OPS.listSecurityRules.method);
-  assert.equal(calls[0].path, OPS.listSecurityRules.path);
+  await client.searchSecurityRules();
+  assert.equal(calls[0].method, OPS.searchSecurityRules.method);
+  assert.equal(calls[0].path, OPS.searchSecurityRules.path);
 
   await client.getSecurityRule('tenant-scoped');
   assert.equal(calls[1].method, OPS.getSecurityRule.method);
@@ -356,7 +356,7 @@ test('runners: listRunners emits the contract method + path + declared query par
 });
 
 test('the contract declares the version-availability (promotion matrix) operations', () => {
-  for (const id of ['listVersionAvailability', 'makeVersionAvailable', 'withdrawVersionAvailability']) {
+  for (const id of ['listVersionAvailability', 'makeVersionAvailable', 'deleteVersionAvailability']) {
     assert.ok(OPS[id], `operation ${id} present in the OpenAPI document`);
   }
 });
@@ -375,9 +375,9 @@ test('version availability: each client method emits the contract method + templ
   assert.equal(calls[1].method, OPS.makeVersionAvailable.method);
   assert.equal(calls[1].path, sub('makeVersionAvailable'));
 
-  await client.withdrawVersionAvailability('flow', 2, 'production');
-  assert.equal(calls[2].method, OPS.withdrawVersionAvailability.method);
-  assert.equal(calls[2].path, sub('withdrawVersionAvailability'));
+  await client.deleteVersionAvailability('flow', 2, 'production');
+  assert.equal(calls[2].method, OPS.deleteVersionAvailability.method);
+  assert.equal(calls[2].path, sub('deleteVersionAvailability'));
 });
 
 test('the contract declares the identity / grantee-resolution operation', () => {
