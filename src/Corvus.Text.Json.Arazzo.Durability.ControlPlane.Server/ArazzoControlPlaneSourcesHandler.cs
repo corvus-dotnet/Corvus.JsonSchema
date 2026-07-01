@@ -87,9 +87,9 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
     }
 
     /// <inheritdoc/>
-    public async ValueTask<RegisterSourceResult> HandleRegisterSourceAsync(RegisterSourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    public async ValueTask<CreateSourceResult> HandleCreateSourceAsync(CreateSourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        Models.SourceWrite body = parameters.Body;
+        Models.SourceCreate body = parameters.Body;
         SecurityTagSet managementTags;
         try
         {
@@ -121,13 +121,13 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
         }
         catch (ArgumentException ex)
         {
-            return RegisterSourceResult.BadRequest(Problem("invalid-source", "Invalid source", 400, ex.Message), workspace);
+            return CreateSourceResult.BadRequest(Problem("invalid-source", "Invalid source", 400, ex.Message), workspace);
         }
 
         // Guard against privilege escalation: a principal may not register a source it could not itself manage.
         if (!managementTags.IsEmpty && !this.access.Current().Admits(AccessVerb.Write, managementTags))
         {
-            return RegisterSourceResult.BadRequest(
+            return CreateSourceResult.BadRequest(
                 Problem("management-out-of-reach", "Management scope out of reach", 400, "The source's management tags are outside your own management reach."), workspace);
         }
 
@@ -147,15 +147,15 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
             // The full source (document included) is congruent with the API model — a free whole-document re-wrap. Hand the
             // pooled document to the workspace (it disposes it after the response is written); the draft is input only.
             workspace.TakeOwnership(created);
-            return RegisterSourceResult.Created(Models.SourceEntity.From(created.RootElement), workspace);
+            return CreateSourceResult.Created(Models.SourceEntity.From(created.RootElement), workspace);
         }
         catch (ArgumentException ex)
         {
-            return RegisterSourceResult.BadRequest(Problem("invalid-source", "Invalid source", 400, ex.Message), workspace);
+            return CreateSourceResult.BadRequest(Problem("invalid-source", "Invalid source", 400, ex.Message), workspace);
         }
         catch (InvalidOperationException ex)
         {
-            return RegisterSourceResult.Conflict(Problem("source-exists", "Source already exists", 409, ex.Message), workspace);
+            return CreateSourceResult.Conflict(Problem("source-exists", "Source already exists", 409, ex.Message), workspace);
         }
     }
 

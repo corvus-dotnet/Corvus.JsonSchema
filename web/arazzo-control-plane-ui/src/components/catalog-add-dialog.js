@@ -313,7 +313,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
           this._sourceDocs[decl.name] = st.uploadedDoc;
           content = st.uploadedText;
           try {
-            await this.client.registerSource({ name: decl.name, type: decl.type, document: st.uploadedDoc });
+            await this.client.createSource({ name: decl.name, type: decl.type, document: st.uploadedDoc });
           } catch (err) {
             if (err.problem?.status !== 409) throw err; // 409 = raced in / already registered → reuse it
           }

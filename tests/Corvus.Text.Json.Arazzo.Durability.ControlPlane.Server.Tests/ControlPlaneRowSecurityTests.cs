@@ -136,12 +136,13 @@ public sealed class ControlPlaneRowSecurityTests
     }
 
     [TestMethod]
-    public async Task Patching_a_version_cannot_set_securityTags_rejected_at_the_boundary()
+    public async Task Patching_a_version_accepts_the_securityTags_field_and_preserves_internal_tags()
     {
-        // Row-security tags are server-stamped at creation (§14.2) and immutable thereafter — the PATCH body schema is
-        // closed (additionalProperties: false), so an attempt to inject securityTags (or any unknown field) is rejected
-        // with 400 at the schema boundary, never reaching the handler/store. (The caller has full write reach here, so a
-        // 403 is not in play — this isolates the schema rejection.)
+        // §14.2 contract change: `securityTags` is now a KNOWN field on the PATCH body (the non-internal reach labels are
+        // admin-editable), so the schema boundary ACCEPTS it (200) instead of rejecting the whole request as an unknown
+        // field. The server-stamped internal tenant tag is still never overwritten: the handler ignores `securityTags`
+        // until the backend enforcement lands (persist the non-internal labels; reject the reserved internal-tag prefix),
+        // which will strengthen this test to assert that rejection + persistence.
         await using Scoped host = await StartAsync();
         await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
 
@@ -149,11 +150,10 @@ public sealed class ControlPlaneRowSecurityTests
         {
             Content = new StringContent("""{ "status": "Obsolete", "securityTags": [ { "key": "tenant", "value": "globex" } ] }""", Encoding.UTF8, "application/json"),
         };
-        (await host.SendAsync(injected, tenant: null)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await host.SendAsync(injected, tenant: null)).StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        // The rejection applied nothing: the version keeps its original server-stamped tenant tag, and the injected
-        // value never took effect. (The catalog also auto-stamps a sys:workflow tag at creation, hence Contains, not an
-        // exact-set, assertion.)
+        // The version keeps its original server-stamped tenant tag; the injected value never took effect. (The catalog
+        // also auto-stamps a sys:workflow tag at creation, hence Contains, not an exact-set, assertion.)
         using var fetched = await host.Catalog.GetAsync("flow", 1, AccessContext.System, default);
         fetched.ShouldNotBeNull();
         var securityTags = fetched.RootElement.SecurityTagsValue.ToList();

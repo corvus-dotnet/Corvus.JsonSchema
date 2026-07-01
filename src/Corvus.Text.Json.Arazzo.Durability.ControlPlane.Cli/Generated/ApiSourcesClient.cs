@@ -62,11 +62,11 @@ public sealed class ApiSourcesClient : IApiSourcesClient
     /// </remarks>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<RegisterSourceResponse> RegisterSourceAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<CreateSourceResponse> CreateSourceAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceCreate.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceWrite bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceWrite.CreateBuilder(workspace, body, 30).RootElement;
-        RegisterSourceRequest request = new();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceCreate bodyValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceCreate.CreateBuilder(workspace, body, 30).RootElement;
+        CreateSourceRequest request = new();
 
         request.Validate(validationMode);
 
@@ -83,7 +83,7 @@ public sealed class ApiSourcesClient : IApiSourcesClient
             ThrowHelper.ThrowRequestBodyValidationFailed();
         }
 
-        return SendWithBodyAsyncCore<RegisterSourceRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceWrite, RegisterSourceResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+        return SendWithBodyAsyncCore<CreateSourceRequest, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceCreate, CreateSourceResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
     }
 
     /// <summary>

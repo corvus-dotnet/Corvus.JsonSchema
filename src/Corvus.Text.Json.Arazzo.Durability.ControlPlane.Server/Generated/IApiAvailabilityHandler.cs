@@ -45,7 +45,7 @@ public interface IApiAvailabilityHandler
     /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<WithdrawVersionAvailabilityResult> HandleWithdrawVersionAvailabilityAsync(WithdrawVersionAvailabilityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+    ValueTask<DeleteVersionAvailabilityResult> HandleDeleteVersionAvailabilityAsync(DeleteVersionAvailabilityParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /environments/{name}/availability — List the workflow versions available in an environment

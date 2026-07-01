@@ -356,8 +356,8 @@ internal static class CredentialCommandHelpers
         return grantee.Label.IsNotUndefined() ? $"{(string)grantee.Label} ({body})" : body;
     }
 
-    public static Models.CredentialBindingWrite.Source BuildWrite(CredentialCreateSettings s)
-        => new((ref Models.CredentialBindingWrite.Builder b) =>
+    public static Models.CredentialBindingCreate.Source BuildWrite(CredentialCreateSettings s)
+        => new((ref Models.CredentialBindingCreate.Builder b) =>
         {
             Models.JsonString.Source description = s.Description is { } d ? (Models.JsonString.Source)d : default;
             Models.JsonDateTime.Source expiresAt = s.ExpiresAt is { } e ? (Models.JsonDateTime.Source)e : default;
@@ -465,8 +465,8 @@ internal static class CredentialCommandHelpers
         return merged;
     }
 
-    private static Models.CredentialBindingWrite.SecretReferenceArray.Source WriteRefs(IReadOnlyDictionary<string, string>? refs)
-        => new((ref Models.CredentialBindingWrite.SecretReferenceArray.Builder ab) =>
+    private static Models.CredentialBindingCreate.SecretReferenceArray.Source WriteRefs(IReadOnlyDictionary<string, string>? refs)
+        => new((ref Models.CredentialBindingCreate.SecretReferenceArray.Builder ab) =>
         {
             if (refs is null)
             {
@@ -488,14 +488,14 @@ internal static class CredentialCommandHelpers
             }
         });
 
-    private static Models.CredentialBindingWrite.CredentialConfigEntryArray.Source WriteConfig(IReadOnlyDictionary<string, string>? config)
+    private static Models.CredentialBindingCreate.CredentialConfigEntryArray.Source WriteConfig(IReadOnlyDictionary<string, string>? config)
     {
         if (config is not { Count: > 0 })
         {
             return default;
         }
 
-        return new Models.CredentialBindingWrite.CredentialConfigEntryArray.Source((ref Models.CredentialBindingWrite.CredentialConfigEntryArray.Builder ab) =>
+        return new Models.CredentialBindingCreate.CredentialConfigEntryArray.Source((ref Models.CredentialBindingCreate.CredentialConfigEntryArray.Builder ab) =>
         {
             foreach ((string key, string value) in config)
             {
@@ -520,14 +520,14 @@ internal static class CredentialCommandHelpers
         });
     }
 
-    private static Models.CredentialBindingWrite.CredentialSecurityTagArray.Source WriteManagementTags(ILookup<string, string>? tags)
+    private static Models.CredentialBindingCreate.CredentialSecurityTagArray.Source WriteManagementTags(ILookup<string, string>? tags)
     {
         if (tags is null)
         {
             return default;
         }
 
-        return new Models.CredentialBindingWrite.CredentialSecurityTagArray.Source((ref Models.CredentialBindingWrite.CredentialSecurityTagArray.Builder ab) =>
+        return new Models.CredentialBindingCreate.CredentialSecurityTagArray.Source((ref Models.CredentialBindingCreate.CredentialSecurityTagArray.Builder ab) =>
         {
             foreach (IGrouping<string, string> group in tags)
             {

@@ -171,7 +171,7 @@ class ArazzoAvailabilityMatrix extends ArazzoElement {
     });
     if (!confirmed) return;
     try {
-      await this.client.withdrawVersionAvailability(this.baseWorkflowId, versionNumber, env);
+      await this.client.deleteVersionAvailability(this.baseWorkflowId, versionNumber, env);
       this._availability.get(versionNumber)?.delete(env);
       this._error = null;
       this.renderBody();

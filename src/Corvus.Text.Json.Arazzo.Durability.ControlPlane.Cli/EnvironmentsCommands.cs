@@ -317,8 +317,8 @@ internal static class EnvironmentCommandHelpers
             ? ((NodaTime.OffsetDateTime)value).ToDateTimeOffset().ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)
             : "—";
 
-    public static Models.EnvironmentWrite.Source BuildWrite(EnvironmentCreateSettings s)
-        => new((ref Models.EnvironmentWrite.Builder b) =>
+    public static Models.EnvironmentCreate.Source BuildWrite(EnvironmentCreateSettings s)
+        => new((ref Models.EnvironmentCreate.Builder b) =>
         {
             Models.JsonString.Source displayName = s.DisplayName is { } d ? (Models.JsonString.Source)d : default;
             Models.JsonString.Source description = s.Description is { } desc ? (Models.JsonString.Source)desc : default;
@@ -337,14 +337,14 @@ internal static class EnvironmentCommandHelpers
             b.Create(description: descriptionSource, displayName: displayNameSource);
         });
 
-    private static Models.EnvironmentWrite.EnvironmentSecurityTagArray.Source WriteManagementTags(ILookup<string, string>? tags)
+    private static Models.EnvironmentCreate.EnvironmentSecurityTagArray.Source WriteManagementTags(ILookup<string, string>? tags)
     {
         if (tags is null)
         {
             return default;
         }
 
-        return new Models.EnvironmentWrite.EnvironmentSecurityTagArray.Source((ref Models.EnvironmentWrite.EnvironmentSecurityTagArray.Builder ab) =>
+        return new Models.EnvironmentCreate.EnvironmentSecurityTagArray.Source((ref Models.EnvironmentCreate.EnvironmentSecurityTagArray.Builder ab) =>
         {
             foreach (IGrouping<string, string> group in tags)
             {

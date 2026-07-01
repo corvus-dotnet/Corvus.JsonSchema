@@ -52,7 +52,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ListSecurityRulesResult> HandleListSecurityRulesAsync(ListSecurityRulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    public async ValueTask<SearchSecurityRulesResult> HandleSearchSecurityRulesAsync(SearchSecurityRulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         // An absent limit passes 0 — the contract's "use the store's default page size" sentinel (the store owns that
         // size; the handler does not duplicate it). The page token and the q filter flow to the store as their JSON
@@ -75,7 +75,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             in ruleList,
             rules: Models.SecurityRuleList.SecurityRuleSummaryArray.Build(in ruleList, BuildRuleSummaries),
             nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
-        return ListSecurityRulesResult.Ok(body, workspace);
+        return SearchSecurityRulesResult.Ok(body, workspace);
     }
 
     /// <inheritdoc/>
@@ -177,7 +177,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ListSecurityBindingsResult> HandleListSecurityBindingsAsync(ListSecurityBindingsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    public async ValueTask<SearchSecurityBindingsResult> HandleSearchSecurityBindingsAsync(SearchSecurityBindingsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         // An absent limit passes 0 — the contract's "use the store's default page size" sentinel (the store owns that
         // size; the handler does not duplicate it). The page token and the q filter flow to the store as their JSON values
@@ -201,7 +201,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             in bindingList,
             bindings: Models.SecurityBindingList.SecurityBindingSummaryArray.Build(in bindingList, BuildBindingSummaries),
             nextPageToken: nextPageToken.IsEmpty ? default : (Models.JsonString.Source)nextPageToken.Span);
-        return ListSecurityBindingsResult.Ok(body, workspace);
+        return SearchSecurityBindingsResult.Ok(body, workspace);
     }
 
     /// <inheritdoc/>
@@ -373,7 +373,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     // SecurityRuleSummary is congruent with the stored SecurityRuleDocument (identical fields — the single-document
     // create/get/update sites already respond with the whole-document Models.SecurityRuleSummary.From wrap), so the list
     // wraps each rule the same way: no field-copy, no per-field From() ternary. The build is closure-free (the rule list
-    // is threaded as the context) and inlined in HandleListSecurityRulesAsync (the list Build is ref-scoped to its `in`
+    // is threaded as the context) and inlined in HandleSearchSecurityRulesAsync (the list Build is ref-scoped to its `in`
     // argument, so it cannot be returned from a helper).
     private static void BuildRuleSummaries(in IReadOnlyList<SecurityRuleDocument> rules, ref Models.SecurityRuleList.SecurityRuleSummaryArray.Builder array)
     {

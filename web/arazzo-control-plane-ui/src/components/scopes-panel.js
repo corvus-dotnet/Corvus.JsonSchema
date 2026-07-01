@@ -114,7 +114,7 @@ class ArazzoScopesPanel extends ArazzoElement {
       // One keyset page for the current cursor, filtered server-side by q — the page REPLACES the list. Orderings are
       // small config (the classification templates); fetch them once and reuse across searches and page turns rather
       // than on every reload/page turn.
-      const tasks = [client.listSecurityRules({ q: q || undefined, pageToken: this._currentToken, limit: this.pageSize })];
+      const tasks = [client.searchSecurityRules({ q: q || undefined, pageToken: this._currentToken, limit: this.pageSize })];
       if (!this._orderingsLoaded) tasks.push(client.listSecurityOrderings().catch(() => ({ orderings: [] })));
       const [page, orderingsResult] = await Promise.all(tasks);
       if (seq !== this._reqSeq) return;

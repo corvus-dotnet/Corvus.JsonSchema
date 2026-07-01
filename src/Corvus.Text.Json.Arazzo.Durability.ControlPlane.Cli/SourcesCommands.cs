@@ -191,7 +191,7 @@ internal sealed class SourceRegisterCommand : AsyncCommand<SourceRegisterSetting
         using (http)
         await using (transport)
         {
-            await using RegisterSourceResponse response = await client.RegisterSourceAsync(SourceCommandHelpers.BuildWrite(settings, document), cancellationToken);
+            await using CreateSourceResponse response = await client.CreateSourceAsync(SourceCommandHelpers.BuildWrite(settings, document), cancellationToken);
             return response.MatchResult(source => Output.Print(source.ToString()), Output.Problem, Output.Problem, Output.Unexpected);
         }
     }
@@ -273,8 +273,8 @@ internal static class SourceCommandHelpers
             ? ((NodaTime.OffsetDateTime)value).ToDateTimeOffset().ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)
             : "—";
 
-    public static Models.SourceWrite.Source BuildWrite(SourceRegisterSettings s, Models.SourceDocument document)
-        => new((ref Models.SourceWrite.Builder b) =>
+    public static Models.SourceCreate.Source BuildWrite(SourceRegisterSettings s, Models.SourceDocument document)
+        => new((ref Models.SourceCreate.Builder b) =>
         {
             Models.JsonString.Source displayName = s.DisplayName is { } d ? (Models.JsonString.Source)d : default;
             Models.JsonString.Source description = s.Description is { } desc ? (Models.JsonString.Source)desc : default;
@@ -296,14 +296,14 @@ internal static class SourceCommandHelpers
             b.Create(description: descriptionSource, displayName: displayNameSource, document: documentSource);
         });
 
-    private static Models.SourceWrite.SourceSecurityTagArray.Source WriteManagementTags(ILookup<string, string>? tags)
+    private static Models.SourceCreate.SourceSecurityTagArray.Source WriteManagementTags(ILookup<string, string>? tags)
     {
         if (tags is null)
         {
             return default;
         }
 
-        return new Models.SourceWrite.SourceSecurityTagArray.Source((ref Models.SourceWrite.SourceSecurityTagArray.Builder ab) =>
+        return new Models.SourceCreate.SourceSecurityTagArray.Source((ref Models.SourceCreate.SourceSecurityTagArray.Builder ab) =>
         {
             foreach (IGrouping<string, string> group in tags)
             {
