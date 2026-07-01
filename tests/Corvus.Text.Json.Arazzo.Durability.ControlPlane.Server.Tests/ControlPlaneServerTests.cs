@@ -565,7 +565,7 @@ public sealed class ControlPlaneServerTests
 
         // Valid inputs → 202 with the run id; the run is persisted Pending.
         HttpResponseMessage accepted = await client.PostAsync(
-            "/catalog/flow/versions/1/runs",
+            "/catalog/flow/versions/1/runs?environment=production",
             new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
         accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted);
 
@@ -582,17 +582,18 @@ public sealed class ControlPlaneServerTests
             run.ShouldNotBeNull();
             run!.Status.ShouldBe(WorkflowRunStatus.Pending);
             run.WorkflowId.ShouldBe("flow-v1");
+            run.Environment.ShouldBe("production"); // the run is pinned to the environment supplied at start (§5.5)
         }
 
         // Inputs that fail the baked schema → 422.
         HttpResponseMessage invalid = await client.PostAsync(
-            "/catalog/flow/versions/1/runs",
+            "/catalog/flow/versions/1/runs?environment=production",
             new StringContent("""{ }""", Encoding.UTF8, "application/json"));
         invalid.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
 
         // An unknown version → 404.
         HttpResponseMessage missing = await client.PostAsync(
-            "/catalog/flow/versions/99/runs",
+            "/catalog/flow/versions/99/runs?environment=production",
             new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
         missing.StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
@@ -622,7 +623,7 @@ public sealed class ControlPlaneServerTests
         await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
 
         HttpResponseMessage accepted = await client.PostAsync(
-            "/catalog/flow/versions/1/runs",
+            "/catalog/flow/versions/1/runs?environment=production",
             new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
         accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted);
 
@@ -662,7 +663,7 @@ public sealed class ControlPlaneServerTests
         using HttpClient client = app.GetTestClient();
 
         HttpResponseMessage conflict = await client.PostAsync(
-            "/catalog/flow/versions/1/runs",
+            "/catalog/flow/versions/1/runs?environment=production",
             new StringContent("""{ }""", Encoding.UTF8, "application/json"));
         conflict.StatusCode.ShouldBe(HttpStatusCode.Conflict);
 
@@ -690,9 +691,65 @@ public sealed class ControlPlaneServerTests
         using HttpClient client = app.GetTestClient();
 
         HttpResponseMessage conflict = await client.PostAsync(
-            "/catalog/flow/versions/1/runs",
+            "/catalog/flow/versions/1/runs?environment=production",
             new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
         conflict.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        await app.StopAsync();
+    }
+
+    [TestMethod]
+    public async Task StartCatalogWorkflowRun_validates_the_pinned_environment_when_the_registries_are_wired()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+        var environmentStore = new Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore(clock);
+        var availabilityStore = new Corvus.Text.Json.Arazzo.Durability.Availability.InMemoryAvailabilityStore(clock);
+
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment> draft =
+            Corvus.Text.Json.Arazzo.Durability.Environments.Environment.Draft("production", "Production", "The live environment.", default))
+        {
+            (await environmentStore.AddAsync(draft.RootElement, "ops", default)).Dispose();
+        }
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, environmentStore: environmentStore, availabilityStore: availabilityStore);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+        await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
+
+        // An environment that does not exist (or is outside reach) → 404, non-disclosing (§5.5).
+        HttpResponseMessage unknownEnv = await client.PostAsync(
+            "/catalog/flow/versions/1/runs?environment=nope",
+            new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
+        unknownEnv.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        // The environment exists, but the version is not yet available in it (§7.8) → 409.
+        HttpResponseMessage notAvailable = await client.PostAsync(
+            "/catalog/flow/versions/1/runs?environment=production",
+            new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
+        notAvailable.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // Once the version is made available there, the run is accepted and pinned to the environment.
+        (await availabilityStore.MakeAvailableAsync("flow", 1, "production", "ops", default)).Entry.Dispose();
+        HttpResponseMessage accepted = await client.PostAsync(
+            "/catalog/flow/versions/1/runs?environment=production",
+            new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
+        accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(accepted))
+        {
+            string runId = doc.RootElement.GetProperty("runId").GetString()!;
+            using WorkflowRun? run = await WorkflowRun.ResumeAsync(runStore, runId, clock, default);
+            run!.Environment.ShouldBe("production");
+        }
 
         await app.StopAsync();
     }
