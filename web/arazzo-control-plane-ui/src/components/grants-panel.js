@@ -38,7 +38,7 @@ const grantSummary = (g) => {
 
 class ArazzoGrantsPanel extends ArazzoElement {
   static get observedAttributes() {
-    return ['base-url', 'scopes'];
+    return ['base-url', 'scopes', 'page-size'];
   }
 
   constructor() {
@@ -47,8 +47,9 @@ class ArazzoGrantsPanel extends ArazzoElement {
     // The scopes currently offered in the authoring typeahead — the latest server result, not the whole vocabulary.
     /** @private */ this._scopes = [];
     /** @private */ this._loading = false;
-    /** @private */ this._loadingMore = false;
     /** @private */ this._error = null;
+    /** @private */ this._history = [];          // pageTokens of pages before the current one
+    /** @private */ this._currentToken = undefined;
     /** @private */ this._nextPageToken = null;
     /** @private */ this._reqSeq = 0;
     /** @private */ this._query = '';
@@ -57,22 +58,34 @@ class ArazzoGrantsPanel extends ArazzoElement {
 
   connectedCallback() {
     this.renderShell();
-    this.load();
+    this.reload();
   }
 
   attributeChangedCallback(name) {
     if (!this.isConnected) return;
     if (name === 'scopes') this.renderBody();
-    else this.load();
+    else this.reload();
   }
 
-  requestRender() { this.load(); }
+  requestRender() { this.reload(); }
 
-  refresh() { this.load(); }
+  refresh() { this.reload(); }
+
+  get pageSize() {
+    return Number(this.getAttribute('page-size')) || 50;
+  }
 
   get canWrite() {
     const scopes = (this.getAttribute('scopes') || '').split(/\s+/).filter(Boolean);
     return scopes.length === 0 || scopes.includes('security:write');
+  }
+
+  /** Reload from page 1 (resets the keyset cursor). Every caller that wants page 1 — a search-term change, connect,
+   *  refresh, or a create/edit/delete mutation — goes through here so the pager returns to the first page. */
+  reload() {
+    this._history = [];
+    this._currentToken = undefined;
+    return this.load();
   }
 
   async load() {
@@ -86,13 +99,12 @@ class ArazzoGrantsPanel extends ArazzoElement {
     const seq = ++this._reqSeq;
     this._loading = true;
     this._error = null;
-    this._grants = [];
-    this._nextPageToken = null;
     this.renderBody();
     try {
-      // The first keyset page of grants, filtered server-side by q. The scope vocabulary for the authoring typeahead is
-      // fetched on demand when the editor opens / as the user types (loadScopeOptions), not loaded in full here.
-      const page = await client.listSecurityBindings({ q: this._query.trim() || undefined });
+      // One keyset page of grants, filtered server-side by q. Replaces the list (Prev/Next paging), not appended. The
+      // scope vocabulary for the authoring typeahead is fetched on demand when the editor opens / as the user types
+      // (loadScopeOptions), not loaded in full here.
+      const page = await client.listSecurityBindings({ q: this._query.trim() || undefined, pageToken: this._currentToken, limit: this.pageSize });
       if (seq !== this._reqSeq) return;
       this._grants = page.bindings;
       this._nextPageToken = page.nextPageToken;
@@ -108,26 +120,17 @@ class ArazzoGrantsPanel extends ArazzoElement {
     }
   }
 
-  /** Fetch and append the next keyset page of grants (the "Load more" action), keeping the current search term. */
-  async loadMore() {
-    const client = this.client;
-    if (!client || !this._nextPageToken || this._loadingMore) return;
-    const seq = this._reqSeq;
-    this._loadingMore = true;
-    this.renderBody();
-    try {
-      const page = await client.listSecurityBindings({ q: this._query.trim() || undefined, pageToken: this._nextPageToken });
-      if (seq !== this._reqSeq) return;
-      this._grants.push(...page.bindings);
-      this._nextPageToken = page.nextPageToken;
-      this._loadingMore = false;
-      this.renderBody();
-    } catch (err) {
-      if (seq !== this._reqSeq) return;
-      this._loadingMore = false;
-      this._error = err.problem || { title: err.message };
-      this.renderBody();
-    }
+  nextPage() {
+    if (!this._nextPageToken) return;
+    this._history.push(this._currentToken);
+    this._currentToken = this._nextPageToken;
+    this.load();
+  }
+
+  prevPage() {
+    if (this._history.length === 0) return;
+    this._currentToken = this._history.pop();
+    this.load();
   }
 
   /** Fetch a page of scopes matching `q` for the authoring typeahead, and refresh the datalist in place. Best-effort. */
@@ -268,8 +271,8 @@ class ArazzoGrantsPanel extends ArazzoElement {
   }
 
   async reloadAndEmit() {
-    // Reload the first page under the current search term (a mutation may have added/removed a matching grant).
-    await this.load();
+    // Reload from page 1 under the current search term (a mutation may have added/removed a matching grant).
+    await this.reload();
     this.emit('grants-changed', { grants: this._grants });
   }
 
@@ -287,7 +290,7 @@ class ArazzoGrantsPanel extends ArazzoElement {
         .list { display: grid; }
         .grow-row { display: flex; align-items: baseline; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--_border); }
         .grow-row:last-child { border-bottom: none; }
-        .more-row { display: flex; justify-content: center; padding: 10px; border-top: 1px solid var(--_border); }
+        .pager { display: flex; gap: 8px; justify-content: center; padding: 10px; border-top: 1px solid var(--_border); }
         .gmeta { flex: 1; min-width: 0; }
         .claim { font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
         .verbs { color: var(--_muted); font-size: 12px; margin-top: 3px; display: flex; gap: 12px; flex-wrap: wrap; }
@@ -343,7 +346,8 @@ class ArazzoGrantsPanel extends ArazzoElement {
     this.$('.search').addEventListener('input', (e) => {
       this._query = e.target.value;
       clearTimeout(this._searchTimer);
-      this._searchTimer = setTimeout(() => this.load(), SEARCH_DEBOUNCE_MS);
+      // A search-term change must reset to page 1 — reload(), not load().
+      this._searchTimer = setTimeout(() => this.reload(), SEARCH_DEBOUNCE_MS);
     });
     this.$('.cancel').addEventListener('click', () => this.closeEditor());
     this.$('.confirm').addEventListener('click', () => this.submitForm());
@@ -380,14 +384,19 @@ class ArazzoGrantsPanel extends ArazzoElement {
           <button class="edit ghost" type="button" data-id="${escapeHtml(g.id)}">Edit</button>
           <button class="del ghost" type="button" data-id="${escapeHtml(g.id)}">Delete</button>` : ''}
       </div>`).join('');
-    const more = this._nextPageToken
-      ? `<div class="more-row"><button class="more ghost" type="button"${this._loadingMore ? ' disabled' : ''}>${this._loadingMore ? 'Loading…' : 'Load more'}</button></div>`
+    const pager = (this._history.length > 0 || this._nextPageToken)
+      ? `<div class="pager">
+           <button class="prev ghost" type="button"${this._history.length === 0 || this._loading ? ' disabled' : ''}>‹ Prev</button>
+           <button class="next ghost" type="button"${!this._nextPageToken || this._loading ? ' disabled' : ''}>Next ›</button>
+         </div>`
       : '';
-    list.innerHTML = rows + more;
+    list.innerHTML = rows + pager;
     this.$$('.edit').forEach((b) => b.addEventListener('click', () => this.openEdit(b.dataset.id)));
     this.$$('.del').forEach((b) => b.addEventListener('click', () => this.deleteGrant(b.dataset.id)));
-    const moreBtn = this.$('.more');
-    if (moreBtn) moreBtn.addEventListener('click', () => this.loadMore());
+    const prevBtn = this.$('.prev');
+    if (prevBtn) prevBtn.addEventListener('click', () => this.prevPage());
+    const nextBtn = this.$('.next');
+    if (nextBtn) nextBtn.addEventListener('click', () => this.nextPage());
   }
 
   verbRowHtml(verb) {

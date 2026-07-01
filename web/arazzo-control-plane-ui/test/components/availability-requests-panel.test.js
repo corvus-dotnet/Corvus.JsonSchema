@@ -145,4 +145,32 @@ describe('<arazzo-availability-requests>', () => {
     equal(el.view, 'queue', 'the inbox tab is selected');
     ok(el.shadowRoot.querySelector('.env'), 'the inbox toolbar offers an environment filter');
   });
+
+  it('pages the approver inbox with Prev/Next (keyset, small page size)', async () => {
+    // The inbox seeds three Pending requests; a page-size of 2 splits them across two keyset pages.
+    el = panelWithMock({ view: 'queue', 'page-size': '2' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    equal(rows(el).length, 2, 'the first page holds two requests');
+    const prev = el.shadowRoot.querySelector('.prev');
+    const next = el.shadowRoot.querySelector('.next');
+    ok(prev, 'a Prev button is wired');
+    ok(next, 'a Next button is wired');
+    ok(prev.disabled, 'Prev is disabled on page 1');
+    ok(!next.disabled, 'Next is enabled while a next page exists');
+
+    let loaded = nextEvent(el, 'loaded');
+    next.click();
+    await loaded;
+    equal(rows(el).length, 1, 'the second page holds the remaining request');
+    ok(!el.shadowRoot.querySelector('.prev').disabled, 'Prev is enabled on page 2');
+    ok(el.shadowRoot.querySelector('.next').disabled, 'Next is disabled on the last page');
+
+    loaded = nextEvent(el, 'loaded');
+    el.shadowRoot.querySelector('.prev').click();
+    await loaded;
+    equal(rows(el).length, 2, 'Prev returns to page 1');
+    ok(el.shadowRoot.querySelector('.prev').disabled, 'Prev is disabled again on page 1');
+    ok(!el.shadowRoot.querySelector('.next').disabled, 'Next is enabled again on page 1');
+  });
 });

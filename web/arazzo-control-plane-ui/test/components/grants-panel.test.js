@@ -44,6 +44,38 @@ describe('<arazzo-grants-panel>', () => {
     ok([...rows(el)].every((r) => r.textContent.toLowerCase().includes('tenant')), 'search filters');
   });
 
+  it('pages the grants with Prev/Next (keyset), not append', async () => {
+    // Two grants are seeded (bind-1, bind-2); page-size=1 splits them across two keyset pages.
+    el = panelWithMock({ scopes: 'security:read', 'page-size': '1' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    // Page 1: one row, Prev disabled (no history), Next enabled (a second page exists).
+    equal(rows(el).length, 1, 'one grant per page');
+    ok($(el, '.pager'), 'a pager (not Load more) is shown');
+    ok(!$(el, '.more'), 'no Load more button');
+    ok($(el, '.prev').disabled, 'Prev disabled on page 1');
+    ok(!$(el, '.next').disabled, 'Next enabled with a further page');
+    const firstClaim = el.shadowRoot.querySelector('.claim').textContent;
+
+    // Next → page 2: replaces (does not append) the list; Prev now enabled, Next disabled (last page).
+    let loaded = nextEvent(el, 'loaded');
+    $(el, '.next').click();
+    await loaded;
+    equal(rows(el).length, 1, 'page 2 replaces, not appends');
+    const secondClaim = el.shadowRoot.querySelector('.claim').textContent;
+    ok(secondClaim !== firstClaim, 'a different grant on page 2');
+    ok(!$(el, '.prev').disabled, 'Prev enabled on page 2');
+    ok($(el, '.next').disabled, 'Next disabled on the last page');
+
+    // Prev → back to page 1.
+    loaded = nextEvent(el, 'loaded');
+    $(el, '.prev').click();
+    await loaded;
+    equal(rows(el).length, 1, 'back to one row');
+    equal(el.shadowRoot.querySelector('.claim').textContent, firstClaim, 'Prev returns to page 1');
+    ok($(el, '.prev').disabled, 'Prev disabled again on page 1');
+  });
+
   it('opens a modal editor and creates a grant from a raw claim + an unrestricted action', async () => {
     el = panelWithMock({ scopes: 'security:read security:write' });
     mount(el);

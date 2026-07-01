@@ -2,10 +2,10 @@
 //
 //   <arazzo-credentials-table base-url="/arazzo/v1" status="expiring" selectable></arazzo-credentials-table>
 //
-// Attributes : base-url, status (valid|expiring|expired), source, selectable, scopes (gates the Duplicate action)
+// Attributes : base-url, status (valid|expiring|expired), source, page-size (default 50), selectable, scopes (gates the Duplicate action)
 // Properties : .client, .filters = { status, source }
 // Events     : credential-selected {binding}, credential-duplicate {binding}, loaded {count, expiring, expired}, error {problem}
-// Parts      : table, row, cell, status, toolbar
+// Parts      : table, row, cell, status, toolbar, foot, pager
 //
 // This is a MANAGEMENT surface, not a creation one: rows are rotated/inspected (credential-selected), duplicated to
 // another environment (credential-duplicate — clone source + auth, re-point the secret), and revoked. Creating a
@@ -17,9 +17,6 @@
 // break?", so status is the headline column (colour-coded) with an "N expiring / M expired" footer.
 
 import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, absoluteTime, countdown, define } from './base.js';
-
-// One keyset page fetched at a time; the store pages server-side and "Load more" appends the next page.
-const PAGE_SIZE = 50;
 
 const STATUS = {
   valid: { label: 'valid', color: 'var(--arazzo-status-completed, #2a8a4a)' },
@@ -43,12 +40,15 @@ function shortDate(iso) {
 
 class ArazzoCredentialsTable extends ArazzoElement {
   static get observedAttributes() {
-    return ['base-url', 'status', 'source', 'selectable', 'scopes'];
+    return ['base-url', 'status', 'source', 'selectable', 'scopes', 'page-size'];
   }
 
   constructor() {
     super();
     /** @private */ this._bindings = [];
+    /** @private */ this._history = []; // pageTokens of pages before the current one
+    /** @private */ this._currentToken = undefined;
+    /** @private */ this._nextPageToken = null;
     /** @private */ this._loading = false;
     /** @private */ this._error = null;
     /** @private */ this._selectedKey = null;
@@ -57,13 +57,17 @@ class ArazzoCredentialsTable extends ArazzoElement {
 
   connectedCallback() {
     this.renderShell();
-    this.load();
+    this.reload();
   }
 
   attributeChangedCallback(name) {
     if (!this.isConnected) return;
-    if (name === 'base-url') this.load();
+    if (name === 'base-url' || name === 'page-size') this.reload();
     else this.renderBody();
+  }
+
+  get pageSize() {
+    return Number(this.getAttribute('page-size')) || 50;
   }
 
   /** Imperative filter set (equivalent to the attributes). */
@@ -78,14 +82,22 @@ class ArazzoCredentialsTable extends ArazzoElement {
   }
 
   requestRender() {
-    this.load();
+    this.reload();
   }
 
-  /** Re-fetch from the server (e.g. after a create/update/delete). */
+  /** Re-fetch from the server (e.g. after a create/update/delete) — back to page 1. */
   refresh() {
+    this.reload();
+  }
+
+  /** Reload from page 1 (resets the keyset cursor). */
+  reload() {
+    this._history = [];
+    this._currentToken = undefined;
     this.load();
   }
 
+  /** Fetch ONE keyset page at the current cursor, replacing the rows (the store pages server-side). */
   async load() {
     const client = this.client;
     if (!client) {
@@ -102,7 +114,7 @@ class ArazzoCredentialsTable extends ArazzoElement {
     this.renderBody();
 
     try {
-      const { credentials, nextPageToken } = await client.listCredentials({ limit: PAGE_SIZE });
+      const { credentials, nextPageToken } = await client.listCredentials({ limit: this.pageSize, pageToken: this._currentToken });
       if (seq !== this._reqSeq) return;
       this._bindings = credentials;
       this._nextPageToken = nextPageToken;
@@ -117,27 +129,17 @@ class ArazzoCredentialsTable extends ArazzoElement {
     }
   }
 
-  /** Append the next keyset page (the store pages server-side; this never re-fetches the loaded ones). */
-  async loadMore() {
-    const client = this.client;
-    if (!client || !this._nextPageToken || this._loadingMore) return;
-    const seq = this._reqSeq;
-    this._loadingMore = true;
-    this.renderFoot(0, 0);
-    try {
-      const { credentials, nextPageToken } = await client.listCredentials({ limit: PAGE_SIZE, pageToken: this._nextPageToken });
-      if (seq !== this._reqSeq) return; // a fresh load() superseded this page
-      this._bindings = [...this._bindings, ...credentials];
-      this._nextPageToken = nextPageToken;
-      this._loadingMore = false;
-      this.renderBody();
-    } catch (err) {
-      if (seq !== this._reqSeq) return;
-      this._loadingMore = false;
-      this._error = err.problem || { title: err.message };
-      this.renderBody();
-      this.emit('error', { problem: this._error, error: err });
-    }
+  nextPage() {
+    if (!this._nextPageToken) return;
+    this._history.push(this._currentToken);
+    this._currentToken = this._nextPageToken;
+    this.load();
+  }
+
+  prevPage() {
+    if (this._history.length === 0) return;
+    this._currentToken = this._history.pop();
+    this.load();
   }
 
   // ---- rendering --------------------------------------------------------------------------------
@@ -173,6 +175,9 @@ class ArazzoCredentialsTable extends ArazzoElement {
         .pill { font-weight: 600; }
         .pill.amber { color: var(--arazzo-status-suspended, #b07d18); }
         .pill.red { color: var(--arazzo-status-faulted, #d4351c); }
+        .pager { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--_surface); border-top: 1px solid var(--_border); }
+        .pager .grow { flex: 1; }
+        .pager .count { font-size: 12px; color: var(--_muted); }
       </style>
       <div class="wrap" part="table">
         <div class="toolbar" part="toolbar">
@@ -194,6 +199,12 @@ class ArazzoCredentialsTable extends ArazzoElement {
           <tbody part="rows"></tbody>
         </table>
         <div class="foot" part="foot"></div>
+        <div class="pager" part="pager" hidden>
+          <button class="prev ghost" type="button">‹ Prev</button>
+          <button class="next ghost" type="button">Next ›</button>
+          <span class="grow"></span>
+          <span class="count"></span>
+        </div>
       </div>
     `;
     const status = this.$('.status');
@@ -202,6 +213,8 @@ class ArazzoCredentialsTable extends ArazzoElement {
     const src = this.$('.src');
     src.value = this.getAttribute('source') || '';
     src.addEventListener('input', () => this.filters = { ...this.filters, source: src.value.trim() || undefined });
+    this.$('.prev').addEventListener('click', () => this.prevPage());
+    this.$('.next').addEventListener('click', () => this.nextPage());
   }
 
   visibleBindings() {
@@ -288,18 +301,28 @@ class ArazzoCredentialsTable extends ArazzoElement {
   }
 
   renderFoot(expiring, expired) {
+    this.updatePager();
     const foot = this.$('.foot');
     if (!foot) return;
     if (this._loading) { foot.textContent = 'Loading…'; return; }
     const total = this.visibleBindings().length;
-    const parts = [`${total} binding${total === 1 ? '' : 's'}${this._nextPageToken ? '+' : ''}`];
+    const parts = [`${total} binding${total === 1 ? '' : 's'}`];
     if (expiring > 0) parts.push(`<span class="pill amber">${expiring} expiring soon</span>`);
     if (expired > 0) parts.push(`<span class="pill red">${expired} expired</span>`);
-    const more = this._nextPageToken
-      ? ` <button class="more ghost" type="button"${this._loadingMore ? ' disabled' : ''}>${this._loadingMore ? 'Loading…' : 'Load more'}</button>`
-      : '';
-    foot.innerHTML = parts.join(' · ') + more;
-    foot.querySelector('.more')?.addEventListener('click', () => this.loadMore());
+    foot.innerHTML = parts.join(' · ');
+  }
+
+  updatePager() {
+    const pager = this.$('.pager');
+    if (!pager) return;
+    const hasPages = this._history.length > 0 || !!this._nextPageToken;
+    pager.hidden = !hasPages;
+    const prev = this.$('.prev');
+    const next = this.$('.next');
+    if (prev) prev.disabled = this._history.length === 0 || this._loading;
+    if (next) next.disabled = !this._nextPageToken || this._loading;
+    const count = this.$('.pager .count');
+    if (count) count.textContent = this._loading ? 'Loading…' : (this._history.length ? `page ${this._history.length + 1}` : '');
   }
 
   /** Select a binding by `source@environment` (highlights the row and emits `credential-selected`). */
