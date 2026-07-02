@@ -12,7 +12,8 @@
 // Standalone-capable: it renders metadata + governance (obsolete / delete) itself and offers download links
 // for the package, workflow and each source document. Layer 2 listens to its events to keep the table in sync.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, copyToClipboard, parseSecurityTags, securityTagsToText, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, copyToClipboard, define } from './base.js';
+import './tag-editor.js';
 import './administrators-panel.js';
 import './access-request-dialog.js';
 import './availability-request-dialog.js';
@@ -309,6 +310,9 @@ class ArazzoCatalogDetail extends ArazzoElement {
     this.$('.sectag-edit')?.addEventListener('click', () => this.editSecurityTags());
     this.$('.sectag-save')?.addEventListener('click', () => this.saveSecurityTags(v));
     this.$('.sectag-cancel')?.addEventListener('click', () => this.cancelSecurityTags());
+    // Seed the tag editor once it is in the DOM (its .tags setter re-renders the rows).
+    const sectagEditor = this.$('#sectag-editor');
+    if (sectagEditor) sectagEditor.tags = Array.isArray(v.securityTags) ? v.securityTags : [];
     this.wireDownloads(v);
     this.wireSources(v);
     this.loadSourceBindings(v);
@@ -563,19 +567,20 @@ class ArazzoCatalogDetail extends ArazzoElement {
 
   /**
    * The version's security tags (§14.2 reach labels) as a `<dt>/<dd>` block: chips in display mode (with an Edit
-   * affordance when the caller has `catalog:write`), or a `key=value` text editor with Save/Cancel in edit mode. The
-   * server preserves the deployment-internal tags and strips them from the response, so only the user labels appear.
+   * affordance when the caller has `catalog:write`), or a full add/edit/delete tag editor with Save/Cancel in edit mode
+   * (the editor is seeded in renderBody once it is in the DOM). The server preserves the deployment-internal tags and
+   * strips them from the response, so only the user labels appear.
    */
   renderSecurityTags(v) {
     const tags = Array.isArray(v.securityTags) ? v.securityTags : [];
     if (this._editingSecurityTags) {
       return `<dt>Security tags</dt><dd part="security-tags">
-        <div class="sectag-edit-row">
-          <input id="sectag-input" type="text" placeholder="domain=payments" value="${escapeHtml(securityTagsToText(tags))}">
-          <button class="sectag-save" type="button">Save</button>
+        <arazzo-tag-editor id="sectag-editor"></arazzo-tag-editor>
+        <div class="sectag-edit-actions">
+          <button class="sectag-save primary" type="button">Save</button>
           <button class="sectag-cancel ghost" type="button">Cancel</button>
         </div>
-        <div class="hint">Reach labels, <code>key=value</code>, space separated. The reserved <code>sys:</code> prefix is deployment-owned.</div>
+        <div class="hint">Reach labels rules match on (§14.2). Add, edit, or remove rows. The reserved <code>sys:</code> prefix is deployment-owned.</div>
       </dd>`;
     }
 
@@ -589,7 +594,6 @@ class ArazzoCatalogDetail extends ArazzoElement {
   editSecurityTags() {
     this._editingSecurityTags = true;
     this.renderBody();
-    this.$('#sectag-input')?.focus();
   }
 
   cancelSecurityTags() {
@@ -598,7 +602,8 @@ class ArazzoCatalogDetail extends ArazzoElement {
   }
 
   async saveSecurityTags(v) {
-    const securityTags = parseSecurityTags(this.$('#sectag-input')?.value);
+    const editor = this.$('#sectag-editor');
+    const securityTags = editor ? editor.tags : [];
     try {
       const updated = await this.client.updateCatalogVersion(v.baseWorkflowId, v.versionNumber, { securityTags });
       this._version = updated;
