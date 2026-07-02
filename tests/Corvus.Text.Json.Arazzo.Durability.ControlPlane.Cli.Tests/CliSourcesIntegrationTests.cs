@@ -65,6 +65,34 @@ public sealed partial class CliIntegrationTests
     }
 
     [TestMethod]
+    public async Task Source_management_tags_are_settable_on_register_and_re_taggable_on_update()
+    {
+        await using Host host = await StartSourcesAsync();
+        string docPath = await WriteTempDocumentAsync("""{"openapi":"3.1.0","info":{"title":"Petstore"}}""");
+        try
+        {
+            (int registerExit, string registerOut, _) = await RunAsync(host, "sources", "register", "petstore", "--type", "openapi", "--document", docPath, "--manage", "team=payments", "--token", "acme");
+            registerExit.ShouldBe(0);
+            registerOut.ShouldContain("payments");
+
+            // --manage re-tags the non-internal labels on update; the old one is replaced (the document is carried forward).
+            (int updateExit, string updateOut, _) = await RunAsync(host, "sources", "update", "petstore", "--manage", "team=billing", "--token", "acme");
+            updateExit.ShouldBe(0);
+            updateOut.ShouldContain("billing");
+            updateOut.ShouldNotContain("payments");
+
+            // Omitting --manage carries the tags forward (a description-only update keeps billing).
+            (int keepExit, string keepOut, _) = await RunAsync(host, "sources", "update", "petstore", "--description", "The pet store API.", "--token", "acme");
+            keepExit.ShouldBe(0);
+            keepOut.ShouldContain("billing");
+        }
+        finally
+        {
+            File.Delete(docPath);
+        }
+    }
+
+    [TestMethod]
     public async Task Updating_a_source_with_a_new_document_rotates_it_over_http()
     {
         await using Host host = await StartSourcesAsync();

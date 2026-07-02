@@ -57,6 +57,28 @@ public sealed partial class CliIntegrationTests
     }
 
     [TestMethod]
+    public async Task Environment_management_tags_are_settable_on_create_and_re_taggable_on_update()
+    {
+        await using Host host = await StartEnvironmentsAsync();
+
+        // acme creates an environment with a management tag (and is granted its administration).
+        (int createExit, string createOut, _) = await RunAsync(host, "environments", "create", "production", "--manage", "team=payments", "--token", "acme");
+        createExit.ShouldBe(0);
+        createOut.ShouldContain("payments");
+
+        // --manage re-tags the non-internal labels on update; the old one is replaced.
+        (int updateExit, string updateOut, _) = await RunAsync(host, "environments", "update", "production", "--manage", "team=billing", "--token", "acme");
+        updateExit.ShouldBe(0);
+        updateOut.ShouldContain("billing");
+        updateOut.ShouldNotContain("payments");
+
+        // Omitting --manage carries the tags forward (a description-only update keeps billing).
+        (int keepExit, string keepOut, _) = await RunAsync(host, "environments", "update", "production", "--description", "Live", "--token", "acme");
+        keepExit.ShouldBe(0);
+        keepOut.ShouldContain("billing");
+    }
+
+    [TestMethod]
     public async Task Environment_administration_lists_adds_removes_and_transfers_over_http()
     {
         await using Host host = await StartEnvironmentsAsync();
