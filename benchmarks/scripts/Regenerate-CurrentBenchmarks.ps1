@@ -47,7 +47,15 @@ $Overrides = @{
 }
 
 Write-Host 'Building the code generator (Release)...' -ForegroundColor Cyan
-dotnet build $generatorProject -f net10.0 -c Release | Out-Null
+# Build the tool up front so the per-project 'dotnet run --no-build' below runs the CURRENT binary. This build
+# must be verified: a silent failure here (e.g. a transient file lock) would leave a stale or missing binary, and
+# --no-build would then under-generate into each freshly-cleaned C/ while still exiting 0 — silently gutting every
+# C/ directory. Fail loudly BEFORE the loop touches any C/ so a bad build can never destroy the baselines.
+$buildOutput = dotnet build $generatorProject -f net10.0 -c Release 2>&1
+if ($LASTEXITCODE -ne 0) {
+    $buildOutput | Write-Host
+    throw "Failed to build the code generator ($generatorProject). Aborting before any C/ directory is modified — the '--no-build' generation would otherwise run against a stale or missing binary and silently under-generate."
+}
 
 $projects = Get-ChildItem -Path $benchmarksDir -Directory -Filter '*BenchmarkModels' | Sort-Object Name
 $regenerated = 0
