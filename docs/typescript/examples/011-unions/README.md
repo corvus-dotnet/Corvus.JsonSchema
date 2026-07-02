@@ -1,13 +1,13 @@
 # TypeScript Patterns - Unions
 
-This recipe shows how `oneOf` becomes a TypeScript **union** with per-branch type guards and an exhaustive `{Union}.match` function — the idiomatic way to handle "one of several shapes".
+This recipe shows how `oneOf` becomes a TypeScript **union** with per-branch type guards and an exhaustive `{Union}.match` function, the idiomatic way to handle "one of several shapes".
 
 ## The Pattern
 
 A `oneOf` of object schemas generates a union type alias (`type Shape = Circle | Rectangle`) plus:
 
 - a **type guard** per branch (`Circle.is(value): value is Circle`) that narrows in an `if`;
-- an exhaustive **`Shape.match(value, cases)`** that dispatches to a handler per branch and returns a result — the compiler requires a case for *every* member, so adding a branch to the schema turns missing handlers into compile errors.
+- an exhaustive **`Shape.match(value, cases)`** that dispatches to a handler per branch and returns a result: the compiler requires a case for *every* member, so adding a branch to the schema turns missing handlers into compile errors.
 
 When each branch carries a discriminant property (here `kind: "circle"` / `"rectangle"` via `const`), the guards key off it; the same shape with no discriminant still works, distinguished structurally by the evaluator.
 
@@ -66,8 +66,8 @@ node dist/011-unions/demo.js
 
 ## Related Patterns
 
-- [012-discriminated-unions](../012-discriminated-unions/) — a shared discriminator property across branches
-- [014-numeric-enums](../014-numeric-enums/) — `oneOf` of `const` values
+- [012-discriminated-unions](../012-discriminated-unions/): a shared discriminator property across branches
+- [014-numeric-enums](../014-numeric-enums/): `oneOf` of `const` values
 
 ## Frequently Asked Questions
 
@@ -77,4 +77,4 @@ Both generate a union type and `{Union}.match`. The difference is in evaluation:
 
 ### Why is `Shape.match` better than a manual `switch`?
 
-It is exhaustive by construction: the `cases` object must have a handler for every union member, so if you later add a `Triangle` branch to the schema, the regenerated `Shape.match` won't type-check until you handle it — you can't silently forget a case.
+It is exhaustive by construction: the `cases` object must have a handler for every union member, so if you later add a `Triangle` branch to the schema, the regenerated `Shape.match` won't type-check until you handle it; you can't silently forget a case.

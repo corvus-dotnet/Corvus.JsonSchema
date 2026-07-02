@@ -1,6 +1,6 @@
 # TypeScript Patterns - Discriminated Unions
 
-This recipe shows a tagged union — a `oneOf` whose branches share a discriminant property — and the exhaustive dispatch it generates.
+This recipe shows a tagged union (a `oneOf` whose branches share a discriminant property) and the exhaustive dispatch it generates.
 
 ## The Pattern
 
@@ -39,11 +39,11 @@ From `docs/typescript/examples/` (`npm install` once): `npm run build` then `nod
 
 ## Related Patterns
 
-- [011-unions](../011-unions/) — `oneOf` in general (and `{Union}.match`)
-- [013-string-enums](../013-string-enums/) — the discriminant values as a literal union
+- [011-unions](../011-unions/): `oneOf` in general (and `{Union}.match`)
+- [013-string-enums](../013-string-enums/): the discriminant values as a literal union
 
 ## Frequently Asked Questions
 
 ### Does the discriminant make evaluation faster?
 
-It can short-circuit: a value with `type: "scroll"` only needs the `Scroll` branch evaluated. But the discriminant is a convenience for *your* dispatch (`{Union}.match`) — `Event.evaluate` is correct with or without one, distinguishing branches structurally when there is no tag.
+It can short-circuit: a value with `type: "scroll"` only needs the `Scroll` branch evaluated. But the discriminant is a convenience for *your* dispatch (`{Union}.match`); `Event.evaluate` is correct with or without one, distinguishing branches structurally when there is no tag.

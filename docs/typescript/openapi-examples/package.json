@@ -6,7 +6,7 @@
   "description": "Worked OpenAPI client recipes for the Corvus.Text.Json TypeScript OpenAPI client generator.",
   "scripts": {
     "build": "tsc",
-    "regenerate": "bash regenerate.sh"
+    "regenerate": "pwsh -File regenerate.ps1"
   },
   "dependencies": {
     "@js-temporal/polyfill": "^0.5.1",

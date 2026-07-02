@@ -39,12 +39,12 @@ From `docs/typescript/examples/` (`npm install` once): `npm run build` then `nod
 
 ## Related Patterns
 
-- [008-nested-arrays](../008-nested-arrays/) — arrays of arrays
-- [009-tuples](../009-tuples/) — fixed-length positional arrays
-- [016-mutation](../016-mutation/) — `produce`/`patch` on arrays in depth
+- [008-nested-arrays](../008-nested-arrays/): arrays of arrays
+- [009-tuples](../009-tuples/): fixed-length positional arrays
+- [016-mutation](../016-mutation/): `produce`/`patch` on arrays in depth
 
 ## Frequently Asked Questions
 
 ### Are the arrays mutable?
 
-The read surface is `readonly` (you can't accidentally mutate parsed data in place). To produce a changed copy, use `{Type}.produce` with a recipe — `push`, index assignment and splice are recorded and lowered to a byte-level edit, leaving the original untouched.
+The read surface is `readonly` (you can't accidentally mutate parsed data in place). To produce a changed copy, use `{Type}.produce` with a recipe: `push`, index assignment and splice are recorded and lowered to a byte-level edit, leaving the original untouched.

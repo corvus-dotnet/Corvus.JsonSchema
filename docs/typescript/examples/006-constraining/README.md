@@ -34,11 +34,11 @@ From `docs/typescript/examples/` (`npm install` once): `npm run build` then `nod
 
 ## Related Patterns
 
-- [005-extending](../005-extending/) — `allOf` that adds properties
-- [002-validation](../002-validation/) — the constraint keywords themselves
+- [005-extending](../005-extending/): `allOf` that adds properties
+- [002-validation](../002-validation/): the constraint keywords themselves
 
 ## Frequently Asked Questions
 
 ### Why doesn't the constraint show up in the TypeScript type?
 
-A numeric range can't be expressed in a TypeScript type, so `size` is just `number` in the interface and the `1..100` bound lives in `SmallBatch.evaluate` — the same split between *shape* and *constraint* as plain validation (002).
+A numeric range can't be expressed in a TypeScript type, so `size` is `number` in the interface and the `1..100` bound lives in `SmallBatch.evaluate`: the same split between *shape* and *constraint* as plain validation (002).

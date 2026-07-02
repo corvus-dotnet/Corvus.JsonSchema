@@ -4,7 +4,7 @@ This recipe shows a numeric `enum` generating a numeric-literal union.
 
 ## The Pattern
 
-A numeric `enum` becomes `type Status = 200 | 404 | 500` — a union of numeric literals, checkable and completable, with `Response.evaluate` rejecting any other number.
+A numeric `enum` becomes `type Status = 200 | 404 | 500`, a union of numeric literals, checkable and completable, with `Response.evaluate` rejecting any other number.
 
 ## The Schema
 
@@ -30,11 +30,11 @@ From `docs/typescript/examples/` (`npm install` once): `npm run build` then `nod
 
 ## Related Patterns
 
-- [013-string-enums](../013-string-enums/) — string `enum`
-- [011-unions](../011-unions/) — `oneOf` for object branches
+- [013-string-enums](../013-string-enums/): string `enum`
+- [011-unions](../011-unions/): `oneOf` for object branches
 
 ## Frequently Asked Questions
 
 ### Are enum values compared exactly?
 
-Yes — numeric membership is compared by mathematical value against the schema's literals, so there is no floating-point surprise even for large or fractional members.
+Yes. Numeric membership is compared by mathematical value against the schema's literals, so there is no floating-point surprise even for large or fractional members.

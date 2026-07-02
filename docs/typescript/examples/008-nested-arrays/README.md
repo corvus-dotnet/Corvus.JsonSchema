@@ -1,6 +1,6 @@
 # TypeScript Patterns - Arrays of Higher Rank
 
-This recipe shows nested arrays — an array whose `items` are themselves arrays — generating a matrix type.
+This recipe shows nested arrays (an array whose `items` are themselves arrays) generating a matrix type.
 
 ## The Pattern
 
@@ -32,5 +32,5 @@ From `docs/typescript/examples/` (`npm install` once): `npm run build` then `nod
 
 ## Related Patterns
 
-- [007-arrays](../007-arrays/) — a single-rank array
-- [009-tuples](../009-tuples/) — fixed-length arrays (a `Vec3` is `readonly [number, number, number]`)
+- [007-arrays](../007-arrays/): a single-rank array
+- [009-tuples](../009-tuples/): fixed-length arrays (a `Vec3` is `readonly [number, number, number]`)

@@ -1,6 +1,6 @@
 # TypeScript Patterns - String Enumerations
 
-This recipe shows `enum` of strings generating a string-literal union — the idiomatic TypeScript enum.
+This recipe shows `enum` of strings generating a string-literal union, the idiomatic TypeScript enum.
 
 ## The Pattern
 
@@ -33,8 +33,8 @@ From `docs/typescript/examples/` (`npm install` once): `npm run build` then `nod
 
 ## Related Patterns
 
-- [014-numeric-enums](../014-numeric-enums/) — numeric `enum`
-- [012-discriminated-unions](../012-discriminated-unions/) — enums as union discriminants
+- [014-numeric-enums](../014-numeric-enums/): numeric `enum`
+- [012-discriminated-unions](../012-discriminated-unions/): enums as union discriminants
 
 ## Frequently Asked Questions
 

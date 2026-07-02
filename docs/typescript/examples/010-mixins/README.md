@@ -4,7 +4,7 @@ This recipe composes several independent base types into one with a multi-member
 
 ## The Pattern
 
-`allOf` can reference more than one base. `Widget` mixes in `Named` (a `name`) and `Timestamped` (a `createdAt`), and adds its own `id` — the generated `interface` merges all of them, and a value must satisfy each. This is the "combine orthogonal capabilities" pattern.
+`allOf` can reference more than one base. `Widget` mixes in `Named` (a `name`) and `Timestamped` (a `createdAt`), and adds its own `id`: the generated `interface` merges all of them, and a value must satisfy each. This is the "combine orthogonal capabilities" pattern.
 
 ## The Schema
 
@@ -35,5 +35,5 @@ From `docs/typescript/examples/` (`npm install` once): `npm run build` then `nod
 
 ## Related Patterns
 
-- [005-extending](../005-extending/) — one base plus an extension
-- [003-references](../003-references/) — the `$ref`/`$defs` the mix-ins are referenced by
+- [005-extending](../005-extending/): one base plus an extension
+- [003-references](../003-references/): the `$ref`/`$defs` the mix-ins are referenced by

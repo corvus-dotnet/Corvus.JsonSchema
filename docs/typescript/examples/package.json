@@ -6,7 +6,7 @@
   "description": "Worked examples for the Corvus.Text.Json TypeScript code-generation engine.",
   "scripts": {
     "build": "tsc",
-    "regenerate": "bash regenerate.sh"
+    "regenerate": "pwsh -File regenerate.ps1"
   },
   "dependencies": {
     "@js-temporal/polyfill": "^0.5.1",

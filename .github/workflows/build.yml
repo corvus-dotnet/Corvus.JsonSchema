@@ -316,7 +316,7 @@ jobs:
       # The load-bearing emitted-code gate: regenerate every petstore-*/client from its spec via the
       # production CLI (openapi-client --engine TypeScript) and strict-type-check the whole tree.
       - name: OpenAPI client recipes - generate + strict tsc
-        run: bash regenerate.sh
+        run: pwsh -File ./regenerate.ps1
         working-directory: docs/typescript/openapi-examples
         timeout-minutes: 15
         env:
@@ -326,7 +326,7 @@ jobs:
       # and run the node:test suite that drives composed requests / decomposed responses through a mock
       # transport (path/query/header/cookie styles, every body category, streaming, headers, links).
       - name: OpenAPI client conformance suite
-        run: bash conformance.sh
+        run: pwsh -File ./conformance.ps1
         working-directory: docs/typescript/openapi-examples
         timeout-minutes: 15
         env:

@@ -4,7 +4,7 @@ This recipe shows how a schema reuses a common type with `$ref` and `$defs`, and
 
 ## The Pattern
 
-A subschema defined under `$defs` and referenced with `$ref` is generated **once**, as a named `interface`, and every reference to it resolves to that same type. Here `shipTo` and `billTo` both `$ref` `#/$defs/address`, so both properties are typed `Address` — define an address value once and use it for either.
+A subschema defined under `$defs` and referenced with `$ref` is generated **once**, as a named `interface`, and every reference to it resolves to that same type. Here `shipTo` and `billTo` both `$ref` `#/$defs/address`, so both properties are typed `Address`: define an address value once and use it for either.
 
 A referenced type is first-class: `Address` gets its own `Address.evaluate` / `Address.build` / `Address.patch` / `Address.produce` alongside `Order`'s, so you can construct and evaluate it independently.
 
@@ -77,8 +77,8 @@ node dist/003-references/demo.js
 
 ## Related Patterns
 
-- [001-data-object](../001-data-object/) — a single object
-- [005-extending](../005-extending/) — composing a base type with `allOf`
+- [001-data-object](../001-data-object/): a single object
+- [005-extending](../005-extending/): composing a base type with `allOf`
 
 ## Frequently Asked Questions
 
@@ -88,4 +88,4 @@ No. The referenced subschema is generated once and every `$ref` to it resolves t
 
 ### What about references across files, or `$dynamicRef`?
 
-The engine resolves `$ref`, `$dynamicRef`/`$recursiveRef`, anchors and remote documents during generation, so by the time the TypeScript is emitted the reference graph is already a plain set of named types — there is no runtime resolution. (Cross-file references resolve through the document loader you generate against.)
+The engine resolves `$ref`, `$dynamicRef`/`$recursiveRef`, anchors and remote documents during generation, so by the time the TypeScript is emitted the reference graph is already a plain set of named types: there is no runtime resolution. (Cross-file references resolve through the document loader you generate against.)

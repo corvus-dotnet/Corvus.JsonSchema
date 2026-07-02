@@ -8,10 +8,10 @@ The `patch` and `produce` methods edit a document by naming the fields you want 
 
 For every buildable type the generator emits four companion methods over the document bytes (or a parsed value):
 
-- `Contact.applyPatch(doc, patch)` — apply an RFC 6902 patch, returning canonical bytes. The patch is applied **atomically**: a failed `test` (or any invalid operation) throws `JsonPatchError` and leaves the input untouched.
-- `Contact.createPatch(source, target)` — compute a minimal RFC 6902 patch that turns `source` into `target`.
-- `Contact.applyMergePatch(doc, mergePatch)` — apply an RFC 7396 merge patch, returning canonical bytes.
-- `Contact.createMergePatch(source, target)` — compute the RFC 7396 merge patch between two documents.
+- `Contact.applyPatch(doc, patch)`: apply an RFC 6902 patch, returning canonical bytes. The patch is applied **atomically**: a failed `test` (or any invalid operation) throws `JsonPatchError` and leaves the input untouched.
+- `Contact.createPatch(source, target)`: compute a minimal RFC 6902 patch that turns `source` into `target`.
+- `Contact.applyMergePatch(doc, mergePatch)`: apply an RFC 7396 merge patch, returning canonical bytes.
+- `Contact.createMergePatch(source, target)`: compute the RFC 7396 merge patch between two documents.
 
 The generic `applyPatch` / `createPatch` / `applyMergePatch` / `createMergePatch` functions (which work on parsed JSON values) and the `JsonPatch` / `JsonPatchOp` types and `JsonPatchError` are re-exported from every module.
 
@@ -85,14 +85,14 @@ node dist/020-json-patch/demo.js
 
 ## Related Patterns
 
-- [016-mutation](../016-mutation/) — `build` / `patch` / `produce` field-level mutation in depth
-- [001-data-object](../001-data-object/) — the generated companion surface
+- [016-mutation](../016-mutation/): `build` / `patch` / `produce` field-level mutation in depth
+- [001-data-object](../001-data-object/): the generated companion surface
 
 ## Frequently Asked Questions
 
 ### How is `applyPatch` different from `patch`?
 
-`Contact.patch(bytes, changes)` is a typed, field-level update — you pass a `Partial<Contact>` of the fields to change. `Contact.applyPatch(bytes, ops)` applies a standard **RFC 6902** patch document — an array of `{ op, path, value }` operations with JSON Pointer paths — which is the right choice when the patch arrives over the wire, is stored, or is computed as a diff.
+`Contact.patch(bytes, changes)` is a typed, field-level update: you pass a `Partial<Contact>` of the fields to change. `Contact.applyPatch(bytes, ops)` applies a standard **RFC 6902** patch document (an array of `{ op, path, value }` operations with JSON Pointer paths) which is the right choice when the patch arrives over the wire, is stored, or is computed as a diff.
 
 ### Does `applyPatch` validate the result against the schema?
 
@@ -100,4 +100,4 @@ No. It applies the operations and returns the resulting bytes; the result may no
 
 ### Is the patch applied atomically?
 
-Yes. Operations are applied to a copy, and any failure — a failed `test`, a missing path for `remove`/`replace`, an invalid operation — throws `JsonPatchError` without mutating the input, so a partially-applied patch is never observable.
+Yes. Operations are applied to a copy, and any failure (a failed `test`, a missing path for `remove`/`replace`, an invalid operation) throws `JsonPatchError` without mutating the input, so a partially-applied patch is never observable.

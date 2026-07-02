@@ -1,10 +1,10 @@
 # TypeScript Patterns - Tuples
 
-This recipe shows a fixed-length positional array — `prefixItems` with `items: false` — generating a TypeScript tuple type.
+This recipe shows a fixed-length positional array (`prefixItems` with `items: false`) generating a TypeScript tuple type.
 
 ## The Pattern
 
-`prefixItems` types each position; `items: false` forbids anything beyond them, and `minItems` requires them all to be present. Together they generate a tuple — `readonly [number, number, number]` — which destructures and indexes positionally with full types.
+`prefixItems` types each position; `items: false` forbids anything beyond them, and `minItems` requires them all to be present. Together they generate a tuple (`readonly [number, number, number]`) which destructures and indexes positionally with full types.
 
 ## The Schema
 
@@ -34,11 +34,11 @@ From `docs/typescript/examples/` (`npm install` once): `npm run build` then `nod
 
 ## Related Patterns
 
-- [007-arrays](../007-arrays/) — variable-length homogeneous arrays
-- [008-nested-arrays](../008-nested-arrays/) — arrays of arrays
+- [007-arrays](../007-arrays/): variable-length homogeneous arrays
+- [008-nested-arrays](../008-nested-arrays/): arrays of arrays
 
 ## Frequently Asked Questions
 
 ### Why does the tuple need `minItems` as well as `prefixItems`?
 
-`prefixItems` only types the positions that are *present* — on its own it allows a shorter array. Adding `minItems: 3` (and `items: false` for the upper bound) is what makes the length exactly three, matching the `readonly [number, number, number]` type.
+`prefixItems` only types the positions that are *present*; on its own it allows a shorter array. Adding `minItems: 3` (and `items: false` for the upper bound) is what makes the length exactly three, matching the `readonly [number, number, number]` type.

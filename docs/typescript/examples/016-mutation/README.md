@@ -1,14 +1,14 @@
 # TypeScript Patterns - Mutation
 
-This recipe covers the mutation surface in depth — `build`, `patch` and `produce` — over canonical UTF-8 JSON bytes.
+This recipe covers the mutation surface in depth (`build`, `patch` and `produce`) over canonical UTF-8 JSON bytes.
 
 ## The Pattern
 
 Parsed values are `readonly`, so you never mutate data in place. Instead the generator emits three ways to produce a *new* document, all operating on bytes:
 
-- **`{Type}.build(props)`** — construct a fresh document from values.
-- **`{Type}.patch(source, changes, removals?)`** — the leanest update: name the top-level fields to change (and any to remove); only those member spans are rewritten, the rest of the bytes are copied through verbatim — no parse, no re-serialise of the unchanged part.
-- **`{Type}.produce(source, recipe)`** — an immer-style recipe over a typed, mutable `Draft<T>` for nested and array edits; the recorded change-set lowers to the same byte-level patch.
+- **`{Type}.build(props)`**: construct a fresh document from values.
+- **`{Type}.patch(source, changes, removals?)`**: the leanest update. Name the top-level fields to change (and any to remove); only those member spans are rewritten, the rest of the bytes are copied through verbatim, with no parse and no re-serialise of the unchanged part.
+- **`{Type}.produce(source, recipe)`**: an immer-style recipe over a typed, mutable `Draft<T>` for nested and array edits; the recorded change-set lowers to the same byte-level patch.
 
 ## The Schema
 
@@ -46,14 +46,14 @@ From `docs/typescript/examples/` (`npm install` once): `npm run build` then `nod
 
 ## Related Patterns
 
-- [001-data-object](../001-data-object/) — the same trio on a flat object
-- [007-arrays](../007-arrays/) — `produce` with array `push`
+- [001-data-object](../001-data-object/): the same trio on a flat object
+- [007-arrays](../007-arrays/): `produce` with array `push`
 
 ## Frequently Asked Questions
 
 ### When should I use `patch` vs `produce`?
 
-`patch` is the fast path for "set/remove these top-level fields" — it touches only the named member spans. `produce` is for nested or conditional edits where a recipe reads more naturally; it records the changes and lowers them to the same kind of byte edit. Both leave the source document untouched and return new bytes.
+`patch` is the fast path for "set/remove these top-level fields": it touches only the named member spans. `produce` is for nested or conditional edits where a recipe reads more naturally; it records the changes and lowers them to the same kind of byte edit. Both leave the source document untouched and return new bytes.
 
 ### Why bytes rather than an object?
 
