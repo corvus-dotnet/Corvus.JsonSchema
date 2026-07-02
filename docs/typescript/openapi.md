@@ -21,7 +21,7 @@ request/response parsing, streaming, and error handling — so you focus purely 
 never touches .NET at run time: the output is TypeScript plus a small runtime library.
 
 > **Server generation is C#-only.** The TypeScript engine emits clients; use the C# `openapi-server` command
-> for ASP.NET Core server stubs (see [OpenAPI Code Generation](../../OpenApi.md)).
+> for ASP.NET Core server stubs (see [OpenAPI Code Generation](/docs/open-api.html)).
 
 ## Installation
 
@@ -347,5 +347,5 @@ generated from any of the three versions produces the same wire for the same inp
 - [Getting Started](./getting-started.md) — the TypeScript engine walkthrough.
 - [Code generation](./code-generation.md) — the model-generation reference.
 - [The runtime](./runtime.md) — the model runtime the generated clients build on.
-- [OpenAPI Code Generation](../../OpenApi.md) — the C# reference (client **and** server), including
+- [OpenAPI Code Generation](/docs/open-api.html) — the C# reference (client **and** server), including
   authentication, webhooks/callbacks, and the CLI in depth.

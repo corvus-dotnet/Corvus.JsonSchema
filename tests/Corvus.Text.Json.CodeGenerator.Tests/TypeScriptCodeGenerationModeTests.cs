@@ -54,14 +54,17 @@ public class TypeScriptCodeGenerationModeTests
         StringAssert.Contains(content, "function evaluate");
         StringAssert.Contains(content, "export default ");
 
-        // ...but suppresses the type surface entirely (no interface, no enum/union/brand/map alias). The import
-        // line carries `type Draft` etc., but that is `import { ... }`, never an `export interface`/`export type`.
+        // ...but suppresses the type surface entirely (no interface, no enum/union/brand/map/array alias
+        // *declaration*). Runtime plumbing that carries type names is allowed: the import line has
+        // `import { ... type Draft ... }`, and the module re-exports the JSON Patch types with
+        // `export type { JsonPatch, JsonPatchOp };` — a type-only re-export, not a type alias. So match an
+        // alias *declaration* (`export type <Name> = ...`) rather than the bare `export type ` substring.
         Assert.IsFalse(
             content.Contains("export interface", StringComparison.Ordinal),
             "SchemaEvaluationOnly must not emit an interface. Generated:\n" + content);
         Assert.IsFalse(
-            content.Contains("export type ", StringComparison.Ordinal),
-            "SchemaEvaluationOnly must not emit a type alias. Generated:\n" + content);
+            System.Text.RegularExpressions.Regex.IsMatch(content, "export type [A-Za-z_$]"),
+            "SchemaEvaluationOnly must not emit a type-alias declaration. Generated:\n" + content);
     }
 
     // Build the schema's type declarations and emit TypeScript via the provider in the requested mode,

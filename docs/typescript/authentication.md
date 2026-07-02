@@ -407,7 +407,7 @@ token. On GCP hosts ADC comes from the metadata server; locally set `GOOGLE_APPL
 `gcloud auth application-default login`.
 
 Targets `google-auth-library` v10 (the current major): `auth.getAccessToken()` returns `{ token }` (read
-`.token`, as shown). See the [google-auth-library docs](https://github.com/googleapis/google-auth-library-nodejs#readme)
+`.token`, as shown). See the [google-auth-library docs](https://github.com/googleapis/google-auth-library-nodejs)
 and the [Cloud Run service-to-service auth guide](https://cloud.google.com/run/docs/authenticating/service-to-service).
 
 ### Generic OAuth2 client-credentials
@@ -493,7 +493,7 @@ alongside the transport.
 
 Option A targets `undici` v8 (the current major): its `dispatcher` interface differs from the undici
 built into Node's global `fetch`, so the standalone `undici` you import must match the one backing your
-`fetch`. Option B uses only the built-in `node:https` `Agent`. See the [undici `Agent` docs](https://undici.nodejs.org/#/docs/api/Agent) and
+`fetch`. Option B uses only the built-in `node:https` `Agent`. See the [undici `Agent` docs](https://github.com/nodejs/undici) and
 [Node.js `https.Agent` docs](https://nodejs.org/api/https.html#class-httpsagent).
 
 ## Request signing
@@ -586,5 +586,5 @@ No package to pin — this is Node's built-in `node:crypto` (or the platform `cr
 
 - [OpenAPI client generation](./openapi.md) — generating and consuming the TypeScript client.
 - [The runtime](./runtime.md) — the model runtime the generated clients build on.
-- [OpenAPI Code Generation (C#)](../../OpenApi.md) — the C# reference, whose `Authentication` section
+- [OpenAPI Code Generation (C#)](/docs/open-api.html) — the C# reference, whose `Authentication` section
   mirrors these providers with `HttpClient` / `DelegatingHandler` snippets.

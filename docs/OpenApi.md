@@ -616,7 +616,7 @@ Kiota provides built-in `IAuthenticationProvider` implementations (`BaseBearerTo
 
 **Key advantage:** Corvus extracts OAuth2 scopes from the specification and emits them as generated constants — per-operation (`ListPetsOauth2Scopes`) and unioned (`AllOauth2Scopes`). This eliminates hardcoded scope strings and ensures your token requests stay in sync with the API contract. Kiota does not surface per-operation scopes in generated code.
 
-> **These `SecuritySchemes` / `SecurityRequirements` scope constants are emitted for OpenAPI 3.0, 3.1, and 3.2 specs that declare `securitySchemes`.** (This is distinct from the server-side `ApiEndpointRegistration.SecurityRequirements` endpoint metadata described under [Applying OpenAPI Security as Authorization](#applying-openapi-security-as-authorization), which is populated for all supported versions.) The same broad set of providers below applies to the TypeScript client — see the [TypeScript authentication guide](./typescript/authentication.md).
+> **These `SecuritySchemes` / `SecurityRequirements` scope constants are emitted for OpenAPI 3.0, 3.1, and 3.2 specs that declare `securitySchemes`.** (This is distinct from the server-side `ApiEndpointRegistration.SecurityRequirements` endpoint metadata described under [Applying OpenAPI Security as Authorization](#applying-openapi-security-as-authorization), which is populated for all supported versions.) The same broad set of providers below applies to the TypeScript client — see the [TypeScript authentication guide](/typescript/guides/authentication.html).
 
 ### Microsoft Entra ID (Azure AD / MSAL)
 
@@ -853,7 +853,7 @@ Version/doc caveats for the third-party pieces named here (latest stable majors 
 - **AWS Cognito** — no acquisition SDK on the verify side; validate the pool JWKS. See [Verifying a Cognito JWT](https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-verifying-a-jwt.html).
 - **Clerk** ([clerk.com/docs](https://clerk.com/docs)) and **Supabase** ([supabase.com/docs](https://supabase.com/docs)) — standard `AddJwtBearer` against the provider issuer/JWKS; any community C# SDK (e.g. `Clerk.Net`, `supabase-csharp`) is optional and versions independently.
 
-In every case, whichever flow yields the JWT, attach it with the built-in `BearerTokenAuthenticationProvider(factory)` shown above. The TypeScript client is where these providers are wired *client-side* — see the [TypeScript authentication guide](./typescript/authentication.md) for the browser SDK snippets (and the specific npm package + version caveat for each).
+In every case, whichever flow yields the JWT, attach it with the built-in `BearerTokenAuthenticationProvider(factory)` shown above. The TypeScript client is where these providers are wired *client-side* — see the [TypeScript authentication guide](/typescript/guides/authentication.html) for the browser SDK snippets (and the specific npm package + version caveat for each).
 
 ### Generic OAuth2 client-credentials (token endpoint)
 

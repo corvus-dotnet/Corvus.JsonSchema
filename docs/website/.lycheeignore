@@ -25,6 +25,7 @@ https://github\.com/corvus-dotnet/Corvus\.JsonSchema/blob/.+#L\d+
 # GitHub tree links to directories that exist on feature branches but not yet on main.
 # These resolve once the PR is merged.
 https://github\.com/corvus-dotnet/Corvus\.JsonSchema/tree/main/benchmarks
+https://github\.com/corvus-dotnet/Corvus\.JsonSchema/tree/main/docs/typescript
 
 # dotnet.microsoft.com returns 403 to automated crawlers
 https://dotnet\.microsoft\.com
