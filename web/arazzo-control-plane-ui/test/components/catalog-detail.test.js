@@ -36,19 +36,39 @@ describe('<arazzo-catalog-detail>', () => {
     equal(el.shadowRoot.querySelector('header .badge').textContent, 'Obsolete', 'status badge reflects the version');
   });
 
-  it('shows security tags and re-tags them via the inline editor with catalog:write', async () => {
+  it('adds a security tag via the editor (Add tag) with catalog:write', async () => {
     el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read catalog:write' });
     mount(el);
     const dd = await waitFor(() => el.shadowRoot.querySelector('[part="security-tags"]'));
     ok([...dd.querySelectorAll('.tag')].some((t) => t.textContent === 'domain=pets'), 'seeded security tag shown');
-    const editBtn = dd.querySelector('.sectag-edit');
-    ok(editBtn, 'edit affordance present with catalog:write');
-    editBtn.click();
-    const input = await waitFor(() => el.shadowRoot.querySelector('#sectag-input'));
-    input.value = 'domain=pets team=shelter';
+    dd.querySelector('.sectag-edit').click();
+    const editor = await waitFor(() => el.shadowRoot.querySelector('#sectag-editor'));
+    // Seeded with the existing tag as an editable row.
+    await waitFor(() => editor.shadowRoot.querySelectorAll('.tag-row').length === 1);
+    // ADD a brand-new tag via the editor's Add button, then fill the new row.
+    editor.shadowRoot.querySelector('.add').click();
+    const rows = editor.shadowRoot.querySelectorAll('.tag-row');
+    equal(rows.length, 2, 'Add tag appended a row');
+    rows[1].querySelector('.tk').value = 'team';
+    rows[1].querySelector('.tv').value = 'shelter';
     el.shadowRoot.querySelector('.sectag-save').click();
     await waitFor(() => [...el.shadowRoot.querySelectorAll('[part="security-tags"] .tag')].some((t) => t.textContent === 'team=shelter'));
-    ok(true, 're-tagged via the inline editor');
+    ok([...el.shadowRoot.querySelectorAll('[part="security-tags"] .tag')].some((t) => t.textContent === 'domain=pets'), 'existing tag kept');
+  });
+
+  it('deletes a security tag via the editor (✕) with catalog:write', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read catalog:write' });
+    mount(el);
+    const dd = await waitFor(() => el.shadowRoot.querySelector('[part="security-tags"]'));
+    dd.querySelector('.sectag-edit').click();
+    const editor = await waitFor(() => el.shadowRoot.querySelector('#sectag-editor'));
+    await waitFor(() => editor.shadowRoot.querySelectorAll('.tag-row').length === 1);
+    // Remove the only row, then save → the version ends up with no security tags.
+    editor.shadowRoot.querySelector('.rm').click();
+    equal(editor.shadowRoot.querySelectorAll('.tag-row').length, 0, 'row removed');
+    el.shadowRoot.querySelector('.sectag-save').click();
+    await waitFor(() => el.shadowRoot.querySelector('[part="security-tags"] .muted'));
+    ok(!el.shadowRoot.querySelector('[part="security-tags"] .tag'), 'no tags remain after delete');
   });
 
   it('shows security tags read-only without catalog:write', async () => {
