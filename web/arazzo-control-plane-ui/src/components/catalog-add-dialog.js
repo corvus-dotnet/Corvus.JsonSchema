@@ -22,7 +22,7 @@
 //   4. Review & commit  — everything is gathered first; one commit registers new sources, adds the version, applies
 //                         the administrators, and opens the guided credential dialog for each source flagged for setup.
 
-import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, parseSecurityTags, define } from './base.js';
 import { packWorkflowPackage } from '../workflow-package.js';
 import './credential-dialog.js';
 import './grantee-picker.js';
@@ -67,6 +67,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
     this._stagedAdmins = [];           // resolved grantees (person/team/role)
     this._owner = { name: '', email: '', team: '', url: '' };
     this._tags = [];
+    this._securityTags = []; // [{ key, value }] — reach labels (§14.2)
     this._error = '';
     this.renderStep();
     this.$('dialog').showModal();
@@ -114,6 +115,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
         url: this.$('#ownerUrl')?.value.trim() || '',
       };
       this._tags = (this.$('#tags')?.value || '').split(/[,\s]+/).map((t) => t.trim()).filter(Boolean);
+      this._securityTags = parseSecurityTags(this.$('#securityTags')?.value);
     }
     // The sources step has no deferred fields — uploads parse on change and credentials are set up inline.
   }
@@ -290,6 +292,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
     if (this._owner.team) owner.team = this._owner.team;
     if (this._owner.url) owner.url = this._owner.url;
     const tags = this._tags;
+    const securityTags = this._securityTags;
 
     let pkg;
     this._sourceDocs = {};
@@ -322,7 +325,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
       }
       pkg = packWorkflowPackage(this._workflowText, sources);
     }
-    return { package: pkg, owner, tags };
+    return { package: pkg, owner, tags, securityTags };
   }
 
   async commit() {
@@ -538,7 +541,8 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
         </div>
       </fieldset>
       <div><label for="tags">Tags (space or comma separated)</label><input id="tags" type="text" placeholder="prod billing" value="${escapeHtml(this._tags.join(' '))}"></div>
-      <div class="hint">The catalog assigns the version — a new workflow id starts at v1, an existing one gets the next. Submit the bare id (no <code>-vN</code>).</div>
+      <div><label for="securityTags">Security tags <span class="hint">(reach labels, <code>key=value</code>, space separated)</span></label><input id="securityTags" type="text" placeholder="domain=payments" value="${escapeHtml(this._securityTags.map((t) => `${t.key}=${t.value}`).join(' '))}"></div>
+      <div class="hint">The catalog assigns the version — a new workflow id starts at v1, an existing one gets the next. Submit the bare id (no <code>-vN</code>). The reserved <code>sys:</code> prefix is deployment-owned.</div>
     `;
   }
 
@@ -617,6 +621,7 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
         <div class="review-row"><span class="k">Mode</span><span>${this._mode === 'build' ? 'Build from documents' : 'Upload package'}</span></div>
         <div class="review-row"><span class="k">Owner</span><span>${escapeHtml(this._owner.name)} &lt;${escapeHtml(this._owner.email)}&gt;${this._owner.team ? ` · ${escapeHtml(this._owner.team)}` : ''}</span></div>
         <div class="review-row"><span class="k">Tags</span><span>${this._tags.length ? this._tags.map((t) => `<span class="env-chip">${escapeHtml(t)}</span>`).join(' ') : '<span class="hint">none</span>'}</span></div>
+        <div class="review-row"><span class="k">Security tags</span><span>${this._securityTags.length ? this._securityTags.map((t) => `<span class="env-chip">${escapeHtml(t.key)}=${escapeHtml(t.value)}</span>`).join(' ') : '<span class="hint">none</span>'}</span></div>
         <div class="review-row"><span class="k">Sources</span><span>${sourceLines}</span></div>
         <div class="review-row"><span class="k">Readiness</span><span>${readyLine}</span></div>
         <div class="review-row"><span class="k">Administrators</span><span>${admins}</span></div>

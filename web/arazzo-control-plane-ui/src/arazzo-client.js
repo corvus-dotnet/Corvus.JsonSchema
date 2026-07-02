@@ -497,8 +497,9 @@ export class ArazzoControlPlaneClient {
 
   /**
    * `addCatalogVersion` — upload a new immutable version as `multipart/form-data`.
-   * @param {{ package: (Blob|ArrayBuffer|Uint8Array), owner: { name: string, email: string, team?: string, url?: string }, tags?: string[], signal?: AbortSignal }} request
+   * @param {{ package: (Blob|ArrayBuffer|Uint8Array), owner: { name: string, email: string, team?: string, url?: string }, tags?: string[], securityTags?: Array<{ key: string, value: string }>, signal?: AbortSignal }} request
    *   `package` is the package archive (the `{workflow, sources}` content as the ZIP from `WorkflowPackage`).
+   *   `securityTags` are non-internal reach labels (§14.2); the reserved `sys:` prefix is rejected (400).
    * @returns {Promise<object>} The added {@link CatalogVersionSummary}. Throws {@link ProblemError} `400`/`409`.
    */
   addCatalogVersion(request) {
@@ -512,14 +513,21 @@ export class ArazzoControlPlaneClient {
     for (const tag of request.tags ?? []) {
       if (tag) form.append('tags', tag);
     }
+    // Complex parts are JSON parts (matching the server's MultipartFormDataSerializer / the `owner` part above), not
+    // repeated fields. Omit entirely when empty so the server leaves the stamped internal tags untouched.
+    if (request.securityTags?.length) {
+      form.append('securityTags', new Blob([JSON.stringify(request.securityTags)], { type: 'application/json' }));
+    }
     return this._request('POST', '/catalog', { form, signal: request.signal });
   }
 
   /**
-   * `updateCatalogVersion` — update a version's governance metadata (owner / tags / status).
+   * `updateCatalogVersion` — update a version's governance metadata (owner / tags / status / securityTags).
    * @param {string} baseWorkflowId
    * @param {number} versionNumber
-   * @param {{ owner?: object, tags?: string[], status?: string }} patch
+   * @param {{ owner?: object, tags?: string[], status?: string, securityTags?: Array<{ key: string, value: string }> }} patch
+   *   A present `securityTags` re-tags the non-internal labels (omit to leave unchanged); the server preserves the
+   *   deployment-internal tags and rejects the reserved `sys:` prefix (400).
    * @param {{ signal?: AbortSignal }} [opts]
    * @returns {Promise<object>} The updated {@link CatalogVersionSummary}.
    */

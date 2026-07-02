@@ -12,7 +12,7 @@
 // Standalone-capable: it renders metadata + governance (obsolete / delete) itself and offers download links
 // for the package, workflow and each source document. Layer 2 listens to its events to keep the table in sync.
 
-import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, copyToClipboard, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, copyToClipboard, parseSecurityTags, securityTagsToText, define } from './base.js';
 import './administrators-panel.js';
 import './access-request-dialog.js';
 import './availability-request-dialog.js';
@@ -290,6 +290,7 @@ class ArazzoCatalogDetail extends ArazzoElement {
         ${v.description ? `<dt>Description</dt><dd>${escapeHtml(v.description)}</dd>` : ''}
         <dt>Content hash</dt><dd class="mono" part="hash">${escapeHtml(v.hash || '—')}<button class="copy ghost copy-hash" type="button" title="Copy content hash" aria-label="Copy content hash">⧉</button></dd>
         ${Array.isArray(v.tags) && v.tags.length > 0 ? `<dt>Tags</dt><dd part="tags"><div class="tags">${v.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div></dd>` : ''}
+        ${this.renderSecurityTags(v)}
       </dl>
       ${this.renderOwner(v)}
       ${this.renderGovernance(v)}
@@ -305,6 +306,9 @@ class ArazzoCatalogDetail extends ArazzoElement {
         setTimeout(() => { button.textContent = '⧉'; }, 1200);
       }
     });
+    this.$('.sectag-edit')?.addEventListener('click', () => this.editSecurityTags());
+    this.$('.sectag-save')?.addEventListener('click', () => this.saveSecurityTags(v));
+    this.$('.sectag-cancel')?.addEventListener('click', () => this.cancelSecurityTags());
     this.wireDownloads(v);
     this.wireSources(v);
     this.loadSourceBindings(v);
@@ -553,6 +557,58 @@ class ArazzoCatalogDetail extends ArazzoElement {
       saveBlob(blob, filename);
     } catch (err) {
       this._error = err.problem || { title: err.message, status: err.status };
+      this.emit('error', { problem: this._error, error: err });
+    }
+  }
+
+  /**
+   * The version's security tags (§14.2 reach labels) as a `<dt>/<dd>` block: chips in display mode (with an Edit
+   * affordance when the caller has `catalog:write`), or a `key=value` text editor with Save/Cancel in edit mode. The
+   * server preserves the deployment-internal tags and strips them from the response, so only the user labels appear.
+   */
+  renderSecurityTags(v) {
+    const tags = Array.isArray(v.securityTags) ? v.securityTags : [];
+    if (this._editingSecurityTags) {
+      return `<dt>Security tags</dt><dd part="security-tags">
+        <div class="sectag-edit-row">
+          <input id="sectag-input" type="text" placeholder="domain=payments" value="${escapeHtml(securityTagsToText(tags))}">
+          <button class="sectag-save" type="button">Save</button>
+          <button class="sectag-cancel ghost" type="button">Cancel</button>
+        </div>
+        <div class="hint">Reach labels, <code>key=value</code>, space separated. The reserved <code>sys:</code> prefix is deployment-owned.</div>
+      </dd>`;
+    }
+
+    const chips = tags.length
+      ? `<div class="tags">${tags.map((t) => `<span class="tag">${escapeHtml(t.key)}=${escapeHtml(t.value)}</span>`).join('')}</div>`
+      : '<span class="muted">none</span>';
+    const edit = this.hasScope('catalog:write') ? '<button class="sectag-edit ghost" type="button">Edit…</button>' : '';
+    return `<dt>Security tags</dt><dd part="security-tags"><div class="sectag-row">${chips}${edit}</div></dd>`;
+  }
+
+  editSecurityTags() {
+    this._editingSecurityTags = true;
+    this.renderBody();
+    this.$('#sectag-input')?.focus();
+  }
+
+  cancelSecurityTags() {
+    this._editingSecurityTags = false;
+    this.renderBody();
+  }
+
+  async saveSecurityTags(v) {
+    const securityTags = parseSecurityTags(this.$('#sectag-input')?.value);
+    try {
+      const updated = await this.client.updateCatalogVersion(v.baseWorkflowId, v.versionNumber, { securityTags });
+      this._version = updated;
+      this._editingSecurityTags = false;
+      this.renderBody();
+      this.emit('version-changed', { version: updated });
+    } catch (err) {
+      this._error = err.problem || { title: err.message, status: err.status };
+      this._editingSecurityTags = false;
+      this.renderBody();
       this.emit('error', { problem: this._error, error: err });
     }
   }
