@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Replacement metadata for an existing source (its name, type, managementTags reach scope, and created-* audit are immutable and taken from the stored source). The document is optional: omit it to keep the registered document unchanged (e.g. to rename without re-uploading), or supply a new one to rotate it.
+/// Replacement metadata for an existing source (its name, type, and created-* audit are immutable). An administrator may re-tag the managementTags reach scope; the deployment&#39;s internal tags are preserved. The document is optional: omit it to keep the registered document unchanged (e.g. to rename without re-uploading), or supply a new one to rotate it.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -213,6 +213,27 @@ public readonly partial struct SourceUpdate
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DocumentUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceDocument value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>managementTags</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Replacement non-internal security tags (&#167;14.2) scoping who may MANAGE and SEE this source; absent leaves the tags unchanged. The reserved internal-tag prefix is rejected (400); the deployment&#39;s internal tags are preserved.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceUpdate.SourceSecurityTagArray ManagementTags
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ManagementTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SourceUpdate.SourceSecurityTagArray value))
             {
                 return value;
             }
@@ -680,6 +701,11 @@ public readonly partial struct SourceUpdate
         public const string Document = "document";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="ManagementTags"/>.
+        /// </summary>
+        public const string ManagementTags = "managementTags";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Description"/>.
         /// </summary>
         public static ReadOnlySpan<byte> DescriptionUtf8 => "description"u8;
@@ -693,6 +719,11 @@ public readonly partial struct SourceUpdate
         /// Gets the JSON property name for <see cref="Document"/>.
         /// </summary>
         public static ReadOnlySpan<byte> DocumentUtf8 => "document"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="ManagementTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ManagementTagsUtf8 => "managementTags"u8;
     }
 
     /// <summary>
@@ -714,6 +745,11 @@ public readonly partial struct SourceUpdate
         /// Gets the escaped UTF-8 JSON property name for <see cref="Document"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Document => "document"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="ManagementTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ManagementTags => "managementTags"u8;
     }
 
     /// <summary>
@@ -736,5 +772,10 @@ public readonly partial struct SourceUpdate
         /// Gets the pre-baked property name blob for <see cref="Document"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Document => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x6F, 0x63, 0x75, 0x6D, 0x65, 0x6E, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ManagementTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ManagementTags => [0x05, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x6E, 0x61, 0x67, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x54, 0x61, 0x67, 0x73, 0x22];
     }
 }

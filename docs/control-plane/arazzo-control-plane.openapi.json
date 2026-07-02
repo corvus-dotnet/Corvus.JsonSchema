@@ -3643,8 +3643,13 @@
       },
       "CredentialBindingUpdate": {
         "type": "object",
-        "description": "Replacement references and non-secret metadata for an existing binding (its sourceName/environment identity is taken from the path and is immutable).",
+        "description": "Replacement references and non-secret metadata for an existing binding (its sourceName/environment identity is taken from the path and is immutable). An administrator may re-tag the managementTags reach scope; the deployment's internal tags are preserved.",
         "properties": {
+          "managementTags": {
+            "type": "array",
+            "description": "Replacement non-internal security tags scoping who may MANAGE this binding (§14.2); absent leaves the tags unchanged. The reserved internal-tag prefix is rejected (400); the deployment's internal tags are preserved.",
+            "items": { "$ref": "#/components/schemas/CredentialSecurityTag" }
+          },
           "authKind": { "$ref": "#/components/schemas/SourceCredentialKind" },
           "secretRefs": {
             "type": "array",
@@ -3820,10 +3825,11 @@
       },
       "EnvironmentUpdate": {
         "type": "object",
-        "description": "Replacement mutable metadata for an existing environment (its name, managementTags reach scope, and created-* audit are immutable and taken from the stored environment).",
+        "description": "Replacement mutable metadata for an existing environment (its name and created-* audit are immutable). An administrator may re-tag the managementTags reach scope; the deployment's internal tags are preserved.",
         "properties": {
           "displayName": { "type": "string", "description": "An optional human-friendly display name; defaults to the name when absent." },
-          "description": { "type": "string", "description": "An optional human description." }
+          "description": { "type": "string", "description": "An optional human description." },
+          "managementTags": { "type": "array", "description": "Replacement non-internal security tags (§14.2) scoping who may MANAGE and SEE this environment; absent leaves the tags unchanged. The reserved internal-tag prefix is rejected (400); the deployment's internal tags are preserved.", "items": { "$ref": "#/components/schemas/EnvironmentSecurityTag" } }
         }
       },
       "EnvironmentSummary": {
@@ -3896,11 +3902,12 @@
       },
       "SourceUpdate": {
         "type": "object",
-        "description": "Replacement metadata for an existing source (its name, type, managementTags reach scope, and created-* audit are immutable and taken from the stored source). The document is optional: omit it to keep the registered document unchanged (e.g. to rename without re-uploading), or supply a new one to rotate it.",
+        "description": "Replacement metadata for an existing source (its name, type, and created-* audit are immutable). An administrator may re-tag the managementTags reach scope; the deployment's internal tags are preserved. The document is optional: omit it to keep the registered document unchanged (e.g. to rename without re-uploading), or supply a new one to rotate it.",
         "properties": {
           "document": { "$ref": "#/components/schemas/SourceDocument" },
           "displayName": { "type": "string", "description": "An optional human-friendly display name; defaults to the name when absent." },
-          "description": { "type": "string", "description": "An optional human description." }
+          "description": { "type": "string", "description": "An optional human description." },
+          "managementTags": { "type": "array", "description": "Replacement non-internal security tags (§14.2) scoping who may MANAGE and SEE this source; absent leaves the tags unchanged. The reserved internal-tag prefix is rejected (400); the deployment's internal tags are preserved.", "items": { "$ref": "#/components/schemas/SourceSecurityTag" } }
         }
       },
       "SourceSummary": {

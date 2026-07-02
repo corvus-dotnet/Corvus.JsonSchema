@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Replacement mutable metadata for an existing environment (its name, managementTags reach scope, and created-* audit are immutable and taken from the stored environment).
+/// Replacement mutable metadata for an existing environment (its name and created-* audit are immutable). An administrator may re-tag the managementTags reach scope; the deployment&#39;s internal tags are preserved.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -192,6 +192,27 @@ public readonly partial struct EnvironmentUpdate
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DisplayNameUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>managementTags</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Replacement non-internal security tags (&#167;14.2) scoping who may MANAGE and SEE this environment; absent leaves the tags unchanged. The reserved internal-tag prefix is rejected (400); the deployment&#39;s internal tags are preserved.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.EnvironmentSecurityTagArray ManagementTags
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ManagementTagsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.EnvironmentSecurityTagArray value))
             {
                 return value;
             }
@@ -654,6 +675,11 @@ public readonly partial struct EnvironmentUpdate
         public const string DisplayName = "displayName";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="ManagementTags"/>.
+        /// </summary>
+        public const string ManagementTags = "managementTags";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Description"/>.
         /// </summary>
         public static ReadOnlySpan<byte> DescriptionUtf8 => "description"u8;
@@ -662,6 +688,11 @@ public readonly partial struct EnvironmentUpdate
         /// Gets the JSON property name for <see cref="DisplayName"/>.
         /// </summary>
         public static ReadOnlySpan<byte> DisplayNameUtf8 => "displayName"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="ManagementTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ManagementTagsUtf8 => "managementTags"u8;
     }
 
     /// <summary>
@@ -678,6 +709,11 @@ public readonly partial struct EnvironmentUpdate
         /// Gets the escaped UTF-8 JSON property name for <see cref="DisplayName"/>.
         /// </summary>
         public static ReadOnlySpan<byte> DisplayName => "displayName"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="ManagementTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ManagementTags => "managementTags"u8;
     }
 
     /// <summary>
@@ -695,5 +731,10 @@ public readonly partial struct EnvironmentUpdate
         /// Gets the pre-baked property name blob for <see cref="DisplayName"/>.
         /// </summary>
         public static ReadOnlySpan<byte> DisplayName => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x70, 0x6C, 0x61, 0x79, 0x4E, 0x61, 0x6D, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ManagementTags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ManagementTags => [0x05, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x6E, 0x61, 0x67, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x54, 0x61, 0x67, 0x73, 0x22];
     }
 }
