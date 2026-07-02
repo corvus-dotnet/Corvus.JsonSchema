@@ -4,18 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
-    <meta name="description" content="This recipe shows the default annotation and how it surfaces in the generated TypeScript." />
+    <meta name="description" content="This recipe shows the default annotation and the two ways the generated TypeScript surfaces it." />
     <meta name="keywords" content="TypeScript, JSON Schema, Corvus.Text.Json, code generation" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:description" content="This recipe shows the default annotation and how it surfaces in the generated TypeScript." />
+    <meta name="twitter:description" content="This recipe shows the default annotation and the two ways the generated TypeScript surfaces it." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta name="twitter:title" content="Default Values &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="article:tag" content="TypeScript" />
     <meta property="article:tag" content="JSON Schema" />
     <meta property="article:tag" content="Corvus.Text.Json" />
     <meta property="article:tag" content="code generation" />
-    <meta property="og:description" content="This recipe shows the default annotation and how it surfaces in the generated TypeScript." />
+    <meta property="og:description" content="This recipe shows the default annotation and the two ways the generated TypeScript surfaces it." />
     <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta property="og:title" content="Default Values &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="og:type" content="website" />
@@ -187,30 +187,42 @@
     <main id="main-content" class="layout-docs__main">
         <div class="doc__content">
             <h1>Default Values</h1>
-<p>This recipe shows the <code>default</code> annotation and how it surfaces in the generated TypeScript.</p>
+<p>This recipe shows the <code>default</code> annotation and the two ways the generated TypeScript surfaces it.</p>
 <h2 id="the-pattern">The Pattern</h2>
-<p><code>default</code> documents a fallback for a property and, in practice, makes that property optional. The generated <code>interface</code> marks it <code>?:</code> — a value may omit it and still be valid. The default value is <strong>not</strong> currently applied to the parsed value: an omitted property reads as <code>undefined</code>, so you supply the default at the read site (<code>value.theme ?? &quot;light&quot;</code>).</p>
+<p><code>default</code> documents a fallback for a property and, in practice, makes that property optional. The generated <code>interface</code> marks it <code>?:</code>, so a value may omit it and still be valid. The parsed value is never mutated. An omitted property still reads <code>undefined</code> on the raw value. The generator gives you two ways to work with the documented defaults:</p>
+<ul>
+<li><strong><code>{Type}.defaults</code></strong>: a readonly object literal of this type's direct property defaults (<code>as const</code>, so each value keeps its literal type). Read one default without hardcoding it: <code>s.theme ?? Settings.defaults.theme</code>.</li>
+<li><strong><code>{Type}.withDefaults(value)</code></strong>: returns a copy of <code>value</code> with every absent default filled. Present properties are left as-is, and nested object types are recursed through their own <code>withDefaults</code>.</li>
+</ul>
+<p><code>defaults</code> holds only the type's own direct properties that declare a <code>default</code>; a nested object type gets its own <code>defaults</code>, so the tree is not flattened. It is emitted only for types that have at least one direct default.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/018-defaults/settings.json"><code>settings.json</code></a></p>
-<pre><code class="language-json">{ &quot;title&quot;: &quot;Settings&quot;, &quot;type&quot;: &quot;object&quot;,
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/a17512411528cc7094dcbe6ec88b0497dd834796/docs/typescript/examples/018-defaults/settings.json"><code>settings.json</code></a></p>
+<pre><code class="language-json">{ &quot;title&quot;: &quot;Settings&quot;, &quot;type&quot;: &quot;object&quot;, &quot;additionalProperties&quot;: false,
   &quot;properties&quot;: { &quot;theme&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;default&quot;: &quot;light&quot; }, &quot;fontSize&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;default&quot;: 14 } } }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/018-defaults/demo.ts">Example code</a></p>
-<pre><code class="language-typescript">Settings.evaluate(JSON.parse(&quot;{}&quot;));   // true — both properties are optional
-const s = JSON.parse(&quot;{}&quot;) as Settings;
-s.theme ?? &quot;light&quot;;               // apply the documented default at the read site
-s.fontSize ?? 14;
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/a17512411528cc7094dcbe6ec88b0497dd834796/docs/typescript/examples/018-defaults/demo.ts">Example code</a></p>
+<pre><code class="language-typescript">Settings.defaults;            // { readonly theme: &quot;light&quot;; readonly fontSize: 14 }
+Settings.defaults.theme;      // &quot;light&quot;
+
+const s = Settings.parse(Settings.build({}));
+s.theme ?? Settings.defaults.theme;   // read one documented default
+s.fontSize ?? Settings.defaults.fontSize;
+
+const filled = Settings.withDefaults(s);   // { theme: &quot;light&quot;, fontSize: 14 }
 </code></pre>
 <h2 id="running-the-example">Running the Example</h2>
 <p>From <code>docs/typescript/examples/</code> (<code>npm install</code> once): <code>npm run build</code> then <code>node dist/018-defaults/demo.js</code>.</p>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/data-object.html">001-data-object</a> — required vs optional properties</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/data-object.html">001-data-object</a>: required vs optional properties</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mutation.html">016-mutation</a>: <code>build</code> and <code>produce</code> over document bytes</li>
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
-<h3 id="does-the-generator-apply-defaults-for-me">Does the generator apply defaults for me?</h3>
-<p>Not yet — <code>default</code> is treated as an annotation that makes the property optional, and you apply the value with <code>??</code> where you read it. Automatic default application (filling omitted properties on read or build) is a planned enhancement.</p>
+<h3 id="defaults-or-withdefaults"><code>defaults</code> or <code>withDefaults</code>?</h3>
+<p>Use <code>defaults</code> to read a single documented fallback at the point you need it (<code>s.theme ?? Settings.defaults.theme</code>). Use <code>withDefaults</code> to get a copy with every absent default applied in one call, which is convenient before handing the value to code that expects the defaulted shape.</p>
+<h3 id="does-either-one-change-the-parsed-value">Does either one change the parsed value?</h3>
+<p>No. <code>defaults</code> is a static literal, and <code>withDefaults</code> returns a shallow copy. The original value is untouched, so an omitted property still reads <code>undefined</code> on it.</p>
         </div>
     </main>
 </div>

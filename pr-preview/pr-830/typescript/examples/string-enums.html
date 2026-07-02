@@ -191,13 +191,13 @@
 <h2 id="the-pattern">The Pattern</h2>
 <p>A string <code>enum</code> becomes a <code>type</code> alias of string literals (<code>type Status = &quot;todo&quot; | &quot;in_progress&quot; | &quot;done&quot;</code>), not a TypeScript <code>enum</code>. That gives exhaustive <code>switch</code>/lookup with no runtime cost and full editor completion; <code>Task.evaluate</code> rejects any value outside the set.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/013-string-enums/task.json"><code>task.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/a17512411528cc7094dcbe6ec88b0497dd834796/docs/typescript/examples/013-string-enums/task.json"><code>task.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Task&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;status&quot;],
   &quot;properties&quot;: { &quot;status&quot;: { &quot;enum&quot;: [&quot;todo&quot;, &quot;in_progress&quot;, &quot;done&quot;] }, &quot;priority&quot;: { &quot;enum&quot;: [&quot;low&quot;, &quot;medium&quot;, &quot;high&quot;] } } }
 </code></pre>
 <p>The generated <code>type Status = &quot;todo&quot; | &quot;in_progress&quot; | &quot;done&quot;</code> (and <code>Priority</code>), with <code>Task</code> using them.</p>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/013-string-enums/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/a17512411528cc7094dcbe6ec88b0497dd834796/docs/typescript/examples/013-string-enums/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">const label: Record&lt;Status, string&gt; = { todo: &quot;To do&quot;, in_progress: &quot;In progress&quot;, done: &quot;Done&quot; };
 label[task.status];                        // exhaustive — every member must be handled
 Task.evaluate({ status: &quot;archived&quot; });      // false — not a member

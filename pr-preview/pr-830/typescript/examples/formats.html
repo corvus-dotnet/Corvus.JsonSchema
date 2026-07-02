@@ -4,18 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
-    <meta name="description" content="This recipe shows format keywords generating branded types with validating factories." />
+    <meta name="description" content="This recipe shows format keywords generating branded types with validating factories, and the accessors that convert a branded value into a strong runtime type." />
     <meta name="keywords" content="TypeScript, JSON Schema, Corvus.Text.Json, code generation" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:description" content="This recipe shows format keywords generating branded types with validating factories." />
+    <meta name="twitter:description" content="This recipe shows format keywords generating branded types with validating factories, and the accessors that convert a branded value into a strong runtime type." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta name="twitter:title" content="Format Validation &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="article:tag" content="TypeScript" />
     <meta property="article:tag" content="JSON Schema" />
     <meta property="article:tag" content="Corvus.Text.Json" />
     <meta property="article:tag" content="code generation" />
-    <meta property="og:description" content="This recipe shows format keywords generating branded types with validating factories." />
+    <meta property="og:description" content="This recipe shows format keywords generating branded types with validating factories, and the accessors that convert a branded value into a strong runtime type." />
     <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta property="og:title" content="Format Validation &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="og:type" content="website" />
@@ -187,35 +187,72 @@
     <main id="main-content" class="layout-docs__main">
         <div class="doc__content">
             <h1>Format Validation</h1>
-<p>This recipe shows <code>format</code> keywords generating <strong>branded</strong> types with validating factories.</p>
+<p>This recipe shows <code>format</code> keywords generating <strong>branded</strong> types with validating factories, and the accessors that convert a branded value into a strong runtime type.</p>
 <h2 id="the-pattern">The Pattern</h2>
-<p>A <code>format</code> (e.g. <code>uuid</code>, <code>uri</code>, <code>date-time</code>) generates a branded type — <code>type Id = Brand&lt;string, &quot;uuid&quot;&gt;</code> — and a factory <code>Id.from(value): Id</code> that checks the format and throws <code>FormatError</code> on failure. The brand means a raw <code>string</code> is <em>not</em> assignable where an <code>Id</code> is expected: you must go through the factory, so a value's format is guaranteed by its type. <code>Account.evaluate</code> also checks formats as part of whole-document evaluation.</p>
+<p>A <code>format</code> (e.g. <code>uuid</code>, <code>uri</code>, <code>date-time</code>) generates a branded type (<code>type Id = Brand&lt;string, &quot;uuid&quot;&gt;</code>) and a factory <code>Id.from(value): Id</code> that checks the format and throws <code>FormatError</code> on failure. The brand means a raw <code>string</code> is <em>not</em> assignable where an <code>Id</code> is expected. You go through the factory, so a value's format is guaranteed by its type. <code>Account.evaluate</code> also checks formats as part of whole-document evaluation.</p>
+<p>A branded value is still a <code>string</code> (or <code>number</code>) at runtime, so it serializes and prints as-is. When you need a <em>strong</em> runtime value, a calendar or instant type for a date, or the exact digits of an arbitrary-precision number, the companion carries a conversion accessor (see <a href="#getting-strong-values-out">Getting strong values out</a>).</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/019-formats/account.json"><code>account.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/a17512411528cc7094dcbe6ec88b0497dd834796/docs/typescript/examples/019-formats/account.json"><code>account.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Account&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;id&quot;],
   &quot;properties&quot;: { &quot;id&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;uuid&quot; }, &quot;website&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;uri&quot; }, &quot;created&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;date-time&quot; } } }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/019-formats/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/a17512411528cc7094dcbe6ec88b0497dd834796/docs/typescript/examples/019-formats/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">Account.build({
   id: Id.from(&quot;6f9619ff-8b86-d011-b42d-00cf4fc964ff&quot;),
   website: Website.from(&quot;https://example.com&quot;),
   created: Created.from(&quot;2026-06-26T10:00:00Z&quot;),
 });
 Id.from(&quot;nope&quot;); // throws FormatError(&quot;uuid&quot;)
+
+// Convert the branded date-time back out to a strong Temporal value:
+const when = Created.toTemporal(Created.from(&quot;2026-06-26T10:00:00Z&quot;)); // Temporal.Instant
 </code></pre>
+<h2 id="getting-strong-values-out">Getting strong values out</h2>
+<p><code>.from</code> brings a value <em>in</em> (validate, then brand). The companion also carries accessors that take a branded value back <em>out</em> to a strong runtime type. They are pure parse helpers. They never re-validate (the brand already proves the format) and never mutate the value.</p>
+<p><strong>Temporal formats</strong> (<code>date</code>, <code>date-time</code>, <code>time</code>, <code>duration</code>) get <code>{Type}.toTemporal(value)</code>, returning the matching <code>Temporal</code> value type (the runtime provides <code>Temporal</code>, so no extra setup is needed):</p>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th><code>toTemporal</code> returns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>date</code></td>
+<td><code>Temporal.PlainDate</code></td>
+</tr>
+<tr>
+<td><code>date-time</code></td>
+<td><code>Temporal.Instant</code></td>
+</tr>
+<tr>
+<td><code>time</code></td>
+<td><code>Temporal.PlainTime</code></td>
+</tr>
+<tr>
+<td><code>duration</code></td>
+<td><code>Temporal.Duration</code></td>
+</tr>
+</tbody>
+</table>
+<p>For this recipe's <code>created</code> (<code>date-time</code>), that is <code>Created.toTemporal(value): Temporal.Instant</code>.</p>
+<p><strong>Arbitrary-precision numeric formats</strong> (<code>decimal</code>, or a numeric field whose value can exceed IEEE-754 double precision) get <code>{Type}.toExact(value): string</code>, returning the exact decimal digits as a string. That is the zero-dependency big-number seam. Pass the string to whatever big-decimal library you use, with no precision lost through a JavaScript <code>number</code>.</p>
 <h2 id="running-the-example">Running the Example</h2>
 <p>From <code>docs/typescript/examples/</code> (<code>npm install</code> once): <code>npm run build</code> then <code>node dist/019-formats/demo.js</code>.</p>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/data-object.html">001-data-object</a> — a <code>date</code> brand in context</li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/validation.html">002-validation</a> — <code>format</code> alongside other constraints</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/data-object.html">001-data-object</a>: a <code>date</code> brand in context</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/validation.html">002-validation</a>: <code>format</code> alongside other constraints</li>
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
 <h3 id="which-formats-are-supported">Which formats are supported?</h3>
-<p>The RFC-accurate set from the JSON Schema test suite — <code>date</code>/<code>time</code>/<code>date-time</code>/<code>duration</code>, <code>email</code>/<code>idn-email</code>, <code>hostname</code>/<code>idn-hostname</code>, <code>ipv4</code>/<code>ipv6</code>, <code>uri</code>/<code>iri</code> and relatives, <code>uuid</code>, <code>json-pointer</code>, <code>regex</code>, and more. The runtime ships the checks; <code>{Type}.from</code> factories are generated for each formatted field.</p>
+<p>The RFC-accurate set from the JSON Schema test suite: <code>date</code>/<code>time</code>/<code>date-time</code>/<code>duration</code>, <code>email</code>/<code>idn-email</code>, <code>hostname</code>/<code>idn-hostname</code>, <code>ipv4</code>/<code>ipv6</code>, <code>uri</code>/<code>iri</code> and relatives, <code>uuid</code>, <code>json-pointer</code>, <code>regex</code>, and more. The runtime ships the checks; <code>{Type}.from</code> factories are generated for each formatted field.</p>
 <h3 id="do-i-have-to-use-the-factory">Do I have to use the factory?</h3>
-<p>To assign into a branded field, yes — that's the point: the brand makes &quot;this string is a valid uuid&quot; a type-level fact. When you already have a value of the branded type (e.g. read back from a validated document), it flows through without re-checking.</p>
+<p>To assign into a branded field, yes. That is the point. The brand makes &quot;this string is a valid uuid&quot; a type-level fact. When you already have a value of the branded type (for example, read back from a validated document), it flows through without re-checking.</p>
+<h3 id="how-do-i-get-a-date-or-a-big-number-out-of-a-branded-value">How do I get a date or a big number out of a branded value?</h3>
+<p>Use the conversion accessor on the companion. <code>{Type}.toTemporal(value)</code> returns the matching <code>Temporal</code> type for the temporal formats (a <code>Temporal</code> value, not a legacy <code>Date</code>), and <code>{Type}.toExact(value)</code> returns the exact decimal digits as a string for arbitrary-precision numeric formats. See <a href="#getting-strong-values-out">Getting strong values out</a>.</p>
         </div>
     </main>
 </div>

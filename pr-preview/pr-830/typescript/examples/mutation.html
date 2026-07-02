@@ -196,7 +196,7 @@
 <li><strong><code>{Type}.produce(source, recipe)</code></strong>: an immer-style recipe over a typed, mutable <code>Draft&lt;T&gt;</code> for nested and array edits; the recorded change-set lowers to the same byte-level patch.</li>
 </ul>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/016-mutation/document.json"><code>document.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/a17512411528cc7094dcbe6ec88b0497dd834796/docs/typescript/examples/016-mutation/document.json"><code>document.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Document&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;title&quot;],
   &quot;properties&quot;: {
     &quot;title&quot;: { &quot;type&quot;: &quot;string&quot; },
@@ -205,7 +205,7 @@
     &quot;version&quot;: { &quot;type&quot;: &quot;integer&quot; } } }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/016-mutation/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/a17512411528cc7094dcbe6ec88b0497dd834796/docs/typescript/examples/016-mutation/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">const bytes = Document.build({ title: &quot;Draft&quot;, owner: { name: &quot;Ada&quot;, email: &quot;ada@x.com&quot; }, tags: [&quot;wip&quot;], version: 1 });
 
 Document.patch(bytes, { version: 2 });           // only &quot;version&quot; is rewritten
@@ -226,7 +226,7 @@ Document.produce(bytes, (d) =&gt; {
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
 <h3 id="when-should-i-use-patch-vs-produce">When should I use <code>patch</code> vs <code>produce</code>?</h3>
-<p><code>patch</code> is the fast path for &quot;set/remove these top-level fields&quot;: it touches only the named member spans. <code>produce</code> is for nested or conditional edits where a recipe reads more naturally; it records the changes and lowers them to the same kind of byte edit. Both leave the source document untouched and return new bytes.</p>
+<p><code>patch</code> is the fast path for &quot;set/remove these top-level fields&quot;. It touches only the named member spans. <code>produce</code> is for nested or conditional edits where a recipe reads more naturally; it records the changes and lowers them to the same kind of byte edit. Both leave the source document untouched and return new bytes.</p>
 <h3 id="why-bytes-rather-than-an-object">Why bytes rather than an object?</h3>
 <p>The wire/persistence shape <em>is</em> bytes. Working at the byte level lets an update splice only the changed spans and copy the rest verbatim, which is dramatically cheaper than parse → mutate object → re-serialise for large documents.</p>
         </div>

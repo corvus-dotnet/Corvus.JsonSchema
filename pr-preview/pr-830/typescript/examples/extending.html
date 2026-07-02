@@ -191,7 +191,7 @@
 <h2 id="the-pattern">The Pattern</h2>
 <p><code>allOf: [ { &quot;$ref&quot;: &quot;#/$defs/person&quot; } ]</code> plus this schema's own <code>properties</code> produces a single <code>interface</code> that <strong>merges</strong> the base and the extension. <code>Employee</code> carries <code>name</code>/<code>email</code> from <code>Person</code> and adds <code>employeeId</code>/<code>department</code>, and a value must satisfy every constraint of every member.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/005-extending/employee.json"><code>employee.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/a17512411528cc7094dcbe6ec88b0497dd834796/docs/typescript/examples/005-extending/employee.json"><code>employee.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Employee&quot;, &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: { &quot;person&quot;: { &quot;title&quot;: &quot;Person&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;name&quot;],
       &quot;properties&quot;: { &quot;name&quot;: { &quot;type&quot;: &quot;string&quot; }, &quot;email&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;email&quot; } } } },
@@ -201,7 +201,7 @@
 </code></pre>
 <p>The generated <code>interface Employee</code> has <code>name</code>, <code>email?</code>, <code>employeeId</code>, <code>department?</code>: the base and the extension in one shape.</p>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/005-extending/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/a17512411528cc7094dcbe6ec88b0497dd834796/docs/typescript/examples/005-extending/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">const bytes = Employee.build({ name: &quot;Ada&quot;, email: Email.from(&quot;ada@example.com&quot;), employeeId: &quot;E-1&quot;, department: &quot;R&amp;D&quot; });
 const e = Employee.parse(bytes);
 e.name;        // from Person (the base)
