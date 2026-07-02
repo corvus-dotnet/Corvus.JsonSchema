@@ -660,10 +660,12 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
-   * `updateEnvironment` — replace an environment's mutable metadata (display name, description); the name, reach scope,
-   * and created-* audit fields are immutable. The caller must be a current administrator (`403` otherwise).
+   * `updateEnvironment` — replace an environment's mutable metadata (display name, description, and — for an
+   * administrator re-tag — the management-tags reach scope §14.2; a present `managementTags` replaces the caller's
+   * non-internal labels, absent leaves them unchanged, the reserved `sys:` prefix is rejected 400). The name and
+   * created-* audit fields are immutable. The caller must be a current administrator (`403` otherwise).
    * @param {string} name
-   * @param {{ displayName?: string, description?: string }} patch
+   * @param {{ displayName?: string, description?: string, managementTags?: Array<{key: string, value: string}> }} patch
    * @param {{ signal?: AbortSignal }} [opts]
    * @returns {Promise<object>} The updated {@link EnvironmentSummary}. Throws {@link ProblemError} `400`/`403`/`404`/`409`.
    */
@@ -854,8 +856,10 @@ export class ArazzoControlPlaneClient {
 
   /**
    * `updateCredential` — replace a binding's references and non-secret metadata (the `(sourceName, environment)`
-   * identity and created-* audit fields are immutable). Re-pointing a `secretRef` is how a credential is
-   * rotated. A value that is not a well-formed `secretRef` is rejected (`400`).
+   * identity, usage grant, and created-* audit fields are immutable). Re-pointing a `secretRef` is how a credential is
+   * rotated. A value that is not a well-formed `secretRef` is rejected (`400`). A present `managementTags` re-tags who
+   * may administer the binding (§14.2): it replaces the caller's non-internal labels (reserved `sys:` prefix rejected
+   * `400`), absent leaves them unchanged.
    * @param {string} sourceName
    * @param {string} environment
    * @param {object} body The replacement reference set + metadata.

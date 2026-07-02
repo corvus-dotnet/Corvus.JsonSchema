@@ -51,6 +51,23 @@ describe('<arazzo-credential-dialog>', () => {
     el.open(await client.getCredential('petstore', 'production'));
     const readonly = await waitFor(() => { const r = $(el, '.scopes-readonly'); return r && !r.hidden ? r : null; });
     ok(readonly.textContent.includes('available to all workflow runs'), 'explains the shared usage instead of a bare dash');
+    ok(!readonly.textContent.includes('Management tags'), 'management tags are not in the immutable read-only block');
+  });
+
+  it('makes management tags admin-editable on update (edit + persist via the shared tag editor)', async () => {
+    const client = clientWithMock();
+    el = dialogWith(client);
+    mount(el);
+    // Edit a seeded binding → the shared <arazzo-tag-editor> is shown (not the immutable read-only block).
+    el.open(await client.getCredential('petstore', 'production'));
+    const editor = await waitFor(() => $(el, '.mgmt-editor'));
+    // Re-tag via the editor's .tags API, then save.
+    editor.tags = [{ key: 'team', value: 'payments' }];
+    const saved = nextEvent(el, 'credential-saved');
+    el.submit();
+    const e = await saved;
+    equal(e.detail.binding.managementTags?.[0]?.key, 'team', 'management tag key persisted on update');
+    equal(e.detail.binding.managementTags?.[0]?.value, 'payments', 'management tag value persisted on update');
   });
 
   it('derives the server base URL from an OpenAPI source and stores an override per environment', async () => {

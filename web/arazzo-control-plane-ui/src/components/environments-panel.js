@@ -15,7 +15,8 @@
 // never be left without an administrator. Mutating controls are gated by environments:write.
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, parseSecurityTags, securityTagsToText, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, define } from './base.js';
+import './tag-editor.js';
 import './administrators-panel.js';
 import './pager.js';
 
@@ -182,10 +183,15 @@ class ArazzoEnvironments extends ArazzoElement {
     if (!this._detail) return;
     const displayName = this.$('.d-displayName')?.value ?? '';
     const description = this.$('.d-description')?.value ?? '';
+    // A present managementTags re-tags the reach scope (§14.2): the editor is seeded with the current non-internal
+    // labels, so re-saving is idempotent, editing re-tags, and clearing removes them. The server preserves the
+    // deployment-internal tags and rejects the reserved sys: prefix (400).
+    const mgmtEd = this.$('.d-mgmt-editor');
+    const managementTags = mgmtEd ? mgmtEd.tags : [];
     const saveBtn = this.$('.d-save');
     if (saveBtn) saveBtn.disabled = true;
     try {
-      const updated = await this.buildClient().updateEnvironment(this._detail.name, { displayName, description });
+      const updated = await this.buildClient().updateEnvironment(this._detail.name, { displayName, description, managementTags });
       this._detail = updated;
       const i = this._envs.findIndex((e) => e.name === updated.name);
       if (i >= 0) this._envs[i] = { ...this._envs[i], ...updated };
@@ -220,7 +226,7 @@ class ArazzoEnvironments extends ArazzoElement {
   // ---- create (modal dialog) --------------------------------------------------------------------
 
   openCreate() {
-    this._form = { name: '', displayName: '', description: '', managementTags: '', formError: null };
+    this._form = { name: '', displayName: '', description: '', managementTags: [], formError: null };
     this.renderEditor();
     this.$('dialog').showModal();
     this.$('.f-name')?.focus();
@@ -237,7 +243,7 @@ class ArazzoEnvironments extends ArazzoElement {
     const name = (form.name || '').trim();
     if (!name) { form.formError = { title: 'An environment name is required.' }; this.renderEditor(); return; }
     try {
-      const managementTags = parseSecurityTags(form.managementTags);
+      const managementTags = this.$('.f-mgmt-editor')?.tags ?? [];
       const created = await this.buildClient().createEnvironment({
         name,
         displayName: (form.displayName || '').trim() || undefined,
@@ -418,10 +424,15 @@ class ArazzoEnvironments extends ArazzoElement {
         </div>
         <div class="section">
           <h4>Management tags</h4>
-          ${Array.isArray(e.managementTags) && e.managementTags.length
-            ? `<div class="mtags">${e.managementTags.map((t) => `<code>${escapeHtml(t.key)}=${escapeHtml(t.value)}</code>`).join(' ')}</div>`
-            : '<div class="muted">None — visible to everyone within reach.</div>'}
-          <div class="hint">Who may manage and see this environment (§14.2). Set at creation and immutable afterwards.</div>
+          ${writable ? `
+            <arazzo-tag-editor class="d-mgmt-editor"></arazzo-tag-editor>
+            <div class="hint">Who may manage and see this environment (§14.2). An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed. Saved with the details above.</div>
+          ` : `
+            ${Array.isArray(e.managementTags) && e.managementTags.length
+              ? `<div class="mtags">${e.managementTags.map((t) => `<code>${escapeHtml(t.key)}=${escapeHtml(t.value)}</code>`).join(' ')}</div>`
+              : '<div class="muted">None — visible to everyone within reach.</div>'}
+            <div class="hint">Who may manage and see this environment (§14.2).</div>
+          `}
         </div>
         <div class="section">
           <h4>Administrators</h4>
@@ -441,6 +452,9 @@ class ArazzoEnvironments extends ArazzoElement {
 
     const admins = pane.querySelector('.env-admins');
     if (admins) admins.client = this.buildClient();
+    // Seed the management-tags editor once it is in the DOM (its .tags setter re-renders the rows).
+    const mgmtEd = pane.querySelector('.d-mgmt-editor');
+    if (mgmtEd) mgmtEd.tags = Array.isArray(e.managementTags) ? e.managementTags : [];
     const saveBtn = pane.querySelector('.d-save');
     if (saveBtn) saveBtn.addEventListener('click', () => this.saveMetadata());
     const delBtn = pane.querySelector('.d-delete');
@@ -465,14 +479,16 @@ class ArazzoEnvironments extends ArazzoElement {
       <div class="field"><span>Name</span><input class="f-name" placeholder="qa" value="${escapeHtml(f.name)}"></div>
       <div class="field"><span>Display name</span><input class="f-displayName" placeholder="(optional)" value="${escapeHtml(f.displayName)}"></div>
       <div class="field"><span>Description</span><textarea class="f-description" placeholder="(optional)">${escapeHtml(f.description)}</textarea></div>
-      <div class="field"><span>Management tags</span><input class="f-managementTags" placeholder="team=ops (key=value, space separated)" value="${escapeHtml(f.managementTags)}"></div>
-      <div class="hint">Scope who may manage and see this environment (§14.2). Set at creation and immutable afterwards; the reserved <code>sys:</code> prefix is not allowed.</div>
+      <div class="field"><span>Management tags</span><arazzo-tag-editor class="f-mgmt-editor"></arazzo-tag-editor></div>
+      <div class="hint">Scope who may manage and see this environment (§14.2); an administrator may re-tag it later. The reserved <code>sys:</code> prefix is not allowed.</div>
       <div class="form-err">${f.formError ? `<div class="error-banner"><span><strong>${escapeHtml(f.formError.title || 'Request failed')}</strong>${f.formError.detail ? ' — ' + escapeHtml(f.formError.detail) : ''}</span></div>` : ''}</div>
     `;
     content.querySelector('.f-name').addEventListener('input', (ev) => { f.name = ev.target.value; });
     content.querySelector('.f-displayName').addEventListener('input', (ev) => { f.displayName = ev.target.value; });
     content.querySelector('.f-description').addEventListener('input', (ev) => { f.description = ev.target.value; });
-    content.querySelector('.f-managementTags').addEventListener('input', (ev) => { f.managementTags = ev.target.value; });
+    const mgmtEd = content.querySelector('.f-mgmt-editor');
+    mgmtEd.tags = Array.isArray(f.managementTags) ? f.managementTags : [];
+    mgmtEd.addEventListener('tags-changed', () => { f.managementTags = mgmtEd.tags; });
   }
 }
 
