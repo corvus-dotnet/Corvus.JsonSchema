@@ -17,24 +17,29 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Replacement references and non-secret metadata for an existing binding (its sourceName/environment identity is taken from the path and is immutable). An administrator may re-tag the managementTags reach scope; the deployment&#39;s internal tags are preserved.
+/// Replacement mutable metadata for an existing environment (its name and created-* audit are immutable). An administrator may re-tag the managementTags reach scope; the deployment&#39;s internal tags are preserved.
 /// </para>
 /// </remarks>
-public readonly partial struct CredentialBindingUpdate
+public readonly partial struct EnvironmentUpdate
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Replacement non-internal security tags (&#167;14.2) scoping who may MANAGE and SEE this environment; absent leaves the tags unchanged. The reserved internal-tag prefix is rejected (400); the deployment&#39;s internal tags are preserved.
+    /// </para>
+    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct SecretReferenceArray
-        : IJsonElement<SecretReferenceArray>
+    public readonly partial struct EnvironmentSecurityTagArray
+        : IJsonElement<EnvironmentSecurityTagArray>
     {
         public static partial class JsonSchema
         {
@@ -43,17 +48,17 @@ public readonly partial struct CredentialBindingUpdate
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/CredentialBindingUpdate/properties/secretRefs"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/EnvironmentUpdate/properties/managementTags"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "/components/schemas/CredentialBindingUpdate/properties/secretRefs";
+            public const string SchemaLocation = "/components/schemas/EnvironmentUpdate/properties/managementTags";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/CredentialBindingUpdate/properties/secretRefs"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/EnvironmentUpdate/properties/managementTags"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -81,7 +86,6 @@ public readonly partial struct CredentialBindingUpdate
                         return;
                     }
                     context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeArray, "items"u8);
-                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeArray, "minItems"u8);
                 }
                 else
                 {
@@ -92,14 +96,14 @@ public readonly partial struct CredentialBindingUpdate
                     {
                         int arrayValidation_currentIndex = arrayValidation_enumerator.CurrentIndex;
 
-                        JsonSchemaContext childContext = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference.JsonSchema.PushChildContext(
+                        JsonSchemaContext childContext = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag.JsonSchema.PushChildContext(
                             parentDocument,
                             arrayValidation_currentIndex,
                             ref context,
                             itemIndex: arrayValidation_itemCount,
                             evaluationPath: ItemsSchemaEvaluationPath);
 
-                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
+                        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
                         if (!childContext.IsMatch)
                         {
                             context.CommitChildContext(false, ref childContext);
@@ -117,8 +121,6 @@ public readonly partial struct CredentialBindingUpdate
 
                         arrayValidation_itemCount++;
                     }
-
-                    JsonSchemaEvaluation.MatchItemCountGreaterThanOrEquals(1, arrayValidation_itemCount, "minItems"u8, ref context);
                 }
             }
 

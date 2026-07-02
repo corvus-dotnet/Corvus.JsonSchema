@@ -17,23 +17,28 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Replacement references and non-secret metadata for an existing binding (its sourceName/environment identity is taken from the path and is immutable). An administrator may re-tag the managementTags reach scope; the deployment&#39;s internal tags are preserved.
+/// Replacement mutable metadata for an existing environment (its name and created-* audit are immutable). An administrator may re-tag the managementTags reach scope; the deployment&#39;s internal tags are preserved.
 /// </para>
 /// </remarks>
-public readonly partial struct CredentialBindingUpdate
+public readonly partial struct EnvironmentUpdate
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Replacement non-internal security tags (&#167;14.2) scoping who may MANAGE and SEE this environment; absent leaves the tags unchanged. The reserved internal-tag prefix is rejected (400); the deployment&#39;s internal tags are preserved.
+    /// </para>
+    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct SecretReferenceArray
+    public readonly partial struct EnvironmentSecurityTagArray
     {
         public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -138,7 +143,7 @@ public readonly partial struct CredentialBindingUpdate
             /// <param name="value">The instance of this type.</param>
             /// <returns>A mutable instance.</returns>
             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-            public static explicit operator Mutable(SecretReferenceArray instance)
+            public static explicit operator Mutable(EnvironmentSecurityTagArray instance)
             {
                 if (instance._parent is not IMutableJsonDocument doc)
                 {
@@ -153,9 +158,9 @@ public readonly partial struct CredentialBindingUpdate
             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
             /// </summary>
             /// <param name="value">The <see cref="Mutable"/> instance.</param>
-            /// <returns>An immutable instance of a <see cref="SecretReferenceArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
+            /// <returns>An immutable instance of a <see cref="EnvironmentSecurityTagArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static implicit operator SecretReferenceArray(Mutable instance)
+            public static implicit operator EnvironmentSecurityTagArray(Mutable instance)
             {
                 return new(instance._parent, instance._idx);
             }
@@ -179,12 +184,12 @@ public readonly partial struct CredentialBindingUpdate
             /// <returns>The item at the given index.</returns>
             /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference.Mutable this[int index]
+            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag.Mutable this[int index]
             {
                 get
                 {
                     CheckValidInstance();
-                    return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference.Mutable>(_idx, index);
+                    return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag.Mutable>(_idx, index);
                 }
             }
 
@@ -202,17 +207,17 @@ public readonly partial struct CredentialBindingUpdate
             /// Enumerates the array.
             /// </summary>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference.Mutable> EnumerateArray()
+            public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag.Mutable> EnumerateArray()
             {
                 CheckValidInstance();
-                return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference.Mutable>(_parent, _idx);
+                return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonElement value && Equals(new SecretReferenceArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                    (obj is IJsonElement value && Equals(new EnvironmentSecurityTagArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                     (obj is null && this.IsNull());
             }
 
@@ -311,7 +316,7 @@ public readonly partial struct CredentialBindingUpdate
 #endif
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private string DebuggerDisplay => $"SecretReferenceArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+            private string DebuggerDisplay => $"EnvironmentSecurityTagArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
             /// <summary>
             ///   Sets the value of an array element at the specified index.
             /// </summary>
@@ -334,7 +339,7 @@ public readonly partial struct CredentialBindingUpdate
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference.Source value)
+            public void SetItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag.Source value)
             {
                 CheckValidInstance();
 
@@ -381,7 +386,7 @@ public readonly partial struct CredentialBindingUpdate
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference.Source value)
+            public void InsertItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag.Source value)
             {
                 CheckValidInstance();
 
@@ -407,7 +412,7 @@ public readonly partial struct CredentialBindingUpdate
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference.Source value)
+            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }
@@ -577,10 +582,10 @@ public readonly partial struct CredentialBindingUpdate
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Remove(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference item)
+            public bool Remove(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag item)
             {
                 CheckValidInstance();
-                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference>(this, in item))
+                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag>(this, in item))
                 {
                     return false;
                 }
@@ -614,10 +619,10 @@ public readonly partial struct CredentialBindingUpdate
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RemoveWhere(JsonPredicate<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference> predicate)
+            public void RemoveWhere(JsonPredicate<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag> predicate)
             {
                 CheckValidInstance();
-                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference>(this, predicate);
+                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag>(this, predicate);
                 _documentVersion = _parent.Version;
             }
 
@@ -634,7 +639,7 @@ public readonly partial struct CredentialBindingUpdate
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Replace(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference oldItem, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference.Source newItem)
+            public bool Replace(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag oldItem, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag.Source newItem)
             {
                 CheckValidInstance();
 
@@ -643,11 +648,11 @@ public readonly partial struct CredentialBindingUpdate
                     return Remove(in oldItem);
                 }
 
-                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference>(_parent, _idx);
+                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag>(_parent, _idx);
 
                 while (enumerator.MoveNext())
                 {
-                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference current = enumerator.Current;
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag current = enumerator.Current;
                     if (JsonElementHelpers.DeepEquals(in current, in oldItem))
                     {
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
@@ -678,11 +683,11 @@ public readonly partial struct CredentialBindingUpdate
             JsonValueKind IJsonElement.ValueKind => ValueKind;
 
             /// <summary>
-            /// Gets a <see cref="SecretReferenceArray"/> which can be safely stored beyond the lifetime of the
+            /// Gets a <see cref="EnvironmentSecurityTagArray"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </summary>
             /// <returns>
-            /// A <see cref="SecretReferenceArray"/> which can be safely stored beyond the lifetime of the
+            /// A <see cref="EnvironmentSecurityTagArray"/> which can be safely stored beyond the lifetime of the
             /// original document.
             /// </returns>
             /// <remarks>
@@ -691,10 +696,10 @@ public readonly partial struct CredentialBindingUpdate
             /// document. The result is independent of the workspace.
             /// </para>
             /// </remarks>
-            public readonly SecretReferenceArray Clone()
+            public readonly EnvironmentSecurityTagArray Clone()
             {
                 CheckValidInstance();
-                return _parent.CloneElement<SecretReferenceArray>(_idx);
+                return _parent.CloneElement<EnvironmentSecurityTagArray>(_idx);
             }
 
             /// <summary>
@@ -702,7 +707,7 @@ public readonly partial struct CredentialBindingUpdate
             /// document builder registered in the same workspace.
             /// </summary>
             /// <returns>
-            /// An immutable <see cref="SecretReferenceArray"/> that lives for the lifetime of its
+            /// An immutable <see cref="EnvironmentSecurityTagArray"/> that lives for the lifetime of its
             /// workspace and its associated documents.
             /// </returns>
             /// <remarks>
@@ -713,10 +718,10 @@ public readonly partial struct CredentialBindingUpdate
             /// immutable but is only valid for the lifetime of the workspace.
             /// </para>
             /// </remarks>
-            public readonly SecretReferenceArray Freeze()
+            public readonly EnvironmentSecurityTagArray Freeze()
             {
                 CheckValidInstance();
-                return _parent.FreezeElement<SecretReferenceArray>(_idx);
+                return _parent.FreezeElement<EnvironmentSecurityTagArray>(_idx);
             }
         }
 
@@ -744,9 +749,9 @@ public readonly partial struct CredentialBindingUpdate
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingUpdate.SecretReferenceArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
-            public static implicit operator Source(SecretReferenceArray instance) => new(JsonElement.From(instance));
+            public static implicit operator Source(EnvironmentSecurityTagArray instance) => new(JsonElement.From(instance));
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -865,7 +870,7 @@ public readonly partial struct CredentialBindingUpdate
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingUpdate.SecretReferenceArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -979,7 +984,7 @@ public readonly partial struct CredentialBindingUpdate
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference.Source value)
+            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag.Source value)
             {
                 value.AddAsItem(ref _builder);
             }
@@ -987,7 +992,7 @@ public readonly partial struct CredentialBindingUpdate
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference.Source<TContext> value)
+            public void AddItem<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentSecurityTag.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1162,7 +1167,7 @@ public readonly partial struct CredentialBindingUpdate
         /// <returns>An instance of a mutable document initialized with this instance.</returns>
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
-            return workspace.CreateBuilder<SecretReferenceArray, Mutable>(this);
+            return workspace.CreateBuilder<EnvironmentSecurityTagArray, Mutable>(this);
         }
     }
 }
