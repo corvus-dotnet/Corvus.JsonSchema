@@ -274,14 +274,26 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
             obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
         }
 
+        // Re-tag (§14.2): when the patch replaces the security tags, rewrite the denormalized column AND the indexed
+        // child table atomically with the metadata update — otherwise the tags are left untouched (a single UPDATE).
+        bool reTag = patch.SecurityTags is not null;
+        await using SqlTransaction? transaction = reTag ? (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false) : null;
+
         await using SqlCommand update = connection.CreateCommand();
-        update.CommandText =
-            """
-            UPDATE CatalogVersions
-            SET Status = @status, Tags = @tags, OwnerName = @ownerName, OwnerEmail = @ownerEmail, OwnerTeam = @ownerTeam, OwnerUrl = @ownerUrl,
-                LastUpdatedBy = @lastUpdatedBy, LastUpdatedAt = @lastUpdatedAt, ObsoletedBy = @obsoletedBy, ObsoletedAt = @obsoletedAt
-            WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;
-            """;
+        update.Transaction = transaction;
+        update.CommandText = reTag
+            ? """
+              UPDATE CatalogVersions
+              SET Status = @status, Tags = @tags, OwnerName = @ownerName, OwnerEmail = @ownerEmail, OwnerTeam = @ownerTeam, OwnerUrl = @ownerUrl,
+                  LastUpdatedBy = @lastUpdatedBy, LastUpdatedAt = @lastUpdatedAt, ObsoletedBy = @obsoletedBy, ObsoletedAt = @obsoletedAt, SecurityTags = @securityTags
+              WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;
+              """
+            : """
+              UPDATE CatalogVersions
+              SET Status = @status, Tags = @tags, OwnerName = @ownerName, OwnerEmail = @ownerEmail, OwnerTeam = @ownerTeam, OwnerUrl = @ownerUrl,
+                  LastUpdatedBy = @lastUpdatedBy, LastUpdatedAt = @lastUpdatedAt, ObsoletedBy = @obsoletedBy, ObsoletedAt = @obsoletedAt
+              WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;
+              """;
         update.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
         update.Parameters.AddWithValue("@versionNumber", versionNumber);
         update.Parameters.AddWithValue("@status", status.ToString());
@@ -294,7 +306,43 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
         update.Parameters.AddWithValue("@lastUpdatedAt", now.ToUnixTimeMilliseconds());
         update.Parameters.Add(NullableText("@obsoletedBy", obsoletedBy));
         update.Parameters.Add(NullableBigint("@obsoletedAt", obsoletedAt?.ToUnixTimeMilliseconds()));
+        if (reTag)
+        {
+            update.Parameters.Add(NullableText("@securityTags", patch.SecurityTags!.Value.ToSecurityDelimitedOrNull(SecurityTagPairSeparator, SecurityTagKeyValueSeparator)));
+        }
+
         await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        if (reTag)
+        {
+            SecurityTagSet securityTags = patch.SecurityTags!.Value;
+            await using (SqlCommand deleteTags = connection.CreateCommand())
+            {
+                deleteTags.Transaction = transaction;
+                deleteTags.CommandText = "DELETE FROM CatalogVersionSecurityTags WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
+                deleteTags.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
+                deleteTags.Parameters.AddWithValue("@versionNumber", versionNumber);
+                await deleteTags.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            if (!securityTags.IsEmpty)
+            {
+                // Materialize at this write leaf: the ref-struct enumerator cannot cross the per-row await below.
+                foreach (SecurityTag tag in securityTags.ToList())
+                {
+                    await using SqlCommand tagInsert = connection.CreateCommand();
+                    tagInsert.Transaction = transaction;
+                    tagInsert.CommandText = "INSERT INTO CatalogVersionSecurityTags (BaseWorkflowId, VersionNumber, TagKey, TagValue) VALUES (@baseWorkflowId, @versionNumber, @key, @value);";
+                    tagInsert.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
+                    tagInsert.Parameters.AddWithValue("@versionNumber", versionNumber);
+                    tagInsert.Parameters.AddWithValue("@key", tag.Key);
+                    tagInsert.Parameters.AddWithValue("@value", tag.Value);
+                    await tagInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            await transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }
 
         return await ReadOneAsync(connection, baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
     }

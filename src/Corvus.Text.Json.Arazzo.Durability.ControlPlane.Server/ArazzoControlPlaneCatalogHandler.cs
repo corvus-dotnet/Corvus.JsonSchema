@@ -82,10 +82,24 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         CatalogOwner owner = ToOwner(body.Owner);
         TagSet tags = ToTags(body.Tags);
 
-        // Stamp the deployment's internal tags (e.g. the principal's tenant, §14.3) onto the new version so runs
-        // triggered from it inherit them. User-supplied security tags would be validated here once the contract
-        // carries them.
-        SecurityTagSet securityTags = SecurityTagSet.FromTags(this.access.InternalTags());
+        // User-supplied non-internal security tags (§14.2) flow bytes-native from the request body and are validated
+        // string-free: a key carrying the reserved internal prefix is rejected (that keyspace is deployment-owned).
+        // CopyFrom yields the empty set when the property is absent (a non-array element).
+        SecurityTagSet userTags = SecurityTagSet.CopyFrom(body.SecurityTags);
+        try
+        {
+            this.access.ValidateUserTags(userTags);
+        }
+        catch (ArgumentException ex)
+        {
+            return AddCatalogVersionResult.BadRequest(
+                Problem("reserved-security-tag", "Reserved security tag", 400, ex.Message), workspace);
+        }
+
+        // The deployment stamps its internal tags (e.g. the principal's tenant, §14.3) onto the new version so runs
+        // triggered from it inherit them; the user tags are combined with them. Internal keys carry the reserved
+        // prefix and user keys cannot, so the two sets never collide.
+        SecurityTagSet securityTags = CombineSecurityTags(this.access.InternalTags(), userTags);
 
         try
         {
@@ -94,7 +108,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             // The summary is a zero-copy view over the version document, so hand the pooled document to the workspace —
             // it owns it for the response's lifetime, and a throw cannot leak the rented buffer.
             workspace.TakeOwnership(version);
-            return AddCatalogVersionResult.Created(Models.CatalogVersionSummary.From(version.RootElement), workspace);
+            return AddCatalogVersionResult.Created(Models.CatalogVersionSummary.From(this.PublicView(version.RootElement, workspace)), workspace);
         }
         catch (WorkflowAdministrationException ex)
         {
@@ -141,7 +155,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         // by Ok(...) here but re-read by the later (post-handler) body validation/serialization — so hand the documents
         // to the workspace (it disposes them at request end); `using page` then only returns the batch's backing array.
         page.Versions.TransferOwnershipTo(workspace);
-        return SearchCatalogResult.Ok(BuildPage(page), workspace);
+        return SearchCatalogResult.Ok(this.BuildPage(page, workspace), workspace);
     }
 
     /// <inheritdoc/>
@@ -156,7 +170,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
         // See HandleSearchCatalogAsync: hand the documents to the workspace so the deferred body materialization is safe.
         page.Versions.TransferOwnershipTo(workspace);
-        return ListCatalogVersionsResult.Ok(BuildPage(page), workspace);
+        return ListCatalogVersionsResult.Ok(this.BuildPage(page, workspace), workspace);
     }
 
     /// <inheritdoc/>
@@ -173,7 +187,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         }
 
         workspace.TakeOwnership(v);
-        return GetCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(v.RootElement), workspace);
+        return GetCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(this.PublicView(v.RootElement, workspace)), workspace);
     }
 
     /// <inheritdoc/>
@@ -187,9 +201,29 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         TagSet? tags = ToTags(patch.Tags);
         CatalogStatus? status = patch.Status.IsNotUndefined() ? Enum.Parse<CatalogStatus>((string)patch.Status) : null;
 
+        // Re-tag (§14.2): a present `securityTags` re-tags the version with new non-internal labels (absent = leave them
+        // unchanged). Validated string-free — a key using the reserved internal prefix is rejected (400); the security
+        // wrapper preserves the version's deployment-internal tags and persists the merged result.
+        SecurityTagSet? securityTags = null;
+        if (patch.SecurityTags.IsNotUndefined())
+        {
+            SecurityTagSet userTags = SecurityTagSet.CopyFrom(patch.SecurityTags);
+            try
+            {
+                this.access.ValidateUserTags(userTags);
+            }
+            catch (ArgumentException ex)
+            {
+                return UpdateCatalogVersionResult.BadRequest(
+                    Problem("reserved-security-tag", "Reserved security tag", 400, ex.Message), workspace);
+            }
+
+            securityTags = userTags;
+        }
+
         // The client resolves read-then-write reach on a single fetch (§14.2): outside read reach → 404 (non-disclosing),
         // readable but outside write reach → 403 — so the handler no longer pre-fetches the version for the reach check.
-        CatalogUpdateResult result = await this.catalog.UpdateAsync(baseWorkflowId, versionNumber, owner, tags, status, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        CatalogUpdateResult result = await this.catalog.UpdateAsync(baseWorkflowId, versionNumber, owner, tags, status, securityTags, this.access.InternalTagPrefix, this.access.Current(), cancellationToken).ConfigureAwait(false);
         if (result.Outcome == CatalogUpdateOutcome.NotFound)
         {
             return UpdateCatalogVersionResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
@@ -202,7 +236,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
         ParsedJsonDocument<CatalogVersion> v = result.Document!;
         workspace.TakeOwnership(v);
-        return UpdateCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(v.RootElement), workspace);
+        return UpdateCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(this.PublicView(v.RootElement, workspace)), workspace);
     }
 
     /// <inheritdoc/>
@@ -577,6 +611,114 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             Team: owner.Team.IsNotUndefined() ? (string)owner.Team : null,
             Url: owner.Url.IsNotUndefined() ? (string)owner.Url : null);
 
+    // Unions the deployment's internal tags with the validated user tags into one security-tag set. The publish path
+    // is cold, so the internal list is realized once through FromTags; the union itself is bytes-native (each set's
+    // tags are appended from their unescaped UTF-8, no per-tag managed string). Internal keys carry the reserved
+    // prefix and user keys cannot (ValidateUserTags enforced it), so the two sets never collide.
+    private static SecurityTagSet CombineSecurityTags(IReadOnlyList<SecurityTag> internalTags, SecurityTagSet userTags)
+    {
+        if (userTags.IsEmpty)
+        {
+            return SecurityTagSet.FromTags(internalTags);
+        }
+
+        if (internalTags.Count == 0)
+        {
+            return userTags;
+        }
+
+        SecurityTagSet internalSet = SecurityTagSet.FromTags(internalTags);
+        return SecurityTagSet.Build(
+            (Internal: internalSet, User: userTags),
+            static (ref IdentityBuilder builder, in (SecurityTagSet Internal, SecurityTagSet User) s) =>
+            {
+                AppendTags(ref builder, s.Internal);
+                AppendTags(ref builder, s.User);
+            });
+    }
+
+    // Appends every tag of a set to the builder from its unescaped UTF-8 key/value spans (string-free).
+    private static void AppendTags(ref IdentityBuilder builder, SecurityTagSet set)
+    {
+        SecurityTagSet.Utf8Enumerator e = set.EnumerateUtf8();
+        try
+        {
+            while (e.MoveNext())
+            {
+                builder.Add(e.CurrentKey, e.CurrentValue);
+            }
+        }
+        finally
+        {
+            e.Dispose();
+        }
+    }
+
+    // Returns a client view of the version whose deployment-internal security tags (the reserved prefix, §14.2) are
+    // stripped — the persisted document keeps them for row authorization; only the response drops them. When the
+    // version carries no internal tags the original element is returned unchanged (zero-copy, no rewrite). A rewritten
+    // view is a pooled document owned by the workspace, so its element stays valid through the deferred body
+    // serialization.
+    private CatalogVersion PublicView(CatalogVersion version, JsonWorkspace workspace)
+    {
+        SecurityTagSet full = version.SecurityTagsValue;
+        if (full.IsEmpty || !this.HasInternalTag(full))
+        {
+            return version;
+        }
+
+        SecurityTagSet visible = this.BuildVisibleTags(full);
+        var stripped = ParsedJsonDocument<CatalogVersion>.Parse(CatalogVersion.CreateWithSecurityTags(version, visible));
+        workspace.TakeOwnership(stripped);
+        return stripped.RootElement;
+    }
+
+    // Whether the set carries any deployment-internal tag (string-free span scan).
+    private bool HasInternalTag(SecurityTagSet set)
+    {
+        SecurityTagSet.Utf8Enumerator e = set.EnumerateUtf8();
+        try
+        {
+            while (e.MoveNext())
+            {
+                if (this.access.IsInternalTag(e.CurrentKey))
+                {
+                    return true;
+                }
+            }
+        }
+        finally
+        {
+            e.Dispose();
+        }
+
+        return false;
+    }
+
+    // Builds the non-internal (client-visible) subset of a tag set bytes-native — each retained tag is appended from
+    // its unescaped UTF-8 key/value, so no per-tag managed string is created.
+    private SecurityTagSet BuildVisibleTags(SecurityTagSet full)
+        => SecurityTagSet.Build(
+            (Full: full, Access: this.access),
+            static (ref IdentityBuilder builder, in (SecurityTagSet Full, ControlPlaneAccess Access) s) =>
+            {
+                SecurityTagSet.Utf8Enumerator e = s.Full.EnumerateUtf8();
+                try
+                {
+                    while (e.MoveNext())
+                    {
+                        if (!s.Access.IsInternalTag(e.CurrentKey))
+                        {
+                            builder.Add(e.CurrentKey, e.CurrentValue);
+                        }
+                    }
+                }
+                finally
+                {
+                    e.Dispose();
+                }
+            });
+
     // Copy the parsed tag-list parameter's canonical bytes into the holder (per request, not per row). An add or a
     // search needle yields an empty holder when absent; a patch yields null (= "leave tags unchanged").
     private static TagSet ToTags(Models.PostCatalogBody.JsonStringArray tags) => TagSet.CopyFrom(tags);
@@ -585,21 +727,32 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
     private static TagSet ToTags(Models.TagList tags) => TagSet.CopyFrom(tags);
 
-    private static Models.CatalogPage.Source BuildPage(CatalogPage page)
-        => new((ref Models.CatalogPage.Builder b) =>
+    private Models.CatalogPage.Source BuildPage(CatalogPage page, JsonWorkspace workspace)
+    {
+        // Strip internal tags from each version NOW (before the deferred body serialization runs): a rewritten public
+        // view must have its ownership established up-front so its element stays valid through serialization. Versions
+        // with no internal tags keep their zero-copy element (owned via the page transfer above).
+        var views = new List<CatalogVersion>();
+        foreach (CatalogVersion version in page.Versions)
+        {
+            views.Add(this.PublicView(version, workspace));
+        }
+
+        return new((ref Models.CatalogPage.Builder b) =>
         {
             Models.JsonString.Source nextPageToken = page.NextPageToken.IsEmpty ? default : (Models.JsonString.Source)page.NextPageToken.Span;
             b.Create(
                 versions: new Models.CatalogPage.CatalogVersionSummaryArray.Source(
                     (ref Models.CatalogPage.CatalogVersionSummaryArray.Builder ab) =>
                     {
-                        foreach (CatalogVersion version in page.Versions)
+                        foreach (CatalogVersion view in views)
                         {
-                            ab.AddItem(Models.CatalogVersionSummary.From(version));
+                            ab.AddItem(Models.CatalogVersionSummary.From(view));
                         }
                     }),
                 nextPageToken: nextPageToken);
         });
+    }
 
     private static Models.ProblemDetails.Source NotFoundProblem(string baseWorkflowId, int versionNumber)
         => Problem("version-not-found", "Version not found", 404, $"No version {versionNumber} of workflow '{baseWorkflowId}' exists.");

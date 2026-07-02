@@ -356,6 +356,14 @@ public sealed class AzureStorageWorkflowCatalogStore : IWorkflowCatalogStore, IS
         }
 
         WriteGovernance(entity, status, tags, owner, patch.UpdatedBy, now, obsoletedBy, obsoletedAt);
+
+        // Re-tag (§14.2): replace the encoded SecurityTags property (which in-process reach-filtering reads) with the
+        // effective set; absent → the property is left unchanged.
+        if (patch.SecurityTags is { } newSecurityTags)
+        {
+            entity["SecurityTags"] = EncodeSecurityTags(newSecurityTags);
+        }
+
         await this.catalog.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
         return ReadVersion(entity);
     }

@@ -74,6 +74,17 @@ public abstract class ControlPlaneRowSecurityPolicy
     {
     }
 
+    /// <summary>Whether a security-tag key (as unescaped UTF-8) is deployment-internal — its key carries the reserved
+    /// prefix. The span-based check used to strip internal tags from client responses (§14.2), so it never materializes
+    /// a managed string per tag.</summary>
+    /// <param name="keyUtf8">The tag key as unescaped UTF-8.</param>
+    /// <returns><see langword="true"/> if the key carries the reserved internal prefix.</returns>
+    public bool IsInternalTag(ReadOnlySpan<byte> keyUtf8) => keyUtf8.StartsWith(this.InternalTagPrefixUtf8);
+
+    /// <summary>Gets the reserved internal-tag key prefix (the public accessor of <see cref="InternalTagPrefix"/>) — the
+    /// security wrapper reads it to preserve a version's internal tags across an admin re-tag (§14.2).</summary>
+    public string InternalTagKeyPrefix => this.InternalTagPrefix;
+
     /// <summary>Gets the reserved internal tag prefix this policy stamps/maps to (default <see cref="SecurityShell.DefaultInternalPrefix"/>).</summary>
     protected virtual string InternalTagPrefix => SecurityShell.DefaultInternalPrefix;
 
@@ -290,6 +301,17 @@ internal sealed class ControlPlaneAccess
     /// <param name="userTags">The user-supplied security tags.</param>
     /// <exception cref="ArgumentException">A user tag is not permitted.</exception>
     public void ValidateUserTags(SecurityTagSet userTags) => this.policy?.ValidateUserTags(userTags);
+
+    /// <summary>Whether a security-tag key (as unescaped UTF-8) is deployment-internal and must be stripped from client
+    /// responses (§14.2). An unscoped deployment stamps no internal tags, so nothing is internal.</summary>
+    /// <param name="keyUtf8">The tag key as unescaped UTF-8.</param>
+    /// <returns><see langword="true"/> if the key carries the reserved internal prefix.</returns>
+    public bool IsInternalTag(ReadOnlySpan<byte> keyUtf8) => this.policy?.IsInternalTag(keyUtf8) ?? false;
+
+    /// <summary>Gets the reserved internal-tag key prefix for the current deployment — the security wrapper uses it to
+    /// preserve a version's internal tags across an admin re-tag (§14.2). Falls back to the default when unscoped (no
+    /// internal tags are stamped then, so the prefix is not exercised).</summary>
+    public string InternalTagPrefix => this.policy?.InternalTagKeyPrefix ?? SecurityShell.DefaultInternalPrefix;
 
     /// <summary>Maps source credential usage grants to internal usage tags (empty when unscoped).</summary>
     /// <param name="grants">The operator-supplied usage grants.</param>
