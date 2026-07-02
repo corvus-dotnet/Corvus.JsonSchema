@@ -12,9 +12,11 @@
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <IsPackable>true</IsPackable>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>TypeScript code generation for API clients from OpenAPI specifications. Emits idiomatic TypeScript that consumes the @endjin/corvus-json-client-runtime byte-native transport and Corvus.Text.Json-generated TypeScript models.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi.CodeGeneration\Corvus.Text.Json.OpenApi.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
