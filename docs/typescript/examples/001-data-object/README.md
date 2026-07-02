@@ -8,7 +8,7 @@ It is common to define a simple data object composed of primitive values for exc
 
 The generator emits, for the root schema, a `readonly` **interface** whose name is derived from the schema (here `Person`). Required properties are `name: T`; optional properties are `name?: T`. JSON Schema scalar types map to TypeScript primitives (`string`, `number`, `boolean`), and a `format` keyword becomes a **branded** type with a validating factory (here `birthDate` is `Brand<string, "date">` with `BirthDate.from(...)`).
 
-There is **nothing to wrap**: a JSON value parsed with `JSON.parse` *is* a `Person` once `Person.evaluate` accepts it, and you read it with ordinary property access. The generator adds only what the language can't express for free:
+There is **nothing to wrap**. A JSON value parsed with `JSON.parse` *is* a `Person` once `Person.evaluate` accepts it, and you read it with ordinary property access. The generator adds only what the language can't express for free:
 
 - `Person.evaluate(value)` / `Person.evaluate(value, ev)`: an AOT-compiled boolean evaluator (no exceptions, no error-object graph).
 - `Person.build(props)`: construct canonical UTF-8 JSON **bytes** from plain values.
@@ -133,8 +133,8 @@ Because TypeScript already expresses the shape. A `JSON.parse`'d value, once `Pe
 
 ### What is the difference between an absent property and `null`?
 
-An **optional** property (`name?: T`) is absent when the key is missing: read it as `value.name === undefined`. A property typed to include `null` is present with the JSON literal `null`. JSON Schema treats these differently, and so does the generated interface (`?:` vs a `| null` member).
+An **optional** property (`name?: T`) is absent when the key is missing. Read it as `value.name === undefined`. A property typed to include `null` is present with the JSON literal `null`. JSON Schema treats these differently, and so does the generated interface (`?:` vs a `| null` member).
 
 ### When do I use `build` vs `patch` vs `produce`?
 
-`{Type}.build` constructs a fresh document from values. `{Type}.patch` is the leanest update: name the fields to change (and any to remove) and it splices them into the source bytes without re-parsing or re-serialising the rest. `{Type}.produce` gives the ergonomic immer-style recipe for deeper or conditional edits, lowering the recorded change-set to the same byte patch.
+`{Type}.build` constructs a fresh document from values. `{Type}.patch` is the leanest update. Name the fields to change (and any to remove) and it splices them into the source bytes without re-parsing or re-serialising the rest. `{Type}.produce` gives the ergonomic immer-style recipe for deeper or conditional edits, lowering the recorded change-set to the same byte patch.

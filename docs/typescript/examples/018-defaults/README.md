@@ -4,7 +4,7 @@ This recipe shows the `default` annotation and the two ways the generated TypeSc
 
 ## The Pattern
 
-`default` documents a fallback for a property and, in practice, makes that property optional. The generated `interface` marks it `?:`, so a value may omit it and still be valid. The parsed value is never mutated: an omitted property still reads `undefined` on the raw value. The generator gives you two ways to work with the documented defaults:
+`default` documents a fallback for a property and, in practice, makes that property optional. The generated `interface` marks it `?:`, so a value may omit it and still be valid. The parsed value is never mutated. An omitted property still reads `undefined` on the raw value. The generator gives you two ways to work with the documented defaults:
 
 - **`{Type}.defaults`**: a readonly object literal of this type's direct property defaults (`as const`, so each value keeps its literal type). Read one default without hardcoding it: `s.theme ?? Settings.defaults.theme`.
 - **`{Type}.withDefaults(value)`**: returns a copy of `value` with every absent default filled. Present properties are left as-is, and nested object types are recursed through their own `withDefaults`.

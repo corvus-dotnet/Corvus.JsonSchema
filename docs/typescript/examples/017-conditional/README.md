@@ -4,7 +4,7 @@ This recipe shows `if`/`then`/`else`, applying constraints conditionally on a va
 
 ## The Pattern
 
-`if`/`then`/`else` makes a constraint depend on the data: when the `if` subschema matches, `then` must also hold (otherwise `else`). Here, when `method` is `"card"`, `cardNumber` becomes required. This is a *constraint*, not a shape change: the generated `interface` keeps `cardNumber` optional, and `Payment.evaluate` enforces the conditional requirement.
+`if`/`then`/`else` makes a constraint depend on the data. When the `if` subschema matches, `then` must also hold (otherwise `else`). Here, when `method` is `"card"`, `cardNumber` becomes required. This is a *constraint*, not a shape change. The generated `interface` keeps `cardNumber` optional, and `Payment.evaluate` enforces the conditional requirement.
 
 ## The Schema
 

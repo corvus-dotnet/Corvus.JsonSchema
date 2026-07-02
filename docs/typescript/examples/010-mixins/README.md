@@ -4,7 +4,7 @@ This recipe composes several independent base types into one with a multi-member
 
 ## The Pattern
 
-`allOf` can reference more than one base. `Widget` mixes in `Named` (a `name`) and `Timestamped` (a `createdAt`), and adds its own `id`: the generated `interface` merges all of them, and a value must satisfy each. This is the "combine orthogonal capabilities" pattern.
+`allOf` can reference more than one base. `Widget` mixes in `Named` (a `name`) and `Timestamped` (a `createdAt`), and adds its own `id`. The generated `interface` merges all of them, and a value must satisfy each. This is the "combine orthogonal capabilities" pattern.
 
 ## The Schema
 

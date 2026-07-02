@@ -4,7 +4,7 @@ This recipe shows an open map (`additionalProperties` with a value schema) gener
 
 ## The Pattern
 
-An object whose keys aren't known ahead of time, but whose *values* share a schema, is a map. `additionalProperties: { "type": "number" }` generates `interface Scores { readonly [key: string]: number }`. A map is a plain object: read it by key, iterate with `Object.entries`, and serialise it directly (there is no `{Type}.build` for an open map); `Scores.evaluate` checks every value against the value schema.
+An object whose keys aren't known ahead of time, but whose *values* share a schema, is a map. `additionalProperties: { "type": "number" }` generates `interface Scores { readonly [key: string]: number }`. A map is a plain object. Read it by key, iterate with `Object.entries`, and serialise it directly (there is no `{Type}.build` for an open map); `Scores.evaluate` checks every value against the value schema.
 
 ## The Schema
 

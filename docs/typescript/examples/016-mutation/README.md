@@ -53,7 +53,7 @@ From `docs/typescript/examples/` (`npm install` once): `npm run build` then `nod
 
 ### When should I use `patch` vs `produce`?
 
-`patch` is the fast path for "set/remove these top-level fields": it touches only the named member spans. `produce` is for nested or conditional edits where a recipe reads more naturally; it records the changes and lowers them to the same kind of byte edit. Both leave the source document untouched and return new bytes.
+`patch` is the fast path for "set/remove these top-level fields". It touches only the named member spans. `produce` is for nested or conditional edits where a recipe reads more naturally; it records the changes and lowers them to the same kind of byte edit. Both leave the source document untouched and return new bytes.
 
 ### Why bytes rather than an object?
 

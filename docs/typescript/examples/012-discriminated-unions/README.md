@@ -4,7 +4,7 @@ This recipe shows a tagged union (a `oneOf` whose branches share a discriminant 
 
 ## The Pattern
 
-When every branch of a `oneOf` carries a `const` discriminant (here `type: "click" | "keypress" | "scroll"`), the generated `{Union}.match` keys off it to dispatch to a per-branch handler. `Event.match` is exhaustive: the `cases` object must have a handler for every member, so adding a branch to the schema turns a missing case into a compile error.
+When every branch of a `oneOf` carries a `const` discriminant (here `type: "click" | "keypress" | "scroll"`), the generated `{Union}.match` keys off it to dispatch to a per-branch handler. `Event.match` is exhaustive. The `cases` object must have a handler for every member, so adding a branch to the schema turns a missing case into a compile error.
 
 ## The Schema
 
@@ -46,4 +46,4 @@ From `docs/typescript/examples/` (`npm install` once): `npm run build` then `nod
 
 ### Does the discriminant make evaluation faster?
 
-It can short-circuit: a value with `type: "scroll"` only needs the `Scroll` branch evaluated. But the discriminant is a convenience for *your* dispatch (`{Union}.match`); `Event.evaluate` is correct with or without one, distinguishing branches structurally when there is no tag.
+It can short-circuit. A value with `type: "scroll"` only needs the `Scroll` branch evaluated. But the discriminant is a convenience for *your* dispatch (`{Union}.match`); `Event.evaluate` is correct with or without one, distinguishing branches structurally when there is no tag.

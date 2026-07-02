@@ -4,7 +4,7 @@ This recipe adds **constraints** to a data object (length, range, pattern, numer
 
 ## The Pattern
 
-A JSON Schema validation keyword (`minLength`, `pattern`, `minimum`/`maximum`, `multipleOf`, `format`, …) constrains a value beyond its type. So the generator splits the two concerns: the **interface is the shape**, and **`Registration.evaluate` is the constraint authority**. Evaluation returns a plain `boolean`: a rejection is `false`, with no thrown exception and no allocated error graph. (Collecting *why* a value failed, the per-keyword results, is a separate opt-in, like the engine's results collector.)
+A JSON Schema validation keyword (`minLength`, `pattern`, `minimum`/`maximum`, `multipleOf`, `format`, …) constrains a value beyond its type. So the generator splits the two concerns: the **interface is the shape**, and **`Registration.evaluate` is the constraint authority**. Evaluation returns a plain `boolean`. A rejection is `false`, with no thrown exception and no allocated error graph. (Collecting *why* a value failed, the per-keyword results, is a separate opt-in, like the engine's results collector.)
 
 A `format` keyword additionally produces a **branded** type with an eager factory (`Email.from`) that throws on a malformed value at construction. This is useful when you want to fail fast on one field rather than evaluate a whole document.
 

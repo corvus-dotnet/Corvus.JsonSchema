@@ -4,11 +4,11 @@ This recipe shows applying and building [RFC 6902 JSON Patch](https://datatracke
 
 ## The Pattern
 
-The `patch` and `produce` methods edit a document by naming the fields you want to change. **JSON Patch** is the standard, interchange-friendly alternative: a patch is a JSON array of operations (`add` / `remove` / `replace` / `move` / `copy` / `test`, each with a JSON Pointer path) that you can receive over the wire, store, or compute as a diff. **JSON Merge Patch** is the simpler form for partial updates: a JSON document that overlays the target, where a member set to `null` deletes that key.
+The `patch` and `produce` methods edit a document by naming the fields you want to change. **JSON Patch** is the standard, interchange-friendly alternative. A patch is a JSON array of operations (`add` / `remove` / `replace` / `move` / `copy` / `test`, each with a JSON Pointer path) that you can receive over the wire, store, or compute as a diff. **JSON Merge Patch** is the simpler form for partial updates: a JSON document that overlays the target, where a member set to `null` deletes that key.
 
 For every buildable type the generator emits four companion methods over the document bytes (or a parsed value):
 
-- `Contact.applyPatch(doc, patch)`: apply an RFC 6902 patch, returning canonical bytes. The patch is applied **atomically**: a failed `test` (or any invalid operation) throws `JsonPatchError` and leaves the input untouched.
+- `Contact.applyPatch(doc, patch)`: apply an RFC 6902 patch, returning canonical bytes. The patch is applied **atomically**. A failed `test` (or any invalid operation) throws `JsonPatchError` and leaves the input untouched.
 - `Contact.createPatch(source, target)`: compute a minimal RFC 6902 patch that turns `source` into `target`.
 - `Contact.applyMergePatch(doc, mergePatch)`: apply an RFC 7396 merge patch, returning canonical bytes.
 - `Contact.createMergePatch(source, target)`: compute the RFC 7396 merge patch between two documents.
@@ -92,7 +92,7 @@ node dist/020-json-patch/demo.js
 
 ### How is `applyPatch` different from `patch`?
 
-`Contact.patch(bytes, changes)` is a typed, field-level update: you pass a `Partial<Contact>` of the fields to change. `Contact.applyPatch(bytes, ops)` applies a standard **RFC 6902** patch document (an array of `{ op, path, value }` operations with JSON Pointer paths) which is the right choice when the patch arrives over the wire, is stored, or is computed as a diff.
+`Contact.patch(bytes, changes)` is a typed, field-level update. You pass a `Partial<Contact>` of the fields to change. `Contact.applyPatch(bytes, ops)` applies a standard **RFC 6902** patch document (an array of `{ op, path, value }` operations with JSON Pointer paths) which is the right choice when the patch arrives over the wire, is stored, or is computed as a diff.
 
 ### Does `applyPatch` validate the result against the schema?
 
