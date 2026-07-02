@@ -98,12 +98,12 @@ example-recipes:
       - {index: 0, language: json, lines: [28, 36]}
       - {index: 1, language: json, lines: [40, 71]}
       - {index: 2, language: csharp, lines: [79, 107], category: fragment, verified: false}
-      - {index: 3, language: csharp, lines: [111, 175], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [179, 195], category: compilable, verified: true}
-      - {index: 5, language: csharp, lines: [199, 206], category: compilable, verified: false}
-      - {index: 6, language: csharp, lines: [211, 228], category: compilable, verified: false}
-      - {index: 7, language: csharp, lines: [231, 249], category: compilable, verified: false}
-      - {index: 8, language: bash, lines: [260, 263]}
+      - {index: 3, language: csharp, lines: [111, 172], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [176, 190], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [194, 201], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [206, 223], category: compilable, verified: false}
+      - {index: 7, language: csharp, lines: [226, 244], category: compilable, verified: false}
+      - {index: 8, language: bash, lines: [255, 258]}
   - path: "docs/ExampleRecipes/008-CreatingAnArrayOfHigherRank/README.md"
     companion_project: "docs/ExampleRecipes/008-CreatingAnArrayOfHigherRank/"
     blocks:
@@ -123,11 +123,11 @@ example-recipes:
       - {index: 1, language: csharp, lines: [68, 106], category: fragment, verified: false}
       - {index: 2, language: csharp, lines: [112, 119], category: fragment, verified: false}
       - {index: 3, language: csharp, lines: [123, 127], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [131, 137], category: compilable, verified: false}
-      - {index: 5, language: csharp, lines: [145, 153], category: compilable, verified: false}
-      - {index: 6, language: csharp, lines: [158, 174], category: fragment, verified: false}
-      - {index: 7, language: csharp, lines: [177, 202], category: compilable, verified: false}
-      - {index: 8, language: bash, lines: [213, 216]}
+      - {index: 4, language: csharp, lines: [131, 136], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [144, 152], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [157, 173], category: fragment, verified: false}
+      - {index: 7, language: csharp, lines: [176, 201], category: compilable, verified: false}
+      - {index: 8, language: bash, lines: [212, 215]}
   - path: "docs/ExampleRecipes/010-CreatingTuples/README.md"
     companion_project: "docs/ExampleRecipes/010-CreatingTuples/"
     blocks:
@@ -135,13 +135,13 @@ example-recipes:
       - {index: 1, language: json, lines: [29, 47]}
       - {index: 2, language: csharp, lines: [58, 68], category: compilable, verified: false}
       - {index: 3, language: csharp, lines: [72, 76], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [80, 90], category: compilable, verified: true}
-      - {index: 5, language: csharp, lines: [96, 102], category: compilable, verified: true}
-      - {index: 6, language: csharp, lines: [108, 111], category: compilable, verified: false}
-      - {index: 7, language: csharp, lines: [117, 126], category: compilable, verified: true}
-      - {index: 8, language: csharp, lines: [131, 141], category: compilable, verified: false}
-      - {index: 9, language: csharp, lines: [144, 164], category: compilable, verified: false}
-      - {index: 10, language: bash, lines: [170, 173]}
+      - {index: 4, language: csharp, lines: [80, 87], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [93, 99], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [105, 108], category: compilable, verified: false}
+      - {index: 7, language: csharp, lines: [114, 123], category: compilable, verified: false}
+      - {index: 8, language: csharp, lines: [128, 138], category: compilable, verified: false}
+      - {index: 9, language: csharp, lines: [141, 158], category: compilable, verified: false}
+      - {index: 10, language: bash, lines: [164, 167]}
   - path: "docs/ExampleRecipes/011-InterfacesAndMixInTypes/README.md"
     companion_project: "docs/ExampleRecipes/011-InterfacesAndMixInTypes/"
     blocks:
@@ -408,52 +408,52 @@ example-recipes:
       - {index: 1, language: bash, lines: [80, 84]}
       - {index: 2, language: csharp, lines: [100, 109], category: compilable, verified: false}
       - {index: 3, language: csharp, lines: [115, 140], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [146, 164], category: compilable, verified: false}
-      - {index: 5, language: csharp, lines: [176, 190], category: compilable, verified: false}
-      - {index: 6, language: csharp, lines: [198, 202], category: compilable, verified: false}
-      - {index: 7, language: csharp, lines: [208, 222], category: compilable, verified: false}
-      - {index: 8, language: bash, lines: [233, 236]}
+      - {index: 4, language: csharp, lines: [146, 161], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [173, 187], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [195, 199], category: compilable, verified: false}
+      - {index: 7, language: csharp, lines: [205, 219], category: compilable, verified: false}
+      - {index: 8, language: bash, lines: [230, 233]}
   - path: "docs/ExampleRecipes/030-OpenApiServer/README.md"
     companion_project: "docs/ExampleRecipes/030-OpenApiServer/"
     blocks:
       - {index: 0, language: bash, lines: [28, 32]}
       - {index: 1, language: csharp, lines: [49, 60], category: compilable, verified: false}
       - {index: 2, language: csharp, lines: [64, 68], category: compilable, verified: false}
-      - {index: 3, language: csharp, lines: [74, 115], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [123, 140], category: compilable, verified: false}
-      - {index: 5, language: csharp, lines: [146, 156], category: compilable, verified: false}
-      - {index: 6, language: csharp, lines: [162, 179], category: compilable, verified: false}
-      - {index: 7, language: csharp, lines: [185, 202], category: compilable, verified: false}
-      - {index: 8, language: csharp, lines: [224, 250], category: compilable, verified: false}
-      - {index: 9, language: csharp, lines: [256, 269], category: compilable, verified: false}
-      - {index: 10, language: csharp, lines: [275, 307], category: compilable, verified: false}
-      - {index: 11, language: csharp, lines: [315, 357], category: compilable, verified: false}
-      - {index: 12, language: csharp, lines: [363, 384], category: compilable, verified: false}
-      - {index: 13, language: csharp, lines: [392, 399], category: compilable, verified: false}
-      - {index: 14, language: csharp, lines: [405, 413], category: compilable, verified: false}
-      - {index: 15, language: csharp, lines: [419, 421], category: compilable, verified: false}
-      - {index: 16, language: csharp, lines: [425, 427], category: compilable, verified: false}
-      - {index: 17, language: csharp, lines: [433, 438], category: compilable, verified: false}
-      - {index: 18, language: csharp, lines: [442, 444], category: compilable, verified: false}
-      - {index: 19, language: csharp, lines: [473, 475], category: compilable, verified: false}
-      - {index: 20, language: csharp, lines: [479, 485], category: compilable, verified: false}
-      - {index: 21, language: bash, lines: [501, 504]}
-      - {index: 22, language: bash, lines: [510, 524]}
+      - {index: 3, language: csharp, lines: [74, 111], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [119, 136], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [142, 152], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [158, 175], category: compilable, verified: false}
+      - {index: 7, language: csharp, lines: [181, 198], category: compilable, verified: false}
+      - {index: 8, language: csharp, lines: [220, 243], category: compilable, verified: false}
+      - {index: 9, language: csharp, lines: [249, 259], category: compilable, verified: false}
+      - {index: 10, language: csharp, lines: [265, 297], category: compilable, verified: false}
+      - {index: 11, language: csharp, lines: [305, 347], category: compilable, verified: false}
+      - {index: 12, language: csharp, lines: [353, 374], category: compilable, verified: false}
+      - {index: 13, language: csharp, lines: [382, 389], category: compilable, verified: false}
+      - {index: 14, language: csharp, lines: [395, 403], category: compilable, verified: false}
+      - {index: 15, language: csharp, lines: [409, 411], category: compilable, verified: false}
+      - {index: 16, language: csharp, lines: [415, 417], category: compilable, verified: false}
+      - {index: 17, language: csharp, lines: [423, 428], category: compilable, verified: false}
+      - {index: 18, language: csharp, lines: [432, 434], category: compilable, verified: false}
+      - {index: 19, language: csharp, lines: [463, 465], category: compilable, verified: false}
+      - {index: 20, language: csharp, lines: [469, 475], category: compilable, verified: false}
+      - {index: 21, language: bash, lines: [491, 494]}
+      - {index: 22, language: bash, lines: [500, 514]}
   - path: "docs/ExampleRecipes/031-OpenApiAdvancedClient/README.md"
     companion_project: "docs/ExampleRecipes/031-OpenApiAdvancedClient/"
     blocks:
       - {index: 0, language: bash, lines: [22, 24]}
       - {index: 1, language: bash, lines: [28, 33]}
-      - {index: 2, language: csharp, lines: [46, 63], category: compilable, verified: false}
-      - {index: 3, language: csharp, lines: [69, 77], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [84, 96], category: compilable, verified: false}
-      - {index: 5, language: csharp, lines: [100, 105], category: compilable, verified: false}
-      - {index: 6, language: csharp, lines: [111, 122], category: compilable, verified: false}
-      - {index: 7, language: bash, lines: [126, 129]}
-      - {index: 8, language: , lines: [135, 147]}
-      - {index: 9, language: csharp, lines: [155, 159], category: compilable, verified: false}
-      - {index: 10, language: csharp, lines: [165, 170], category: compilable, verified: false}
-      - {index: 11, language: csharp, lines: [176, 185], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [46, 60], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [66, 74], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [81, 93], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [97, 102], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [108, 116], category: compilable, verified: false}
+      - {index: 7, language: bash, lines: [120, 123]}
+      - {index: 8, language: , lines: [129, 141]}
+      - {index: 9, language: csharp, lines: [149, 153], category: compilable, verified: false}
+      - {index: 10, language: csharp, lines: [159, 164], category: compilable, verified: false}
+      - {index: 11, language: csharp, lines: [170, 179], category: compilable, verified: false}
   - path: "docs/ExampleRecipes/032-OpenApiAdvancedServer/README.md"
     companion_project: "docs/ExampleRecipes/032-OpenApiAdvancedServer/"
     blocks:
@@ -491,16 +491,16 @@ example-recipes:
       - {index: 0, language: bash, lines: [21, 25]}
       - {index: 1, language: bash, lines: [37, 39]}
       - {index: 2, language: , lines: [43, 53]}
-      - {index: 3, language: csharp, lines: [59, 82], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [88, 97], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [59, 79], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [85, 94], category: compilable, verified: false}
   - path: "docs/ExampleRecipes/036-AsyncApiProducer/README.md"
     companion_project: "docs/ExampleRecipes/036-AsyncApiProducer/"
     blocks:
       - {index: 0, language: bash, lines: [17, 19]}
       - {index: 1, language: bash, lines: [23, 27]}
-      - {index: 2, language: csharp, lines: [42, 49], category: compilable, verified: false}
-      - {index: 3, language: bash, lines: [67, 69]}
-      - {index: 4, language: text, lines: [73, 79]}
+      - {index: 2, language: csharp, lines: [42, 46], category: compilable, verified: false}
+      - {index: 3, language: bash, lines: [64, 66]}
+      - {index: 4, language: text, lines: [70, 76]}
   - path: "docs/ExampleRecipes/037-AsyncApiConsumer/README.md"
     companion_project: "docs/ExampleRecipes/037-AsyncApiConsumer/"
     blocks:
@@ -519,17 +519,17 @@ example-recipes:
       - {index: 2, language: csharp, lines: [50, 52], category: compilable, verified: false}
       - {index: 3, language: csharp, lines: [58, 66], category: compilable, verified: false}
       - {index: 4, language: csharp, lines: [72, 88], category: compilable, verified: false}
-      - {index: 5, language: csharp, lines: [92, 101], category: compilable, verified: false}
-      - {index: 6, language: csharp, lines: [113, 120], category: compilable, verified: false}
-      - {index: 7, language: csharp, lines: [128, 135], category: compilable, verified: false}
-      - {index: 8, language: csharp, lines: [143, 150], category: compilable, verified: false}
-      - {index: 9, language: csharp, lines: [154, 159], category: compilable, verified: false}
-      - {index: 10, language: csharp, lines: [163, 169], category: compilable, verified: false}
-      - {index: 11, language: csharp, lines: [175, 191], category: compilable, verified: false}
-      - {index: 12, language: csharp, lines: [199, 207], category: compilable, verified: false}
-      - {index: 13, language: csharp, lines: [211, 221], category: compilable, verified: false}
-      - {index: 14, language: csharp, lines: [225, 235], category: compilable, verified: false}
-      - {index: 15, language: bash, lines: [252, 254]}
+      - {index: 5, language: csharp, lines: [92, 98], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [110, 117], category: compilable, verified: false}
+      - {index: 7, language: csharp, lines: [125, 132], category: compilable, verified: false}
+      - {index: 8, language: csharp, lines: [140, 147], category: compilable, verified: false}
+      - {index: 9, language: csharp, lines: [151, 156], category: compilable, verified: false}
+      - {index: 10, language: csharp, lines: [160, 166], category: compilable, verified: false}
+      - {index: 11, language: csharp, lines: [172, 188], category: compilable, verified: false}
+      - {index: 12, language: csharp, lines: [196, 204], category: compilable, verified: false}
+      - {index: 13, language: csharp, lines: [208, 218], category: compilable, verified: false}
+      - {index: 14, language: csharp, lines: [222, 232], category: compilable, verified: false}
+      - {index: 15, language: bash, lines: [249, 251]}
   - path: "docs/ExampleRecipes/039-AsyncApiAuthentication/README.md"
     companion_project: "docs/ExampleRecipes/039-AsyncApiAuthentication/"
     blocks:
@@ -612,66 +612,66 @@ main-docs:
       - {index: 2, language: bash, lines: [31, 39]}
       - {index: 3, language: bash, lines: [43, 45]}
       - {index: 4, language: bash, lines: [51, 56]}
-      - {index: 5, language: csharp, lines: [60, 85], category: compilable, verified: false}
-      - {index: 6, language: bash, lines: [91, 96]}
-      - {index: 7, language: csharp, lines: [100, 119], category: compilable, verified: false}
-      - {index: 8, language: csharp, lines: [123, 136], category: compilable, verified: false}
-      - {index: 9, language: , lines: [166, 175]}
-      - {index: 10, language: csharp, lines: [179, 182], category: compilable, verified: false}
-      - {index: 11, language: , lines: [188, 196]}
-      - {index: 12, language: , lines: [200, 207]}
-      - {index: 13, language: csharp, lines: [225, 243], category: compilable, verified: false}
-      - {index: 14, language: csharp, lines: [249, 255], category: compilable, verified: false}
-      - {index: 15, language: csharp, lines: [281, 291], category: compilable, verified: false}
-      - {index: 16, language: csharp, lines: [297, 326], category: compilable, verified: false}
-      - {index: 17, language: bash, lines: [344, 346]}
-      - {index: 18, language: csharp, lines: [350, 379], category: compilable, verified: false}
-      - {index: 19, language: csharp, lines: [401, 412], category: compilable, verified: false}
-      - {index: 20, language: csharp, lines: [416, 427], category: compilable, verified: false}
-      - {index: 21, language: csharp, lines: [431, 442], category: compilable, verified: false}
-      - {index: 22, language: csharp, lines: [446, 458], category: compilable, verified: false}
-      - {index: 23, language: csharp, lines: [462, 471], category: compilable, verified: false}
-      - {index: 24, language: csharp, lines: [475, 487], category: compilable, verified: false}
-      - {index: 25, language: csharp, lines: [491, 499], category: compilable, verified: false}
-      - {index: 26, language: bash, lines: [507, 509]}
-      - {index: 27, language: csharp, lines: [511, 533], category: compilable, verified: false}
-      - {index: 28, language: powershell, lines: [539, 541]}
-      - {index: 29, language: , lines: [560, 566]}
-      - {index: 30, language: csharp, lines: [584, 619], category: compilable, verified: false}
-      - {index: 31, language: csharp, lines: [623, 649], category: compilable, verified: false}
-      - {index: 32, language: csharp, lines: [657, 678], category: compilable, verified: false}
-      - {index: 33, language: csharp, lines: [686, 704], category: compilable, verified: false}
-      - {index: 34, language: csharp, lines: [708, 730], category: compilable, verified: false}
-      - {index: 35, language: csharp, lines: [736, 764], category: compilable, verified: false}
-      - {index: 36, language: csharp, lines: [770, 790], category: compilable, verified: false}
-      - {index: 37, language: csharp, lines: [796, 818], category: compilable, verified: false}
-      - {index: 38, language: csharp, lines: [824, 850], category: compilable, verified: false}
-      - {index: 39, language: csharp, lines: [856, 876], category: compilable, verified: false}
-      - {index: 40, language: csharp, lines: [880, 902], category: compilable, verified: false}
-      - {index: 41, language: csharp, lines: [910, 919], category: compilable, verified: false}
-      - {index: 42, language: json, lines: [931, 957]}
-      - {index: 43, language: csharp, lines: [963, 977], category: compilable, verified: false}
-      - {index: 44, language: csharp, lines: [985, 1013], category: compilable, verified: false}
-      - {index: 45, language: csharp, lines: [1019, 1027], category: compilable, verified: false}
-      - {index: 46, language: csharp, lines: [1035, 1048], category: compilable, verified: false}
-      - {index: 47, language: csharp, lines: [1052, 1074], category: compilable, verified: false}
-      - {index: 48, language: csharp, lines: [1097, 1111], category: compilable, verified: false}
-      - {index: 49, language: json, lines: [1117, 1137]}
-      - {index: 50, language: csharp, lines: [1147, 1162], category: compilable, verified: false}
-      - {index: 51, language: csharp, lines: [1166, 1173], category: compilable, verified: false}
-      - {index: 52, language: json, lines: [1191, 1205]}
-      - {index: 53, language: csharp, lines: [1209, 1218], category: compilable, verified: false}
-      - {index: 54, language: csharp, lines: [1228, 1236], category: compilable, verified: false}
-      - {index: 55, language: csharp, lines: [1249, 1266], category: compilable, verified: false}
-      - {index: 56, language: bash, lines: [1274, 1276]}
-      - {index: 57, language: csharp, lines: [1278, 1289], category: compilable, verified: false}
-      - {index: 58, language: bash, lines: [1299, 1301]}
-      - {index: 59, language: bash, lines: [1319, 1337]}
-      - {index: 60, language: bash, lines: [1341, 1343]}
-      - {index: 61, language: , lines: [1347, 1357]}
-      - {index: 62, language: bash, lines: [1370, 1376]}
-      - {index: 63, language: csharp, lines: [1412, 1417], category: compilable, verified: false}
-      - {index: 64, language: , lines: [1431, 1436]}
+      - {index: 5, language: csharp, lines: [60, 82], category: compilable, verified: false}
+      - {index: 6, language: bash, lines: [88, 93]}
+      - {index: 7, language: csharp, lines: [97, 116], category: compilable, verified: false}
+      - {index: 8, language: csharp, lines: [120, 133], category: compilable, verified: false}
+      - {index: 9, language: , lines: [163, 172]}
+      - {index: 10, language: csharp, lines: [176, 179], category: compilable, verified: false}
+      - {index: 11, language: , lines: [185, 193]}
+      - {index: 12, language: , lines: [197, 204]}
+      - {index: 13, language: csharp, lines: [222, 237], category: compilable, verified: false}
+      - {index: 14, language: csharp, lines: [243, 249], category: compilable, verified: false}
+      - {index: 15, language: csharp, lines: [275, 285], category: compilable, verified: false}
+      - {index: 16, language: csharp, lines: [291, 320], category: compilable, verified: false}
+      - {index: 17, language: bash, lines: [338, 340]}
+      - {index: 18, language: csharp, lines: [344, 373], category: compilable, verified: false}
+      - {index: 19, language: csharp, lines: [395, 406], category: compilable, verified: false}
+      - {index: 20, language: csharp, lines: [410, 421], category: compilable, verified: false}
+      - {index: 21, language: csharp, lines: [425, 436], category: compilable, verified: false}
+      - {index: 22, language: csharp, lines: [440, 452], category: compilable, verified: false}
+      - {index: 23, language: csharp, lines: [456, 465], category: compilable, verified: false}
+      - {index: 24, language: csharp, lines: [469, 481], category: compilable, verified: false}
+      - {index: 25, language: csharp, lines: [485, 493], category: compilable, verified: false}
+      - {index: 26, language: bash, lines: [501, 503]}
+      - {index: 27, language: csharp, lines: [505, 524], category: compilable, verified: false}
+      - {index: 28, language: powershell, lines: [530, 532]}
+      - {index: 29, language: , lines: [551, 557]}
+      - {index: 30, language: csharp, lines: [575, 607], category: compilable, verified: false}
+      - {index: 31, language: csharp, lines: [611, 637], category: compilable, verified: false}
+      - {index: 32, language: csharp, lines: [645, 663], category: compilable, verified: false}
+      - {index: 33, language: csharp, lines: [671, 686], category: compilable, verified: false}
+      - {index: 34, language: csharp, lines: [690, 712], category: compilable, verified: false}
+      - {index: 35, language: csharp, lines: [718, 746], category: compilable, verified: false}
+      - {index: 36, language: csharp, lines: [752, 769], category: compilable, verified: false}
+      - {index: 37, language: csharp, lines: [775, 797], category: compilable, verified: false}
+      - {index: 38, language: csharp, lines: [803, 826], category: compilable, verified: false}
+      - {index: 39, language: csharp, lines: [832, 849], category: compilable, verified: false}
+      - {index: 40, language: csharp, lines: [853, 875], category: compilable, verified: false}
+      - {index: 41, language: csharp, lines: [883, 889], category: compilable, verified: false}
+      - {index: 42, language: json, lines: [901, 927]}
+      - {index: 43, language: csharp, lines: [933, 941], category: compilable, verified: false}
+      - {index: 44, language: csharp, lines: [949, 977], category: compilable, verified: false}
+      - {index: 45, language: csharp, lines: [983, 991], category: compilable, verified: false}
+      - {index: 46, language: csharp, lines: [999, 1012], category: compilable, verified: false}
+      - {index: 47, language: csharp, lines: [1016, 1038], category: compilable, verified: false}
+      - {index: 48, language: csharp, lines: [1061, 1072], category: compilable, verified: false}
+      - {index: 49, language: json, lines: [1078, 1098]}
+      - {index: 50, language: csharp, lines: [1108, 1123], category: compilable, verified: false}
+      - {index: 51, language: csharp, lines: [1127, 1134], category: compilable, verified: false}
+      - {index: 52, language: json, lines: [1152, 1166]}
+      - {index: 53, language: csharp, lines: [1170, 1179], category: compilable, verified: false}
+      - {index: 54, language: csharp, lines: [1189, 1197], category: compilable, verified: false}
+      - {index: 55, language: csharp, lines: [1210, 1227], category: compilable, verified: false}
+      - {index: 56, language: bash, lines: [1235, 1237]}
+      - {index: 57, language: csharp, lines: [1239, 1250], category: compilable, verified: false}
+      - {index: 58, language: bash, lines: [1260, 1262]}
+      - {index: 59, language: bash, lines: [1280, 1298]}
+      - {index: 60, language: bash, lines: [1302, 1304]}
+      - {index: 61, language: , lines: [1308, 1318]}
+      - {index: 62, language: bash, lines: [1331, 1337]}
+      - {index: 63, language: csharp, lines: [1373, 1378], category: compilable, verified: false}
+      - {index: 64, language: , lines: [1392, 1397]}
   - path: "docs/AsyncApiMessageResumption.md"
     blocks:
       - {index: 0, language: , lines: [26, 32]}
@@ -977,11 +977,12 @@ main-docs:
       - {index: 38, language: csharp, lines: [1331, 1337], category: compilable, verified: false}
       - {index: 39, language: csharp, lines: [1340, 1348], category: compilable, verified: false}
       - {index: 40, language: csharp, lines: [1351, 1358], category: compilable, verified: false}
-      - {index: 41, language: csharp, lines: [1401, 1407], category: compilable, verified: false}
-      - {index: 42, language: csharp, lines: [1410, 1417], category: compilable, verified: false}
-      - {index: 43, language: csharp, lines: [1441, 1445], category: compilable, verified: false}
-      - {index: 44, language: csharp, lines: [1448, 1452], category: compilable, verified: false}
-      - {index: 45, language: csharp, lines: [1455, 1459], category: compilable, verified: false}
+      - {index: 41, language: csharp, lines: [1377, 1392], category: compilable, verified: false}
+      - {index: 42, language: csharp, lines: [1430, 1436], category: compilable, verified: false}
+      - {index: 43, language: csharp, lines: [1439, 1446], category: compilable, verified: false}
+      - {index: 44, language: csharp, lines: [1470, 1474], category: compilable, verified: false}
+      - {index: 45, language: csharp, lines: [1477, 1481], category: compilable, verified: false}
+      - {index: 46, language: csharp, lines: [1484, 1488], category: compilable, verified: false}
   - path: "docs/JsonLogic.md"
     blocks:
       - {index: 0, language: bash, lines: [29, 32]}
@@ -1118,63 +1119,63 @@ main-docs:
       - {index: 19, language: csharp, lines: [391, 410], category: compilable, verified: false}
       - {index: 20, language: csharp, lines: [427, 433], category: compilable, verified: false}
       - {index: 21, language: csharp, lines: [437, 450], category: compilable, verified: false}
-      - {index: 22, language: csharp, lines: [454, 462], category: compilable, verified: false}
-      - {index: 23, language: csharp, lines: [466, 473], category: compilable, verified: false}
-      - {index: 24, language: csharp, lines: [498, 506], category: compilable, verified: false}
-      - {index: 25, language: csharp, lines: [510, 516], category: compilable, verified: false}
-      - {index: 26, language: csharp, lines: [522, 536], category: compilable, verified: false}
-      - {index: 27, language: csharp, lines: [540, 558], category: compilable, verified: false}
-      - {index: 28, language: csharp, lines: [572, 575], category: fragment, verified: false}
-      - {index: 29, language: csharp, lines: [581, 584], category: v4-before, verified: false}
-      - {index: 30, language: csharp, lines: [590, 600], category: compilable, verified: false}
-      - {index: 31, language: csharp, lines: [628, 631], category: fragment, verified: false}
-      - {index: 32, language: csharp, lines: [635, 638], category: fragment, verified: false}
-      - {index: 33, language: csharp, lines: [642, 645], category: fragment, verified: false}
-      - {index: 34, language: csharp, lines: [653, 663], category: fragment, verified: false}
-      - {index: 35, language: csharp, lines: [667, 672], category: compilable, verified: false}
-      - {index: 36, language: csharp, lines: [680, 690], category: fragment, verified: false}
-      - {index: 37, language: csharp, lines: [694, 704], category: compilable, verified: false}
-      - {index: 38, language: csharp, lines: [708, 714], category: compilable, verified: false}
-      - {index: 39, language: csharp, lines: [718, 728], category: compilable, verified: false}
-      - {index: 40, language: csharp, lines: [732, 742], category: compilable, verified: false}
-      - {index: 41, language: csharp, lines: [758, 767], category: compilable, verified: false}
-      - {index: 42, language: csharp, lines: [773, 786], category: compilable, verified: false}
-      - {index: 43, language: csharp, lines: [792, 798], category: compilable, verified: false}
-      - {index: 44, language: csharp, lines: [806, 814], category: compilable, verified: false}
-      - {index: 45, language: csharp, lines: [818, 823], category: compilable, verified: false}
-      - {index: 46, language: csharp, lines: [829, 837], category: compilable, verified: false}
-      - {index: 47, language: csharp, lines: [841, 845], category: compilable, verified: false}
-      - {index: 48, language: csharp, lines: [849, 855], category: compilable, verified: false}
-      - {index: 49, language: csharp, lines: [863, 876], category: compilable, verified: false}
-      - {index: 50, language: csharp, lines: [888, 898], category: compilable, verified: false}
-      - {index: 51, language: csharp, lines: [902, 905], category: fragment, verified: false}
-      - {index: 52, language: csharp, lines: [909, 933], category: compilable, verified: false}
-      - {index: 53, language: csharp, lines: [939, 948], category: compilable, verified: false}
-      - {index: 54, language: csharp, lines: [958, 971], category: v4-before, verified: false}
-      - {index: 55, language: csharp, lines: [977, 988], category: fragment, verified: false}
-      - {index: 56, language: csharp, lines: [1000, 1018], category: compilable, verified: false}
-      - {index: 57, language: csharp, lines: [1027, 1033], category: compilable, verified: false}
-      - {index: 58, language: csharp, lines: [1043, 1053], category: fragment, verified: false}
-      - {index: 59, language: csharp, lines: [1061, 1075], category: compilable, verified: false}
-      - {index: 60, language: csharp, lines: [1079, 1095], category: compilable, verified: false}
-      - {index: 61, language: csharp, lines: [1103, 1113], category: fragment, verified: false}
-      - {index: 62, language: csharp, lines: [1117, 1121], category: compilable, verified: false}
-      - {index: 63, language: csharp, lines: [1125, 1140], category: compilable, verified: false}
-      - {index: 64, language: csharp, lines: [1156, 1161], category: v4-before, verified: false}
-      - {index: 65, language: csharp, lines: [1167, 1173], category: fragment, verified: false}
-      - {index: 66, language: csharp, lines: [1179, 1183], category: compilable, verified: false}
-      - {index: 67, language: , lines: [1187, 1194]}
-      - {index: 68, language: bash, lines: [1204, 1218]}
-      - {index: 69, language: csharp, lines: [1230, 1234], category: compilable, verified: false}
-      - {index: 70, language: xml, lines: [1245, 1257]}
-      - {index: 71, language: xml, lines: [1261, 1273]}
-      - {index: 72, language: csharp, lines: [1285, 1297], category: compilable, verified: false}
-      - {index: 73, language: csharp, lines: [1303, 1326], category: compilable, verified: false}
-      - {index: 74, language: csharp, lines: [1330, 1339], category: compilable, verified: false}
-      - {index: 75, language: csharp, lines: [1345, 1353], category: compilable, verified: false}
-      - {index: 76, language: csharp, lines: [1364, 1374], category: compilable, verified: false}
-      - {index: 77, language: csharp, lines: [1382, 1397], category: compilable, verified: false}
-      - {index: 78, language: csharp, lines: [1405, 1422], category: compilable, verified: false}
+      - {index: 22, language: csharp, lines: [454, 460], category: compilable, verified: false}
+      - {index: 23, language: csharp, lines: [464, 471], category: compilable, verified: false}
+      - {index: 24, language: csharp, lines: [496, 504], category: compilable, verified: false}
+      - {index: 25, language: csharp, lines: [508, 514], category: compilable, verified: false}
+      - {index: 26, language: csharp, lines: [520, 533], category: compilable, verified: false}
+      - {index: 27, language: csharp, lines: [537, 552], category: compilable, verified: false}
+      - {index: 28, language: csharp, lines: [566, 569], category: fragment, verified: false}
+      - {index: 29, language: csharp, lines: [575, 578], category: v4-before, verified: false}
+      - {index: 30, language: csharp, lines: [584, 594], category: compilable, verified: false}
+      - {index: 31, language: csharp, lines: [622, 625], category: fragment, verified: false}
+      - {index: 32, language: csharp, lines: [629, 632], category: fragment, verified: false}
+      - {index: 33, language: csharp, lines: [636, 639], category: fragment, verified: false}
+      - {index: 34, language: csharp, lines: [647, 657], category: fragment, verified: false}
+      - {index: 35, language: csharp, lines: [661, 666], category: compilable, verified: false}
+      - {index: 36, language: csharp, lines: [674, 684], category: fragment, verified: false}
+      - {index: 37, language: csharp, lines: [688, 698], category: compilable, verified: false}
+      - {index: 38, language: csharp, lines: [702, 708], category: compilable, verified: false}
+      - {index: 39, language: csharp, lines: [712, 722], category: compilable, verified: false}
+      - {index: 40, language: csharp, lines: [726, 736], category: compilable, verified: false}
+      - {index: 41, language: csharp, lines: [752, 761], category: compilable, verified: false}
+      - {index: 42, language: csharp, lines: [767, 780], category: compilable, verified: false}
+      - {index: 43, language: csharp, lines: [786, 792], category: compilable, verified: false}
+      - {index: 44, language: csharp, lines: [800, 808], category: compilable, verified: false}
+      - {index: 45, language: csharp, lines: [812, 817], category: compilable, verified: false}
+      - {index: 46, language: csharp, lines: [823, 831], category: compilable, verified: false}
+      - {index: 47, language: csharp, lines: [835, 839], category: compilable, verified: false}
+      - {index: 48, language: csharp, lines: [843, 848], category: compilable, verified: false}
+      - {index: 49, language: csharp, lines: [856, 869], category: compilable, verified: false}
+      - {index: 50, language: csharp, lines: [881, 891], category: compilable, verified: false}
+      - {index: 51, language: csharp, lines: [895, 898], category: fragment, verified: false}
+      - {index: 52, language: csharp, lines: [902, 925], category: compilable, verified: false}
+      - {index: 53, language: csharp, lines: [931, 940], category: compilable, verified: false}
+      - {index: 54, language: csharp, lines: [950, 963], category: v4-before, verified: false}
+      - {index: 55, language: csharp, lines: [969, 980], category: fragment, verified: false}
+      - {index: 56, language: csharp, lines: [992, 1010], category: compilable, verified: false}
+      - {index: 57, language: csharp, lines: [1019, 1025], category: compilable, verified: false}
+      - {index: 58, language: csharp, lines: [1035, 1045], category: fragment, verified: false}
+      - {index: 59, language: csharp, lines: [1053, 1067], category: compilable, verified: false}
+      - {index: 60, language: csharp, lines: [1071, 1087], category: compilable, verified: false}
+      - {index: 61, language: csharp, lines: [1095, 1105], category: fragment, verified: false}
+      - {index: 62, language: csharp, lines: [1109, 1113], category: compilable, verified: false}
+      - {index: 63, language: csharp, lines: [1117, 1132], category: compilable, verified: false}
+      - {index: 64, language: csharp, lines: [1148, 1153], category: v4-before, verified: false}
+      - {index: 65, language: csharp, lines: [1159, 1165], category: fragment, verified: false}
+      - {index: 66, language: csharp, lines: [1171, 1175], category: compilable, verified: false}
+      - {index: 67, language: , lines: [1179, 1186]}
+      - {index: 68, language: bash, lines: [1196, 1210]}
+      - {index: 69, language: csharp, lines: [1222, 1226], category: compilable, verified: false}
+      - {index: 70, language: xml, lines: [1237, 1249]}
+      - {index: 71, language: xml, lines: [1253, 1265]}
+      - {index: 72, language: csharp, lines: [1277, 1289], category: compilable, verified: false}
+      - {index: 73, language: csharp, lines: [1295, 1317], category: compilable, verified: false}
+      - {index: 74, language: csharp, lines: [1321, 1330], category: compilable, verified: false}
+      - {index: 75, language: csharp, lines: [1336, 1344], category: compilable, verified: false}
+      - {index: 76, language: csharp, lines: [1355, 1362], category: compilable, verified: false}
+      - {index: 77, language: csharp, lines: [1370, 1385], category: compilable, verified: false}
+      - {index: 78, language: csharp, lines: [1393, 1410], category: compilable, verified: false}
   - path: "docs/MigrationAnalyzers.md"
     blocks:
       - {index: 0, language: xml, lines: [11, 13]}
@@ -1226,64 +1227,64 @@ main-docs:
       - {index: 5, language: csharp, lines: [53, 81], category: compilable, verified: false}
       - {index: 6, language: bash, lines: [87, 91]}
       - {index: 7, language: csharp, lines: [95, 107], category: compilable, verified: false}
-      - {index: 8, language: csharp, lines: [111, 134], category: compilable, verified: false}
-      - {index: 9, language: , lines: [173, 180]}
-      - {index: 10, language: , lines: [184, 191]}
-      - {index: 11, language: csharp, lines: [209, 223], category: compilable, verified: false}
-      - {index: 12, language: csharp, lines: [227, 244], category: compilable, verified: false}
-      - {index: 13, language: csharp, lines: [252, 257], category: compilable, verified: false}
-      - {index: 14, language: csharp, lines: [265, 269], category: compilable, verified: false}
-      - {index: 15, language: csharp, lines: [277, 292], category: compilable, verified: false}
-      - {index: 16, language: csharp, lines: [298, 314], category: compilable, verified: false}
-      - {index: 17, language: csharp, lines: [320, 331], category: compilable, verified: false}
-      - {index: 18, language: csharp, lines: [335, 349], category: compilable, verified: false}
-      - {index: 19, language: csharp, lines: [357, 372], category: compilable, verified: false}
-      - {index: 20, language: csharp, lines: [378, 386], category: compilable, verified: false}
-      - {index: 21, language: csharp, lines: [392, 403], category: compilable, verified: false}
-      - {index: 22, language: csharp, lines: [407, 415], category: compilable, verified: false}
-      - {index: 23, language: csharp, lines: [421, 430], category: compilable, verified: false}
-      - {index: 24, language: csharp, lines: [434, 439], category: compilable, verified: false}
-      - {index: 25, language: csharp, lines: [445, 462], category: fragment, verified: false}
-      - {index: 26, language: csharp, lines: [470, 483], category: fragment, verified: false}
-      - {index: 27, language: csharp, lines: [509, 521], category: fragment, verified: false}
-      - {index: 28, language: csharp, lines: [576, 599], category: fragment, verified: false}
-      - {index: 29, language: csharp, lines: [605, 625], category: fragment, verified: false}
-      - {index: 30, language: csharp, lines: [643, 653], category: fragment, verified: false}
-      - {index: 31, language: csharp, lines: [657, 679], category: fragment, verified: false}
-      - {index: 32, language: csharp, lines: [683, 713], category: fragment, verified: false}
-      - {index: 33, language: csharp, lines: [717, 727], category: fragment, verified: false}
-      - {index: 34, language: csharp, lines: [733, 758], category: fragment, verified: false}
-      - {index: 35, language: csharp, lines: [766, 786], category: fragment, verified: false}
-      - {index: 36, language: csharp, lines: [792, 797], category: fragment, verified: false}
-      - {index: 37, language: csharp, lines: [803, 821], category: fragment, verified: false}
-      - {index: 38, language: csharp, lines: [825, 832], category: fragment, verified: false}
-      - {index: 39, language: csharp, lines: [838, 844], category: fragment, verified: false}
-      - {index: 40, language: csharp, lines: [850, 858], category: fragment, verified: false}
-      - {index: 41, language: csharp, lines: [870, 876], category: fragment, verified: false}
-      - {index: 42, language: csharp, lines: [880, 889], category: compilable, verified: false}
-      - {index: 43, language: csharp, lines: [901, 930], category: compilable, verified: false}
-      - {index: 44, language: csharp, lines: [934, 960], category: compilable, verified: false}
-      - {index: 45, language: csharp, lines: [964, 977], category: compilable, verified: false}
-      - {index: 46, language: csharp, lines: [994, 1009], category: compilable, verified: false}
-      - {index: 47, language: csharp, lines: [1017, 1033], category: compilable, verified: false}
-      - {index: 48, language: csharp, lines: [1041, 1052], category: compilable, verified: false}
-      - {index: 49, language: , lines: [1062, 1070]}
-      - {index: 50, language: bash, lines: [1083, 1087]}
-      - {index: 51, language: csharp, lines: [1096, 1107], category: compilable, verified: false}
-      - {index: 52, language: bash, lines: [1113, 1117]}
-      - {index: 53, language: csharp, lines: [1125, 1139], category: compilable, verified: false}
-      - {index: 54, language: csharp, lines: [1155, 1168], category: compilable, verified: false}
-      - {index: 55, language: csharp, lines: [1178, 1195], category: compilable, verified: false}
-      - {index: 56, language: json, lines: [1201, 1245]}
-      - {index: 57, language: bash, lines: [1251, 1253]}
-      - {index: 58, language: bash, lines: [1269, 1271]}
-      - {index: 59, language: bash, lines: [1277, 1279]}
-      - {index: 60, language: bash, lines: [1287, 1289]}
-      - {index: 61, language: bash, lines: [1297, 1299]}
-      - {index: 62, language: bash, lines: [1327, 1344]}
-      - {index: 63, language: bash, lines: [1348, 1358]}
-      - {index: 64, language: bash, lines: [1366, 1378]}
-      - {index: 65, language: bash, lines: [1384, 1399]}
+      - {index: 8, language: csharp, lines: [111, 131], category: compilable, verified: false}
+      - {index: 9, language: , lines: [170, 177]}
+      - {index: 10, language: , lines: [181, 188]}
+      - {index: 11, language: csharp, lines: [206, 216], category: compilable, verified: false}
+      - {index: 12, language: csharp, lines: [220, 237], category: compilable, verified: false}
+      - {index: 13, language: csharp, lines: [245, 250], category: compilable, verified: false}
+      - {index: 14, language: csharp, lines: [258, 262], category: compilable, verified: false}
+      - {index: 15, language: csharp, lines: [270, 282], category: compilable, verified: false}
+      - {index: 16, language: csharp, lines: [288, 301], category: compilable, verified: false}
+      - {index: 17, language: csharp, lines: [307, 316], category: compilable, verified: false}
+      - {index: 18, language: csharp, lines: [320, 332], category: compilable, verified: false}
+      - {index: 19, language: csharp, lines: [340, 355], category: compilable, verified: false}
+      - {index: 20, language: csharp, lines: [361, 369], category: compilable, verified: false}
+      - {index: 21, language: csharp, lines: [375, 386], category: compilable, verified: false}
+      - {index: 22, language: csharp, lines: [390, 398], category: compilable, verified: false}
+      - {index: 23, language: csharp, lines: [404, 412], category: compilable, verified: false}
+      - {index: 24, language: csharp, lines: [416, 421], category: compilable, verified: false}
+      - {index: 25, language: csharp, lines: [427, 444], category: fragment, verified: false}
+      - {index: 26, language: csharp, lines: [452, 465], category: fragment, verified: false}
+      - {index: 27, language: csharp, lines: [491, 503], category: fragment, verified: false}
+      - {index: 28, language: csharp, lines: [558, 581], category: fragment, verified: false}
+      - {index: 29, language: csharp, lines: [587, 607], category: fragment, verified: false}
+      - {index: 30, language: csharp, lines: [625, 635], category: fragment, verified: false}
+      - {index: 31, language: csharp, lines: [639, 661], category: fragment, verified: false}
+      - {index: 32, language: csharp, lines: [665, 695], category: fragment, verified: false}
+      - {index: 33, language: csharp, lines: [699, 709], category: fragment, verified: false}
+      - {index: 34, language: csharp, lines: [715, 740], category: fragment, verified: false}
+      - {index: 35, language: csharp, lines: [748, 768], category: fragment, verified: false}
+      - {index: 36, language: csharp, lines: [774, 779], category: fragment, verified: false}
+      - {index: 37, language: csharp, lines: [785, 803], category: fragment, verified: false}
+      - {index: 38, language: csharp, lines: [807, 814], category: fragment, verified: false}
+      - {index: 39, language: csharp, lines: [820, 826], category: fragment, verified: false}
+      - {index: 40, language: csharp, lines: [832, 840], category: fragment, verified: false}
+      - {index: 41, language: csharp, lines: [852, 858], category: fragment, verified: false}
+      - {index: 42, language: csharp, lines: [862, 871], category: compilable, verified: false}
+      - {index: 43, language: csharp, lines: [883, 912], category: compilable, verified: false}
+      - {index: 44, language: csharp, lines: [916, 942], category: compilable, verified: false}
+      - {index: 45, language: csharp, lines: [946, 959], category: compilable, verified: false}
+      - {index: 46, language: csharp, lines: [976, 991], category: compilable, verified: false}
+      - {index: 47, language: csharp, lines: [999, 1015], category: compilable, verified: false}
+      - {index: 48, language: csharp, lines: [1023, 1034], category: compilable, verified: false}
+      - {index: 49, language: , lines: [1044, 1052]}
+      - {index: 50, language: bash, lines: [1065, 1069]}
+      - {index: 51, language: csharp, lines: [1078, 1089], category: compilable, verified: false}
+      - {index: 52, language: bash, lines: [1095, 1099]}
+      - {index: 53, language: csharp, lines: [1107, 1118], category: compilable, verified: false}
+      - {index: 54, language: csharp, lines: [1134, 1144], category: compilable, verified: false}
+      - {index: 55, language: csharp, lines: [1154, 1168], category: compilable, verified: false}
+      - {index: 56, language: json, lines: [1174, 1218]}
+      - {index: 57, language: bash, lines: [1224, 1226]}
+      - {index: 58, language: bash, lines: [1242, 1244]}
+      - {index: 59, language: bash, lines: [1250, 1252]}
+      - {index: 60, language: bash, lines: [1260, 1262]}
+      - {index: 61, language: bash, lines: [1270, 1272]}
+      - {index: 62, language: bash, lines: [1300, 1317]}
+      - {index: 63, language: bash, lines: [1321, 1331]}
+      - {index: 64, language: bash, lines: [1339, 1351]}
+      - {index: 65, language: bash, lines: [1357, 1372]}
   - path: "docs/ParsedJsonDocument.md"
     blocks:
       - {index: 0, language: csharp, lines: [40, 56], category: compilable, verified: false}
@@ -1487,8 +1488,12 @@ main-docs:
       - {index: 16, language: csharp, lines: [372, 377], category: v4-before, verified: false}
       - {index: 17, language: csharp, lines: [381, 385], category: compilable, verified: false}
       - {index: 18, language: csharp, lines: [391, 418], category: compilable, verified: false}
-      - {index: 19, language: csharp, lines: [426, 432], category: compilable, verified: false}
-      - {index: 20, language: csharp, lines: [548, 558], category: compilable, verified: false}
+      - {index: 19, language: csharp, lines: [426, 433], category: compilable, verified: false}
+      - {index: 20, language: csharp, lines: [459, 466], category: compilable, verified: false}
+      - {index: 21, language: csharp, lines: [470, 473], category: compilable, verified: false}
+      - {index: 22, language: yaml, lines: [477, 493]}
+      - {index: 23, language: csharp, lines: [498, 502], category: compilable, verified: false}
+      - {index: 24, language: csharp, lines: [626, 636], category: compilable, verified: false}
 
 v4-docs:
   - path: "docs/V4/GettingStartedWithJsonSchemaCodeGeneration.md"
@@ -1623,43 +1628,43 @@ copilot-docs:
       - {index: 13, language: csharp, lines: [184, 190], category: v4-before, verified: false}
       - {index: 14, language: csharp, lines: [197, 204], category: fragment, verified: false}
       - {index: 15, language: csharp, lines: [207, 233], category: fragment, verified: false}
-      - {index: 16, language: csharp, lines: [248, 268], category: compilable, verified: false}
-      - {index: 17, language: csharp, lines: [271, 288], category: compilable, verified: false}
-      - {index: 18, language: csharp, lines: [291, 306], category: compilable, verified: false}
-      - {index: 19, language: csharp, lines: [309, 329], category: compilable, verified: false}
-      - {index: 20, language: csharp, lines: [332, 349], category: compilable, verified: false}
-      - {index: 21, language: csharp, lines: [361, 373], category: fragment, verified: false}
-      - {index: 22, language: csharp, lines: [376, 393], category: compilable, verified: false}
-      - {index: 23, language: csharp, lines: [396, 411], category: fragment, verified: false}
-      - {index: 24, language: csharp, lines: [417, 426], category: compilable, verified: false}
-      - {index: 25, language: csharp, lines: [433, 439], category: compilable, verified: false}
-      - {index: 26, language: csharp, lines: [442, 448], category: compilable, verified: false}
-      - {index: 27, language: csharp, lines: [451, 457], category: compilable, verified: false}
-      - {index: 28, language: csharp, lines: [460, 466], category: compilable, verified: false}
-      - {index: 29, language: csharp, lines: [469, 472], category: fragment, verified: false}
-      - {index: 30, language: csharp, lines: [475, 478], category: fragment, verified: false}
-      - {index: 31, language: csharp, lines: [481, 485], category: compilable, verified: false}
-      - {index: 32, language: csharp, lines: [492, 499], category: compilable, verified: false}
-      - {index: 33, language: csharp, lines: [502, 509], category: compilable, verified: false}
-      - {index: 34, language: csharp, lines: [512, 516], category: compilable, verified: false}
-      - {index: 35, language: csharp, lines: [523, 528], category: fragment, verified: false}
-      - {index: 36, language: csharp, lines: [531, 537], category: compilable, verified: false}
-      - {index: 37, language: csharp, lines: [551, 561], category: compilable, verified: false}
-      - {index: 38, language: csharp, lines: [564, 578], category: compilable, verified: false}
-      - {index: 39, language: csharp, lines: [581, 595], category: fragment, verified: false}
-      - {index: 40, language: csharp, lines: [602, 605], category: fragment, verified: false}
-      - {index: 41, language: csharp, lines: [608, 615], category: compilable, verified: false}
-      - {index: 42, language: csharp, lines: [618, 625], category: compilable, verified: false}
-      - {index: 43, language: csharp, lines: [632, 635], category: fragment, verified: false}
-      - {index: 44, language: csharp, lines: [638, 644], category: compilable, verified: false}
-      - {index: 45, language: xml, lines: [651, 658]}
-      - {index: 46, language: xml, lines: [661, 668]}
-      - {index: 47, language: bash, lines: [674, 680]}
-      - {index: 48, language: csharp, lines: [688, 699], category: compilable, verified: false}
-      - {index: 49, language: csharp, lines: [703, 711], category: fragment, verified: false}
-      - {index: 50, language: csharp, lines: [715, 722], category: compilable, verified: false}
-      - {index: 51, language: csharp, lines: [726, 730], category: compilable, verified: false}
-      - {index: 52, language: csharp, lines: [734, 740], category: compilable, verified: false}
+      - {index: 16, language: csharp, lines: [248, 266], category: compilable, verified: false}
+      - {index: 17, language: csharp, lines: [269, 285], category: compilable, verified: false}
+      - {index: 18, language: csharp, lines: [288, 303], category: compilable, verified: false}
+      - {index: 19, language: csharp, lines: [306, 325], category: compilable, verified: false}
+      - {index: 20, language: csharp, lines: [328, 344], category: compilable, verified: false}
+      - {index: 21, language: csharp, lines: [356, 368], category: fragment, verified: false}
+      - {index: 22, language: csharp, lines: [371, 388], category: compilable, verified: false}
+      - {index: 23, language: csharp, lines: [391, 406], category: fragment, verified: false}
+      - {index: 24, language: csharp, lines: [412, 421], category: compilable, verified: false}
+      - {index: 25, language: csharp, lines: [428, 434], category: compilable, verified: false}
+      - {index: 26, language: csharp, lines: [437, 443], category: compilable, verified: false}
+      - {index: 27, language: csharp, lines: [446, 452], category: compilable, verified: false}
+      - {index: 28, language: csharp, lines: [455, 461], category: compilable, verified: false}
+      - {index: 29, language: csharp, lines: [464, 467], category: fragment, verified: false}
+      - {index: 30, language: csharp, lines: [470, 473], category: fragment, verified: false}
+      - {index: 31, language: csharp, lines: [476, 480], category: compilable, verified: false}
+      - {index: 32, language: csharp, lines: [487, 494], category: compilable, verified: false}
+      - {index: 33, language: csharp, lines: [497, 504], category: compilable, verified: false}
+      - {index: 34, language: csharp, lines: [507, 511], category: compilable, verified: false}
+      - {index: 35, language: csharp, lines: [518, 523], category: fragment, verified: false}
+      - {index: 36, language: csharp, lines: [526, 532], category: compilable, verified: false}
+      - {index: 37, language: csharp, lines: [546, 556], category: compilable, verified: false}
+      - {index: 38, language: csharp, lines: [559, 573], category: compilable, verified: false}
+      - {index: 39, language: csharp, lines: [576, 590], category: fragment, verified: false}
+      - {index: 40, language: csharp, lines: [597, 600], category: fragment, verified: false}
+      - {index: 41, language: csharp, lines: [603, 610], category: compilable, verified: false}
+      - {index: 42, language: csharp, lines: [613, 620], category: compilable, verified: false}
+      - {index: 43, language: csharp, lines: [627, 630], category: fragment, verified: false}
+      - {index: 44, language: csharp, lines: [633, 639], category: compilable, verified: false}
+      - {index: 45, language: xml, lines: [646, 653]}
+      - {index: 46, language: xml, lines: [656, 663]}
+      - {index: 47, language: bash, lines: [669, 675]}
+      - {index: 48, language: csharp, lines: [683, 691], category: compilable, verified: false}
+      - {index: 49, language: csharp, lines: [695, 703], category: fragment, verified: false}
+      - {index: 50, language: csharp, lines: [707, 714], category: compilable, verified: false}
+      - {index: 51, language: csharp, lines: [718, 722], category: compilable, verified: false}
+      - {index: 52, language: csharp, lines: [726, 732], category: compilable, verified: false}
 
 copilot-instructions:
   - path: ".github/copilot-instructions.md"
@@ -1852,7 +1857,8 @@ skills:
     blocks:
       - {index: 0, language: csharp, lines: [32, 42], category: compilable, verified: false}
       - {index: 1, language: csharp, lines: [46, 55], category: compilable, verified: false}
-      - {index: 2, language: powershell, lines: [77, 79]}
+      - {index: 2, language: csharp, lines: [66, 72], category: compilable, verified: false}
+      - {index: 3, language: powershell, lines: [97, 99]}
   - path: ".github/skills/ref-struct-delegates/SKILL.md"
     blocks:
       - {index: 0, language: csharp, lines: [21, 26], category: compilable, verified: false}
