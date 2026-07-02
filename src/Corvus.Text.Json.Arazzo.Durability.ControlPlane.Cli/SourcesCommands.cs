@@ -72,8 +72,8 @@ internal sealed class SourceRegisterSettings : SourceNameSettings
 }
 
 /// <summary>Settings for updating a source. Only the supplied fields change (a PATCH-style merge); the name, type,
-/// management-tag reach scope, and created-* audit are immutable. The document is rotated only when a new
-/// <c>--document</c> file is supplied — otherwise the stored document is kept.</summary>
+/// and created-* audit are immutable. An administrator may re-tag the managementTags reach scope. The document is
+/// rotated only when a new <c>--document</c> file is supplied — otherwise the stored document is kept.</summary>
 internal sealed class SourceUpdateSettings : SourceNameSettings
 {
     [CommandOption("--document <FILE>")]
@@ -87,6 +87,10 @@ internal sealed class SourceUpdateSettings : SourceNameSettings
     [CommandOption("--description <TEXT>")]
     [Description("Replace the description (preserved if omitted).")]
     public string? Description { get; init; }
+
+    [CommandOption("--manage <KEY=VALUE>")]
+    [Description("Re-tag who may manage and see the source, e.g. --manage team=ops (repeatable). Replaces the non-internal management tags; preserved if omitted; the reserved 'sys:' prefix is not permitted.")]
+    public ILookup<string, string>? ManagementTags { get; init; }
 
     /// <inheritdoc/>
     public override Spectre.Console.ValidationResult Validate()
@@ -232,11 +236,11 @@ internal sealed class SourceUpdateCommand : AsyncCommand<SourceUpdateSettings>
             {
                 byte[] documentBytes = await File.ReadAllBytesAsync(file, cancellationToken);
                 Models.SourceDocument document = Models.SourceDocument.ParseValue(documentBytes);
-                body = SourceCommandHelpers.BuildUpdate(displayName, description, document, hasDocument: true);
+                body = SourceCommandHelpers.BuildUpdate(displayName, description, document, hasDocument: true, settings.ManagementTags);
             }
             else
             {
-                body = SourceCommandHelpers.BuildUpdate(displayName, description, default, hasDocument: false);
+                body = SourceCommandHelpers.BuildUpdate(displayName, description, default, hasDocument: false, settings.ManagementTags);
             }
 
             await using UpdateSourceResponse response = await client.UpdateSourceAsync(settings.Name, body, cancellationToken);
@@ -287,13 +291,13 @@ internal static class SourceCommandHelpers
                 managementTags: WriteManagementTags(s.ManagementTags));
         });
 
-    public static Models.SourceUpdate.Source BuildUpdate(string? displayName, string? description, Models.SourceDocument document, bool hasDocument)
+    public static Models.SourceUpdate.Source BuildUpdate(string? displayName, string? description, Models.SourceDocument document, bool hasDocument, ILookup<string, string>? managementTags)
         => new((ref Models.SourceUpdate.Builder b) =>
         {
             Models.JsonString.Source displayNameSource = displayName is { } d ? (Models.JsonString.Source)d : default;
             Models.JsonString.Source descriptionSource = description is { } desc ? (Models.JsonString.Source)desc : default;
             Models.SourceDocument.Source documentSource = hasDocument ? document : default;
-            b.Create(description: descriptionSource, displayName: displayNameSource, document: documentSource);
+            b.Create(description: descriptionSource, displayName: displayNameSource, document: documentSource, managementTags: WriteUpdateManagementTags(managementTags));
         });
 
     private static Models.SourceCreate.SourceSecurityTagArray.Source WriteManagementTags(ILookup<string, string>? tags)
@@ -304,6 +308,25 @@ internal static class SourceCommandHelpers
         }
 
         return new Models.SourceCreate.SourceSecurityTagArray.Source((ref Models.SourceCreate.SourceSecurityTagArray.Builder ab) =>
+        {
+            foreach (IGrouping<string, string> group in tags)
+            {
+                foreach (string value in group)
+                {
+                    ab.AddItem(new Models.SourceSecurityTag.Source((ref Models.SourceSecurityTag.Builder tb) => tb.Create(group.Key, value)));
+                }
+            }
+        });
+    }
+
+    private static Models.SourceUpdate.SourceSecurityTagArray.Source WriteUpdateManagementTags(ILookup<string, string>? tags)
+    {
+        if (tags is null)
+        {
+            return default;
+        }
+
+        return new Models.SourceUpdate.SourceSecurityTagArray.Source((ref Models.SourceUpdate.SourceSecurityTagArray.Builder ab) =>
         {
             foreach (IGrouping<string, string> group in tags)
             {

@@ -46,7 +46,7 @@ internal sealed class EnvironmentCreateSettings : EnvironmentNameSettings
 }
 
 /// <summary>Settings for updating an environment's mutable metadata. Only the supplied fields change (a PATCH-style
-/// merge); the name, management-tag reach scope, and created-* audit are immutable.</summary>
+/// merge); the name and created-* audit are immutable. An administrator may re-tag the managementTags reach scope.</summary>
 internal sealed class EnvironmentUpdateSettings : EnvironmentNameSettings
 {
     [CommandOption("--display-name <TEXT>")]
@@ -56,6 +56,10 @@ internal sealed class EnvironmentUpdateSettings : EnvironmentNameSettings
     [CommandOption("--description <TEXT>")]
     [Description("Replace the description (preserved if omitted).")]
     public string? Description { get; init; }
+
+    [CommandOption("--manage <KEY=VALUE>")]
+    [Description("Re-tag who may manage and see the environment, e.g. --manage team=ops (repeatable). Replaces the non-internal management tags; preserved if omitted; the reserved 'sys:' prefix is not permitted.")]
+    public ILookup<string, string>? ManagementTags { get; init; }
 }
 
 internal sealed class EnvironmentListCommand : AsyncCommand<EnvironmentListSettings>
@@ -183,7 +187,10 @@ internal sealed class EnvironmentUpdateCommand : AsyncCommand<EnvironmentUpdateS
 
             string? displayName = settings.DisplayName ?? snapshot.DisplayName;
             string? description = settings.Description ?? snapshot.Description;
-            Models.EnvironmentUpdate.Source body = EnvironmentCommandHelpers.BuildUpdate(displayName, description);
+
+            // managementTags carry forward server-side when omitted (a re-tag replaces them), so unlike display
+            // name / description it needs no snapshot merge — send it only when --manage is supplied.
+            Models.EnvironmentUpdate.Source body = EnvironmentCommandHelpers.BuildUpdate(displayName, description, settings.ManagementTags);
             await using UpdateEnvironmentResponse response = await client.UpdateEnvironmentAsync(settings.Name, body, cancellationToken);
             return response.MatchResult(summary => Output.Print(summary.ToString()), Output.Problem, Output.Problem, Output.Problem, Output.Problem, Output.Unexpected);
         }
@@ -329,12 +336,12 @@ internal static class EnvironmentCommandHelpers
                 managementTags: WriteManagementTags(s.ManagementTags));
         });
 
-    public static Models.EnvironmentUpdate.Source BuildUpdate(string? displayName, string? description)
+    public static Models.EnvironmentUpdate.Source BuildUpdate(string? displayName, string? description, ILookup<string, string>? managementTags)
         => new((ref Models.EnvironmentUpdate.Builder b) =>
         {
             Models.JsonString.Source displayNameSource = displayName is { } d ? (Models.JsonString.Source)d : default;
             Models.JsonString.Source descriptionSource = description is { } desc ? (Models.JsonString.Source)desc : default;
-            b.Create(description: descriptionSource, displayName: displayNameSource);
+            b.Create(description: descriptionSource, displayName: displayNameSource, managementTags: WriteUpdateManagementTags(managementTags));
         });
 
     private static Models.EnvironmentCreate.EnvironmentSecurityTagArray.Source WriteManagementTags(ILookup<string, string>? tags)
@@ -345,6 +352,25 @@ internal static class EnvironmentCommandHelpers
         }
 
         return new Models.EnvironmentCreate.EnvironmentSecurityTagArray.Source((ref Models.EnvironmentCreate.EnvironmentSecurityTagArray.Builder ab) =>
+        {
+            foreach (IGrouping<string, string> group in tags)
+            {
+                foreach (string value in group)
+                {
+                    ab.AddItem(new Models.EnvironmentSecurityTag.Source((ref Models.EnvironmentSecurityTag.Builder tb) => tb.Create(group.Key, value)));
+                }
+            }
+        });
+    }
+
+    private static Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source WriteUpdateManagementTags(ILookup<string, string>? tags)
+    {
+        if (tags is null)
+        {
+            return default;
+        }
+
+        return new Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Source((ref Models.EnvironmentUpdate.EnvironmentSecurityTagArray.Builder ab) =>
         {
             foreach (IGrouping<string, string> group in tags)
             {
