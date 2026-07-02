@@ -493,7 +493,7 @@ alongside the transport.
 
 Option A targets `undici` v8 (the current major): its `dispatcher` interface differs from the undici
 built into Node's global `fetch`, so the standalone `undici` you import must match the one backing your
-`fetch`. Option B uses only the built-in `node:https` `Agent`. See the [undici `Agent` docs](https://github.com/nodejs/undici) and
+`fetch`. Option B uses only the built-in `node:https` `Agent`. See the [undici `Agent` docs](https://github.com/nodejs/undici/blob/main/docs/docs/api/Agent.md) and
 [Node.js `https.Agent` docs](https://nodejs.org/api/https.html#class-httpsagent).
 
 ## Request signing
