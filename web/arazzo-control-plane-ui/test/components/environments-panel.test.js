@@ -87,6 +87,29 @@ describe('<arazzo-environments>', () => {
     ok(detail(el).textContent.includes('qa'), 'opens on the new environment');
   });
 
+  it('shows management tags read-only in the detail and sets them on create', async () => {
+    el = panelWithMock();
+    mount(el);
+    await nextEvent(el, 'loaded');
+    // Production is seeded with a management tag → shown read-only in the detail.
+    el.shadowRoot.querySelector('.erow[data-name="production"]').click();
+    await nextEvent(el, 'environment-selected');
+    await waitFor(() => detail(el).textContent.includes('team=platform'));
+    ok(true, 'seeded management tag shown read-only');
+
+    // Create a new environment with a management tag via the dialog input.
+    el.shadowRoot.querySelector('.new').click();
+    const name = el.shadowRoot.querySelector('.f-name');
+    name.value = 'qa'; name.dispatchEvent(new Event('input'));
+    const mtags = el.shadowRoot.querySelector('.f-managementTags');
+    mtags.value = 'team=qa'; mtags.dispatchEvent(new Event('input'));
+    const created = nextEvent(el, 'environment-created');
+    el.shadowRoot.querySelector('.confirm').click();
+    const e = await created;
+    equal(e.detail.environment.managementTags?.[0]?.key, 'team', 'management tag key persisted');
+    equal(e.detail.environment.managementTags?.[0]?.value, 'qa', 'management tag value persisted');
+  });
+
   it('saves edited metadata and emits environment-changed', async () => {
     el = panelWithMock();
     mount(el);
