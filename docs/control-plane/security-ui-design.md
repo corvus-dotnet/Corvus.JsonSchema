@@ -38,14 +38,12 @@ The rest of this doc is the original design narrative and lags the code in place
   slot in Overview (needs slice 6), cross-link Administrators from Catalog, retire the Permissions tab.
 
 **Security-tags / management-tags thread** — settable + admin-editable-on-update `{key,value}` reach labels
-(catalog `securityTags`; environment/source/credential `managementTags`). DONE across OpenAPI / server handler /
-durability + store-conformance / mock for all four entities, via the shared `<arazzo-tag-editor>` on the web.
-Committed for catalog (+ its create/edit UI) and environment/source/credential at the API/store layer; the
-environment + credential **web edit UI** is (2026-07-02) in the working tree, **uncommitted**. Remaining gaps:
-- **CLI `--manage`-on-update exists only for catalog.** `environment` / `source` / `credential` update commands
-  can't re-tag yet, and their settings' doc comments still wrongly say the tags are "immutable" on update.
-- **Registered-source has no standalone UI edit panel** — **parked** (the sources registry has no dedicated panel
-  by design, §7.6). `updateSource` exists server- and mock-side for when a panel lands.
+(catalog `securityTags`; environment/source/credential `managementTags`). **DONE end-to-end** for all four
+entities: OpenAPI / server handler / durability + store-conformance / mock; the web edit UI via the shared
+`<arazzo-tag-editor>` (catalog + environment + credential); and the CLI `--manage`-on-update flag for
+environment/source/credential (parity with catalog's `--security-tag`, with integration tests). **Only remaining
+item:** the registered-**source** has no standalone UI edit panel — **parked** (the sources registry has no
+dedicated panel by design, §7.6); `updateSource` exists server- and mock-side for when a panel lands.
 
 **Actual app-shell tabs today** (`demo/index.html`): Runs · Runners · Catalog · Sources · Environments · Access ·
 Permissions · Promotions · Runner auth. (The §3 snapshot below predates several of these.)
@@ -344,8 +342,8 @@ Recommended order: 1 → 2 → 3 → 4 → 5 → 6 → 7 (grantee primitive, the
 need, then the two missing editors, then the server-aggregated overview, then the reorg). Each is
 independently demoable. **Status (2026-07-02): 1–5 DONE, 6 not started, 7 in progress — see §0.** The recommended
 order also predates a parallel thread — the **security-tags / management-tags** work (settable + editable reach
-labels on catalog/environment/source/credential) — which is done bar the CLI `--manage`-on-update flag for
-environment/source/credential and committing the web edit UI (§0).
+labels on catalog/environment/source/credential) — which is now **done end-to-end** (API/store/mock/web/CLI),
+bar the parked registered-source UI edit panel (§0).
 
 ---
 
