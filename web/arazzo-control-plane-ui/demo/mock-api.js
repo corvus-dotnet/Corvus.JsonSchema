@@ -619,12 +619,13 @@ function toCredentialSummary(b) {
 
 function seedEnvironments() {
   const day = 24 * 60 * 60000;
-  const e = (name, displayName, description) => ({
-    name, displayName, description, managementTags: [],
+  const e = (name, displayName, description, managementTags = []) => ({
+    name, displayName, description, managementTags,
     createdBy: 'alice@example.com', createdAt: iso(-40 * day), etag: nextEtag(),
   });
   return [
-    e('production', 'Production', 'The live production environment.'),
+    // Production is scoped by a management tag (§14.2) so its read-only display has something to show.
+    e('production', 'Production', 'The live production environment.', [{ key: 'team', value: 'platform' }]),
     e('staging', 'Staging', 'Pre-production staging environment.'),
   ];
 }
@@ -2101,6 +2102,10 @@ export function createMockControlPlane(options = {}) {
   function createEnvironment(body) {
     if (!body || !body.name) return problem(400, 'Invalid environment', 'A name is required.');
     if (findEnvironment(body.name)) return problem(409, 'Environment exists', `An environment named '${body.name}' already exists.`);
+    if (usesReservedTag(body.managementTags)) {
+      return problem(400, 'Reserved management tag', `A management tag key uses the reserved internal prefix '${RESERVED_TAG_PREFIX}', which is owned by the deployment.`);
+    }
+
     const e = {
       name: body.name, displayName: body.displayName || body.name, description: body.description,
       managementTags: body.managementTags ?? [],

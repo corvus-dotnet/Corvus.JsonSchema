@@ -15,7 +15,7 @@
 // never be left without an administrator. Mutating controls are gated by environments:write.
 
 import { ArazzoControlPlaneClient } from '../arazzo-client.js';
-import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, define } from './base.js';
+import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, confirmDialog, parseSecurityTags, securityTagsToText, define } from './base.js';
 import './administrators-panel.js';
 import './pager.js';
 
@@ -220,7 +220,7 @@ class ArazzoEnvironments extends ArazzoElement {
   // ---- create (modal dialog) --------------------------------------------------------------------
 
   openCreate() {
-    this._form = { name: '', displayName: '', description: '', formError: null };
+    this._form = { name: '', displayName: '', description: '', managementTags: '', formError: null };
     this.renderEditor();
     this.$('dialog').showModal();
     this.$('.f-name')?.focus();
@@ -237,10 +237,12 @@ class ArazzoEnvironments extends ArazzoElement {
     const name = (form.name || '').trim();
     if (!name) { form.formError = { title: 'An environment name is required.' }; this.renderEditor(); return; }
     try {
+      const managementTags = parseSecurityTags(form.managementTags);
       const created = await this.buildClient().createEnvironment({
         name,
         displayName: (form.displayName || '').trim() || undefined,
         description: (form.description || '').trim() || undefined,
+        managementTags: managementTags.length ? managementTags : undefined,
       });
       this.closeEditor();
       await this.reload();
@@ -415,6 +417,13 @@ class ArazzoEnvironments extends ArazzoElement {
           `}
         </div>
         <div class="section">
+          <h4>Management tags</h4>
+          ${Array.isArray(e.managementTags) && e.managementTags.length
+            ? `<div class="mtags">${e.managementTags.map((t) => `<code>${escapeHtml(t.key)}=${escapeHtml(t.value)}</code>`).join(' ')}</div>`
+            : '<div class="muted">None — visible to everyone within reach.</div>'}
+          <div class="hint">Who may manage and see this environment (§14.2). Set at creation and immutable afterwards.</div>
+        </div>
+        <div class="section">
           <h4>Administrators</h4>
           <arazzo-administrators-panel class="env-admins" environment="${escapeHtml(e.name)}" scopes="${escapeHtml(this.getAttribute('scopes') || '')}"></arazzo-administrators-panel>
         </div>
@@ -456,11 +465,14 @@ class ArazzoEnvironments extends ArazzoElement {
       <div class="field"><span>Name</span><input class="f-name" placeholder="qa" value="${escapeHtml(f.name)}"></div>
       <div class="field"><span>Display name</span><input class="f-displayName" placeholder="(optional)" value="${escapeHtml(f.displayName)}"></div>
       <div class="field"><span>Description</span><textarea class="f-description" placeholder="(optional)">${escapeHtml(f.description)}</textarea></div>
+      <div class="field"><span>Management tags</span><input class="f-managementTags" placeholder="team=ops (key=value, space separated)" value="${escapeHtml(f.managementTags)}"></div>
+      <div class="hint">Scope who may manage and see this environment (§14.2). Set at creation and immutable afterwards; the reserved <code>sys:</code> prefix is not allowed.</div>
       <div class="form-err">${f.formError ? `<div class="error-banner"><span><strong>${escapeHtml(f.formError.title || 'Request failed')}</strong>${f.formError.detail ? ' — ' + escapeHtml(f.formError.detail) : ''}</span></div>` : ''}</div>
     `;
     content.querySelector('.f-name').addEventListener('input', (ev) => { f.name = ev.target.value; });
     content.querySelector('.f-displayName').addEventListener('input', (ev) => { f.displayName = ev.target.value; });
     content.querySelector('.f-description').addEventListener('input', (ev) => { f.description = ev.target.value; });
+    content.querySelector('.f-managementTags').addEventListener('input', (ev) => { f.managementTags = ev.target.value; });
   }
 }
 
