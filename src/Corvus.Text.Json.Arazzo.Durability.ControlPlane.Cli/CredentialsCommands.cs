@@ -89,7 +89,7 @@ internal sealed class CredentialCreateSettings : CredentialKeySettings
 /// <summary>Settings for updating a binding. Only the supplied fields change (a PATCH-style merge); unspecified ones are
 /// preserved from the current binding. Changing a reference is how a credential is "rotated" — the operator writes the
 /// new secret version to their store out of band, then re-points the binding here (<c>rotatedAt</c> is stamped
-/// automatically). Management tags and usage grants are immutable across updates.</summary>
+/// automatically). Usage grants are immutable across updates; management tags may be re-tagged via <c>--manage</c>.</summary>
 internal sealed class CredentialUpdateSettings : CredentialKeySettings
 {
     [CommandOption("--auth-kind <KIND>")]
@@ -115,6 +115,10 @@ internal sealed class CredentialUpdateSettings : CredentialKeySettings
     [CommandOption("--description <TEXT>")]
     [Description("Replace the description (preserved if omitted).")]
     public string? Description { get; init; }
+
+    [CommandOption("--manage <KEY=VALUE>")]
+    [Description("Re-tag who may administer the binding, e.g. --manage team=ops (repeatable). Replaces the non-internal management tags; preserved if omitted; the reserved 'sys:' prefix is not permitted.")]
+    public ILookup<string, string>? ManagementTags { get; init; }
 }
 
 internal sealed class CredentialListCommand : AsyncCommand<CredentialListSettings>
@@ -429,7 +433,8 @@ internal static class CredentialCommandHelpers
                 config: UpdateConfig(config),
                 description: descriptionSource,
                 expiresAt: expiresAt,
-                rotatedAt: rotatedAt);
+                rotatedAt: rotatedAt,
+                managementTags: WriteUpdateManagementTags(s.ManagementTags));
         });
     }
 
@@ -528,6 +533,25 @@ internal static class CredentialCommandHelpers
         }
 
         return new Models.CredentialBindingCreate.CredentialSecurityTagArray.Source((ref Models.CredentialBindingCreate.CredentialSecurityTagArray.Builder ab) =>
+        {
+            foreach (IGrouping<string, string> group in tags)
+            {
+                foreach (string value in group)
+                {
+                    ab.AddItem(new Models.CredentialSecurityTag.Source((ref Models.CredentialSecurityTag.Builder tb) => tb.Create(group.Key, value)));
+                }
+            }
+        });
+    }
+
+    private static Models.CredentialBindingUpdate.CredentialSecurityTagArray.Source WriteUpdateManagementTags(ILookup<string, string>? tags)
+    {
+        if (tags is null)
+        {
+            return default;
+        }
+
+        return new Models.CredentialBindingUpdate.CredentialSecurityTagArray.Source((ref Models.CredentialBindingUpdate.CredentialSecurityTagArray.Builder ab) =>
         {
             foreach (IGrouping<string, string> group in tags)
             {
