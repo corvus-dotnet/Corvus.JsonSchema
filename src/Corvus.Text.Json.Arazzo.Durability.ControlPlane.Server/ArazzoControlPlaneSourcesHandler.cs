@@ -181,16 +181,40 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
         string name = (string)parameters.Name;
         Models.SourceUpdate body = parameters.Body;
 
-        // Only the mutable content is carried bytes-to-bytes; the immutable name + type + management tags + created-* audit
-        // are carried forward from the stored source by the store, so the draft omits them. An undefined document keeps the
-        // stored one (a rename without re-upload); a supplied document rotates it.
+        // A present managementTags re-tags the reach scope (§14.2): the caller's non-internal labels replace the old ones
+        // while the deployment-internal tenant tag is (re-)stamped so management is preserved (validated against the
+        // reserved prefix). Absent leaves the tags unchanged — the draft omits them and the store carries them forward. The
+        // immutable name + type + created-* audit are carried forward; an undefined document keeps the stored one.
+        SecurityTagSet managementTags = SecurityTagSet.Empty;
+        if (body.ManagementTags.IsNotUndefined())
+        {
+            try
+            {
+                SecurityTagSet userManagement = SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(body.ManagementTags).Memory);
+                this.access.ValidateUserTags(userManagement);
+                var tagsState = new ManagementTagsState(this.access.InternalTags(), userManagement);
+                managementTags = SecurityTagSet.Build(in tagsState, WriteManagementTags);
+            }
+            catch (ArgumentException ex)
+            {
+                return UpdateSourceResult.BadRequest(Problem("invalid-source", "Invalid source", 400, ex.Message), workspace);
+            }
+
+            // A principal may not re-tag a source to a management scope outside its own reach.
+            if (!managementTags.IsEmpty && !this.access.Current().Admits(AccessVerb.Write, managementTags))
+            {
+                return UpdateSourceResult.BadRequest(
+                    Problem("management-out-of-reach", "Management scope out of reach", 400, "The source's management tags are outside your own management reach."), workspace);
+            }
+        }
+
         using ParsedJsonDocument<RegisteredSource> draft = RegisteredSource.Draft(
             default,
             default,
             (JsonElement)body.Document,
             (JsonElement)body.DisplayName,
             (JsonElement)body.Description,
-            SecurityTagSet.Empty);
+            managementTags);
         ParsedJsonDocument<RegisteredSource>? updated = await this.store.UpdateAsync(name, draft.RootElement, WorkflowEtag.None, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
         if (updated is not { } s)
         {

@@ -195,8 +195,10 @@ public readonly partial struct RegisteredSource
         WriteValueIfPresent(writer, JsonPropertyNames.DisplayNameUtf8, (JsonElement)draft.DisplayName);
         WriteValueIfPresent(writer, JsonPropertyNames.DescriptionUtf8, (JsonElement)draft.Description);
 
-        // Immutable reach scope carried forward from the stored source bytes-to-bytes.
-        WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)this.ManagementTags);
+        // Reach scope (§14.2): an administrator re-tag supplies managementTags on the draft (already merged with the
+        // preserved deployment-internal tags by the handler) → take the draft's; an update that omits them carries the
+        // stored tags forward bytes-to-bytes.
+        WriteValuePreferringDraft(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)draft.ManagementTags, (JsonElement)this.ManagementTags);
 
         // created-* audit carried forward bytes-to-bytes (copy the stored tokens verbatim — no parse/reformat).
         WriteValueIfPresent(writer, JsonPropertyNames.CreatedByUtf8, (JsonElement)this.CreatedBy);

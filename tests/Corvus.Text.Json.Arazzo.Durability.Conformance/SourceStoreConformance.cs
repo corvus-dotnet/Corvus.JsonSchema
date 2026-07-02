@@ -228,7 +228,7 @@ public abstract class SourceStoreConformance
     }
 
     [TestMethod]
-    public async Task Security_tags_round_trip_and_are_immutable_on_update()
+    public async Task Security_tags_round_trip_carry_forward_when_omitted_and_are_replaced_on_re_tag()
     {
         ISourceStore store = await this.NewStoreAsync();
         WorkflowEtag etag;
@@ -239,11 +239,28 @@ public abstract class SourceStoreConformance
             etag = added.RootElement.EtagValue;
         }
 
-        // An update may not change the security tags (the immutable row-authorization scope) — they are carried forward.
-        using ParsedJsonDocument<RegisteredSource> draft = RegisteredSource.Draft("petstore", null, default, "renamed", null, Tenant("globex"));
-        using ParsedJsonDocument<RegisteredSource>? updated = await store.UpdateAsync("petstore", draft.RootElement, etag, "bob", AccessContext.System, default);
-        updated.ShouldNotBeNull();
-        updated!.RootElement.ManagementTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "acme"));
+        // An update that OMITS management tags leaves them unchanged — carried forward bytes-to-bytes.
+        using (ParsedJsonDocument<RegisteredSource> renameOnly = RegisteredSource.Draft("petstore", null, default, "renamed", null, SecurityTagSet.Empty))
+        using (ParsedJsonDocument<RegisteredSource>? unchanged = await store.UpdateAsync("petstore", renameOnly.RootElement, etag, "bob", AccessContext.System, default))
+        {
+            unchanged.ShouldNotBeNull();
+            unchanged!.RootElement.ManagementTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "acme"));
+            etag = unchanged.RootElement.EtagValue;
+        }
+
+        // An update that SUPPLIES management tags re-tags the reach scope: the store replaces them with the given set (the
+        // handler merges in the preserved internal tags, so at the store level it is a straight replace).
+        using (ParsedJsonDocument<RegisteredSource> reTag = RegisteredSource.Draft("petstore", null, default, null, null, Tenant("globex")))
+        using (ParsedJsonDocument<RegisteredSource>? updated = await store.UpdateAsync("petstore", reTag.RootElement, etag, "carol", AccessContext.System, default))
+        {
+            updated.ShouldNotBeNull();
+            updated!.RootElement.ManagementTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "globex"));
+        }
+
+        // The re-tag is durable and the row is still found by name (the create-time key is frozen; lookup is by name+reach).
+        using ParsedJsonDocument<RegisteredSource>? refetched = await store.GetAsync("petstore", AccessContext.System, default);
+        refetched.ShouldNotBeNull();
+        refetched!.RootElement.ManagementTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "globex"));
     }
 
     [TestMethod]
