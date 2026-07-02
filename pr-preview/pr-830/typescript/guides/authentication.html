@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="&gt; This is the authentication companion to the [OpenAPI client guide](/typescript/guides/openapi.html) &#x2014; start there &gt; for generating and consuming the client, then use this reference to wire a token provider, a signing &gt; scheme, or session cookies onto the transport." />
+    <meta name="keywords" content="TypeScript, JSON Schema, Corvus.Text.Json, code generation" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="&gt; This is the authentication companion to the [OpenAPI client guide](/typescript/guides/openapi.html) &#x2014; start there &gt; for generating and consuming the client, then use this reference to wire a token provider, a signing &gt; scheme, or session cookies onto the transport." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="OpenAPI client authentication &#x2014; Corvus.Text.Json TypeScript" />
+    <meta property="article:tag" content="TypeScript" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="article:tag" content="code generation" />
+    <meta property="og:description" content="&gt; This is the authentication companion to the [OpenAPI client guide](/typescript/guides/openapi.html) &#x2014; start there &gt; for generating and consuming the client, then use this reference to wire a token provider, a signing &gt; scheme, or session cookies onto the transport." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
+    <meta property="og:title" content="OpenAPI client authentication &#x2014; Corvus.Text.Json TypeScript" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/typescript/guides/authentication/" />
+    <title>OpenAPI client authentication &#x2014; Corvus.Text.Json TypeScript</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/typescript/guides/authentication/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/typescript/guides/authentication/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-830/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/favicon.svg" />
+    
+</head>
+<body class="">
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-830/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/index.html" class="site-header__link " >Getting Started</a>
+                <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/index.html" class="site-header__link is-active" aria-current=page>Documentation</a>
+                <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/index.html" class="site-header__link " >Examples</a>
+                <a href="/Corvus.JsonSchema/pr-preview/pr-830/playground-typescript/" class="site-header__link" target="_blank" rel="noopener noreferrer" title="TypeScript playground">Playground</a>
+                <a href="/Corvus.JsonSchema/pr-preview/pr-830/getting-started/index.html" class="site-header__link site-header__switch" title="Switch to the C# documentation">C# &rsaquo;</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+        <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/index.html" class="site-header__link">Getting Started</a>
+        <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/index.html" class="site-header__link">Documentation</a>
+        <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/index.html" class="site-header__link">Examples</a>
+        <a href="/Corvus.JsonSchema/pr-preview/pr-830/playground-typescript/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+        <a href="/Corvus.JsonSchema/pr-preview/pr-830/getting-started/index.html" class="site-header__link site-header__switch">Switch to C#</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/index.html">Introduction</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/code-generation.html">Code generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/the-type-surface.html">The type surface</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/reading-and-validating.html">Reading and evaluating</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/value-types.html">Value types &#x2014; brands, numbers, dates &amp; times</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/mutation.html">Mutation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/json-patch.html">JSON Patch and Merge Patch</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/runtime.html">The runtime</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/openapi.html">OpenAPI client generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/authentication.html">OpenAPI client authentication</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/validation.html">Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/references.html">References</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/open-and-closed.html">Open and Closed Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/extending.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/constraining.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/arrays.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/nested-arrays.html">Arrays of Higher Rank</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/tuples.html">Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mixins.html">Mix-in Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/unions.html">Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/discriminated-unions.html">Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/string-enums.html">String Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/numeric-enums.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/maps.html">Maps</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mutation.html">Mutation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/conditional.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/defaults.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/formats.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/json-patch.html">JSON Patch and Merge Patch</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>OpenAPI client authentication</h1>
+<blockquote>
+<p>This is the authentication companion to the <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/openapi.html">OpenAPI client guide</a> — start there
+for generating and consuming the client, then use this reference to wire a token provider, a signing
+scheme, or session cookies onto the transport.</p>
+</blockquote>
+<p>Almost every provider below ends the same way: it hands you a bearer JWT, and you feed that to
+<code>bearerToken(...)</code>. The differences are in how you <em>acquire</em> the token, so each subsection is a small
+acquisition snippet dropped into the same canonical wiring.</p>
+<h2 id="how-it-works">How it works</h2>
+<p>The transport takes an optional <code>AuthenticationProvider</code>. The runtime runs it <strong>once per logical
+<code>send</code></strong> — after the wire request has been composed (URL, headers, body) and <strong>before</strong> any middleware
+or the network dispatch. An async <code>TokenFactory</code> therefore runs once per <code>send</code> (so a token refreshed
+between calls is used on the next one); retries within a send reuse the credential applied at the top:</p>
+<pre><code class="language-typescript">import { FetchApiTransport, bearerToken } from &quot;@endjin/corvus-json-client-runtime&quot;;
+import { ApiStatusClient } from &quot;./api/ApiStatusClient.js&quot;;
+
+const transport = new FetchApiTransport({
+  baseUrl: &quot;https://api.example.com/v1&quot;,
+  authenticationProvider: bearerToken(async (signal) =&gt; await getAccessToken(signal)),
+});
+const client = new ApiStatusClient(transport);
+</code></pre>
+<p>An <code>AuthenticationProvider</code> is just a request mutator:</p>
+<pre><code class="language-typescript">interface AuthenticationProvider {
+  authenticate(request: WireRequest, signal: AbortSignal): void | Promise&lt;void&gt;;
+}
+</code></pre>
+<p>It mutates the composed <code>WireRequest</code> in place — set a header (<code>request.headers.set(...)</code>), append a
+query parameter (<code>request.url</code>), or add a <code>Cookie</code> header. That is all a built-in provider does, and it
+is the seam you implement directly for request signing (see <a href="#request-signing">Request signing</a>). The
+<code>signal</code> is the request's <code>AbortSignal</code>, so an async token fetch cancels with the request.</p>
+<p><strong>Redirects strip credentials cross-origin.</strong> When you enable <code>redirectHandler</code> (or use the browser's
+own redirect following), the runtime removes the <code>Authorization</code> header on a redirect to a different
+origin, so a token minted for your API is never leaked to a redirect target.</p>
+<p><strong>The <code>fetchImpl</code> seam.</strong> For auth mechanisms that live <em>below</em> the request (session cookies, mTLS,
+a custom <code>undici</code> dispatcher) there is no header to set — you override the transport's <code>fetch</code>:</p>
+<pre><code class="language-typescript">const transport = new FetchApiTransport({
+  baseUrl: &quot;https://api.example.com/v1&quot;,
+  fetchImpl: (input, init) =&gt; fetch(input, { ...init, credentials: &quot;include&quot; }),
+});
+</code></pre>
+<p><strong>Scope constants come from the spec.</strong> For an OpenAPI 3.0, 3.1, or 3.2 spec that declares
+<code>securitySchemes</code>, the generated client exposes a <code>static readonly securitySchemes</code> (token/authorization
+URLs, available scopes, API-key name and location) and a <code>static readonly securityRequirements</code>
+(per-operation and unioned OAuth2 scopes) block, both <code>as const</code>. Read scopes from these rather than
+hardcoding them, so a spec change flows through to your token requests.</p>
+<pre><code class="language-typescript">ApiStatusClient.securitySchemes.oauth2TokenUrl;          // &quot;https://auth.example.com/token&quot;
+ApiStatusClient.securitySchemes.oauth2AvailableScopes;   // [&quot;read:pets&quot;, &quot;write:pets&quot;]
+ApiStatusClient.securityRequirements.allOauth2Scopes;    // [&quot;read:pets&quot;, &quot;write:pets&quot;]
+ApiStatusClient.securityRequirements.updatePetOauth2Scopes; // [&quot;write:pets&quot;]
+</code></pre>
+<h2 id="built-in-providers">Built-in providers</h2>
+<p>Three providers cover the OpenAPI <code>http</code> (bearer / basic) and <code>apiKey</code> schemes directly:</p>
+<pre><code class="language-typescript">import { bearerToken, apiKey, basicAuth } from &quot;@endjin/corvus-json-client-runtime&quot;;
+
+// Bearer — a static token, or a factory refreshed once per send:
+bearerToken(&quot;eyJ…&quot;);
+bearerToken(async (signal) =&gt; await getFreshToken(signal));
+
+// API key — in a header, query parameter, or cookie:
+apiKey(&quot;secret&quot;, &quot;X-Api-Key&quot;, &quot;header&quot;);
+apiKey(&quot;secret&quot;, &quot;api_key&quot;, &quot;query&quot;);
+
+// HTTP Basic:
+basicAuth(&quot;user&quot;, &quot;pass&quot;);
+</code></pre>
+<p>For an <code>apiKey</code> scheme the generated <code>securitySchemes</code> block carries the name and location straight from
+the spec, so you can keep those in sync too:</p>
+<pre><code class="language-typescript">apiKey(
+  process.env.API_KEY!,
+  ApiStatusClient.securitySchemes.apiKeyKeyName,      // &quot;X-API-Key&quot;
+  ApiStatusClient.securitySchemes.apiKeyKeyLocation,  // &quot;header&quot;
+);
+</code></pre>
+<h2 id="scopes-from-the-spec">Scopes from the spec</h2>
+<p>When the token source lets you specify scopes, take them from the generated union so a spec change can
+never silently drop one:</p>
+<pre><code class="language-typescript">import { bearerToken } from &quot;@endjin/corvus-json-client-runtime&quot;;
+import { ApiStatusClient } from &quot;./api/ApiStatusClient.js&quot;;
+
+const provider = bearerToken(async (signal) =&gt;
+  (await cred.getToken(ApiStatusClient.securityRequirements.allOauth2Scopes, { abortSignal: signal })).token,
+);
+</code></pre>
+<p>Use <code>securityRequirements.{operation}Oauth2Scopes</code> when you want a minimal, per-operation token instead
+of the union.</p>
+<h2 id="browser-spa-providers">Browser / SPA providers</h2>
+<p>These are browser SDKs — they run the interactive/silent flow and hand you a token to wrap. In every
+case, request the <strong>access-token scopes your API validates</strong>, not the OIDC <code>openid</code>/<code>profile</code> scopes
+(those yield an ID token, which is for identity, not for calling an API). Where the token is an ID token
+(Firebase, optionally Cognito), only send it if your API is designed to verify ID tokens.</p>
+<h3 id="microsoft-entra-id-msal.js">Microsoft Entra ID — MSAL.js</h3>
+<p><code>@azure/msal-browser</code>. Silent first, interactive on <code>InteractionRequiredAuthError</code>:</p>
+<pre><code class="language-typescript">import { PublicClientApplication, InteractionRequiredAuthError } from &quot;@azure/msal-browser&quot;;
+
+const pca = new PublicClientApplication({
+  auth: { clientId: &quot;&lt;client-id&gt;&quot;, authority: &quot;https://login.microsoftonline.com/&lt;tenant&gt;&quot; },
+});
+await pca.initialize();                               // required in msal-browser v5
+const scopes = [&quot;api://&lt;app-id-uri&gt;/access_as_user&quot;]; // API scopes, NOT &quot;.default&quot; for a delegated flow
+
+bearerToken(async () =&gt; {
+  const account = pca.getActiveAccount() ?? pca.getAllAccounts()[0];
+  try {
+    return (await pca.acquireTokenSilent({ scopes, account })).accessToken;
+  } catch (e) {
+    if (e instanceof InteractionRequiredAuthError) return (await pca.acquireTokenPopup({ scopes })).accessToken;
+    throw e;
+  }
+});
+</code></pre>
+<p><code>acquireTokenSilent</code> reads from cache / a hidden iframe, so it is cheap to call per request. Request
+access-token scopes (<code>api://…/scope</code>) that match the spec's OAuth2 flow — <code>openid</code>/<code>profile</code> return an
+ID token, which is not for calling APIs.</p>
+<p>Targets <code>@azure/msal-browser</code> v5 — call <code>await pca.initialize()</code> before the first token call. See the
+<a href="https://learn.microsoft.com/entra/msal/javascript/browser/about-msal-browser">MSAL.js browser docs</a>.</p>
+<h3 id="auth0-auth0-spa-js">Auth0 — auth0-spa-js</h3>
+<p><code>@auth0/auth0-spa-js</code>. The <strong><code>audience</code> is mandatory</strong> to get a real JWT access token for your API:</p>
+<pre><code class="language-typescript">import { createAuth0Client } from &quot;@auth0/auth0-spa-js&quot;;
+
+const auth0 = await createAuth0Client({
+  domain: &quot;&lt;tenant&gt;.auth0.com&quot;,
+  clientId: &quot;&lt;client-id&gt;&quot;,
+  authorizationParams: { audience: &quot;https://api.example.com&quot;, redirect_uri: window.location.origin },
+});
+
+bearerToken(() =&gt;
+  auth0.getTokenSilently({ authorizationParams: { audience: &quot;https://api.example.com&quot;, scope: &quot;read:pets&quot; } }),
+);
+</code></pre>
+<p>Without an <code>audience</code>, Auth0 returns an opaque token only usable against <code>/userinfo</code>.
+<code>getTokenSilently</code> throws <code>login_required</code> / <code>consent_required</code> when interaction is needed — catch those
+and call <code>loginWithRedirect</code> / <code>loginWithPopup</code>.</p>
+<p>Targets <code>@auth0/auth0-spa-js</code> v2 (the current major) — the <code>createAuth0Client</code> factory and
+<code>authorizationParams</code> shape shown are v2. See the <a href="https://auth0.com/docs/libraries/auth0-single-page-app-sdk">Auth0 SPA SDK docs</a>.</p>
+<h3 id="okta-okta-auth-js">Okta — okta-auth-js</h3>
+<p><code>@okta/okta-auth-js</code>. Use the async, refresh-aware <code>getOrRenewAccessToken()</code>, <strong>not</strong> the synchronous
+<code>getAccessToken()</code> (which returns the cached string without renewing):</p>
+<pre><code class="language-typescript">import { OktaAuth } from &quot;@okta/okta-auth-js&quot;;
+
+const oktaAuth = new OktaAuth({
+  issuer: &quot;https://&lt;org&gt;.okta.com/oauth2/default&quot;,
+  clientId: &quot;&lt;client-id&gt;&quot;,
+  redirectUri: window.location.origin + &quot;/callback&quot;,
+  scopes: [&quot;openid&quot;, &quot;profile&quot;, &quot;pets:read&quot;],
+  tokenManager: { autoRenew: true },
+});
+
+bearerToken(async () =&gt; (await oktaAuth.getOrRenewAccessToken()) ?? &quot;&quot;);
+</code></pre>
+<p>Ensure the API scope (<code>pets:read</code>) is in <code>scopes</code> and matches the spec. With <code>autoRenew: true</code> the token
+manager renews shortly before expiry. (Pin your <code>@okta/okta-auth-js</code> version and check its typings — the
+synchronous-vs-async getter split is easy to get wrong.)</p>
+<p>Targets <code>@okta/okta-auth-js</code> v8 (the current major), where <code>getOrRenewAccessToken</code> is present. The
+synchronous <code>getAccessToken()</code> vs async <code>getOrRenewAccessToken()</code> distinction is the easy trap — call the
+async one so the token is renewed rather than returned stale. See the <a href="https://developer.okta.com/docs/guides/auth-js/main/">Okta Auth JS docs</a>.</p>
+<h3 id="firebase-authentication-firebaseauth">Firebase Authentication — firebase/auth</h3>
+<p><code>firebase</code> (modular <code>firebase/auth</code>). Firebase gives you an <strong>ID token</strong>, not an OAuth access token:</p>
+<pre><code class="language-typescript">import { getAuth, getIdToken } from &quot;firebase/auth&quot;;
+
+const auth = getAuth();
+bearerToken(async () =&gt; {
+  const user = auth.currentUser;
+  if (!user) throw new Error(&quot;not signed in&quot;);
+  return getIdToken(user);            // getIdToken(user, /* forceRefresh */ true) to force
+});
+</code></pre>
+<p>Only appropriate if your API verifies Firebase ID tokens (there are no OAuth scopes). ID tokens expire
+in ~1 hour; <code>getIdToken(user)</code> auto-refreshes near expiry, or pass <code>true</code> to force. The server must
+verify with the Firebase Admin SDK / JWKS.</p>
+<p>Targets <code>firebase</code> v12 (the current major), using the modular <code>firebase/auth</code> imports shown (the
+namespaced <code>firebase.auth()</code> API was removed after v8). See the <a href="https://firebase.google.com/docs/web/setup">Firebase JS SDK setup docs</a>.</p>
+<h3 id="aws-cognito-aws-amplifyauth">AWS Cognito — aws-amplify/auth</h3>
+<p><code>aws-amplify</code> (import from <code>aws-amplify/auth</code>, Amplify v6 / Gen 2). Choose the <strong>access</strong> or <strong>ID</strong> token
+per what your API's authorizer expects:</p>
+<pre><code class="language-typescript">import { fetchAuthSession } from &quot;aws-amplify/auth&quot;;
+
+bearerToken(async () =&gt; {
+  const { tokens } = await fetchAuthSession();     // { forceRefresh: true } to force
+  return tokens?.accessToken?.toString() ?? &quot;&quot;;    // or tokens?.idToken?.toString()
+});
+</code></pre>
+<p>Amplify v6 renamed the whole auth surface — it is <code>fetchAuthSession()</code> from <code>aws-amplify/auth</code>, not v5's
+<code>Auth.currentSession()</code>. A Cognito <strong>access token</strong> carries <code>scope</code> (API Gateway / custom scopes); the
+<strong>ID token</strong> carries user-identity claims. <code>fetchAuthSession()</code> auto-refreshes when expired if a refresh
+token exists.</p>
+<p>Targets <code>aws-amplify</code> v6 (Gen 2, the current major): the v5→v6 rename replaced <code>Auth.currentSession()</code>
+with the functional <code>fetchAuthSession()</code> shown, so a v5 project needs the <a href="https://docs.amplify.aws/gen1/javascript/build-a-backend/auth/auth-migration-guide/">migration guide</a>.
+See the <a href="https://docs.amplify.aws/">Amplify auth docs</a>.</p>
+<h3 id="google-identity-services-gis">Google Identity Services (GIS)</h3>
+<p>The GIS script (<code>https://accounts.google.com/gsi/client</code>). <code>initTokenClient</code> is <strong>callback-based</strong>, so
+wrap it in a promise:</p>
+<pre><code class="language-typescript">// &lt;script src=&quot;https://accounts.google.com/gsi/client&quot; async&gt;&lt;/script&gt;
+bearerToken(
+  () =&gt;
+    new Promise&lt;string&gt;((resolve, reject) =&gt; {
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: &quot;&lt;client-id&gt;.apps.googleusercontent.com&quot;,
+        scope: &quot;https://www.googleapis.com/auth/drive.readonly&quot;,
+        callback: (r) =&gt; (r.error ? reject(r) : resolve(r.access_token)),
+      });
+      tokenClient.requestAccessToken();   // may show a consent popup on first use
+    }),
+);
+</code></pre>
+<p>The GIS <strong>token model</strong> yields a Google-API <strong>access token</strong> (~1 hour, no browser refresh token) — good
+for calling Google APIs, and for your own API only if it accepts Google access tokens. The callback
+fires on every <code>requestAccessToken()</code> and the first call may prompt for consent, so don't call it
+outside a user gesture expecting silence.</p>
+<p>Loaded from the versionless GIS script (<code>https://accounts.google.com/gsi/client</code>) — there is no npm
+package to pin, but the <code>google.accounts.oauth2</code> token-model API shown replaced the retired
+<code>gapi.auth2</code>/Google Sign-In JS library, so older <code>gapi</code>-based snippets no longer apply. See the
+<a href="https://developers.google.com/identity/oauth2/web/guides/use-token-model">GIS token-model guide</a>.</p>
+<h3 id="clerk-clerkclerk-js">Clerk — @clerk/clerk-js</h3>
+<p><code>@clerk/clerk-js</code>. <code>session.getToken()</code> returns a short-lived, self-caching session JWT:</p>
+<pre><code class="language-typescript">import { Clerk } from &quot;@clerk/clerk-js&quot;;
+
+const clerk = new Clerk(&quot;&lt;publishable-key&gt;&quot;);
+await clerk.load();
+
+bearerToken(async () =&gt; (await clerk.session?.getToken()) ?? &quot;&quot;);
+// getToken({ template: &quot;my-api&quot; }) mints a JWT shaped for a specific downstream API.
+</code></pre>
+<p><code>getToken()</code> caches and refreshes in the background, so <code>await</code> it fresh per request rather than caching
+it yourself. <code>clerk.session</code> is <code>null</code> until <code>await clerk.load()</code> completes and a user is signed in — the
+<code>?.</code> returns <code>undefined</code> when signed out, which the <code>?? &quot;&quot;</code> handles. In v6, <code>getToken()</code> now <strong>throws</strong> a
+<code>ClerkOfflineError</code> when the device is offline (rather than returning <code>null</code>), so wrap the call if you
+need to tolerate that.</p>
+<p>Targets <code>@clerk/clerk-js</code> v6 (&quot;Core 3&quot;, the current major): the <code>new Clerk(publishableKey)</code> +
+<code>await clerk.load()</code> + <code>session.getToken()</code> shape shown is v6. See the <a href="https://clerk.com/docs">Clerk docs</a>.</p>
+<h3 id="supabase-supabasesupabase-js">Supabase — @supabase/supabase-js</h3>
+<p><code>@supabase/supabase-js</code>. <code>auth.getSession()</code> returns <code>access_token</code> (a JWT), refreshing if needed:</p>
+<pre><code class="language-typescript">import { createClient } from &quot;@supabase/supabase-js&quot;;
+
+const supabase = createClient(&quot;&lt;project-url&gt;&quot;, &quot;&lt;anon-key&gt;&quot;);
+
+bearerToken(async () =&gt; {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? &quot;&quot;;
+});
+</code></pre>
+<p>For a pure browser SPA calling your own API, <code>getSession().access_token</code> is the intended path. Supabase
+warns the stored session may be inauthentic in cookie-based/server contexts — use <code>getUser()</code> (which
+revalidates with the server) when authenticity matters.</p>
+<p>Targets <code>@supabase/supabase-js</code> v2 (the current major) — the async <code>auth.getSession()</code>/<code>getUser()</code>
+methods shown are v2. See the <a href="https://supabase.com/docs/reference/javascript/auth-getsession">Supabase getSession docs</a>.</p>
+<h3 id="session-cookies">Session cookies</h3>
+<p>Cookie-based sessions (a same-site API, or auth handled by a reverse proxy) aren't a token provider —
+skip <code>authenticationProvider</code> entirely and send credentials via <code>fetchImpl</code>:</p>
+<pre><code class="language-typescript">const transport = new FetchApiTransport({
+  baseUrl: &quot;https://api.example.com/v1&quot;,
+  fetchImpl: (input, init) =&gt; fetch(input, { ...init, credentials: &quot;include&quot; }),
+});
+const client = new ApiStatusClient(transport);
+</code></pre>
+<p>Cross-origin cookies require the server to send <code>Access-Control-Allow-Credentials: true</code> <strong>and</strong> a
+specific <code>Access-Control-Allow-Origin</code> (not <code>*</code>), and the cookie needs <code>SameSite=None; Secure</code> to travel
+cross-site. Cookie auth also needs CSRF defence (an anti-forgery token, or an <code>Origin</code> / <code>Sec-Fetch-Site</code>
+check server-side) that bearer flows don't. Same-site deployments are far simpler.</p>
+<h2 id="node-server-providers">Node / server providers</h2>
+<p>On a server the credential libraries cache and refresh internally, so calling their token accessor per
+request (inside the <code>bearerToken</code> factory) is cheap — don't re-create the credential object per request.</p>
+<h3 id="azure-identity-incl.managed-identity">Azure Identity (incl. Managed Identity)</h3>
+<p><code>@azure/identity</code>. <code>DefaultAzureCredential</code> falls back through Managed Identity, environment, and CLI
+credentials; the SDK caches and refreshes, so calling <code>getToken</code> per request is fine:</p>
+<pre><code class="language-typescript">import { DefaultAzureCredential } from &quot;@azure/identity&quot;;
+import { FetchApiTransport, bearerToken } from &quot;@endjin/corvus-json-client-runtime&quot;;
+
+const cred = new DefaultAzureCredential();            // or ManagedIdentityCredential / ClientSecretCredential(...)
+const scope = &quot;api://&lt;app-id&gt;/.default&quot;;
+
+const transport = new FetchApiTransport({
+  baseUrl: &quot;https://api.example.com/v1&quot;,
+  authenticationProvider: bearerToken(async (signal) =&gt; {
+    const t = await cred.getToken(scope, { abortSignal: signal });
+    if (!t) throw new Error(&quot;No Azure token&quot;);
+    return t.token;
+  }),
+});
+</code></pre>
+<p>Managed Identity works only on Azure hosts that inject it (App Service, Functions, Container Apps, AKS
+with workload identity, VMs) — locally <code>DefaultAzureCredential</code> uses env / CLI / VS credentials. Use the
+resource's <code>/.default</code> scope for an app-only token; a bare resource scope throws <code>AADSTS70011</code>.</p>
+<p>Targets <code>@azure/identity</code> v4 (the current major): <code>getToken</code> returns <code>AccessToken | null</code> with
+<code>expiresOnTimestamp</code>. See the <a href="https://learn.microsoft.com/javascript/api/overview/azure/identity-readme">Azure Identity for JavaScript docs</a>.</p>
+<h3 id="google-auth-library">Google Auth Library</h3>
+<p><code>google-auth-library</code>. Application Default Credentials come from the environment or the GCP metadata
+server. For a Google <strong>access token</strong>:</p>
+<pre><code class="language-typescript">import { GoogleAuth } from &quot;google-auth-library&quot;;
+import { bearerToken } from &quot;@endjin/corvus-json-client-runtime&quot;;
+
+const auth = new GoogleAuth({ scopes: &quot;https://www.googleapis.com/auth/cloud-platform&quot; });
+bearerToken(async () =&gt; {
+  const { token } = await auth.getAccessToken();      // v10 returns { token }
+  if (!token) throw new Error(&quot;No Google access token&quot;);
+  return token;
+});
+</code></pre>
+<p>For a private Cloud Run service or an IAP-protected resource you need an <strong>ID token</strong> whose <code>aud</code> is the
+service URL / IAP client ID:</p>
+<pre><code class="language-typescript">const audience = &quot;https://my-svc-xxxx-uc.a.run.app&quot;; // Cloud Run URL, or the IAP OAuth client ID
+const auth = new GoogleAuth();
+const idClient = await auth.getIdTokenClient(audience);
+bearerToken(() =&gt; idClient.idTokenProvider.fetchIdToken(audience)); // the client caches until near expiry
+</code></pre>
+<p>Access token vs ID token is the trap: Google APIs want the access token; Cloud Run / IAP want the ID
+token. On GCP hosts ADC comes from the metadata server; locally set <code>GOOGLE_APPLICATION_CREDENTIALS</code> or
+<code>gcloud auth application-default login</code>.</p>
+<p>Targets <code>google-auth-library</code> v10 (the current major): <code>auth.getAccessToken()</code> returns <code>{ token }</code> (read
+<code>.token</code>, as shown). See the <a href="https://github.com/googleapis/google-auth-library-nodejs">google-auth-library docs</a>
+and the <a href="https://cloud.google.com/run/docs/authenticating/service-to-service">Cloud Run service-to-service auth guide</a>.</p>
+<h3 id="generic-oauth2-client-credentials">Generic OAuth2 client-credentials</h3>
+<p>No SDK required — POST to the token endpoint with <code>fetch</code>, cache the token until shortly before it
+expires, and read the endpoint and scopes from the generated constants:</p>
+<pre><code class="language-typescript">import { bearerToken } from &quot;@endjin/corvus-json-client-runtime&quot;;
+import { ApiStatusClient } from &quot;./api/ApiStatusClient.js&quot;;
+
+const tokenUrl = ApiStatusClient.securitySchemes.oauth2TokenUrl;               // the spec's tokenUrl
+const scope = ApiStatusClient.securityRequirements.allOauth2Scopes.join(&quot; &quot;);  // space-separated
+let cache: { token: string; exp: number } | undefined;
+
+const provider = bearerToken(async (signal) =&gt; {
+  if (cache &amp;&amp; Date.now() &lt; cache.exp) return cache.token;
+  const body = new URLSearchParams({
+    grant_type: &quot;client_credentials&quot;, scope,
+    client_id: process.env.CLIENT_ID!, client_secret: process.env.CLIENT_SECRET!,
+  });
+  const res = await fetch(tokenUrl, {
+    method: &quot;POST&quot;, body, signal,
+    headers: { &quot;content-type&quot;: &quot;application/x-www-form-urlencoded&quot; },
+  });
+  if (!res.ok) throw new Error(`token endpoint ${res.status}`);
+  const j = (await res.json()) as { access_token: string; expires_in: number };
+  cache = { token: j.access_token, exp: Date.now() + (j.expires_in - 60) * 1000 }; // 60s skew buffer
+  return cache.token;
+});
+</code></pre>
+<p>Cache until shortly <em>before</em> <code>expires_in</code> (a 30–60 s skew buffer) — a per-request POST to the IdP will
+rate-limit you. Scopes are a <strong>space-separated</strong> string in the form body. For multi-tenant use, key the
+cache by <code>(clientId, scope)</code> and guard against a concurrent-refresh stampede.</p>
+<p>No SDK to version — the request body follows the OAuth 2.0 client-credentials grant. See
+<a href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.4">RFC 6749 §4.4</a> for the request/response shape.</p>
+<h3 id="mtls-client-certificate">mTLS (client certificate)</h3>
+<p>There is no header to set, so mTLS goes through <code>fetchImpl</code> with an <code>undici</code> <code>Agent</code>, or through the
+Node transport with an <code>https.Agent</code>.</p>
+<p>Option A — <code>undici</code> <code>Agent</code> via <code>fetchImpl</code>:</p>
+<pre><code class="language-typescript">import { Agent, fetch as undiciFetch } from &quot;undici&quot;;
+import { readFileSync } from &quot;node:fs&quot;;
+import { FetchApiTransport } from &quot;@endjin/corvus-json-client-runtime&quot;;
+
+const agent = new Agent({ connect: {
+  cert: readFileSync(&quot;client.crt&quot;, &quot;utf8&quot;),
+  key: readFileSync(&quot;client.key&quot;, &quot;utf8&quot;),
+  // ca: readFileSync(&quot;ca.crt&quot;, &quot;utf8&quot;),   // custom server CA if needed
+  rejectUnauthorized: true,
+} });
+
+const transport = new FetchApiTransport({
+  baseUrl: &quot;https://mtls.example.com&quot;,
+  // undici's fetch accepts a per-request `dispatcher`; the DOM RequestInit type omits it, so cast.
+  fetchImpl: ((input, init) =&gt;
+    undiciFetch(input as any, { ...(init as any), dispatcher: agent })) as unknown as typeof fetch,
+});
+</code></pre>
+<p>Option B — <code>NodeApiTransport</code> with an <code>https.Agent</code> (no undici dependency):</p>
+<pre><code class="language-typescript">import { Agent } from &quot;node:https&quot;;
+import { readFileSync } from &quot;node:fs&quot;;
+import { NodeApiTransport } from &quot;@endjin/corvus-json-client-runtime/node&quot;;
+
+const httpsAgent = new Agent({ cert: readFileSync(&quot;client.crt&quot;), key: readFileSync(&quot;client.key&quot;) });
+const transport = new NodeApiTransport({ baseUrl: &quot;https://mtls.example.com&quot;, httpsAgent });
+</code></pre>
+<p>Import <code>fetch</code> and <code>Agent</code> from the <strong>same <code>undici</code> you installed</strong> rather than mixing the global
+<code>fetch</code> with a standalone-undici <code>Agent</code> — undici 8 changed the dispatcher interface, so a per-request
+<code>dispatcher</code> from a standalone <code>undici</code> is incompatible with a <code>fetch</code> backed by a different undici.
+Option B avoids undici entirely. Combine mTLS with a token provider by passing <code>authenticationProvider</code>
+alongside the transport.</p>
+<p>Option A targets <code>undici</code> v8 (the current major): its <code>dispatcher</code> interface differs from the undici
+built into Node's global <code>fetch</code>, so the standalone <code>undici</code> you import must match the one backing your
+<code>fetch</code>. Option B uses only the built-in <code>node:https</code> <code>Agent</code>. See the <a href="https://github.com/nodejs/undici">undici <code>Agent</code> docs</a> and
+<a href="https://nodejs.org/api/https.html#class-httpsagent">Node.js <code>https.Agent</code> docs</a>.</p>
+<h2 id="request-signing">Request signing</h2>
+<p>When the credential depends on the request itself — the method, path, query, and body — implement an
+<code>AuthenticationProvider</code> directly and mutate the composed <code>WireRequest</code>. The runtime buffers <code>bytes</code>
+bodies before dispatch, so the body is available to hash (a <code>stream</code> body cannot be signed as-is).</p>
+<h3 id="aws-sigv4">AWS SigV4</h3>
+<p><code>@smithy/signature-v4</code> + <code>@aws-crypto/sha256-js</code> + <code>@smithy/protocol-http</code> +
+<code>@aws-sdk/credential-providers</code>. SigV4 signs the method, host, path, query, headers, <strong>and</strong> body, so it
+must run in the provider where those are known:</p>
+<pre><code class="language-typescript">import { SignatureV4 } from &quot;@smithy/signature-v4&quot;;
+import { Sha256 } from &quot;@aws-crypto/sha256-js&quot;;
+import { HttpRequest } from &quot;@smithy/protocol-http&quot;;
+import { fromNodeProviderChain } from &quot;@aws-sdk/credential-providers&quot;;
+import type { AuthenticationProvider } from &quot;@endjin/corvus-json-client-runtime&quot;;
+
+const signer = new SignatureV4({
+  service: &quot;execute-api&quot;, region: &quot;eu-west-1&quot;,
+  credentials: fromNodeProviderChain(), sha256: Sha256,
+});
+
+const sigv4Provider: AuthenticationProvider = {
+  async authenticate(request) {
+    const u = new URL(request.url);
+    const query = Object.fromEntries(u.searchParams);         // SigV4 signs the query too
+    const bodyBytes = request.body.kind === &quot;bytes&quot; ? request.body.content : undefined;
+    const signed = await signer.sign(new HttpRequest({
+      method: request.method, protocol: u.protocol, hostname: u.hostname,
+      path: u.pathname, query,
+      headers: { host: u.host, ...Object.fromEntries(request.headers) },   // host header is mandatory
+      body: bodyBytes,
+    }));
+    for (const [k, v] of Object.entries(signed.headers)) request.headers.set(k, v as string);
+  },
+};
+</code></pre>
+<p>The <code>host</code> header is <strong>mandatory</strong> (a missing one is a 403) and you must sign the query string, not just
+the path. Signatures are time-boxed (~5 min), so <strong>clock skew</strong> on the host causes
+<code>SignatureDoesNotMatch</code> — sync the clock (NTP). <code>service</code> is <code>execute-api</code> for API Gateway, <code>lambda</code> for
+Lambda function URLs. Temporary/role credentials carry a <code>sessionToken</code>, which <code>fromNodeProviderChain()</code>
+supplies automatically. Because the provider already runs once per send, the signature is never replayed
+across a retry.</p>
+<p>Package caveat: use <strong><code>@smithy/signature-v4</code></strong> v5 with <code>HttpRequest</code> from <code>@smithy/protocol-http</code> v5,
+<code>fromNodeProviderChain</code> from <code>@aws-sdk/credential-providers</code> v3, and <code>Sha256</code> from <code>@aws-crypto/sha256-js</code>
+v5. The older <code>@aws-sdk/signature-v4</code> and <code>@aws-sdk/protocol-http</code> packages are <strong>deprecated</strong> (frozen at
+3.374.0) — don't use them. See the
+<a href="https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-smithy-signature-v4/"><code>@smithy/signature-v4</code> docs</a>.</p>
+<h3 id="hmac-shared-secret">HMAC (shared secret)</h3>
+<p>Node's built-in <code>crypto</code>. The <strong>string-to-sign must match the server byte-for-byte</strong> — canonicalize the
+path/query exactly as the server does:</p>
+<pre><code class="language-typescript">import { createHmac, createHash } from &quot;node:crypto&quot;;
+import type { AuthenticationProvider } from &quot;@endjin/corvus-json-client-runtime&quot;;
+
+function hmacProvider(keyId: string, secret: string): AuthenticationProvider {
+  return {
+    authenticate(request) {
+      const u = new URL(request.url);
+      const ts = new Date().toISOString();
+      const body = request.body.kind === &quot;bytes&quot; ? request.body.content : new Uint8Array();
+      const bodyHash = createHash(&quot;sha256&quot;).update(body).digest(&quot;hex&quot;);
+      const stringToSign = `${request.method}\n${u.pathname}${u.search}\n${ts}\n${bodyHash}`;
+      const sig = createHmac(&quot;sha256&quot;, secret).update(stringToSign).digest(&quot;base64&quot;);
+      request.headers.set(&quot;X-Date&quot;, ts);
+      request.headers.set(&quot;Authorization&quot;, `HMAC ${keyId}:${sig}`);
+    },
+  };
+}
+</code></pre>
+<p>Include the timestamp header <strong>inside</strong> the signature and validate a tight window server-side to defend
+against replay — that makes clock skew a live failure mode. Sign the body <em>hash</em> (keeps the header
+small), keep the secret out of source (env / secret store). For an edge runtime without <code>node:crypto</code>,
+use <code>crypto.subtle.importKey(...)</code> + <code>crypto.subtle.sign(&quot;HMAC&quot;, key, ...)</code> and base64 the result.</p>
+<p>No package to pin — this is Node's built-in <code>node:crypto</code> (or the platform <code>crypto.subtle</code>). See the
+<a href="https://nodejs.org/api/crypto.html"><code>node:crypto</code> docs</a> / <a href="https://developer.mozilla.org/docs/Web/API/SubtleCrypto/sign">Web Crypto <code>subtle.sign</code> docs</a>.</p>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/openapi.html">OpenAPI client generation</a> — generating and consuming the TypeScript client.</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/runtime.html">The runtime</a> — the model runtime the generated clients build on.</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/docs/open-api.html">OpenAPI Code Generation (C#)</a> — the C# reference, whose <code>Authentication</code> section
+mirrors these providers with <code>HttpClient</code> / <code>DelegatingHandler</code> snippets.</li>
+</ul>
+        </div>
+    </main>
+</div>
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-830/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-830/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-830/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-830/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-830/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-830/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="Nineteen worked examples of generating TypeScript from JSON Schema: objects, references, composition, arrays, tuples, unions, enums, maps, mutation, conditionals, defaults, and formats." />
+    <meta name="keywords" content="TypeScript, JSON Schema, examples, recipes, code generation" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="Nineteen worked examples of generating TypeScript from JSON Schema." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="TypeScript Examples &#x2014; Corvus.Text.Json" />
+    <meta property="article:tag" content="TypeScript" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="examples" />
+    <meta property="article:tag" content="recipes" />
+    <meta property="article:tag" content="code generation" />
+    <meta property="og:description" content="Nineteen worked examples of generating TypeScript from JSON Schema." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
+    <meta property="og:title" content="TypeScript Examples &#x2014; Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/typescript/examples/" />
+    <title>TypeScript Examples &#x2014; Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/typescript/examples/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/typescript/examples/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-830/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/favicon.svg" />
+    
+</head>
+<body class="">
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-830/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/index.html" class="site-header__link " >Getting Started</a>
+                <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/index.html" class="site-header__link " >Documentation</a>
+                <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/index.html" class="site-header__link is-active" aria-current=page>Examples</a>
+                <a href="/Corvus.JsonSchema/pr-preview/pr-830/playground-typescript/" class="site-header__link" target="_blank" rel="noopener noreferrer" title="TypeScript playground">Playground</a>
+                <a href="/Corvus.JsonSchema/pr-preview/pr-830/getting-started/index.html" class="site-header__link site-header__switch" title="Switch to the C# documentation">C# &rsaquo;</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+        <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/index.html" class="site-header__link">Getting Started</a>
+        <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/index.html" class="site-header__link">Documentation</a>
+        <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/index.html" class="site-header__link">Examples</a>
+        <a href="/Corvus.JsonSchema/pr-preview/pr-830/playground-typescript/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+        <a href="/Corvus.JsonSchema/pr-preview/pr-830/getting-started/index.html" class="site-header__link site-header__switch">Switch to C#</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/index.html">Introduction</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/code-generation.html">Code generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/the-type-surface.html">The type surface</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/reading-and-validating.html">Reading and evaluating</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/value-types.html">Value types &#x2014; brands, numbers, dates &amp; times</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/mutation.html">Mutation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/json-patch.html">JSON Patch and Merge Patch</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/runtime.html">The runtime</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/openapi.html">OpenAPI client generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/authentication.html">OpenAPI client authentication</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/validation.html">Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/references.html">References</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/open-and-closed.html">Open and Closed Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/extending.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/constraining.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/arrays.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/nested-arrays.html">Arrays of Higher Rank</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/tuples.html">Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mixins.html">Mix-in Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/unions.html">Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/discriminated-unions.html">Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/string-enums.html">String Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/numeric-enums.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/maps.html">Maps</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mutation.html">Mutation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/conditional.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/defaults.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/formats.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/json-patch.html">JSON Patch and Merge Patch</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Example Recipes</h1>
+            <p>
+                Worked examples of generating TypeScript from JSON Schema, one construct at a time. Each recipe is
+                a schema, the generated TypeScript, and a runnable demo. Run them from the
+                <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/docs/typescript/examples">examples directory</a>
+                in the repository (<code>npm install</code>, then <code>npm run build</code> and
+                <code>node dist/&lt;recipe&gt;/demo.js</code>).
+            </p>
+            <div class="card-grid" style="margin-top:var(--space-lg)">
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/data-object.html">
+                            <span class="card__tag">001</span>
+                            <h3 class="card__title">Simple Data Objects</h3>
+                            <p class="card__body">This recipe demonstrates how to define a simple data object of primitive values in JSON Schema, and how the Corvus.Text.Json TypeScript generator produces an idiomatic readonly interface plus a small, allocation-lean API to evaluate, read, build and mutate it.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/validation.html">
+                            <span class="card__tag">002</span>
+                            <h3 class="card__title">Validation</h3>
+                            <p class="card__body">This recipe adds constraints to a data object &#x2014; length, range, pattern, numeric step, format &#x2014; and shows that the generated Registration.evaluate enforces them while the interface stays the plain shape.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/references.html">
+                            <span class="card__tag">003</span>
+                            <h3 class="card__title">References</h3>
+                            <p class="card__body">This recipe shows how a schema reuses a common type with $ref and $defs, and how that becomes one shared interface with its own generated API.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/open-and-closed.html">
+                            <span class="card__tag">004</span>
+                            <h3 class="card__title">Open and Closed Objects</h3>
+                            <p class="card__body">This recipe shows the difference between an open object (unknown properties allowed) and a closed one (unevaluatedProperties: false), and how each is generated.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/extending.html">
+                            <span class="card__tag">005</span>
+                            <h3 class="card__title">Extending a Base Type</h3>
+                            <p class="card__body">This recipe composes a base type with extra properties using allOf &#x2014; the JSON Schema equivalent of inheritance.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/constraining.html">
+                            <span class="card__tag">006</span>
+                            <h3 class="card__title">Constraining a Base Type</h3>
+                            <p class="card__body">This recipe uses allOf not to add properties but to tighten a base type&#x27;s constraints.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/arrays.html">
+                            <span class="card__tag">007</span>
+                            <h3 class="card__title">Strongly Typed Arrays</h3>
+                            <p class="card__body">This recipe shows a homogeneous array of objects: items types every element, and the array reads as a readonly T[].</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/nested-arrays.html">
+                            <span class="card__tag">008</span>
+                            <h3 class="card__title">Arrays of Higher Rank</h3>
+                            <p class="card__body">This recipe shows nested arrays &#x2014; an array whose items are themselves arrays &#x2014; generating a matrix type.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/tuples.html">
+                            <span class="card__tag">009</span>
+                            <h3 class="card__title">Tuples</h3>
+                            <p class="card__body">This recipe shows a fixed-length positional array &#x2014; prefixItems with items: false &#x2014; generating a TypeScript tuple type.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mixins.html">
+                            <span class="card__tag">010</span>
+                            <h3 class="card__title">Mix-in Types</h3>
+                            <p class="card__body">This recipe composes several independent base types into one with a multi-member allOf.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/unions.html">
+                            <span class="card__tag">011</span>
+                            <h3 class="card__title">Unions</h3>
+                            <p class="card__body">This recipe shows how oneOf becomes a TypeScript union with per-branch type guards and an exhaustive {Union}.match function &#x2014; the idiomatic way to handle &quot;one of several shapes&quot;.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/discriminated-unions.html">
+                            <span class="card__tag">012</span>
+                            <h3 class="card__title">Discriminated Unions</h3>
+                            <p class="card__body">This recipe shows a tagged union &#x2014; a oneOf whose branches share a discriminant property &#x2014; and the exhaustive dispatch it generates.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/string-enums.html">
+                            <span class="card__tag">013</span>
+                            <h3 class="card__title">String Enumerations</h3>
+                            <p class="card__body">This recipe shows enum of strings generating a string-literal union &#x2014; the idiomatic TypeScript enum.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/numeric-enums.html">
+                            <span class="card__tag">014</span>
+                            <h3 class="card__title">Numeric Enumerations</h3>
+                            <p class="card__body">This recipe shows a numeric enum generating a numeric-literal union.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/maps.html">
+                            <span class="card__tag">015</span>
+                            <h3 class="card__title">Maps</h3>
+                            <p class="card__body">This recipe shows an open map &#x2014; additionalProperties with a value schema &#x2014; generating an index-signature type.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mutation.html">
+                            <span class="card__tag">016</span>
+                            <h3 class="card__title">Mutation</h3>
+                            <p class="card__body">This recipe covers the mutation surface in depth &#x2014; build, patch and produce &#x2014; over canonical UTF-8 JSON bytes.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/conditional.html">
+                            <span class="card__tag">017</span>
+                            <h3 class="card__title">Conditional Schemas</h3>
+                            <p class="card__body">This recipe shows if/then/else &#x2014; applying constraints conditionally on a value&#x27;s contents.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/defaults.html">
+                            <span class="card__tag">018</span>
+                            <h3 class="card__title">Default Values</h3>
+                            <p class="card__body">This recipe shows the default annotation and how it surfaces in the generated TypeScript.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/formats.html">
+                            <span class="card__tag">019</span>
+                            <h3 class="card__title">Format Validation</h3>
+                            <p class="card__body">This recipe shows format keywords generating branded types with validating factories.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/json-patch.html">
+                            <span class="card__tag">020</span>
+                            <h3 class="card__title">JSON Patch and Merge Patch</h3>
+                            <p class="card__body">This recipe shows applying and building [RFC 6902 JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) and [RFC 7396 JSON Merge Patch](https://datatracker.ietf.org/doc/html/rfc7396) documents against a generated type&#x27;s bytes.</p>
+                        </a>
+            </div>
+        </div>
+    </main>
+</div>
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-830/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-830/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-830/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-830/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-830/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-830/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

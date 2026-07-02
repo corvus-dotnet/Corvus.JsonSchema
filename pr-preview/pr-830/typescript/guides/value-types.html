@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="JSON&#x27;s primitive types are coarse: every string is a string, every number a number." />
+    <meta name="keywords" content="TypeScript, JSON Schema, Corvus.Text.Json, code generation" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="JSON&#x27;s primitive types are coarse: every string is a string, every number a number." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Value types &#x2014; brands, numbers, dates &amp; times &#x2014; Corvus.Text.Json TypeScript" />
+    <meta property="article:tag" content="TypeScript" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="article:tag" content="code generation" />
+    <meta property="og:description" content="JSON&#x27;s primitive types are coarse: every string is a string, every number a number." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Value types &#x2014; brands, numbers, dates &amp; times &#x2014; Corvus.Text.Json TypeScript" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/typescript/guides/value-types/" />
+    <title>Value types &#x2014; brands, numbers, dates &amp; times &#x2014; Corvus.Text.Json TypeScript</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/typescript/guides/value-types/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/typescript/guides/value-types/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-830/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/favicon.svg" />
+    
+</head>
+<body class="">
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-830/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/index.html" class="site-header__link " >Getting Started</a>
+                <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/index.html" class="site-header__link is-active" aria-current=page>Documentation</a>
+                <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/index.html" class="site-header__link " >Examples</a>
+                <a href="/Corvus.JsonSchema/pr-preview/pr-830/playground-typescript/" class="site-header__link" target="_blank" rel="noopener noreferrer" title="TypeScript playground">Playground</a>
+                <a href="/Corvus.JsonSchema/pr-preview/pr-830/getting-started/index.html" class="site-header__link site-header__switch" title="Switch to the C# documentation">C# &rsaquo;</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+        <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/index.html" class="site-header__link">Getting Started</a>
+        <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/index.html" class="site-header__link">Documentation</a>
+        <a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/index.html" class="site-header__link">Examples</a>
+        <a href="/Corvus.JsonSchema/pr-preview/pr-830/playground-typescript/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+        <a href="/Corvus.JsonSchema/pr-preview/pr-830/getting-started/index.html" class="site-header__link site-header__switch">Switch to C#</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/index.html">Introduction</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/code-generation.html">Code generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/the-type-surface.html">The type surface</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/reading-and-validating.html">Reading and evaluating</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/value-types.html">Value types &#x2014; brands, numbers, dates &amp; times</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/mutation.html">Mutation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/json-patch.html">JSON Patch and Merge Patch</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/runtime.html">The runtime</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/openapi.html">OpenAPI client generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/guides/authentication.html">OpenAPI client authentication</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/validation.html">Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/references.html">References</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/open-and-closed.html">Open and Closed Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/extending.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/constraining.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/arrays.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/nested-arrays.html">Arrays of Higher Rank</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/tuples.html">Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mixins.html">Mix-in Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/unions.html">Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/discriminated-unions.html">Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/string-enums.html">String Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/numeric-enums.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/maps.html">Maps</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mutation.html">Mutation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/conditional.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/defaults.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/formats.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/json-patch.html">JSON Patch and Merge Patch</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Value types &#x2014; brands, numbers, dates &amp; times</h1>
+<p>JSON's primitive types are coarse: every string is a <code>string</code>, every number a <code>number</code>. JSON Schema refines them with <code>format</code> and numeric keywords, and the generator surfaces that refinement as <strong>branded types</strong>, <strong>exact numeric evaluation</strong>, and <strong><code>bigint</code></strong> for large integers. This guide covers working with those richer values.</p>
+<h2 id="branded-format-types">Branded format types</h2>
+<p>A <code>format</code> keyword generates a <strong>branded</strong> type and a validating factory:</p>
+<pre><code class="language-typescript">export type Email = Brand&lt;string, &quot;email&quot;&gt;;
+function fromEmail(value: string): Email {
+  if (!__fmt(&quot;email&quot;, value)) { throw new FormatError(&quot;email&quot;); }
+  return value as Email;
+}
+export const Email = { evaluate: /* … */, from: fromEmail };   // companion: Email.from(&quot;…&quot;)
+</code></pre>
+<p><code>Brand&lt;string, &quot;email&quot;&gt;</code> is a <code>string</code> at run time but a distinct type at compile time, so a plain <code>string</code> is not assignable where an <code>Email</code> is expected. The only way to obtain one is through <code>Email.from</code>, which checks the format and throws <code>FormatError</code> on failure. Once a value has type <code>Email</code>, the compiler guarantees it is a well-formed email, so you do not need to validate it again downstream.</p>
+<pre><code class="language-typescript">const e: Email = Email.from(&quot;ada@example.com&quot;); // ok
+const bad: Email = &quot;ada@example.com&quot;;        // compile error — a raw string is not an Email
+</code></pre>
+<p>When you read a value back out of an evaluated document, a branded field already has its brand type and carries through without further checking. <code>Type.evaluate</code> checks every format as part of whole-document validation, so the brand and the validator agree.</p>
+<h3 id="supported-formats">Supported formats</h3>
+<p>The runtime ships RFC-accurate checks for:</p>
+<p><code>date</code> · <code>time</code> · <code>date-time</code> · <code>duration</code> · <code>email</code> · <code>idn-email</code> · <code>hostname</code> · <code>idn-hostname</code> · <code>ipv4</code> · <code>ipv6</code> · <code>uuid</code> · <code>uri</code> · <code>iri</code> · <code>uri-reference</code> · <code>iri-reference</code> · <code>uri-template</code> · <code>json-pointer</code> · <code>relative-json-pointer</code> · <code>regex</code></p>
+<p>The internationalised forms (<code>idn-*</code>, <code>iri-*</code>) use proper IDNA processing; <code>uuid</code>, <code>ipv6</code> and the URI family follow their RFCs rather than a loose regex.</p>
+<p>Numeric <code>format</code>s brand a <strong>number</strong> rather than a string — see <a href="#numeric-format-brands">Numeric format brands</a> below.</p>
+<h2 id="numbers">Numbers</h2>
+<p>A <code>number</code> or <code>integer</code> reads as a TypeScript <code>number</code> by default. Two things make numeric handling exact rather than &quot;good enough&quot;:</p>
+<h3 id="exact-evaluation">Exact evaluation</h3>
+<p>Numeric keywords — <code>minimum</code>, <code>maximum</code>, <code>exclusiveMinimum/Maximum</code>, <code>multipleOf</code> — are evaluated against the number's <strong>source text</strong> using big-integer arithmetic (a decimal is decomposed into sign, integer mantissa, and base-10 exponent), not by comparing IEEE-754 doubles. So the cases where floating point lies just work:</p>
+<pre><code class="language-typescript">Type.evaluate({ score: 0.3 });  // multipleOf 0.5 -&gt; false  (0.3 is not a multiple of 0.5)
+// even though, in raw JS, 0.3 % 0.1 === 0.05 rather than 0
+</code></pre>
+<p>Bounds on very large integers are likewise compared by mathematical value, so <code>9007199254740993</code> is distinct from <code>9007199254740992</code> even though both round to the same double.</p>
+<h3 id="large-integers-bigint">Large integers → <code>bigint</code></h3>
+<p>An integer <code>format</code> that exceeds JavaScript's safe-integer range generates <code>bigint</code> rather than <code>number</code>:</p>
+<table>
+<thead>
+<tr>
+<th>format</th>
+<th>TypeScript</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>int64</code> · <code>uint64</code> · <code>int128</code> · <code>uint128</code></td>
+<td><code>bigint</code></td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-typescript">const v = JSON.parse(text) as Values;
+v.id;            // bigint — build and compare with bigint literals (123n)
+</code></pre>
+<h3 id="numeric-format-brands">Numeric format brands</h3>
+<p>A sub-64-bit numeric <code>format</code> brands a <strong><code>number</code></strong> (the value fits a JS double) and emits a validating <code>as{Name}</code> factory, the numeric analog of the string-format brands above. The factory enforces the format's range (and integer-ness, where applicable); <code>Type.evaluate</code> enforces the same range when <code>format</code> is asserted.</p>
+<table>
+<thead>
+<tr>
+<th>format</th>
+<th>TypeScript</th>
+<th>factory check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>byte</code> · <code>sbyte</code> · <code>int16</code> · <code>uint16</code> · <code>int32</code> · <code>uint32</code></td>
+<td><code>Brand&lt;number, &quot;fmt&quot;&gt;</code></td>
+<td>integer, in range (e.g. <code>byte</code> 0–255, <code>int32</code> ±2³¹)</td>
+</tr>
+<tr>
+<td><code>half</code></td>
+<td><code>Brand&lt;number, &quot;half&quot;&gt;</code></td>
+<td>in range ±65504 (fractions allowed)</td>
+</tr>
+<tr>
+<td><code>single</code> · <code>double</code></td>
+<td><code>Brand&lt;number, &quot;fmt&quot;&gt;</code></td>
+<td>unbounded (a type tag; any number)</td>
+</tr>
+<tr>
+<td><code>decimal</code></td>
+<td><code>Brand&lt;number, &quot;decimal&quot;&gt;</code></td>
+<td>in the .NET decimal range</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-typescript">const port = Port.from(8080);   // Port = Brand&lt;number, &quot;uint16&quot;&gt;; throws on -1 or 70000
+const level = Level.from(255);  // Level = Brand&lt;number, &quot;byte&quot;&gt;;  throws on 256 or 1.5
+</code></pre>
+<h3 id="typed-array-views">Typed-array views</h3>
+<p>For a dense numeric array (<code>readonly number[]</code>) in performance-sensitive code, the runtime offers optional typed-array views. The generated array type stays <code>readonly number[]</code>; the views are opt-in:</p>
+<pre><code class="language-typescript">import { toFloat64Array, toFloat32Array, toInt32Array } from &quot;@endjin/corvus-json-runtime&quot;;
+const speeds = toFloat64Array(reading.samples); // a Float64Array over the values
+</code></pre>
+<h3 id="arbitrary-precision">Arbitrary precision</h3>
+<p>The declared type for an ordinary <code>number</code> is <code>number</code>, but the evaluator also accepts <code>lossless-json</code> numbers, so it is exact on the original digits even past double precision. To read those exact digits as a <strong>value</strong> (for a big-number library, a content hash, or a cache key), parse with the runtime's re-exported <code>parseLossless</code> and call <code>exactNumber</code> — the zero-dependency big-number seam (feed the string into decimal.js / bignumber.js):</p>
+<pre><code class="language-typescript">import { parseLossless, exactNumber } from &quot;@endjin/corvus-json-runtime&quot;;
+const doc = parseLossless(text) as { amount: unknown };
+exactNumber(doc.amount); // &quot;123456789012345678901234567890.5&quot; — JSON.parse would have rounded it
+</code></pre>
+<p>A <code>decimal</code>-format field additionally gets a generated <code>{Type}.toExact(value): string</code> accessor that delegates to <code>exactNumber</code>. (Parse with <code>parseLossless</code> to preserve the digits; a plain <code>JSON.parse</code> has already rounded.)</p>
+<h2 id="dates-times-and-durations">Dates, times and durations</h2>
+<p><code>date</code>, <code>time</code> and <code>date-time</code> are validated to <strong>RFC 3339</strong> (calendar-valid dates, leap-second <code>:60</code>, offsets, fractional seconds, <code>T</code>/<code>Z</code> casing). <code>duration</code> follows the <strong>RFC 3339 ABNF</strong> grammar, which is <em>stricter</em> than ISO 8601 / <code>Temporal.Duration</code> — units must be contiguous and descending and there are no fractions (<code>P1Y2D</code> and <code>PT1H2S</code> are invalid).</p>
+<p>A formatted date/time field is a <strong>branded string</strong> — <code>Brand&lt;string, &quot;date-time&quot;&gt;</code> — built and checked with its <code>as*</code> factory:</p>
+<pre><code class="language-typescript">const when = When.from(&quot;2026-06-26T10:00:00Z&quot;); // When = Brand&lt;string, &quot;date-time&quot;&gt;
+</code></pre>
+<p>Each of the four temporal formats gets a generated <code>{Type}.toTemporal</code> accessor that parses the branded string into its matching <a href="https://tc39.es/proposal-temporal/docs/"><code>Temporal</code></a> value, so you don't convert by hand:</p>
+<pre><code class="language-typescript">Day.toTemporal(account.day);          // Temporal.PlainDate   (format: date)
+OccurredAt.toTemporal(event.at);      // Temporal.Instant     (format: date-time — the absolute instant)
+AtTime.toTemporal(slot.start);        // Temporal.PlainTime   (format: time)
+Span.toTemporal(plan.duration);       // Temporal.Duration    (format: duration)
+</code></pre>
+<p><code>Temporal</code> is re-exported from the runtime, so you get the types from the package. (You can still convert the branded string by hand — <code>new Date(account.created)</code> or <code>Temporal.Instant.from(account.created)</code> — if you prefer.)</p>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/formats.html">examples/019-formats</a> — branded formats, runnable.</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/validation.html">examples/002-validation</a> — numeric constraints in context.</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/index.html">getting-started</a> — the <code>lossless-json</code> / <code>@js-temporal/polyfill</code> runtime dependencies.</li>
+</ul>
+        </div>
+    </main>
+</div>
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-830/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-830/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-830/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-830/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-830/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-830/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>
