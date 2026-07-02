@@ -105,12 +105,20 @@ export function seedRuns() {
   ];
 }
 
-// Reach demo (§14.2): each workflow sits in a security "domain" (a KVP security tag). A run/version inherits its
-// workflow's domain, and a reach-scoped persona (e.g. the payments team) reads only rows whose domain its reach admits.
-const WORKFLOW_DOMAIN = { 'adopt-pet': 'pets', 'nightly-reconcile': 'payments', 'onboard-customer': 'identity' };
+// Reach demo (§14.2): each demo workflow is seeded with a REAL, non-internal security tag ({ key, value }, matching the
+// CatalogSecurityTag contract) — not a computed fiction. A catalog version stores its own tags (settable at add,
+// re-taggable via PATCH), a run inherits its workflow's, and a reach-scoped persona (e.g. the payments team) reads only
+// rows whose tags its reach admits.
+const WORKFLOW_SECURITY_TAGS = {
+  'adopt-pet': [{ key: 'domain', value: 'pets' }],
+  'nightly-reconcile': [{ key: 'domain', value: 'payments' }],
+  'onboard-customer': [{ key: 'domain', value: 'identity' }],
+};
 const baseWorkflowOf = (workflowId) => (workflowId || '').replace(/-v\d+$/, '');
-const domainOf = (baseWorkflowId) => WORKFLOW_DOMAIN[baseWorkflowId] ?? 'other';
-const domainSecurityTags = (baseWorkflowId) => [{ dimension: 'domain', value: domainOf(baseWorkflowId) }];
+const securityTagsForBase = (baseWorkflowId) => WORKFLOW_SECURITY_TAGS[baseWorkflowId] ?? [{ key: 'domain', value: 'other' }];
+// The reserved internal-tag prefix (§14.2) — deployment-owned; user-supplied tags using it are rejected (400).
+const RESERVED_TAG_PREFIX = 'sys:';
+const usesReservedTag = (tags) => (tags || []).some((t) => (t.key || '').startsWith(RESERVED_TAG_PREFIX));
 
 function toSummary(run) {
   return {
@@ -125,7 +133,7 @@ function toSummary(run) {
     errorType: run.status === 'Faulted' ? (run._errorType ?? 'Error') : null,
     correlationId: run.correlationId ?? null,
     environment: run.environment ?? null,
-    securityTags: domainSecurityTags(baseWorkflowOf(run.workflowId)),
+    securityTags: securityTagsForBase(baseWorkflowOf(run.workflowId)),
     tags: run.tags ?? [],
   };
 }
@@ -142,7 +150,7 @@ function toDetail(run) {
     etag: run.etag,
     correlationId: run.correlationId ?? null,
     environment: run.environment ?? null,
-    securityTags: domainSecurityTags(baseWorkflowOf(run.workflowId)),
+    securityTags: securityTagsForBase(baseWorkflowOf(run.workflowId)),
     tags: run.tags ?? [],
   };
 }
@@ -506,6 +514,7 @@ function seedCatalog() {
   const v = (base, n, status, title, owner, tags, ageDays, extra = {}) => ({
     baseWorkflowId: base, versionNumber: n, workflowId: `${base}-v${n}`,
     title, description: `${title} — versioned workflow.`, status, tags, owner, sources: refsFor(base),
+    securityTags: securityTagsForBase(base),
     hash: `${base}${n}`.padEnd(64, '0'),
     createdBy: 'alice@example.com', createdAt: iso(-ageDays * day),
     _workflow: workflowDoc(`${base}-v${n}`, title, `${title} — versioned workflow.`, refsFor(base)),
@@ -539,7 +548,7 @@ function toCatalogSummary(v) {
     lastUpdatedAt: v.lastUpdatedAt ?? undefined,
     obsoletedBy: v.obsoletedBy ?? undefined,
     obsoletedAt: v.obsoletedAt ?? undefined,
-    securityTags: domainSecurityTags(v.baseWorkflowId),
+    securityTags: v.securityTags ?? securityTagsForBase(v.baseWorkflowId),
   };
 }
 
@@ -985,15 +994,16 @@ export function createMockControlPlane(options = {}) {
   const administersWorkflow = (base) => adminSetAdmits(administrators[base]);
   const administersEnvironment = (env) => adminSetAdmits(environmentAdministrators[env]);
 
-  // The caller's read reach (§14.2) over a row's security domain: 'all' admits everything; a { readDomain } reach admits
-  // only rows in that domain. Out-of-reach rows are omitted from lists and 404 on direct GET (non-disclosing).
-  function reachAdmitsDomain(domain) {
+  // The caller's read reach (§14.2) over a row's real security tags: 'all' admits everything; a { readDomain } reach
+  // admits only rows carrying a `domain=<readDomain>` tag. Out-of-reach rows are omitted from lists and 404 on direct
+  // GET (non-disclosing). Reads the row's actual { key, value } securityTags — no computed fiction.
+  function reachAdmits(securityTags) {
     const reach = persona.reach;
-    if (!reach || reach === 'all') {
+    if (!reach || reach === 'all' || reach.readDomain === undefined) {
       return true;
     }
 
-    return reach.readDomain === undefined || domain === reach.readDomain;
+    return (securityTags || []).some((t) => t.key === 'domain' && t.value === reach.readDomain);
   }
 
   let persona = personaState(options.persona || 'administrator');
@@ -1167,7 +1177,7 @@ export function createMockControlPlane(options = {}) {
 
       if (!action && method === 'GET') {
         // Reach (§14.2): a run outside the caller's reach reads back as not found (non-disclosing).
-        if (!reachAdmitsDomain(domainOf(baseWorkflowOf(run.workflowId)))) return problem(404, 'Run not found', `No run with id '${id}'.`);
+        if (!reachAdmits(securityTagsForBase(baseWorkflowOf(run.workflowId)))) return problem(404, 'Run not found', `No run with id '${id}'.`);
         return json(toDetail(run));
       }
       if (!action && method === 'DELETE') return deleteRun(run);
@@ -1206,7 +1216,7 @@ export function createMockControlPlane(options = {}) {
     if (correlationId) filtered = filtered.filter((r) => r.correlationId === correlationId);
 
     // Reach (§14.2): the caller sees only runs whose workflow domain their read reach admits (non-disclosing).
-    filtered = filtered.filter((r) => reachAdmitsDomain(domainOf(baseWorkflowOf(r.workflowId))));
+    filtered = filtered.filter((r) => reachAdmits(securityTagsForBase(baseWorkflowOf(r.workflowId))));
 
     const slice = filtered.slice(offset, offset + limit);
     const hasMore = offset + limit < filtered.length;
@@ -1287,7 +1297,7 @@ export function createMockControlPlane(options = {}) {
       if (!v) return problem(404, 'Version not found', `No version ${n} of workflow '${base}'.`);
       if (!sub && method === 'GET') {
         // Reach (§14.2): a version whose workflow domain the caller cannot read reads back as not found.
-        if (!reachAdmitsDomain(domainOf(v.baseWorkflowId))) return problem(404, 'Version not found', `No version ${n} of workflow '${base}'.`);
+        if (!reachAdmits(v.securityTags ?? securityTagsForBase(v.baseWorkflowId))) return problem(404, 'Version not found', `No version ${n} of workflow '${base}'.`);
         return json(toCatalogSummary(v));
       }
       if (!sub && method === 'PATCH') return updateVersion(v, body);
@@ -1333,7 +1343,7 @@ export function createMockControlPlane(options = {}) {
     const wantTags = params.getAll('tag').filter(Boolean);
     if (wantTags.length > 0 && !wantTags.every((t) => (v.tags ?? []).includes(t))) return false;
     // Reach (§14.2): a version whose workflow domain the caller cannot read is invisible.
-    if (!reachAdmitsDomain(domainOf(v.baseWorkflowId))) return false;
+    if (!reachAdmits(v.securityTags ?? securityTagsForBase(v.baseWorkflowId))) return false;
     return true;
   }
 
@@ -1373,11 +1383,21 @@ export function createMockControlPlane(options = {}) {
 
   function listCatalogVersions(base, params) {
     // Reach (§14.2): a workflow whose domain the caller cannot read has no visible versions (non-disclosing).
-    if (!reachAdmitsDomain(domainOf(base))) return pageCatalog([], params);
+    if (!reachAdmits(securityTagsForBase(base))) return pageCatalog([], params);
     return pageCatalog(catalog.filter((v) => v.baseWorkflowId === base), params);
   }
 
   function updateVersion(v, patch) {
+    // Re-tag (§14.2): a present securityTags replaces the version's non-internal labels (the reserved prefix is
+    // rejected; the demo carries no internal tags so there is nothing to preserve). Absent leaves them unchanged.
+    if (Array.isArray(patch?.securityTags)) {
+      if (usesReservedTag(patch.securityTags)) {
+        return problem(400, 'Reserved security tag', `A security tag key uses the reserved internal prefix '${RESERVED_TAG_PREFIX}', which is owned by the deployment.`);
+      }
+
+      v.securityTags = patch.securityTags;
+    }
+
     if (patch?.owner) v.owner = patch.owner;
     if (Array.isArray(patch?.tags)) v.tags = patch.tags;
     if (patch?.status && patch.status !== v.status) {
@@ -1458,10 +1478,29 @@ export function createMockControlPlane(options = {}) {
     const versionNumber = (catalog.filter((v) => v.baseWorkflowId === base).reduce((m, v) => Math.max(m, v.versionNumber), 0)) + 1;
     const workflowId = `${base}-v${versionNumber}`;
     if (workflowDoc.workflows?.[0]) workflowDoc.workflows[0].workflowId = workflowId;
+
+    // User-supplied non-internal security tags (§14.2): a single JSON part, mirroring the server's
+    // MultipartFormDataSerializer. The reserved internal prefix is rejected (400). Absent → the demo stamps the
+    // workflow's seeded tags so a new version stays reach-consistent with its siblings.
+    let securityTags = [];
+    const securityTagsPart = form.get('securityTags');
+    if (securityTagsPart) {
+      try {
+        securityTags = JSON.parse(await securityTagsPart.text());
+      } catch {
+        securityTags = [];
+      }
+    }
+
+    if (usesReservedTag(securityTags)) {
+      return problem(400, 'Reserved security tag', `A security tag key uses the reserved internal prefix '${RESERVED_TAG_PREFIX}', which is owned by the deployment.`);
+    }
+
     const v = {
       baseWorkflowId: base, versionNumber, workflowId,
       title, description, status: 'Active',
       tags: form.getAll('tags'), owner, sources: sourceRefs, hash: `${base}${versionNumber}`.padEnd(64, '0'),
+      securityTags: securityTags.length ? securityTags : securityTagsForBase(base),
       createdBy: actingSubject(), createdAt: iso(0),
       _workflow: workflowDoc,
       _sources: sources,

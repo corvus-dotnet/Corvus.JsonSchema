@@ -36,6 +36,28 @@ describe('<arazzo-catalog-detail>', () => {
     equal(el.shadowRoot.querySelector('header .badge').textContent, 'Obsolete', 'status badge reflects the version');
   });
 
+  it('shows security tags and re-tags them via the inline editor with catalog:write', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read catalog:write' });
+    mount(el);
+    const dd = await waitFor(() => el.shadowRoot.querySelector('[part="security-tags"]'));
+    ok([...dd.querySelectorAll('.tag')].some((t) => t.textContent === 'domain=pets'), 'seeded security tag shown');
+    const editBtn = dd.querySelector('.sectag-edit');
+    ok(editBtn, 'edit affordance present with catalog:write');
+    editBtn.click();
+    const input = await waitFor(() => el.shadowRoot.querySelector('#sectag-input'));
+    input.value = 'domain=pets team=shelter';
+    el.shadowRoot.querySelector('.sectag-save').click();
+    await waitFor(() => [...el.shadowRoot.querySelectorAll('[part="security-tags"] .tag')].some((t) => t.textContent === 'team=shelter'));
+    ok(true, 're-tagged via the inline editor');
+  });
+
+  it('shows security tags read-only without catalog:write', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read' });
+    mount(el);
+    const dd = await waitFor(() => el.shadowRoot.querySelector('[part="security-tags"]'));
+    ok(!dd.querySelector('.sectag-edit'), 'no edit affordance read-only');
+  });
+
   it('shows which environments the version is available in', async () => {
     el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read' });
     mount(el);
