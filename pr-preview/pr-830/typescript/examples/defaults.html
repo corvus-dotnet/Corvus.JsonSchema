@@ -191,12 +191,12 @@
 <h2 id="the-pattern">The Pattern</h2>
 <p><code>default</code> documents a fallback for a property and, in practice, makes that property optional. The generated <code>interface</code> marks it <code>?:</code> — a value may omit it and still be valid. The default value is <strong>not</strong> currently applied to the parsed value: an omitted property reads as <code>undefined</code>, so you supply the default at the read site (<code>value.theme ?? &quot;light&quot;</code>).</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/4fa0c9336d26c4b0aa38e3c30d7f2726e72b472f/docs/typescript/examples/018-defaults/settings.json"><code>settings.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/018-defaults/settings.json"><code>settings.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Settings&quot;, &quot;type&quot;: &quot;object&quot;,
   &quot;properties&quot;: { &quot;theme&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;default&quot;: &quot;light&quot; }, &quot;fontSize&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;default&quot;: 14 } } }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/4fa0c9336d26c4b0aa38e3c30d7f2726e72b472f/docs/typescript/examples/018-defaults/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/018-defaults/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">Settings.evaluate(JSON.parse(&quot;{}&quot;));   // true — both properties are optional
 const s = JSON.parse(&quot;{}&quot;) as Settings;
 s.theme ?? &quot;light&quot;;               // apply the documented default at the read site
