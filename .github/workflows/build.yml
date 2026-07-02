@@ -289,8 +289,9 @@ jobs:
 
       # The @endjin/corvus-json-runtime package's own unit tests, including the RFC 6902 / 7396 JSON Patch
       # conformance suite (the tests/json-patch-tests submodule). Builds the package (tsc) then runs node --test.
+      # The package-lock is gitignored (see the package's .gitignore), so npm install (not npm ci).
       - name: Runtime package tests
-        run: npm ci && npm run build && node --test
+        run: npm install && npm run build && node --test
         working-directory: packages/corvus-json-runtime
         timeout-minutes: 5
 
