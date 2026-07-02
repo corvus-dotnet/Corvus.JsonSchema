@@ -136,29 +136,46 @@ public sealed class ControlPlaneRowSecurityTests
     }
 
     [TestMethod]
-    public async Task Patching_a_version_accepts_the_securityTags_field_and_preserves_internal_tags()
+    public async Task Patching_a_version_re_tags_user_labels_and_preserves_internal_tags()
     {
-        // §14.2 contract change: `securityTags` is now a KNOWN field on the PATCH body (the non-internal reach labels are
-        // admin-editable), so the schema boundary ACCEPTS it (200) instead of rejecting the whole request as an unknown
-        // field. The server-stamped internal tenant tag is still never overwritten: the handler ignores `securityTags`
-        // until the backend enforcement lands (persist the non-internal labels; reject the reserved internal-tag prefix),
-        // which will strengthen this test to assert that rejection + persistence.
+        // §14.2: a metadata PATCH re-tags the version's non-internal security labels — the caller's new labels replace the
+        // old ones, while every deployment-internal tag (reserved prefix — here the auto-stamped sys:workflow identity) is
+        // preserved and never user-editable. The catalog auto-stamps sys:workflow=<baseId> at creation.
         await using Scoped host = await StartAsync();
-        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("team", "payments")]), default);
 
-        using var injected = new HttpRequestMessage(HttpMethod.Patch, "/catalog/flow/versions/1")
+        using var patch = new HttpRequestMessage(HttpMethod.Patch, "/catalog/flow/versions/1")
         {
-            Content = new StringContent("""{ "status": "Obsolete", "securityTags": [ { "key": "tenant", "value": "globex" } ] }""", Encoding.UTF8, "application/json"),
+            Content = new StringContent("""{ "securityTags": [ { "key": "team", "value": "billing" } ] }""", Encoding.UTF8, "application/json"),
         };
-        (await host.SendAsync(injected, tenant: null)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(patch, tenant: null)).StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        // The version keeps its original server-stamped tenant tag; the injected value never took effect. (The catalog
-        // also auto-stamps a sys:workflow tag at creation, hence Contains, not an exact-set, assertion.)
         using var fetched = await host.Catalog.GetAsync("flow", 1, AccessContext.System, default);
         fetched.ShouldNotBeNull();
         var securityTags = fetched.RootElement.SecurityTagsValue.ToList();
-        securityTags.ShouldContain(new SecurityTag("tenant", "acme"));
-        securityTags.ShouldNotContain(new SecurityTag("tenant", "globex"));
+        securityTags.ShouldContain(new SecurityTag("team", "billing"));      // the caller's new label
+        securityTags.ShouldNotContain(new SecurityTag("team", "payments"));  // the old user label was replaced
+        securityTags.ShouldContain(new SecurityTag("sys:workflow", "flow")); // the internal identity was preserved
+    }
+
+    [TestMethod]
+    public async Task Patching_a_version_rejects_a_reserved_internal_security_tag()
+    {
+        // §14.2: the reserved internal prefix is owned by the deployment — a caller may not set (or re-tag with) a
+        // sys:-prefixed key. A shell-backed policy enforces it; the whole request is rejected (400) and nothing changes.
+        await using Scoped host = await StartAsync(new ShellPolicy());
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("team", "payments")]), default);
+
+        using var patch = new HttpRequestMessage(HttpMethod.Patch, "/catalog/flow/versions/1")
+        {
+            Content = new StringContent("""{ "securityTags": [ { "key": "sys:tenant", "value": "evil" } ] }""", Encoding.UTF8, "application/json"),
+        };
+        (await host.SendAsync(patch, tenant: null)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        // The version is unchanged — the reserved-prefix attempt never reached the store.
+        using var fetched = await host.Catalog.GetAsync("flow", 1, AccessContext.System, default);
+        fetched.ShouldNotBeNull();
+        fetched.RootElement.SecurityTagsValue.ToList().ShouldContain(new SecurityTag("team", "payments"));
     }
 
     [TestMethod]
@@ -189,6 +206,47 @@ public sealed class ControlPlaneRowSecurityTests
         (await host.GetAsync("/catalog/globex-flow/versions/1/package", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
+    [TestMethod]
+    public async Task Getting_a_version_strips_internal_security_tags_from_the_response()
+    {
+        // §14.2: deployment-internal tags (the reserved `sys:` prefix) are stamped and used for row authorization but
+        // never returned to clients. The version below carries an internal `sys:tenant` tag plus a user `team` tag, and
+        // AddAsync additionally stamps the internal `sys:workflow` identity — the response must expose only `team`.
+        await using Scoped host = await StartAsync();
+        await host.Catalog.AddAsync(
+            Package("flow"),
+            Owner,
+            default,
+            SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme"), new SecurityTag("team", "payments")]),
+            default);
+
+        // The operator (no tenant claim) is unrestricted, so the row is visible; the strip is orthogonal to reach.
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/catalog/flow/versions/1", tenant: null));
+
+        List<(string Key, string Value)> tags = ReadSecurityTags(doc.RootElement);
+        tags.ShouldContain(("team", "payments"));
+        tags.ShouldNotContain(t => t.Key.StartsWith("sys:", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public async Task Searching_the_catalog_strips_internal_security_tags_from_every_row()
+    {
+        await using Scoped host = await StartAsync();
+        await host.Catalog.AddAsync(
+            Package("flow"),
+            Owner,
+            default,
+            SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme"), new SecurityTag("team", "payments")]),
+            default);
+
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/catalog", tenant: null));
+
+        foreach (Stj.JsonElement version in doc.RootElement.GetProperty("versions").EnumerateArray())
+        {
+            ReadSecurityTags(version).ShouldNotContain(t => t.Key.StartsWith("sys:", StringComparison.Ordinal));
+        }
+    }
+
     private sealed class FixedClock(DateTimeOffset now) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => now;
@@ -201,6 +259,13 @@ public sealed class ControlPlaneRowSecurityTests
 
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+
+    // The securityTags of a catalog-version summary element as (key, value) pairs, or empty when the property is absent
+    // (an all-internal set is stripped to nothing and the property is omitted).
+    private static List<(string Key, string Value)> ReadSecurityTags(Stj.JsonElement version)
+        => version.TryGetProperty("securityTags", out Stj.JsonElement tags)
+            ? [.. tags.EnumerateArray().Select(t => (t.GetProperty("key").GetString()!, t.GetProperty("value").GetString()!))]
+            : [];
 
     private static async Task SeedRunAsync(InMemoryWorkflowStateStore store, string id, TimeProvider clock, params SecurityTag[] security)
     {
@@ -337,5 +402,16 @@ public sealed class ControlPlaneRowSecurityTests
             var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal) { ["tenant"] = [tenant] };
             return AccessContext.Uniform(new SecurityFilter([SecurityRule.Compile("tenant == $claim.tenant")], claims));
         }
+    }
+
+    // Unrestricted reach, but backed by a SecurityShell so it enforces the reserved internal-tag prefix (the default
+    // policy accepts everything) — exercises reserved-prefix rejection on user-supplied security tags (§14.2).
+    private sealed class ShellPolicy : ControlPlaneRowSecurityPolicy
+    {
+        private static readonly SecurityShell Shell = new([]);
+
+        public override AccessContext Resolve(ClaimsPrincipal? principal) => AccessContext.System;
+
+        public override void ValidateUserTags(SecurityTagSet userTags) => Shell.ValidateUserTags(userTags);
     }
 }

@@ -497,7 +497,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             obsoletedAt = newlyObsolete ? now : reactivated ? null : current.ObsoletedAtValue;
         }
 
-        var update = new BsonDocument("$set", new BsonDocument
+        var setFields = new BsonDocument
         {
             ["status"] = status.ToString(),
             ["tags"] = new BsonArray(tags.ToList()),
@@ -509,7 +509,16 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             ["lastUpdatedAt"] = now.ToUnixTimeMilliseconds(),
             ["obsoletedBy"] = (BsonValue?)obsoletedBy ?? BsonNull.Value,
             ["obsoletedAt"] = obsoletedAt is { } oa ? oa.ToUnixTimeMilliseconds() : BsonNull.Value,
-        });
+        };
+
+        // Re-tag (§14.2): replace the mirrored securityTags array (which reach-filtering reads) with the effective set;
+        // absent → the array is left unchanged.
+        if (patch.SecurityTags is { } newSecurityTags)
+        {
+            setFields["securityTags"] = MongoSecurityTags.ToBson(newSecurityTags);
+        }
+
+        var update = new BsonDocument("$set", setFields);
 
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", Id(baseWorkflowId, versionNumber));
         await this.versions.UpdateOneAsync(filter, update, options: null, cancellationToken).ConfigureAwait(false);
