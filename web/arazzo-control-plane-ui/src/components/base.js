@@ -172,6 +172,30 @@ export function escapeHtml(value) {
 }
 
 /**
+ * Parse a `key=value key2=value2` text field into `[{ key, value }]` reach labels (§14.2 security tags). Tokens are
+ * space/comma separated; blanks and malformed tokens (no `=`, or an empty value) are dropped. The inverse is
+ * {@link securityTagsToText}.
+ * @param {string} text
+ * @returns {Array<{ key: string, value: string }>}
+ */
+export function parseSecurityTags(text) {
+  return (text || '')
+    .split(/[,\s]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => {
+      const i = s.indexOf('=');
+      return i > 0 ? { key: s.slice(0, i), value: s.slice(i + 1) } : null;
+    })
+    .filter((t) => t && t.value);
+}
+
+/** Format `[{ key, value }]` reach labels as a `key=value` space-separated string (the inverse of {@link parseSecurityTags}). */
+export function securityTagsToText(tags) {
+  return (tags || []).map((t) => `${t.key}=${t.value}`).join(' ');
+}
+
+/**
  * The shared visual for a resolved grantee — the universal "WHO" of the access model (§16.5.4). Used wherever a
  * grantee is displayed (administrators, credential usage, the access overview, bindings) so naming someone reads
  * the same everywhere: the kind as a badge, the human label foremost, and the resolved identity (its

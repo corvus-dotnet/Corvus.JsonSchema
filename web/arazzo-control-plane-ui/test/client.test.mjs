@@ -260,6 +260,27 @@ test('addCatalogVersion rejects a missing package or owner before calling the se
   await assert.rejects(async () => makeClient().addCatalogVersion({ package: new Blob(['x']) }), TypeError);
 });
 
+test('addCatalogVersion carries securityTags and rejects the reserved sys: prefix (400)', async () => {
+  const c = makeClient();
+  const pkg = packWorkflowPackage(workflowJson('sec-flow', 'Sec Flow'), []);
+  const added = await c.addCatalogVersion({ package: pkg, owner: { name: 'Me', email: 'me@example.com' }, securityTags: [{ key: 'domain', value: 'payments' }] });
+  assert.deepEqual(added.securityTags, [{ key: 'domain', value: 'payments' }]);
+
+  const pkg2 = packWorkflowPackage(workflowJson('sec-flow-2', 'Sec Flow 2'), []);
+  await assert.rejects(
+    () => c.addCatalogVersion({ package: pkg2, owner: { name: 'Me', email: 'me@example.com' }, securityTags: [{ key: 'sys:tenant', value: 'evil' }] }),
+    (e) => e instanceof ProblemError && e.status === 400);
+});
+
+test('updateCatalogVersion re-tags securityTags and rejects the reserved sys: prefix (400)', async () => {
+  const c = makeClient();
+  const updated = await c.updateCatalogVersion('adopt-pet', 1, { securityTags: [{ key: 'domain', value: 'pets' }, { key: 'team', value: 'shelter' }] });
+  assert.deepEqual(updated.securityTags, [{ key: 'domain', value: 'pets' }, { key: 'team', value: 'shelter' }]);
+  await assert.rejects(
+    () => c.updateCatalogVersion('adopt-pet', 1, { securityTags: [{ key: 'sys:tenant', value: 'evil' }] }),
+    (e) => e instanceof ProblemError && e.status === 400);
+});
+
 test('unpackWorkflowPackage round-trips the AWP container packWorkflowPackage builds', async () => {
   const wf = workflowJson('round-trip', 'Round Trip', [{ name: 'petstore' }]);
   const src = JSON.stringify({ openapi: '3.1.0', info: { title: 'Petstore', version: '1.0.0' } });
