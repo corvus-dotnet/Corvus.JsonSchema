@@ -50,11 +50,16 @@ public readonly record struct CatalogMetadata(CatalogOwner Owner, string Created
 /// <param name="Owner">A replacement owner, if set.</param>
 /// <param name="Tags">A replacement tag set, if set.</param>
 /// <param name="Status">A new status, if set.</param>
+/// <param name="SecurityTags">The <em>effective</em> replacement security-tag set, if the version is being re-tagged
+/// (design §14.2) — <see langword="null"/> leaves the version's security tags unchanged. The set is already the final
+/// tags to persist: the security wrapper has merged the caller's new non-internal labels with the version's preserved
+/// deployment-internal tags, so a store simply replaces its stored/queryable representation with it.</param>
 public readonly record struct CatalogMetadataPatch(
     string UpdatedBy,
     CatalogOwner? Owner = null,
     TagSet? Tags = null,
-    CatalogStatus? Status = null);
+    CatalogStatus? Status = null,
+    SecurityTagSet? SecurityTags = null);
 
 // The catalog version's persisted metadata is the generated Corvus.Text.Json type CatalogVersion
 // (see CatalogVersion.cs + Schemas/CatalogVersion.json) — the entity stores hold as JSON.

@@ -172,9 +172,10 @@ public readonly partial struct CatalogVersion
     /// Builds the bytes of a metadata-patched copy of <paramref name="current"/> for the document-blob stores. Only the
     /// changed governance fields are written through the mutable builder — <c>lastUpdatedBy</c>/<c>lastUpdatedAt</c>
     /// always, <c>status</c> when the patch changes it (with the obsolete/reactivate transition on
-    /// <c>obsoletedBy</c>/<c>obsoletedAt</c>), and <c>owner</c>/<c>tags</c> when the patch replaces them. Every other
-    /// field (title, hash, sources, created*, securityTags, …) is carried bytes-to-bytes from the current document — no
-    /// per-field string realisation. Preserves the exact transition semantics of the field-by-field rebuild it replaces.
+    /// <c>obsoletedBy</c>/<c>obsoletedAt</c>), <c>owner</c>/<c>tags</c> when the patch replaces them, and
+    /// <c>securityTags</c> when the patch re-tags the version (§14.2). Every other field (title, hash, sources,
+    /// created*, …) is carried bytes-to-bytes from the current document — no per-field string realisation. Preserves the
+    /// exact transition semantics of the field-by-field rebuild it replaces.
     /// </summary>
     /// <param name="current">The current persisted version.</param>
     /// <param name="patch">The metadata patch (updated-by + optional owner/tags/status).</param>
@@ -218,6 +219,20 @@ public readonly partial struct CatalogVersion
             builder.RootElement.SetTags(TagsSource(tags));
         }
 
+        // Re-tag (§14.2): replace the version's security tags with the patch's effective set (already merged with the
+        // preserved internal tags by the security wrapper). Absent → the tags are carried bytes-to-bytes unchanged.
+        if (patch.SecurityTags is { } securityTags)
+        {
+            if (securityTags.IsEmpty)
+            {
+                builder.RootElement.RemoveSecurityTags();
+            }
+            else
+            {
+                builder.RootElement.SetSecurityTags(SecurityTagInfoArray.ParseValue(securityTags.RawJson));
+            }
+        }
+
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
         try
         {
@@ -229,6 +244,96 @@ public readonly partial struct CatalogVersion
         {
             workspace.ReturnWriterAndBuffer(writer, buffer);
         }
+    }
+
+    /// <summary>
+    /// Builds the bytes of a copy of <paramref name="current"/> whose <c>securityTags</c> are replaced by
+    /// <paramref name="securityTags"/> (an empty set removes the property) — every other field is carried
+    /// bytes-to-bytes through the mutable builder, so no field is dropped by omission. Used for the control-plane
+    /// response's internal-tag strip (the persisted document keeps its internal tags for row authorization; only the
+    /// client view drops them). The replacement set's persisted JSON is spliced in through the generated array's
+    /// <c>ParseValue</c>, so no per-tag managed string is created.
+    /// </summary>
+    /// <param name="current">The current persisted version.</param>
+    /// <param name="securityTags">The replacement security-tag set (empty removes the property).</param>
+    /// <returns>The rewritten document's UTF-8 bytes.</returns>
+    public static byte[] CreateWithSecurityTags(in CatalogVersion current, SecurityTagSet securityTags)
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<Mutable> builder = current.CreateBuilder(workspace);
+        if (securityTags.IsEmpty)
+        {
+            builder.RootElement.RemoveSecurityTags();
+        }
+        else
+        {
+            builder.RootElement.SetSecurityTags(SecurityTagInfoArray.ParseValue(securityTags.RawJson));
+        }
+
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
+        try
+        {
+            builder.RootElement.WriteTo(writer);
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
+    }
+
+    /// <summary>
+    /// The effective security-tag set for a re-tag (design §14.2): the current version's deployment-internal tags (whose
+    /// key carries <paramref name="internalPrefixUtf8"/>) PRESERVED — they are never user-editable and cannot be
+    /// re-derived from the caller (e.g. <c>sys:workflow</c> is the version's immutable identity) — plus the caller's new
+    /// non-internal tags. Bytes-native: each preserved/added tag is copied from its unescaped UTF-8, so no per-tag
+    /// managed string is created; the one owned allocation is the sealed set's backing array.
+    /// </summary>
+    /// <param name="current">The version's current security tags (internal + user).</param>
+    /// <param name="newUserTags">The caller's new non-internal tags (already validated as not using the reserved prefix).</param>
+    /// <param name="internalPrefixUtf8">The reserved internal-tag key prefix as UTF-8.</param>
+    /// <returns>The effective set to persist.</returns>
+    public static SecurityTagSet MergeReTaggedSecurityTags(SecurityTagSet current, SecurityTagSet newUserTags, byte[] internalPrefixUtf8)
+    {
+        ArgumentNullException.ThrowIfNull(internalPrefixUtf8);
+        return SecurityTagSet.Build(
+            (Current: current, NewUser: newUserTags, Prefix: internalPrefixUtf8),
+            static (ref IdentityBuilder builder, in (SecurityTagSet Current, SecurityTagSet NewUser, byte[] Prefix) s) =>
+            {
+                ReadOnlySpan<byte> prefix = s.Prefix;
+
+                // Preserve the current version's deployment-internal tags (reserved prefix).
+                SecurityTagSet.Utf8Enumerator ce = s.Current.EnumerateUtf8();
+                try
+                {
+                    while (ce.MoveNext())
+                    {
+                        if (ce.CurrentKey.StartsWith(prefix))
+                        {
+                            builder.Add(ce.CurrentKey, ce.CurrentValue);
+                        }
+                    }
+                }
+                finally
+                {
+                    ce.Dispose();
+                }
+
+                // Append the caller's new non-internal tags.
+                SecurityTagSet.Utf8Enumerator ue = s.NewUser.EnumerateUtf8();
+                try
+                {
+                    while (ue.MoveNext())
+                    {
+                        builder.Add(ue.CurrentKey, ue.CurrentValue);
+                    }
+                }
+                finally
+                {
+                    ue.Dispose();
+                }
+            });
     }
 
     // A replacement owner as a builder Source (the four record fields; team/url omitted when null).

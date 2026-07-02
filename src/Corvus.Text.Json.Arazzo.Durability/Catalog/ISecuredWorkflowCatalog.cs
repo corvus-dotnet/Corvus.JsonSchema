@@ -75,12 +75,17 @@ public interface ISecuredWorkflowCatalog
     /// <param name="owner">A replacement owner, if changing it.</param>
     /// <param name="tags">A replacement tag set, if changing it.</param>
     /// <param name="status">A new status, if changing it.</param>
+    /// <param name="securityTags">The caller's new <em>non-internal</em> security tags, if re-tagging the version
+    /// (§14.2); <see langword="null"/> leaves the security tags unchanged. The wrapper preserves the version's existing
+    /// deployment-internal tags and persists the merged result — internal tags are never dropped or user-editable.</param>
+    /// <param name="internalTagPrefix">The reserved internal-tag key prefix, used to preserve the internal tags on
+    /// re-tag; ignored when <paramref name="securityTags"/> is <see langword="null"/>.</param>
     /// <param name="context">The caller's access grant; the version must be within its write reach.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The outcome and, on <see cref="CatalogUpdateOutcome.Updated"/>, the updated version document (which the
     /// caller owns): <see cref="CatalogUpdateOutcome.NotFound"/> if it is absent or outside read reach (non-disclosing),
     /// <see cref="CatalogUpdateOutcome.Forbidden"/> if readable but outside write reach.</returns>
-    ValueTask<CatalogUpdateResult> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, AccessContext context, CancellationToken cancellationToken);
+    ValueTask<CatalogUpdateResult> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, SecurityTagSet? securityTags, string? internalTagPrefix, AccessContext context, CancellationToken cancellationToken);
 
     /// <summary>Deletes a single version, refusing while any workflow run references its versioned workflow id, if the caller's write reach admits it (§14.2).</summary>
     /// <param name="baseWorkflowId">The base workflow id.</param>
