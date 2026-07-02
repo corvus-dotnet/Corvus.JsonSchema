@@ -291,7 +291,7 @@ public abstract class SourceCredentialStoreConformance
     }
 
     [TestMethod]
-    public async Task Security_tags_round_trip_and_are_immutable_on_update()
+    public async Task Management_tags_carry_forward_when_omitted_and_are_replaced_on_re_tag()
     {
         ISourceCredentialStore store = await this.NewStoreAsync();
         WorkflowEtag etag;
@@ -301,14 +301,36 @@ public abstract class SourceCredentialStoreConformance
             etag = added.RootElement.EtagValue;
         }
 
-        // An update may not change the security tags (the binding's immutable row-authorization scope).
-        SourceCredentialDefinition rotatedWithDifferentTags = Tagged("petstore", "production", "globex") with
+        // An update that OMITS management tags (empty draft set) rotating the secret leaves the tags unchanged.
+        SourceCredentialDefinition rotateOnly = Tagged("petstore", "production", "acme") with
+        {
+            ManagementTags = SecurityTagSet.Empty,
+            SecretRefs = [new SecretReferenceDefinition("value", "keyvault://petstore-rotated")],
+        };
+        using (ParsedJsonDocument<SourceCredentialBinding>? unchanged = await store.UpdateAsync("petstore", "production", rotateOnly, etag, "bob", AccessContext.System, default))
+        {
+            unchanged.ShouldNotBeNull();
+            unchanged!.RootElement.ManagementTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "acme"));
+            etag = unchanged.RootElement.EtagValue;
+        }
+
+        // An update that SUPPLIES management tags re-tags who may manage the binding: the store replaces them with the given
+        // set (the handler merges in the preserved internal tags). Usage tags stay immutable (carried forward).
+        SourceCredentialDefinition reTag = Tagged("petstore", "production", "globex") with
         {
             SecretRefs = [new SecretReferenceDefinition("value", "keyvault://petstore-rotated")],
         };
-        using ParsedJsonDocument<SourceCredentialBinding>? updated = await store.UpdateAsync("petstore", "production", rotatedWithDifferentTags, etag, "bob", AccessContext.System, default);
-        updated.ShouldNotBeNull();
-        updated!.RootElement.ManagementTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "acme"));
+        using (ParsedJsonDocument<SourceCredentialBinding>? updated = await store.UpdateAsync("petstore", "production", reTag, etag, "carol", AccessContext.System, default))
+        {
+            updated.ShouldNotBeNull();
+            updated!.RootElement.ManagementTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "globex"));
+            updated.RootElement.UsageTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "acme"));
+        }
+
+        // The re-tag is durable and the row is still found by (sourceName, environment) — the create-time key is frozen.
+        using ParsedJsonDocument<SourceCredentialBinding>? refetched = await store.GetAsync("petstore", "production", AccessContext.System, default);
+        refetched.ShouldNotBeNull();
+        refetched!.RootElement.ManagementTagsValue.ToList().Single().ShouldBe(new SecurityTag("tenant", "globex"));
     }
 
     [TestMethod]

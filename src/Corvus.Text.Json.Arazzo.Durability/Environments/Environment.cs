@@ -158,14 +158,17 @@ public readonly partial struct Environment
     {
         writer.WriteStartObject();
 
-        // Immutable identity + reach scope carried forward from the stored environment bytes-to-bytes, never from the draft.
+        // Immutable identity carried forward from the stored environment bytes-to-bytes, never from the draft.
         WriteValueIfPresent(writer, JsonPropertyNames.NameUtf8, (JsonElement)this.Name);
 
         // Mutable content carried bytes-to-bytes from the draft.
         WriteValueIfPresent(writer, JsonPropertyNames.DisplayNameUtf8, (JsonElement)draft.DisplayName);
         WriteValueIfPresent(writer, JsonPropertyNames.DescriptionUtf8, (JsonElement)draft.Description);
 
-        WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)this.ManagementTags);
+        // Reach scope (§14.2): an administrator re-tag supplies managementTags on the draft (already merged with the
+        // preserved deployment-internal tags by the handler) → take the draft's; an update that omits them carries the
+        // stored tags forward bytes-to-bytes.
+        WriteValuePreferringDraft(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)draft.ManagementTags, (JsonElement)this.ManagementTags);
 
         // created-* audit carried forward bytes-to-bytes (copy the stored tokens verbatim — no parse/reformat).
         WriteValueIfPresent(writer, JsonPropertyNames.CreatedByUtf8, (JsonElement)this.CreatedBy);
@@ -185,6 +188,18 @@ public readonly partial struct Environment
         {
             writer.WritePropertyName(name);
             value.WriteTo(writer);
+        }
+    }
+
+    // Writes the draft's value when it supplies one (a re-tag), else the stored value carried forward — for a field that
+    // is replaced only when the update includes it (managementTags). Both undefined → the property is omitted.
+    private static void WriteValuePreferringDraft(Utf8JsonWriter writer, ReadOnlySpan<byte> name, in JsonElement draftValue, in JsonElement storedValue)
+    {
+        JsonElement chosen = draftValue.ValueKind != JsonValueKind.Undefined ? draftValue : storedValue;
+        if (chosen.ValueKind != JsonValueKind.Undefined)
+        {
+            writer.WritePropertyName(name);
+            chosen.WriteTo(writer);
         }
     }
 

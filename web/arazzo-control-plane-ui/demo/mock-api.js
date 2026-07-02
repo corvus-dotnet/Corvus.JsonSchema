@@ -1605,6 +1605,16 @@ export function createMockControlPlane(options = {}) {
   function updateCredential(b, body) {
     const err = refError(body?.secretRefs);
     if (err) return problem(400, 'Invalid credential binding', err);
+    // Management tags (who may MANAGE the binding, §14.2) are admin-editable: a present managementTags replaces them
+    // (reserved prefix rejected), absent leaves them unchanged. Usage grant/tags stay immutable.
+    if (Array.isArray(body?.managementTags)) {
+      if (usesReservedTag(body.managementTags)) {
+        return problem(400, 'Reserved management tag', `A management tag key uses the reserved internal prefix '${RESERVED_TAG_PREFIX}', which is owned by the deployment.`);
+      }
+
+      b.managementTags = body.managementTags;
+    }
+
     b.authKind = body.authKind ?? b.authKind;
     b.secretRefs = body.secretRefs;
     b.config = body.config ?? [];
@@ -1956,6 +1966,7 @@ export function createMockControlPlane(options = {}) {
       return problem(405, 'Method not allowed');
     }
     if (method === 'GET') return getRegisteredSource(name);
+    if (method === 'PUT') return updateSource(name, body);
     return problem(405, 'Method not allowed');
   }
 
@@ -1990,6 +2001,27 @@ export function createMockControlPlane(options = {}) {
     };
     sourceRegistry.push(s);
     return json(structuredClone(s), 201);
+  }
+
+  function updateSource(name, body) {
+    const s = sourceRegistry.find((x) => x.name === name);
+    if (!s) return problem(404, 'Source not found', `No source named '${name}'.`);
+    // The name, type, and created-* audit are immutable. The document (a re-upload), display name, description, and — for
+    // an administrator re-tag (§14.2) — the managementTags reach scope are mutable; a present managementTags replaces them
+    // (reserved prefix rejected), absent leaves them unchanged.
+    if (Array.isArray(body?.managementTags)) {
+      if (usesReservedTag(body.managementTags)) {
+        return problem(400, 'Reserved management tag', `A management tag key uses the reserved internal prefix '${RESERVED_TAG_PREFIX}', which is owned by the deployment.`);
+      }
+
+      s.managementTags = body.managementTags;
+    }
+
+    if (body?.document != null) s.document = body.document;
+    if (body?.displayName !== undefined) s.displayName = body.displayName;
+    if (body?.description !== undefined) s.description = body.description;
+    s.lastUpdatedBy = actingSubject(); s.lastUpdatedAt = iso(0); s.etag = nextEtag();
+    return json(structuredClone(s));
   }
 
   // ---- deployment environments (§7.7) -----------------------------------------------------------
@@ -2120,7 +2152,17 @@ export function createMockControlPlane(options = {}) {
   function updateEnvironment(name, body) {
     const e = findEnvironment(name);
     if (!e) return notFoundEnvironment(name);
-    // Only display name and description are mutable; the name, reach scope, and created-* audit fields are immutable.
+    // The name and created-* audit are immutable. Display name, description, and — for an administrator re-tag (§14.2) —
+    // the managementTags reach scope are mutable; a present managementTags replaces them (reserved prefix rejected),
+    // absent leaves them unchanged.
+    if (Array.isArray(body?.managementTags)) {
+      if (usesReservedTag(body.managementTags)) {
+        return problem(400, 'Reserved management tag', `A management tag key uses the reserved internal prefix '${RESERVED_TAG_PREFIX}', which is owned by the deployment.`);
+      }
+
+      e.managementTags = body.managementTags;
+    }
+
     if (body?.displayName !== undefined) e.displayName = body.displayName;
     if (body?.description !== undefined) e.description = body.description;
     e.lastUpdatedBy = actingSubject(); e.lastUpdatedAt = iso(0); e.etag = nextEtag();

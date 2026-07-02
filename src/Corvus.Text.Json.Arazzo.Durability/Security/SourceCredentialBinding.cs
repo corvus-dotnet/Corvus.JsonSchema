@@ -465,6 +465,18 @@ public readonly partial struct SourceCredentialBinding
         }
     }
 
+    // Writes the draft's value when it supplies one (a re-tag), else the stored value carried forward — for a field that
+    // is replaced only when the update includes it (managementTags). Both undefined → the property is omitted.
+    private static void WriteValuePreferringDraft(Utf8JsonWriter writer, ReadOnlySpan<byte> name, in JsonElement draftValue, in JsonElement storedValue)
+    {
+        JsonElement chosen = draftValue.ValueKind != JsonValueKind.Undefined ? draftValue : storedValue;
+        if (chosen.ValueKind != JsonValueKind.Undefined)
+        {
+            writer.WritePropertyName(name);
+            chosen.WriteTo(writer);
+        }
+    }
+
     // The bytes-to-bytes draft context: the request body's already-parsed JSON values plus the resolved tag sets.
     private readonly struct DraftElements(
         JsonElement sourceName,
@@ -578,10 +590,11 @@ public readonly partial struct SourceCredentialBinding
         WriteValueIfPresent(writer, JsonPropertyNames.ExpiresAtUtf8, (JsonElement)draft.ExpiresAt);
         WriteValueIfPresent(writer, JsonPropertyNames.RotatedAtUtf8, (JsonElement)draft.RotatedAt);
 
-        // Management and usage tags are immutable identity (the binding's row-authorization scope) — carried forward
-        // from the existing binding, never taken from the draft. The usage grantee's display (kind/label) is part of that
-        // immutable usage identity, so it is carried forward too (never dropped on update — the catalog-drop lesson).
-        WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)this.ManagementTags);
+        // Management tags (who may MANAGE the binding, §14.2): an administrator re-tag supplies them on the draft (already
+        // merged with the preserved deployment-internal tags by the handler) → take the draft's; an update that omits them
+        // carries the stored tags forward. Usage tags + the grantee display (kind/label) remain immutable identity — always
+        // carried forward from the existing binding (never dropped on update — the catalog-drop lesson).
+        WriteValuePreferringDraft(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)draft.ManagementTags, (JsonElement)this.ManagementTags);
         WriteValueIfPresent(writer, JsonPropertyNames.UsageTagsUtf8, (JsonElement)this.UsageTags);
         WriteValueIfPresent(writer, JsonPropertyNames.UsageKindUtf8, (JsonElement)this.UsageKind);
         WriteValueIfPresent(writer, JsonPropertyNames.UsageLabelUtf8, (JsonElement)this.UsageLabel);
