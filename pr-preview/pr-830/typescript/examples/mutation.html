@@ -4,18 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
-    <meta name="description" content="This recipe covers the mutation surface in depth &#x2014; build, patch and produce &#x2014; over canonical UTF-8 JSON bytes." />
+    <meta name="description" content="This recipe covers the mutation surface in depth (build, patch and produce) over canonical UTF-8 JSON bytes." />
     <meta name="keywords" content="TypeScript, JSON Schema, Corvus.Text.Json, code generation" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:description" content="This recipe covers the mutation surface in depth &#x2014; build, patch and produce &#x2014; over canonical UTF-8 JSON bytes." />
+    <meta name="twitter:description" content="This recipe covers the mutation surface in depth (build, patch and produce) over canonical UTF-8 JSON bytes." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta name="twitter:title" content="Mutation &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="article:tag" content="TypeScript" />
     <meta property="article:tag" content="JSON Schema" />
     <meta property="article:tag" content="Corvus.Text.Json" />
     <meta property="article:tag" content="code generation" />
-    <meta property="og:description" content="This recipe covers the mutation surface in depth &#x2014; build, patch and produce &#x2014; over canonical UTF-8 JSON bytes." />
+    <meta property="og:description" content="This recipe covers the mutation surface in depth (build, patch and produce) over canonical UTF-8 JSON bytes." />
     <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta property="og:title" content="Mutation &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="og:type" content="website" />
@@ -187,16 +187,16 @@
     <main id="main-content" class="layout-docs__main">
         <div class="doc__content">
             <h1>Mutation</h1>
-<p>This recipe covers the mutation surface in depth — <code>build</code>, <code>patch</code> and <code>produce</code> — over canonical UTF-8 JSON bytes.</p>
+<p>This recipe covers the mutation surface in depth (<code>build</code>, <code>patch</code> and <code>produce</code>) over canonical UTF-8 JSON bytes.</p>
 <h2 id="the-pattern">The Pattern</h2>
 <p>Parsed values are <code>readonly</code>, so you never mutate data in place. Instead the generator emits three ways to produce a <em>new</em> document, all operating on bytes:</p>
 <ul>
-<li><strong><code>{Type}.build(props)</code></strong> — construct a fresh document from values.</li>
-<li><strong><code>{Type}.patch(source, changes, removals?)</code></strong> — the leanest update: name the top-level fields to change (and any to remove); only those member spans are rewritten, the rest of the bytes are copied through verbatim — no parse, no re-serialise of the unchanged part.</li>
-<li><strong><code>{Type}.produce(source, recipe)</code></strong> — an immer-style recipe over a typed, mutable <code>Draft&lt;T&gt;</code> for nested and array edits; the recorded change-set lowers to the same byte-level patch.</li>
+<li><strong><code>{Type}.build(props)</code></strong>: construct a fresh document from values.</li>
+<li><strong><code>{Type}.patch(source, changes, removals?)</code></strong>: the leanest update. Name the top-level fields to change (and any to remove); only those member spans are rewritten, the rest of the bytes are copied through verbatim, with no parse and no re-serialise of the unchanged part.</li>
+<li><strong><code>{Type}.produce(source, recipe)</code></strong>: an immer-style recipe over a typed, mutable <code>Draft&lt;T&gt;</code> for nested and array edits; the recorded change-set lowers to the same byte-level patch.</li>
 </ul>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/016-mutation/document.json"><code>document.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/016-mutation/document.json"><code>document.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Document&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;title&quot;],
   &quot;properties&quot;: {
     &quot;title&quot;: { &quot;type&quot;: &quot;string&quot; },
@@ -205,7 +205,7 @@
     &quot;version&quot;: { &quot;type&quot;: &quot;integer&quot; } } }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/016-mutation/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/016-mutation/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">const bytes = Document.build({ title: &quot;Draft&quot;, owner: { name: &quot;Ada&quot;, email: &quot;ada@x.com&quot; }, tags: [&quot;wip&quot;], version: 1 });
 
 Document.patch(bytes, { version: 2 });           // only &quot;version&quot; is rewritten
@@ -221,12 +221,12 @@ Document.produce(bytes, (d) =&gt; {
 <p>From <code>docs/typescript/examples/</code> (<code>npm install</code> once): <code>npm run build</code> then <code>node dist/016-mutation/demo.js</code>.</p>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/data-object.html">001-data-object</a> — the same trio on a flat object</li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/arrays.html">007-arrays</a> — <code>produce</code> with array <code>push</code></li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/data-object.html">001-data-object</a>: the same trio on a flat object</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/arrays.html">007-arrays</a>: <code>produce</code> with array <code>push</code></li>
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
 <h3 id="when-should-i-use-patch-vs-produce">When should I use <code>patch</code> vs <code>produce</code>?</h3>
-<p><code>patch</code> is the fast path for &quot;set/remove these top-level fields&quot; — it touches only the named member spans. <code>produce</code> is for nested or conditional edits where a recipe reads more naturally; it records the changes and lowers them to the same kind of byte edit. Both leave the source document untouched and return new bytes.</p>
+<p><code>patch</code> is the fast path for &quot;set/remove these top-level fields&quot;: it touches only the named member spans. <code>produce</code> is for nested or conditional edits where a recipe reads more naturally; it records the changes and lowers them to the same kind of byte edit. Both leave the source document untouched and return new bytes.</p>
 <h3 id="why-bytes-rather-than-an-object">Why bytes rather than an object?</h3>
 <p>The wire/persistence shape <em>is</em> bytes. Working at the byte level lets an update splice only the changed spans and copy the rest verbatim, which is dramatically cheaper than parse → mutate object → re-serialise for large documents.</p>
         </div>

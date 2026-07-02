@@ -4,18 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
-    <meta name="description" content="This recipe shows nested arrays &#x2014; an array whose items are themselves arrays &#x2014; generating a matrix type." />
+    <meta name="description" content="This recipe shows nested arrays (an array whose items are themselves arrays) generating a matrix type." />
     <meta name="keywords" content="TypeScript, JSON Schema, Corvus.Text.Json, code generation" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:description" content="This recipe shows nested arrays &#x2014; an array whose items are themselves arrays &#x2014; generating a matrix type." />
+    <meta name="twitter:description" content="This recipe shows nested arrays (an array whose items are themselves arrays) generating a matrix type." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta name="twitter:title" content="Arrays of Higher Rank &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="article:tag" content="TypeScript" />
     <meta property="article:tag" content="JSON Schema" />
     <meta property="article:tag" content="Corvus.Text.Json" />
     <meta property="article:tag" content="code generation" />
-    <meta property="og:description" content="This recipe shows nested arrays &#x2014; an array whose items are themselves arrays &#x2014; generating a matrix type." />
+    <meta property="og:description" content="This recipe shows nested arrays (an array whose items are themselves arrays) generating a matrix type." />
     <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta property="og:title" content="Arrays of Higher Rank &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="og:type" content="website" />
@@ -187,17 +187,17 @@
     <main id="main-content" class="layout-docs__main">
         <div class="doc__content">
             <h1>Arrays of Higher Rank</h1>
-<p>This recipe shows nested arrays — an array whose <code>items</code> are themselves arrays — generating a matrix type.</p>
+<p>This recipe shows nested arrays (an array whose <code>items</code> are themselves arrays) generating a matrix type.</p>
 <h2 id="the-pattern">The Pattern</h2>
 <p><code>items</code> can itself be an <code>array</code>, recursively. A rank-2 array generates <code>readonly (readonly number[])[]</code>; the nesting continues for rank-N (tensors). Element access is ordinary double-indexing.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/008-nested-arrays/grid.json"><code>grid.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/008-nested-arrays/grid.json"><code>grid.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Grid&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;cells&quot;],
   &quot;properties&quot;: { &quot;cells&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;number&quot; } } } } }
 </code></pre>
 <p>The generated <code>interface Grid</code> has <code>cells: readonly (readonly number[])[]</code>.</p>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/008-nested-arrays/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/008-nested-arrays/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">const grid = Grid.parse(bytes);
 grid.cells[1][2]; // 6 — typed at every level
 </code></pre>
@@ -205,8 +205,8 @@ grid.cells[1][2]; // 6 — typed at every level
 <p>From <code>docs/typescript/examples/</code> (<code>npm install</code> once): <code>npm run build</code> then <code>node dist/008-nested-arrays/demo.js</code>.</p>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/arrays.html">007-arrays</a> — a single-rank array</li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/tuples.html">009-tuples</a> — fixed-length arrays (a <code>Vec3</code> is <code>readonly [number, number, number]</code>)</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/arrays.html">007-arrays</a>: a single-rank array</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/tuples.html">009-tuples</a>: fixed-length arrays (a <code>Vec3</code> is <code>readonly [number, number, number]</code>)</li>
 </ul>
         </div>
     </main>

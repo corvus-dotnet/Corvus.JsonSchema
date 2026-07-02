@@ -189,14 +189,14 @@
             <h1>Numeric Enumerations</h1>
 <p>This recipe shows a numeric <code>enum</code> generating a numeric-literal union.</p>
 <h2 id="the-pattern">The Pattern</h2>
-<p>A numeric <code>enum</code> becomes <code>type Status = 200 | 404 | 500</code> — a union of numeric literals, checkable and completable, with <code>Response.evaluate</code> rejecting any other number.</p>
+<p>A numeric <code>enum</code> becomes <code>type Status = 200 | 404 | 500</code>, a union of numeric literals, checkable and completable, with <code>Response.evaluate</code> rejecting any other number.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/014-numeric-enums/response.json"><code>response.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/014-numeric-enums/response.json"><code>response.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Response&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;status&quot;],
   &quot;properties&quot;: { &quot;status&quot;: { &quot;enum&quot;: [200, 404, 500] } } }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/014-numeric-enums/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/014-numeric-enums/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">r.status === 200;                       // narrowed to the literal union
 Response.evaluate({ status: 418 });          // false — not 200 | 404 | 500
 </code></pre>
@@ -204,12 +204,12 @@ Response.evaluate({ status: 418 });          // false — not 200 | 404 | 500
 <p>From <code>docs/typescript/examples/</code> (<code>npm install</code> once): <code>npm run build</code> then <code>node dist/014-numeric-enums/demo.js</code>.</p>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/string-enums.html">013-string-enums</a> — string <code>enum</code></li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/unions.html">011-unions</a> — <code>oneOf</code> for object branches</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/string-enums.html">013-string-enums</a>: string <code>enum</code></li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/unions.html">011-unions</a>: <code>oneOf</code> for object branches</li>
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
 <h3 id="are-enum-values-compared-exactly">Are enum values compared exactly?</h3>
-<p>Yes — numeric membership is compared by mathematical value against the schema's literals, so there is no floating-point surprise even for large or fractional members.</p>
+<p>Yes. Numeric membership is compared by mathematical value against the schema's literals, so there is no floating-point surprise even for large or fractional members.</p>
         </div>
     </main>
 </div>

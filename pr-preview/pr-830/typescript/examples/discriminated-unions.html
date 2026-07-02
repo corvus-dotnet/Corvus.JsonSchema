@@ -4,18 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
-    <meta name="description" content="This recipe shows a tagged union &#x2014; a oneOf whose branches share a discriminant property &#x2014; and the exhaustive dispatch it generates." />
+    <meta name="description" content="This recipe shows a tagged union (a oneOf whose branches share a discriminant property) and the exhaustive dispatch it generates." />
     <meta name="keywords" content="TypeScript, JSON Schema, Corvus.Text.Json, code generation" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:description" content="This recipe shows a tagged union &#x2014; a oneOf whose branches share a discriminant property &#x2014; and the exhaustive dispatch it generates." />
+    <meta name="twitter:description" content="This recipe shows a tagged union (a oneOf whose branches share a discriminant property) and the exhaustive dispatch it generates." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta name="twitter:title" content="Discriminated Unions &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="article:tag" content="TypeScript" />
     <meta property="article:tag" content="JSON Schema" />
     <meta property="article:tag" content="Corvus.Text.Json" />
     <meta property="article:tag" content="code generation" />
-    <meta property="og:description" content="This recipe shows a tagged union &#x2014; a oneOf whose branches share a discriminant property &#x2014; and the exhaustive dispatch it generates." />
+    <meta property="og:description" content="This recipe shows a tagged union (a oneOf whose branches share a discriminant property) and the exhaustive dispatch it generates." />
     <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta property="og:title" content="Discriminated Unions &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="og:type" content="website" />
@@ -187,11 +187,11 @@
     <main id="main-content" class="layout-docs__main">
         <div class="doc__content">
             <h1>Discriminated Unions</h1>
-<p>This recipe shows a tagged union — a <code>oneOf</code> whose branches share a discriminant property — and the exhaustive dispatch it generates.</p>
+<p>This recipe shows a tagged union (a <code>oneOf</code> whose branches share a discriminant property) and the exhaustive dispatch it generates.</p>
 <h2 id="the-pattern">The Pattern</h2>
 <p>When every branch of a <code>oneOf</code> carries a <code>const</code> discriminant (here <code>type: &quot;click&quot; | &quot;keypress&quot; | &quot;scroll&quot;</code>), the generated <code>{Union}.match</code> keys off it to dispatch to a per-branch handler. <code>Event.match</code> is exhaustive: the <code>cases</code> object must have a handler for every member, so adding a branch to the schema turns a missing case into a compile error.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/012-discriminated-unions/event.json"><code>event.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/012-discriminated-unions/event.json"><code>event.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Event&quot;,
   &quot;oneOf&quot;: [
     { &quot;title&quot;: &quot;Click&quot;,    &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;type&quot;, &quot;x&quot;, &quot;y&quot;],   &quot;properties&quot;: { &quot;type&quot;: { &quot;const&quot;: &quot;click&quot; },    &quot;x&quot;: { &quot;type&quot;: &quot;number&quot; }, &quot;y&quot;: { &quot;type&quot;: &quot;number&quot; } } },
@@ -200,7 +200,7 @@
 </code></pre>
 <p>The generated <code>type Event = Click | KeyPress | Scroll</code>, with <code>Click.is</code>/<code>KeyPress.is</code>/<code>Scroll.is</code> guards and <code>Event.match</code>.</p>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/012-discriminated-unions/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/012-discriminated-unions/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">const describe = (e: Event) =&gt;
   Event.match(e, {
     click:    (c) =&gt; `click at ${c.x},${c.y}`,
@@ -212,12 +212,12 @@
 <p>From <code>docs/typescript/examples/</code> (<code>npm install</code> once): <code>npm run build</code> then <code>node dist/012-discriminated-unions/demo.js</code>.</p>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/unions.html">011-unions</a> — <code>oneOf</code> in general (and <code>{Union}.match</code>)</li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/string-enums.html">013-string-enums</a> — the discriminant values as a literal union</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/unions.html">011-unions</a>: <code>oneOf</code> in general (and <code>{Union}.match</code>)</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/string-enums.html">013-string-enums</a>: the discriminant values as a literal union</li>
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
 <h3 id="does-the-discriminant-make-evaluation-faster">Does the discriminant make evaluation faster?</h3>
-<p>It can short-circuit: a value with <code>type: &quot;scroll&quot;</code> only needs the <code>Scroll</code> branch evaluated. But the discriminant is a convenience for <em>your</em> dispatch (<code>{Union}.match</code>) — <code>Event.evaluate</code> is correct with or without one, distinguishing branches structurally when there is no tag.</p>
+<p>It can short-circuit: a value with <code>type: &quot;scroll&quot;</code> only needs the <code>Scroll</code> branch evaluated. But the discriminant is a convenience for <em>your</em> dispatch (<code>{Union}.match</code>); <code>Event.evaluate</code> is correct with or without one, distinguishing branches structurally when there is no tag.</p>
         </div>
     </main>
 </div>

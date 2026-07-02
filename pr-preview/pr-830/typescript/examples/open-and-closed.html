@@ -189,15 +189,15 @@
             <h1>Open and Closed Objects</h1>
 <p>This recipe shows the difference between an <strong>open</strong> object (unknown properties allowed) and a <strong>closed</strong> one (<code>unevaluatedProperties: false</code>), and how each is generated.</p>
 <h2 id="the-pattern">The Pattern</h2>
-<p>By default a JSON Schema object is <strong>open</strong>: properties beyond those declared are allowed and ignored. Adding <code>unevaluatedProperties: false</code> makes it <strong>closed</strong> — any property not accounted for by the schema is rejected. The generated <code>interface</code> carries the declared properties either way; the open/closed distinction is enforced by <code>StrictPoint.evaluate</code>. (A closed type has no index signature, so it also reads as exact in TypeScript.)</p>
+<p>By default a JSON Schema object is <strong>open</strong>: properties beyond those declared are allowed and ignored. Adding <code>unevaluatedProperties: false</code> makes it <strong>closed</strong>, so any property not accounted for by the schema is rejected. The generated <code>interface</code> carries the declared properties either way; the open/closed distinction is enforced by <code>StrictPoint.evaluate</code>. (A closed type has no index signature, so it also reads as exact in TypeScript.)</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/004-open-and-closed/point.json"><code>point.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/004-open-and-closed/point.json"><code>point.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;StrictPoint&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;x&quot;, &quot;y&quot;],
   &quot;properties&quot;: { &quot;x&quot;: { &quot;type&quot;: &quot;number&quot; }, &quot;y&quot;: { &quot;type&quot;: &quot;number&quot; } },
   &quot;unevaluatedProperties&quot;: false }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/004-open-and-closed/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/004-open-and-closed/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">StrictPoint.evaluate({ x: 1, y: 2 });        // true
 StrictPoint.evaluate({ x: 1, y: 2, z: 3 });  // false — z is an unevaluated (unknown) property
 StrictPoint.evaluate({ x: 1 });              // false — y is required
@@ -206,12 +206,12 @@ StrictPoint.evaluate({ x: 1 });              // false — y is required
 <p>From <code>docs/typescript/examples/</code> (<code>npm install</code> once): <code>npm run build</code> then <code>node dist/004-open-and-closed/demo.js</code>.</p>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/data-object.html">001-data-object</a> — the default (open) object</li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/maps.html">015-maps</a> — <code>additionalProperties</code> typing the <em>unknown</em> keys</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/data-object.html">001-data-object</a>: the default (open) object</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/maps.html">015-maps</a>: <code>additionalProperties</code> typing the <em>unknown</em> keys</li>
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
 <h3 id="what-is-the-difference-between-additionalproperties-and-unevaluatedproperties">What is the difference between <code>additionalProperties</code> and <code>unevaluatedProperties</code>?</h3>
-<p><code>additionalProperties</code> constrains keys not named in <em>this</em> schema's <code>properties</code>. <code>unevaluatedProperties</code> constrains keys not accounted for by <em>any</em> applicable subschema, including those pulled in by <code>allOf</code>/<code>if</code>/<code>$ref</code> — so it's the right tool for &quot;closed, even across composition&quot;. Setting either to <code>false</code> rejects unknown keys; setting it to a schema types them (see 015-maps).</p>
+<p><code>additionalProperties</code> constrains keys not named in <em>this</em> schema's <code>properties</code>. <code>unevaluatedProperties</code> constrains keys not accounted for by <em>any</em> applicable subschema, including those pulled in by <code>allOf</code>/<code>if</code>/<code>$ref</code>, so it's the right tool for &quot;closed, even across composition&quot;. Setting either to <code>false</code> rejects unknown keys; setting it to a schema types them (see 015-maps).</p>
         </div>
     </main>
 </div>

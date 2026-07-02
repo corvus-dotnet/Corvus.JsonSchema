@@ -4,18 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
-    <meta name="description" content="This recipe shows how oneOf becomes a TypeScript union with per-branch type guards and an exhaustive {Union}.match function &#x2014; the idiomatic way to handle &quot;one of several shapes&quot;." />
+    <meta name="description" content="This recipe shows how oneOf becomes a TypeScript union with per-branch type guards and an exhaustive {Union}.match function, the idiomatic way to handle &quot;one of several shapes&quot;." />
     <meta name="keywords" content="TypeScript, JSON Schema, Corvus.Text.Json, code generation" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:description" content="This recipe shows how oneOf becomes a TypeScript union with per-branch type guards and an exhaustive {Union}.match function &#x2014; the idiomatic way to handle &quot;one of several shapes&quot;." />
+    <meta name="twitter:description" content="This recipe shows how oneOf becomes a TypeScript union with per-branch type guards and an exhaustive {Union}.match function, the idiomatic way to handle &quot;one of several shapes&quot;." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta name="twitter:title" content="Unions &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="article:tag" content="TypeScript" />
     <meta property="article:tag" content="JSON Schema" />
     <meta property="article:tag" content="Corvus.Text.Json" />
     <meta property="article:tag" content="code generation" />
-    <meta property="og:description" content="This recipe shows how oneOf becomes a TypeScript union with per-branch type guards and an exhaustive {Union}.match function &#x2014; the idiomatic way to handle &quot;one of several shapes&quot;." />
+    <meta property="og:description" content="This recipe shows how oneOf becomes a TypeScript union with per-branch type guards and an exhaustive {Union}.match function, the idiomatic way to handle &quot;one of several shapes&quot;." />
     <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta property="og:title" content="Unions &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="og:type" content="website" />
@@ -187,16 +187,16 @@
     <main id="main-content" class="layout-docs__main">
         <div class="doc__content">
             <h1>Unions</h1>
-<p>This recipe shows how <code>oneOf</code> becomes a TypeScript <strong>union</strong> with per-branch type guards and an exhaustive <code>{Union}.match</code> function — the idiomatic way to handle &quot;one of several shapes&quot;.</p>
+<p>This recipe shows how <code>oneOf</code> becomes a TypeScript <strong>union</strong> with per-branch type guards and an exhaustive <code>{Union}.match</code> function, the idiomatic way to handle &quot;one of several shapes&quot;.</p>
 <h2 id="the-pattern">The Pattern</h2>
 <p>A <code>oneOf</code> of object schemas generates a union type alias (<code>type Shape = Circle | Rectangle</code>) plus:</p>
 <ul>
 <li>a <strong>type guard</strong> per branch (<code>Circle.is(value): value is Circle</code>) that narrows in an <code>if</code>;</li>
-<li>an exhaustive <strong><code>Shape.match(value, cases)</code></strong> that dispatches to a handler per branch and returns a result — the compiler requires a case for <em>every</em> member, so adding a branch to the schema turns missing handlers into compile errors.</li>
+<li>an exhaustive <strong><code>Shape.match(value, cases)</code></strong> that dispatches to a handler per branch and returns a result: the compiler requires a case for <em>every</em> member, so adding a branch to the schema turns missing handlers into compile errors.</li>
 </ul>
 <p>When each branch carries a discriminant property (here <code>kind: &quot;circle&quot;</code> / <code>&quot;rectangle&quot;</code> via <code>const</code>), the guards key off it; the same shape with no discriminant still works, distinguished structurally by the evaluator.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/011-unions/shape.json"><code>shape.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/011-unions/shape.json"><code>shape.json</code></a></p>
 <pre><code class="language-json">{
   &quot;title&quot;: &quot;Shape&quot;,
   &quot;oneOf&quot;: [
@@ -208,7 +208,7 @@
 }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/011-unions/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/011-unions/demo.ts">Example code</a></p>
 <h3 id="match-exhaustively">Match exhaustively</h3>
 <pre><code class="language-typescript">const area = (s: Shape) =&gt;
   Shape.match(s, {
@@ -231,14 +231,14 @@ node dist/011-unions/demo.js
 </code></pre>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/discriminated-unions.html">012-discriminated-unions</a> — a shared discriminator property across branches</li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/numeric-enums.html">014-numeric-enums</a> — <code>oneOf</code> of <code>const</code> values</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/discriminated-unions.html">012-discriminated-unions</a>: a shared discriminator property across branches</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/numeric-enums.html">014-numeric-enums</a>: <code>oneOf</code> of <code>const</code> values</li>
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
 <h3 id="how-is-oneof-different-from-anyof-here">How is <code>oneOf</code> different from <code>anyOf</code> here?</h3>
 <p>Both generate a union type and <code>{Union}.match</code>. The difference is in evaluation: <code>oneOf</code> requires the value to match <em>exactly one</em> branch (matching two is invalid), while <code>anyOf</code> accepts one <em>or more</em>. The TypeScript surface is the same; <code>Shape.evaluate</code> enforces the cardinality.</p>
 <h3 id="why-is-shape.match-better-than-a-manual-switch">Why is <code>Shape.match</code> better than a manual <code>switch</code>?</h3>
-<p>It is exhaustive by construction: the <code>cases</code> object must have a handler for every union member, so if you later add a <code>Triangle</code> branch to the schema, the regenerated <code>Shape.match</code> won't type-check until you handle it — you can't silently forget a case.</p>
+<p>It is exhaustive by construction: the <code>cases</code> object must have a handler for every union member, so if you later add a <code>Triangle</code> branch to the schema, the regenerated <code>Shape.match</code> won't type-check until you handle it; you can't silently forget a case.</p>
         </div>
     </main>
 </div>

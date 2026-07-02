@@ -4,18 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
-    <meta name="description" content="This recipe adds constraints to a data object &#x2014; length, range, pattern, numeric step, format &#x2014; and shows that the generated Registration.evaluate enforces them while the interface stays the plain shape." />
+    <meta name="description" content="This recipe adds constraints to a data object (length, range, pattern, numeric step, format) and shows that the generated Registration.evaluate enforces them while the interface stays the plain shape." />
     <meta name="keywords" content="TypeScript, JSON Schema, Corvus.Text.Json, code generation" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:description" content="This recipe adds constraints to a data object &#x2014; length, range, pattern, numeric step, format &#x2014; and shows that the generated Registration.evaluate enforces them while the interface stays the plain shape." />
+    <meta name="twitter:description" content="This recipe adds constraints to a data object (length, range, pattern, numeric step, format) and shows that the generated Registration.evaluate enforces them while the interface stays the plain shape." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta name="twitter:title" content="Validation &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="article:tag" content="TypeScript" />
     <meta property="article:tag" content="JSON Schema" />
     <meta property="article:tag" content="Corvus.Text.Json" />
     <meta property="article:tag" content="code generation" />
-    <meta property="og:description" content="This recipe adds constraints to a data object &#x2014; length, range, pattern, numeric step, format &#x2014; and shows that the generated Registration.evaluate enforces them while the interface stays the plain shape." />
+    <meta property="og:description" content="This recipe adds constraints to a data object (length, range, pattern, numeric step, format) and shows that the generated Registration.evaluate enforces them while the interface stays the plain shape." />
     <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta property="og:title" content="Validation &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="og:type" content="website" />
@@ -187,12 +187,12 @@
     <main id="main-content" class="layout-docs__main">
         <div class="doc__content">
             <h1>Validation</h1>
-<p>This recipe adds <strong>constraints</strong> to a data object — length, range, pattern, numeric step, format — and shows that the generated <code>Registration.evaluate</code> enforces them while the interface stays the plain shape.</p>
+<p>This recipe adds <strong>constraints</strong> to a data object (length, range, pattern, numeric step, format) and shows that the generated <code>Registration.evaluate</code> enforces them while the interface stays the plain shape.</p>
 <h2 id="the-pattern">The Pattern</h2>
-<p>A JSON Schema validation keyword (<code>minLength</code>, <code>pattern</code>, <code>minimum</code>/<code>maximum</code>, <code>multipleOf</code>, <code>format</code>, …) constrains a value beyond its type. So the generator splits the two concerns: the <strong>interface is the shape</strong>, and <strong><code>Registration.evaluate</code> is the constraint authority</strong>. Evaluation returns a plain <code>boolean</code> — a rejection is just <code>false</code>, with no thrown exception and no allocated error graph. (Collecting <em>why</em> a value failed — the per-keyword results — is a separate opt-in, like the engine's results collector.)</p>
-<p>A <code>format</code> keyword additionally produces a <strong>branded</strong> type with an eager factory (<code>Email.from</code>) that throws on a malformed value at construction — useful when you want to fail fast on one field rather than evaluate a whole document.</p>
+<p>A JSON Schema validation keyword (<code>minLength</code>, <code>pattern</code>, <code>minimum</code>/<code>maximum</code>, <code>multipleOf</code>, <code>format</code>, …) constrains a value beyond its type. So the generator splits the two concerns: the <strong>interface is the shape</strong>, and <strong><code>Registration.evaluate</code> is the constraint authority</strong>. Evaluation returns a plain <code>boolean</code>: a rejection is <code>false</code>, with no thrown exception and no allocated error graph. (Collecting <em>why</em> a value failed, the per-keyword results, is a separate opt-in, like the engine's results collector.)</p>
+<p>A <code>format</code> keyword additionally produces a <strong>branded</strong> type with an eager factory (<code>Email.from</code>) that throws on a malformed value at construction. This is useful when you want to fail fast on one field rather than evaluate a whole document.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/002-validation/registration.json"><code>registration.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/002-validation/registration.json"><code>registration.json</code></a></p>
 <pre><code class="language-json">{
   &quot;title&quot;: &quot;Registration&quot;,
   &quot;type&quot;: &quot;object&quot;,
@@ -206,13 +206,13 @@
 }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/002-validation/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/002-validation/demo.ts">Example code</a></p>
 <h3 id="evaluate-a-value">Evaluate a value</h3>
-<p><code>Registration.evaluate</code> returns a boolean — <code>true</code> when every constraint holds:</p>
+<p><code>Registration.evaluate</code> returns a boolean, <code>true</code> when every constraint holds:</p>
 <pre><code class="language-typescript">const bytes = Registration.build({ username: &quot;ada_lovelace&quot;, age: 36, email: Email.from(&quot;ada@example.com&quot;), score: 4.5 });
 Registration.evaluate(bytes); // true
 </code></pre>
-<p>Each constraint rejection is just <code>false</code>:</p>
+<p>Each constraint rejection is <code>false</code>:</p>
 <pre><code class="language-typescript">Registration.evaluate({ username: &quot;ab&quot;,  age: 36, email: &quot;a@b.com&quot; });               // false — minLength 3
 Registration.evaluate({ username: &quot;Ada&quot;, age: 36, email: &quot;a@b.com&quot; });               // false — pattern ^[a-z][a-z0-9_]*$
 Registration.evaluate({ username: &quot;ada&quot;, age: 17, email: &quot;a@b.com&quot; });               // false — minimum 18
@@ -229,15 +229,15 @@ node dist/002-validation/demo.js
 </code></pre>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/data-object.html">001-data-object</a> — the shape without constraints</li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/formats.html">019-formats</a> — branded format types in depth</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/data-object.html">001-data-object</a>: the shape without constraints</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/formats.html">019-formats</a>: branded format types in depth</li>
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
 <h3 id="why-does-registration.evaluate-return-a-boolean-instead-of-a-list-of-errors">Why does <code>Registration.evaluate</code> return a boolean instead of a list of errors?</h3>
-<p>The common path — &quot;is this value acceptable?&quot; — wants a fast yes/no with no allocation, so that is the default. The detailed <em>why</em> (per-keyword failures, instance/keyword locations) is produced by passing an optional results collector to the evaluator; the boolean is the zero-overhead shape of the same call.</p>
+<p>The common path (&quot;is this value acceptable?&quot;) wants a fast yes/no with no allocation, so that is the default. The detailed <em>why</em> (per-keyword failures, instance/keyword locations) is produced by passing an optional results collector to the evaluator; the boolean is the zero-overhead shape of the same call.</p>
 <h3 id="are-numeric-constraints-exact">Are numeric constraints exact?</h3>
-<p>Yes. <code>minimum</code>/<code>maximum</code>/<code>multipleOf</code> are evaluated against the number's source text using big-integer arithmetic, not a lossy IEEE-754 double — so <code>multipleOf: 0.1</code> and large-integer bounds behave mathematically, not according to floating-point rounding.</p>
-<h3 id="where-do-constraints-live-the-type-or-the-evaluator">Where do constraints live — the type or the evaluator?</h3>
+<p>Yes. <code>minimum</code>/<code>maximum</code>/<code>multipleOf</code> are evaluated against the number's source text using big-integer arithmetic, not a lossy IEEE-754 double, so <code>multipleOf: 0.1</code> and large-integer bounds behave mathematically, not according to floating-point rounding.</p>
+<h3 id="where-do-constraints-live-the-type-or-the-evaluator">Where do constraints live, the type or the evaluator?</h3>
 <p>The evaluator. A constraint like <code>minLength</code> or <code>multipleOf</code> can't be expressed in a TypeScript type, so the interface carries only the shape (<code>username: string</code>) and <code>Registration.evaluate</code> carries the constraint. A <code>format</code>, however, is surfaced in <em>both</em>: as a branded type (so a raw <code>string</code> isn't assignable) and as a runtime check.</p>
         </div>
     </main>

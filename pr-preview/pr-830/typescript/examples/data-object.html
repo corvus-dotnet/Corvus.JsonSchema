@@ -189,18 +189,18 @@
             <h1>Simple Data Objects</h1>
 <p>This recipe demonstrates how to define a simple data object of primitive values in JSON Schema, and how the Corvus.Text.Json <strong>TypeScript</strong> generator produces an idiomatic <code>readonly</code> interface plus a small, allocation-lean API to evaluate, read, build and mutate it.</p>
 <h2 id="the-pattern">The Pattern</h2>
-<p>It is very common to define a simple data object composed of primitive values for exchange through an API.</p>
+<p>It is common to define a simple data object composed of primitive values for exchange through an API.</p>
 <p>The generator emits, for the root schema, a <code>readonly</code> <strong>interface</strong> whose name is derived from the schema (here <code>Person</code>). Required properties are <code>name: T</code>; optional properties are <code>name?: T</code>. JSON Schema scalar types map to TypeScript primitives (<code>string</code>, <code>number</code>, <code>boolean</code>), and a <code>format</code> keyword becomes a <strong>branded</strong> type with a validating factory (here <code>birthDate</code> is <code>Brand&lt;string, &quot;date&quot;&gt;</code> with <code>BirthDate.from(...)</code>).</p>
-<p>There is <strong>nothing to wrap</strong>: a JSON value parsed with <code>JSON.parse</code> <em>is</em> a <code>Person</code> once <code>Person.evaluate</code> accepts it — you read it with ordinary property access. The generator adds only what the language can't express for free:</p>
+<p>There is <strong>nothing to wrap</strong>: a JSON value parsed with <code>JSON.parse</code> <em>is</em> a <code>Person</code> once <code>Person.evaluate</code> accepts it, and you read it with ordinary property access. The generator adds only what the language can't express for free:</p>
 <ul>
-<li><code>Person.evaluate(value)</code> / <code>Person.evaluate(value, ev)</code> — an AOT-compiled boolean evaluator (no exceptions, no error-object graph).</li>
-<li><code>Person.build(props)</code> — construct canonical UTF-8 JSON <strong>bytes</strong> from plain values.</li>
-<li><code>Person.patch(source, changes, removals?)</code> — change only the named fields, spliced at the byte level (unchanged bytes copied verbatim).</li>
-<li><code>Person.produce(source, recipe)</code> — an immer-style <code>produce(draft =&gt; …)</code> over a typed, mutable <code>Draft&lt;Person&gt;</code>.</li>
-<li><code>BirthDate.from(value)</code> — a validating factory for the <code>date</code>-formatted branded type.</li>
+<li><code>Person.evaluate(value)</code> / <code>Person.evaluate(value, ev)</code>: an AOT-compiled boolean evaluator (no exceptions, no error-object graph).</li>
+<li><code>Person.build(props)</code>: construct canonical UTF-8 JSON <strong>bytes</strong> from plain values.</li>
+<li><code>Person.patch(source, changes, removals?)</code>: change only the named fields, spliced at the byte level (unchanged bytes copied verbatim).</li>
+<li><code>Person.produce(source, recipe)</code>: an immer-style <code>produce(draft =&gt; …)</code> over a typed, mutable <code>Draft&lt;Person&gt;</code>.</li>
+<li><code>BirthDate.from(value)</code>: a validating factory for the <code>date</code>-formatted branded type.</li>
 </ul>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/001-data-object/person.json"><code>person.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/001-data-object/person.json"><code>person.json</code></a></p>
 <pre><code class="language-json">{
   &quot;title&quot;: &quot;Person&quot;,
   &quot;type&quot;: &quot;object&quot;,
@@ -224,9 +224,9 @@
 }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/001-data-object/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/001-data-object/demo.ts">Example code</a></p>
 <h3 id="build-from-plain-values">Build from plain values</h3>
-<p><code>{Type}.build</code> produces canonical UTF-8 JSON bytes (the wire / persistence shape):</p>
+<p><code>{Type}.build</code> produces canonical UTF-8 JSON bytes (the wire or persistence shape):</p>
 <pre><code class="language-typescript">const bytes = Person.build({
   familyName: &quot;Brontë&quot;,
   givenName: &quot;Anne&quot;,
@@ -236,22 +236,22 @@
 // {&quot;familyName&quot;:&quot;Brontë&quot;,&quot;givenName&quot;:&quot;Anne&quot;,&quot;birthDate&quot;:&quot;1820-01-17&quot;,&quot;height&quot;:1.52}
 </code></pre>
 <h3 id="evaluate-untrusted-input">Evaluate untrusted input</h3>
-<p><code>Person.evaluate</code> is a boolean — no exceptions, no allocated error graph:</p>
+<p><code>Person.evaluate</code> is a boolean, with no exceptions and no allocated error graph:</p>
 <pre><code class="language-typescript">Person.evaluate(bytes);                     // true — evaluate accepts bytes (decodes them) or a value
 Person.evaluate({ givenName: &quot;Anne&quot; });     // false — familyName is required
 </code></pre>
 <h3 id="read">Read</h3>
-<p>Once <code>Person.evaluate</code> accepts it, the value <em>is</em> a <code>Person</code>; read it with ordinary property access. <code>Person.parse</code> decodes the bytes (or JSON.parses a string) and returns it typed:</p>
+<p>Once <code>Person.evaluate</code> accepts it, the value <em>is</em> a <code>Person</code>, so read it with ordinary property access. <code>Person.parse</code> decodes the bytes (or JSON.parses a string) and returns it typed:</p>
 <pre><code class="language-typescript">const person = Person.parse(bytes);
 person.familyName;                  // &quot;Brontë&quot;
 person.birthDate;                   // &quot;1820-01-17&quot;
 person.otherNames !== undefined;    // false — optional and absent
 </code></pre>
-<h3 id="patch-change-only-what-you-name">Patch — change only what you name</h3>
+<h3 id="patch-change-only-what-you-name">Patch: change only what you name</h3>
 <pre><code class="language-typescript">const patched = Person.patch(bytes, { height: 1.55 });
 // only &quot;height&quot; is rewritten; every other byte is copied through
 </code></pre>
-<h3 id="produce-immer-style-recipe">Produce — immer-style recipe</h3>
+<h3 id="produce-immer-style-recipe">Produce: immer-style recipe</h3>
 <pre><code class="language-typescript">const produced = Person.produce(bytes, (d) =&gt; {
   d.birthDate = BirthDate.from(&quot;1984-06-03&quot;);
 });
@@ -266,19 +266,19 @@ node dist/001-data-object/demo.js
 </code></pre>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/validation.html">002-validation</a> — adding validation constraints</li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/string-enums.html">013-string-enums</a> — <code>enum</code> as a string-literal union</li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mutation.html">016-mutation</a> — <code>produce</code> / <code>patch</code> / <code>build</code> in depth</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/validation.html">002-validation</a>: adding validation constraints</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/string-enums.html">013-string-enums</a>: <code>enum</code> as a string-literal union</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mutation.html">016-mutation</a>: <code>produce</code> / <code>patch</code> / <code>build</code> in depth</li>
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
 <h3 id="how-do-json-schema-property-types-map-to-typescript">How do JSON Schema property types map to TypeScript?</h3>
 <p><code>&quot;type&quot;: &quot;string&quot;</code> → <code>string</code>, <code>&quot;number&quot;</code>/<code>&quot;integer&quot;</code> → <code>number</code>, <code>&quot;boolean&quot;</code> → <code>boolean</code>, <code>&quot;null&quot;</code> → <code>null</code>, an object → a <code>readonly interface</code>, an array → <code>readonly T[]</code>. A <code>format</code> keyword (e.g. <code>&quot;date&quot;</code>) becomes a <strong>branded</strong> type (<code>Brand&lt;string, &quot;date&quot;&gt;</code>) so a plain <code>string</code> is <em>not</em> assignable without going through the validating <code>BirthDate.from(...)</code> factory.</p>
 <h3 id="why-is-there-no-wrapper-type-to-parse-into">Why is there no wrapper type to &quot;parse into&quot;?</h3>
-<p>Because TypeScript already expresses the shape. A <code>JSON.parse</code>'d value, once <code>Person.evaluate</code>'d, is a sound <code>Person</code> — there is nothing to beat reading a plain object you trust. The generated functions cover only what the type system can't: evaluation, byte-level mutation, and construction.</p>
+<p>Because TypeScript already expresses the shape. A <code>JSON.parse</code>'d value, once <code>Person.evaluate</code>'d, is a sound <code>Person</code>, and there is nothing to beat reading a plain object you trust. The generated functions cover only what the type system can't: evaluation, byte-level mutation, and construction.</p>
 <h3 id="what-is-the-difference-between-an-absent-property-and-null">What is the difference between an absent property and <code>null</code>?</h3>
-<p>An <strong>optional</strong> property (<code>name?: T</code>) is absent when the key is missing — read it as <code>value.name === undefined</code>. A property typed to include <code>null</code> is present with the JSON literal <code>null</code>. JSON Schema treats these differently, and so does the generated interface (<code>?:</code> vs a <code>| null</code> member).</p>
+<p>An <strong>optional</strong> property (<code>name?: T</code>) is absent when the key is missing: read it as <code>value.name === undefined</code>. A property typed to include <code>null</code> is present with the JSON literal <code>null</code>. JSON Schema treats these differently, and so does the generated interface (<code>?:</code> vs a <code>| null</code> member).</p>
 <h3 id="when-do-i-use-build-vs-patch-vs-produce">When do I use <code>build</code> vs <code>patch</code> vs <code>produce</code>?</h3>
-<p><code>{Type}.build</code> constructs a fresh document from values. <code>{Type}.patch</code> is the leanest update — name the fields to change (and any to remove) and it splices them into the source bytes without re-parsing or re-serialising the rest. <code>{Type}.produce</code> gives the ergonomic immer-style recipe for deeper or conditional edits, lowering the recorded change-set to the same byte patch.</p>
+<p><code>{Type}.build</code> constructs a fresh document from values. <code>{Type}.patch</code> is the leanest update: name the fields to change (and any to remove) and it splices them into the source bytes without re-parsing or re-serialising the rest. <code>{Type}.produce</code> gives the ergonomic immer-style recipe for deeper or conditional edits, lowering the recorded change-set to the same byte patch.</p>
         </div>
     </main>
 </div>

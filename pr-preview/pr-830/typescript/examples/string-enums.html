@@ -4,18 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
-    <meta name="description" content="This recipe shows enum of strings generating a string-literal union &#x2014; the idiomatic TypeScript enum." />
+    <meta name="description" content="This recipe shows enum of strings generating a string-literal union, the idiomatic TypeScript enum." />
     <meta name="keywords" content="TypeScript, JSON Schema, Corvus.Text.Json, code generation" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:description" content="This recipe shows enum of strings generating a string-literal union &#x2014; the idiomatic TypeScript enum." />
+    <meta name="twitter:description" content="This recipe shows enum of strings generating a string-literal union, the idiomatic TypeScript enum." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta name="twitter:title" content="String Enumerations &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="article:tag" content="TypeScript" />
     <meta property="article:tag" content="JSON Schema" />
     <meta property="article:tag" content="Corvus.Text.Json" />
     <meta property="article:tag" content="code generation" />
-    <meta property="og:description" content="This recipe shows enum of strings generating a string-literal union &#x2014; the idiomatic TypeScript enum." />
+    <meta property="og:description" content="This recipe shows enum of strings generating a string-literal union, the idiomatic TypeScript enum." />
     <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta property="og:title" content="String Enumerations &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="og:type" content="website" />
@@ -187,17 +187,17 @@
     <main id="main-content" class="layout-docs__main">
         <div class="doc__content">
             <h1>String Enumerations</h1>
-<p>This recipe shows <code>enum</code> of strings generating a string-literal union — the idiomatic TypeScript enum.</p>
+<p>This recipe shows <code>enum</code> of strings generating a string-literal union, the idiomatic TypeScript enum.</p>
 <h2 id="the-pattern">The Pattern</h2>
 <p>A string <code>enum</code> becomes a <code>type</code> alias of string literals (<code>type Status = &quot;todo&quot; | &quot;in_progress&quot; | &quot;done&quot;</code>), not a TypeScript <code>enum</code>. That gives exhaustive <code>switch</code>/lookup with no runtime cost and full editor completion; <code>Task.evaluate</code> rejects any value outside the set.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/013-string-enums/task.json"><code>task.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/013-string-enums/task.json"><code>task.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Task&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;status&quot;],
   &quot;properties&quot;: { &quot;status&quot;: { &quot;enum&quot;: [&quot;todo&quot;, &quot;in_progress&quot;, &quot;done&quot;] }, &quot;priority&quot;: { &quot;enum&quot;: [&quot;low&quot;, &quot;medium&quot;, &quot;high&quot;] } } }
 </code></pre>
 <p>The generated <code>type Status = &quot;todo&quot; | &quot;in_progress&quot; | &quot;done&quot;</code> (and <code>Priority</code>), with <code>Task</code> using them.</p>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/013-string-enums/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/013-string-enums/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">const label: Record&lt;Status, string&gt; = { todo: &quot;To do&quot;, in_progress: &quot;In progress&quot;, done: &quot;Done&quot; };
 label[task.status];                        // exhaustive — every member must be handled
 Task.evaluate({ status: &quot;archived&quot; });      // false — not a member
@@ -206,8 +206,8 @@ Task.evaluate({ status: &quot;archived&quot; });      // false — not a member
 <p>From <code>docs/typescript/examples/</code> (<code>npm install</code> once): <code>npm run build</code> then <code>node dist/013-string-enums/demo.js</code>.</p>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/numeric-enums.html">014-numeric-enums</a> — numeric <code>enum</code></li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/discriminated-unions.html">012-discriminated-unions</a> — enums as union discriminants</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/numeric-enums.html">014-numeric-enums</a>: numeric <code>enum</code></li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/discriminated-unions.html">012-discriminated-unions</a>: enums as union discriminants</li>
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
 <h3 id="why-a-string-literal-union-instead-of-a-typescript-enum">Why a string-literal union instead of a TypeScript <code>enum</code>?</h3>

@@ -192,14 +192,14 @@
 <p>The <code>patch</code> and <code>produce</code> methods edit a document by naming the fields you want to change. <strong>JSON Patch</strong> is the standard, interchange-friendly alternative: a patch is a JSON array of operations (<code>add</code> / <code>remove</code> / <code>replace</code> / <code>move</code> / <code>copy</code> / <code>test</code>, each with a JSON Pointer path) that you can receive over the wire, store, or compute as a diff. <strong>JSON Merge Patch</strong> is the simpler form for partial updates: a JSON document that overlays the target, where a member set to <code>null</code> deletes that key.</p>
 <p>For every buildable type the generator emits four companion methods over the document bytes (or a parsed value):</p>
 <ul>
-<li><code>Contact.applyPatch(doc, patch)</code> — apply an RFC 6902 patch, returning canonical bytes. The patch is applied <strong>atomically</strong>: a failed <code>test</code> (or any invalid operation) throws <code>JsonPatchError</code> and leaves the input untouched.</li>
-<li><code>Contact.createPatch(source, target)</code> — compute a minimal RFC 6902 patch that turns <code>source</code> into <code>target</code>.</li>
-<li><code>Contact.applyMergePatch(doc, mergePatch)</code> — apply an RFC 7396 merge patch, returning canonical bytes.</li>
-<li><code>Contact.createMergePatch(source, target)</code> — compute the RFC 7396 merge patch between two documents.</li>
+<li><code>Contact.applyPatch(doc, patch)</code>: apply an RFC 6902 patch, returning canonical bytes. The patch is applied <strong>atomically</strong>: a failed <code>test</code> (or any invalid operation) throws <code>JsonPatchError</code> and leaves the input untouched.</li>
+<li><code>Contact.createPatch(source, target)</code>: compute a minimal RFC 6902 patch that turns <code>source</code> into <code>target</code>.</li>
+<li><code>Contact.applyMergePatch(doc, mergePatch)</code>: apply an RFC 7396 merge patch, returning canonical bytes.</li>
+<li><code>Contact.createMergePatch(source, target)</code>: compute the RFC 7396 merge patch between two documents.</li>
 </ul>
 <p>The generic <code>applyPatch</code> / <code>createPatch</code> / <code>applyMergePatch</code> / <code>createMergePatch</code> functions (which work on parsed JSON values) and the <code>JsonPatch</code> / <code>JsonPatchOp</code> types and <code>JsonPatchError</code> are re-exported from every module.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/020-json-patch/contact.json"><code>contact.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/020-json-patch/contact.json"><code>contact.json</code></a></p>
 <pre><code class="language-json">{
   &quot;title&quot;: &quot;Contact&quot;,
   &quot;type&quot;: &quot;object&quot;,
@@ -215,7 +215,7 @@
 }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/020-json-patch/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/020-json-patch/demo.ts">Example code</a></p>
 <h3 id="apply-an-rfc-6902-patch">Apply an RFC 6902 patch</h3>
 <pre><code class="language-typescript">import { Contact, type JsonPatch } from &quot;./generated.js&quot;;
 
@@ -248,16 +248,16 @@ node dist/020-json-patch/demo.js
 </code></pre>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mutation.html">016-mutation</a> — <code>build</code> / <code>patch</code> / <code>produce</code> field-level mutation in depth</li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/data-object.html">001-data-object</a> — the generated companion surface</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mutation.html">016-mutation</a>: <code>build</code> / <code>patch</code> / <code>produce</code> field-level mutation in depth</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/data-object.html">001-data-object</a>: the generated companion surface</li>
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
 <h3 id="how-is-applypatch-different-from-patch">How is <code>applyPatch</code> different from <code>patch</code>?</h3>
-<p><code>Contact.patch(bytes, changes)</code> is a typed, field-level update — you pass a <code>Partial&lt;Contact&gt;</code> of the fields to change. <code>Contact.applyPatch(bytes, ops)</code> applies a standard <strong>RFC 6902</strong> patch document — an array of <code>{ op, path, value }</code> operations with JSON Pointer paths — which is the right choice when the patch arrives over the wire, is stored, or is computed as a diff.</p>
+<p><code>Contact.patch(bytes, changes)</code> is a typed, field-level update: you pass a <code>Partial&lt;Contact&gt;</code> of the fields to change. <code>Contact.applyPatch(bytes, ops)</code> applies a standard <strong>RFC 6902</strong> patch document (an array of <code>{ op, path, value }</code> operations with JSON Pointer paths) which is the right choice when the patch arrives over the wire, is stored, or is computed as a diff.</p>
 <h3 id="does-applypatch-validate-the-result-against-the-schema">Does <code>applyPatch</code> validate the result against the schema?</h3>
 <p>No. It applies the operations and returns the resulting bytes; the result may not match the schema (for example a <code>move</code> to a path the schema does not define). Validate the result with <code>Contact.evaluate(...)</code> if the patch came from an untrusted source.</p>
 <h3 id="is-the-patch-applied-atomically">Is the patch applied atomically?</h3>
-<p>Yes. Operations are applied to a copy, and any failure — a failed <code>test</code>, a missing path for <code>remove</code>/<code>replace</code>, an invalid operation — throws <code>JsonPatchError</code> without mutating the input, so a partially-applied patch is never observable.</p>
+<p>Yes. Operations are applied to a copy, and any failure (a failed <code>test</code>, a missing path for <code>remove</code>/<code>replace</code>, an invalid operation) throws <code>JsonPatchError</code> without mutating the input, so a partially-applied patch is never observable.</p>
         </div>
     </main>
 </div>

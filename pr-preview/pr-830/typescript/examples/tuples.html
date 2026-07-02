@@ -4,18 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
-    <meta name="description" content="This recipe shows a fixed-length positional array &#x2014; prefixItems with items: false &#x2014; generating a TypeScript tuple type." />
+    <meta name="description" content="This recipe shows a fixed-length positional array (prefixItems with items: false) generating a TypeScript tuple type." />
     <meta name="keywords" content="TypeScript, JSON Schema, Corvus.Text.Json, code generation" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:description" content="This recipe shows a fixed-length positional array &#x2014; prefixItems with items: false &#x2014; generating a TypeScript tuple type." />
+    <meta name="twitter:description" content="This recipe shows a fixed-length positional array (prefixItems with items: false) generating a TypeScript tuple type." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta name="twitter:title" content="Tuples &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="article:tag" content="TypeScript" />
     <meta property="article:tag" content="JSON Schema" />
     <meta property="article:tag" content="Corvus.Text.Json" />
     <meta property="article:tag" content="code generation" />
-    <meta property="og:description" content="This recipe shows a fixed-length positional array &#x2014; prefixItems with items: false &#x2014; generating a TypeScript tuple type." />
+    <meta property="og:description" content="This recipe shows a fixed-length positional array (prefixItems with items: false) generating a TypeScript tuple type." />
     <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta property="og:title" content="Tuples &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="og:type" content="website" />
@@ -187,18 +187,18 @@
     <main id="main-content" class="layout-docs__main">
         <div class="doc__content">
             <h1>Tuples</h1>
-<p>This recipe shows a fixed-length positional array — <code>prefixItems</code> with <code>items: false</code> — generating a TypeScript tuple type.</p>
+<p>This recipe shows a fixed-length positional array (<code>prefixItems</code> with <code>items: false</code>) generating a TypeScript tuple type.</p>
 <h2 id="the-pattern">The Pattern</h2>
-<p><code>prefixItems</code> types each position; <code>items: false</code> forbids anything beyond them, and <code>minItems</code> requires them all to be present. Together they generate a tuple — <code>readonly [number, number, number]</code> — which destructures and indexes positionally with full types.</p>
+<p><code>prefixItems</code> types each position; <code>items: false</code> forbids anything beyond them, and <code>minItems</code> requires them all to be present. Together they generate a tuple (<code>readonly [number, number, number]</code>) which destructures and indexes positionally with full types.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/009-tuples/point3d.json"><code>point3d.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/009-tuples/point3d.json"><code>point3d.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Point3D&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;coord&quot;],
   &quot;properties&quot;: { &quot;coord&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;minItems&quot;: 3,
       &quot;prefixItems&quot;: [ { &quot;type&quot;: &quot;number&quot; }, { &quot;type&quot;: &quot;number&quot; }, { &quot;type&quot;: &quot;number&quot; } ], &quot;items&quot;: false } } }
 </code></pre>
 <p>The generated <code>interface Point3D</code> has <code>coord: readonly [number, number, number]</code>.</p>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/009-tuples/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/009-tuples/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">const [x, y, z] = p.coord;                  // positional, each typed number
 Point3D.evaluate({ coord: [1, 2] });            // false — minItems 3
 Point3D.evaluate({ coord: [1, 2, 3, 4] });      // false — items: false (no fourth element)
@@ -207,12 +207,12 @@ Point3D.evaluate({ coord: [1, 2, 3, 4] });      // false — items: false (no fo
 <p>From <code>docs/typescript/examples/</code> (<code>npm install</code> once): <code>npm run build</code> then <code>node dist/009-tuples/demo.js</code>.</p>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/arrays.html">007-arrays</a> — variable-length homogeneous arrays</li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/nested-arrays.html">008-nested-arrays</a> — arrays of arrays</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/arrays.html">007-arrays</a>: variable-length homogeneous arrays</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/nested-arrays.html">008-nested-arrays</a>: arrays of arrays</li>
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
 <h3 id="why-does-the-tuple-need-minitems-as-well-as-prefixitems">Why does the tuple need <code>minItems</code> as well as <code>prefixItems</code>?</h3>
-<p><code>prefixItems</code> only types the positions that are <em>present</em> — on its own it allows a shorter array. Adding <code>minItems: 3</code> (and <code>items: false</code> for the upper bound) is what makes the length exactly three, matching the <code>readonly [number, number, number]</code> type.</p>
+<p><code>prefixItems</code> only types the positions that are <em>present</em>; on its own it allows a shorter array. Adding <code>minItems: 3</code> (and <code>items: false</code> for the upper bound) is what makes the length exactly three, matching the <code>readonly [number, number, number]</code> type.</p>
         </div>
     </main>
 </div>

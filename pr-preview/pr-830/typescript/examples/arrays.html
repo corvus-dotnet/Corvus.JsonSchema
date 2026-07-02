@@ -191,7 +191,7 @@
 <h2 id="the-pattern">The Pattern</h2>
 <p>An <code>array</code> with an <code>items</code> schema generates <code>readonly T[]</code>, where <code>T</code> is the element type (here a generated <code>LineItem</code> interface). The array is read with ordinary indexing and iteration, evaluated as a whole (including <code>minItems</code>), and appended to with <code>produce</code>.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/007-arrays/cart.json"><code>cart.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/007-arrays/cart.json"><code>cart.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Cart&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;items&quot;],
   &quot;properties&quot;: { &quot;items&quot;: { &quot;type&quot;: &quot;array&quot;, &quot;minItems&quot;: 1,
       &quot;items&quot;: { &quot;title&quot;: &quot;LineItem&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;sku&quot;, &quot;qty&quot;],
@@ -199,7 +199,7 @@
 </code></pre>
 <p>The generated <code>interface Cart</code> has <code>items: readonly LineItem[]</code>.</p>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/007-arrays/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/007-arrays/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">const cart = Cart.parse(bytes);
 cart.items[0].sku;                              // indexed, typed as LineItem
 cart.items.reduce((n, i) =&gt; n + i.qty, 0);      // ordinary array methods
@@ -212,13 +212,13 @@ const more = Cart.produce(bytes, (d) =&gt; { d.items.push({ sku: &quot;C3&quot;,
 <p>From <code>docs/typescript/examples/</code> (<code>npm install</code> once): <code>npm run build</code> then <code>node dist/007-arrays/demo.js</code>.</p>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/nested-arrays.html">008-nested-arrays</a> — arrays of arrays</li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/tuples.html">009-tuples</a> — fixed-length positional arrays</li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mutation.html">016-mutation</a> — <code>produce</code>/<code>patch</code> on arrays in depth</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/nested-arrays.html">008-nested-arrays</a>: arrays of arrays</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/tuples.html">009-tuples</a>: fixed-length positional arrays</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mutation.html">016-mutation</a>: <code>produce</code>/<code>patch</code> on arrays in depth</li>
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
 <h3 id="are-the-arrays-mutable">Are the arrays mutable?</h3>
-<p>The read surface is <code>readonly</code> (you can't accidentally mutate parsed data in place). To produce a changed copy, use <code>{Type}.produce</code> with a recipe — <code>push</code>, index assignment and splice are recorded and lowered to a byte-level edit, leaving the original untouched.</p>
+<p>The read surface is <code>readonly</code> (you can't accidentally mutate parsed data in place). To produce a changed copy, use <code>{Type}.produce</code> with a recipe: <code>push</code>, index assignment and splice are recorded and lowered to a byte-level edit, leaving the original untouched.</p>
         </div>
     </main>
 </div>

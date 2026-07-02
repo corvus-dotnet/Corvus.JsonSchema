@@ -4,18 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
-    <meta name="description" content="This recipe shows if/then/else &#x2014; applying constraints conditionally on a value&#x27;s contents." />
+    <meta name="description" content="This recipe shows if/then/else, applying constraints conditionally on a value&#x27;s contents." />
     <meta name="keywords" content="TypeScript, JSON Schema, Corvus.Text.Json, code generation" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:description" content="This recipe shows if/then/else &#x2014; applying constraints conditionally on a value&#x27;s contents." />
+    <meta name="twitter:description" content="This recipe shows if/then/else, applying constraints conditionally on a value&#x27;s contents." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta name="twitter:title" content="Conditional Schemas &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="article:tag" content="TypeScript" />
     <meta property="article:tag" content="JSON Schema" />
     <meta property="article:tag" content="Corvus.Text.Json" />
     <meta property="article:tag" content="code generation" />
-    <meta property="og:description" content="This recipe shows if/then/else &#x2014; applying constraints conditionally on a value&#x27;s contents." />
+    <meta property="og:description" content="This recipe shows if/then/else, applying constraints conditionally on a value&#x27;s contents." />
     <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta property="og:title" content="Conditional Schemas &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="og:type" content="website" />
@@ -187,18 +187,18 @@
     <main id="main-content" class="layout-docs__main">
         <div class="doc__content">
             <h1>Conditional Schemas</h1>
-<p>This recipe shows <code>if</code>/<code>then</code>/<code>else</code> — applying constraints conditionally on a value's contents.</p>
+<p>This recipe shows <code>if</code>/<code>then</code>/<code>else</code>, applying constraints conditionally on a value's contents.</p>
 <h2 id="the-pattern">The Pattern</h2>
-<p><code>if</code>/<code>then</code>/<code>else</code> makes a constraint depend on the data: when the <code>if</code> subschema matches, <code>then</code> must also hold (otherwise <code>else</code>). Here, when <code>method</code> is <code>&quot;card&quot;</code>, <code>cardNumber</code> becomes required. This is a <em>constraint</em>, not a shape change — the generated <code>interface</code> keeps <code>cardNumber</code> optional, and <code>Payment.evaluate</code> enforces the conditional requirement.</p>
+<p><code>if</code>/<code>then</code>/<code>else</code> makes a constraint depend on the data: when the <code>if</code> subschema matches, <code>then</code> must also hold (otherwise <code>else</code>). Here, when <code>method</code> is <code>&quot;card&quot;</code>, <code>cardNumber</code> becomes required. This is a <em>constraint</em>, not a shape change: the generated <code>interface</code> keeps <code>cardNumber</code> optional, and <code>Payment.evaluate</code> enforces the conditional requirement.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/017-conditional/payment.json"><code>payment.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/017-conditional/payment.json"><code>payment.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Payment&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;method&quot;],
   &quot;properties&quot;: { &quot;method&quot;: { &quot;enum&quot;: [&quot;card&quot;, &quot;cash&quot;] }, &quot;cardNumber&quot;: { &quot;type&quot;: &quot;string&quot; } },
   &quot;if&quot;: { &quot;properties&quot;: { &quot;method&quot;: { &quot;const&quot;: &quot;card&quot; } } },
   &quot;then&quot;: { &quot;required&quot;: [&quot;cardNumber&quot;] } }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/017-conditional/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/017-conditional/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">Payment.evaluate({ method: &quot;cash&quot; });                            // true
 Payment.evaluate({ method: &quot;card&quot;, cardNumber: &quot;4111 …&quot; });      // true
 Payment.evaluate({ method: &quot;card&quot; });                            // false — then-clause requires cardNumber
@@ -207,12 +207,12 @@ Payment.evaluate({ method: &quot;card&quot; });                            // fa
 <p>From <code>docs/typescript/examples/</code> (<code>npm install</code> once): <code>npm run build</code> then <code>node dist/017-conditional/demo.js</code>.</p>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/validation.html">002-validation</a> — unconditional constraints</li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/discriminated-unions.html">012-discriminated-unions</a> — when the branches differ in <em>shape</em>, prefer <code>oneOf</code></li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/validation.html">002-validation</a>: unconditional constraints</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/discriminated-unions.html">012-discriminated-unions</a>: when the branches differ in <em>shape</em>, prefer <code>oneOf</code></li>
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
 <h3 id="why-isnt-the-conditional-reflected-in-the-type">Why isn't the conditional reflected in the type?</h3>
-<p>TypeScript can't express &quot;if method is card then cardNumber is required&quot; as a single object type without splitting it into a union. The generator keeps the honest base shape (<code>cardNumber?</code>) and enforces the rule in <code>Payment.evaluate</code>. If you want the <em>type</em> to capture the two cases, model them as a <code>oneOf</code> (a discriminated union) instead.</p>
+<p>TypeScript can't express &quot;if method is card then cardNumber is required&quot; as a single object type without splitting it into a union. The generator keeps the base shape (<code>cardNumber?</code>) and enforces the rule in <code>Payment.evaluate</code>. If you want the <em>type</em> to capture the two cases, model them as a <code>oneOf</code> (a discriminated union) instead.</p>
         </div>
     </main>
 </div>

@@ -4,18 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
-    <meta name="description" content="This recipe composes a base type with extra properties using allOf &#x2014; the JSON Schema equivalent of inheritance." />
+    <meta name="description" content="This recipe composes a base type with extra properties using allOf, the JSON Schema equivalent of inheritance." />
     <meta name="keywords" content="TypeScript, JSON Schema, Corvus.Text.Json, code generation" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:description" content="This recipe composes a base type with extra properties using allOf &#x2014; the JSON Schema equivalent of inheritance." />
+    <meta name="twitter:description" content="This recipe composes a base type with extra properties using allOf, the JSON Schema equivalent of inheritance." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta name="twitter:title" content="Extending a Base Type &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="article:tag" content="TypeScript" />
     <meta property="article:tag" content="JSON Schema" />
     <meta property="article:tag" content="Corvus.Text.Json" />
     <meta property="article:tag" content="code generation" />
-    <meta property="og:description" content="This recipe composes a base type with extra properties using allOf &#x2014; the JSON Schema equivalent of inheritance." />
+    <meta property="og:description" content="This recipe composes a base type with extra properties using allOf, the JSON Schema equivalent of inheritance." />
     <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-830/assets/images/og-corvus.png" />
     <meta property="og:title" content="Extending a Base Type &#x2014; Corvus.Text.Json TypeScript" />
     <meta property="og:type" content="website" />
@@ -187,11 +187,11 @@
     <main id="main-content" class="layout-docs__main">
         <div class="doc__content">
             <h1>Extending a Base Type</h1>
-<p>This recipe composes a base type with extra properties using <code>allOf</code> — the JSON Schema equivalent of inheritance.</p>
+<p>This recipe composes a base type with extra properties using <code>allOf</code>, the JSON Schema equivalent of inheritance.</p>
 <h2 id="the-pattern">The Pattern</h2>
-<p><code>allOf: [ { &quot;$ref&quot;: &quot;#/$defs/person&quot; } ]</code> plus this schema's own <code>properties</code> produces a single <code>interface</code> that <strong>merges</strong> the base and the extension. <code>Employee</code> carries <code>name</code>/<code>email</code> from <code>Person</code> and adds <code>employeeId</code>/<code>department</code>; a value must satisfy every constraint of every member.</p>
+<p><code>allOf: [ { &quot;$ref&quot;: &quot;#/$defs/person&quot; } ]</code> plus this schema's own <code>properties</code> produces a single <code>interface</code> that <strong>merges</strong> the base and the extension. <code>Employee</code> carries <code>name</code>/<code>email</code> from <code>Person</code> and adds <code>employeeId</code>/<code>department</code>, and a value must satisfy every constraint of every member.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/005-extending/employee.json"><code>employee.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/005-extending/employee.json"><code>employee.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Employee&quot;, &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: { &quot;person&quot;: { &quot;title&quot;: &quot;Person&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;name&quot;],
       &quot;properties&quot;: { &quot;name&quot;: { &quot;type&quot;: &quot;string&quot; }, &quot;email&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;email&quot; } } } },
@@ -199,9 +199,9 @@
   &quot;required&quot;: [&quot;employeeId&quot;],
   &quot;properties&quot;: { &quot;employeeId&quot;: { &quot;type&quot;: &quot;string&quot; }, &quot;department&quot;: { &quot;type&quot;: &quot;string&quot; } } }
 </code></pre>
-<p>The generated <code>interface Employee</code> has <code>name</code>, <code>email?</code>, <code>employeeId</code>, <code>department?</code> — the base and the extension in one shape.</p>
+<p>The generated <code>interface Employee</code> has <code>name</code>, <code>email?</code>, <code>employeeId</code>, <code>department?</code>: the base and the extension in one shape.</p>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0a0f92ddeb2bc48b288b9b227155e9e0f3fc3a37/docs/typescript/examples/005-extending/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/2acaf71da8e4b444805d9dd482659dc6417c241d/docs/typescript/examples/005-extending/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">const bytes = Employee.build({ name: &quot;Ada&quot;, email: Email.from(&quot;ada@example.com&quot;), employeeId: &quot;E-1&quot;, department: &quot;R&amp;D&quot; });
 const e = Employee.parse(bytes);
 e.name;        // from Person (the base)
@@ -212,8 +212,8 @@ Employee.evaluate({ employeeId: &quot;E-2&quot; }); // false — name is require
 <p>From <code>docs/typescript/examples/</code> (<code>npm install</code> once): <code>npm run build</code> then <code>node dist/005-extending/demo.js</code>.</p>
 <h2 id="related-patterns">Related Patterns</h2>
 <ul>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/constraining.html">006-constraining</a> — <code>allOf</code> that tightens a base instead of adding to it</li>
-<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mixins.html">010-mixins</a> — <code>allOf</code> of several bases at once</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/constraining.html">006-constraining</a>: <code>allOf</code> that tightens a base instead of adding to it</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-830/typescript/examples/mixins.html">010-mixins</a>: <code>allOf</code> of several bases at once</li>
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
 <h3 id="is-the-base-type-still-available-on-its-own">Is the base type still available on its own?</h3>
