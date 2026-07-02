@@ -198,6 +198,10 @@ internal sealed class CatalogAddSettings : RunsSettings
     [Description("A free-form tag (repeat to add several).")]
     public string[] Tags { get; init; } = [];
 
+    [CommandOption("--security-tag <KEY=VALUE>")]
+    [Description("A security tag (KVP reach label) scoping who may see the version, e.g. --security-tag team=payments (repeatable; the reserved 'sys:' prefix is not permitted).")]
+    public ILookup<string, string>? SecurityTags { get; init; }
+
     /// <inheritdoc/>
     public override Spectre.Console.ValidationResult Validate()
     {
@@ -310,6 +314,10 @@ internal sealed class CatalogUpdateSettings : CatalogVersionSettings
     [CommandOption("--tag <TAG>")]
     [Description("Replace the tag set (repeat to set several).")]
     public string[] Tags { get; init; } = [];
+
+    [CommandOption("--security-tag <KEY=VALUE>")]
+    [Description("Replace the version's security tags (KVP reach labels), e.g. --security-tag team=billing (repeatable). Omit to leave them unchanged; the reserved 'sys:' prefix is not permitted and deployment-internal tags are always preserved.")]
+    public ILookup<string, string>? SecurityTags { get; init; }
 
     [CommandOption("--status <STATUS>")]
     [Description("Set the lifecycle status (Active/Obsolete).")]
@@ -488,7 +496,11 @@ internal sealed class CatalogAddCommand : AsyncCommand<CatalogAddSettings>
 
             // Named args: the generated Build takes (owner, package, securityTags, tags) — pass by name so adding a
             // property never silently misaligns positions. The binary package is sent separately (below), not in the body.
-            Models.PostCatalogBody.Source body = Models.PostCatalogBody.Build(owner: BuildOwner(settings.OwnerName!, settings.OwnerEmail!, settings.OwnerTeam, settings.OwnerUrl), package: default, tags: tags);
+            Models.PostCatalogBody.Source body = Models.PostCatalogBody.Build(
+                owner: BuildOwner(settings.OwnerName!, settings.OwnerEmail!, settings.OwnerTeam, settings.OwnerUrl),
+                package: default,
+                securityTags: WriteAddSecurityTags(settings.SecurityTags),
+                tags: tags);
             await using AddCatalogVersionResponse response = await client.AddCatalogVersionAsync(body, package, cancellationToken, validationMode: ValidationMode.None);
             return response.MatchResult(
                 summary => Output.Print(summary.ToString()),
@@ -505,6 +517,27 @@ internal sealed class CatalogAddCommand : AsyncCommand<CatalogAddSettings>
             Models.JsonIri.Source urlSource = url is { } u ? (Models.JsonIri.Source)u : default;
             b.Create(email: email, name: name, team: teamSource, url: urlSource);
         });
+
+    // Projects the --security-tag KVPs into the add body's security-tag array (default = property omitted). An ILookup
+    // preserves duplicate keys (e.g. two tenant= tags). The reserved-prefix check is the server's (returns 400).
+    private static Models.PostCatalogBody.CatalogSecurityTagArray.Source WriteAddSecurityTags(ILookup<string, string>? tags)
+    {
+        if (tags is null)
+        {
+            return default;
+        }
+
+        return new Models.PostCatalogBody.CatalogSecurityTagArray.Source((ref Models.PostCatalogBody.CatalogSecurityTagArray.Builder ab) =>
+        {
+            foreach (IGrouping<string, string> group in tags)
+            {
+                foreach (string value in group)
+                {
+                    ab.AddItem(new Models.CatalogSecurityTag.Source((ref Models.CatalogSecurityTag.Builder tb) => tb.Create(group.Key, value)));
+                }
+            }
+        });
+    }
 
     /// <summary>
     /// Verifies the workflow is deployable — every referenced source has a credential in at least one environment
@@ -883,8 +916,13 @@ internal sealed class CatalogUpdateCommand : AsyncCommand<CatalogUpdateSettings>
             }
 
             // Named args: the generated Build takes (owner, securityTags, status, tags) — pass by name so adding a
-            // property never silently misaligns positions. (securityTags editing is a later CLI slice.)
-            Models.CatalogMetadataPatch.Source body = Models.CatalogMetadataPatch.Build(owner: owner, status: status, tags: tags);
+            // property never silently misaligns positions. A present --security-tag re-tags the version's non-internal
+            // labels (absent leaves them unchanged); the server preserves the deployment-internal tags.
+            Models.CatalogMetadataPatch.Source body = Models.CatalogMetadataPatch.Build(
+                owner: owner,
+                securityTags: WriteUpdateSecurityTags(settings.SecurityTags),
+                status: status,
+                tags: tags);
             await using UpdateCatalogVersionResponse response = await client.UpdateCatalogVersionAsync(settings.BaseWorkflowId, settings.Version, body, cancellationToken);
             return response.MatchResult(
                 summary => Output.Print(summary.ToString()),
@@ -902,6 +940,28 @@ internal sealed class CatalogUpdateCommand : AsyncCommand<CatalogUpdateSettings>
             Models.JsonIri.Source urlSource = url is { } u ? (Models.JsonIri.Source)u : default;
             b.Create(email: email, name: name, team: teamSource, url: urlSource);
         });
+
+    // Projects the --security-tag KVPs into the patch body's security-tag array. A null (option omitted) leaves the
+    // version's tags unchanged; a present set re-tags the non-internal labels (the server preserves internal tags and
+    // rejects the reserved prefix with 400). An ILookup preserves duplicate keys.
+    private static Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source WriteUpdateSecurityTags(ILookup<string, string>? tags)
+    {
+        if (tags is null)
+        {
+            return default;
+        }
+
+        return new Models.CatalogMetadataPatch.CatalogSecurityTagArray.Source((ref Models.CatalogMetadataPatch.CatalogSecurityTagArray.Builder ab) =>
+        {
+            foreach (IGrouping<string, string> group in tags)
+            {
+                foreach (string value in group)
+                {
+                    ab.AddItem(new Models.CatalogSecurityTag.Source((ref Models.CatalogSecurityTag.Builder tb) => tb.Create(group.Key, value)));
+                }
+            }
+        });
+    }
 }
 
 internal sealed class CatalogObsoleteCommand : AsyncCommand<CatalogVersionSettings>

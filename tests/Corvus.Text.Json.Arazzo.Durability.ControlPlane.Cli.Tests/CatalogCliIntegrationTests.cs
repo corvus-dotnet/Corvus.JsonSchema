@@ -170,6 +170,27 @@ public sealed partial class CliIntegrationTests
     }
 
     [TestMethod]
+    public async Task Catalog_add_and_update_security_tags()
+    {
+        await using Host host = await StartAsync();
+        using var workspace = new TempWorkspace();
+
+        // Add with a user security tag (§14.2). withSource:false avoids the deployability gate.
+        (int addExit, string addOut, _) = await RunAsync(
+            host, "catalog", "add", "--workflow", workspace.WriteWorkflow("cli-sec", withSource: false),
+            "--owner-name", "A", "--owner-email", "a@example.com", "--security-tag", "team=payments");
+        addExit.ShouldBe(0);
+        addOut.ShouldContain("payments"); // the user security tag round-trips into the response
+
+        // --security-tag re-tags the non-internal labels; the old one is replaced.
+        (int updateExit, string updateOut, _) = await RunAsync(
+            host, "catalog", "update", "cli-sec", "1", "--security-tag", "team=billing");
+        updateExit.ShouldBe(0);
+        updateOut.ShouldContain("billing");
+        updateOut.ShouldNotContain("payments");
+    }
+
+    [TestMethod]
     public async Task Catalog_purge_reaps_obsolete()
     {
         await using Host host = await StartAsync();
