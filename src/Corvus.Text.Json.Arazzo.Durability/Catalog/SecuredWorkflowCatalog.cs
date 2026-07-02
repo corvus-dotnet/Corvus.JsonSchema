@@ -193,7 +193,7 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     }
 
     /// <inheritdoc/>
-    public async ValueTask<CatalogUpdateResult> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, AccessContext context, CancellationToken cancellationToken)
+    public async ValueTask<CatalogUpdateResult> UpdateAsync(string baseWorkflowId, int versionNumber, CatalogOwner? owner, TagSet? tags, CatalogStatus? status, SecurityTagSet? securityTags, string? internalTagPrefix, AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
 
@@ -217,8 +217,23 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
             return new CatalogUpdateResult(CatalogUpdateOutcome.Forbidden, null);
         }
 
+        // Re-tag (§14.2): merge the caller's new non-internal tags with the version's preserved deployment-internal tags
+        // — internal tags (e.g. sys:workflow, sys:tenant) are never dropped and cannot be re-derived from the caller — and
+        // pass the effective set to the store. Read the current tags on this cold admin path only. A concurrent delete
+        // leaves the set null, and the update below then returns NotFound.
+        SecurityTagSet? effectiveSecurityTags = null;
+        if (securityTags is { } newUserTags)
+        {
+            using ParsedJsonDocument<CatalogVersion>? current = await this.catalog.GetAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+            if (current is { } cur)
+            {
+                byte[] prefixUtf8 = System.Text.Encoding.UTF8.GetBytes(internalTagPrefix ?? SecurityShell.DefaultInternalPrefix);
+                effectiveSecurityTags = CatalogVersion.MergeReTaggedSecurityTags(cur.RootElement.SecurityTagsValue, newUserTags, prefixUtf8);
+            }
+        }
+
         ParsedJsonDocument<CatalogVersion>? updated = await this.catalog.UpdateMetadataAsync(
-            baseWorkflowId, versionNumber, new CatalogMetadataPatch(this.actor, owner, tags, status), cancellationToken).ConfigureAwait(false);
+            baseWorkflowId, versionNumber, new CatalogMetadataPatch(this.actor, owner, tags, status, effectiveSecurityTags), cancellationToken).ConfigureAwait(false);
         if (updated is null)
         {
             // Unrestricted write reach with no version present (or a concurrent delete) → not found.

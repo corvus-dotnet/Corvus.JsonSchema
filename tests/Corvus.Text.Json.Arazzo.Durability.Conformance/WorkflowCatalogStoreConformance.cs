@@ -423,6 +423,51 @@ public abstract class WorkflowCatalogStoreConformance
     }
 
     [TestMethod]
+    public async Task UpdateMetadata_replaces_the_security_tags_when_set()
+    {
+        // Re-tag (§14.2): a patch carrying an effective SecurityTags set replaces the version's security tags in EVERY
+        // representation a store keeps — the returned + re-read document, and (for stores that push the reach filter
+        // down) the indexed/queryable copy a search matches against. The security wrapper has already merged the
+        // caller's new labels with the preserved internal tags, so the store persists the set verbatim.
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        (await store.AddAsync(
+            "secure-flow",
+            Package("secure-flow"),
+            new CatalogMetadata(new CatalogOwner("Team A", "team-a@example.com"), "alice", default, SecurityTagSet.FromTags([new("tenant", "acme"), new("team", "payments")])),
+            default)).Dispose();
+
+        SecurityTag[] replacement = [new("tenant", "acme"), new("team", "billing")];
+        using (ParsedJsonDocument<CatalogVersion>? updated = await store.UpdateMetadataAsync(
+            "secure-flow", 1, new CatalogMetadataPatch("bob", SecurityTags: SecurityTagSet.FromTags(replacement)), default))
+        {
+            updated.ShouldNotBeNull();
+            updated.RootElement.SecurityTagsValue.ToList().OrderBy(t => t.Key).ThenBy(t => t.Value).ShouldBe(
+                replacement.OrderBy(t => t.Key).ThenBy(t => t.Value));
+        }
+
+        // The persisted document keeps the replacement (a re-read, not just the returned copy).
+        using (ParsedJsonDocument<CatalogVersion>? refetched = await store.GetAsync("secure-flow", 1, default))
+        {
+            refetched.ShouldNotBeNull();
+            refetched.RootElement.SecurityTagsValue.ToList().OrderBy(t => t.Key).ThenBy(t => t.Value).ShouldBe(
+                replacement.OrderBy(t => t.Key).ThenBy(t => t.Value));
+        }
+
+        // The tags a reach-filtered search matches against also reflect the re-tag: the new label is found and the old
+        // one is not (this catches a store that updates its blob/column but forgets its indexed/queryable tag copy).
+        var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+        using (CatalogPage found = await store.QueryAsync(new CatalogQuery(Limit: 10, Security: new SecurityFilter([SecurityRule.Compile("team == 'billing'")], claims)), default))
+        {
+            found.Versions.Select(v => v.Ref.BaseWorkflowId).ShouldBe(["secure-flow"]);
+        }
+
+        using (CatalogPage gone = await store.QueryAsync(new CatalogQuery(Limit: 10, Security: new SecurityFilter([SecurityRule.Compile("team == 'payments'")], claims)), default))
+        {
+            gone.Versions.Count.ShouldBe(0);
+        }
+    }
+
+    [TestMethod]
     public async Task Search_applies_a_row_security_reach_filter_matching_the_evaluator()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
