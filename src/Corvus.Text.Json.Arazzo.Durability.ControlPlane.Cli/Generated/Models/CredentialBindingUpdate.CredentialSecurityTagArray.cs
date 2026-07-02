@@ -32,15 +32,20 @@ public readonly partial struct CredentialBindingUpdate
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Replacement non-internal security tags scoping who may MANAGE this binding (&#167;14.2); absent leaves the tags unchanged. The reserved internal-tag prefix is rejected (400); the deployment&#39;s internal tags are preserved.
+    /// </para>
+    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct SecretReferenceArray
+    public readonly partial struct CredentialSecurityTagArray
 #if NET8_0_OR_GREATER
-        : IJsonElement<SecretReferenceArray>,
+        : IJsonElement<CredentialSecurityTagArray>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
-        : IJsonElement<SecretReferenceArray>,
+        : IJsonElement<CredentialSecurityTagArray>,
           IFormattable
 #endif
     {
@@ -50,10 +55,10 @@ public readonly partial struct CredentialBindingUpdate
 
         #pragma warning restore CS8618 // JsonDocument nullability
         /// <summary>
-        /// Initializes a new instance of the <see cref="SecretReferenceArray"/> struct.
+        /// Initializes a new instance of the <see cref="CredentialSecurityTagArray"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        internal SecretReferenceArray(IJsonDocument parent, int idx)
+        internal CredentialSecurityTagArray(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);
             _parent = parent;
@@ -63,7 +68,7 @@ public readonly partial struct CredentialBindingUpdate
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static SecretReferenceArray DefaultInstance { get; }
+        public static CredentialSecurityTagArray DefaultInstance { get; }
 
         /// <summary>
         /// Gets the rank of the array.
@@ -77,12 +82,12 @@ public readonly partial struct CredentialBindingUpdate
         /// <returns>The item at the given index.</returns>
         /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecretReference this[int index]
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialSecurityTag this[int index]
         {
             get
             {
                 CheckValidInstance();
-                return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecretReference>(_idx, index);
+                return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialSecurityTag>(_idx, index);
             }
         }
 
@@ -100,10 +105,10 @@ public readonly partial struct CredentialBindingUpdate
         /// Enumerates the array.
         /// </summary>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecretReference> EnumerateArray()
+        public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialSecurityTag> EnumerateArray()
         {
             CheckValidInstance();
-            return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SecretReference>(_parent, _idx);
+            return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialSecurityTag>(_parent, _idx);
         }
 
         /// <inheritdoc/>
@@ -120,7 +125,7 @@ public readonly partial struct CredentialBindingUpdate
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in SecretReferenceArray left, in SecretReferenceArray right)
+        public static bool operator ==(in CredentialSecurityTagArray left, in CredentialSecurityTagArray right)
         {
             return left.Equals(right);
         }
@@ -133,7 +138,7 @@ public readonly partial struct CredentialBindingUpdate
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in SecretReferenceArray left, in SecretReferenceArray right)
+        public static bool operator !=(in CredentialSecurityTagArray left, in CredentialSecurityTagArray right)
         {
             return !left.Equals(right);
         }
@@ -146,7 +151,7 @@ public readonly partial struct CredentialBindingUpdate
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in SecretReferenceArray left, in JsonElement right)
+        public static bool operator ==(in CredentialSecurityTagArray left, in JsonElement right)
         {
             return left.Equals(right);
         }
@@ -159,7 +164,7 @@ public readonly partial struct CredentialBindingUpdate
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in SecretReferenceArray left, in JsonElement right)
+        public static bool operator !=(in CredentialSecurityTagArray left, in JsonElement right)
         {
             return !left.Equals(right);
         }
@@ -170,7 +175,7 @@ public readonly partial struct CredentialBindingUpdate
         /// <param name="value">The instance of this type.</param>
         /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator JsonElement(SecretReferenceArray instance)
+        public static implicit operator JsonElement(CredentialSecurityTagArray instance)
         {
             return JsonElement.From(instance);
         }
@@ -181,9 +186,9 @@ public readonly partial struct CredentialBindingUpdate
         /// <param name="value">The instance of this type as a JsonElement.</param>
         /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator SecretReferenceArray(JsonElement instance)
+        public static implicit operator CredentialSecurityTagArray(JsonElement instance)
         {
-            return SecretReferenceArray.From(instance);
+            return CredentialSecurityTagArray.From(instance);
         }
 
         /// <summary>
@@ -192,7 +197,7 @@ public readonly partial struct CredentialBindingUpdate
         /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the JSON element.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static SecretReferenceArray From<T>(in T instance)
+        public static CredentialSecurityTagArray From<T>(in T instance)
             where T : struct, IJsonElement<T>
         {
             return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -217,10 +222,10 @@ public readonly partial struct CredentialBindingUpdate
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static SecretReferenceArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+        public static CredentialSecurityTagArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<SecretReferenceArray>(utf8Json, options);
+            return JsonElementHelpers.ParseValue<CredentialSecurityTagArray>(utf8Json, options);
             #pragma warning restore CS0618
         }
 
@@ -243,10 +248,10 @@ public readonly partial struct CredentialBindingUpdate
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static SecretReferenceArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+        public static CredentialSecurityTagArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<SecretReferenceArray>(json, options);
+            return JsonElementHelpers.ParseValue<CredentialSecurityTagArray>(json, options);
             #pragma warning restore CS0618
         }
 
@@ -269,10 +274,10 @@ public readonly partial struct CredentialBindingUpdate
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static SecretReferenceArray ParseValue(string json, JsonDocumentOptions options = default)
+        public static CredentialSecurityTagArray ParseValue(string json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<SecretReferenceArray>(json, options);
+            return JsonElementHelpers.ParseValue<CredentialSecurityTagArray>(json, options);
             #pragma warning restore CS0618
         }
 
@@ -312,10 +317,10 @@ public readonly partial struct CredentialBindingUpdate
         ///   A value could not be read from the reader.
         /// </exception>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-        public static SecretReferenceArray ParseValue(ref Utf8JsonReader reader)
+        public static CredentialSecurityTagArray ParseValue(ref Utf8JsonReader reader)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<SecretReferenceArray>(ref reader);
+            return JsonElementHelpers.ParseValue<CredentialSecurityTagArray>(ref reader);
             #pragma warning restore CS0618
         }
 
@@ -357,16 +362,16 @@ public readonly partial struct CredentialBindingUpdate
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
-        public static bool TryParseValue(ref Utf8JsonReader reader, out SecretReferenceArray? result)
+        public static bool TryParseValue(ref Utf8JsonReader reader, out CredentialSecurityTagArray? result)
         {
-            return JsonElementHelpers.TryParseValue<SecretReferenceArray>(ref reader, out result);
+            return JsonElementHelpers.TryParseValue<CredentialSecurityTagArray>(ref reader, out result);
         }
 
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new SecretReferenceArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new CredentialSecurityTagArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -456,11 +461,11 @@ public readonly partial struct CredentialBindingUpdate
         void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-        static SecretReferenceArray IJsonElement<SecretReferenceArray>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+        static CredentialSecurityTagArray IJsonElement<CredentialSecurityTagArray>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"SecretReferenceArray: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"CredentialSecurityTagArray: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -475,11 +480,11 @@ public readonly partial struct CredentialBindingUpdate
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <summary>
-        /// Gets a <see cref="SecretReferenceArray"/> which can be safely stored beyond the lifetime of the
+        /// Gets a <see cref="CredentialSecurityTagArray"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </summary>
         /// <returns>
-        /// A <see cref="SecretReferenceArray"/> which can be safely stored beyond the lifetime of the
+        /// A <see cref="CredentialSecurityTagArray"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </returns>
         /// <remarks>
@@ -488,10 +493,10 @@ public readonly partial struct CredentialBindingUpdate
         /// this method returns the same instance without additional allocation.
         /// </para>
         /// </remarks>
-        public SecretReferenceArray Clone()
+        public CredentialSecurityTagArray Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<SecretReferenceArray>(_idx);
+            return _parent.CloneElement<CredentialSecurityTagArray>(_idx);
         }
 
         /// <summary>
@@ -499,7 +504,7 @@ public readonly partial struct CredentialBindingUpdate
         /// or returns this instance if it is already immutable.
         /// </summary>
         /// <returns>
-        /// An immutable <see cref="SecretReferenceArray"/> that lives for the lifetime of its
+        /// An immutable <see cref="CredentialSecurityTagArray"/> that lives for the lifetime of its
         /// workspace and its associated documents.
         /// </returns>
         /// <remarks>
@@ -513,12 +518,12 @@ public readonly partial struct CredentialBindingUpdate
         /// If this instance is already backed by an immutable document, it is returned as-is.
         /// </para>
         /// </remarks>
-        public SecretReferenceArray Freeze()
+        public CredentialSecurityTagArray Freeze()
         {
             CheckValidInstance();
             if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
             {
-                return mutable.FreezeElement<SecretReferenceArray>(_idx);
+                return mutable.FreezeElement<CredentialSecurityTagArray>(_idx);
             }
 
             return this;
