@@ -24,6 +24,7 @@
 
 import { ArazzoElement, SHARED_CSS, GRANTEE_CHIP_CSS, granteeChip, escapeHtml, define } from './base.js';
 import './grantee-picker.js';
+import './tag-editor.js';
 
 const SECRET_REF = /^(keyvault|awssm|vault|env|file):\/\/.+/;
 
@@ -381,17 +382,27 @@ class ArazzoCredentialDialog extends ArazzoElement {
       ? new Map(derived.config.map((c) => [c.key, c.value]))
       : new Map((b?.config || []).map((c) => [c.key, c.value])));
 
-    // Usage grants + management tags are set at create and immutable on update — show read-only when editing.
+    // Usage grants are set at create and immutable on update — shown read-only when editing. Management tags (who may
+    // administer the binding, §14.2) are admin-editable on update, so the .mgmt editor stays visible and pre-filled.
     this.$('fieldset.create-only').hidden = ro;
     this.$('.scopes-readonly').hidden = !ro;
     if (ro) {
       const usage = b.usageGrantee && Array.isArray(b.usageGrantee.identity) && b.usageGrantee.identity.length
         ? granteeChip(b.usageGrantee)
         : '<span class="muted">available to all workflow runs</span>';
-      const mgmt = (b.managementTags || []).map((t) => `${t.key}=${t.value}`).join(', ') || '—';
-      this.$('.scopes-readonly').innerHTML = `<div><span class="ro-label">Usage</span> ${usage}</div><div><span class="ro-label">Management tags</span> ${escapeHtml(mgmt)}</div>`;
+      this.$('.scopes-readonly').innerHTML = `<div><span class="ro-label">Usage</span> ${usage}</div>`;
+    }
+    // Management tags are admin-editable on create and update, via the shared <arazzo-tag-editor>. Seed it with the
+    // binding's current tags (empty on create); a read-only caller (no credentials:write) sees them as chips instead.
+    const mgmtSlot = this.$('.mgmt-slot');
+    const mgmtTags = b?.managementTags || [];
+    if (this.canWrite) {
+      mgmtSlot.innerHTML = '<arazzo-tag-editor class="mgmt-editor"></arazzo-tag-editor>';
+      this.$('.mgmt-editor').tags = mgmtTags;
     } else {
-      this.$('.mgmt').innerHTML = '';
+      mgmtSlot.innerHTML = mgmtTags.length
+        ? `<div class="tags-ro">${mgmtTags.map((t) => `<span class="tag">${escapeHtml(t.key)}=${escapeHtml(t.value)}</span>`).join('')}</div>`
+        : '<span class="muted">none</span>';
     }
   }
 
@@ -658,17 +669,21 @@ class ArazzoCredentialDialog extends ArazzoElement {
     } else {
       // Usage scopes which runs may use the binding. "Shared" (the default) writes no usage grant → usable by any run
       // that references the source. "Restrict to…" carries the picked grantee's identity (AND-matched); kind/label are
-      // for display. Management tags stay the {key,value} rows.
+      // for display. Usage is set at create and immutable afterwards.
       // mTLS is connection-level and cannot be usage-scoped (the server rejects it), so it never carries a grantee.
       const restricted = this.authKind !== 'mtls' && this.$('input[name="usageMode"]:checked')?.value === 'restricted';
       const grantee = restricted ? this.$('.usage-grantee')?.grant : null;
       if (grantee) {
         body.usageGrantee = { identity: grantee.identity, kind: grantee.kind, label: grantee.label };
       }
-
-      const mgmt = this.collect('.mgmt').map(([key, value]) => ({ key, value }));
-      if (mgmt.length) body.managementTags = mgmt;
     }
+
+    // Management tags (who may administer the binding, §14.2) are admin-editable on both create and update: a present
+    // array replaces the caller's non-internal labels (reserved sys: prefix rejected 400), absent leaves them unchanged.
+    // Always sent on an update (the seeded editor is the source of truth) so a re-tag or a clear takes effect.
+    const mgmtEditor = this.$('.mgmt-editor');
+    const mgmt = mgmtEditor ? mgmtEditor.tags : [];
+    if (this._editing || mgmt.length) body.managementTags = mgmt;
     return body;
   }
 
@@ -791,7 +806,7 @@ class ArazzoCredentialDialog extends ArazzoElement {
             </fieldset>
 
             <fieldset class="create-only">
-              <legend>Authorization (set at create, immutable after)</legend>
+              <legend>Usage (set at create, immutable after)</legend>
               <div>
                 <label>Usage — which runs may use this credential</label>
                 <div class="usage-mode">
@@ -802,7 +817,12 @@ class ArazzoCredentialDialog extends ArazzoElement {
                 <div class="usage-hint">Shared is usable by every workflow that references this source. Restrict only to lock the credential to specific runs (a workflow that isn’t named can’t use it).</div>
                 <div class="usage-hint usage-mtls-note" hidden>An mTLS certificate authenticates the connection at the TLS handshake, so it is shared by every run that reaches this source — it cannot be restricted to a grantee.</div>
               </div>
-              <div><label>Management tags — who may administer the binding</label><div class="mgmt"></div><button class="add ghost addmgmt" type="button">+ Add tag</button></div>
+            </fieldset>
+
+            <fieldset class="mgmt-fieldset">
+              <legend>Management tags</legend>
+              <div><label>Who may administer the binding (§14.2)</label><div class="mgmt-slot"></div></div>
+              <div class="usage-hint">An administrator may re-tag on update; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed.</div>
             </fieldset>
 
             <div class="scopes-readonly" hidden></div>
@@ -823,7 +843,6 @@ class ArazzoCredentialDialog extends ArazzoElement {
       this.syncUsageMode(); // mTLS forces "Shared" and hides "Restrict"
     });
     this.$('.addcfg').addEventListener('click', () => this.addRow('.config-extra', 'cfg'));
-    this.$('.addmgmt').addEventListener('click', () => this.addRow('.mgmt', 'mgmt'));
     this.$$('input[name="usageMode"]').forEach((r) => r.addEventListener('change', () => this.syncUsageMode()));
     this.$('form').addEventListener('submit', (e) => {
       if (e.submitter?.value === 'confirm') { e.preventDefault(); this.submit(); }
