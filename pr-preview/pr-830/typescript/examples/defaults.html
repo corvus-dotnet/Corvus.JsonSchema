@@ -196,12 +196,12 @@
 </ul>
 <p><code>defaults</code> holds only the type's own direct properties that declare a <code>default</code>; a nested object type gets its own <code>defaults</code>, so the tree is not flattened. It is emitted only for types that have at least one direct default.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/a17512411528cc7094dcbe6ec88b0497dd834796/docs/typescript/examples/018-defaults/settings.json"><code>settings.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0f60368cf9ad534abb6720b6ed646e55109d3b94/docs/typescript/examples/018-defaults/settings.json"><code>settings.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;Settings&quot;, &quot;type&quot;: &quot;object&quot;, &quot;additionalProperties&quot;: false,
   &quot;properties&quot;: { &quot;theme&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;default&quot;: &quot;light&quot; }, &quot;fontSize&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;default&quot;: 14 } } }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/a17512411528cc7094dcbe6ec88b0497dd834796/docs/typescript/examples/018-defaults/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/0f60368cf9ad534abb6720b6ed646e55109d3b94/docs/typescript/examples/018-defaults/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">Settings.defaults;            // { readonly theme: &quot;light&quot;; readonly fontSize: 14 }
 Settings.defaults.theme;      // &quot;light&quot;
 
