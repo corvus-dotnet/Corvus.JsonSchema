@@ -67,6 +67,40 @@ public sealed partial class CliIntegrationTests
     }
 
     [TestMethod]
+    public async Task Credential_management_tags_are_settable_on_create_and_re_taggable_on_update()
+    {
+        await using Host host = await StartAsync();
+
+        (int createExit, string createOut, _) = await RunAsync(
+            host,
+            "credentials", "create", "petstore", "production",
+            "--auth-kind", "apiKey",
+            "--ref", "value=keyvault://petstore-key#3",
+            "--config", "parameterName=X-Api-Key",
+            "--manage", "team=payments");
+        createExit.ShouldBe(0);
+        createOut.ShouldContain("payments");
+
+        // --manage re-tags who may administer the binding; the old label is replaced (authKind/config preserved).
+        (int updateExit, string updateOut, _) = await RunAsync(
+            host,
+            "credentials", "update", "petstore", "production",
+            "--manage", "team=billing");
+        updateExit.ShouldBe(0);
+        updateOut.ShouldContain("billing");
+        updateOut.ShouldNotContain("payments");
+        updateOut.ShouldContain("apiKey");
+
+        // Omitting --manage carries the tags forward (a ref-only rotation keeps billing).
+        (int keepExit, string keepOut, _) = await RunAsync(
+            host,
+            "credentials", "update", "petstore", "production",
+            "--ref", "value=keyvault://petstore-key#4");
+        keepExit.ShouldBe(0);
+        keepOut.ShouldContain("billing");
+    }
+
+    [TestMethod]
     public async Task List_renders_status_and_filters_by_status()
     {
         await using Host host = await StartAsync();
