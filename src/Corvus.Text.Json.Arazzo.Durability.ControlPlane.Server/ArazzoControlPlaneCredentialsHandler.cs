@@ -249,10 +249,37 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             return UpdateCredentialResult.BadRequest(Problem("invalid-credential", "Invalid credential binding", 400, ex.Message), workspace);
         }
 
+        // A present managementTags re-tags who may MANAGE the binding (§14.2): the caller's non-internal labels replace the
+        // old ones while the deployment-internal tenant tag is (re-)stamped (validated against the reserved prefix). Absent
+        // leaves them unchanged (the draft omits them; the store carries them forward). Usage tags stay immutable.
+        SecurityTagSet managementTags = SecurityTagSet.Empty;
+        if (body.ManagementTags.IsNotUndefined())
+        {
+            try
+            {
+                SecurityTagSet userManagement = SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(body.ManagementTags).Memory);
+                this.access.ValidateUserTags(userManagement);
+                var tagsState = new ManagementTagsState(this.access.InternalTags(), userManagement);
+                managementTags = SecurityTagSet.Build(in tagsState, WriteManagementTags);
+            }
+            catch (ArgumentException ex)
+            {
+                return UpdateCredentialResult.BadRequest(Problem("invalid-credential", "Invalid credential binding", 400, ex.Message), workspace);
+            }
+
+            // A principal may not re-tag a binding to a management scope outside its own reach.
+            if (!managementTags.IsEmpty && !this.access.Current().Admits(AccessVerb.Write, managementTags))
+            {
+                return UpdateCredentialResult.BadRequest(
+                    Problem("management-out-of-reach", "Management scope out of reach", 400, "The binding's management tags are outside your own management reach."), workspace);
+            }
+        }
+
         try
         {
             // Only the mutable content is carried bytes-to-bytes; the immutable identity (sourceName, environment) and the
-            // security tags are carried forward from the stored binding by the store, so the draft omits them.
+            // usage tags are carried forward from the stored binding by the store. managementTags are replaced on a re-tag
+            // (non-empty) or carried forward when omitted (empty draft set).
             using ParsedJsonDocument<SourceCredentialBinding> draft = SourceCredentialBinding.Draft(
                 sourceName: default,
                 environment: default,
@@ -262,7 +289,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 description: (JsonElement)body.Description,
                 expiresAt: (JsonElement)body.ExpiresAt,
                 rotatedAt: (JsonElement)body.RotatedAt,
-                managementTags: default,
+                managementTags: managementTags,
                 usageTags: default);
             ParsedJsonDocument<SourceCredentialBinding>? updated = await this.store.UpdateAsync(sourceName, environment, draft.RootElement, WorkflowEtag.None, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
             if (updated is not { } b)

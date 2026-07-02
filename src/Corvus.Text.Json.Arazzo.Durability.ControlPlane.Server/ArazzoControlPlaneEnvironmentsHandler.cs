@@ -197,9 +197,34 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
 
         Models.EnvironmentUpdate body = parameters.Body;
 
-        // Only the mutable content (display name, description) is carried bytes-to-bytes; the immutable name + management
-        // tags + created-* audit are carried forward from the stored environment by the store, so the draft omits them.
-        using ParsedJsonDocument<Environment> draft = Environment.Draft(default, (JsonElement)body.DisplayName, (JsonElement)body.Description, SecurityTagSet.Empty);
+        // A present managementTags re-tags the reach scope (§14.2): the caller's non-internal labels replace the old ones
+        // while the deployment-internal tenant tag is (re-)stamped so management is preserved (validated against the
+        // reserved prefix, as a non-owning view). Absent leaves the tags unchanged — the draft omits them (empty set) and
+        // the store carries the stored tags forward. Display name + description are always carried bytes-to-bytes.
+        SecurityTagSet managementTags = SecurityTagSet.Empty;
+        if (body.ManagementTags.IsNotUndefined())
+        {
+            try
+            {
+                SecurityTagSet userManagement = SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(body.ManagementTags).Memory);
+                this.access.ValidateUserTags(userManagement);
+                var tagsState = new ManagementTagsState(this.access.InternalTags(), userManagement);
+                managementTags = SecurityTagSet.Build(in tagsState, WriteManagementTags);
+            }
+            catch (ArgumentException ex)
+            {
+                return UpdateEnvironmentResult.BadRequest(Problem("invalid-environment", "Invalid environment", 400, ex.Message), workspace);
+            }
+
+            // A principal may not re-tag an environment to a management scope outside its own reach.
+            if (!managementTags.IsEmpty && !this.access.Current().Admits(AccessVerb.Write, managementTags))
+            {
+                return UpdateEnvironmentResult.BadRequest(
+                    Problem("management-out-of-reach", "Management scope out of reach", 400, "The environment's management tags are outside your own management reach."), workspace);
+            }
+        }
+
+        using ParsedJsonDocument<Environment> draft = Environment.Draft(default, (JsonElement)body.DisplayName, (JsonElement)body.Description, managementTags);
         ParsedJsonDocument<Environment>? updated = await this.store.UpdateAsync(name, draft.RootElement, WorkflowEtag.None, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
         if (updated is not { } e)
         {
