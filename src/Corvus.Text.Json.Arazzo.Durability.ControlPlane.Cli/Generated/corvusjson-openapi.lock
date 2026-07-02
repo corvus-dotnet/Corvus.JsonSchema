@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-07-01T19:35:34.2027655\u002B00:00",
+  "generatedAt": "2026-07-02T11:02:11.1111023\u002B00:00",
   "generatedFiles": [
     "ListRunsRequest.cs",
     "ListRunsResponse.cs",
@@ -394,6 +394,9 @@
     "Models/CredentialBindingUpdate.CredentialConfigEntryArray.cs",
     "Models/CredentialBindingUpdate.CredentialConfigEntryArray.Mutable.cs",
     "Models/CredentialBindingUpdate.CredentialConfigEntryArray.JsonSchema.cs",
+    "Models/CredentialBindingUpdate.CredentialSecurityTagArray.cs",
+    "Models/CredentialBindingUpdate.CredentialSecurityTagArray.Mutable.cs",
+    "Models/CredentialBindingUpdate.CredentialSecurityTagArray.JsonSchema.cs",
     "Models/CredentialBindingUpdate.SecretReferenceArray.cs",
     "Models/CredentialBindingUpdate.SecretReferenceArray.Mutable.cs",
     "Models/CredentialBindingUpdate.SecretReferenceArray.JsonSchema.cs",
@@ -451,6 +454,9 @@
     "Models/EnvironmentUpdate.cs",
     "Models/EnvironmentUpdate.Mutable.cs",
     "Models/EnvironmentUpdate.JsonSchema.cs",
+    "Models/EnvironmentUpdate.EnvironmentSecurityTagArray.cs",
+    "Models/EnvironmentUpdate.EnvironmentSecurityTagArray.Mutable.cs",
+    "Models/EnvironmentUpdate.EnvironmentSecurityTagArray.JsonSchema.cs",
     "Models/GranteeKind.cs",
     "Models/GranteeKind.Mutable.cs",
     "Models/GranteeKind.JsonSchema.cs",
@@ -616,6 +622,9 @@
     "Models/SourceUpdate.cs",
     "Models/SourceUpdate.Mutable.cs",
     "Models/SourceUpdate.JsonSchema.cs",
+    "Models/SourceUpdate.SourceSecurityTagArray.cs",
+    "Models/SourceUpdate.SourceSecurityTagArray.Mutable.cs",
+    "Models/SourceUpdate.SourceSecurityTagArray.JsonSchema.cs",
     "Models/StatePatchResume.cs",
     "Models/StatePatchResume.Mutable.cs",
     "Models/StatePatchResume.JsonSchema.cs",
@@ -729,9 +738,9 @@
     "Models/GetRunnerAuthorizationsStatus.JsonSchema.cs",
     "Models/Corvus__GlobalDeclarations.cs"
   ],
-  "generatorVersion": "1.0.0\u002B2416232753b292e39d60a335a1d90fb7166a8916",
+  "generatorVersion": "1.0.0\u002B16cc894c6cfdf474de7482784a15787d29bb17fe",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "8a9e70310a5018d9f2a0bf4729798527e24fa4dac299a614459cc9ea4b67cace",
+  "specFileHash": "e5c403e26b5aa4609a24a2aa44cd3ef306bc8f486200256e08325c2ab176930a",
   "specVersion": "3.2"
 }
