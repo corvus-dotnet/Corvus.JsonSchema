@@ -373,6 +373,13 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
         Add($"\nfunction withDefaults{name}(", "withDefaults", $"withDefaults{name}");
         Add($"\nfunction match{name}<", "match", $"match{name}");
 
+        // defaults{T} is a `const` (not a function), so it needs its own detection: the readonly object literal
+        // of this type's DIRECT property defaults, exposed as `T.defaults` (`s.theme ?? T.defaults.theme`).
+        if (content.Contains($"export const defaults{name} ", StringComparison.Ordinal))
+        {
+            props.Add($"  defaults: defaults{name}");
+        }
+
         // RFC 6902 JSON Patch + RFC 7396 Merge Patch over the document bytes: apply -> canonical bytes; diff
         // two documents -> a patch. Emitted for buildable document types (those with a `build`).
         if (content.Contains($"\nfunction build{name}(", StringComparison.Ordinal))
@@ -527,6 +534,7 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
                     EmitApplyTo(sb, td);
                     EmitProduceDraft(sb, td);
                     EmitWithDefaults(sb, td);
+                    EmitDefaults(sb, td);
                 }
             }
             else if (IsEnum(td))
@@ -912,6 +920,37 @@ public sealed class TypeScriptLanguageProvider : IHierarchicalLanguageProvider
 
         sb.Append("  return out as unknown as ").Append(name).Append(";\n");
         sb.Append("}\n\n");
+    }
+
+    // Gap B1 (defaults), READ half: defaults{T} is a readonly object literal of this type's DIRECT property
+    // defaults, `as const`, so a caller can read ONE default without hardcoding (`s.theme ?? T.defaults.theme`)
+    // while `withDefaults{T}` fills them all. Only the type's own properties that declare a `default` are
+    // included — a nested object type gets its OWN defaults{Nested}, so the tree is not flattened. Emitted
+    // ONLY when at least one direct property has a default (most types get none); the same literal rendering as
+    // withDefaults (TryGetPropertyDefault + TsEmit.Str key), so the two agree byte-for-byte.
+    private static void EmitDefaults(StringBuilder sb, TypeDeclaration td)
+    {
+        if (!td.HasPropertyDeclarations)
+        {
+            return;
+        }
+
+        var entries = new List<string>();
+        foreach (PropertyDeclaration p in td.PropertyDeclarations)
+        {
+            if (TryGetPropertyDefault(p, out string? defaultJson))
+            {
+                entries.Add($"{TsEmit.Str(p.JsonPropertyName)}: {defaultJson}");
+            }
+        }
+
+        if (entries.Count == 0)
+        {
+            return;
+        }
+
+        string name = FinalName(td);
+        sb.Append("export const defaults").Append(name).Append(" = { ").Append(string.Join(", ", entries)).Append(" } as const;\n\n");
     }
 
     // The compact-JSON form of a property's authored `default` (the SAME `UnreducedPropertyType` subschema the

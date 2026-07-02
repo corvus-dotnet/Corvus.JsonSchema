@@ -30,6 +30,22 @@ public class TypeScriptCodeGenerationModeTests
         }
         """;
 
+    // An object with two direct properties that declare a `default` (a string and an integer), so the
+    // typed `defaults` static and its literal rendering are meaningful in type-generation mode and their
+    // absence is meaningful in eval-only mode.
+    private const string SettingsSchema = """
+        {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "title": "Settings",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "theme": { "type": "string", "default": "light" },
+            "fontSize": { "type": "integer", "default": 14 }
+          }
+        }
+        """;
+
     [TestMethod]
     public async Task TypeScript_TypeGeneration_EmitsTypeSurfaceAndValidators()
     {
@@ -65,6 +81,38 @@ public class TypeScriptCodeGenerationModeTests
         Assert.IsFalse(
             System.Text.RegularExpressions.Regex.IsMatch(content, "export type [A-Za-z_$]"),
             "SchemaEvaluationOnly must not emit a type-alias declaration. Generated:\n" + content);
+    }
+
+    [TestMethod]
+    public async Task TypeScript_TypeGeneration_EmitsTypedDefaultsStatic()
+    {
+        string content = await GenerateTypeScript(SettingsSchema, emitTypeSurface: true);
+
+        // The typed `defaults` static is a readonly object literal of the type's DIRECT property defaults,
+        // `as const`, with the SAME literal rendering as withDefaults (quoted keys, compact JSON values). The
+        // property order follows the interface (properties are emitted alphabetically: fontSize, then theme).
+        StringAssert.Contains(
+            content,
+            "export const defaultsSettings = { \"fontSize\": 14, \"theme\": \"light\" } as const;",
+            "TypeGeneration must emit the typed defaults literal.\n" + content);
+
+        // ...and the companion object exposes it as `Settings.defaults`.
+        StringAssert.Contains(content, "defaults: defaultsSettings", "The companion must expose defaults.");
+    }
+
+    [TestMethod]
+    public async Task TypeScript_SchemaEvaluationOnly_DoesNotEmitDefaultsStatic()
+    {
+        string content = await GenerateTypeScript(SettingsSchema, emitTypeSurface: false);
+
+        // The typed `defaults` static is part of the type surface, so eval-only mode must suppress it entirely
+        // (both the `const` declaration and the companion member), same as the interface and withDefaults.
+        Assert.IsFalse(
+            content.Contains("export const defaults", StringComparison.Ordinal),
+            "SchemaEvaluationOnly must not emit the defaults static. Generated:\n" + content);
+        Assert.IsFalse(
+            content.Contains("defaults:", StringComparison.Ordinal),
+            "SchemaEvaluationOnly must not expose defaults on the companion. Generated:\n" + content);
     }
 
     // Build the schema's type declarations and emit TypeScript via the provider in the requested mode,

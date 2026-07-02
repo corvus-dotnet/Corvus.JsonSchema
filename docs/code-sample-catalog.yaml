@@ -653,12 +653,12 @@ typescript-recipes:
       - {index: 1, language: typescript, lines: [24, 28]}
   - path: "docs/typescript/examples/018-defaults/README.md"
     blocks:
-      - {index: 0, language: json, lines: [13, 16]}
-      - {index: 1, language: typescript, lines: [22, 27]}
+      - {index: 0, language: json, lines: [18, 21]}
+      - {index: 1, language: typescript, lines: [27, 36]}
   - path: "docs/typescript/examples/019-formats/README.md"
     blocks:
-      - {index: 0, language: json, lines: [13, 16]}
-      - {index: 1, language: typescript, lines: [22, 29]}
+      - {index: 0, language: json, lines: [15, 18]}
+      - {index: 1, language: typescript, lines: [24, 34]}
   - path: "docs/typescript/examples/020-json-patch/README.md"
     blocks:
       - {index: 0, language: json, lines: [22, 36]}

@@ -49,6 +49,8 @@ function withDefaultsSettings(value: Settings): Settings {
   return out as unknown as Settings;
 }
 
+export const defaultsSettings = { "fontSize": 14, "theme": "light" } as const;
+
 function evaluateSettings(value: unknown, ev: Ev, il: string = "", kl: string = "", r: Results | null = null): boolean {
   let ok = true;
   if (!(__isObj(value))) { if (r === null) return false; r.fail(kl + "/type", il, "/home/mwa/src/Corvus.JsonSchema/.claude/worktrees/ts-codegen-design/docs/typescript/examples/018-defaults/settings.json#/type"); ok = false; }
@@ -94,6 +96,7 @@ export const Settings = {
   patch: patchSettings,
   produce: produceSettings,
   withDefaults: withDefaultsSettings,
+  defaults: defaultsSettings,
   applyPatch: (doc: Uint8Array | Settings, patch: JsonPatch): Uint8Array => canonicalize(applyPatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, patch)),
   applyMergePatch: (doc: Uint8Array | Settings, mergePatch: unknown): Uint8Array => canonicalize(applyMergePatch(doc instanceof Uint8Array ? decodeAndParse(doc) : doc, mergePatch)),
   createPatch: (source: Uint8Array | Settings, target: Uint8Array | Settings): JsonPatchOp[] => createPatch(source instanceof Uint8Array ? decodeAndParse(source) : source, target instanceof Uint8Array ? decodeAndParse(target) : target),

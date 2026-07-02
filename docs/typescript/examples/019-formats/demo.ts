@@ -9,3 +9,6 @@ const bytes = Account.build({
 });
 console.log("valid:    ", Account.evaluate(bytes)); // true
 try { Id.from("nope"); } catch (e) { console.log("Id.from threw:", (e as Error).message); }
+// Convert the branded date-time back out to a strong Temporal.Instant (a pure parse helper; no re-validation).
+const when = Created.toTemporal(Created.from("2026-06-26T10:00:00Z"));
+console.log("created:  ", when.toString()); // 2026-06-26T10:00:00Z
