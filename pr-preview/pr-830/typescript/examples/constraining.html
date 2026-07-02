@@ -191,7 +191,7 @@
 <h2 id="the-pattern">The Pattern</h2>
 <p>A member of <code>allOf</code> can re-state an existing property with extra keywords; all members apply together. Here <code>Batch</code> requires <code>size &gt;= 1</code>, and <code>SmallBatch</code> composes it with <code>size &lt;= 100</code>, so the effective constraint is <code>1 &lt;= size &lt;= 100</code>. The generated shape is unchanged (<code>{ size }</code>); the <em>constraints</em> are the union of all members and are enforced by <code>SmallBatch.evaluate</code>.</p>
 <h2 id="the-schema">The Schema</h2>
-<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/03fc165617056707fd8b84031decbba66fd9c729/docs/typescript/examples/006-constraining/small-batch.json"><code>small-batch.json</code></a></p>
+<p>File: <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/4fa0c9336d26c4b0aa38e3c30d7f2726e72b472f/docs/typescript/examples/006-constraining/small-batch.json"><code>small-batch.json</code></a></p>
 <pre><code class="language-json">{ &quot;title&quot;: &quot;SmallBatch&quot;, &quot;type&quot;: &quot;object&quot;,
   &quot;$defs&quot;: { &quot;batch&quot;: { &quot;title&quot;: &quot;Batch&quot;, &quot;type&quot;: &quot;object&quot;, &quot;required&quot;: [&quot;size&quot;],
       &quot;properties&quot;: { &quot;size&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;minimum&quot;: 1 } } } },
@@ -199,7 +199,7 @@
   &quot;properties&quot;: { &quot;size&quot;: { &quot;maximum&quot;: 100 } } }
 </code></pre>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/03fc165617056707fd8b84031decbba66fd9c729/docs/typescript/examples/006-constraining/demo.ts">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/4fa0c9336d26c4b0aa38e3c30d7f2726e72b472f/docs/typescript/examples/006-constraining/demo.ts">Example code</a></p>
 <pre><code class="language-typescript">SmallBatch.evaluate({ size: 50 });   // true
 SmallBatch.evaluate({ size: 200 });  // false — maximum 100 (added by SmallBatch)
 SmallBatch.evaluate({ size: 0 });    // false — minimum 1 (from the base)

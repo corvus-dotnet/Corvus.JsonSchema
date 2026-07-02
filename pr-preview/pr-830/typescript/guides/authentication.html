@@ -566,7 +566,7 @@ Option B avoids undici entirely. Combine mTLS with a token provider by passing <
 alongside the transport.</p>
 <p>Option A targets <code>undici</code> v8 (the current major): its <code>dispatcher</code> interface differs from the undici
 built into Node's global <code>fetch</code>, so the standalone <code>undici</code> you import must match the one backing your
-<code>fetch</code>. Option B uses only the built-in <code>node:https</code> <code>Agent</code>. See the <a href="https://github.com/nodejs/undici">undici <code>Agent</code> docs</a> and
+<code>fetch</code>. Option B uses only the built-in <code>node:https</code> <code>Agent</code>. See the <a href="https://github.com/nodejs/undici/blob/main/docs/docs/api/Agent.md">undici <code>Agent</code> docs</a> and
 <a href="https://nodejs.org/api/https.html#class-httpsagent">Node.js <code>https.Agent</code> docs</a>.</p>
 <h2 id="request-signing">Request signing</h2>
 <p>When the credential depends on the request itself — the method, path, query, and body — implement an
