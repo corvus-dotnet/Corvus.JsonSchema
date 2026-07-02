@@ -54,7 +54,7 @@ cd Corvus.JsonSchema
 dotnet build Corvus.Text.Json.slnx
 ```
 
-The `--recurse-submodules` flag is required to fetch the `JSON-Schema-Test-Suite/` submodule used by the test suite.
+The `--recurse-submodules` flag fetches the compliance and test-suite submodules that the build and tests depend on: `JSON-Schema-Test-Suite/`, `tests/json-patch-tests/`, `Jsonata-Test-Suite/`, `JMESPath-Test-Suite/`, `yaml-test-suite/`, `jsonpath-compliance-test-suite/`, and `toon-format-spec/`. Without them the build fails (missing generated test inputs). If you have already cloned without the flag, run `git submodule update --init --recursive`.
 
 ### Run tests
 
