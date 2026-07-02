@@ -14,6 +14,10 @@ https://api\.github\.com
 # NuGet package pages (may return 404 for pre-release versions)
 https://www\.nuget\.org/packages/.*/\d+\.\d+\.\d+-
 
+# npmjs.com package pages return 403 Forbidden to automated crawlers (the packages exist;
+# npm blocks the request). Same class as the NuGet / learn.microsoft rate-limit exclusions.
+https://www\.npmjs\.com/package/
+
 # Canonical/SEO links (og:url, rel=canonical, rel=sitemap) always point to the
 # production domain, which is unreachable during local and preview builds.
 https://corvus-oss\.org
