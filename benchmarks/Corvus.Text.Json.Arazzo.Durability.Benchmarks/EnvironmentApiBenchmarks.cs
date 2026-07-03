@@ -35,7 +35,7 @@ public class EnvironmentApiBenchmarks
         """{"name":"production","displayName":"Production","description":"The live environment."}"""u8.ToArray();
 
     private ArazzoControlPlaneEnvironmentsHandler listHandler = null!;
-    private ParsedJsonDocument<Models.EnvironmentWrite> createBody = null!;
+    private ParsedJsonDocument<Models.EnvironmentCreate> createBody = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -49,7 +49,7 @@ public class EnvironmentApiBenchmarks
         }
 
         this.listHandler = new ArazzoControlPlaneEnvironmentsHandler(store, new SecuredEnvironmentAdministration(new InMemoryEnvironmentAdministratorStore()), Actor);
-        this.createBody = ParsedJsonDocument<Models.EnvironmentWrite>.Parse(CreateBodyJson);
+        this.createBody = ParsedJsonDocument<Models.EnvironmentCreate>.Parse(CreateBodyJson);
     }
 
     [GlobalCleanup]
