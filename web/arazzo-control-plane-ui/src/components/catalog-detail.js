@@ -193,6 +193,13 @@ class ArazzoCatalogDetail extends ArazzoElement {
         .bind { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; padding: 3px 8px; border: 1px solid var(--_border); border-radius: 999px; background: var(--_bg); color: var(--_text); cursor: pointer; }
         .bind:hover { background: var(--_surface); }
         .bind .cred-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 0 6px; border-radius: 999px; color: #fff; }
+        /* The source-head "＋" credential menu. The trigger is a plain .ghost button (no size override) so it matches
+           the Download button's height; the menu is a small absolutely-positioned popover of New / Copy-<env> actions. */
+        .src-menu-wrap { position: relative; display: inline-flex; }
+        .setup-menu { font-weight: 700; }
+        .cred-menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; min-width: 168px; display: flex; flex-direction: column; padding: 4px; gap: 2px; background: var(--_bg); border: 1px solid var(--_border); border-radius: var(--_radius); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); }
+        .cred-menu .menu-item { text-align: left; white-space: nowrap; border: 1px solid transparent; background: transparent; padding: 6px 10px; border-radius: 6px; font: inherit; font-size: 13px; cursor: pointer; }
+        .cred-menu .menu-item:hover { background: var(--_surface); border-color: transparent; }
         .downloads { display: flex; gap: 8px; flex-wrap: wrap; }
         .avail-body { display: grid; gap: 8px; }
         .avail-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 13px; }
@@ -375,7 +382,10 @@ class ArazzoCatalogDetail extends ArazzoElement {
           <span class="name">${escapeHtml(s.name)}</span>
           <span class="type">${escapeHtml(s.type || '')}</span>
           <span class="grow"></span>
-          ${canWrite ? `<button class="ghost setup-cred" type="button" data-name="${escapeHtml(s.name)}">Set up credential…</button>` : ''}
+          ${canWrite ? `<span class="src-menu-wrap">
+            <button class="ghost setup-menu" type="button" data-name="${escapeHtml(s.name)}" aria-haspopup="menu" aria-expanded="false" title="Add a credential for ${escapeHtml(s.name)}" aria-label="Add a credential for ${escapeHtml(s.name)}">＋</button>
+            <div class="cred-menu" data-name="${escapeHtml(s.name)}" role="menu" hidden></div>
+          </span>` : ''}
           <button class="ghost dl-source" type="button" data-name="${escapeHtml(s.name)}" title="Download ${escapeHtml(s.name)}">Download</button>
         </div>
         <div class="src-binds" data-name="${escapeHtml(s.name)}"><span class="muted">Loading credentials…</span></div>
@@ -433,7 +443,43 @@ class ArazzoCatalogDetail extends ArazzoElement {
 
   /** Wire each source's "Set up credential…" to derive auth from the source document and open the dialog. */
   wireSources(v) {
-    this.$$('.setup-cred').forEach((btn) => btn.addEventListener('click', () => this.setupCredential(v, btn.dataset.name)));
+    this.$$('.setup-menu').forEach((btn) => btn.addEventListener('click', (e) => { e.stopPropagation(); this.toggleCredMenu(v, btn); }));
+    // Dismiss any open credential menu on an outside click or Escape (wired once — the shadow root persists across renders).
+    if (!this._credMenuDismiss) {
+      this._credMenuDismiss = (e) => { if (!e.target.closest?.('.src-menu-wrap')) this.closeCredMenus(); };
+      this.shadowRoot.addEventListener('click', this._credMenuDismiss);
+      this.shadowRoot.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.closeCredMenus(); });
+    }
+  }
+
+  /** Open (toggle) a source's "＋" credential menu: "New credential…" plus "Copy <env>…" for each existing binding.
+   * The Copy items are built from the loaded credential list at open time, so they reflect the current environments;
+   * "New" opens a blank guided setup, "Copy" clones that binding with the environment + secretRef blanked (§13). */
+  toggleCredMenu(v, btn) {
+    const menu = btn.closest('.src-menu-wrap').querySelector('.cred-menu');
+    const wasOpen = !menu.hidden;
+    this.closeCredMenus();
+    if (wasOpen) return;
+    const sourceName = btn.dataset.name;
+    const binds = (this._creds || []).filter((b) => b.sourceName === sourceName);
+    menu.innerHTML = ['<button class="menu-item" role="menuitem" type="button" data-action="new" title="Set up a new credential for this source">New credential…</button>']
+      .concat(binds.map((b) => {
+        const env = escapeHtml(b.environment);
+        return `<button class="menu-item" role="menuitem" type="button" data-action="copy" data-key="${escapeHtml(`${b.sourceName}@${b.environment}`)}" title="Copy the ${env} credential to set up another environment">Copy ${env}…</button>`;
+      })).join('');
+    menu.querySelector('[data-action="new"]').addEventListener('click', () => { this.closeCredMenus(); this.setupCredential(v, sourceName); });
+    menu.querySelectorAll('[data-action="copy"]').forEach((mi) => mi.addEventListener('click', () => {
+      this.closeCredMenus();
+      const b = binds.find((x) => `${x.sourceName}@${x.environment}` === mi.dataset.key);
+      if (b) { const dlg = this.$('arazzo-credential-dialog'); dlg.client = this.client; dlg.open(b, { duplicate: true }); }
+    }));
+    menu.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+  }
+
+  closeCredMenus() {
+    this.$$('.cred-menu').forEach((m) => { m.hidden = true; });
+    this.$$('.setup-menu').forEach((b) => b.setAttribute('aria-expanded', 'false'));
   }
 
   async setupCredential(v, sourceName) {
