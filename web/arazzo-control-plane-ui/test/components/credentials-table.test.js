@@ -22,7 +22,7 @@ describe('<arazzo-credentials-table>', () => {
     el = tableWithMock();
     mount(el);
     const e = await nextEvent(el, 'loaded');
-    equal(rowCount(el), 4, 'four seeded bindings');
+    equal(rowCount(el), 5, 'five seeded bindings');
     equal(e.detail.expiring, 1, 'one expiring soon');
     equal(e.detail.expired, 1, 'one expired');
     ok(el.shadowRoot.querySelector('[part="status"]'), 'status badge present');
@@ -67,27 +67,35 @@ describe('<arazzo-credentials-table>', () => {
   // covered there; this table covers view / select / duplicate / rotate.
 
   it('pages bindings with Prev/Next over the keyset cursor', async () => {
-    // Four seeded bindings; a page-size of two makes two keyset pages (2 + 2).
+    // Five seeded bindings; a page-size of two makes three keyset pages (2 + 2 + 1).
     el = tableWithMock({ 'page-size': '2' });
     mount(el);
     await nextEvent(el, 'loaded');
+    const next = () => el.shadowRoot.querySelector('.next');
+    const prev = () => el.shadowRoot.querySelector('.prev');
     equal(rowCount(el), 2, 'page 1 holds two bindings');
-    const next = el.shadowRoot.querySelector('.next');
-    ok(!next.disabled, 'Next is enabled when a page follows');
-    ok(el.shadowRoot.querySelector('.prev').disabled, 'Prev is disabled on page 1');
+    ok(!next().disabled, 'Next is enabled when a page follows');
+    ok(prev().disabled, 'Prev is disabled on page 1');
     ok(!el.shadowRoot.querySelector('.foot .more'), 'the old Load more control is gone');
 
     const page2 = nextEvent(el, 'loaded');
-    next.click();
+    next().click();
     await page2;
-    equal(rowCount(el), 2, 'page 2 holds the remaining two bindings');
-    ok(el.shadowRoot.querySelector('.next').disabled, 'Next is disabled on the last page');
-    ok(!el.shadowRoot.querySelector('.prev').disabled, 'Prev is enabled off page 1');
+    equal(rowCount(el), 2, 'page 2 holds two bindings');
+    ok(!next().disabled, 'Next is still enabled — a third page follows');
+    ok(!prev().disabled, 'Prev is enabled off page 1');
+
+    const page3 = nextEvent(el, 'loaded');
+    next().click();
+    await page3;
+    equal(rowCount(el), 1, 'page 3 holds the remaining binding');
+    ok(next().disabled, 'Next is disabled on the last page');
+    ok(!prev().disabled, 'Prev is enabled off page 1');
 
     const back = nextEvent(el, 'loaded');
-    el.shadowRoot.querySelector('.prev').click();
+    prev().click();
     await back;
-    equal(rowCount(el), 2, 'Prev returns to page 1');
-    ok(el.shadowRoot.querySelector('.prev').disabled, 'Prev is disabled again on page 1');
+    equal(rowCount(el), 2, 'Prev returns to page 2');
+    ok(!prev().disabled, 'Prev still enabled on page 2');
   });
 });

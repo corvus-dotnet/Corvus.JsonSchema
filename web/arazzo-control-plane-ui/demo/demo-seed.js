@@ -31,6 +31,7 @@ const securityBindings = [
   { id: 'bind-1', claimType: 'team', claimValue: 'payments', read: { ruleNames: ['reach-payments'] }, write: { ruleNames: ['reach-payments'] }, purge: { unrestricted: false }, order: 0, description: 'Payments team — read and write the payments domain.', createdBy: 'priya@example.com', createdAt: ago(12 * day), etag: 'etag-b1' },
   { id: 'bind-2', claimType: 'role', claimValue: 'sre', read: { unrestricted: true }, write: { ruleNames: ['reach-payments', 'reach-onboarding'] }, purge: { unrestricted: false }, order: 1, description: 'SRE — read everything; write the payments and onboarding domains.', createdBy: 'priya@example.com', createdAt: ago(5 * day), etag: 'etag-b2' },
   { id: 'bind-3', claimType: 'team', claimValue: 'growth', read: { ruleNames: ['reach-onboarding'] }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 2, description: 'Growth team — read the onboarding domain.', createdBy: 'priya@example.com', createdAt: ago(4 * day), etag: 'etag-b3' },
+  { id: 'bind-4', claimType: 'sub', claimValue: 'u-1042', read: { ruleNames: ['reach-payments'] }, write: { unrestricted: false }, purge: { unrestricted: false }, order: 3, description: 'Ada Lovelace — read the payments domain (a direct person grant).', createdBy: 'priya@example.com', createdAt: ago(4 * day), etag: 'etag-b4' },
 ];
 
 // Resolvable grantees for the pickers — people, teams, a role, a workflow. No tenant grantee.
@@ -45,7 +46,10 @@ const grantees = [
 
 // Workflow administrators — teams, never tenant. adminGrant stamps the same stable digest the picker/remove round-trip uses.
 const administrators = {
-  'nightly-reconcile': [adminGrant([{ dimension: 'team', value: 'payments' }], 'team', 'Payments')],
+  'nightly-reconcile': [
+    adminGrant([{ dimension: 'team', value: 'payments' }], 'team', 'Payments'),
+    adminGrant([{ dimension: 'sys:sub', value: 'u-1042' }], 'person', 'Ada Lovelace'),
+  ],
   'onboard-customer': [
     adminGrant([{ dimension: 'team', value: 'growth' }], 'team', 'Growth'),
     adminGrant([{ dimension: 'team', value: 'platform' }], 'team', 'Platform'),

@@ -1045,6 +1045,27 @@ export class ArazzoControlPlaneClient {
     return this._request('GET', `/security/bindings/${encodeURIComponent(bindingId)}`, { signal: opts.signal });
   }
 
+  /**
+   * `getAccessGrants` — the Access Overview (`GET /access/grants`): one resolved grantee's aggregated access across the
+   * deployment. `grantee` is the resolved-grantee object the identity picker hands back
+   * (`{ kind, value, label, identity: [{dimension,value}], source, complete }`, `identity` in the resolved `sys:` form);
+   * it is encoded as a URL-safe base64 token of its UTF-8 JSON in the `grantee` query parameter. Requires `security:read`.
+   * @param {{ kind?: string, value?: string, label?: string, identity?: Array<{dimension: string, value: string}>, source?: string, complete?: boolean }} grantee
+   *   The resolved grantee to aggregate access for.
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ grantee: object, bindings: object[], administers: Array<{ baseWorkflowId: string }>, credentialUsage: Array<{ sourceName: string, environment: string }> }>}
+   *   An {@link AccessGrantsOverview}: the echoed `grantee`, the `bindings` it matches (each a {@link SecurityBindingSummary}),
+   *   the `administers` base workflows, and the `credentialUsage` (source, environment) pairs it may use.
+   */
+  async getAccessGrants(grantee, opts = {}) {
+    const json = JSON.stringify(grantee);
+    const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(json)));
+    const token = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const search = new URLSearchParams();
+    search.set('grantee', token);
+    return this._request('GET', `/access/grants${qs(search)}`, { signal: opts.signal });
+  }
+
   // ---- security:write ---------------------------------------------------------------------------
 
   /**
