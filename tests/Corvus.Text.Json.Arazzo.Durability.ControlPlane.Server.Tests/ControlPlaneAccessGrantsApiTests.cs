@@ -29,11 +29,12 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 [TestClass]
 public sealed class ControlPlaneAccessGrantsApiTests
 {
-    // A resolved person grantee whose sole identity grant is {sub, u-1042}. The default policy resolves that
-    // operator-facing grant to the internal identity sys:sub=u-1042 (the SecurityShell "sys:" prefix), which keys the
-    // administered-workflows reverse index and the credential usage-entitlement (IsUsableBy) match.
+    // A resolved person grantee whose identity is the internal sys: form the wire returns (design §16.5.4): sys:sub=u-1042.
+    // That sys: identity keys the administered-workflows reverse index and the credential IsUsableBy match directly; the
+    // binding match derives the operator-facing claim from it (sys:sub -> sub) to match a binding on claimType sub. (With
+    // the pre-revision handler, which compared the sys: dimension to the claim as-is, sys:sub != sub dropped the binding.)
     private const string GranteeJson =
-        """{"kind":"person","value":"u-1042","identity":[{"dimension":"sub","value":"u-1042"}],"source":"observed","complete":true}""";
+        """{"kind":"person","value":"u-1042","identity":[{"dimension":"sys:sub","value":"u-1042"}],"source":"observed","complete":true}""";
 
     [TestMethod]
     public async Task Get_access_grants_projects_matching_bindings_administered_workflows_and_usable_credentials()
