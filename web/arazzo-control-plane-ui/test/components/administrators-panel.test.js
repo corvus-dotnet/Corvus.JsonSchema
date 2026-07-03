@@ -38,7 +38,7 @@ describe('<arazzo-administrators-panel>', () => {
     el = panelWithMock({ 'base-workflow-id': 'nightly-reconcile', scopes: 'administrators:write' });
     mount(el);
     await nextEvent(el, 'loaded');
-    equal(rows(el).length, 2, 'Platform team + alice@ops seeded');
+    equal(rows(el).length, 3, 'Platform team + alice@ops + Ada seeded');
     // Drive the nested picker: type a query, pick the server-resolved grantee, then Add.
     const picker = el.shadowRoot.querySelector('arazzo-grantee-picker');
     const q = picker.shadowRoot.querySelector('.q');
@@ -50,7 +50,7 @@ describe('<arazzo-administrators-panel>', () => {
     const changed = nextEvent(el, 'administrators-changed');
     el.shadowRoot.querySelector('.addbtn').click();
     const e = await changed;
-    equal(e.detail.administrators.length, 3, 'the set grew');
+    equal(e.detail.administrators.length, 4, 'the set grew');
     ok(e.detail.administrators.some((a) => a.kind === 'team' && (a.identity || []).some((g) => g.dimension === 'team' && g.value === 'payments')), 'added the resolved team grantee');
   });
 
