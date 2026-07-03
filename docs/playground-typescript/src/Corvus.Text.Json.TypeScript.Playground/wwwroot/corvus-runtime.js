@@ -6800,6 +6800,184 @@ function recordChanges(value, recipe) {
   __diff(value, next, "", patches);
   return { next, patches };
 }
+var JsonPatchError = class extends Error {
+};
+function __ptrTokens(pointer) {
+  if (pointer === "") return [];
+  if (pointer.charCodeAt(0) !== 47) throw new JsonPatchError(`invalid JSON Pointer: ${JSON.stringify(pointer)}`);
+  return pointer.slice(1).split("/").map((t2) => t2.replace(/~1/g, "/").replace(/~0/g, "~"));
+}
+function __deepEqual(a2, b2) {
+  if (a2 === b2) return true;
+  if (typeof a2 !== "object" || typeof b2 !== "object" || a2 === null || b2 === null) return false;
+  const aa = Array.isArray(a2), ba = Array.isArray(b2);
+  if (aa !== ba) return false;
+  if (aa) {
+    const x3 = a2, y3 = b2;
+    if (x3.length !== y3.length) return false;
+    for (let i2 = 0; i2 < x3.length; i2++) {
+      if (!__deepEqual(x3[i2], y3[i2])) return false;
+    }
+    return true;
+  }
+  const x2 = a2, y2 = b2;
+  const xk = Object.keys(x2);
+  if (xk.length !== Object.keys(y2).length) return false;
+  for (const k2 of xk) {
+    if (!Object.prototype.hasOwnProperty.call(y2, k2) || !__deepEqual(x2[k2], y2[k2])) return false;
+  }
+  return true;
+}
+function __arrIndex(token, len, allowDash) {
+  if (token === "-") return allowDash ? len : -1;
+  if (token.length === 0 || token.length > 1 && token[0] === "0" || !/^[0-9]+$/.test(token)) return -1;
+  return Number(token);
+}
+function __ptrGet(doc, tokens) {
+  let cur = doc;
+  for (const t2 of tokens) {
+    if (Array.isArray(cur)) {
+      const i2 = __arrIndex(t2, cur.length, false);
+      if (i2 < 0 || i2 >= cur.length) throw new JsonPatchError(`path not found: ${t2}`);
+      cur = cur[i2];
+    } else if (cur !== null && typeof cur === "object" && Object.prototype.hasOwnProperty.call(cur, t2)) {
+      cur = cur[t2];
+    } else {
+      throw new JsonPatchError(`path not found: ${t2}`);
+    }
+  }
+  return cur;
+}
+function __ptrAdd(doc, tokens, value) {
+  if (tokens.length === 0) return value;
+  const last = tokens[tokens.length - 1];
+  const parent = __ptrGet(doc, tokens.slice(0, -1));
+  if (Array.isArray(parent)) {
+    const i2 = __arrIndex(last, parent.length, true);
+    if (i2 < 0 || i2 > parent.length) throw new JsonPatchError(`invalid array index for add: ${last}`);
+    parent.splice(i2, 0, value);
+  } else if (parent !== null && typeof parent === "object") {
+    parent[last] = value;
+  } else {
+    throw new JsonPatchError(`cannot add at ${last}: parent is not a container`);
+  }
+  return doc;
+}
+function __ptrRemove(doc, tokens) {
+  if (tokens.length === 0) throw new JsonPatchError("cannot remove the whole document");
+  const last = tokens[tokens.length - 1];
+  const parent = __ptrGet(doc, tokens.slice(0, -1));
+  if (Array.isArray(parent)) {
+    const i2 = __arrIndex(last, parent.length, false);
+    if (i2 < 0 || i2 >= parent.length) throw new JsonPatchError(`array index out of range for remove: ${last}`);
+    parent.splice(i2, 1);
+  } else if (parent !== null && typeof parent === "object" && Object.prototype.hasOwnProperty.call(parent, last)) {
+    delete parent[last];
+  } else {
+    throw new JsonPatchError(`path not found for remove: ${last}`);
+  }
+  return doc;
+}
+function __ptrReplace(doc, tokens, value) {
+  if (tokens.length === 0) return value;
+  const last = tokens[tokens.length - 1];
+  const parent = __ptrGet(doc, tokens.slice(0, -1));
+  if (Array.isArray(parent)) {
+    const i2 = __arrIndex(last, parent.length, false);
+    if (i2 < 0 || i2 >= parent.length) throw new JsonPatchError(`array index out of range for replace: ${last}`);
+    parent[i2] = value;
+  } else if (parent !== null && typeof parent === "object" && Object.prototype.hasOwnProperty.call(parent, last)) {
+    parent[last] = value;
+  } else {
+    throw new JsonPatchError(`path not found for replace: ${last}`);
+  }
+  return doc;
+}
+function applyPatch(document, patch) {
+  let doc = structuredClone(document);
+  for (const op of patch) {
+    const raw = op;
+    if (typeof raw.path !== "string") {
+      throw new JsonPatchError(`operation '${raw.op}' requires a "path" member`);
+    }
+    if ((raw.op === "add" || raw.op === "replace" || raw.op === "test") && !("value" in raw)) {
+      throw new JsonPatchError(`operation '${raw.op}' requires a "value" member`);
+    }
+    if ((raw.op === "move" || raw.op === "copy") && typeof raw.from !== "string") {
+      throw new JsonPatchError(`operation '${raw.op}' requires a "from" member`);
+    }
+    const path = __ptrTokens(op.path);
+    switch (op.op) {
+      case "add":
+        doc = __ptrAdd(doc, path, structuredClone(op.value));
+        break;
+      case "remove":
+        doc = __ptrRemove(doc, path);
+        break;
+      case "replace":
+        doc = __ptrReplace(doc, path, structuredClone(op.value));
+        break;
+      case "test":
+        if (!__deepEqual(__ptrGet(doc, path), op.value)) throw new JsonPatchError(`test failed at ${op.path}`);
+        break;
+      case "move": {
+        const from = __ptrTokens(op.from);
+        if (path.length > from.length && from.every((t2, i2) => t2 === path[i2])) throw new JsonPatchError("cannot move a location into one of its children");
+        const val = __ptrGet(doc, from);
+        doc = __ptrRemove(doc, from);
+        doc = __ptrAdd(doc, path, val);
+        break;
+      }
+      case "copy":
+        doc = __ptrAdd(doc, path, structuredClone(__ptrGet(doc, __ptrTokens(op.from))));
+        break;
+      default:
+        throw new JsonPatchError(`unknown op: ${JSON.stringify(op.op)}`);
+    }
+  }
+  return doc;
+}
+function createPatch(source, target) {
+  const out = [];
+  __diff(source, target, "", out);
+  return out;
+}
+function applyMergePatch(target, patch) {
+  if (patch === null || typeof patch !== "object" || Array.isArray(patch)) {
+    return structuredClone(patch);
+  }
+  const base = target !== null && typeof target === "object" && !Array.isArray(target) ? { ...target } : {};
+  for (const [k2, v2] of Object.entries(patch)) {
+    if (v2 === null) {
+      delete base[k2];
+    } else {
+      base[k2] = applyMergePatch(base[k2], v2);
+    }
+  }
+  return base;
+}
+function createMergePatch(source, target) {
+  const sObj = source !== null && typeof source === "object" && !Array.isArray(source);
+  const tObj = target !== null && typeof target === "object" && !Array.isArray(target);
+  if (!sObj || !tObj) {
+    return structuredClone(target);
+  }
+  const s2 = source, t2 = target;
+  const patch = {};
+  for (const k2 of Object.keys(s2)) {
+    if (!(k2 in t2)) {
+      patch[k2] = null;
+    }
+  }
+  for (const k2 of Object.keys(t2)) {
+    if (!(k2 in s2)) {
+      patch[k2] = structuredClone(t2[k2]);
+    } else if (!__deepEqual(s2[k2], t2[k2])) {
+      patch[k2] = createMergePatch(s2[k2], t2[k2]);
+    }
+  }
+  return patch;
+}
 function __groupHead(ops) {
   const g2 = /* @__PURE__ */ new Map();
   for (const op of ops) {
@@ -6897,6 +7075,9 @@ function __lowerArray(bytes, ops) {
 }
 function __decodeValue(bytes, vs, ve2) {
   return JSON.parse(new TextDecoder().decode(bytes.subarray(vs, ve2)));
+}
+function decodeAndParse(bytes) {
+  return JSON.parse(new TextDecoder().decode(bytes));
 }
 function __spanKind(bytes, vs) {
   const c2 = bytes[vs];
@@ -7539,6 +7720,7 @@ export {
   COMMA,
   Ev,
   FormatError,
+  JsonPatchError,
   LBRACE,
   LBRACK,
   NOEV,
@@ -7602,9 +7784,14 @@ export {
   __validAuthority,
   __validUriPart,
   applyEditsBytes,
+  applyMergePatch,
+  applyPatch,
   canonicalJson,
   canonicalize,
   concatBytes,
+  createMergePatch,
+  createPatch,
+  decodeAndParse,
   eqName,
   exactNumber,
   findMember,

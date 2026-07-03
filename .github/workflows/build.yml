@@ -269,6 +269,19 @@ jobs:
         working-directory: prototypes/ts-bench
         timeout-minutes: 5
 
+      # Each TypeScript playground vendors a bundled corvus-runtime.js (and the OpenAPI one a
+      # corvus-client-runtime.js) built from packages/corvus-json-*-runtime by its regenerate-vendored-assets.ps1.
+      # That regeneration is manual and per-playground, so a runtime change (e.g. new exports) can leave a
+      # committed bundle stale and silently break the deployed playground (its generated code imports symbols the
+      # stale bundle lacks). Re-bundle from source here (esbuild is installed above, same one the scripts use) and
+      # fail if any committed copy drifted — turning silent staleness into a build failure.
+      - name: Playground vendored runtime bundles are current
+        shell: pwsh
+        run: |
+          ./docs/playground-typescript/regenerate-vendored-assets.ps1 -Check
+          ./docs/playground-openapi-typescript/regenerate-vendored-assets.ps1 -Check
+        timeout-minutes: 3
+
       # Full JSON-Schema-Test-Suite: codegen every test-group (in-process, public codegen libs),
       # esbuild-transpile, validate, and assert the pass/errored thresholds. Exits non-zero on any
       # non-allow-listed failure (KNOWN_FAILURES gates exactly one pre-existing engine gap, always printed).

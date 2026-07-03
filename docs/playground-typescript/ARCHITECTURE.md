@@ -51,7 +51,7 @@ generated.ts ──────────────┘
   - `Components/TypeMapPanel.razor` — the type-surface tree.
   - `wwwroot/js/playground-interop.js` — theme helpers + the esbuild-wasm transpile-and-run bridge.
 
-## Vendored browser assets (`regenerate-vendored-assets.sh`)
+## Vendored browser assets (`regenerate-vendored-assets.ps1`)
 
 - `wwwroot/corvus-runtime.js` — the shared `@endjin/corvus-json-runtime` (with `lossless-json`, the Temporal
   polyfill and `tr46` inlined) bundled into one self-contained ESM. The in-browser-transpiled module imports
@@ -75,7 +75,7 @@ primitive:
 
 ```powershell
 # (only after changing the runtime or esbuild-wasm)
-bash docs/playground-typescript/regenerate-vendored-assets.sh
+pwsh docs/playground-typescript/regenerate-vendored-assets.ps1
 
 $env:ASPNETCORE_URLS = "http://127.0.0.1:5282"
 dotnet run --project docs/playground-typescript/src/Corvus.Text.Json.TypeScript.Playground/Corvus.Text.Json.TypeScript.Playground.csproj
