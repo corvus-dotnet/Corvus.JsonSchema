@@ -137,6 +137,58 @@ Which identity providers you let assert scopes is therefore a deployment trust d
 mirror image of the reach side, which goes to the trouble of issuer-qualifying identity (`sys:iss`)
 precisely because a bare `sub` cannot be trusted across multiple semi-trusted providers.
 
+## Authentication schemes and machine identities
+
+Everything above assumes an authenticated caller. Authentication is pluggable, and the access model
+only ever needs the resulting principal to carry two things: a `scope` claim (capability) and identity
+claims that resolve to a `sys:` identity (reach). Each operation declares one required scope, shared
+across all of the authentication schemes. The schemes differ only in how they produce those two things.
+
+The dividing line is whether the credential carries its own scopes.
+
+**Credentials that carry scopes: OAuth2 and OpenID Connect tokens, including client-credentials.** The
+token is the claims. It carries the `scope` claim and the identity claims directly. A **service
+identity** is exactly this. A machine authenticates through the client-credentials flow, receives a
+bearer token with its granted scopes and its client identity (`sub` / `client_id`), and the control
+plane reads it identically to an interactive user's token. Its `sys:` identity for reach is resolved
+from that client identity through the same directory and shell path as any other principal.
+
+**Credentials that carry no scopes: client certificates, and by extension API keys.** A certificate
+proves identity but has no OAuth scope claim. The deployment maps the credential to scopes and identity
+out of band, and then the same policies and reach resolution apply.
+
+- **Certificate auth (mTLS).** Mutual TLS carries no scopes, so the host maps the certificate identity
+  to a tier out of band. An authentication handler validates the certificate, then a claims
+  transformation attaches the `scope` claim and the identity from the certificate's subject or
+  thumbprint.
+- **API keys.** A key is a bearer credential with no inherent scopes. The deployment validates the key
+  and maps it to its `{ scopes, identity }` from a key store or config, producing the same claims the
+  policies read.
+
+Some credentials arrive with scopes and some do not. For the ones that do not, the deployment supplies
+the mapping, exactly as it maps roles to scopes for an IdP that issues roles rather than scopes.
+
+### Inbound authentication is not the source credentials (§13)
+
+The `apiKey`, `oauth2ClientCredentials`, `basic`, `bearer` and `mtls` kinds in the credential dialog
+are a different thing that happens to share the vocabulary. They are how a workflow **run**
+authenticates outbound to the OpenAPI and AsyncAPI services it calls, not how a caller authenticates
+inbound to the control plane.
+
+| | Inbound (caller to control plane) | Outbound (run to its sources, §13) |
+|---|---|---|
+| What it is | How you authenticate to the management API. | How a run authenticates to the services it calls. |
+| Produces | A principal, so a `scope` claim and a `sys:` identity. | A secret the run presents downstream. |
+| Gated by | The per-scope policies and row reach. | `usageGrantee` / `IsUsableBy` (which run identities may use the credential). |
+
+### mTLS is the odd one in both directions
+
+A certificate is a connection-level identity that cannot carry fine-grained authorization, so the
+deployment supplies that mapping on both sides. Inbound, an mTLS caller carries no scopes, so the host
+maps the certificate to a tier. Outbound, an mTLS source credential authenticates the deployment to the
+source at the TLS handshake rather than an individual run, so it is forced Shared and cannot be
+usage-scoped.
+
 ## Where reach is authored
 
 Reach (grants and rules) is authored in the security UI. Grants bind a claim to per-verb reach; rules
