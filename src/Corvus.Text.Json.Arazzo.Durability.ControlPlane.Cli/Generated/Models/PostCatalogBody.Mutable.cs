@@ -393,7 +393,7 @@ public readonly partial struct PostCatalogBody
         /// Set the <c>owner</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetOwner(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogOwner.Source value)
+        public void SetOwner(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogOwner.Source value)
         {
             CheckValidInstance();
 
@@ -458,7 +458,7 @@ public readonly partial struct PostCatalogBody
         /// Set the <c>package</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPackage(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBinary.Source value)
+        public void SetPackage(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBinary.Source value)
         {
             CheckValidInstance();
 
@@ -489,7 +489,7 @@ public readonly partial struct PostCatalogBody
         /// Set the <c>securityTags</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSecurityTags(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray.Source value)
+        public void SetSecurityTags(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray.Source value)
         {
             CheckValidInstance();
 
@@ -570,7 +570,7 @@ public readonly partial struct PostCatalogBody
         /// Set the <c>tags</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTags(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.JsonStringArray.Source value)
+        public void SetTags(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -752,7 +752,7 @@ public readonly partial struct PostCatalogBody
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -775,7 +775,7 @@ public readonly partial struct PostCatalogBody
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -822,7 +822,7 @@ public readonly partial struct PostCatalogBody
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -995,7 +995,7 @@ public readonly partial struct PostCatalogBody
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogOwner.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBinary.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.JsonStringArray.Source arg4)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogOwner.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBinary.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.JsonStringArray.Source arg4)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1165,7 +1165,7 @@ public readonly partial struct PostCatalogBody
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogOwner.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBinary.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray.Source<TContext> arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.JsonStringArray.Source<TContext> arg4)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogOwner.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBinary.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.JsonStringArray.Source<TContext> arg4)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1483,7 +1483,7 @@ public readonly partial struct PostCatalogBody
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogOwner.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBinary.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.JsonStringArray.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogOwner.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBinary.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.JsonStringArray.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4);
@@ -1500,7 +1500,7 @@ public readonly partial struct PostCatalogBody
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogOwner.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBinary.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray.Source<TContext> arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.JsonStringArray.Source<TContext> arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogOwner.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBinary.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray.Source<TContext> arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.JsonStringArray.Source<TContext> arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1548,7 +1548,7 @@ public readonly partial struct PostCatalogBody
     /// <param name="securityTags">The value of the <c>"securityTags"</c> property.</param>
     /// <param name="tags">The value of the <c>"tags"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogOwner.Source owner, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBinary.Source package, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray.Source securityTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.JsonStringArray.Source tags = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogOwner.Source owner, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBinary.Source package, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray.Source securityTags = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.JsonStringArray.Source tags = default)
     {
         return new Source(owner, package, securityTags, tags);
     }
@@ -1563,7 +1563,7 @@ public readonly partial struct PostCatalogBody
     /// <param name="securityTags">The value of the <c>"securityTags"</c> property.</param>
     /// <param name="tags">The value of the <c>"tags"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogOwner.Source<TContext> owner, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBinary.Source package, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray.Source<TContext> securityTags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.JsonStringArray.Source<TContext> tags = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CatalogOwner.Source<TContext> owner, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBinary.Source package, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.CatalogSecurityTagArray.Source<TContext> securityTags = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.PostCatalogBody.JsonStringArray.Source<TContext> tags = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

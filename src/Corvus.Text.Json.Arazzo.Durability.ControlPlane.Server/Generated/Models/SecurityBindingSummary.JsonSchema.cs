@@ -104,7 +104,7 @@ public readonly partial struct SecurityBindingSummary
         private static readonly JsonSchemaPathProvider ReadSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/read/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider WriteSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/write/$ref"u8, buffer, out written);
 
-        private static void MatchClaimType(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchClaimType(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
@@ -126,7 +126,7 @@ public readonly partial struct SecurityBindingSummary
             requiredBitBuffer[RequiredOffsetForClaimType] |= RequiredBitForClaimType;
         }
 
-        private static void MatchClaimValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchClaimValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
@@ -141,7 +141,7 @@ public readonly partial struct SecurityBindingSummary
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
         }
 
-        private static void MatchCreatedAt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchCreatedAt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
@@ -163,7 +163,7 @@ public readonly partial struct SecurityBindingSummary
             requiredBitBuffer[RequiredOffsetForCreatedAt] |= RequiredBitForCreatedAt;
         }
 
-        private static void MatchCreatedBy(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchCreatedBy(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext3 =
@@ -185,7 +185,7 @@ public readonly partial struct SecurityBindingSummary
             requiredBitBuffer[RequiredOffsetForCreatedBy] |= RequiredBitForCreatedBy;
         }
 
-        private static void MatchDescription(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchDescription(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext4 =
@@ -200,7 +200,7 @@ public readonly partial struct SecurityBindingSummary
             context.CommitChildContext(childContext4.IsMatch, ref childContext4);
         }
 
-        private static void MatchEtag(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchEtag(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext5 =
@@ -222,7 +222,7 @@ public readonly partial struct SecurityBindingSummary
             requiredBitBuffer[RequiredOffsetForEtag] |= RequiredBitForEtag;
         }
 
-        private static void MatchId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext6 =
@@ -244,7 +244,7 @@ public readonly partial struct SecurityBindingSummary
             requiredBitBuffer[RequiredOffsetForId] |= RequiredBitForId;
         }
 
-        private static void MatchLastUpdatedAt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchLastUpdatedAt(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext7 =
@@ -259,7 +259,7 @@ public readonly partial struct SecurityBindingSummary
             context.CommitChildContext(childContext7.IsMatch, ref childContext7);
         }
 
-        private static void MatchLastUpdatedBy(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchLastUpdatedBy(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext8 =
@@ -274,7 +274,7 @@ public readonly partial struct SecurityBindingSummary
             context.CommitChildContext(childContext8.IsMatch, ref childContext8);
         }
 
-        private static void MatchOrder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchOrder(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext9 =
@@ -296,7 +296,7 @@ public readonly partial struct SecurityBindingSummary
             requiredBitBuffer[RequiredOffsetForOrder] |= RequiredBitForOrder;
         }
 
-        private static void MatchPurge(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchPurge(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext10 =
@@ -318,7 +318,7 @@ public readonly partial struct SecurityBindingSummary
             requiredBitBuffer[RequiredOffsetForPurge] |= RequiredBitForPurge;
         }
 
-        private static void MatchRead(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchRead(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext11 =
@@ -340,7 +340,7 @@ public readonly partial struct SecurityBindingSummary
             requiredBitBuffer[RequiredOffsetForRead] |= RequiredBitForRead;
         }
 
-        private static void MatchWrite(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchWrite(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext12 =
@@ -362,9 +362,9 @@ public readonly partial struct SecurityBindingSummary
             requiredBitBuffer[RequiredOffsetForWrite] |= RequiredBitForWrite;
         }
 
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1> MatchersBuilder()
+        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
-            return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1>([
+            return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator>([
                 (static () => JsonPropertyNames.ClaimTypeUtf8, MatchClaimType),
                 (static () => JsonPropertyNames.ClaimValueUtf8, MatchClaimValue),
                 (static () => JsonPropertyNames.CreatedAtUtf8, MatchCreatedAt),
@@ -381,13 +381,13 @@ public readonly partial struct SecurityBindingSummary
             ]);
         }
 
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1> Matchers { get; } = MatchersBuilder();
+        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
 
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
         [NotNullWhen(true)]
 #endif
-        out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1? matcher)
+        out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
             return Matchers.TryGetNamedMatcher(span, out matcher);
         }
@@ -446,9 +446,9 @@ public readonly partial struct SecurityBindingSummary
                     int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
                     using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1? validator))
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {

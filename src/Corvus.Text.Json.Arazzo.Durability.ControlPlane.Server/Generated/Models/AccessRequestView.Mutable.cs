@@ -692,7 +692,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>baseWorkflowId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetBaseWorkflowId(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetBaseWorkflowId(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -723,7 +723,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>createdAt</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCreatedAt(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
+        public void SetCreatedAt(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -754,7 +754,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>createdBy</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCreatedBy(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetCreatedBy(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -785,7 +785,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>decidedAt</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDecidedAt(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
+        public void SetDecidedAt(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -830,7 +830,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>decidedBy</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDecidedBy(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetDecidedBy(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -875,7 +875,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>decisionReason</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDecisionReason(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetDecisionReason(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -920,7 +920,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>etag</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEtag(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetEtag(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -951,7 +951,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>grantedBindingId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetGrantedBindingId(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetGrantedBindingId(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -996,7 +996,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>grantedUntil</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetGrantedUntil(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
+        public void SetGrantedUntil(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -1041,7 +1041,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetId(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1072,7 +1072,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>reason</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetReason(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetReason(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1117,7 +1117,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>requestedDurationSeconds</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRequestedDurationSeconds(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt64.Source value)
+        public void SetRequestedDurationSeconds(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt64.Source value)
         {
             CheckValidInstance();
 
@@ -1162,7 +1162,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>requestedScopes</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRequestedScopes(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.JsonStringArray.Source value)
+        public void SetRequestedScopes(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -1227,7 +1227,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>requesterLabel</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetRequesterLabel(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetRequesterLabel(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1272,7 +1272,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>status</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStatus(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity.Source value)
+        public void SetStatus(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity.Source value)
         {
             CheckValidInstance();
 
@@ -1303,7 +1303,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>subjectClaimType</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSubjectClaimType(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetSubjectClaimType(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1334,7 +1334,7 @@ public readonly partial struct AccessRequestView
         /// Set the <c>subjectClaimValue</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSubjectClaimValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetSubjectClaimValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1466,7 +1466,7 @@ public readonly partial struct AccessRequestView
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -1489,7 +1489,7 @@ public readonly partial struct AccessRequestView
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1536,7 +1536,7 @@ public readonly partial struct AccessRequestView
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1722,7 +1722,7 @@ public readonly partial struct AccessRequestView
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.JsonStringArray.Source arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity.Source arg7, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg9, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg10, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg14, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg15, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt64.Source arg16, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg17)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.JsonStringArray.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg14, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg15, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt64.Source arg16, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg17)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1918,7 +1918,7 @@ public readonly partial struct AccessRequestView
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.JsonStringArray.Source<TContext> arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity.Source arg7, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg9, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg10, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg14, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg15, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt64.Source arg16, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg17)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.JsonStringArray.Source<TContext> arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg14, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg15, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt64.Source arg16, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg17)
         {
             _context = context;
             _createArg1 = arg1;
@@ -2340,7 +2340,7 @@ public readonly partial struct AccessRequestView
         /// <param name="arg16">The value of the property.</param>
         /// <param name="arg17">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.JsonStringArray.Source arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity.Source arg7, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg9, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg10, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg14, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg15, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt64.Source arg16, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg17, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.JsonStringArray.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg14, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg15, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt64.Source arg16, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg17, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17);
@@ -2370,7 +2370,7 @@ public readonly partial struct AccessRequestView
         /// <param name="arg16">The value of the property.</param>
         /// <param name="arg17">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.JsonStringArray.Source<TContext> arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity.Source arg7, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg9, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg10, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg14, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg15, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt64.Source arg16, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg17, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.JsonStringArray.Source<TContext> arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg12, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg13, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg14, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg15, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt64.Source arg16, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg17, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -2431,7 +2431,7 @@ public readonly partial struct AccessRequestView
     /// <param name="requestedDurationSeconds">The value of the <c>"requestedDurationSeconds"</c> property.</param>
     /// <param name="requesterLabel">The value of the <c>"requesterLabel"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.JsonStringArray.Source requestedScopes, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source subjectClaimType, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source subjectClaimValue, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source decidedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decidedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decisionReason = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source grantedBindingId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source grantedUntil = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt64.Source requestedDurationSeconds = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source requesterLabel = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.JsonStringArray.Source requestedScopes, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source subjectClaimType, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source subjectClaimValue, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source decidedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decidedBy = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decisionReason = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source grantedBindingId = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source grantedUntil = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt64.Source requestedDurationSeconds = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source requesterLabel = default)
     {
         return new Source(baseWorkflowId, createdAt, createdBy, etag, id, requestedScopes, status, subjectClaimType, subjectClaimValue, decidedAt, decidedBy, decisionReason, grantedBindingId, grantedUntil, reason, requestedDurationSeconds, requesterLabel);
     }
@@ -2459,7 +2459,7 @@ public readonly partial struct AccessRequestView
     /// <param name="requestedDurationSeconds">The value of the <c>"requestedDurationSeconds"</c> property.</param>
     /// <param name="requesterLabel">The value of the <c>"requesterLabel"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.JsonStringArray.Source<TContext> requestedScopes, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source subjectClaimType, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source subjectClaimValue, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source decidedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decidedBy = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decisionReason = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source grantedBindingId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source grantedUntil = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt64.Source requestedDurationSeconds = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source requesterLabel = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source baseWorkflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source createdBy, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source etag, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.JsonStringArray.Source<TContext> requestedScopes, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestView.StatusEntity.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source subjectClaimType, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source subjectClaimValue, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source decidedAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decidedBy = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source decisionReason = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source grantedBindingId = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source grantedUntil = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source reason = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonInt64.Source requestedDurationSeconds = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source requesterLabel = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

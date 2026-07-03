@@ -356,7 +356,7 @@ public readonly partial struct ValidationResult
         /// Set the <c>errors</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetErrors(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.ValidationErrorArray.Source value)
+        public void SetErrors(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.ValidationErrorArray.Source value)
         {
             CheckValidInstance();
 
@@ -421,7 +421,7 @@ public readonly partial struct ValidationResult
         /// Set the <c>valid</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetValid(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source value)
+        public void SetValid(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source value)
         {
             CheckValidInstance();
 
@@ -553,7 +553,7 @@ public readonly partial struct ValidationResult
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -576,7 +576,7 @@ public readonly partial struct ValidationResult
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -623,7 +623,7 @@ public readonly partial struct ValidationResult
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -794,7 +794,7 @@ public readonly partial struct ValidationResult
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.ValidationErrorArray.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg2)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.ValidationErrorArray.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg2)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -960,7 +960,7 @@ public readonly partial struct ValidationResult
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.ValidationErrorArray.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg2)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.ValidationErrorArray.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg2)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1260,7 +1260,7 @@ public readonly partial struct ValidationResult
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.ValidationErrorArray.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg2, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.ValidationErrorArray.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2);
@@ -1275,7 +1275,7 @@ public readonly partial struct ValidationResult
         /// <param name="arg1">The value of the property.</param>
         /// <param name="arg2">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.ValidationErrorArray.Source<TContext> arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg2, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.ValidationErrorArray.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1321,7 +1321,7 @@ public readonly partial struct ValidationResult
     /// <param name="errors">The value of the <c>"errors"</c> property.</param>
     /// <param name="valid">The value of the <c>"valid"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.ValidationErrorArray.Source errors, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source valid)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.ValidationErrorArray.Source errors, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source valid)
     {
         return new Source(errors, valid);
     }
@@ -1334,7 +1334,7 @@ public readonly partial struct ValidationResult
     /// <param name="errors">The value of the <c>"errors"</c> property.</param>
     /// <param name="valid">The value of the <c>"valid"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.ValidationErrorArray.Source<TContext> errors, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source valid)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationResult.ValidationErrorArray.Source<TContext> errors, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source valid)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

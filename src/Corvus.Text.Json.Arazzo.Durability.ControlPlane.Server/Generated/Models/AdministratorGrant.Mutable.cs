@@ -398,7 +398,7 @@ public readonly partial struct AdministratorGrant
         /// Set the <c>digest</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDigest(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetDigest(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -429,7 +429,7 @@ public readonly partial struct AdministratorGrant
         /// Set the <c>identity</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetIdentity(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.AdministratorIdentityArray.Source value)
+        public void SetIdentity(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.AdministratorIdentityArray.Source value)
         {
             CheckValidInstance();
 
@@ -494,7 +494,7 @@ public readonly partial struct AdministratorGrant
         /// Set the <c>kind</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetKind(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source value)
+        public void SetKind(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source value)
         {
             CheckValidInstance();
 
@@ -539,7 +539,7 @@ public readonly partial struct AdministratorGrant
         /// Set the <c>label</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLabel(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetLabel(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -685,7 +685,7 @@ public readonly partial struct AdministratorGrant
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -708,7 +708,7 @@ public readonly partial struct AdministratorGrant
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -755,7 +755,7 @@ public readonly partial struct AdministratorGrant
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -928,7 +928,7 @@ public readonly partial struct AdministratorGrant
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.AdministratorIdentityArray.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.AdministratorIdentityArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1098,7 +1098,7 @@ public readonly partial struct AdministratorGrant
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.AdministratorIdentityArray.Source<TContext> arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.AdministratorIdentityArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1416,7 +1416,7 @@ public readonly partial struct AdministratorGrant
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.AdministratorIdentityArray.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.AdministratorIdentityArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4);
@@ -1433,7 +1433,7 @@ public readonly partial struct AdministratorGrant
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.AdministratorIdentityArray.Source<TContext> arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.AdministratorIdentityArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1481,7 +1481,7 @@ public readonly partial struct AdministratorGrant
     /// <param name="kind">The value of the <c>"kind"</c> property.</param>
     /// <param name="label">The value of the <c>"label"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source digest, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.AdministratorIdentityArray.Source identity, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source kind = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source label = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source digest, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.AdministratorIdentityArray.Source identity, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source kind = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source label = default)
     {
         return new Source(digest, identity, kind, label);
     }
@@ -1496,7 +1496,7 @@ public readonly partial struct AdministratorGrant
     /// <param name="kind">The value of the <c>"kind"</c> property.</param>
     /// <param name="label">The value of the <c>"label"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source digest, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.AdministratorIdentityArray.Source<TContext> identity, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source kind = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source label = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source digest, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorGrant.AdministratorIdentityArray.Source<TContext> identity, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source kind = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source label = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

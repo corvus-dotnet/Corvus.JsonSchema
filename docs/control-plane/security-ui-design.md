@@ -9,7 +9,7 @@ picker and the §15 admin = resolved-identity work already shipped.
 
 ---
 
-## 0. Current state (living — last verified 2026-07-02 against branch `worktree-arazzo-workflow-engine-plan`)
+## 0. Current state (living — last verified 2026-07-03 against branch `worktree-arazzo-workflow-engine-plan`)
 
 This section is the ground truth; keep it current as slices land (memory: *keep-control-plane-living-docs-current*).
 The rest of this doc is the original design narrative and lags the code in places — this section reconciles it.
@@ -30,8 +30,17 @@ The rest of this doc is the original design narrative and lags the code in place
   classification-ordering templates (the latter gated on `/security/orderings`), CRUD, reach-scoped, 13 tests.
 - **Slice 5 — Bindings UI (`grants-panel`) — DONE**, including the server-side **self-elevation guard** (create +
   update) with a dedicated test; person elevation routed to the request flow.
-- **Slice 6 — Access overview (`GET /access/grants?grantee=…` server aggregation + Overview screen) — NOT STARTED.**
-  No OpenAPI path, server handler, durability aggregation, UI, or mock. This is the one large remaining build.
+- **Slice 6 — Access overview (`GET /access/grants?grantee=…` server aggregation + Overview screen) — SERVER SIDE DONE;
+  UI + mock remaining.** The OpenAPI path + schemas (`AccessGrantsOverview` = grantee echo + matching bindings +
+  administered workflows + usable credentials), regen (server + CLI), and the bytes-native handler
+  (`HandleGetAccessGrantsAsync`: opaque base64url grantee token → owned `ResolvedGrantee` doc echoed whole; bindings
+  scanned + claim-matched **string-free** via `ValueEquals`/`GetUtf8String().Span`; `ListAdministeredWorkflowsAsync`
+  reverse lookup; credentials scanned + `IsUsableBy`; closure-free context-threaded `From()` projection with
+  transfer-matched-pages ownership) are **built + green + tested** (2 server tests: aggregation + malformed-token 400).
+  §803 proof landed: the fair projection benchmark shows the bytes-native projection at **256 B vs the naive 1376 B
+  (0.19×)**; the full end-to-end handler is 4601 B (token decode + 3 store scans + serialize). **Remaining:** the
+  `<arazzo-access-overview>` web component + its mock `/access/grants` + web client method + inline revoke, then the
+  slice-7 slotting. The client encodes the token as base64url of a `ResolvedGrantee` JSON (from `GET /identity/grantees`).
 - **Slice 7 — Access-area reorg — IN PROGRESS** (decision taken). Today an **Access** tab holds Requests and a
   **Permissions** tab holds Bindings + Reach (split codified in `smoke.spec.js`). Remaining: fold
   Overview | Bindings | Reach | Requests under a single Access sub-nav, move Bindings+Reach out of Permissions,
@@ -328,10 +337,11 @@ MemoryDiagnoser benchmark + container conformance gates. Web-only slices still g
    group/role policy bindings (picker for well-known kinds + raw-claim fallback + the multi-IdP caveat banner,
    §6.5); per-person elevation routed to the request flow, not authored here. Web + mock; the server adds a
    **self-elevation guard** (defense in depth, built + tested — create and update). Server/OpenAPI already expose the binding ops.
-6. **[NOT STARTED — the one large remaining build] Access overview** (server-side aggregation, per your call). New reach-scoped endpoint
-   `GET /access/grants?grantee=…` that aggregates a grantee's bindings + administered workflows + credential
-   usage server-side (client stays thin) → full ground→ownership-ledger→MemoryDiagnoser→container-conformance
-   per the §803 protocol. Web surface = the Overview screen + inline revoke (delete the underlying binding/grant).
+6. **[SERVER SIDE DONE — UI + mock remaining] Access overview** (server-side aggregation, per your call). The reach-scoped endpoint
+   `GET /access/grants?grantee=…` aggregates a grantee's bindings + administered workflows + credential
+   usage server-side (client stays thin). Handler + 2 tests built + green; §803 ledger + MemoryDiagnoser proof landed
+   (bytes-native projection 256 B vs naive 1376 B; end-to-end 4601 B). Container-conformance and the Web surface (the
+   Overview screen + inline revoke — delete the underlying binding/grant) remain.
 7. **[IN PROGRESS] Access-area reorg.** Fold Overview/Bindings/Reach/Requests under the Access tab nav; cross-link
    per-workflow Administrators from Catalog. *Started (decision taken): today an **Access** tab holds Requests and a
    **Permissions** tab holds Bindings + Reach (split codified in `smoke.spec.js`). Remaining: one Access sub-nav

@@ -386,7 +386,7 @@ public readonly partial struct CredentialBindingCreate
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference.Source value)
+            public void InsertItem(int itemIndex, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference.Source value)
             {
                 CheckValidInstance();
 
@@ -412,7 +412,7 @@ public readonly partial struct CredentialBindingCreate
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference.Source value)
+            public void AddItem(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecretReference.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }

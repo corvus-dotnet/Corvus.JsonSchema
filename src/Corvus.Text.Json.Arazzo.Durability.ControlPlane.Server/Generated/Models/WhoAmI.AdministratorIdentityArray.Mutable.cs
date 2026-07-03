@@ -381,7 +381,7 @@ public readonly partial struct WhoAmI
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Source value)
+            public void InsertItem(int itemIndex, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Source value)
             {
                 CheckValidInstance();
 
@@ -407,7 +407,7 @@ public readonly partial struct WhoAmI
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Source value)
+            public void AddItem(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }

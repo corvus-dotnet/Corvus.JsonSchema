@@ -381,7 +381,7 @@ public readonly partial struct AvailabilityRequestList
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.Source value)
+            public void InsertItem(int itemIndex, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.Source value)
             {
                 CheckValidInstance();
 
@@ -407,7 +407,7 @@ public readonly partial struct AvailabilityRequestList
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.Source value)
+            public void AddItem(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestView.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }

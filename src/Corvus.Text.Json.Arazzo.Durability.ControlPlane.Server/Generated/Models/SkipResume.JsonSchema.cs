@@ -44,7 +44,7 @@ public readonly partial struct SkipResume
         private static readonly JsonSchemaPathProvider SkipOutputsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/skipOutputs"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider TargetCursorSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/targetCursor"u8, buffer, out written);
 
-        private static void MatchMode(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchMode(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
@@ -66,7 +66,7 @@ public readonly partial struct SkipResume
             requiredBitBuffer[RequiredOffsetForMode] |= RequiredBitForMode;
         }
 
-        private static void MatchSkipOutputs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSkipOutputs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
@@ -81,7 +81,7 @@ public readonly partial struct SkipResume
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
         }
 
-        private static void MatchTargetCursor(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchTargetCursor(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
@@ -96,22 +96,22 @@ public readonly partial struct SkipResume
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1> MatchersBuilder()
+        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
-            return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1>([
+            return new PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator>([
                 (static () => JsonPropertyNames.ModeUtf8, MatchMode),
                 (static () => JsonPropertyNames.SkipOutputsUtf8, MatchSkipOutputs),
                 (static () => JsonPropertyNames.TargetCursorUtf8, MatchTargetCursor),
             ]);
         }
 
-        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1> Matchers { get; } = MatchersBuilder();
+        private static PropertySchemaMatchers<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
 
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
         [NotNullWhen(true)]
 #endif
-        out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1? matcher)
+        out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
             return Matchers.TryGetNamedMatcher(span, out matcher);
         }
@@ -170,9 +170,9 @@ public readonly partial struct SkipResume
                     int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
                     using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator1? validator))
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {

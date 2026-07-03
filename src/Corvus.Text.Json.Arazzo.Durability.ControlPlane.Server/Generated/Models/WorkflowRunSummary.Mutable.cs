@@ -548,7 +548,7 @@ public readonly partial struct WorkflowRunSummary
         /// Set the <c>awaitingChannel</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAwaitingChannel(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetAwaitingChannel(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -593,7 +593,7 @@ public readonly partial struct WorkflowRunSummary
         /// Set the <c>awaitingCorrelationId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAwaitingCorrelationId(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetAwaitingCorrelationId(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -638,7 +638,7 @@ public readonly partial struct WorkflowRunSummary
         /// Set the <c>correlationId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCorrelationId(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetCorrelationId(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -683,7 +683,7 @@ public readonly partial struct WorkflowRunSummary
         /// Set the <c>createdAt</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCreatedAt(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
+        public void SetCreatedAt(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -714,7 +714,7 @@ public readonly partial struct WorkflowRunSummary
         /// Set the <c>dueAt</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDueAt(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
+        public void SetDueAt(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -759,7 +759,7 @@ public readonly partial struct WorkflowRunSummary
         /// Set the <c>environment</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEnvironment(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetEnvironment(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -804,7 +804,7 @@ public readonly partial struct WorkflowRunSummary
         /// Set the <c>errorType</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetErrorType(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetErrorType(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -849,7 +849,7 @@ public readonly partial struct WorkflowRunSummary
         /// Set the <c>id</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetId(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetId(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -880,7 +880,7 @@ public readonly partial struct WorkflowRunSummary
         /// Set the <c>status</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStatus(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus.Source value)
+        public void SetStatus(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus.Source value)
         {
             CheckValidInstance();
 
@@ -911,7 +911,7 @@ public readonly partial struct WorkflowRunSummary
         /// Set the <c>tags</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTags(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.JsonStringArray.Source value)
+        public void SetTags(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.JsonStringArray.Source value)
         {
             CheckValidInstance();
 
@@ -992,7 +992,7 @@ public readonly partial struct WorkflowRunSummary
         /// Set the <c>updatedAt</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetUpdatedAt(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
+        public void SetUpdatedAt(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -1023,7 +1023,7 @@ public readonly partial struct WorkflowRunSummary
         /// Set the <c>workflowId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetWorkflowId(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetWorkflowId(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -1155,7 +1155,7 @@ public readonly partial struct WorkflowRunSummary
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -1178,7 +1178,7 @@ public readonly partial struct WorkflowRunSummary
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1225,7 +1225,7 @@ public readonly partial struct WorkflowRunSummary
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -1406,7 +1406,7 @@ public readonly partial struct WorkflowRunSummary
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.JsonStringArray.Source arg12)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.JsonStringArray.Source arg12)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1592,7 +1592,7 @@ public readonly partial struct WorkflowRunSummary
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.JsonStringArray.Source<TContext> arg12)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.JsonStringArray.Source<TContext> arg12)
         {
             _context = context;
             _createArg1 = arg1;
@@ -1974,7 +1974,7 @@ public readonly partial struct WorkflowRunSummary
         /// <param name="arg11">The value of the property.</param>
         /// <param name="arg12">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.JsonStringArray.Source arg12, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.JsonStringArray.Source arg12, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
@@ -1999,7 +1999,7 @@ public readonly partial struct WorkflowRunSummary
         /// <param name="arg11">The value of the property.</param>
         /// <param name="arg12">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg4, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.JsonStringArray.Source<TContext> arg12, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg7, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg8, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source arg9, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg10, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg11, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.JsonStringArray.Source<TContext> arg12, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -2055,7 +2055,7 @@ public readonly partial struct WorkflowRunSummary
     /// <param name="errorType">The value of the <c>"errorType"</c> property.</param>
     /// <param name="tags">The value of the <c>"tags"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source updatedAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source awaitingChannel = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source awaitingCorrelationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source dueAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source errorType = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.JsonStringArray.Source tags = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source updatedAt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source awaitingChannel = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source awaitingCorrelationId = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source correlationId = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source dueAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source errorType = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.JsonStringArray.Source tags = default)
     {
         return new Source(createdAt, id, status, updatedAt, workflowId, awaitingChannel, awaitingCorrelationId, correlationId, dueAt, environment, errorType, tags);
     }
@@ -2078,7 +2078,7 @@ public readonly partial struct WorkflowRunSummary
     /// <param name="errorType">The value of the <c>"errorType"</c> property.</param>
     /// <param name="tags">The value of the <c>"tags"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source updatedAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source awaitingChannel = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source awaitingCorrelationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source dueAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source errorType = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.JsonStringArray.Source<TContext> tags = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source createdAt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source id, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunStatus.Source status, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source updatedAt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source workflowId, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source awaitingChannel = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source awaitingCorrelationId = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source correlationId = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonDateTime.Source dueAt = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source environment = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source errorType = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkflowRunSummary.JsonStringArray.Source<TContext> tags = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

@@ -395,7 +395,7 @@ public readonly partial struct ValidationError
         /// Set the <c>instancePath</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetInstancePath(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
+        public void SetInstancePath(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -440,7 +440,7 @@ public readonly partial struct ValidationError
         /// Set the <c>keyword</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetKeyword(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
+        public void SetKeyword(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -485,7 +485,7 @@ public readonly partial struct ValidationError
         /// Set the <c>message</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMessage(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
+        public void SetMessage(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -516,7 +516,7 @@ public readonly partial struct ValidationError
         /// Set the <c>schemaLocation</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSchemaLocation(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
+        public void SetSchemaLocation(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -662,7 +662,7 @@ public readonly partial struct ValidationError
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -685,7 +685,7 @@ public readonly partial struct ValidationError
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -732,7 +732,7 @@ public readonly partial struct ValidationError
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -905,7 +905,7 @@ public readonly partial struct ValidationError
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ValidationError.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg4)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg4)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1307,7 +1307,7 @@ public readonly partial struct ValidationError
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4);
@@ -1352,7 +1352,7 @@ public readonly partial struct ValidationError
     /// <param name="keyword">The value of the <c>"keyword"</c> property.</param>
     /// <param name="schemaLocation">The value of the <c>"schemaLocation"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source message, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source instancePath = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source keyword = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source schemaLocation = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source message, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source instancePath = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source keyword = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source schemaLocation = default)
     {
         return new Source(message, instancePath, keyword, schemaLocation);
     }

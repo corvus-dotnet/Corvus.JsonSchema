@@ -21,11 +21,6 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-/// <remarks>
-/// <para>
-/// The cursor to rewind to.
-/// </para>
-/// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public readonly partial struct JsonInt32
 {

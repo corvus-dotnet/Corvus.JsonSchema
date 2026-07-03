@@ -404,7 +404,7 @@ public readonly partial struct WorkflowFault
         /// Set the <c>at</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAt(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source value)
+        public void SetAt(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source value)
         {
             CheckValidInstance();
 
@@ -435,7 +435,7 @@ public readonly partial struct WorkflowFault
         /// Set the <c>attempt</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAttempt(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source value)
+        public void SetAttempt(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source value)
         {
             CheckValidInstance();
 
@@ -466,7 +466,7 @@ public readonly partial struct WorkflowFault
         /// Set the <c>error</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetError(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
+        public void SetError(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -497,7 +497,7 @@ public readonly partial struct WorkflowFault
         /// Set the <c>stepId</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetStepId(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
+        public void SetStepId(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -629,7 +629,7 @@ public readonly partial struct WorkflowFault
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -652,7 +652,7 @@ public readonly partial struct WorkflowFault
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -699,7 +699,7 @@ public readonly partial struct WorkflowFault
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -872,7 +872,7 @@ public readonly partial struct WorkflowFault
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowFault.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg4)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg4)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
@@ -1274,7 +1274,7 @@ public readonly partial struct WorkflowFault
         /// <param name="arg3">The value of the property.</param>
         /// <param name="arg4">The value of the property.</param>
         /// <param name="o">The complex value builder into which to write the object.</param>
-        internal static void BuildCreateValue(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source arg1, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source arg2, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1, arg2, arg3, arg4);
@@ -1319,7 +1319,7 @@ public readonly partial struct WorkflowFault
     /// <param name="error">The value of the <c>"error"</c> property.</param>
     /// <param name="stepId">The value of the <c>"stepId"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source at, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source attempt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source error, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source stepId)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source at, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source attempt, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source error, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source stepId)
     {
         return new Source(at, attempt, error, stepId);
     }

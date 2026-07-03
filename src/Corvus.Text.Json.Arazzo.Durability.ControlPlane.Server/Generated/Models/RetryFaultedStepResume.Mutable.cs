@@ -329,7 +329,7 @@ public readonly partial struct RetryFaultedStepResume
         /// Set the <c>mode</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetMode(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.ModeEntity.Source value)
+        public void SetMode(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RetryFaultedStepResume.ModeEntity.Source value)
         {
             CheckValidInstance();
 
@@ -461,7 +461,7 @@ public readonly partial struct RetryFaultedStepResume
         ///   </para>
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetProperty(string propertyName, in JsonElement.Source value)
+        public void SetProperty(string propertyName, scoped in JsonElement.Source value)
         {
             SetProperty(propertyName.AsSpan(), value);
         }
@@ -484,7 +484,7 @@ public readonly partial struct RetryFaultedStepResume
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
@@ -531,7 +531,7 @@ public readonly partial struct RetryFaultedStepResume
         ///     If the property doesn't exist, it will be added to the object.
         ///   </para>
         /// </remarks>
-        public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+        public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
         {
             CheckValidInstance();
 
