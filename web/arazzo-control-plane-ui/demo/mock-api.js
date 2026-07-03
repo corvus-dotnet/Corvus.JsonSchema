@@ -2098,7 +2098,8 @@ export function createMockControlPlane(options = {}) {
       const name = decodeURIComponent(oneMatch[1]);
       if (method === 'GET') {
         const e = findEnvironment(name);
-        return e ? json(structuredClone(e)) : notFoundEnvironment(name);
+        // Non-disclosing: an environment outside the caller's reach is reported as absent (§7.7), not a 403.
+        return e && reachAdmits(e.managementTags) ? json(structuredClone(e)) : notFoundEnvironment(name);
       }
       if (method === 'PUT') return updateEnvironment(name, body);
       if (method === 'DELETE') return deleteEnvironment(name);
@@ -2124,7 +2125,10 @@ export function createMockControlPlane(options = {}) {
 
   function listEnvironmentsPage(params) {
     const limit = Math.max(1, Math.min(Number(params.get('limit')) || 50, 200));
-    const sorted = [...environments].sort((a, b) => a.name.localeCompare(b.name));
+    // Reach filter (§7.7/§14.2): the caller sees only the environments their reach admits (by management tags),
+    // non-disclosing — the window the real IEnvironmentStore.ListAsync applies via the caller's AccessContext.
+    const visible = environments.filter((e) => reachAdmits(e.managementTags));
+    const sorted = [...visible].sort((a, b) => a.name.localeCompare(b.name));
     const offset = Number(params.get('pageToken')) || 0;
     const pageItems = sorted.slice(offset, offset + limit).map((e) => structuredClone(e));
     const nextPageToken = offset + limit < sorted.length ? String(offset + limit) : null;
