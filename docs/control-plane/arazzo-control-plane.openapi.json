@@ -79,6 +79,55 @@
   }
   ],
   "paths": {
+    "/access/grants": {
+      "get": {
+        "operationId": "getAccessGrants",
+        "security": [
+          {
+            "oauth2": [
+              "security:read"
+            ]
+          },
+          {
+            "openIdConnect": [
+              "security:read"
+            ]
+          },
+          {
+            "mtls": []
+          }
+        ],
+        "tags": [
+          "security"
+        ],
+        "summary": "Who-can-do-what overview for a grantee",
+        "description": "Aggregates, for a single resolved grantee, all their access: the security bindings whose claim matches the grantee's identity (with per-verb reach), the base workflows the grantee administers, and the source-credential bindings the grantee's runs may use. The grantee is passed as an opaque URL-safe token: the base64url encoding of a resolved grantee's JSON (a ResolvedGrantee object — kind, value, identity, source, complete — exactly as returned by GET /identity/grantees), round-tripped verbatim by the client. Reach-scoped. Binding selection is based on the grantee's resolved sys: identity, so a live token may carry additional non-identity claims (e.g. groups) not represented here, and wildcard ('*') bindings that apply to every principal are omitted.",
+        "parameters": [
+          {
+            "name": "grantee",
+            "in": "query",
+            "required": true,
+            "description": "An opaque URL-safe token identifying the grantee: base64url of a resolved grantee's JSON (a ResolvedGrantee object from a GET /identity/grantees result), round-tripped verbatim by the client.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The grantee's aggregated access.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessGrantsOverview"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
     "/runs": {
       "get": {
         "operationId": "listRuns",
@@ -2792,6 +2841,73 @@
       }
     },
     "schemas": {
+      "AccessGrantsOverview": {
+        "type": "object",
+        "description": "The who-can-do-what aggregation for one grantee (design §6.1): the security bindings that grant it reach, the workflows it administers, and the credentials its runs may use.",
+        "properties": {
+          "grantee": {
+            "$ref": "#/components/schemas/ResolvedGrantee"
+          },
+          "bindings": {
+            "type": "array",
+            "description": "The security bindings whose claim matches the grantee's identity; each carries its per-verb read/write/purge reach. Delete a binding to revoke that access.",
+            "items": {
+              "$ref": "#/components/schemas/SecurityBindingSummary"
+            }
+          },
+          "administers": {
+            "type": "array",
+            "description": "The base workflows the grantee administers (exact identity set-equality).",
+            "items": {
+              "$ref": "#/components/schemas/AccessGrantsAdministeredWorkflow"
+            }
+          },
+          "credentialUsage": {
+            "type": "array",
+            "description": "The source-credential bindings the grantee's runs may use (label-superset over the binding's usage grant).",
+            "items": {
+              "$ref": "#/components/schemas/AccessGrantsCredentialUsage"
+            }
+          }
+        },
+        "required": [
+          "grantee",
+          "bindings",
+          "administers",
+          "credentialUsage"
+        ]
+      },
+      "AccessGrantsAdministeredWorkflow": {
+        "type": "object",
+        "description": "A base workflow a grantee administers (a link target for the catalog).",
+        "properties": {
+          "baseWorkflowId": {
+            "type": "string",
+            "description": "The base workflow id."
+          }
+        },
+        "required": [
+          "baseWorkflowId"
+        ]
+      },
+      "AccessGrantsCredentialUsage": {
+        "type": "object",
+        "description": "A source-credential binding a grantee's runs may use, keyed by (source name, environment).",
+        "properties": {
+          "sourceName": {
+            "type": "string",
+            "description": "The registered source name."
+          },
+          "environment": {
+            "type": "string",
+            "description": "The environment the binding is scoped to."
+          }
+        },
+        "required": [
+          "sourceName",
+          "environment"
+        ]
+      },
       "WorkflowRunStatus": {
         "type": "string",
         "description": "A run's lifecycle status. `Faulted` is terminal-but-recoverable (awaiting remediation); `Completed` and `Cancelled` are terminal.",
