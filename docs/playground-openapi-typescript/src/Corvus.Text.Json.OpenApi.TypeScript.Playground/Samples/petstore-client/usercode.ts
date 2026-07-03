@@ -6,7 +6,7 @@
 // FetchApiTransport then works entirely offline.
 import { FetchApiTransport } from "@endjin/corvus-json-client-runtime";
 import { ApiPetsClient } from "./ApiPetsClient.js";
-import type { Pet } from "./models/generated.js";
+import type { Pet, Pets } from "./models/generated.js";
 
 // ── Setting up the client ────────────────────────────────────────────────────
 // The base URL carries the spec's server path prefix (/v1); the per-operation path is appended to it.
@@ -17,7 +17,7 @@ const client = new ApiPetsClient(transport);
 console.log("1. Listing pets (limit=10)...");
 const listResponse = await client.listPets({ limit: 10 });
 listResponse.match({
-  ok: (pets: Pet[]) => {
+  ok: (pets: Pets) => {
     console.log(`   Got ${pets.length} pets`);
     for (const pet of pets) {
       console.log(`   - [${pet.id}] ${pet.name} (tag: ${pet.tag ?? "none"})`);

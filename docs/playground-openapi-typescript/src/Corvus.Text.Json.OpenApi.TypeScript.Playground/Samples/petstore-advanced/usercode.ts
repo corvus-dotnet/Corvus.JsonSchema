@@ -6,7 +6,7 @@
 // FetchApiTransport then works entirely offline.
 import { FetchApiTransport } from "@endjin/corvus-json-client-runtime";
 import { ApiPetsClient } from "./ApiPetsClient.js";
-import type { Pet } from "./models/generated.js";
+import type { Pet, PetList } from "./models/generated.js";
 
 const transport = new FetchApiTransport({ baseUrl: "https://petstore.example.com/v2" });
 const client = new ApiPetsClient(transport);
@@ -21,7 +21,7 @@ function describe(pet: Pet): string {
 console.log("1. Listing pets (limit=10)...");
 const listResponse = await client.listPets({ xRequestId: "trace-001", limit: 10, tags: ["good-boy"] });
 listResponse.match({
-  ok: (pets: Pet[]) => {
+  ok: (pets: PetList) => {
     console.log(`   Got ${pets.length} pets`);
     for (const pet of pets) {
       console.log(`   - ${describe(pet)}`);
@@ -39,8 +39,11 @@ if (total !== undefined) {
 }
 
 // ── 2. Create a pet (POST /pets) ─────────────────────────────────────────────
+// createPet takes the operation parameters first (a required session_token cookie), then the request body.
 console.log("2. Creating a pet...");
-const createResponse = await client.createPet({ name: "Rex", breed: "Labrador", status: "available", tags: ["good-boy"] });
+const createResponse = await client.createPet(
+  { sessionToken: "session-abc" },
+  { name: "Rex", breed: "Labrador", status: "available", tags: ["good-boy"] });
 createResponse.match({
   created: (createdPet: Pet) => {
     console.log(`   Created: ${describe(createdPet)}`);
