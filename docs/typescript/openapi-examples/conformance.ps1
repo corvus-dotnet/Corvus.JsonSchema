@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Generates, compiles, and runs the conformance suite for the generated TypeScript OpenAPI clients.
+    Generates, compiles, and runs the conformance suite for the generated TypeScript OpenAPI clients, strict-type-checks the browser playground samples against their generated clients, and exercises FetchApiTransport.
 
 .DESCRIPTION
     The recipes under `petstore-*/client` import the runtime via a RELATIVE path to the package's built
@@ -65,9 +65,37 @@ try {
     npx tsc -p tsconfig.conformance.json
     if ($LASTEXITCODE -ne 0) { throw 'conformance tsc failed' }
 
-    Write-Host 'running node:test conformance + parity + auth suites...'
-    node --test conformance.test.mjs parity.test.mjs auth.test.mjs
+    # ── Playground OpenAPI-TS sample type-checks ──
+    # The browser playground runs each sample's usercode.ts via esbuild (transpile only, NO type-check), so a
+    # sample whose call does not match its generated client's API fails SILENTLY at runtime (e.g. omitting a
+    # cookie-parameter argument sends an empty body). Generate each playground sample's client from its spec and
+    # strict-tsc the usercode against it — the gate that catches sample/API drift the esbuild path cannot.
+    Write-Host 'type-checking playground OpenAPI-TS samples...'
+    $samplesRoot = Join-Path $root 'docs/playground-openapi-typescript/src/Corvus.Text.Json.OpenApi.TypeScript.Playground/Samples'
+    $sampleOut = Join-Path $here 'sample-typecheck'
+    Remove-Item -Recurse -Force -Path $sampleOut -ErrorAction SilentlyContinue
+    try {
+        foreach ($dir in Get-ChildItem -Path $samplesRoot -Directory | Sort-Object Name) {
+            $spec = Join-Path $dir.FullName 'openapi.json'
+            $user = Join-Path $dir.FullName 'usercode.ts'
+            if (-not (Test-Path $spec) -or -not (Test-Path $user)) { continue }
+            $out = Join-Path $sampleOut $dir.Name
+            New-Item -ItemType Directory -Force -Path $out | Out-Null
+            dotnet $dll openapi-client $spec --engine TypeScript --outputPath $out --tsClientRuntimeModule '@endjin/corvus-json-client-runtime' --force | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "sample client generation failed for $($dir.Name)" }
+            Copy-Item $user (Join-Path $out 'usercode.ts')
+            Copy-Item (Join-Path $here 'globals.d.ts') (Join-Path $out 'globals.d.ts')
+            Set-Content -Path (Join-Path $out 'tsconfig.json') -Value '{ "compilerOptions": { "strict": true, "exactOptionalPropertyTypes": true, "target": "es2022", "module": "esnext", "moduleResolution": "bundler", "lib": ["es2023", "dom", "esnext.disposable"], "noEmit": true, "skipLibCheck": true }, "include": ["globals.d.ts", "usercode.ts"] }'
+            Write-Host "  sample: $($dir.Name)"
+            npx tsc -p (Join-Path $out 'tsconfig.json')
+            if ($LASTEXITCODE -ne 0) { throw "playground sample '$($dir.Name)' usercode.ts does not type-check against its generated client" }
+        }
+    }
+    finally { Remove-Item -Recurse -Force -Path $sampleOut -ErrorAction SilentlyContinue }
+
+    Write-Host 'running node:test conformance + parity + auth + fetch-transport suites...'
+    node --test conformance.test.mjs parity.test.mjs auth.test.mjs fetch-transport.test.mjs
     if ($LASTEXITCODE -ne 0) { throw 'conformance suite failed' }
 }
 finally { Pop-Location }
-Write-Host 'OK - conformance + parity + auth suites passed.'
+Write-Host 'OK - sample type-checks + conformance/parity/auth/fetch-transport suites passed.'

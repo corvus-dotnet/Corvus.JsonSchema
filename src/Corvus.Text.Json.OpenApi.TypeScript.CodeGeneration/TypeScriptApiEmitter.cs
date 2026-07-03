@@ -2837,10 +2837,14 @@ public sealed class TypeScriptApiEmitter : IClientEmitter
         w.WriteLine($"{(captureLink ? "async " : string.Empty)}{methodName}({signature}): Promise<{responseClass}> {{");
         w.PushIndent();
 
-        // The request: a factory call (params closure) when parameterised, else the const.
+        // The request: a factory call (params closure) when parameterised, else the const. When EVERY
+        // parameter is optional the method signature is `params?`, so default to `{}` (which satisfies an
+        // all-optional params interface) before handing it to the request factory's required parameter —
+        // otherwise `params` is `Params | undefined` and strict (exactOptionalPropertyTypes) rejects the call.
         if (hasParams)
         {
-            w.WriteLine($"const request = {requestModule}(params);");
+            bool allParamsOptional = op.Parameters.Where(IsSerializedParameter).All(p => !p.IsRequired);
+            w.WriteLine($"const request = {requestModule}({(allParamsOptional ? "params ?? {}" : "params")});");
         }
         else
         {

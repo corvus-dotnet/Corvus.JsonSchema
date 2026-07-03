@@ -2,3 +2,5 @@ node_modules/
 dist/
 conformance/
 package-lock.json
+
+sample-typecheck/
