@@ -189,6 +189,48 @@ describe('<arazzo-catalog-detail>', () => {
     const e = await changed;
     equal(e.detail.version.status, 'Obsolete', 'version is now obsolete');
   });
+
+  it('the + credential menu offers New and Copy-per-environment; Copy opens the dialog in duplicate mode', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read credentials:read credentials:write' });
+    mount(el);
+    const plus = await waitFor(() => el.shadowRoot.querySelector('.src[data-name="petstore"] .setup-menu'));
+    // Wait for the async binding list so the menu can offer "Copy production…" for the seeded binding.
+    await waitFor(() => (el._creds || []).some((b) => b.sourceName === 'petstore'));
+    plus.click();
+    const menu = await waitFor(() => el.shadowRoot.querySelector('.src[data-name="petstore"] .cred-menu:not([hidden])'));
+    const items = [...menu.querySelectorAll('.menu-item')].map((m) => m.textContent);
+    ok(items.some((t) => /^New credential/i.test(t)), 'offers New credential…');
+    ok(items.some((t) => /^Copy production/i.test(t)), 'offers Copy production…');
+    // Copy → the dialog opens in duplicate mode cloned from that environment's binding.
+    const dlg = el.shadowRoot.querySelector('arazzo-credential-dialog');
+    let captured = null;
+    dlg.open = (binding, opts) => { captured = { binding, opts }; };
+    menu.querySelector('[data-action="copy"]').click();
+    ok(captured?.opts?.duplicate === true, 'Copy opened the dialog in duplicate mode');
+    equal(captured.binding?.environment, 'production', 'cloned from the production binding');
+  });
+
+  it('the + credential menu New option opens a blank guided setup locked to the source', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read credentials:read credentials:write' });
+    mount(el);
+    const plus = await waitFor(() => el.shadowRoot.querySelector('.src[data-name="petstore"] .setup-menu'));
+    plus.click();
+    const menu = await waitFor(() => el.shadowRoot.querySelector('.src[data-name="petstore"] .cred-menu:not([hidden])'));
+    const dlg = el.shadowRoot.querySelector('arazzo-credential-dialog');
+    let captured = null;
+    dlg.open = (binding, opts) => { captured = { binding, opts }; };
+    menu.querySelector('[data-action="new"]').click();
+    await waitFor(() => captured); // setupCredential derives the source doc asynchronously before opening
+    ok(!captured.opts?.duplicate, 'New is not a duplicate');
+    equal(captured.opts?.sourceName, 'petstore', 'New is locked to the source');
+  });
+
+  it('hides the + credential menu without credentials:write (scope honesty)', async () => {
+    el = detailWithMock({ 'base-workflow-id': 'adopt-pet', 'version-number': '1', scopes: 'catalog:read credentials:read' });
+    mount(el);
+    await waitFor(() => el.shadowRoot.querySelector('.src[data-name="petstore"]'));
+    equal(el.shadowRoot.querySelector('.setup-menu'), null, 'no + menu without credentials:write');
+  });
 });
 
 describe('<arazzo-catalog> panel', () => {
